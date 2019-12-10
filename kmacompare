@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+
+# installation:
+# 1: install conda
+# 2: install the environment used (cmkobel/compare)
+
+echo "This is the KMA compare program"
+
+# remember to install miniconda
+# TODO: In the long run, it might be nice to use a shared conda environment, between users.
+echo "activating environment" 
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate compare
+
+echo "calling workflow"
+gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py status
+
+        
+
+# prompt the user.
+echo ""
+read -p "Do you want to submit this job list? [y/n] " -n 1 -r
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    # If the user agrees, run the workflow
+    echo "submitting jobs..."
+    gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py run
+
+    echo ""
+    echo "The job list has been submitted."
+    echo "When the pipeline is done, the output will reside in"
+    echo "    /project/ClinicalMicrobio/faststorage/compare/output"
+    echo "Please check the status by running mj"
+    mj
+
+fi
+
+
+
