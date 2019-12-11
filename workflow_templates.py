@@ -126,6 +126,9 @@ cd fasttree
 FastTree -nt -gtr ../roary/core_gene_alignment.aln > tree.newick 2> stderr.txt
 
 
+Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/ape_newick2pdf.r tree.newick 2> R_stderr.txt
+
+
 """
     return inputs, outputs, options, spec
 
@@ -159,6 +162,13 @@ perl {target_dir}/scripts/perl/roary2svg.pl ../roary/gene_presence_absence.csv >
 
 '''
     return inputs, outputs, options, spec
+
+
+def panito():
+    pass
+
+
+
 
 def mailzip():
     spec = """mail -s 'clinmicpipe done {group_name}' -a pangenome_matrix.png kobel@pm.me <<< 'Sent from workflow_templates.py'"""
