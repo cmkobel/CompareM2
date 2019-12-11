@@ -151,7 +151,7 @@ cd fasttree
 
 
 
-#FastTree -nt -gtr ../roary/core_gene_alignment.aln > tree.newick 2> stderr.txt
+FastTree -nt -gtr ../roary/core_gene_alignment.aln > tree.newick {debug('ft')}
 
 
 
