@@ -5,7 +5,23 @@
 # 1: install conda
 # 2: install the environment used (cmkobel/compare)
 
+
+
+TARGET_DIR='/project/ClinicalMicrobio/faststorage/compare'
+curr_dir_name=${PWD##*/}          # to assign to a variable
+
+red=`tput setaf 1`
+green=`tput setaf 2`
+orange=`tput setaf 3`
+blue=`tput setaf 4`
+purple=`tput setaf 5`
+
+reset=`tput sgr0`
+
 echo "This is the KMA assembly comparison program"
+
+
+
 
 # remember to install miniconda
 # TODO: In the long run, it might be nice to use a shared conda environment, between users.
@@ -14,20 +30,29 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate compare
 
 echo " testing dependencies..."
-#todo test here
+#todo test the environment from conda against a list of expected
 
 echo
-echo "These are the `ls -1 | wc -l` files considered:"
+echo "These are the `ls -1 | wc -l` files considered for $curr_dir_name:"
 ls -1
 echo
-read -p "Do you wish to succeed? [y/n] " -n 1 -r
+
+
+[ -d "$TARGET_DIR/output/$curr_dir_name" ] && echo -e "${purple}Attention!${reset} This folder already exists in the output directory. Proceed only if the contents are comparable.\n"
+
+read -p "Do you wish to proceed? [y/n] " -n 1 -r
 echo    # (optional) move to a new line
 if [[ ! $REPLY =~ ^[Yy]$ ]]
 then
     [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
 fi
 
-echo " calling gwf workflow"
+echo " copying content to target input..."
+
+
+cp -r ../$curr_dir_name $TARGET_DIR/input/ &
+
+echo " calling gwf workflow..."
 gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py status
 
         

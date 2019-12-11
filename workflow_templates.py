@@ -1,6 +1,15 @@
 
 from gwf import *
 
+DEBUG_STATUS = False
+
+def debug(title = ''):
+	if DEBUG_STATUS:
+		return '2> ' + str(title).strip() + '_stderr.txt'
+	else:
+		return ""
+
+
 
 
 def stem(input):
@@ -73,7 +82,7 @@ def prokka(target_dir, title, name):
 cd {target_dir}/output/{title}/{name}
 
 
-prokka --cpu 8 --outdir prokka --prefix {name} contigs.fa 2> stderr.txt
+prokka --cpu 8 --outdir prokka --prefix {name} contigs.fa {debug('prokka')}
 
 cp prokka/*.gff annotation.gff
 
@@ -82,9 +91,27 @@ cp prokka/*.gff annotation.gff
     return inputs, outputs , options, spec
 
 
+# MLST: Multi Locus Sequence Typing
+def mlst(target_dir, title, contigs):
+    inputs = [target_dir + '/output/' + title + '/' + i for i in contigs]
+    outputs = target_dir + '/output/' + title + '/mlst.tsv', # Denne fil skal bruges til at lave træet, så det er den vigtigste. Og så også en liste over alle .gff-filer som er brugt.
+    
+    options = {'nodes': 1, 'cores': 2, 'memory': '4g', 'walltime': '01:00:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
+    spec = f'''
+
+
+cd {target_dir}/output/{title}
+#mkdir mlst
+
+
+mlst {' '.join(contigs)} > mlst.tsv {debug('mlst')}
+
+'''
+    return (inputs, outputs, options, spec)	
 
 
 
+# Roary: The pan genome pipeline
 def roary(target_dir, title, gffs):
     # target_dir:   Der hvor den skal gemme outputtet.
     # gffs:         En liste med fulde stier til de .gff-filer som skal analyseres.
@@ -114,19 +141,21 @@ jobinfo $SLURM_JOBID
 
 def fasttree(target_dir, title):
     inputs = target_dir + '/output/' + title + '/roary/core_gene_alignment.aln'
-    outputs = target_dir + '/output/' + title + '/fasttree/tree.newick'
-    options = {'nodes': 1, 'cores': 8, 'memory': f'8g', 'walltime': f'2:00:00', 'queue': 'normal', 'account': 'ClinicalMicrobio'}
+    outputs = [target_dir + '/output/' + title + '/fasttree/tree.newick',
+               target_dir + '/output/' + title + '/fasttree/tree.pdf']
+    options = {'nodes': 1, 'cores': 8, 'memory': '8g', 'walltime': '2:00:00', 'queue': 'normal', 'account': 'ClinicalMicrobio'}
     spec = f"""
 cd {target_dir}/output/{title}
-mkdir fasttree
+mkdir -p fasttree
 cd fasttree
 
 
 
-FastTree -nt -gtr ../roary/core_gene_alignment.aln > tree.newick 2> stderr.txt
+#FastTree -nt -gtr ../roary/core_gene_alignment.aln > tree.newick 2> stderr.txt
 
 
-Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/ape_newick2pdf.r tree.newick 2> R_stderr.txt
+
+Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/ape_newick2pdf.r tree.newick "{title} core genome"  {debug('R')}
 
 
 """
@@ -141,7 +170,7 @@ def quicktree(target_dir, title, names):
     pass
 
 
-#def roary_plots(working_dir, script_file, tree_file, genes_abspres_file, group_name):
+
 def roary_plots(target_dir, title):
     script_file = '/faststorage/project/ClinicalMicrobio/compare/scripts/py/roary_plots.py'
     #tree_file = 
@@ -164,8 +193,24 @@ perl {target_dir}/scripts/perl/roary2svg.pl ../roary/gene_presence_absence.csv >
     return inputs, outputs, options, spec
 
 
-def panito():
-    pass
+
+def panito(target_dir, title):
+    inputs = [target_dir + '/output/' + title + '/roary/core_gene_alignment.aln',
+              target_dir + '/output/' + title + '/fasttree/tree.newick']
+    outputs = target_dir + '/output/' + title + '/panito/ani.pdf'
+    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
+    spec = f'''
+
+cd {target_dir}/output/{title}
+mkdir -p panito
+cd panito
+
+panito {inputs[0]} > ani.tsv {debug('panito')}
+Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/aniplot.r ani.tsv {inputs[1]} {debug('r_panito')}
+
+
+'''
+    return inputs, outputs, options, spec
 
 
 

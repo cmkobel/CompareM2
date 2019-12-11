@@ -65,12 +65,15 @@ for raw_name in fasta_files:
 
 
 
-# run as group (list of inputs)
+# run as group (list of inputs) from now on (names)
 
-annotations = [name + '/prokka/' + name + '.gff' for name in names]
-#for i in annotations: print(i)
+
+contigs = [name + '/contigs.fa' for name in names]
+gwf.target_from_template('cmp_mlst_' + title, mlst(target_dir, title, contigs))
+
 
 # submit roary
+annotations = [name + '/prokka/' + name + '.gff' for name in names]
 gwf.target_from_template('cmp_roary_' + title, roary(target_dir, title, annotations))
 
 
@@ -80,4 +83,9 @@ gwf.target_from_template('cmp_fasttree_' + title, fasttree(target_dir, title))
 
 # submit roary plots
 gwf.target_from_template('cmp_roary_plots_' + title, roary_plots(target_dir, title))
+
+# submit panito
+gwf.target_from_template('cmp_panito_' + title, panito(target_dir, title))
+
+
 

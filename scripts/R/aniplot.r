@@ -12,12 +12,22 @@ tree_file = args[length(args)] # last argument
 
 # extract order from tree
 tree = readChar(tree_file, file.info(tree_file)$size)
-tree_ = gsub("(\\(|\\))", "", tree) #       remove parenthesis
-tree__ = gsub(":\\d\\.\\d+", "", tree_) #   remove distances
-tree___ = gsub("(;|\\n)" ,"", tree__) #           remove sentinels
-tree____ = str_split(tree___, ",")[[1]] #        split to vector
 
+newick2names = function(newick) {
+  splitted = newick %>% str_split(",")
+  
+  
+  rv = c()
+  for (i in splitted) {
+    
+    new_i = str_replace(i, ":.+$", "") %>% str_replace("\n", "") %>% str_replace("\\(+", "") %>% str_replace("\\)+", "")
+    print(new_i)
+    rv = c(rv, new_i)
+  }
+  rv
+}
 
+tree_as_vector = newick2names(tree)
 
 # get truncated file name
 file_name_trunc = tools::file_path_sans_ext(file_name)
@@ -40,10 +50,10 @@ p = ggplot(data = melted_ani, aes(x=X1, y=variable, fill=value)) +
     geom_tile(aes(x = variable, y = X1, fill = value)) +
     #xlim(rev(levels(melted_ani$variable))) + 
     #ylim(rev(levels(melted_ani$variable))) +
-    xlim(tree____) + 
-    ylim(tree____) +
+    xlim(tree_as_vector) + 
+    ylim(tree_as_vector) +
     labs(title = file_name_trunc,
-         subtitle = "Average Nucleotide Identity of core gene alignment (sanger-panito 0.0.2b1)",
+         subtitle = "Average Nucleotide Identity of core gene alignment (sanger-panito)",
          x = "samples",
          y = "samples") +
     scale_fill_gradient(name = "ANI [%]") + 
@@ -60,5 +70,5 @@ ggsave(paste0(file_name_trunc, ".pdf"), p, device = "pdf", width = 210, height =
 
 
 
-print(tree____)
+print(tree_as_vector)
 
