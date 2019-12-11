@@ -93,8 +93,8 @@ def roary(target_dir, title, gffs):
     ram = -(-len(gffs)//100)*8 # 8 for hver 100 filer
 
     inputs = [target_dir + '/output/' + title + '/' + i for i in gffs]
-    outputs = [target_dir + '/output/' + title + '/roary/core_gene_alignment.aln'] # Denne fil skal bruges til at lave træet, så det er den vigtigste. Og så også en liste over alle .gff-filer som er brugt.
-
+    outputs = [target_dir + '/output/' + title + '/roary/core_gene_alignment.aln', # Denne fil skal bruges til at lave træet, så det er den vigtigste. Og så også en liste over alle .gff-filer som er brugt.
+               target_dir + '/output/' + title + '/roary/gene_presence_absence.csv']
     newline_for_f_string_workaround = '\n'
     options = {'nodes': 1, 'cores': 16, 'memory': f'{ram}g', 'walltime': f'{hours}:00:00', 'queue': 'normal', 'account': 'ClinicalMicrobio'}
     spec = f'''
@@ -138,8 +138,27 @@ def quicktree(target_dir, title, names):
     pass
 
 
-def roary_plots():
-    pass
+#def roary_plots(working_dir, script_file, tree_file, genes_abspres_file, group_name):
+def roary_plots(target_dir, title):
+    script_file = '/faststorage/project/ClinicalMicrobio/compare/scripts/py/roary_plots.py'
+    #tree_file = 
+
+    inputs = [target_dir + '/output/' + title + '/fasttree/tree.newick',
+              target_dir + '/output/' + title + '/roary/gene_presence_absence.csv']
+    outputs = target_dir + '/output/' + title + '/roary_plots/pangenome_matrix.png'
+    #
+    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
+    spec = f'''
+cd {target_dir}/output/{title}
+mkdir -p roary_plots
+cd roary_plots
+
+python {script_file} ../fasttree/tree.newick ../roary/gene_presence_absence.csv 2> stderr.out
+
+perl {target_dir}/scripts/perl/roary2svg.pl ../roary/gene_presence_absence.csv > pangenome_matrix_alternative.svg 2> 2_stderr.out
+
+'''
+    return inputs, outputs, options, spec
 
 def mailzip():
     spec = """mail -s 'clinmicpipe done {group_name}' -a pangenome_matrix.png kobel@pm.me <<< 'Sent from workflow_templates.py'"""

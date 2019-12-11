@@ -74,8 +74,10 @@ annotations = [name + '/prokka/' + name + '.gff' for name in names]
 gwf.target_from_template('cmp_roary_' + title, roary(target_dir, title, annotations))
 
 
-
 # submit fasttree
 gwf.target_from_template('cmp_fasttree_' + title, fasttree(target_dir, title))
 
+
+# submit roary plots
+gwf.target_from_template('cmp_roary_plots_' + title, roary_plots(target_dir, title))
 
