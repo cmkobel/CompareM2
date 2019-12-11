@@ -120,7 +120,12 @@ def fasttree(target_dir, title):
 cd {target_dir}/output/{title}
 mkdir fasttree
 cd fasttree
-FastTree –nt –gtr ../roary/core_gene_alignment.aln > tree.newick 2> fasttree_stderr.txt
+
+
+
+FastTree -nt -gtr ../roary/core_gene_alignment.aln > tree.newick 2> stderr.txt
+
+
 """
     return inputs, outputs, options, spec
 

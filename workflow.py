@@ -13,9 +13,9 @@ source_dir = os.getcwd()
 target_dir = '/project/ClinicalMicrobio/faststorage/compare'
 title = basename(os.getcwd()) # Thought as whatever folder the user is calling kmacompare from
 error_file = target_dir + '/' + title + '/stdout.txt'
-print('title:', title)
-print('source_dir:', source_dir)
-print('target_dir:', target_dir)
+print(' workflow title:', title)
+print(' workflow source_dir:', source_dir)
+print(' workflow target_dir:', target_dir)
 print()
 
 fasta_files = []
