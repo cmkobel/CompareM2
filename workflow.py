@@ -23,10 +23,11 @@ fasta_files = []
 
 fasta_files = [f for f in os.listdir(source_dir) if isfile(join(f))]
 
-print('These are the files considered:')
-for i in fasta_files:
-    print('', i)
-print()
+# This is taken care of from the bash script
+#print('These are the files considered:')
+#for i in fasta_files:
+#    print('', i)
+#print()
 
 for file in os.listdir(source_dir):
     if isfile(file):
@@ -49,13 +50,32 @@ for raw_name in fasta_files:
     name = stem(raw_name.replace(' ', '_'))
     names.append(name)
     
+    # submit copy job
     gwf.target_from_template('cmp_copy_' + title + '_' + name, copy(source = source_dir + '/' + raw_name,
                                                                     target_dir = target_dir + '/output/' + title + '/' + name,
                                                                     target_file = 'contigs.fa'))
         
 
+    # submit kraken2
+    gwf.target_from_template('cmp_kraken2_' + name, kraken2(target_dir, title, name))
+
 
     # submit prokka
-    gwf.target_from_template('cmp_prokka_' + title + '_' + name, prokka(target_dir, title, name, error_file))
+    gwf.target_from_template('cmp_prokka_' + title + '_' + name, prokka(target_dir, title, name))
+
+
+
+# run as group (list of inputs)
+
+annotations = [name + '/prokka/' + name + '.gff' for name in names]
+#for i in annotations: print(i)
+
+# submit roary
+gwf.target_from_template('cmp_roary_' + title, roary(target_dir, title, annotations))
+
+
+
+# submit fasttree
+gwf.target_from_template('cmp_fasttree_' + title, fasttree(target_dir, title))
 
 
