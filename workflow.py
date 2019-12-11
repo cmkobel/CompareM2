@@ -9,6 +9,8 @@ from workflow_templates import *
 gwf = Workflow()
 
 
+#Todo replace - with _ in things in the names of jobs
+
 source_dir = os.getcwd()
 target_dir = '/project/ClinicalMicrobio/faststorage/compare'
 title = basename(os.getcwd()) # Thought as whatever folder the user is calling kmacompare from

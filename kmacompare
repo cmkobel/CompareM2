@@ -5,6 +5,8 @@
 # 1: install conda
 # 2: install the environment used (cmkobel/compare)
 
+# todo: exit when errors happen in subparts (i.e. gwf, when a target has an error.)
+# todo: take better care of 'wrong' symbols in the input files
 
 
 TARGET_DIR='/project/ClinicalMicrobio/faststorage/compare'
@@ -25,6 +27,8 @@ echo "This is the KMA assembly comparison program"
 
 # remember to install miniconda
 # TODO: In the long run, it might be nice to use a shared conda environment, between users.
+# Todo: offer to fix filenames containing weird characters (interactively, maybe)
+
 echo " activating environment..." 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate compare
@@ -49,11 +53,11 @@ fi
 
 echo " copying content to target input..."
 
-
+rm $TARGET_DIR/input/$curr_dir_name
 cp -r ../$curr_dir_name $TARGET_DIR/input/ &
 
 echo " calling gwf workflow..."
-gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py status
+gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py status || [echo "${red}error in gwf. ${reset}exiting." && exit 1]
 
         
 
@@ -65,7 +69,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]
 then
     # If the user agrees, run the workflow
     echo "submitting jobs..."
-    gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py run
+    gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py run || [echo "${red}error in gwf. ${reset}exiting." && exit 1]
 
     echo ""
     echo "The job list has been submitted."

@@ -131,7 +131,7 @@ cd {target_dir}/output/{title}
 
 roary -f roary -e -v -r -p 16 {' '.join(gffs)} 2> roary_stderr.txt
 
-#mail -s 'roary done {title}' kobel@pm.me <<< 'Sent from the compare pipeline'"""
+
 
 echo JOBID $SLURM_JOBID
 jobinfo $SLURM_JOBID
@@ -189,6 +189,9 @@ python {script_file} ../fasttree/tree.newick ../roary/gene_presence_absence.csv 
 
 perl {target_dir}/scripts/perl/roary2svg.pl ../roary/gene_presence_absence.csv > pangenome_matrix_alternative.svg 2> 2_stderr.out
 
+
+mail -s "compare done {title}" -a pangenome_matrix.png $COMPARE_DEFAULT_EMAIL_ADDRESS <<< "Sent from the compare pipeline" &
+# find out how to attach multiple files
 '''
     return inputs, outputs, options, spec
 
