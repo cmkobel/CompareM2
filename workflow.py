@@ -15,10 +15,10 @@ source_dir = os.getcwd()
 target_dir = '/project/ClinicalMicrobio/faststorage/compare'
 title = basename(os.getcwd()) # Thought as whatever folder the user is calling kmacompare from
 error_file = target_dir + '/' + title + '/stdout.txt'
-print(' workflow title:', title)
-print(' workflow source_dir:', source_dir)
-print(' workflow target_dir:', target_dir)
-print()
+#print(' workflow title:', title)
+#print(' workflow source_dir:', source_dir)
+#print(' workflow target_dir:', target_dir)
+#print()
 
 fasta_files = []
 
@@ -37,7 +37,7 @@ for file in os.listdir(source_dir):
             for line in opened_file:
                 
                 if line[0] != '>':
-                    print(f'Warning: the file: {file} doesn\'t look like a fasta file. Consider removing it.')
+                    print(f'Warning: the file: {file} doesn\'t look like a fasta file. Consider its inclusion.')
                 
                 break
 
@@ -54,7 +54,8 @@ for raw_name in fasta_files:
     
     # submit copy job
     gwf.target_from_template('cmp_copy_' + title + '_' + name, copy(source = source_dir + '/' + raw_name,
-                                                                    target_dir = target_dir + '/output/' + title + '/' + name,
+                                                                    target_dir_long = target_dir + '/output/' + title + '/' + name,
+                                                                    target_dir = target_dir,
                                                                     target_file = 'contigs.fa'))
         
 
@@ -90,4 +91,5 @@ gwf.target_from_template('cmp_roary_plots_' + title, roary_plots(target_dir, tit
 gwf.target_from_template('cmp_panito_' + title, panito(target_dir, title))
 
 
-
+# send a mail
+gwf.target_from_template('cmp_mail_' + title, send_mail(target_dir, title, ('\n'.join(names))))

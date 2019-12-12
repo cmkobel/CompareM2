@@ -8,6 +8,10 @@
 # todo: exit when errors happen in subparts (i.e. gwf, when a target has an error.)
 # todo: take better care of 'wrong' symbols in the input files
 
+echo
+echo "╦╔═╔╦╗╔═╗  ┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┌─┐┌┬┐┌─┐┌─┐┬─┐┌─┐┌┬┐┌─┐┬─┐"
+echo "╠╩╗║║║╠═╣  ├─┤└─┐└─┐├┤ │││├┴┐│ └┬┘  │  │ ││││├─┘├─┤├┬┘├─┤ │ │ │├┬┘"
+echo "╩ ╩╩ ╩╩ ╩  ┴ ┴└─┘└─┘└─┘┴ ┴└─┘┴─┘┴   └─┘└─┘┴ ┴┴  ┴ ┴┴└─┴ ┴ ┴ └─┘┴└─"
 
 TARGET_DIR='/project/ClinicalMicrobio/faststorage/compare'
 curr_dir_name=${PWD##*/}          # to assign to a variable
@@ -20,20 +24,24 @@ purple=`tput setaf 5`
 
 reset=`tput sgr0`
 
-echo "This is the KMA assembly comparison program"
+#echo "This is the KMA assembly comparison program"
+echo
 
 
+#Todo: make a test, that tests the complete pipeline. Travis-like
 
 
 # remember to install miniconda
 # TODO: In the long run, it might be nice to use a shared conda environment, between users.
 # Todo: offer to fix filenames containing weird characters (interactively, maybe)
 
-echo " activating environment..." 
+echo "activating environment..." 
 source ~/miniconda3/etc/profile.d/conda.sh
-conda activate compare
+conda activate compare # todo try activating conda after submitting to gwf
 
-echo " testing dependencies..."
+
+
+echo "testing dependencies..."
 #todo test the environment from conda against a list of expected
 
 echo
@@ -42,7 +50,7 @@ ls -1
 echo
 
 
-[ -d "$TARGET_DIR/output/$curr_dir_name" ] && echo -e "${purple}Attention!${reset} This folder already exists in the output directory. Proceed only if the contents are comparable.\n"
+#[ -d "$TARGET_DIR/output/$curr_dir_name" ] && echo -e "${purple}Attention:${reset} This folder already exists in the output directory. Proceed only if the contents are comparable.\n"
 
 read -p "Do you wish to proceed? [y/n] " -n 1 -r
 echo    # (optional) move to a new line
@@ -55,10 +63,10 @@ fi
 # if a dir with the same name already exists in compare/input, then move it away.
 [ -d "$TARGET_DIR/output/$curr_dir_name" ] &&  echo " moving old content to old/" && mv $TARGET_DIR/input/$curr_dir_name $TARGET_DIR/old/$(date +%Y%m%d_%H%M%S)_$curr_dir_name
 
-echo " copying content to compare/input/ "
+echo " archiving the assemblies..."
 cp -r ../$curr_dir_name $TARGET_DIR/input/ &
-
-echo " calling gwf workflow..."
+echo 
+echo "These are the jobs:"
 gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py status  || { echo "${red}error in gwf. ${reset}exiting." && exit 1; }
 
         
@@ -78,7 +86,8 @@ then
     echo "When the pipeline is done, the output will reside in"
     echo "    /project/ClinicalMicrobio/faststorage/compare/output"
     echo "and an email will be sent to $COMPARE_DEFAULT_EMAIL_ADDRESS"
-    echo "Please check the status by running mj"
+    echo "Please check the status by running the following command:"
+    echo "    mj"
     mj
 
 fi

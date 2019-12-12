@@ -17,28 +17,34 @@ def stem(input):
     stem = '.'.join(str(input).split('.')[:-1])
     return stem
 
+
+
 def initialize(title, source_dir, target_dir):
     """ Creates the output/{title} directory"""
-    inputs = ""
-    outputs = target_dir + "/output/" + title
+    inputs = source_dir
+    outputs = target_dir + "/output/" + title + "/initialized.txt"
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '0:02:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
     spec = f"""
+
 mkdir -p {target_dir}/output/{title}
+cd {target_dir}/output/{title}
+
+echo "started3" >> initialized.txt {debug('init')}
 
 
 """
     return inputs, outputs, options, spec
 
 
-def copy(source, target_dir, target_file):
+def copy(source, target_dir_long, target_dir, target_file):
     """  Copies the contigs to folders in the output directory """
     inputs = source
-    outputs = target_dir + '/' + target_file
+    outputs = target_dir_long + '/' + target_file
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '0:05:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
     spec = f"""
 
-mkdir -p {target_dir}
-cp "{source}" {target_dir}/{target_file}
+mkdir -p {target_dir_long}
+cp "{source}" {target_dir_long}/{target_file}
 
 """
     return inputs, outputs, options, spec
@@ -94,7 +100,7 @@ cp prokka/*.gff annotation.gff
 # MLST: Multi Locus Sequence Typing
 def mlst(target_dir, title, contigs):
     inputs = [target_dir + '/output/' + title + '/' + i for i in contigs]
-    outputs = target_dir + '/output/' + title + '/mlst.tsv', # Denne fil skal bruges til at lave træet, så det er den vigtigste. Og så også en liste over alle .gff-filer som er brugt.
+    outputs = target_dir + '/output/' + title + '/mlst.tsv' # Denne fil skal bruges til at lave træet, så det er den vigtigste. Og så også en liste over alle .gff-filer som er brugt.
     
     options = {'nodes': 1, 'cores': 2, 'memory': '4g', 'walltime': '01:00:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
     spec = f'''
@@ -177,7 +183,8 @@ def roary_plots(target_dir, title):
 
     inputs = [target_dir + '/output/' + title + '/fasttree/tree.newick',
               target_dir + '/output/' + title + '/roary/gene_presence_absence.csv']
-    outputs = target_dir + '/output/' + title + '/roary_plots/pangenome_matrix.png'
+    outputs = [target_dir + '/output/' + title + '/roary_plots/pangenome_matrix.png',
+               target_dir + '/output/' + title + '/roary_plots/pangenome_matrix_alternative.svg']
     #
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
     spec = f'''
@@ -190,7 +197,7 @@ python {script_file} ../fasttree/tree.newick ../roary/gene_presence_absence.csv 
 perl {target_dir}/scripts/perl/roary2svg.pl ../roary/gene_presence_absence.csv > pangenome_matrix_alternative.svg 2> 2_stderr.out
 
 
-mail -s "compare done {title}" -a pangenome_matrix.png $COMPARE_DEFAULT_EMAIL_ADDRESS <<< "Sent from the compare pipeline" &
+#mail -s "compare done {title}" -a pangenome_matrix.png $COMPARE_DEFAULT_EMAIL_ADDRESS <<< "Sent from the compare pipeline" &
 # find out how to attach multiple files
 '''
     return inputs, outputs, options, spec
@@ -218,8 +225,35 @@ Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/aniplot.r ani.ts
 
 
 
-def mailzip():
-    spec = """mail -s 'clinmicpipe done {group_name}' -a pangenome_matrix.png kobel@pm.me <<< 'Sent from workflow_templates.py'"""
+def send_mail(target_dir, title, names):
+    inputs = [target_dir + '/output/' + title + '/roary/summary_statistics.txt',
+              target_dir + '/output/' + title + '/panito/ani.pdf',
+              target_dir + '/output/' + title + '/roary_plots/pangenome_matrix.png',
+              target_dir + '/output/' + title + '/roary_plots/pangenome_matrix_alternative.svg',
+              target_dir + '/output/' + title + '/fasttree/tree.newick',
+              target_dir + '/output/' + title + '/fasttree/tree.pdf',
+              target_dir + '/output/' + title + '/mlst.tsv'
+              
+                     
+        ]
+    outputs = ""
+    
+    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
+    spec = f"""
+
+
+cd {target_dir}
+touch mailcall
+
+mail -s "evolve compare" -a {inputs[0]} kobel@pm.me <<< "please work, from the pipeline" {debug('mail_1')}
+
+mail -s "comparator done: {title}" {' '.join(['-a ' + i for i in inputs])} $COMPARE_DEFAULT_EMAIL_ADDRESS <<< "To access the full analysis, please visit /project/ClinicalMicrobio/faststorage/compare/{title} on GenomeDK." {debug('mail_2')}
+touch mail_sent_{title}
+
+
+    """
+    return inputs, outputs, options, spec
+
 
 
 
