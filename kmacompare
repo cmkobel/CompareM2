@@ -51,13 +51,15 @@ then
     [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
 fi
 
-echo " copying content to target input..."
 
-rm $TARGET_DIR/input/$curr_dir_name
+# if a dir with the same name already exists in compare/input, then move it away.
+[ -d "$TARGET_DIR/output/$curr_dir_name" ] &&  echo " moving old content to old/" && mv $TARGET_DIR/input/$curr_dir_name $TARGET_DIR/old/$(date +%Y%m%d_%H%M%S)_$curr_dir_name
+
+echo " copying content to compare/input/ "
 cp -r ../$curr_dir_name $TARGET_DIR/input/ &
 
 echo " calling gwf workflow..."
-gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py status #|| [echo "${red}error in gwf. ${reset}exiting." && exit 1]
+gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py status  || { echo "${red}error in gwf. ${reset}exiting." && exit 1; }
 
         
 
@@ -69,7 +71,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]
 then
     # If the user agrees, run the workflow
     echo "submitting jobs..."
-    gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py run #|| [echo "${red}error in gwf. ${reset}exiting." && exit 1]
+    gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py run || { echo "${red}error in gwf. ${reset}exiting." && exit 1; }
 
     echo ""
     echo "The job list has been submitted."

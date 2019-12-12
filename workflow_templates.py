@@ -143,7 +143,7 @@ def fasttree(target_dir, title):
     inputs = target_dir + '/output/' + title + '/roary/core_gene_alignment.aln'
     outputs = [target_dir + '/output/' + title + '/fasttree/tree.newick',
                target_dir + '/output/' + title + '/fasttree/tree.pdf']
-    options = {'nodes': 1, 'cores': 8, 'memory': '8g', 'walltime': '2:00:00', 'queue': 'normal', 'account': 'ClinicalMicrobio'}
+    options = {'nodes': 1, 'cores': 8, 'memory': '8g', 'walltime': '6:00:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
     spec = f"""
 cd {target_dir}/output/{title}
 mkdir -p fasttree
