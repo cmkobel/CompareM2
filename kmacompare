@@ -18,7 +18,9 @@ lblue=`tput setaf 6`
 white=`tput setaf 6`
 reset=`tput sgr0`
 
-echo
+emailaddress=$(finger `echo $USER` | grep -o -E "<.+@.+\..+>" | tr -d "<" | tr -d ">")
+
+
 echo   "${red}┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┌─┐┌┬┐┌─┐┌─┐┬─┐┌─┐┌┬┐┌─┐┬─┐${purple}KMA"
 echo "${green}├─┤└─┐└─┐├┤ │││├┴┐│ └┬┘  │  │ ││││├─┘├─┤├┬┘├─┤ │ │ │├┬┘"
 echo  "${blue}┴ ┴└─┘└─┘└─┘┴ ┴└─┘┴─┘┴   └─┘└─┘┴ ┴┴  ┴ ┴┴└─┴ ┴ ┴ └─┘┴└─${reset}"
@@ -63,7 +65,7 @@ read -p "Do you wish to proceed? [y/n] " -n 1 -r
 echo    # (optional) move to a new line
 if [[ ! $REPLY =~ ^[Yy]$ ]]
 then
-    echo "${orange}user exited${reset}"
+    echo "${orange}user left${reset}"
     [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
 fi
 echo
@@ -106,7 +108,7 @@ then
     echo "    mj"
     mj
 else
-    echo "${orange}user exited${reset}"
+    echo "${orange}user left${reset}"
 
 fi
 
