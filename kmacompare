@@ -53,7 +53,7 @@ echo "testing dependencies..."
 echo
 echo "These are the `ls -1 | wc -l` files considered for $curr_dir_name:"
 #ls -1
-for l in `ls`; do echo "  $l"; done
+for l in `ls`; do echo " $l (`cat $l | grep -c '^>'` contigs)"; done
 echo
 
 
