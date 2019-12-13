@@ -8,21 +8,27 @@
 # todo: exit when errors happen in subparts (i.e. gwf, when a target has an error.)
 # todo: take better care of 'wrong' symbols in the input files
 
-echo
-echo "╦╔═╔╦╗╔═╗  ┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┌─┐┌┬┐┌─┐┌─┐┬─┐┌─┐┌┬┐┌─┐┬─┐"
-echo "╠╩╗║║║╠═╣  ├─┤└─┐└─┐├┤ │││├┴┐│ └┬┘  │  │ ││││├─┘├─┤├┬┘├─┤ │ │ │├┬┘"
-echo "╩ ╩╩ ╩╩ ╩  ┴ ┴└─┘└─┘└─┘┴ ┴└─┘┴─┘┴   └─┘└─┘┴ ┴┴  ┴ ┴┴└─┴ ┴ ┴ └─┘┴└─"
-
-TARGET_DIR='/project/ClinicalMicrobio/faststorage/compare'
-curr_dir_name=${PWD##*/}          # to assign to a variable
 
 red=`tput setaf 1`
 green=`tput setaf 2`
 orange=`tput setaf 3`
 blue=`tput setaf 4`
 purple=`tput setaf 5`
-
+lblue=`tput setaf 6`
+white=`tput setaf 6`
 reset=`tput sgr0`
+
+echo
+echo   "${red}┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┌─┐┌┬┐┌─┐┌─┐┬─┐┌─┐┌┬┐┌─┐┬─┐${purple}KMA"
+echo "${green}├─┤└─┐└─┐├┤ │││├┴┐│ └┬┘  │  │ ││││├─┘├─┤├┬┘├─┤ │ │ │├┬┘"
+echo  "${blue}┴ ┴└─┘└─┘└─┘┴ ┴└─┘┴─┘┴   └─┘└─┘┴ ┴┴  ┴ ┴┴└─┴ ┴ ┴ └─┘┴└─${reset}"
+
+TARGET_DIR='/project/ClinicalMicrobio/faststorage/compare'
+curr_dir_name=${PWD##*/}          # to assign to a variable
+
+
+
+
 
 #echo "This is the KMA assembly comparison program"
 echo
@@ -35,9 +41,9 @@ echo
 # TODO: In the long run, it might be nice to use a shared conda environment, between users.
 # Todo: offer to fix filenames containing weird characters (interactively, maybe)
 
-echo "activating environment..." 
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate compare # todo try activating conda after submitting to gwf
+#echo "activating environment..." 
+#source ~/miniconda3/etc/profile.d/conda.sh
+#conda activate compare # todo try activating conda after submitting to gwf
 
 
 
@@ -46,7 +52,8 @@ echo "testing dependencies..."
 
 echo
 echo "These are the `ls -1 | wc -l` files considered for $curr_dir_name:"
-ls -1
+#ls -1
+for l in `ls`; do echo "  $l"; done
 echo
 
 
@@ -56,39 +63,50 @@ read -p "Do you wish to proceed? [y/n] " -n 1 -r
 echo    # (optional) move to a new line
 if [[ ! $REPLY =~ ^[Yy]$ ]]
 then
+    echo "${orange}user exited${reset}"
     [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
 fi
+echo
+echo " activating environment..." 
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate compare # todo try activating conda after submitting to gwf
 
 
 # if a dir with the same name already exists in compare/input, then move it away.
-[ -d "$TARGET_DIR/output/$curr_dir_name" ] &&  echo " moving old content to old/" && mv $TARGET_DIR/input/$curr_dir_name $TARGET_DIR/old/$(date +%Y%m%d_%H%M%S)_$curr_dir_name
+[ -d "$TARGET_DIR/output/$curr_dir_name" ] &&  echo " backing up old content..." && mv $TARGET_DIR/input/$curr_dir_name $TARGET_DIR/old/$(date +%Y%m%d_%H%M%S)_$curr_dir_name
 
-echo " archiving the assemblies..."
+echo " archiving job..."
 cp -r ../$curr_dir_name $TARGET_DIR/input/ &
 echo 
 echo "These are the jobs:"
-gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py status  || { echo "${red}error in gwf. ${reset}exiting." && exit 1; }
+gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py status --status running --status submitted --status shouldrun || { echo "${red}error in gwf. ${reset}exiting." && exit 1; }
+
 
         
 
 # prompt the user.
 echo ""
-read -p "Do you want to submit this job list? [y/n] " -n 1 -r
+read -p "Do you wish to submit this job list? [y/n] " -n 1 -r
 echo    # (optional) move to a new line
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
     # If the user agrees, run the workflow
-    echo "submitting jobs..."
+    echo " submitting jobs..."
+    echo
     gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py run || { echo "${red}error in gwf. ${reset}exiting." && exit 1; }
-
-    echo ""
+    
     echo "The job list has been submitted."
-    echo "When the pipeline is done, the output will reside in"
+    echo
+    echo "When the pipeline is done, the output will reside in:"
     echo "    /project/ClinicalMicrobio/faststorage/compare/output"
-    echo "and an email will be sent to $COMPARE_DEFAULT_EMAIL_ADDRESS"
+    echo "and an email will be sent to:"
+    echo "    $COMPARE_DEFAULT_EMAIL_ADDRESS"
+    echo
     echo "Please check the status by running the following command:"
     echo "    mj"
     mj
+else
+    echo "${orange}user exited${reset}"
 
 fi
 

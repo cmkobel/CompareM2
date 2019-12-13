@@ -21,9 +21,9 @@ def stem(input):
 
 def initialize(title, source_dir, target_dir):
     """ Creates the output/{title} directory"""
-    inputs = source_dir
+    inputs = ""#source_dir
     outputs = target_dir + "/output/" + title + "/initialized.txt"
-    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '0:02:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
+    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '0:02:00',  'account': 'clinicalmicrobio'}
     spec = f"""
 
 mkdir -p {target_dir}/output/{title}
@@ -40,7 +40,7 @@ def copy(source, target_dir_long, target_dir, target_file):
     """  Copies the contigs to folders in the output directory """
     inputs = source
     outputs = target_dir_long + '/' + target_file
-    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '0:05:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
+    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '0:05:00',  'account': 'clinicalmicrobio'}
     spec = f"""
 
 mkdir -p {target_dir_long}
@@ -53,7 +53,7 @@ cp "{source}" {target_dir_long}/{target_file}
 def kraken2(target_dir, title, name):
     inputs = target_dir + '/output/' + title + '/' + name + '/contigs.fa'
     outputs = target_dir + '/output/' + title + '/kraken2/' + name + '_report.txt'
-    options = {'nodes': 1, 'cores': 1, 'memory': '8g', 'walltime': '1:00:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
+    options = {'nodes': 1, 'cores': 1, 'memory': '8g', 'walltime': '1:00:00', 'account': 'clinicalmicrobio'}
     spec = f"""
 cd {target_dir}/output/{title}
 
@@ -102,7 +102,7 @@ def mlst(target_dir, title, contigs):
     inputs = [target_dir + '/output/' + title + '/' + i for i in contigs]
     outputs = target_dir + '/output/' + title + '/mlst.tsv' # Denne fil skal bruges til at lave træet, så det er den vigtigste. Og så også en liste over alle .gff-filer som er brugt.
     
-    options = {'nodes': 1, 'cores': 2, 'memory': '4g', 'walltime': '01:00:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
+    options = {'nodes': 1, 'cores': 2, 'memory': '4g', 'walltime': '01:00:00',  'account': 'clinicalmicrobio'}
     spec = f'''
 
 
@@ -129,7 +129,7 @@ def roary(target_dir, title, gffs):
     outputs = [target_dir + '/output/' + title + '/roary/core_gene_alignment.aln', # Denne fil skal bruges til at lave træet, så det er den vigtigste. Og så også en liste over alle .gff-filer som er brugt.
                target_dir + '/output/' + title + '/roary/gene_presence_absence.csv']
     newline_for_f_string_workaround = '\n'
-    options = {'nodes': 1, 'cores': 16, 'memory': f'{ram}g', 'walltime': f'{hours}:00:00', 'queue': 'normal', 'account': 'ClinicalMicrobio'}
+    options = {'nodes': 1, 'cores': 16, 'memory': f'{ram}g', 'walltime': f'{hours}:00:00', 'account': 'ClinicalMicrobio'}
     spec = f'''
 
 
@@ -149,7 +149,7 @@ def fasttree(target_dir, title):
     inputs = target_dir + '/output/' + title + '/roary/core_gene_alignment.aln'
     outputs = [target_dir + '/output/' + title + '/fasttree/tree.newick',
                target_dir + '/output/' + title + '/fasttree/tree.pdf']
-    options = {'nodes': 1, 'cores': 8, 'memory': '8g', 'walltime': '6:00:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
+    options = {'nodes': 1, 'cores': 8, 'memory': '8g', 'walltime': '6:00:00', 'account': 'clinicalmicrobio'}
     spec = f"""
 cd {target_dir}/output/{title}
 mkdir -p fasttree
@@ -186,7 +186,7 @@ def roary_plots(target_dir, title):
     outputs = [target_dir + '/output/' + title + '/roary_plots/pangenome_matrix.png',
                target_dir + '/output/' + title + '/roary_plots/pangenome_matrix_alternative.svg']
     #
-    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
+    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
     spec = f'''
 cd {target_dir}/output/{title}
 mkdir -p roary_plots
@@ -208,7 +208,7 @@ def panito(target_dir, title):
     inputs = [target_dir + '/output/' + title + '/roary/core_gene_alignment.aln',
               target_dir + '/output/' + title + '/fasttree/tree.newick']
     outputs = target_dir + '/output/' + title + '/panito/ani.pdf'
-    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'queue': 'normal', 'account': 'clinicalmicrobio'}
+    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
     spec = f'''
 
 cd {target_dir}/output/{title}
