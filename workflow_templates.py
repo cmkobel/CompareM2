@@ -146,6 +146,7 @@ jobinfo $SLURM_JOBID
 
 
 def fasttree(target_dir, title):
+    # todo: time and mem should depend on number of isolates
     inputs = target_dir + '/output/' + title + '/roary/core_gene_alignment.aln'
     outputs = [target_dir + '/output/' + title + '/fasttree/tree.newick',
                target_dir + '/output/' + title + '/fasttree/tree.pdf']
