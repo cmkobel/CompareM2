@@ -52,6 +52,8 @@ for raw_name in fasta_files:
     name = stem(raw_name.replace(' ', '_'))
     names.append(name)
     
+    #todo: slå copy og prokka sammen?
+
     # submit copy job
     gwf.target_from_template('cmp_copy_' + title + '_' + name, copy(source = source_dir + '/' + raw_name,
                                                                     target_dir_long = target_dir + '/output/' + title + '/' + name,
