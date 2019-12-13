@@ -75,7 +75,7 @@ conda activate compare # todo try activating conda after submitting to gwf
 # if a dir with the same name already exists in compare/input, then move it away.
 [ -d "$TARGET_DIR/output/$curr_dir_name" ] &&  echo " backing up old content..." && mv $TARGET_DIR/input/$curr_dir_name $TARGET_DIR/old/$(date +%Y%m%d_%H%M%S)_$curr_dir_name
 
-echo " archiving job..."
+echo " archiving content..."
 cp -r ../$curr_dir_name $TARGET_DIR/input/ &
 echo 
 echo "These are the jobs:"
