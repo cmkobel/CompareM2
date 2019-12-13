@@ -51,9 +51,9 @@ echo "testing dependencies..."
 #todo test the environment from conda against a list of expected
 
 echo
-echo "These are the `ls -1 | wc -l` files considered for $curr_dir_name:"
+echo "These are the `ls -1 | wc -l` assemblies considered for $curr_dir_name:"
 #ls -1
-for l in `ls`; do echo " $l (`cat $l | grep -c '^>'` contigs)"; done
+for l in `ls`; do echo "  $l (`cat $l | grep -c '^>'` contigs)"; done
 echo
 
 
