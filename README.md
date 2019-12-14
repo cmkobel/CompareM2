@@ -7,7 +7,7 @@ Get it working with a shared environment
 
 
 
-### For each assembly
+### Assembly-wise
   * prokka (annotation)
   * kraken2 (species identification)
   * mlst (multi locus sequence typing)
@@ -15,7 +15,7 @@ Get it working with a shared environment
   * (snippy) (pairwise snp-calling)
   
   
-### For each group
+### Group-wise
   * roary (pan and core genome)
   * panito (average nucleotide identity
   * FastTree (phylogenetic tree of core genome)
