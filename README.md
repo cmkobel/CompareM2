@@ -9,7 +9,7 @@ The KMA Assembly Comparator is a simple pipeline consisting of independent tools
 # Usage
 In order to use the KMA Assebly Comparator, you have to install it such that you can call the main file (bash) in any directory on your system. For instance
 ```
-alias assemblycomparator="/path/to/kmaassemblycomparator/kmacompare"
+export PATH=/path/to/assemblycomparator/:$PATH
 ```
 
 Now, create a directory anywhere on your system containing the fasta-formatted assemblies you want to analyse, and run the alias `assemblycomparator`.
