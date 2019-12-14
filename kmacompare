@@ -54,8 +54,8 @@ echo "testing dependencies..."
 
 echo
 echo "These are the `ls -1 | wc -l` assemblies considered for $curr_dir_name:"
-#ls -1
-for l in `ls`; do echo "  $l (`grep -c '^>' $l` contigs)"; done
+ls -1
+#todo, fix problem with spaces in filenames
 echo
 
 
@@ -68,7 +68,7 @@ then
     echo "${orange}user left${reset}"
     [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
 fi
-echo
+echo " proceeding..."
 echo " activating environment..." 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate compare # todo try activating conda after submitting to gwf
@@ -100,7 +100,7 @@ then
     echo "The job list has been submitted."
     echo
     echo "When the pipeline is done, the output will reside in:"
-    echo "    /project/ClinicalMicrobio/faststorage/compare/output"
+    echo "    /project/ClinicalMicrobio/faststorage/compare/output/$curr_dir_name"
     echo "and an email will be sent to:"
     echo "    $COMPARE_DEFAULT_EMAIL_ADDRESS"
     echo

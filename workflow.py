@@ -94,4 +94,4 @@ gwf.target_from_template('cmp_panito_' + title, panito(target_dir, title))
 
 
 # send a mail
-gwf.target_from_template('cmp_mail_' + title, send_mail(target_dir, title, ('\n'.join(names))))
+gwf.target_from_template('cmp_mail_' + title, send_mail(target_dir, title, names))

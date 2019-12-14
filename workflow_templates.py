@@ -22,14 +22,14 @@ def stem(input):
 def initialize(title, source_dir, target_dir):
     """ Creates the output/{title} directory"""
     inputs = ""#source_dir
-    outputs = target_dir + "/output/" + title + "/initialized.txt"
+    outputs = target_dir + "/output/" + title #+ "/initialized.txt"
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '0:02:00',  'account': 'clinicalmicrobio'}
     spec = f"""
 
 mkdir -p {target_dir}/output/{title}
 cd {target_dir}/output/{title}
 
-echo "started3" >> initialized.txt {debug('init')}
+#echo "started3" >> initialized.txt {debug('init')}
 
 
 """
@@ -186,7 +186,8 @@ def roary_plots(target_dir, title):
     inputs = [target_dir + '/output/' + title + '/fasttree/tree.newick',
               target_dir + '/output/' + title + '/roary/gene_presence_absence.csv']
     outputs = [target_dir + '/output/' + title + '/roary_plots/pangenome_matrix.png',
-               target_dir + '/output/' + title + '/roary_plots/pangenome_matrix_alternative.svg']
+               target_dir + '/output/' + title + '/roary_plots/pangenome_matrix_alternative.svg',
+               target_dir + '/output/' + title + '/roary_plots/pangenome_matrix_alternative.pdf']
     #
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
     spec = f'''
@@ -197,6 +198,7 @@ cd roary_plots
 python {script_file} ../fasttree/tree.newick ../roary/gene_presence_absence.csv 2> stderr.out
 
 perl {target_dir}/scripts/perl/roary2svg.pl ../roary/gene_presence_absence.csv > pangenome_matrix_alternative.svg 2> 2_stderr.out
+cairosvg pangenome_matrix_alternative.svg -o pangenome_matrix_alternative.pdf
 
 
 #mail -s "compare done {title}" -a pangenome_matrix.png $COMPARE_DEFAULT_EMAIL_ADDRESS <<< "Sent from the compare pipeline" &
@@ -231,26 +233,61 @@ def send_mail(target_dir, title, names):
     inputs = [target_dir + '/output/' + title + '/roary/summary_statistics.txt',
               target_dir + '/output/' + title + '/panito/ani.pdf',
               target_dir + '/output/' + title + '/roary_plots/pangenome_matrix.png',
-              target_dir + '/output/' + title + '/roary_plots/pangenome_matrix_alternative.svg',
+              target_dir + '/output/' + title + '/roary_plots/pangenome_matrix_alternative.pdf',
               target_dir + '/output/' + title + '/fasttree/tree.newick',
               target_dir + '/output/' + title + '/fasttree/tree.pdf',
               target_dir + '/output/' + title + '/mlst.tsv'
               
                      
         ]
-    outputs = ""
+
+    newline = '\n'
+    outputs = target_dir + '/output/' + title + '/mailsente' # If it doesn't have an arbitrary output, the first job (init) will be run
     
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
     spec = f"""
 
 
-cd {target_dir}
-touch mailcall
+cd {target_dir}/output/{title}
+touch mailsent
+# collect mail content
 
-mail -s "evolve compare" -a {inputs[0]} kobel@pm.me <<< "please work, from the pipeline" {debug('mail_1')}
+echo -e "Assembly Comparator results for {title}\n" > mail.txt
 
-mail -s "comparator done: {title}" {' '.join(['-a ' + i for i in inputs])} $COMPARE_DEFAULT_EMAIL_ADDRESS <<< "To access the full analysis, please visit /project/ClinicalMicrobio/faststorage/compare/{title} on GenomeDK." {debug('mail_2')}
-touch mail_sent_{title}
+echo -e "list of assemblies:" >> mail.txt
+echo -e "{str(newline).join(names)}" >> mail.txt
+
+echo -e "\n" >> mail.txt
+
+echo "Roary summary statistics:" >> mail.txt
+cat roary/summary_statistics.txt >> mail.txt
+
+echo -e "\n" >> mail.txt
+
+echo -e "MLST results:" >> mail.txt
+sed 's/\<contigs.fa\>//g' mlst.tsv >> mail.txt
+
+echo -e "\n" >> mail.txt
+
+echo -e "A few small output files from the pipeline has been attached in the zip-file" >> mail.txt
+
+echo -e "To access the full analysis, please visit /project/ClinicalMicrobio/faststorage/compare/{title} on GenomeDK." >> mail.txt
+
+
+
+zip -r {title}.zip {' '.join(inputs)}
+
+mail -s "compare done: {title}" -a {title}.zip -q mail.txt kobel@pm.me <<< "" 
+#mail -s "compare done: {title}" {' '.join(['-a ' + i for i in inputs])} -q mail.txt kobel@pm.me <<< "" 
+
+rm {title}.zip
+
+
+
+#mail -s "evolve compare" {' '.join(['-a ' + i for i in inputs])} kobel@pm.me <<< "please work, from the pipeline" {debug('mail_1')}
+
+#mail -s "comparator done: {title}" {' '.join(['-a ' + i for i in inputs])} $COMPARE_DEFAULT_EMAIL_ADDRESS <<< "To access the full analysis, please visit /project/ClinicalMicrobio/faststorage/compare/{title} on GenomeDK." {debug('mail_2')}
+#touch mail_sent_{title}
 
 
     """
