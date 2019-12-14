@@ -1,3 +1,12 @@
+
+```
+┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┌─┐┌┬┐┌─┐┌─┐┬─┐┌─┐┌┬┐┌─┐┬─┐
+├─┤└─┐└─┐├┤ │││├┴┐│ └┬┘  │  │ ││││├─┘├─┤├┬┘├─┤ │ │ │├┬┘
+┴ ┴└─┘└─┘└─┘┴ ┴└─┘┴─┘┴   └─┘└─┘┴ ┴┴  ┴ ┴┴└─┴ ┴ ┴ └─┘┴└─
+```
+
+# Development
+
 ## Phase 1
 Get it working
 
@@ -5,9 +14,9 @@ Get it working
 ## Phase 2
 Get it working with a shared environment
 
+The KMA assembly comparator
 
-
-### Assembly-wise
+### For each assembly
   * prokka (annotation)
   * kraken2 (species identification)
   * mlst (multi locus sequence typing)
@@ -15,7 +24,7 @@ Get it working with a shared environment
   * (snippy) (pairwise snp-calling)
   
   
-### Group-wise
+### For each group
   * roary (pan and core genome)
   * panito (average nucleotide identity
   * FastTree (phylogenetic tree of core genome)
