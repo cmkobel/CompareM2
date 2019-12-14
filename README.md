@@ -47,5 +47,5 @@ Get it working with a shared environment
   
   
   
-The KMA Assembly Comparator is developed at Department of Clinical Microbiology (KMA) at Aarhus University Hospital, Denmark, by Carl Mathias Kobel.
+The KMA Assembly Comparator is developed at [Department of Clinical Microbiology](https://www.auh.dk/om-auh/afdelinger/klinisk-mikrobiologisk-afdeling/) (KMA) at Aarhus University Hospital, Denmark, by Carl Mathias Kobel.
   
