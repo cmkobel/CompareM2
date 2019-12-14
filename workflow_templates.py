@@ -36,15 +36,15 @@ cd {target_dir}/output/{title}
     return inputs, outputs, options, spec
 
 
-def copy(source, target_dir_long, target_dir, target_file):
-    """  Copies the contigs to folders in the output directory """
+def copy(source, target_dir, title, name):
+    """  Copies the contigs to folders in the output directory and converts everything to fasta"""
     inputs = source
-    outputs = target_dir_long + '/' + target_file
+    outputs = target_dir + '/output/' + title + '/' + name + '/' + 'contigs.fa'
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '0:05:00',  'account': 'clinicalmicrobio'}
     spec = f"""
 
-mkdir -p {target_dir_long}
-cp "{source}" {target_dir_long}/{target_file}
+mkdir -p {target_dir + '/output/' + title + '/' + name}
+any2fasta "{source}" > {target_dir + '/output/' + title + '/' + name}/'contigs.fa'
 
 """
     return inputs, outputs, options, spec
@@ -249,7 +249,7 @@ def send_mail(target_dir, title, names):
 
 
 cd {target_dir}/output/{title}
-touch mailsent
+# touch mailsent
 # collect mail content
 
 echo -e "Assembly Comparator results for {title}\n" > mail.txt
@@ -275,7 +275,7 @@ echo -e "To access the full analysis, please visit /project/ClinicalMicrobio/fas
 
 
 
-zip -r {title}.zip {' '.join(inputs)}
+zip -j {title}.zip {' '.join(inputs)}
 
 mail -s "compare done: {title}" -a {title}.zip -q mail.txt kobel@pm.me <<< "" 
 #mail -s "compare done: {title}" {' '.join(['-a ' + i for i in inputs])} -q mail.txt kobel@pm.me <<< "" 

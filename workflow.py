@@ -56,9 +56,9 @@ for raw_name in fasta_files:
 
     # submit copy job
     gwf.target_from_template('cmp_copy_' + title + '_' + name, copy(source = source_dir + '/' + raw_name,
-                                                                    target_dir_long = target_dir + '/output/' + title + '/' + name,
                                                                     target_dir = target_dir,
-                                                                    target_file = 'contigs.fa'))
+                                                                    title = title,
+                                                                    name = name))
         
 
     # submit kraken2
@@ -95,3 +95,6 @@ gwf.target_from_template('cmp_panito_' + title, panito(target_dir, title))
 
 # send a mail
 gwf.target_from_template('cmp_mail_' + title, send_mail(target_dir, title, names))
+
+
+

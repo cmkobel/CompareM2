@@ -54,8 +54,9 @@ echo "testing dependencies..."
 
 echo
 echo "These are the `ls -1 | wc -l` assemblies considered for $curr_dir_name:"
-ls -1
+#ls -1
 #todo, fix problem with spaces in filenames
+for f in *; do echo " $f"; done
 echo
 
 
