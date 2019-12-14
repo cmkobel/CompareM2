@@ -32,6 +32,7 @@ Get it working with a shared environment
 
 
 ### For each assembly
+  * any2fasta (wide format support)
   * prokka (annotation)
   * kraken2 (species identification)
   * mlst (multi locus sequence typing)
