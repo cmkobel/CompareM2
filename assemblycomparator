@@ -16,6 +16,8 @@ blue=`tput setaf 4`
 purple=`tput setaf 5`
 lblue=`tput setaf 6`
 white=`tput setaf 6`
+
+bold=$(tput bold)
 reset=`tput sgr0`
 
 emailaddress=$(finger `echo $USER` | grep -o -E "<.+@.+\..+>" | tr -d "<" | tr -d ">")
@@ -33,7 +35,7 @@ curr_dir_name=${PWD##*/}          # to assign to a variable
 
 
 #echo "This is the KMA assembly comparison program"
-echo
+
 
 
 #Todo: make a test, that tests the complete pipeline. Travis-like
@@ -43,17 +45,14 @@ echo
 # TODO: In the long run, it might be nice to use a shared conda environment, between users.
 # Todo: offer to fix filenames containing weird characters (interactively, maybe)
 
-#echo "activating environment..." 
-#source ~/miniconda3/etc/profile.d/conda.sh
-#conda activate compare # todo try activating conda after submitting to gwf
 
 
 
-echo "testing dependencies..."
+#echo "testing dependencies..."
 #todo test the environment from conda against a list of expected
 
 echo
-echo "These are the `ls -1 | wc -l` assemblies considered for $curr_dir_name:"
+echo "These are the ${bold}`ls -1 | wc -l`${reset} assemblies considered for ${bold}$curr_dir_name${reset}:"
 #ls -1
 #todo, fix problem with spaces in filenames
 for f in *; do echo " $f"; done
@@ -73,14 +72,46 @@ echo " proceeding..."
 echo " activating environment..." 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate compare # todo try activating conda after submitting to gwf
+#conda activate /faststorage/project/ClinicalMicrobio/compare/environment
 
 
-# if a dir with the same name already exists in compare/input, then move it away.
+printf " validating input file integrity..."
+any2fasta -q * > /dev/null || { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }
+#PID=$!
+#i=1
+#sp="/-\|"
+#echo -n ' '
+#while [ -d /proc/$PID ]
+#do
+#  printf "\b\b ${sp:i++%${#sp}:1}"
+#  sleep 0.1
+#done
+#printf "\b\b  "
+#
+echo
+
+
+
+# Throw out the user if they are trying to run from the compare/input/ directory
+inode_pwd=$(ls -id $(pwd)/../ | grep -oE "[0-9]+ ")
+inode_input=$(ls -id $TARGET_DIR/input/ | grep -oE "[0-9]+ ")
+#echo $inode_pwd
+#echo $inode_input
+if [ $inode_pwd == $inode_input ]; then
+    echo "${red}Error: ${reset} Running assemblycomparator from the input directory is not supported. Exiting." && exit 1
+fi
+
+
 [ -d "$TARGET_DIR/output/$curr_dir_name" ] &&  echo " backing up old content..." && mv $TARGET_DIR/input/$curr_dir_name $TARGET_DIR/old/$(date +%Y%m%d_%H%M%S)_$curr_dir_name
 
 echo " archiving content..."
 cp -r ../$curr_dir_name $TARGET_DIR/input/ &
 echo 
+
+
+
+
+# if an output dir with the same name already exists in compare/input, then move it away.
 echo "These are the jobs:"
 gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py status --status running --status submitted --status shouldrun || { echo "${red}error in gwf. ${reset}exiting." && exit 1; }
 

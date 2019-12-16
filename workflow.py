@@ -9,6 +9,21 @@ from workflow_templates import *
 gwf = Workflow()
 
 
+def sanify(input):
+    """ Makes sure that the name of the gwf target is not illegal. """
+    output = []
+    
+    for i in str(input):
+        
+        ascii = ord(i)
+        if (ascii >= 48 and ascii <= 57) or (ascii >= 65 and ascii <= 90) or (ascii >= 97 and ascii <= 122) or ascii == 95:
+            output.append(i)
+        else:
+            output.append('_')
+
+    return ''.join(output)
+
+
 #Todo replace - with _ in things in the names of jobs
 
 source_dir = os.getcwd()
@@ -44,7 +59,7 @@ for file in os.listdir(source_dir):
 
 # Initialize
 #print(dir(gwf))
-gwf.target_from_template('cmp_init_' + title, initialize(title, source_dir, target_dir))
+gwf.target_from_template(sanify('cmp_init_' + title), initialize(title, source_dir, target_dir))
         
 names = []
 for raw_name in fasta_files:
@@ -55,18 +70,18 @@ for raw_name in fasta_files:
     #todo: slå copy og prokka sammen?
 
     # submit copy job
-    gwf.target_from_template('cmp_copy_' + title + '_' + name, copy(source = source_dir + '/' + raw_name,
+    gwf.target_from_template(sanify('cmp_copy_' + title + '_' + name), copy(source = source_dir + '/' + raw_name,
                                                                     target_dir = target_dir,
                                                                     title = title,
                                                                     name = name))
         
 
     # submit kraken2
-    gwf.target_from_template('cmp_kraken2_' + name, kraken2(target_dir, title, name))
+    gwf.target_from_template(sanify('cmp_kraken2_' + name), kraken2(target_dir, title, name))
 
 
     # submit prokka
-    gwf.target_from_template('cmp_prokka_' + title + '_' + name, prokka(target_dir, title, name))
+    gwf.target_from_template(sanify('cmp_prokka_' + title + '_' + name), prokka(target_dir, title, name))
 
 
 
@@ -74,27 +89,27 @@ for raw_name in fasta_files:
 
 
 contigs = [name + '/contigs.fa' for name in names]
-gwf.target_from_template('cmp_mlst_' + title, mlst(target_dir, title, contigs))
+gwf.target_from_template(sanify('cmp_mlst_' + title), mlst(target_dir, title, contigs))
 
 
 # submit roary
 annotations = [name + '/prokka/' + name + '.gff' for name in names]
-gwf.target_from_template('cmp_roary_' + title, roary(target_dir, title, annotations))
+gwf.target_from_template(sanify('cmp_roary_' + title), roary(target_dir, title, annotations))
 
 
 # submit fasttree
-gwf.target_from_template('cmp_fasttree_' + title, fasttree(target_dir, title))
+gwf.target_from_template(sanify('cmp_fasttree_' + title), fasttree(target_dir, title))
 
 
 # submit roary plots
-gwf.target_from_template('cmp_roary_plots_' + title, roary_plots(target_dir, title))
+gwf.target_from_template(sanify('cmp_roary_plots_' + title), roary_plots(target_dir, title))
 
 # submit panito
-gwf.target_from_template('cmp_panito_' + title, panito(target_dir, title))
+gwf.target_from_template(sanify('cmp_panito_' + title), panito(target_dir, title))
 
 
 # send a mail
-gwf.target_from_template('cmp_mail_' + title, send_mail(target_dir, title, names))
+gwf.target_from_template(sanify('cmp_mail_' + title), send_mail(target_dir, title, names))
 
 
 

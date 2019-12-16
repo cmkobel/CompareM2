@@ -88,7 +88,7 @@ def prokka(target_dir, title, name):
 cd {target_dir}/output/{title}/{name}
 
 
-prokka --cpu 8 --outdir prokka --prefix {name} contigs.fa {debug('prokka')}
+prokka --cpu 8 --force --outdir prokka --prefix {name} contigs.fa {debug('prokka')}
 
 cp prokka/*.gff annotation.gff
 

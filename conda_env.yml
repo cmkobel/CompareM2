@@ -495,5 +495,5 @@ dependencies:
   - pip:
     - pyqt5-sip==4.19.18
     - pyqtwebengine==5.12.1
-prefix: /home/cmkobel/miniconda3/envs/compare
+prefix: /project/ClinicalMicrobio/faststorage/compare/environment # /home/cmkobel/miniconda3/envs/compare
 
