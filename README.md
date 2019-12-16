@@ -4,15 +4,17 @@
 ┴ ┴└─┘└─┘└─┘┴ ┴└─┘┴─┘┴   └─┘└─┘┴ ┴┴  ┴ ┴┴└─┴ ┴ ┴ └─┘┴└─
 ```
 
-The KMA Assembly Comparator is a simple pipeline consisting of independent tools for the analysis of microbial genomics. The idea is that the user provides a directory of fasta-formatted assemblies of related bacterial strains, and the pipeline will run a series of generally relevant analyses.
+The KMA Assembly Comparator is a simple pipeline consisting of independent tools for the analysis of microbial genomics. The idea is that the user provides a directory of assemblies of related bacterial strains, and the pipeline will run a series of generally relevant analyses.
+
+The KMA Assembly Comparator supports many formats: `gb/fa/fq/gff/gfa/clw/sth` which can all be `gz/bz2/zip` compressed.
 
 # Usage
 In order to use the KMA Assebly Comparator, you have to install it such that you can call the main file (bash) in any directory on your system. For instance
 ```
-alias assemblycomparator="/path/to/kmaassemblycomparator/kmacompare"
+export PATH=/path/to/assemblycomparator/:$PATH
 ```
 
-Now, create a directory anywhere on your system containing the fasta-formatted assemblies you want to analyse, and run the alias `assemblycomparator`.
+Now, create a directory anywhere on your system containing the fasta-formatted assemblies you want to analyse, and run the main program `assemblycomparator`.
 
 Then, the program will list a series of options, helping you to start the pipeline.
 
@@ -47,5 +49,4 @@ Get it working with a shared environment
   
   
   
-The KMA Assembly Comparator is developed at [Department of Clinical Microbiology (KMA)](https://www.auh.dk/om-auh/afdelinger/klinisk-mikrobiologisk-afdeling/) at Aarhus University Hospital, Denmark, by Carl Mathias Kobel.
   
