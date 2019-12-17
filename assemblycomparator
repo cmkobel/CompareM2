@@ -77,9 +77,12 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate compare # todo try activating conda after submitting to gwf
 #conda activate /faststorage/project/ClinicalMicrobio/compare/environment
 
-
-printf " validating assembly file integrity"
-for f in *; do printf "."; any2fasta -q $f > /dev/null || { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }; done
+# Todo: run in parallel
+printf " validating assembly file integrity   "
+i=1
+sp="/-\|"
+for f in *; do printf "\b\b\b ${sp:i++%${#sp}:1} "; any2fasta -q $f > /dev/null || { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }; done
+printf "\b\b\b..."
 #PID=$!
 #i=1
 #sp="/-\|"
