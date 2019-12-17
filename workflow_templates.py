@@ -78,7 +78,7 @@ def kraken2_table(target_dir, title, names):
     outputs = target_dir + '/output/' + title + '/kraken2-table.txt'
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
 
-    command = """for f in *_report.txt; do echo ${f::-11} >> ../kraken2-table.txt; cat $f | awk '$4 ~ "S[0-9]?" {print " " $1 "% \t" $6 " "$7 " " $8 " " $9}' | head -n 3 >> ../kraken2-table.txt; echo >> ../kraken2-table.txt; done"""
+    command = """for f in *_report.txt; do echo ${f::-11} >> ../kraken2-table.txt; cat $f | awk '$4 ~ "S[0-9]?" {print " " $1 "% " $6 " "$7 " " $8 " " $9}' | head -n 3 >> ../kraken2-table.txt; echo >> ../kraken2-table.txt; done"""
     
     spec = f"""
 cd {target_dir}/output/{title}/kraken2
@@ -273,11 +273,11 @@ def send_mail(target_dir, title, names):
 
 
 cd {target_dir}/output/{title}
-# touch mailsent
+
 # collect mail content
 
 
-echo -e "Assembly Comparator results for {title}\n" >> mail.txt
+echo -e "Assembly Comparator results for {title}\n" > mail.txt
 
 echo -e "List of samples and their top 3 kraken results:" >> mail.txt
 
@@ -303,18 +303,12 @@ echo -e "To access the full analysis, please visit /project/ClinicalMicrobio/fas
 
 zip -j {title}.zip {' '.join(inputs)}
 
-
-mailx -s "comparator done: {title}" -a {title}.zip -q mail.txt $COMPARATOR_EMAIL <<< "" 
-#mail -s "compare done: {title}" {' '.join(['-a ' + i for i in inputs])} -q mail.txt kobel@pm.me <<< "" 
+mailx -s "[comparator] done: {title}" -a {title}.zip -q mail.txt $COMPARATOR_EMAIL <<< "" 
 
 rm {title}.zip
 
+touch mailsent
 
-
-#mail -s "evolve compare" {' '.join(['-a ' + i for i in inputs])} kobel@pm.me <<< "please work, from the pipeline" {debug('mail_1')}
-
-#mail -s "comparator done: {title}" {' '.join(['-a ' + i for i in inputs])} $COMPARE_DEFAULT_EMAIL_ADDRESS <<< "To access the full analysis, please visit /project/ClinicalMicrobio/faststorage/compare/{title} on GenomeDK." {debug('mail_2')}
-#touch mail_sent_{title}
 
 
     """

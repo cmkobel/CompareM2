@@ -78,8 +78,8 @@ conda activate compare # todo try activating conda after submitting to gwf
 #conda activate /faststorage/project/ClinicalMicrobio/compare/environment
 
 
-printf " validating assembly file integrity..."
-any2fasta -q * > /dev/null || { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }
+printf " validating assembly file integrity"
+for f in *; do printf "."; any2fasta -q $f > /dev/null || { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }; done
 #PID=$!
 #i=1
 #sp="/-\|"
