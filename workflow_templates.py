@@ -78,7 +78,7 @@ def kraken2_table(target_dir, title, names):
     outputs = target_dir + '/output/' + title + '/kraken2-table.txt'
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
 
-    command = """for f in *_report.txt; do echo ${f::-11} >> ../kraken2-table.txt; cat $f | awk '$4 ~ "S[0-9]?" {printf("%6.2f%% %s %s %s %s\n", $1, $6, $7, $8, $9);}' | head -n 3 >> ../kraken2-table.txt; echo >> ../kraken2-table.txt; done"""
+    command = '''for f in *_report.txt; do echo ${f::-11} >> ../kraken2-table.txt; cat $f | awk '$4 ~ "S[0-9]?" {printf("%6.2f%% %s %s %s %s\\n", $1, $6, $7, $8, $9)}' | head -n 3 >> ../kraken2-table.txt; echo >> ../kraken2-table.txt; done'''
     
     spec = f"""
 cd {target_dir}/output/{title}/kraken2
