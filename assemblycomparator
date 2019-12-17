@@ -73,15 +73,18 @@ then
 fi
 echo " proceeding..."
 echo " activating environment..." 
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate compare # todo try activating conda after submitting to gwf
+#source ~/miniconda3/etc/profile.d/conda.sh
+source /faststorage/project/ClinicalMicrobio/compare/environment/etc/profile.d/conda.sh
+#conda activate compare 
+conda activate comparator 
+
 #conda activate /faststorage/project/ClinicalMicrobio/compare/environment
 
 # Todo: run in parallel
-printf " validating assembly file integrity   "
+printf " validating integrity of assembly files   "
 i=1
 sp="/-\|"
-for f in *; do printf "\b\b\b ${sp:i++%${#sp}:1} "; any2fasta -q $f > /dev/null || { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }; done
+for f in *; do printf "\b\b\b ${sp:i++%${#sp}:1} "; any2fasta -q "$f" > /dev/null || { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }; done
 printf "\b\b\b..."
 #PID=$!
 #i=1
