@@ -73,6 +73,22 @@ rm {name}.fa
     return inputs, outputs, options, spec
 
 
+def kraken2_table(target_dir, title, names):
+    inputs = [target_dir + '/output/' + title + '/kraken2/' + name + '_report.txt' for name in names]
+    outputs = target_dir + '/output/' + title + '/kraken2-table.txt'
+    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
+
+    command = """for f in *_report.txt; do echo ${f::-11} >> ../kraken2-table.txt; cat $f | awk '$4 ~ "S[0-9]?" {print " " $1 "% \t" $6 " "$7 " " $8 " " $9}' | head -n 3 >> ../kraken2-table.txt; echo >> ../kraken2-table.txt; done"""
+    
+    spec = f"""
+cd {target_dir}/output/{title}/kraken2
+
+{command}
+
+"""
+    return inputs, outputs, options, spec
+    
+
 
 
 def prokka(target_dir, title, name):
@@ -118,16 +134,22 @@ mlst {' '.join(contigs)} > mlst.tsv {debug('mlst')}
 
 
 # Roary: The pan genome pipeline
-def roary(target_dir, title, gffs):
+def roary(target_dir, title, gffs, blastp_identity = 95, allow_paralogs = False):
     # target_dir:   Der hvor den skal gemme outputtet.
     # gffs:         En liste med fulde stier til de .gff-filer som skal analyseres.
 
     hours = -(-len(gffs)//100)*10 # 10 timer for hver 100 filer
     ram = -(-len(gffs)//100)*8 # 8 for hver 100 filer
 
+    if allow_paralogs == True:
+        ap_string = "-ap"
+    else:
+        ap_string = ""
+
     inputs = [target_dir + '/output/' + title + '/' + i for i in gffs]
     outputs = [target_dir + '/output/' + title + '/roary/core_gene_alignment.aln', # Denne fil skal bruges til at lave træet, så det er den vigtigste. Og så også en liste over alle .gff-filer som er brugt.
-               target_dir + '/output/' + title + '/roary/gene_presence_absence.csv']
+               target_dir + '/output/' + title + '/roary/gene_presence_absence.csv',
+               target_dir + '/output/' + title + '/roary/Rplots.pdf']
     newline_for_f_string_workaround = '\n'
     options = {'nodes': 1, 'cores': 16, 'memory': f'{ram}g', 'walltime': f'{hours}:00:00', 'account': 'ClinicalMicrobio'}
     spec = f'''
@@ -135,7 +157,10 @@ def roary(target_dir, title, gffs):
 
 cd {target_dir}/output/{title}
 
-roary -f roary -e -v -r -p 16 {' '.join(gffs)} 2> roary_stderr.txt
+echo "blastp_identity (-i) = {str(blastp_identity)}" > roary_thresholds.txt
+echo "allow paralogs (-ap): {allow_paralogs}" >> roary_thresholds.txt
+
+roary -f roary -e -v -r -p 16 -i {int(blastp_identity)} {ap_string} {' '.join(gffs)} {debug('roary')}
 
 
 
@@ -236,10 +261,9 @@ def send_mail(target_dir, title, names):
               target_dir + '/output/' + title + '/roary_plots/pangenome_matrix_alternative.pdf',
               target_dir + '/output/' + title + '/fasttree/tree.newick',
               target_dir + '/output/' + title + '/fasttree/tree.pdf',
-              target_dir + '/output/' + title + '/mlst.tsv'
-              
-                     
-        ]
+              target_dir + '/output/' + title + '/mlst.tsv',
+              target_dir + '/output/' + title + '/roary/Rplots.pdf',
+              target_dir + '/output/' + title + '/kraken2-table.txt']
 
     newline = '\n'
     outputs = target_dir + '/output/' + title + '/mailsente' # If it doesn't have an arbitrary output, the first job (init) will be run
@@ -252,10 +276,12 @@ cd {target_dir}/output/{title}
 # touch mailsent
 # collect mail content
 
-echo -e "Assembly Comparator results for {title}\n" > mail.txt
 
-echo -e "list of assemblies:" >> mail.txt
-echo -e "{str(newline).join(names)}" >> mail.txt
+echo -e "Assembly Comparator results for {title}\n" >> mail.txt
+
+echo -e "List of samples and their top 3 kraken results:" >> mail.txt
+
+cat kraken2-table.txt >> mail.txt
 
 echo -e "\n" >> mail.txt
 
@@ -270,14 +296,15 @@ sed 's/\<contigs.fa\>//g' mlst.tsv >> mail.txt
 echo -e "\n" >> mail.txt
 
 echo -e "A few small output files from the pipeline has been attached in the zip-file" >> mail.txt
-
 echo -e "To access the full analysis, please visit /project/ClinicalMicrobio/faststorage/compare/{title} on GenomeDK." >> mail.txt
+
 
 
 
 zip -j {title}.zip {' '.join(inputs)}
 
-mail -s "compare done: {title}" -a {title}.zip -q mail.txt kobel@pm.me <<< "" 
+
+mailx -s "comparator done: {title}" -a {title}.zip -q mail.txt $COMPARATOR_EMAIL <<< "" 
 #mail -s "compare done: {title}" {' '.join(['-a ' + i for i in inputs])} -q mail.txt kobel@pm.me <<< "" 
 
 rm {title}.zip

@@ -20,8 +20,11 @@ white=`tput setaf 6`
 bold=$(tput bold)
 reset=`tput sgr0`
 
-emailaddress=$(finger `echo $USER` | grep -o -E "<.+@.+\..+>" | tr -d "<" | tr -d ">")
+export COMPARATOR_EMAIL=$(finger `echo $USER` | grep -o -E "<.+@.+\..+>" | tr -d "<" | tr -d ">")
 
+
+
+#echo $COMPARATOR_EMAIL
 echo
 echo   "${red}┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┌─┐┌┬┐┌─┐┌─┐┬─┐┌─┐┌┬┐┌─┐┬─┐${purple}KMA"
 echo "${green}├─┤└─┐└─┐├┤ │││├┴┐│ └┬┘  │  │ ││││├─┘├─┤├┬┘├─┤ │ │ │├┬┘"
@@ -75,7 +78,7 @@ conda activate compare # todo try activating conda after submitting to gwf
 #conda activate /faststorage/project/ClinicalMicrobio/compare/environment
 
 
-printf " validating input file integrity..."
+printf " validating assembly file integrity..."
 any2fasta -q * > /dev/null || { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }
 #PID=$!
 #i=1
@@ -134,9 +137,10 @@ then
     echo "When the pipeline is done, the output will reside in:"
     echo "    /project/ClinicalMicrobio/faststorage/compare/output/$curr_dir_name"
     echo "and an email will be sent to:"
-    echo "    $COMPARE_DEFAULT_EMAIL_ADDRESS"
+    #echo "    $COMPARE_DEFAULT_EMAIL_ADDRESS"
+    echo "    $COMPARATOR_EMAIL"
     echo
-    echo "Please check the status by running the following command:"
+    echo "Please check the status of the pipeline by running the following command:"
     echo "    mj"
     mj
 else
