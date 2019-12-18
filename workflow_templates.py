@@ -78,7 +78,7 @@ def kraken2_table(target_dir, title, names):
     outputs = target_dir + '/output/' + title + '/kraken2-table.txt'
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
 
-    command = '''for f in *_report.txt; do echo ${f::-11} >> ../kraken2-table.txt; cat $f | awk '$4 ~ "S[0-9]?" {printf("%6.2f%% %s %s %s %s\\n", $1, $6, $7, $8, $9)}' | head -n 3 >> ../kraken2-table.txt; echo >> ../kraken2-table.txt; done'''
+    command = '''for f in *_report.txt; do echo ${f::-11} >> ../kraken2-table.txt; cat $f | awk '$4 ~ "^S$" {printf("%6.2f%% %s %s %s %s\\n", $1, $6, $7, $8, $9)}' | head -n 3 >> ../kraken2-table.txt; echo >> ../kraken2-table.txt; done'''
     
     spec = f"""
 cd {target_dir}/output/{title}/kraken2
@@ -220,14 +220,13 @@ cd {target_dir}/output/{title}
 mkdir -p roary_plots
 cd roary_plots
 
+touch in_roary_plots
+
 python {script_file} ../fasttree/tree.newick ../roary/gene_presence_absence.csv 2> stderr.out
 
 perl {target_dir}/scripts/perl/roary2svg.pl ../roary/gene_presence_absence.csv > pangenome_matrix_alternative.svg 2> 2_stderr.out
-cairosvg pangenome_matrix_alternative.svg -o pangenome_matrix_alternative.pdf
+cairosvg pangenome_matrix_alternative.svg -o pangenome_matrix_alternative.pdf 2> 3_stderr.out
 
-
-#mail -s "compare done {title}" -a pangenome_matrix.png $COMPARE_DEFAULT_EMAIL_ADDRESS <<< "Sent from the compare pipeline" &
-# find out how to attach multiple files
 '''
     return inputs, outputs, options, spec
 

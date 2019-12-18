@@ -102,8 +102,8 @@ echo
 
 
 # Throw out the user if they are trying to run from the compare/input/ directory
-inode_pwd=$(ls -id $(pwd)/../ | grep -oE "[0-9]+ ")
-inode_input=$(ls -id $TARGET_DIR/input/ | grep -oE "[0-9]+ ")
+inode_pwd=$(ls -id "$(pwd)/../" | grep -oE "[0-9]+ ")
+inode_input=$(ls -id "$TARGET_DIR/input/" | grep -oE "[0-9]+ ")
 #echo $inode_pwd
 #echo $inode_input
 if [ $inode_pwd == $inode_input ]; then
@@ -111,10 +111,10 @@ if [ $inode_pwd == $inode_input ]; then
 fi
 
 
-[ -d "$TARGET_DIR/output/$curr_dir_name" ] &&  echo " backing up old content..." && mv $TARGET_DIR/input/$curr_dir_name $TARGET_DIR/old/$(date +%Y%m%d_%H%M%S)_$curr_dir_name
+[ -d "$TARGET_DIR/output/$curr_dir_name" ] &&  echo " backing up old content..." && mv "$TARGET_DIR/input/$curr_dir_name" "$TARGET_DIR/old/$(date +%Y%m%d_%H%M%S)_$curr_dir_name"
 
 echo " archiving content..."
-cp -r ../$curr_dir_name $TARGET_DIR/input/ &
+cp -r "../$curr_dir_name" "$TARGET_DIR/input/" &
 echo 
 
 

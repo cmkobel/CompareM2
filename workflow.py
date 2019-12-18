@@ -6,7 +6,12 @@ from gwf import *
 from workflow_templates import *
 
 
-gwf = Workflow()
+
+
+gwf = Workflow(defaults={
+    "mail_user": "kobel@pm.me",
+    "mail_type": "FAIL",
+})
 
 
 def sanify(input):
@@ -28,7 +33,8 @@ def sanify(input):
 
 source_dir = os.getcwd()
 target_dir = '/project/ClinicalMicrobio/faststorage/compare'
-title = basename(os.getcwd()) # Thought as whatever folder the user is calling kmacompare from
+unsane_title = basename(os.getcwd()) # Thought as whatever folder the user is calling kmacompare from
+title = sanify(unsane_title)
 error_file = target_dir + '/' + title + '/stdout.txt'
 #print(' workflow title:', title)
 #print(' workflow source_dir:', source_dir)
@@ -45,6 +51,8 @@ fasta_files = [f for f in os.listdir(source_dir) if isfile(join(f))]
 #for i in fasta_files:
 #    print('', i)
 #print()
+
+# todo: sanify title, at least, test spaces in input: see 'test 2'
 
 for file in os.listdir(source_dir):
     if isfile(file):
@@ -63,8 +71,7 @@ gwf.target_from_template(sanify('cmp_init_' + title), initialize(title, source_d
         
 names = []
 for raw_name in fasta_files:
-    
-    name = stem(raw_name.replace(' ', '_'))
+    name = sanify(stem(raw_name))
     names.append(name)
     
     #todo: slå copy og prokka sammen?
