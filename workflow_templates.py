@@ -266,8 +266,8 @@ def send_mail(target_dir, title, names):
 
     newline = '\n'
     outputs = target_dir + '/output/' + title + '/mailsente' # If it doesn't have an arbitrary output, the first job (init) will be run
-    
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
+    awk_command = """awk '{printf("%s %s (%s)\\n", $1, $2, $3)}'"""
     spec = f"""
 
 
@@ -290,7 +290,7 @@ cat roary/summary_statistics.txt >> mail.txt
 echo -e "\n" >> mail.txt
 
 echo -e "MLST results:" >> mail.txt
-cat mlst.tsv | sed 's/\<contigs.fa\>//g' | tr -s "/" "\n" | column -t >> mail.txt
+cat mlst.tsv | sed 's/\/contigs.fa//g' | {awk_command} | column -t >> mail.txt
 
 
 echo -e "\n" >> mail.txt
