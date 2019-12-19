@@ -276,11 +276,12 @@ cd {target_dir}/output/{title}
 # collect mail content
 
 
-echo -e "Assembly Comparator results for {title}\n" > mail.txt
+echo -e "Assembly Comparator results for {title}" > mail.txt
 
-echo -e "List of samples and their top 3 kraken results:" >> mail.txt
+echo -e "\n" >> mail.txt
 
-cat kraken2-table.txt >> mail.txt
+echo -e "MLST results:" >> mail.txt
+cat mlst.tsv | sed 's/\/contigs.fa//g' | {awk_command} | column -t >> mail.txt
 
 echo -e "\n" >> mail.txt
 
@@ -289,11 +290,13 @@ cat roary/summary_statistics.txt >> mail.txt
 
 echo -e "\n" >> mail.txt
 
-echo -e "MLST results:" >> mail.txt
-cat mlst.tsv | sed 's/\/contigs.fa//g' | {awk_command} | column -t >> mail.txt
+echo -e "Top 3 kraken results:" >> mail.txt
+
+cat kraken2-table.txt >> mail.txt
 
 
 echo -e "\n" >> mail.txt
+
 
 echo -e "A few small output files from the pipeline has been attached in the zip-file" >> mail.txt
 echo -e "To access the full analysis, please visit /project/ClinicalMicrobio/faststorage/compare/{title} on GenomeDK." >> mail.txt
