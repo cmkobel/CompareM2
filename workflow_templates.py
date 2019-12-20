@@ -306,7 +306,7 @@ echo -e "To access the full analysis, please visit /project/ClinicalMicrobio/fas
 
 zip -j {title}.zip {' '.join(inputs)}
 
-mailx -s "[comparator] done: {title}" -a {title}.zip -q mail.txt $COMPARATOR_EMAIL <<< "" 
+mailx -s "[comparator] done: {title}" -a {title}.zip -q mail.txt $COMPARATOR_EMAIL kobel@pm.me <<< "" 
 
 rm {title}.zip
 
