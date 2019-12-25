@@ -11,7 +11,7 @@ echo "export PATH=/project/ClinicalMicrobio/faststorage/compare/:\$PATH" >> ~/.b
 
 echo "export COMPARATOR_DEFAULT_EMAIL_ADDRESS='nielnoer@rm.dk'" >> ~/.bashrc
 
-echo "export COMPARATOR_CONDA_ENV = /faststorage/project/ClinicalMicrobio/compare/environment"
+echo "export COMPARATOR_CONDA_ENV = /faststorage/project/ClinicalMicrobio/compare/environment" >> ~/.bashrc
 
 
 

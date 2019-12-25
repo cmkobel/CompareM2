@@ -74,6 +74,7 @@ fi
 echo " proceeding..."
 echo " activating environment..." 
 #source ~/miniconda3/etc/profile.d/conda.sh
+# todo: use the COMPARATOR_CONDA_ENV global instead of hardcoding. Make sure it is installed at NNLs user
 source /faststorage/project/ClinicalMicrobio/compare/environment/etc/profile.d/conda.sh
 #conda activate compare 
 conda activate comparator 
