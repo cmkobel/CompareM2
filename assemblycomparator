@@ -20,21 +20,6 @@ white=`tput setaf 6`
 bold=$(tput bold)
 reset=`tput sgr0`
 
-early_file_integrity="1"
-early_any2fasta="/faststorage/project/ClinicalMicrobio/compare/environment/envs/comparator/bin/any2fasta"
-
-if [ $early_file_integrity == "1" ]; then
-    $early_any2fasta -q * >/dev/null 2> ../early_any2fasta.txt &
-    early_pid=$!
-    
-    
-fi
-
-#cat ../early_any2fasta.txt
-
-
-
-
 export COMPARATOR_EMAIL=$(finger `echo $USER` | grep -o -E "<.+@.+\..+>" | tr -d "<" | tr -d ">")
 
 
@@ -66,7 +51,7 @@ curr_dir_name=${PWD##*/}          # to assign to a variable
 
 
 
-
+#echo "testing dependencies..."
 #todo test the environment from conda against a list of expected
 
 echo
@@ -93,44 +78,26 @@ source /faststorage/project/ClinicalMicrobio/compare/environment/etc/profile.d/c
 #conda activate compare 
 conda activate comparator 
 
-echo "testing dependencies..."
-dependencies="prokka roary junkydunk any2fasta"
-for p in $dependencies; # expand this list.
-do
-    type $p &>/dev/null || echo "$p not installed";
-done
-
-
 #conda activate /faststorage/project/ClinicalMicrobio/compare/environment
 
 # Todo: run in parallel
-if [ early_file_integrity == "0" ]; then 
-    printf " validating integrity of assembly files   "
-    i=1
-    sp="/-\|"
-    for f in *; do printf "\b\b\b ${sp:i++%${#sp}:1} "; any2fasta -q "$f" > /dev/null || { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }; done
-    printf "\b\b\b..."
-
-    echo
-elif [ $early_file_integrity == "1" ]; then
-    printf " continuing validating integrity of assembly files   "
-    i=1
-    sp="/-\|"
-    echo -n ' '
-    
-    while [ -d /proc/$early_pid ]
-    do
-    printf "\b${sp:i++%${#sp}:1}"
-    done
-    
-    echo ""
-    cat ../early_any2fasta.txt
-
-    if [ $early_return -ne 0 ]; then
-    echo "Error"
-    fi
-fi
-
+printf " validating integrity of assembly files   "
+i=1
+sp="/-\|"
+for f in *; do printf "\b\b\b ${sp:i++%${#sp}:1} "; any2fasta -q "$f" > /dev/null || { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }; done
+printf "\b\b\b..."
+#PID=$!
+#i=1
+#sp="/-\|"
+#echo -n ' '
+#while [ -d /proc/$PID ]
+#do
+#  printf "\b\b ${sp:i++%${#sp}:1}"
+#  sleep 0.1
+#done
+#printf "\b\b  "
+#
+echo
 
 
 
