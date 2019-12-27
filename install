@@ -2,15 +2,14 @@
 
 # Installs assemblycomparator for the user
 
+# please provide an email_address
+email_address=""
 
 echo "source /faststorage/project/ClinicalMicrobio/compare/environment/etc/profile.d/conda.sh" >> ~/.bash_profile
-
 echo "conda activate comparator" >> ~/.bash_profile
 
 echo "export PATH=/project/ClinicalMicrobio/faststorage/compare/:\$PATH" >> ~/.bashrc
-
-echo "export COMPARATOR_DEFAULT_EMAIL_ADDRESS='nielnoer@rm.dk'" >> ~/.bashrc
-
+echo "export COMPARATOR_DEFAULT_EMAIL_ADDRESS='$email_address'" >> ~/.bashrc
 echo "export COMPARATOR_CONDA_ENV = /faststorage/project/ClinicalMicrobio/compare/environment" >> ~/.bashrc
 
 
