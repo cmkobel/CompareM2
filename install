@@ -2,6 +2,7 @@
 
 # Installs assemblycomparator for the user
 
+# Todo: ask for email
 # please provide an email_address
 email_address=""
 
