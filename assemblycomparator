@@ -24,7 +24,7 @@ export COMPARATOR_EMAIL=$(finger `echo $USER` | grep -o -E "<.+@.+\..+>" | tr -d
 
 
 
-echo $COMPARATOR_DEFAULT_EMAIL_ADDRESS
+echo $COMPARATOR_EMAIL
 echo
 echo   "${red}┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┌─┐┌┬┐┌─┐┌─┐┬─┐┌─┐┌┬┐┌─┐┬─┐${purple}KMA"
 echo "${green}├─┤└─┐└─┐├┤ │││├┴┐│ └┬┘  │  │ ││││├─┘├─┤├┬┘├─┤ │ │ │├┬┘"
@@ -145,8 +145,8 @@ then
     echo "    /project/ClinicalMicrobio/faststorage/compare/output/$curr_dir_name"
     echo "and an email will be sent to:"
     #echo "    $COMPARE_DEFAULT_EMAIL_ADDRESS"
-    #echo "    $COMPARATOR_EMAIL"
-    echo "    $COMPARATOR_DEFAULT_EMAIL_ADDRESS"
+    echo "    $COMPARATOR_EMAIL"
+    #echo "    $COMPARATOR_DEFAULT_EMAIL_ADDRESS"
     echo
     echo "Please check the status of the pipeline by running the following command:"
     echo "    mj"

@@ -138,8 +138,8 @@ def roary(target_dir, title, gffs, blastp_identity = 95, allow_paralogs = False)
     # target_dir:   Der hvor den skal gemme outputtet.
     # gffs:         En liste med fulde stier til de .gff-filer som skal analyseres.
 
-    hours = -(-len(gffs)//100)*10 # 10 timer for hver 100 filer
-    ram = -(-len(gffs)//100)*8 # 8 for hver 100 filer
+    hours = -(-len(gffs)//25)*12 # 12 timer for hver 100 filer
+    ram = -(-len(gffs)//25)*8 # 8 for hver 100 filer
 
     if allow_paralogs == True:
         ap_string = "-ap"
@@ -307,7 +307,9 @@ echo -e "To access the full analysis, please visit /project/ClinicalMicrobio/fas
 zip -j {title}.zip {' '.join(inputs)}
 
 mailx -s "comparator done: {title}" kobel@pm.me <<< ""
-mailx -s "[comparator] done: {title}" -a {title}.zip -q mail.txt $COMPARATOR_DEFAULT_EMAIL_ADDRESS <<< "" 
+#mailx -s "[comparator] done: {title}" -a {title}.zip -q mail.txt $COMPARATOR_EMAIL <<< "" 
+mailx -s "[comparator] done: {title}" -a {title}.zip -q mail.txt nielnoer@rm.dk <<< "" 
+
 
 rm {title}.zip
 
