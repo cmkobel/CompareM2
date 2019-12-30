@@ -102,7 +102,7 @@ gwf.target_from_template(sanify('cmp_mlst_' + title), mlst(target_dir, title, co
 
 # submit roary
 annotations = [name + '/prokka/' + name + '.gff' for name in names]
-gwf.target_from_template(sanify('cmp_roary_' + title), roary(target_dir, title, annotations, blastp_identity = 90, allow_paralogs))
+gwf.target_from_template(sanify('cmp_roary_' + title), roary(target_dir, title, annotations, blastp_identity = 90, allow_paralogs = False))
 
 
 # submit fasttree
