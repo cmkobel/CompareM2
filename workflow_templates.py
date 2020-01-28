@@ -90,6 +90,27 @@ cd {target_dir}/output/{title}/kraken2
     
 
 
+def abricate(target_dir, title, name):
+    inputs = target_dir + '/output/' + title + '/' + name + '/contigs.fa'
+    outputs = target_dir + '/output/' + title + '/abricate/' + name
+    options = {'nodes': 1, 'cores': 1, 'memory': '8g', 'walltime': '1:00:00', 'account': 'clinicalmicrobio'}
+    spec = f"""
+cd {target_dir}/output/{title}
+
+mkdir -p abricate
+cd abricate
+cp ../{name}/contigs.fa {name}.fa
+
+abricate {name}.fa > {name}
+
+
+
+rm {name}.fa
+
+"""
+    return inputs, outputs, options, spec
+
+
 
 def prokka(target_dir, title, name):
     
@@ -170,12 +191,12 @@ jobinfo $SLURM_JOBID
     return (inputs, outputs, options, spec)
 
 
-def fasttree(target_dir, title):
+def fasttree(target_dir, title, n):
     # todo: time and mem should depend on number of isolates
     inputs = target_dir + '/output/' + title + '/roary/core_gene_alignment.aln'
     outputs = [target_dir + '/output/' + title + '/fasttree/tree.newick',
                target_dir + '/output/' + title + '/fasttree/tree.pdf']
-    options = {'nodes': 1, 'cores': 8, 'memory': '8g', 'walltime': '6:00:00', 'account': 'clinicalmicrobio'}
+    options = {'nodes': 1, 'cores': 8, 'memory': f'{round(n*2, 0)}g', 'walltime': f'{n*60}:00', 'account': 'clinicalmicrobio'}
     spec = f"""
 cd {target_dir}/output/{title}
 mkdir -p fasttree
@@ -195,9 +216,7 @@ Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/ape_newick2pdf.r
     return inputs, outputs, options, spec
 
 
-def abricate():
-    # Depends on core gene alignment.
-    pass
+
 
 def quicktree(target_dir, title, names):
     pass
@@ -273,6 +292,11 @@ def send_mail(target_dir, title, names):
 
 cd {target_dir}/output/{title}
 
+
+
+echo "this is the email address collected in assemblycomparator through finger"
+echo $COMPARATOR_DEFAULT_EMAIL_ADDRESS
+
 # collect mail content
 
 
@@ -282,6 +306,11 @@ echo -e "\n" >> mail.txt
 
 echo -e "MLST results:" >> mail.txt
 cat mlst.tsv | sed 's/\/contigs.fa//g' | {awk_command} | column -t >> mail.txt
+
+echo -e "\n" >> mail.txt
+
+echo "Abricate antimicrobial resistance and virulence genes:" >> mail.txt
+abricate --nopath abricate/* --summary | column -t >> mail.txt
 
 echo -e "\n" >> mail.txt
 
@@ -307,8 +336,8 @@ echo -e "To access the full analysis, please visit /project/ClinicalMicrobio/fas
 zip -j {title}.zip {' '.join(inputs)}
 
 #mailx -s "comparator done: {title}" kobel@pm.me <<< ""
-mail -s "[comparator] done: {title}" -a {title}.zip -q mail.txt nielnoer@rm.dk <<< "" 
-mail -s "[comparator] done: {title}" -a {title}.zip -q mail.txt $COMPARATOR_DEFAULT_EMAIL_ADDRESS <<< "" 
+#mail -v -s "[comparator] done: {title}" -a {title}.zip -q mail.txt nielnoer@rm.dk <<< "" 
+mail -v -s "[comparator] done: {title}" -a {title}.zip -q mail.txt $COMPARATOR_DEFAULT_EMAIL_ADDRESS <<< "" 
 
 
 
@@ -319,6 +348,7 @@ echo $(date) >> mailsent
 
 
     """
+    #inputs.append(target_dir + '/output/' + title + '/completed_abricate')
     return inputs, outputs, options, spec
 
 

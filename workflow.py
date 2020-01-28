@@ -86,6 +86,9 @@ for raw_name in fasta_files:
     # submit kraken2
     gwf.target_from_template(sanify('cmp_kraken2_' + name), kraken2(target_dir, title, name))
 
+    # submit abricate
+    gwf.target_from_template(sanify('cmp_abricate_' + name), abricate(target_dir, title, name))
+
 
     # submit prokka
     gwf.target_from_template(sanify('cmp_prokka_' + title + '_' + name), prokka(target_dir, title, name))
@@ -106,7 +109,7 @@ gwf.target_from_template(sanify('cmp_roary_' + title), roary(target_dir, title, 
 
 
 # submit fasttree
-gwf.target_from_template(sanify('cmp_fasttree_' + title), fasttree(target_dir, title))
+gwf.target_from_template(sanify('cmp_fasttree_' + title), fasttree(target_dir, title, len(names)))
 
 
 # submit roary plots

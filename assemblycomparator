@@ -20,11 +20,15 @@ white=`tput setaf 6`
 bold=$(tput bold)
 reset=`tput sgr0`
 
-export COMPARATOR_EMAIL=$(finger `echo $USER` | grep -o -E "<.+@.+\..+>" | tr -d "<" | tr -d ">")
+
+# Extract the email-address of the user from the GenomeDK finger registry:
+#export COMPARATOR_EMAIL=$(finger `echo $USER` | grep -o -E "<.+@.+\..+>" | tr -d "<" | tr -d ">")
+
+export COMPARATOR_DEFAULT_EMAIL_ADDRESS=$(finger `echo $USER` | grep -o -E "<.+@.+\..+>" | tr -d "<" | tr -d ">")
 
 
 
-echo $COMPARATOR_EMAIL
+echo $COMPARATOR_DEFAULT_EMAIL_ADDRESS
 echo
 echo   "${red}┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┌─┐┌┬┐┌─┐┌─┐┬─┐┌─┐┌┬┐┌─┐┬─┐${purple}KMA"
 echo "${green}├─┤└─┐└─┐├┤ │││├┴┐│ └┬┘  │  │ ││││├─┘├─┤├┬┘├─┤ │ │ │├┬┘"
@@ -55,7 +59,7 @@ curr_dir_name=${PWD##*/}          # to assign to a variable
 #todo test the environment from conda against a list of expected
 
 echo
-echo "These are the ${bold}`ls -1 | wc -l`${reset} assemblies considered for ${bold}$curr_dir_name${reset}:"
+echo "These are the ${bold}`ls -1 | wc -l`${reset} assemblies considered for project ${bold}$curr_dir_name${reset}:"
 #ls -1
 #todo, fix problem with spaces in filenames
 for f in *; do echo " $f"; done
@@ -144,9 +148,7 @@ then
     echo "When the pipeline is done, the output will reside in:"
     echo "    /project/ClinicalMicrobio/faststorage/compare/output/$curr_dir_name"
     echo "and an email will be sent to:"
-    #echo "    $COMPARE_DEFAULT_EMAIL_ADDRESS"
-    echo "    $COMPARATOR_EMAIL"
-    #echo "    $COMPARATOR_DEFAULT_EMAIL_ADDRESS"
+    echo "    $COMPARATOR_DEFAULT_EMAIL_ADDRESS"
     echo
     echo "Please check the status of the pipeline by running the following command:"
     echo "    mj"
