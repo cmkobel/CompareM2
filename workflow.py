@@ -96,10 +96,10 @@ for raw_name in fasta_files:
 
 
 # run as group (list of inputs) from now on (names)
-#gwf.target_from_template(sanify('cmp_kraken2_abricateall_' + title), kraken2_table(target_dir, title, names))
+#gwf.target_from_template(sanify('cmp_kraken2_abricateall_' + title), summary_tables(target_dir, title, names))
 
 
-gwf.target_from_template(sanify('cmp_kraken2_table_' + title), kraken2_table(target_dir, title, names))
+gwf.target_from_template(sanify('cmp_summary_tables_' + title), summary_tables(target_dir, title, names))
 
 
 contigs = [name + '/contigs.fa' for name in names]

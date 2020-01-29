@@ -73,9 +73,17 @@ rm {name}.fa
     return inputs, outputs, options, spec
 
 
-def kraken2_table(target_dir, title, names):
-    inputs = [target_dir + '/output/' + title + '/kraken2/' + name + '_report.txt' for name in names]
-    outputs = target_dir + '/output/' + title + '/kraken2-table.txt'
+def summary_tables(target_dir, title, names):
+    #inputs = [target_dir + '/output/' + title + '/kraken2/' + name + '_report.txt' for name in names]
+    inputs = []
+    for name in names:
+        inputs.append(target_dir + '/output/' + title + '/kraken2/' + name + '_report.txt')
+        inputs.append(target_dir + '/output/' + title + '/abricate/' + name + '.tab')
+
+
+    outputs = [target_dir + '/output/' + title + '/kraken2-table.txt',
+               target_dir + '/output/' + title + '/amr_virulence_summary.tab']
+                
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
 
     command = '''for f in *_report.txt; do echo ${f::-11} >> ../kraken2-table.txt; cat $f | awk '$4 ~ "^S$" {printf("%6.2f%% %s %s %s %s\\n", $1, $6, $7, $8, $9)}' | head -n 3 >> ../kraken2-table.txt; echo >> ../kraken2-table.txt; done'''
@@ -83,7 +91,15 @@ def kraken2_table(target_dir, title, names):
     spec = f"""
 cd {target_dir}/output/{title}/kraken2
 
+# delete possibly old file.
+touch ../kraken2-table.txt
+rm ../kraken2-table.txt
+
 {command}
+
+cd ../abricate
+abricate --nopath *.tab --summary > ../amr_virulence_summary.tab
+
 
 """
     return inputs, outputs, options, spec
@@ -92,16 +108,18 @@ cd {target_dir}/output/{title}/kraken2
 
 def abricate(target_dir, title, name):
     inputs = target_dir + '/output/' + title + '/' + name + '/contigs.fa'
-    outputs = target_dir + '/output/' + title + '/abricate/' + name
+    outputs = target_dir + '/output/' + title + '/abricate/' + name + '.tab'
     options = {'nodes': 1, 'cores': 1, 'memory': '8g', 'walltime': '1:00:00', 'account': 'clinicalmicrobio'}
     spec = f"""
 cd {target_dir}/output/{title}
+
+
 
 mkdir -p abricate
 cd abricate
 cp ../{name}/contigs.fa {name}.fa
 
-abricate {name}.fa > {name}
+abricate {name}.fa > {name}.tab
 
 
 
@@ -281,7 +299,10 @@ def send_mail(target_dir, title, names):
               target_dir + '/output/' + title + '/fasttree/tree.pdf',
               target_dir + '/output/' + title + '/mlst.tsv',
               target_dir + '/output/' + title + '/roary/Rplots.pdf',
-              target_dir + '/output/' + title + '/kraken2-table.txt']
+              target_dir + '/output/' + title + '/kraken2-table.txt',
+              target_dir + '/output/' + title + '/amr_virulence_summary.tab']
+    #for name in names:
+    #    inputs.append(target_dir + '/output/' + title + '/abricate/' + name)
 
     newline = '\n'
     outputs = target_dir + '/output/' + title + '/mailsente' # If it doesn't have an arbitrary output, the first job (init) will be run
@@ -310,7 +331,8 @@ cat mlst.tsv | sed 's/\/contigs.fa//g' | {awk_command} | column -t >> mail.txt
 echo -e "\n" >> mail.txt
 
 echo "Abricate antimicrobial resistance and virulence genes:" >> mail.txt
-abricate --nopath abricate/* --summary | column -t >> mail.txt
+#abricate --nopath abricate/* --summary | column -t >> mail.txt
+cat amr_virulence_summary.tab | column -t >> mail.txt
 
 echo -e "\n" >> mail.txt
 
