@@ -37,8 +37,7 @@ Get it working with a shared environment
   * prokka (annotation)
   * kraken2 (species identification)
   * mlst (multi locus sequence typing)
-  * (abricate) (virulence/resistance gene identification)
-  * (snippy) (pairwise snp-calling)
+  * abricate (virulence/resistance gene identification)
   
   
 ### For each group
