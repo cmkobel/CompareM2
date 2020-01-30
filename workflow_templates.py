@@ -188,7 +188,8 @@ def roary(target_dir, title, gffs, blastp_identity = 95, allow_paralogs = False)
     inputs = [target_dir + '/output/' + title + '/' + i for i in gffs]
     outputs = [target_dir + '/output/' + title + '/roary/core_gene_alignment.aln', # Denne fil skal bruges til at lave træet, så det er den vigtigste. Og så også en liste over alle .gff-filer som er brugt.
                target_dir + '/output/' + title + '/roary/gene_presence_absence.csv',
-               target_dir + '/output/' + title + '/roary/Rplots.pdf']
+               target_dir + '/output/' + title + '/roary/Rplots.pdf',
+               target_dir + '/output/' + title + '/roary_thresholds.txt']
     newline_for_f_string_workaround = '\n'
     options = {'nodes': 1, 'cores': 16, 'memory': f'{ram}g', 'walltime': f'{hours}:00:00', 'account': 'ClinicalMicrobio'}
     spec = f'''
@@ -196,7 +197,7 @@ def roary(target_dir, title, gffs, blastp_identity = 95, allow_paralogs = False)
 
 cd {target_dir}/output/{title}
 
-echo "blastp_identity (-i) = {str(blastp_identity)}" > roary_thresholds.txt
+echo "blastp_identity (--blastp) = {str(blastp_identity)}" > roary_thresholds.txt
 echo "allow paralogs (-ap): {allow_paralogs}" >> roary_thresholds.txt
 
 roary -f roary -e -v -r -p 16 -i {int(blastp_identity)} {ap_string} {' '.join(gffs)} {debug('roary')}
@@ -300,7 +301,8 @@ def send_mail(target_dir, title, names):
               target_dir + '/output/' + title + '/mlst.tsv',
               target_dir + '/output/' + title + '/roary/Rplots.pdf',
               target_dir + '/output/' + title + '/kraken2-table.txt',
-              target_dir + '/output/' + title + '/amr_virulence_summary.tab']
+              target_dir + '/output/' + title + '/amr_virulence_summary.tab',
+              target_dir + '/output/' + title + '/roary_thresholds.txt']
     #for name in names:
     #    inputs.append(target_dir + '/output/' + title + '/abricate/' + name)
 
@@ -338,6 +340,7 @@ echo -e "\n" >> mail.txt
 
 echo "Roary summary statistics:" >> mail.txt
 cat roary/summary_statistics.txt | column -ts $'\t' >> mail.txt
+cat roary_thresholds.txt | grep "blastp" >> mail.txt
 
 echo -e "\n" >> mail.txt
 

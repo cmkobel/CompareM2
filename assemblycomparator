@@ -15,7 +15,7 @@ orange=`tput setaf 3`
 blue=`tput setaf 4`
 purple=`tput setaf 5`
 lblue=`tput setaf 6`
-white=`tput setaf 6`
+white=`tput setaf 7`
 
 bold=$(tput bold)
 reset=`tput sgr0`
@@ -28,15 +28,34 @@ export COMPARATOR_DEFAULT_EMAIL_ADDRESS=$(finger `echo $USER` | grep -o -E "<.+@
 
 
 
-echo $COMPARATOR_DEFAULT_EMAIL_ADDRESS
+#echo "${white}$COMPARATOR_DEFAULT_EMAIL_ADDRESS"
 echo
-echo   "${red}┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┌─┐┌┬┐┌─┐┌─┐┬─┐┌─┐┌┬┐┌─┐┬─┐${purple}KMA"
+echo  "${red}┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┌─┐┌┬┐┌─┐┌─┐┬─┐┌─┐┌┬┐┌─┐┬─┐${purple}KMA"
 echo "${green}├─┤└─┐└─┐├┤ │││├┴┐│ └┬┘  │  │ ││││├─┘├─┤├┬┘├─┤ │ │ │├┬┘"
-echo  "${blue}┴ ┴└─┘└─┘└─┘┴ ┴└─┘┴─┘┴   └─┘└─┘┴ ┴┴  ┴ ┴┴└─┴ ┴ ┴ └─┘┴└─${reset}"
-
+echo "${blue}┴ ┴└─┘└─┘└─┘┴ ┴└─┘┴─┘┴   └─┘└─┘┴ ┴┴  ┴ ┴┴└─┴ ┴ ┴ └─┘┴└─${reset}"
+echo 
 TARGET_DIR='/project/ClinicalMicrobio/faststorage/compare'
 curr_dir_name=${PWD##*/}          # to assign to a variable
 
+
+# parse --blastp for blastp-identity
+if [ "$1" = "--blastp" ]; then
+    if [ "$2" -eq "$2" ] && [ "$2" -lt 101 ]; then
+        BLASTP=${2%.*}
+        echo -e "${orange}Info:${reset} The blastp-identity threshold has been set to ${bold}$BLASTP${reset}"
+        if [ "$2" -lt 69 ]; then
+            echo -e "${red}Warning:${reset} Setting the threshold below 70 is not advised."
+        fi
+    else
+        echo -e "\n${red}Error:${reset} the argument given after --blastp must be a number between 70 and 100.\nExample:\n\n\tassemblycomparator --blastp 90\n\n"; exit 1
+    fi
+else
+    BLASTP=95
+    echo -e "Info: The blastp-identity threshold is set to $BLASTP (default).\n\t${white}(can be changed with the --blastp argument)${reset}"
+fi
+
+
+export BLASTP
 
 
 
@@ -86,7 +105,7 @@ conda activate comparator
 #conda activate /faststorage/project/ClinicalMicrobio/compare/environment
 
 # Todo: run in parallel
-printf " validating integrity of assembly files   "
+printf " validating assembly files   "
 i=1
 sp="/-\|"
 for f in *; do printf "\b\b\b ${sp:i++%${#sp}:1} "; any2fasta -q "$f" > /dev/null || { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }; done
