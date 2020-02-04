@@ -1,5 +1,9 @@
 
 from gwf import *
+import os
+
+
+BLASTP = int(os.environ["BLASTP"])
 
 DEBUG_STATUS = False
 
@@ -8,6 +12,7 @@ def debug(title = ''):
 		return '2> ' + str(title).strip() + '_stderr.txt'
 	else:
 		return ""
+
 
 
 
@@ -189,7 +194,8 @@ def roary(target_dir, title, gffs, blastp_identity = 95, allow_paralogs = False)
     outputs = [target_dir + '/output/' + title + '/roary/core_gene_alignment.aln', # Denne fil skal bruges til at lave træet, så det er den vigtigste. Og så også en liste over alle .gff-filer som er brugt.
                target_dir + '/output/' + title + '/roary/gene_presence_absence.csv',
                target_dir + '/output/' + title + '/roary/Rplots.pdf',
-               target_dir + '/output/' + title + '/roary_thresholds.txt']
+               target_dir + '/output/' + title + '/roary_thresholds.txt',
+               target_dir + '/output/' + title + '/roary/blastp_'  + str(BLASTP) + '.setting']
     newline_for_f_string_workaround = '\n'
     options = {'nodes': 1, 'cores': 16, 'memory': f'{ram}g', 'walltime': f'{hours}:00:00', 'account': 'ClinicalMicrobio'}
     spec = f'''
@@ -198,10 +204,10 @@ def roary(target_dir, title, gffs, blastp_identity = 95, allow_paralogs = False)
 cd {target_dir}/output/{title}
 
 echo "blastp_identity (--blastp) = {str(blastp_identity)}" > roary_thresholds.txt
-echo "allow paralogs (-ap): {allow_paralogs}" >> roary_thresholds.txt
 
 roary -f roary -e -v -r -p 16 -i {int(blastp_identity)} {ap_string} {' '.join(gffs)} {debug('roary')}
 
+touch roary/blastp_{str(BLASTP)}.setting
 
 
 echo JOBID $SLURM_JOBID

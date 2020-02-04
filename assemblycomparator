@@ -98,29 +98,24 @@ echo " proceeding..."
 echo " activating environment..." 
 #source ~/miniconda3/etc/profile.d/conda.sh
 # todo: use the COMPARATOR_CONDA_ENV global instead of hardcoding. Make sure it is installed at NNLs user
+
 source /faststorage/project/ClinicalMicrobio/compare/environment/etc/profile.d/conda.sh
-#conda activate compare 
 conda activate comparator 
 
 #conda activate /faststorage/project/ClinicalMicrobio/compare/environment
+
+
 
 # Todo: run in parallel
 printf " validating assembly files   "
 i=1
 sp="/-\|"
-for f in *; do printf "\b\b\b ${sp:i++%${#sp}:1} "; any2fasta -q "$f" > /dev/null || { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }; done
+for f in *; do printf "\b\b\b ${sp:i++%${#sp}:1} "; any2fasta -q "$f" > /dev/null || { echo -e "  file: ${bold}$f${reset}\n${red}error in any2fasta. ${reset} exiting." && exit 1; }; done
+#ls * | parallel 'any2fasta -q {} >/dev/null || printf "\n${red}Error${reset}: {} is not a valid assembly file: "; exit 1; return 1' #|| { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }
+#ls * | parallel 'hay="{}" && any2fasta -q {} >/dev/null 2>ac_a2ferr.txt' && echo YES || { echo "$hay ${red}error in any2fasta. ${reset} exiting." && exit 1; }
+
 printf "\b\b\b..."
-#PID=$!
-#i=1
-#sp="/-\|"
-#echo -n ' '
-#while [ -d /proc/$PID ]
-#do
-#  printf "\b\b ${sp:i++%${#sp}:1}"
-#  sleep 0.1
-#done
-#printf "\b\b  "
-#
+
 echo
 
 
