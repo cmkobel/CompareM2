@@ -21,7 +21,7 @@ Then, the program will list a series of options, helping you to start the pipeli
 
 # Development
 
-This project is still in development. Please check the [project manager](https://github.com/cmkobel/kma-assemblycomparator/projects/1) for tracking new features. 
+This project is still in development. Please check the [repo project manager](https://github.com/cmkobel/kma-assemblycomparator/projects/1) for tracking new features. 
 
 ## Phase 1
 Get it working
