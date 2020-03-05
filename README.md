@@ -46,6 +46,7 @@ Get it working with a shared environment
   * [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity
   * [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
   * [(IQ-tree)](http://www.iqtree.org/) (phylogenetic tree of core genome)
+  * (Tree bootstrapping)
   
   
   
