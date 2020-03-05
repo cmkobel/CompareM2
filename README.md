@@ -42,6 +42,7 @@ Get it working with a shared environment
   
 ### For each group
   * roary (pan and core genome)
+  * snp-dists (core genome snp-distances)
   * panito (average nucleotide identity
   * FastTree (phylogenetic tree of core genome)
   * (IQ-tree) (phylogenetic tree of core genome)
