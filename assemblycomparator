@@ -44,10 +44,10 @@ if [ "$1" = "--blastp" ]; then
         BLASTP=${2%.*}
         echo -e "${orange}Info:${reset} The blastp-identity threshold has been set to ${bold}$BLASTP${reset}"
         if [ "$2" -lt 69 ]; then
-            echo -e "${red}Warning:${reset} Setting the threshold below 70 is not advised."
+            echo -e "${red}Warning:${reset} Setting the threshold below 70 is not recommended."
         fi
     else
-        echo -e "\n${red}Error:${reset} the argument given after --blastp must be a number between 70 and 100.\nExample:\n\n\tassemblycomparator --blastp 90\n\n"; exit 1
+        echo -e "\n${red}Error:${reset} the parameter given after --blastp must be a number between 70 and 100.\nExample:\n\n\tassemblycomparator --blastp 90\n\n"; exit 1
     fi
 else
     BLASTP=95
