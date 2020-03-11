@@ -32,13 +32,7 @@ Then, the program will list a series of options, helping you to start the pipeli
 
 This project is still in development. Please check the [repo project manager](https://github.com/cmkobel/kma-assemblycomparator/projects/1) for tracking new features. 
 
-## Phase 1
-Get it working
-
 A few subanalyses still need to be implemented, (see parenthesized programs in the below list)
-
-## Phase 2
-Get it working with a shared environment
 
 
 ### For each assembly
