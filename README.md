@@ -33,19 +33,20 @@ Get it working with a shared environment
 
 
 ### For each assembly
-  * any2fasta (wide format support)
-  * prokka (annotation)
-  * kraken2 (species identification)
-  * mlst (multi locus sequence typing)
-  * abricate (virulence/resistance gene identification)
+  * [any2fasta](https://github.com/tseemann/any2fasta) (wide format support)
+  * [prokka](https://github.com/tseemann/prokka) (annotation)
+  * [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
+  * [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
+  * [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)
   
   
 ### For each group
-  * roary (pan and core genome)
-  * snp-dists (core genome snp-distances)
-  * panito (average nucleotide identity
-  * FastTree (phylogenetic tree of core genome)
-  * (IQ-tree) (phylogenetic tree of core genome)
+  * [roary](https://sanger-pathogens.github.io/Roary/) (pan and core genome)
+  * [snp-dists](https://github.com/tseemann/snp-dists) (core genome snp-distances)
+  * [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity
+  * [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
+  * [(IQ-tree)](http://www.iqtree.org/) (phylogenetic tree of core genome)
+  * (Tree bootstrapping)
   
   
   
