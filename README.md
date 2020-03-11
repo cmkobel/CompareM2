@@ -45,7 +45,7 @@ Get it working with a shared environment
   * [snp-dists](https://github.com/tseemann/snp-dists) (core genome snp-distances)
   * [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity
   * [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
-  * [(IQ-tree)](http://www.iqtree.org/) (phylogenetic tree of core genome)
+  * ([IQ-tree](http://www.iqtree.org/)) (phylogenetic tree of core genome)
   * (Tree bootstrapping)
   
   
