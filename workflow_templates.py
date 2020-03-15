@@ -49,7 +49,8 @@ def copy(source, target_dir, title, name):
     spec = f"""
 
 mkdir -p {target_dir + '/output/' + title + '/' + name}
-any2fasta "{source}" > {target_dir + '/output/' + title + '/' + name}/'contigs.fa'
+any2fasta "{source}" | /project/ClinicalMicrobio/faststorage/compare/scripts/py/fasta_shorten_headers.py > {target_dir + '/output/' + title + '/' + name}/contigs.fa
+
 
 """
     return inputs, outputs, options, spec
