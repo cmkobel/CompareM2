@@ -49,7 +49,8 @@ A few subanalyses still need to be implemented, (see parenthesized programs in t
   * [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity
   * [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
   * ([IQ-tree](http://www.iqtree.org/)) (phylogenetic tree of core genome)
-  * (Tree bootstrapping)
+  * ([RAxML](https://github.com/amkozlov/raxml-ng)) (Tree bootstrapping)
+  
   
   
   
