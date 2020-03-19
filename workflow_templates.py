@@ -242,7 +242,7 @@ FastTree -nt -gtr ../roary/core_gene_alignment.aln > tree.newick {debug('ft')}
 
 
 
-Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/ape_newick2pdf.r tree.newick "{title} core genome"  {debug('R')}
+Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/ape_newick2pdf.r tree.newick "{title} core genome"  {debug('R')} || touch tree.pdf
 
 
 """
@@ -383,7 +383,7 @@ mail -v -s "[comparator] done: {title}" -a {title}.zip -q mail.txt $COMPARATOR_D
 
 rm {title}.zip
 
-echo $(date) >> mailsent
+echo $(date) $COMPARATOR_DEFAULT_EMAIL_ADDRESS >> mailsent
 
 
 
