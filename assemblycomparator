@@ -22,10 +22,9 @@ reset=`tput sgr0`
 
 
 # Extract the email-address of the user from the GenomeDK finger registry:
-#export COMPARATOR_EMAIL=$(finger `echo $USER` | grep -o -E "<.+@.+\..+>" | tr -d "<" | tr -d ">")
 
-export COMPARATOR_DEFAULT_EMAIL_ADDRESS=$(finger `echo $USER` | grep -o -E "<.+@.+\..+>" | tr -d "<" | tr -d ">")
-
+# Fix problem on Niels' user namespace.
+echo "export COMPARATOR_DEFAULT_EMAIL_ADDRESS='nielnoer@rm.dk'" >> ~/.bashrc
 
 
 #echo "${white}$COMPARATOR_DEFAULT_EMAIL_ADDRESS"

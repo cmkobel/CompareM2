@@ -193,6 +193,7 @@ def roary(target_dir, title, gffs, blastp_identity = 95, allow_paralogs = False)
 
     inputs = [target_dir + '/output/' + title + '/' + i for i in gffs]
     outputs = [target_dir + '/output/' + title + '/roary/core_gene_alignment.aln', # Denne fil skal bruges til at lave træet, så det er den vigtigste. Og så også en liste over alle .gff-filer som er brugt.
+               target_dir + '/output/' + title + '/core_gene_alignment.fasta',
                target_dir + '/output/' + title + '/cg_snp_dists.tab',
                target_dir + '/output/' + title + '/roary/gene_presence_absence.csv',
                target_dir + '/output/' + title + '/roary/Rplots.pdf',
@@ -210,6 +211,8 @@ echo "blastp_identity (--blastp) = {str(blastp_identity)}" > roary_thresholds.tx
 roary -f roary -e -v -r -p 16 -i {int(blastp_identity)} {ap_string} {' '.join(gffs)} {debug('roary')}
 
 snp-dists roary/core_gene_alignment.aln > cg_snp_dists.tab
+
+cp roary/core_gene_alignment.aln core_gene_alignment.fasta
 
 
 touch roary/blastp_{str(BLASTP)}.setting
@@ -314,7 +317,8 @@ def send_mail(target_dir, title, names):
               target_dir + '/output/' + title + '/kraken2-table.txt',
               target_dir + '/output/' + title + '/amr_virulence_summary.tab',
               target_dir + '/output/' + title + '/roary_thresholds.txt',
-              target_dir + '/output/' + title + '/cg_snp_dists.tab']
+              target_dir + '/output/' + title + '/cg_snp_dists.tab',
+              target_dir + '/output/' + title + '/core_gene_alignment.fasta']
     #for name in names:
     #    inputs.append(target_dir + '/output/' + title + '/abricate/' + name)
 
