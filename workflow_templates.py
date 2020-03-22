@@ -272,7 +272,7 @@ cd {target_dir}/output/{title}
 mkdir -p roary_plots
 cd roary_plots
 
-touch in_roary_plots
+
 
 python {script_file} ../fasttree/tree.newick ../roary/gene_presence_absence.csv 
 
