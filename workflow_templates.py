@@ -87,12 +87,13 @@ def summary_tables(target_dir, title, names):
         inputs.append(target_dir + '/output/' + title + '/abricate/' + name + '.tab')
 
 
-    outputs = [target_dir + '/output/' + title + '/kraken2-table.txt',
+    outputs = [target_dir + '/output/' + title + '/kraken2-table.txt_FORCEAGAIN',
                target_dir + '/output/' + title + '/amr_virulence_summary.tab']
                 
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
 
-    command = '''for f in *_report.txt; do echo ${f::-11} >> ../kraken2-table.txt; cat $f | awk '$4 ~ "^S$" {printf("%6.2f%% %s %s %s %s\\n", $1, $6, $7, $8, $9)}' | head -n 3 >> ../kraken2-table.txt; echo >> ../kraken2-table.txt; done'''
+    command = '''for f in *_report.txt; do echo ${f::-11} >> ../kraken2-table.txt; cat $f | awk -F '\\t' '$4 ~ "(^S$)|(U)" {gsub(/^[ \\t]+/, "", $6); printf("%6.2f%% %s\\n", $1, $6)}' | sort -gr  | head -n 3 >> ../kraken2-table.txt; echo >> ../kraken2-table.txt; done'''
+    #kraken_reads_top_command = """awk '$4 ~ "^S$" {printf("%05.2f\\t%s %s %s %s\\n", $1, $6, $7, $8, $9)}'"""
     
     spec = f"""
 cd {target_dir}/output/{title}/kraken2
