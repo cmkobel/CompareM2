@@ -87,7 +87,7 @@ def summary_tables(target_dir, title, names):
         inputs.append(target_dir + '/output/' + title + '/abricate/' + name + '.tab')
 
 
-    outputs = [target_dir + '/output/' + title + '/kraken2-table.txt_FORCEAGAIN',
+    outputs = [target_dir + '/output/' + title + '/kraken2-table.txt',
                target_dir + '/output/' + title + '/amr_virulence_summary.tab']
                 
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
@@ -324,7 +324,7 @@ def send_mail(target_dir, title, names):
     #    inputs.append(target_dir + '/output/' + title + '/abricate/' + name)
 
     newline = '\n'
-    outputs = target_dir + '/output/' + title + '/mailsente' # If it doesn't have an arbitrary output, the first job (init) will be run
+    outputs = target_dir + '/output/' + title + '/mailsent_FORCEAGAIN' # If it doesn't have an arbitrary output, the first job (init) will be run
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
     awk_command = """awk '{printf("%s %s (%s)\\n", $1, $2, $3)}'"""
     spec = f"""
