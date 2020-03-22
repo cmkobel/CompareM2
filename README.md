@@ -1,8 +1,5 @@
-```
-┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┌─┐┌┬┐┌─┐┌─┐┬─┐┌─┐┌┬┐┌─┐┬─┐KMA 
-├─┤└─┐└─┐├┤ │││├┴┐│ └┬┘  │  │ ││││├─┘├─┤├┬┘├─┤ │ │ │├┬┘
-┴ ┴└─┘└─┘└─┘┴ ┴└─┘┴─┘┴   └─┘└─┘┴ ┴┴  ┴ ┴┴└─┴ ┴ ┴ └─┘┴└─
-```
+![logo](https://raw.githubusercontent.com/cmkobel/kma-assemblycomparator/master/scripts/logo.png "")
+
 
 The KMA Assembly Comparator is a simple pipeline consisting of independent tools for the analysis of microbial genomics. The idea is that the user provides a directory of assemblies of related bacterial strains, and the pipeline will run a series of generally relevant analyses.
 
