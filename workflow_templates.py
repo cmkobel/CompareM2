@@ -274,10 +274,10 @@ cd roary_plots
 
 touch in_roary_plots
 
-python {script_file} ../fasttree/tree.newick ../roary/gene_presence_absence.csv 2> stderr.out
+python {script_file} ../fasttree/tree.newick ../roary/gene_presence_absence.csv 
 
-perl {target_dir}/scripts/perl/roary2svg.pl ../roary/gene_presence_absence.csv > pangenome_matrix_alternative.svg 2> 2_stderr.out
-cairosvg pangenome_matrix_alternative.svg -o pangenome_matrix_alternative.pdf 2> 3_stderr.out
+perl {target_dir}/scripts/perl/roary2svg.pl ../roary/gene_presence_absence.csv > pangenome_matrix_alternative.svg
+cairosvg pangenome_matrix_alternative.svg -o pangenome_matrix_alternative.pdf
 
 '''
     return inputs, outputs, options, spec
