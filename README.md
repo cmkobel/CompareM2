@@ -33,7 +33,7 @@ A few subanalyses still need to be implemented, (see parenthesized programs in t
 
 
 ### For each assembly
-  * [any2fasta](https://github.com/tseemann/any2fasta) (wide format support)
+  * [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
   * [prokka](https://github.com/tseemann/prokka) (annotation)
   * [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
   * [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
