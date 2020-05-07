@@ -38,6 +38,8 @@ A few subanalyses still need to be implemented, (see parenthesized programs in t
   * [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
   * [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
   * [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)
+  * ([Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html)) (Identify possible replication origins)
+
   
   
 ### For each group
@@ -47,7 +49,8 @@ A few subanalyses still need to be implemented, (see parenthesized programs in t
   * [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
   * ([IQ-tree](http://www.iqtree.org/)) (phylogenetic tree of core genome)
   * ([RAxML](https://github.com/amkozlov/raxml-ng)) (Tree bootstrapping)
-  
+  * (GC3-profiling) ("fingerprint" of the distribution of GC-content)
+  * (Identification of horizontally transferred genes)
   
   
   
