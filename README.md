@@ -38,7 +38,7 @@ A few subanalyses are in the process of being implemented, (parenthesized progra
   * [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
   * [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
   * [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)
-  * ([Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html)) (Identify possible replication origins)
+  * ([Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html)) (Identify possible replication origins, and thereby identify chromids)
 
   
   
