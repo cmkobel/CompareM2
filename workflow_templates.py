@@ -369,7 +369,7 @@ cat kraken2-table.txt >> mail.txt
 echo -e "\n" >> mail.txt
 
 
-echo -e "A few small output files from the pipeline has been attached in the zip-file" >> mail.txt
+echo -e "A few small output files from the pipeline have been attached in the zip-file" >> mail.txt
 echo -e "To access the full analysis, please visit /project/ClinicalMicrobio/faststorage/compare/output/{title} on GenomeDK." >> mail.txt
 
 
