@@ -31,6 +31,9 @@ echo
 echo  "${red}┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┌─┐┌┬┐┌─┐┌─┐┬─┐┌─┐┌┬┐┌─┐┬─┐${purple}KMA"
 echo "${green}├─┤└─┐└─┐├┤ │││├┴┐│ └┬┘  │  │ ││││├─┘├─┤├┬┘├─┤ │ │ │├┬┘"
 echo "${blue}┴ ┴└─┘└─┘└─┘┴ ┴└─┘┴─┘┴   └─┘└─┘┴ ┴┴  ┴ ┴┴└─┴ ┴ ┴ └─┘┴└─${reset}"
+echo
+echo "Report issues at"
+echo "    https://github.com/cmkobel/assemblycomparator/issues"    
 echo 
 TARGET_DIR='/project/ClinicalMicrobio/faststorage/compare'
 curr_dir_name=${PWD##*/}          # to assign to a variable
@@ -156,12 +159,12 @@ then
     gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py run || { echo "${red}error in gwf. ${reset}exiting." && exit 1; }
     
     echo "The job list has been submitted."
-    echo
+    echo ""
     echo "When the pipeline is done, the output will reside in:"
     echo "    /project/ClinicalMicrobio/faststorage/compare/output/$curr_dir_name"
     echo "and an email will be sent to:"
     echo "    $COMPARATOR_DEFAULT_EMAIL_ADDRESS"
-    echo
+    echo ""
     echo "Please check the status of the pipeline by running the following command:"
     echo "    mj"
     mj
