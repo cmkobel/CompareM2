@@ -64,7 +64,6 @@ then
     echo ""
     echo ""
     echo "${green}Attention${reset}: An analysis on this directory has already been run."
-    echo ""
     read -p " Do you wish resubmit the old analysis? [y/n] " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]
