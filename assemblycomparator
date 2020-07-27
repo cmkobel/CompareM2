@@ -21,9 +21,6 @@ bold=$(tput bold)
 reset=`tput sgr0`
 
 
-# Extract the email-address of the user from the GenomeDK finger registry:
-
-
 
 
 #echo "${white}$COMPARATOR_DEFAULT_EMAIL_ADDRESS"
@@ -57,6 +54,30 @@ fi
 
 
 export BLASTP
+
+
+
+
+# Check if .gwf dir exists, and prompt for resubmission.
+if [ -d ".gwf" ]
+then
+    echo ""
+    echo ""
+    echo "${green}Attention${reset}: An analysis on this directory has already been run."
+    echo ""
+    read -p " Do you wish resubmit the old analysis? [y/n] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]
+    then
+        echo " resubmitting..."
+        gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py run || { echo "${red}error in resubmitting (gwf). ${reset}exiting." && exit 1; }
+        exit 0
+        #[[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+    else
+        echo " user decided not to resubmit."
+    fi
+fi
+
 
 
 

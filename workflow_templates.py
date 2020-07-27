@@ -143,7 +143,7 @@ def prokka(target_dir, title, name):
 
     inputs  = target_dir + '/output/' + title + '/' + name + '/contigs.fa' 
     outputs = target_dir + '/output/' + title + '/' + name + '/prokka/' + name + '.gff'
-    options = {'nodes': 1, 'cores': 8, 'memory': '4g', 'walltime': '04:00:00', 'account': 'clinicalmicrobio'} # initially 2 hours
+    options = {'nodes': 1, 'cores': 8, 'memory': '4g', 'walltime': '12:00:00', 'account': 'clinicalmicrobio'} # initially 2 hours
     spec = f"""
 
 
