@@ -70,7 +70,7 @@ cd kraken2
 
 cp ../{name}/contigs.fa {name}.fa
 
-kraken2 --db /project/ClinicalMicrobio/faststorage/database/minikraken2_v2_8GB_201904_UPDATE --report {name}_report.txt {name}.fa > /dev/null 2> /dev/null
+kraken2 --db /project/ClinicalMicrobio/faststorage/database/minikraken_8GB_20200312 --report {name}_report.txt {name}.fa > /dev/null 2> /dev/null
 
 rm {name}.fa
 
@@ -251,6 +251,37 @@ Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/ape_newick2pdf.r
 
 
 
+def iqtree(target_dir, title, n):
+    # todo: time and mem should depend on number of isolates
+    inputs = target_dir + '/output/' + title + '/roary/core_gene_alignment.aln'
+    outputs = [target_dir + '/output/' + title + '/_iqtree/run/something.log',
+               target_dir + '/output/' + title + '/_iqtree/tree.newick',
+               target_dir + '/output/' + title + '/_iqtree/tree.pdf']
+    options = {'nodes': 1, 'cores': 8, 'memory': f'{round(n*2, 0)}g', 'walltime': f'{n*1}:00:00', 'account': 'clinicalmicrobio'}
+    spec = f"""
+    cd {target_dir}/output/{title}
+    mkdir -p _iqtree/run
+    cd _iqtree/run
+
+
+
+    iqtree -s ../../roary/core_gene_alignment.aln -bb 1000 -nt 8 -wbt
+
+
+
+
+    #Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/ape_newick2pdf.r tree.newick "{title} core genome"  {debug('R')} || touch tree.pdf
+
+
+"""
+    return inputs, outputs, options, spec
+
+
+
+
+
+
+
 
 def quicktree(target_dir, title, names):
     pass
@@ -328,6 +359,9 @@ def send_mail(target_dir, title, names):
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
     awk_command = """awk '{printf("%s %s (%s)\\n", $1, $2, $3)}'"""
     spec = f"""
+
+# back up the environment
+conda env export > 2environment.yml
 
 
 cd {target_dir}/output/{title}

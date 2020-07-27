@@ -117,6 +117,11 @@ gwf.target_from_template(sanify('cmp_roary_' + str(BLASTP) + '_' + title), roary
 # submit fasttree
 gwf.target_from_template(sanify('cmp_fasttree_' + title), fasttree(target_dir, title, len(names)))
 
+# submit iqtree
+gwf.target_from_template(sanify('cmp_iqtree_' + title), iqtree(target_dir, title, len(names)))
+
+
+
 
 # submit roary plots
 gwf.target_from_template(sanify('cmp_roary_plots_' + title), roary_plots(target_dir, title))
