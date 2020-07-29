@@ -24,7 +24,7 @@ def sanify(input):
     for i in str(input):
         
         ascii = ord(i)
-        if (ascii >= 48 and ascii <= 57) or (ascii >= 65 and ascii <= 90) or (ascii >= 97 and ascii <= 122) or ascii == 95:
+        if (ascii >= 48 and ascii <= 57) or (ascii >= 65 and ascii <= 90) or (ascii >= 97 and ascii <= 122) or ascii in [95, 45]:
             output.append(i)
         else:
             output.append('_')
@@ -74,7 +74,7 @@ gwf.target_from_template(sanify('cmp_init_' + title), initialize(title, source_d
         
 names = []
 for raw_name in fasta_files:
-    name = sanify(stem(raw_name))
+    name = sanify(stem(raw_name)) # the name should accept hyphens.
     names.append(name)
     
     #todo: slå copy og prokka sammen?

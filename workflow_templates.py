@@ -254,23 +254,26 @@ Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/ape_newick2pdf.r
 def iqtree(target_dir, title, n):
     # todo: time and mem should depend on number of isolates
     inputs = target_dir + '/output/' + title + '/roary/core_gene_alignment.aln'
-    outputs = [target_dir + '/output/' + title + '/_iqtree/run/something.log',
-               target_dir + '/output/' + title + '/_iqtree/tree.newick',
-               target_dir + '/output/' + title + '/_iqtree/tree.pdf']
+    outputs = [target_dir + '/output/' + title + '/_iqtree/run/core_gene_alignment.fasta.log',
+               target_dir + '/output/' + title + '/_iqtree/run/core_gene_alignment.fasta.treefile',
+
+
+               target_dir + '/output/' + title + '/_iqtree/' + title + '.newick',
+               target_dir + '/output/' + title + '/_iqtree/iqtree_ml_bootstrap.pdf']
     options = {'nodes': 1, 'cores': 8, 'memory': f'{round(n*2, 0)}g', 'walltime': f'{n*1}:00:00', 'account': 'clinicalmicrobio'}
     spec = f"""
     cd {target_dir}/output/{title}
     mkdir -p _iqtree/run
     cd _iqtree/run
 
+    cp ../../roary/core_gene_alignment.aln core_gene_alignment.fasta
 
+    #iqtree -s core_gene_alignment.fasta -bb 1000 -nt 8 -redo
 
-    iqtree -s ../../roary/core_gene_alignment.aln -bb 1000 -nt 8 -wbt
+    cp core_gene_alignment.fasta.treefile ../{title}.newick
+    cd ..
+    Rscript ../../../scripts/R/gg_newick2graphics.r {title}.newick run/core_gene_alignment.fasta.mldist {title}
 
-
-
-
-    #Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/ape_newick2pdf.r tree.newick "{title} core genome"  {debug('R')} || touch tree.pdf
 
 
 """
@@ -350,7 +353,8 @@ def send_mail(target_dir, title, names):
               target_dir + '/output/' + title + '/amr_virulence_summary.tab',
               target_dir + '/output/' + title + '/roary_thresholds.txt',
               target_dir + '/output/' + title + '/cg_snp_dists.tab',
-              target_dir + '/output/' + title + '/core_gene_alignment.fasta']
+              target_dir + '/output/' + title + '/core_gene_alignment.fasta',
+              target_dir + '/output/' + title + '/_iqtree/iqtree_ml_bootstrap.pdf']
     #for name in names:
     #    inputs.append(target_dir + '/output/' + title + '/abricate/' + name)
 
@@ -361,7 +365,7 @@ def send_mail(target_dir, title, names):
     spec = f"""
 
 # back up the environment
-conda env export > 2environment.yml
+conda env export > environment.yml
 
 
 cd {target_dir}/output/{title}
@@ -383,11 +387,6 @@ cat mlst.tsv | sed 's/\/contigs.fa//g' | {awk_command} | column -t >> mail.txt
 
 echo -e "\n" >> mail.txt
 
-echo "Abricate antimicrobial resistance and virulence genes:" >> mail.txt
-#abricate --nopath abricate/* --summary | column -t >> mail.txt
-cat amr_virulence_summary.tab | column -t >> mail.txt
-
-echo -e "\n" >> mail.txt
 
 echo "Roary summary statistics:" >> mail.txt
 cat roary/summary_statistics.txt | column -ts $'\t' >> mail.txt

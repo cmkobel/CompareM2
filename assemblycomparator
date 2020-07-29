@@ -57,25 +57,25 @@ export BLASTP
 
 
 
-
-# Check if .gwf dir exists, and prompt for resubmission.
-if [ -d ".gwf" ]
-then
-    echo ""
-    echo ""
-    echo "${green}Attention${reset}: An analysis on this directory has already been run."
-    read -p " Do you wish resubmit the old analysis? [y/n] " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]
-    then
-        echo " resubmitting..."
-        gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py run || { echo "${red}error in resubmitting (gwf). ${reset}exiting." && exit 1; }
-        exit 0
-        #[[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
-    else
-        echo " user decided not to resubmit."
-    fi
-fi
+# Instead: load environment in each target, and use a shared any2fasta (speed up)
+## Check if .gwf dir exists, and prompt for resubmission.
+#if [ -d ".gwf" ]
+#then
+#    echo ""
+#    echo ""
+#    echo "${green}Notification${reset}: An analysis has already been set up on this directory."
+#    read -p " Do you wish resubmit this? [y/n] " -n 1 -r
+#    echo
+#    if [[ $REPLY =~ ^[Yy]$ ]]
+#    then
+#        echo " resubmitting..."
+#        gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py run || { echo "${red}error in resubmitting (gwf). ${reset}exiting." && exit 1; }
+#        exit 0
+#        #[[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+#    else
+#        echo " user decided not to resubmit."
+#    fi
+#fi
 
 
 
