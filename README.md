@@ -48,8 +48,7 @@ Installation is also not easy, as the code is only supporting a specific Linux/g
   * [snp-dists](https://github.com/tseemann/snp-dists) (core genome snp-distances)
   * [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity
   * [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
-  * ([IQ-tree](http://www.iqtree.org/)) (phylogenetic tree of core genome)
-  * ([RAxML](https://github.com/amkozlov/raxml-ng)) (Tree bootstrapping)
+  * [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
   * (GC3-profiling) ("fingerprint" of the distribution of GC-content)
   * (Identification of horizontally transferred genes)
   
