@@ -17,14 +17,18 @@ gwf = Workflow(defaults={
 })
 
 
-def sanify(input):
+def sanify(input, allow_hyphens = False):
     """ Makes sure that the name of the gwf target is not illegal. """
     output = []
     
+    additional_characters = [95]
+    if allow_hyphens:
+        additional_characters.append(45)
+
     for i in str(input):
         
         ascii = ord(i)
-        if (ascii >= 48 and ascii <= 57) or (ascii >= 65 and ascii <= 90) or (ascii >= 97 and ascii <= 122) or ascii in [95, 45]:
+        if (ascii >= 48 and ascii <= 57) or (ascii >= 65 and ascii <= 90) or (ascii >= 97 and ascii <= 122) or ascii in additional_characters:
             output.append(i)
         else:
             output.append('_')
@@ -74,7 +78,7 @@ gwf.target_from_template(sanify('cmp_init_' + title), initialize(title, source_d
         
 names = []
 for raw_name in fasta_files:
-    name = sanify(stem(raw_name)) # the name should accept hyphens.
+    name = sanify(stem(raw_name), allow_hyphens = True) # the name should accept hyphens.
     names.append(name)
     
     #todo: slå copy og prokka sammen?

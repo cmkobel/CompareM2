@@ -143,7 +143,7 @@ def prokka(target_dir, title, name):
 
     inputs  = target_dir + '/output/' + title + '/' + name + '/contigs.fa' 
     outputs = target_dir + '/output/' + title + '/' + name + '/prokka/' + name + '.gff'
-    options = {'nodes': 1, 'cores': 8, 'memory': '4g', 'walltime': '12:00:00', 'account': 'clinicalmicrobio'} # initially 2 hours
+    options = {'nodes': 1, 'cores': 8, 'memory': '4g', 'walltime': '1-12:00:00', 'account': 'clinicalmicrobio'} # initially 2 hours
     spec = f"""
 
 
@@ -209,7 +209,7 @@ cd {target_dir}/output/{title}
 
 echo "blastp_identity (--blastp) = {str(blastp_identity)}" > roary_thresholds.txt
 
-roary -f roary -e -v -r -p 16 -i {int(blastp_identity)} {ap_string} {' '.join(gffs)} {debug('roary')}
+roary -f roary -e -v -r -p 16 -g 100000 -i {int(blastp_identity)} {ap_string} {' '.join(gffs)} {debug('roary')}
 
 snp-dists roary/core_gene_alignment.aln > cg_snp_dists.tab
 
@@ -268,7 +268,7 @@ def iqtree(target_dir, title, n):
 
     cp ../../roary/core_gene_alignment.aln core_gene_alignment.fasta
 
-    #iqtree -s core_gene_alignment.fasta -bb 1000 -nt 8 -redo
+    iqtree -s core_gene_alignment.fasta -bb 1000 -nt 8 -redo
 
     cp core_gene_alignment.fasta.treefile ../{title}.newick
     cd ..
