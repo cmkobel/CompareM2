@@ -49,7 +49,7 @@ Installation is also not easy, as the code is only supporting a specific Linux/g
   * [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity
   * [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
   * [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
-  * (GC3-profiling) ("fingerprint" of the distribution of GC-content)
+  * (GC3-profiling) ("fingerprinting" of the distribution of GC-content)
   * (Identification of horizontally transferred genes)
   
   
