@@ -107,6 +107,14 @@ rm ../kraken2-table.txt
 cd ../abricate
 abricate --nopath *.tab --summary > ../amr_virulence_summary.tab
 
+#collect all abricate results
+List=$(ls *.tab)
+arr=($List)
+first=${{arr[1]}}
+
+cat $first | grep -E "^#" > abricate_all.tsv
+cat *.tab | grep -vE "^#" >> abricate_all.tsv
+
 
 """
     return inputs, outputs, options, spec
