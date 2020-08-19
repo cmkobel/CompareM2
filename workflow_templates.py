@@ -84,10 +84,11 @@ def summary_tables(target_dir, title, names):
     inputs = []
     for name in names:
         inputs.append(target_dir + '/output/' + title + '/kraken2/' + name + '_report.txt')
-        inputs.append(target_dir + '/output/' + title + '/abricate/' + name + '.tab')
+        inputs.append(target_dir + '/output/' + title + '/abricate/isolates/ncbi_' + name + '.tab')
 
 
     outputs = [target_dir + '/output/' + title + '/kraken2-table.txt',
+               target_dir + '/output/' + title + '/abricate/abricate_ncbi_summary.tab',
                target_dir + '/output/' + title + '/amr_virulence_summary.tab']
                 
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
@@ -137,7 +138,8 @@ cp abricate_ncbi_summary.tab ../amr_virulence_summary.tab
 
 def abricate(target_dir, title, name):
     inputs = target_dir + '/output/' + title + '/' + name + '/contigs.fa'
-    outputs = target_dir + '/output/' + title + '/abricate/' + name + '.tab'
+    outputs = [target_dir + '/output/' + title + '/abricate/isolates/ncbi_' + name + '.tab']
+               #target_dir + '/output/' + title + '/abricate/' + name + '.tab']
     options = {'nodes': 1, 'cores': 1, 'memory': '8g', 'walltime': '1:00:00', 'account': 'clinicalmicrobio'}
     spec = f"""
 cd {target_dir}/output/{title}
