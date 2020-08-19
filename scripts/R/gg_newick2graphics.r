@@ -19,7 +19,9 @@ cat("mldist_file:", mldist_file, "\n")
 tree <- read.tree(newick_file)
 
 
-height = max(7, length(tree$tip.label)/1.2)
+height = max(7, length(tree$tip.label)/1.2) #minimum 7
+height = min(height, 50) # maximum 50
+
 width = max(6, height/1.5)
 
 
@@ -39,7 +41,7 @@ p2 +
 
 
 
-ggsave(paste0("iqtree_ml_bootstrap.pdf"), plot = p2, width = width, height = height)
+ggsave(paste0("iqtree_ml_bootstrap.pdf"), plot = p2, width = width, height = height, limitsize = F)
 
 
 
@@ -77,7 +79,7 @@ tmp %>% ggplot(aes(distance, fill = pairs)) +
     #geom_text(aes(x = distance, y = stat(count), label = pairs))
     labs(title = "Histogram of distances", 
          x = "maximum likelihood distance") +
-ggsave(paste0(title, "_histogram.pdf"))
+ggsave(paste0(title, "_histogram.pdf"), limitsize = F)
 
 
 # manual hist
@@ -103,7 +105,7 @@ a %>% summarize(dist = mean(distance), n = length(distance)) %>%
     #              color = "red", width = space)
 
     
-ggsave(paste0(title, "_histogram2.pdf"))
+ggsave(paste0(title, "_histogram2.pdf"), limitsize = F)
     
 
 
@@ -113,5 +115,5 @@ tmp %>% ggplot(aes(x = pairs, y = distance)) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
     labs(title = "Sorted pairwise distances",
          y = "maximum likelihood distance") +
-ggsave(paste0(title, "_distances.pdf"))
+ggsave(paste0(title, "_distances.pdf"), limitsize = F)
 

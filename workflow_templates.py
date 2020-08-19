@@ -105,15 +105,29 @@ rm ../kraken2-table.txt
 {command}
 
 cd ../abricate
-abricate --nopath *.tab --summary > ../amr_virulence_summary.tab
+#abricate --nopath *.tab --summary > ../amr_virulence_summary.tab
 
-#collect all abricate results
-List=$(ls *.tab)
-arr=($List)
-first=${{arr[1]}}
+abricate --nopath isolates/plasmidfinder_*.tab --summary > abricate_plasmidfinder_summary.tab
+abricate --nopath isolates/ecoli_vf_*.tab --summary > abricate_ecoli_vf_summary.tab
+abricate --nopath isolates/ncbi_*.tab --summary > abricate_ncbi_summary.tab
+abricate --nopath isolates/resfinder_*.tab --summary > abricate_resfinder_summary.tab
+abricate --nopath isolates/argannot_*.tab --summary > abricate_argannot_summary.tab
+abricate --nopath isolates/vfdb_*.tab --summary > abricate_vfdb_summary.tab
+abricate --nopath isolates/megares_*.tab --summary > abricate_megares_summary.tab
+abricate --nopath isolates/ecoh_*.tab --summary > abricate_ecoh_summary.tab
+abricate --nopath isolates/card_*.tab --summary > abricate_card_summary.tab
 
-cat $first | grep -E "^#" > abricate_all.tsv
-cat *.tab | grep -vE "^#" >> abricate_all.tsv
+cp abricate_ncbi_summary.tab ../amr_virulence_summary.tab
+
+
+
+# #collect all abricate results
+# List=$(ls *.tab)
+# arr=($List)
+# first=${{arr[1]}}
+# 
+# cat $first | grep -E "^#" > abricate_all.tsv
+# cat *.tab | grep -vE "^#" >> abricate_all.tsv
 
 
 """
@@ -130,11 +144,39 @@ cd {target_dir}/output/{title}
 
 
 
-mkdir -p abricate
-cd abricate
-cp ../{name}/contigs.fa {name}.fa
+mkdir -p abricate/isolates
+cd abricate/isolates
+cp ../../{name}/contigs.fa {name}.fa
 
-abricate {name}.fa > {name}.tab
+
+
+
+echo "starting plasmidfinder abrication"
+abricate --db plasmidfinder {name}.fa > plasmidfinder_{name}.tab
+
+echo "starting ecoli_vf abrication"
+abricate --db ecoli_vf {name}.fa > ecoli_vf_{name}.tab
+
+echo "starting ncbi abrication"
+abricate --db ncbi {name}.fa > ncbi_{name}.tab
+
+echo "starting resfinder abrication"
+abricate --db resfinder {name}.fa > resfinder_{name}.tab
+
+echo "starting argannot abrication"
+abricate --db argannot {name}.fa > argannot_{name}.tab
+
+echo "starting vfdb abrication"
+abricate --db vfdb {name}.fa > vfdb_{name}.tab
+
+echo "starting megares abrication"
+abricate --db megares {name}.fa > megares_{name}.tab
+
+echo "starting ecoh abrication"
+abricate --db ecoh {name}.fa > ecoh_{name}.tab
+
+echo "starting card abrication"
+abricate --db card {name}.fa > card_{name}.tab
 
 
 

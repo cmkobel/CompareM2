@@ -107,7 +107,7 @@ echo
 
 
 #[ -d "$TARGET_DIR/output/$curr_dir_name" ] && echo -e "${purple}Attention:${reset} This folder already exists in the output directory. Proceed only if the contents are comparable.\n"
-
+read -t 1 -n 10000 discard # Clears stdin before read
 read -p "Do you wish to proceed? [y/n] " -n 1 -r
 echo    # (optional) move to a new line
 if [[ ! $REPLY =~ ^[Yy]$ ]]
@@ -116,29 +116,41 @@ then
     [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
 fi
 echo " proceeding..."
-echo " activating environment..." 
+printf " activating environment |"
 #source ~/miniconda3/etc/profile.d/conda.sh
 # todo: use the COMPARATOR_CONDA_ENV global instead of hardcoding. Make sure it is installed at NNLs user
 
 source /faststorage/project/ClinicalMicrobio/compare/environment/etc/profile.d/conda.sh
+printf "\b/"
 conda activate comparator 
+printf "\b\b..."
+echo
+echo
 
 #conda activate /faststorage/project/ClinicalMicrobio/compare/environment
 
+read -t 1 -n 10000 discard # Clears stdin before read
+read -p "Do you wish to validate the assembly files? (recommended, but slow) [y/n] " -n 1 -r
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    
+    # Todo: run in parallel
+    printf " validating assembly files   "
+    i=1
+    sp="/-\|"
+    for f in *; do printf "\b\b\b ${sp:i++%${#sp}:1} "; any2fasta -q "$f" > /dev/null || { echo -e "  file: ${bold}$f${reset}\n${red}error in any2fasta. ${reset} exiting." && exit 1; }; done
+    #ls * | parallel 'any2fasta -q {} >/dev/null || printf "\n${red}Error${reset}: {} is not a valid assembly file: "; exit 1; return 1' #|| { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }
+    #ls * | parallel 'hay="{}" && any2fasta -q {} >/dev/null 2>ac_a2ferr.txt' && echo YES || { echo "$hay ${red}error in any2fasta. ${reset} exiting." && exit 1; }
 
+    printf "\b\b\b..."
 
-# Todo: run in parallel
-printf " validating assembly files   "
-i=1
-sp="/-\|"
-for f in *; do printf "\b\b\b ${sp:i++%${#sp}:1} "; any2fasta -q "$f" > /dev/null || { echo -e "  file: ${bold}$f${reset}\n${red}error in any2fasta. ${reset} exiting." && exit 1; }; done
-#ls * | parallel 'any2fasta -q {} >/dev/null || printf "\n${red}Error${reset}: {} is not a valid assembly file: "; exit 1; return 1' #|| { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }
-#ls * | parallel 'hay="{}" && any2fasta -q {} >/dev/null 2>ac_a2ferr.txt' && echo YES || { echo "$hay ${red}error in any2fasta. ${reset} exiting." && exit 1; }
+    echo
 
-printf "\b\b\b..."
+else
+    echo " skipping validation step"
 
-echo
-
+fi
 
 
 # Throw out the user if they are trying to run from the compare/input/ directory
@@ -169,6 +181,7 @@ gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py status
 
 # prompt the user.
 echo ""
+read -t 1 -n 10000 discard # Clears stdin before read
 read -p "Do you wish to submit this job list? [y/n] " -n 1 -r
 echo    # (optional) move to a new line
 if [[ $REPLY =~ ^[Yy]$ ]]
@@ -182,7 +195,7 @@ then
     echo ""
     echo "When the pipeline is done, the output will reside in:"
     echo "    /project/ClinicalMicrobio/faststorage/compare/output/$curr_dir_name"
-    echo "and an email will be sent to:"
+    echo "and upon successful completion, an email will be sent to:"
     echo "    $COMPARATOR_DEFAULT_EMAIL_ADDRESS"
     echo ""
     echo "Please check the status of the pipeline by running the following command:"

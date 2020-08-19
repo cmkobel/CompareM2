@@ -52,6 +52,7 @@ fasta_files = []
 
 
 fasta_files = [f for f in os.listdir(source_dir) if isfile(join(f))]
+n_samples = len(fasta_files)
 
 # This is taken care of from the bash script
 #print('These are the files considered:')
@@ -75,7 +76,7 @@ for file in os.listdir(source_dir):
 # Initialize
 #print(dir(gwf))
 gwf.target_from_template(sanify('cmp_init_' + title), initialize(title, source_dir, target_dir))
-        
+    
 names = []
 for raw_name in fasta_files:
     name = sanify(stem(raw_name), allow_hyphens = True) # the name should accept hyphens.

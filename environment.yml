@@ -10,7 +10,7 @@ channels:
 dependencies:
   - _libgcc_mutex=0.1=main
   - _r-mutex=1.0.1=anacondar_1
-  - abricate=0.9.8=h1341992_0
+  - abricate=1.0.1=h1341992_0
   - any2fasta=0.4.2=2
   - aragorn=1.2.38=h470a237_2
   - barrnap=0.9=3
@@ -113,7 +113,7 @@ dependencies:
   - olefile=0.46=py_0
   - openjdk=11.0.1=h516909a_1016
   - openmp=8.0.1=0
-  - openssl=1.1.1g=h516909a_0
+  - openssl=1.1.1g=h516909a_1
   - paml=4.9=h516909a_5
   - pandas=0.25.3=py37hb3f55d8_0
   - pango=1.42.4=ha030887_1
