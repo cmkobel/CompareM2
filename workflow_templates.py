@@ -79,17 +79,18 @@ rm {name}.fa
     return inputs, outputs, options, spec
 
 
-def summary_tables(target_dir, title, names):
+
+
+
+def summary_kraken(target_dir, title, names):
     #inputs = [target_dir + '/output/' + title + '/kraken2/' + name + '_report.txt' for name in names]
     inputs = []
     for name in names:
         inputs.append(target_dir + '/output/' + title + '/kraken2/' + name + '_report.txt')
-        inputs.append(target_dir + '/output/' + title + '/abricate/isolates/ncbi_' + name + '.tab')
+        
 
 
-    outputs = [target_dir + '/output/' + title + '/kraken2-table.txt',
-               target_dir + '/output/' + title + '/abricate/abricate_ncbi_summary.tab',
-               target_dir + '/output/' + title + '/amr_virulence_summary.tab']
+    outputs = [target_dir + '/output/' + title + '/kraken2-table.txt']
                 
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
 
@@ -97,6 +98,7 @@ def summary_tables(target_dir, title, names):
     #kraken_reads_top_command = """awk '$4 ~ "^S$" {printf("%05.2f\\t%s %s %s %s\\n", $1, $6, $7, $8, $9)}'"""
     
     spec = f"""
+
 cd {target_dir}/output/{title}/kraken2
 
 # delete possibly old file.
@@ -105,7 +107,27 @@ rm ../kraken2-table.txt
 
 {command}
 
-cd ../abricate
+
+"""
+    return inputs, outputs, options, spec
+
+def summary_abricate(target_dir, title, names):
+    #inputs = [target_dir + '/output/' + title + '/kraken2/' + name + '_report.txt' for name in names]
+    inputs = []
+    for name in names:
+        inputs.append(target_dir + '/output/' + title + '/abricate/isolates/ncbi_' + name + '.tab')
+
+
+    outputs = [target_dir + '/output/' + title + '/abricate/abricate_ncbi_summary.tab',
+               target_dir + '/output/' + title + '/amr_virulence_summary.tab']
+                
+    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
+
+    
+    spec = f"""
+
+cd {target_dir}/output/{title}/abricate
+
 #abricate --nopath *.tab --summary > ../amr_virulence_summary.tab
 
 abricate --nopath isolates/plasmidfinder_*.tab --summary > abricate_plasmidfinder_summary.tab
@@ -416,8 +438,7 @@ def send_mail(target_dir, title, names):
     awk_command = """awk '{printf("%s %s (%s)\\n", $1, $2, $3)}'"""
     spec = f"""
 
-# back up the environment
-conda env export > environment.yml
+
 
 
 cd {target_dir}/output/{title}

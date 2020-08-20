@@ -199,8 +199,8 @@ then
     echo "    $COMPARATOR_DEFAULT_EMAIL_ADDRESS"
     echo ""
     echo "Please check the status of the pipeline by running the following command:"
-    echo "    mj"
-    mj
+    echo "    sacct"
+    sacct | grep cmp_
 else
     echo "${orange}user left${reset}"
 
