@@ -3,11 +3,11 @@
 # Installs assemblycomparator for the user
 
 
-echo "source /faststorage/project/ClinicalMicrobio/compare/environment/etc/profile.d/conda.sh" >> ~/.bash_profile
-echo "conda activate comparator" >> ~/.bash_profile
+#echo "source /faststorage/project/ClinicalMicrobio/compare/environment/etc/profile.d/conda.sh" >> ~/.bash_profile
+#echo "conda activate comparator" >> ~/.bash_profile
 
 echo "export PATH=/project/ClinicalMicrobio/faststorage/compare/:\$PATH" >> ~/.bashrc
-echo "export COMPARATOR_CONDA_ENV = /faststorage/project/ClinicalMicrobio/compare/environment" >> ~/.bashrc
+echo "export COMPARATOR_CONDA_ENV=/faststorage/project/ClinicalMicrobio/compare/environment" >> ~/.bashrc
 
 
 
