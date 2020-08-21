@@ -14,6 +14,10 @@ def debug(title = ''):
 		return ""
 
 
+environment = """\
+source /faststorage/project/ClinicalMicrobio/compare/environment/etc/profile.d/conda.sh
+conda activate comparator"""
+
 
 
 
@@ -31,13 +35,15 @@ def initialize(title, source_dir, target_dir):
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '0:02:00',  'account': 'clinicalmicrobio'}
     spec = f"""
 
-mkdir -p {target_dir}/output/{title}
-cd {target_dir}/output/{title}
+        {environment}
 
-#echo "started3" >> initialized.txt {debug('init')}
+        mkdir -p {target_dir}/output/{title}
+        cd {target_dir}/output/{title}
 
+        #echo "started3" >> initialized.txt {debug('init')}
 
-"""
+    """
+    
     return inputs, outputs, options, spec
 
 
@@ -48,11 +54,14 @@ def copy(source, target_dir, title, name):
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '0:05:00',  'account': 'clinicalmicrobio'}
     spec = f"""
 
-mkdir -p {target_dir + '/output/' + title + '/' + name}
-any2fasta "{source}" | /project/ClinicalMicrobio/faststorage/compare/scripts/py/fasta_shorten_headers.py > {target_dir + '/output/' + title + '/' + name}/contigs.fa
+        {environment}
+
+        mkdir -p {target_dir + '/output/' + title + '/' + name}
+        any2fasta "{source}" | /project/ClinicalMicrobio/faststorage/compare/scripts/py/fasta_shorten_headers.py > {target_dir + '/output/' + title + '/' + name}/contigs.fa
 
 
-"""
+    """
+
     return inputs, outputs, options, spec
  
 
@@ -61,18 +70,19 @@ def kraken2(target_dir, title, name):
     outputs = target_dir + '/output/' + title + '/kraken2/' + name + '_report.txt'
     options = {'nodes': 1, 'cores': 1, 'memory': '8g', 'walltime': '1:00:00', 'account': 'clinicalmicrobio'}
     spec = f"""
-cd {target_dir}/output/{title}
 
-mkdir -p kraken2
-cd kraken2
+        {environment}
 
+        cd {target_dir}/output/{title}
 
+        mkdir -p kraken2
+        cd kraken2
 
-cp ../{name}/contigs.fa {name}.fa
+        cp ../{name}/contigs.fa {name}.fa
 
-kraken2 --db /project/ClinicalMicrobio/faststorage/database/minikraken_8GB_20200312 --report {name}_report.txt {name}.fa > /dev/null 2> /dev/null
+        kraken2 --db /project/ClinicalMicrobio/faststorage/database/minikraken_8GB_20200312 --report {name}_report.txt {name}.fa > /dev/null 2> /dev/null
 
-rm {name}.fa
+        rm {name}.fa
 
 
     """
@@ -99,16 +109,18 @@ def summary_kraken(target_dir, title, names):
     
     spec = f"""
 
-cd {target_dir}/output/{title}/kraken2
+        {environment}
 
-# delete possibly old file.
-touch ../kraken2-table.txt
-rm ../kraken2-table.txt
+        cd {target_dir}/output/{title}/kraken2
 
-{command}
+        # delete possibly old file.
+        touch ../kraken2-table.txt
+        rm ../kraken2-table.txt
 
+        {command}
 
-"""
+    """
+
     return inputs, outputs, options, spec
 
 def summary_abricate(target_dir, title, names):
@@ -126,34 +138,37 @@ def summary_abricate(target_dir, title, names):
     
     spec = f"""
 
-cd {target_dir}/output/{title}/abricate
+        {environment}
 
-#abricate --nopath *.tab --summary > ../amr_virulence_summary.tab
+        cd {target_dir}/output/{title}/abricate
 
-abricate --nopath isolates/plasmidfinder_*.tab --summary > abricate_plasmidfinder_summary.tab
-abricate --nopath isolates/ecoli_vf_*.tab --summary > abricate_ecoli_vf_summary.tab
-abricate --nopath isolates/ncbi_*.tab --summary > abricate_ncbi_summary.tab
-abricate --nopath isolates/resfinder_*.tab --summary > abricate_resfinder_summary.tab
-abricate --nopath isolates/argannot_*.tab --summary > abricate_argannot_summary.tab
-abricate --nopath isolates/vfdb_*.tab --summary > abricate_vfdb_summary.tab
-abricate --nopath isolates/megares_*.tab --summary > abricate_megares_summary.tab
-abricate --nopath isolates/ecoh_*.tab --summary > abricate_ecoh_summary.tab
-abricate --nopath isolates/card_*.tab --summary > abricate_card_summary.tab
+        #abricate --nopath *.tab --summary > ../amr_virulence_summary.tab
 
-cp abricate_ncbi_summary.tab ../amr_virulence_summary.tab
+        abricate --nopath isolates/plasmidfinder_*.tab --summary > abricate_plasmidfinder_summary.tab
+        abricate --nopath isolates/ecoli_vf_*.tab --summary > abricate_ecoli_vf_summary.tab
+        abricate --nopath isolates/ncbi_*.tab --summary > abricate_ncbi_summary.tab
+        abricate --nopath isolates/resfinder_*.tab --summary > abricate_resfinder_summary.tab
+        abricate --nopath isolates/argannot_*.tab --summary > abricate_argannot_summary.tab
+        abricate --nopath isolates/vfdb_*.tab --summary > abricate_vfdb_summary.tab
+        abricate --nopath isolates/megares_*.tab --summary > abricate_megares_summary.tab
+        abricate --nopath isolates/ecoh_*.tab --summary > abricate_ecoh_summary.tab
+        abricate --nopath isolates/card_*.tab --summary > abricate_card_summary.tab
 
-
-
-# #collect all abricate results
-# List=$(ls *.tab)
-# arr=($List)
-# first=${{arr[1]}}
-# 
-# cat $first | grep -E "^#" > abricate_all.tsv
-# cat *.tab | grep -vE "^#" >> abricate_all.tsv
+        cp abricate_ncbi_summary.tab ../amr_virulence_summary.tab
 
 
-"""
+
+        # #collect all abricate results
+        # List=$(ls *.tab)
+        # arr=($List)
+        # first=${{arr[1]}}
+        # 
+        # cat $first | grep -E "^#" > abricate_all.tsv
+        # cat *.tab | grep -vE "^#" >> abricate_all.tsv
+
+
+    """
+
     return inputs, outputs, options, spec
     
 
@@ -164,49 +179,54 @@ def abricate(target_dir, title, name):
                #target_dir + '/output/' + title + '/abricate/' + name + '.tab']
     options = {'nodes': 1, 'cores': 1, 'memory': '8g', 'walltime': '1:00:00', 'account': 'clinicalmicrobio'}
     spec = f"""
-cd {target_dir}/output/{title}
+
+        {environment}
+
+
+        cd {target_dir}/output/{title}
 
 
 
-mkdir -p abricate/isolates
-cd abricate/isolates
-cp ../../{name}/contigs.fa {name}.fa
+        mkdir -p abricate/isolates
+        cd abricate/isolates
+        cp ../../{name}/contigs.fa {name}.fa
 
 
 
 
-echo "starting plasmidfinder abrication"
-abricate --db plasmidfinder {name}.fa > plasmidfinder_{name}.tab
+        echo "starting plasmidfinder abrication"
+        abricate --db plasmidfinder {name}.fa > plasmidfinder_{name}.tab
 
-echo "starting ecoli_vf abrication"
-abricate --db ecoli_vf {name}.fa > ecoli_vf_{name}.tab
+        echo "starting ecoli_vf abrication"
+        abricate --db ecoli_vf {name}.fa > ecoli_vf_{name}.tab
 
-echo "starting ncbi abrication"
-abricate --db ncbi {name}.fa > ncbi_{name}.tab
+        echo "starting ncbi abrication"
+        abricate --db ncbi {name}.fa > ncbi_{name}.tab
 
-echo "starting resfinder abrication"
-abricate --db resfinder {name}.fa > resfinder_{name}.tab
+        echo "starting resfinder abrication"
+        abricate --db resfinder {name}.fa > resfinder_{name}.tab
 
-echo "starting argannot abrication"
-abricate --db argannot {name}.fa > argannot_{name}.tab
+        echo "starting argannot abrication"
+        abricate --db argannot {name}.fa > argannot_{name}.tab
 
-echo "starting vfdb abrication"
-abricate --db vfdb {name}.fa > vfdb_{name}.tab
+        echo "starting vfdb abrication"
+        abricate --db vfdb {name}.fa > vfdb_{name}.tab
 
-echo "starting megares abrication"
-abricate --db megares {name}.fa > megares_{name}.tab
+        echo "starting megares abrication"
+        abricate --db megares {name}.fa > megares_{name}.tab
 
-echo "starting ecoh abrication"
-abricate --db ecoh {name}.fa > ecoh_{name}.tab
+        echo "starting ecoh abrication"
+        abricate --db ecoh {name}.fa > ecoh_{name}.tab
 
-echo "starting card abrication"
-abricate --db card {name}.fa > card_{name}.tab
+        echo "starting card abrication"
+        abricate --db card {name}.fa > card_{name}.tab
 
 
 
-rm {name}.fa
+        rm {name}.fa
 
-"""
+    """
+
     return inputs, outputs, options, spec
 
 
@@ -220,16 +240,18 @@ def prokka(target_dir, title, name):
     options = {'nodes': 1, 'cores': 8, 'memory': '4g', 'walltime': '1-12:00:00', 'account': 'clinicalmicrobio'} # initially 2 hours
     spec = f"""
 
+        {environment}
 
-cd {target_dir}/output/{title}/{name}
+
+        cd {target_dir}/output/{title}/{name}
 
 
-prokka --cpu 8 --force --outdir prokka --prefix {name} contigs.fa {debug('prokka')}
+        prokka --cpu 8 --force --outdir prokka --prefix {name} contigs.fa {debug('prokka')}
 
-cp prokka/*.gff annotation.gff
+        cp prokka/*.gff annotation.gff
 
-"""
-    
+    """
+            
     return inputs, outputs , options, spec
 
 
@@ -241,14 +263,16 @@ def mlst(target_dir, title, contigs):
     options = {'nodes': 1, 'cores': 2, 'memory': '4g', 'walltime': '01:00:00',  'account': 'clinicalmicrobio'}
     spec = f'''
 
+        {environment}
 
-cd {target_dir}/output/{title}
-#mkdir mlst
+        cd {target_dir}/output/{title}
+        #mkdir mlst
 
 
-mlst {' '.join(contigs)} > mlst.tsv {debug('mlst')}
+        mlst {' '.join(contigs)} > mlst.tsv {debug('mlst')}
 
-'''
+    '''
+
     return (inputs, outputs, options, spec)	
 
 
@@ -278,24 +302,28 @@ def roary(target_dir, title, gffs, blastp_identity = 95, allow_paralogs = False)
     options = {'nodes': 1, 'cores': 16, 'memory': f'{ram}g', 'walltime': f'{hours}:00:00', 'account': 'ClinicalMicrobio'}
     spec = f'''
 
-
-cd {target_dir}/output/{title}
-
-echo "blastp_identity (--blastp) = {str(blastp_identity)}" > roary_thresholds.txt
-
-roary -f roary -e -v -r -p 16 -g 100000 -i {int(blastp_identity)} {ap_string} {' '.join(gffs)} {debug('roary')}
-
-snp-dists roary/core_gene_alignment.aln > cg_snp_dists.tab
-
-cp roary/core_gene_alignment.aln core_gene_alignment.fasta
+        {environment}
 
 
-touch roary/blastp_{str(BLASTP)}.setting
+        cd {target_dir}/output/{title}
+
+        echo "blastp_identity (--blastp) = {str(blastp_identity)}" > roary_thresholds.txt
+
+        roary -f roary -e -v -r -p 16 -g 100000 -i {int(blastp_identity)} {ap_string} {' '.join(gffs)} {debug('roary')}
+
+        snp-dists roary/core_gene_alignment.aln > cg_snp_dists.tab
+
+        cp roary/core_gene_alignment.aln core_gene_alignment.fasta
 
 
-echo JOBID $SLURM_JOBID
-jobinfo $SLURM_JOBID
-'''
+        touch roary/blastp_{str(BLASTP)}.setting
+
+
+        echo JOBID $SLURM_JOBID
+        jobinfo $SLURM_JOBID
+
+    '''
+
     return (inputs, outputs, options, spec)
 
 
@@ -306,22 +334,24 @@ def fasttree(target_dir, title, n):
                target_dir + '/output/' + title + '/fasttree/tree.pdf']
     options = {'nodes': 1, 'cores': 8, 'memory': f'{round(n*2, 0)}g', 'walltime': f'{n*60}:00', 'account': 'clinicalmicrobio'}
     spec = f"""
-cd {target_dir}/output/{title}
-mkdir -p fasttree
-cd fasttree
+
+        {environment}
 
 
+        cd {target_dir}/output/{title}
+        mkdir -p fasttree
+        cd fasttree
 
 
-FastTree -nt -gtr ../roary/core_gene_alignment.aln > tree.newick 2> ft.log #{debug('ft')}
+        FastTree -nt -gtr ../roary/core_gene_alignment.aln > tree.newick 2> ft.log #{debug('ft')}
 
 
+        Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/ape_newick2pdf.r tree.newick "{title} core genome"  {debug('R')} || touch tree.pdf
 
-Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/ape_newick2pdf.r tree.newick "{title} core genome"  {debug('R')} || touch tree.pdf
+    """
 
-
-"""
     return inputs, outputs, options, spec
+
 
 
 
@@ -336,21 +366,23 @@ def iqtree(target_dir, title, n):
                target_dir + '/output/' + title + '/_iqtree/iqtree_ml_bootstrap.pdf']
     options = {'nodes': 1, 'cores': 8, 'memory': f'{round(n*2, 0)}g', 'walltime': f'{n*1}:00:00', 'account': 'clinicalmicrobio'}
     spec = f"""
-    cd {target_dir}/output/{title}
-    mkdir -p _iqtree/run
-    cd _iqtree/run
 
-    cp ../../roary/core_gene_alignment.aln core_gene_alignment.fasta
+        {environment}
 
-    iqtree -s core_gene_alignment.fasta -bb 1000 -nt 8 -redo
+        cd {target_dir}/output/{title}
+        mkdir -p _iqtree/run
+        cd _iqtree/run
 
-    cp core_gene_alignment.fasta.treefile ../{title}.newick
-    cd ..
-    Rscript ../../../scripts/R/gg_newick2graphics.r {title}.newick run/core_gene_alignment.fasta.mldist {title}
+        cp ../../roary/core_gene_alignment.aln core_gene_alignment.fasta
 
+        iqtree -s core_gene_alignment.fasta -bb 1000 -nt 8 -redo
 
+        cp core_gene_alignment.fasta.treefile ../{title}.newick
+        cd ..
+        Rscript ../../../scripts/R/gg_newick2graphics.r {title}.newick run/core_gene_alignment.fasta.mldist {title}
 
-"""
+    """
+
     return inputs, outputs, options, spec
 
 
@@ -377,18 +409,22 @@ def roary_plots(target_dir, title):
     #
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
     spec = f'''
-cd {target_dir}/output/{title}
-mkdir -p roary_plots
-cd roary_plots
+
+        {environment}
+
+        cd {target_dir}/output/{title}
+        mkdir -p roary_plots
+        cd roary_plots
 
 
 
-python {script_file} ../fasttree/tree.newick ../roary/gene_presence_absence.csv 
+        python {script_file} ../fasttree/tree.newick ../roary/gene_presence_absence.csv 
 
-perl {target_dir}/scripts/perl/roary2svg.pl ../roary/gene_presence_absence.csv > pangenome_matrix_alternative.svg
-cairosvg pangenome_matrix_alternative.svg -o pangenome_matrix_alternative.pdf
+        perl {target_dir}/scripts/perl/roary2svg.pl ../roary/gene_presence_absence.csv > pangenome_matrix_alternative.svg
+        cairosvg pangenome_matrix_alternative.svg -o pangenome_matrix_alternative.pdf
 
-'''
+    '''
+
     return inputs, outputs, options, spec
 
 
@@ -400,15 +436,18 @@ def panito(target_dir, title):
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
     spec = f'''
 
-cd {target_dir}/output/{title}
-mkdir -p panito
-cd panito
-
-panito {inputs[0]} > ani.tsv {debug('panito')}
-Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/aniplot.r ani.tsv {inputs[1]} {debug('r_panito')}
+        {environment}
 
 
-'''
+        cd {target_dir}/output/{title}
+        mkdir -p panito
+        cd panito
+
+        panito {inputs[0]} > ani.tsv {debug('panito')}
+        Rscript /project/ClinicalMicrobio/faststorage/compare/scripts/R/aniplot.r ani.tsv {inputs[1]} {debug('r_panito')}
+
+    '''
+
     return inputs, outputs, options, spec
 
 
@@ -438,63 +477,66 @@ def send_mail(target_dir, title, names):
     awk_command = """awk '{printf("%s %s (%s)\\n", $1, $2, $3)}'"""
     spec = f"""
 
-
-
-
-cd {target_dir}/output/{title}
-
-
-
-echo "this is the email address collected in assemblycomparator through finger"
-echo $COMPARATOR_DEFAULT_EMAIL_ADDRESS
-
-# collect mail content
-
-
-echo -e "Assembly Comparator results for {title}" > mail.txt
-
-echo -e "\n" >> mail.txt
-
-echo -e "MLST results:" >> mail.txt
-cat mlst.tsv | sed 's/\/contigs.fa//g' | {awk_command} | column -t >> mail.txt
-
-echo -e "\n" >> mail.txt
-
-
-echo "Roary summary statistics:" >> mail.txt
-cat roary/summary_statistics.txt | column -ts $'\t' >> mail.txt
-cat roary_thresholds.txt | grep "blastp" >> mail.txt
-
-echo -e "\n" >> mail.txt
-
-echo -e "Top 3 kraken results:" >> mail.txt
-
-cat kraken2-table.txt >> mail.txt
-
-
-echo -e "\n" >> mail.txt
-
-
-echo -e "A few small output files from the pipeline have been attached in the zip-file" >> mail.txt
-echo -e "To access the full analysis, please visit /project/ClinicalMicrobio/faststorage/compare/output/{title} on GenomeDK." >> mail.txt
+        {environment}
 
 
 
 
-zip -j {title}.zip {' '.join(inputs)}
-
-
-mail -v -s "[comparator] done: {title}" -a {title}.zip -q mail.txt $COMPARATOR_DEFAULT_EMAIL_ADDRESS <<< "" 
+        cd {target_dir}/output/{title}
 
 
 
-rm {title}.zip
+        echo "this is the email address collected in assemblycomparator through finger"
+        echo $COMPARATOR_DEFAULT_EMAIL_ADDRESS
 
-echo $(date) $COMPARATOR_DEFAULT_EMAIL_ADDRESS >> mailsent
+        # collect mail content
+
+
+        echo -e "Assembly Comparator results for {title}" > mail.txt
+
+        echo -e "\n" >> mail.txt
+
+        echo -e "MLST results:" >> mail.txt
+        cat mlst.tsv | sed 's/\/contigs.fa//g' | {awk_command} | column -t >> mail.txt
+
+        echo -e "\n" >> mail.txt
+
+
+        echo "Roary summary statistics:" >> mail.txt
+        cat roary/summary_statistics.txt | column -ts $'\t' >> mail.txt
+        cat roary_thresholds.txt | grep "blastp" >> mail.txt
+
+        echo -e "\n" >> mail.txt
+
+        echo -e "Top 3 kraken results:" >> mail.txt
+
+        cat kraken2-table.txt >> mail.txt
+
+
+        echo -e "\n" >> mail.txt
+
+
+        echo -e "A few small output files from the pipeline have been attached in the zip-file" >> mail.txt
+        echo -e "To access the full analysis, please visit /project/ClinicalMicrobio/faststorage/compare/output/{title} on GenomeDK." >> mail.txt
+
+
+
+
+        zip -j {title}.zip {' '.join(inputs)}
+
+
+        mail -v -s "[comparator] done: {title}" -a {title}.zip -q mail.txt $COMPARATOR_DEFAULT_EMAIL_ADDRESS <<< "" 
+
+
+
+        rm {title}.zip
+
+        echo $(date) $COMPARATOR_DEFAULT_EMAIL_ADDRESS >> mailsent
 
 
 
     """
+
     #inputs.append(target_dir + '/output/' + title + '/completed_abricate')
     return inputs, outputs, options, spec
 

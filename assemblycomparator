@@ -116,16 +116,16 @@ then
     [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
 fi
 echo " proceeding..."
-printf " activating environment |"
-#source ~/miniconda3/etc/profile.d/conda.sh
-# todo: use the COMPARATOR_CONDA_ENV global instead of hardcoding. Make sure it is installed at NNLs user
-
-source /faststorage/project/ClinicalMicrobio/compare/environment/etc/profile.d/conda.sh
-printf "\b/"
-conda activate comparator 
-printf "\b\b..."
-echo
-echo
+# printf " activating environment |"
+# #source ~/miniconda3/etc/profile.d/conda.sh
+# # todo: use the COMPARATOR_CONDA_ENV global instead of hardcoding. Make sure it is installed at NNLs user
+# 
+# source /faststorage/project/ClinicalMicrobio/compare/environment/etc/profile.d/conda.sh
+# printf "\b/"
+# conda activate comparator 
+# printf "\b\b..."
+# echo
+# echo
 
 #conda activate /faststorage/project/ClinicalMicrobio/compare/environment
 
@@ -139,7 +139,7 @@ then
     printf " validating assembly files   "
     i=1
     sp="/-\|"
-    for f in *; do printf "\b\b\b ${sp:i++%${#sp}:1} "; any2fasta -q "$f" > /dev/null || { echo -e "  file: ${bold}$f${reset}\n${red}error in any2fasta. ${reset} exiting." && exit 1; }; done
+    for f in *; do printf "\b\b\b ${sp:i++%${#sp}:1} "; /project/ClinicalMicrobio/faststorage/compare/environment/envs/comparator/bin/any2fasta -q "$f" > /dev/null || { echo -e "  file: ${bold}$f${reset}\n${red}error in any2fasta. ${reset} exiting." && exit 1; }; done
     #ls * | parallel 'any2fasta -q {} >/dev/null || printf "\n${red}Error${reset}: {} is not a valid assembly file: "; exit 1; return 1' #|| { echo "${red}error in any2fasta. ${reset} exiting." && exit 1; }
     #ls * | parallel 'hay="{}" && any2fasta -q {} >/dev/null 2>ac_a2ferr.txt' && echo YES || { echo "$hay ${red}error in any2fasta. ${reset} exiting." && exit 1; }
 
@@ -199,8 +199,8 @@ then
     echo "    $COMPARATOR_DEFAULT_EMAIL_ADDRESS"
     echo ""
     echo "Please check the status of the pipeline by running the following command:"
-    echo "    sacct"
-    sacct | grep cmp_
+    echo "    mj"
+    mj | grep cmp_
 else
     echo "${orange}user left${reset}"
 
