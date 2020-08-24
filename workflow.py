@@ -131,7 +131,7 @@ gwf.target_from_template(sanify('cmp_iqtree_' + title), iqtree(target_dir, title
 
 
 # submit roary plots
-gwf.target_from_template(sanify('cmp_roary_plots_' + title), roary_plots(target_dir, title))
+gwf.target_from_template(sanify('cmp_plot_roary_' + title), roary_plots(target_dir, title))
 
 # submit panito
 gwf.target_from_template(sanify('cmp_panito_' + title), panito(target_dir, title))

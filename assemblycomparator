@@ -128,7 +128,7 @@ echo " proceeding..."
 # echo
 
 #conda activate /faststorage/project/ClinicalMicrobio/compare/environment
-
+echo ""
 read -t 1 -n 10000 discard # Clears stdin before read
 read -p "Do you wish to validate the assembly files? (recommended, but slow) [y/n] " -n 1 -r
 echo    # (optional) move to a new line
@@ -200,7 +200,7 @@ then
     echo ""
     echo "Please check the status of the pipeline by running the following command:"
     echo "    mj"
-    mj | grep cmp_
+    echo ""
 else
     echo "${orange}user left${reset}"
 
