@@ -279,6 +279,7 @@ def prokka(target_dir, title, name):
 
             echo -e "{name}\t${{hash}}\tsha256sum\tasscom\t$(date)" >> ${{hash_key_dir}}/index.tab            
 
+            # TODO: if base dir exists, then cp, else not. (makes it easy to disable the hash db)
             cp ${{hash_key_dir}}/index.tab ${{hash_base}}
 
         fi
