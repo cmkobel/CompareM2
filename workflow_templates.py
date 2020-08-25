@@ -51,7 +51,7 @@ def copy(source, target_dir, title, name):
     """  Copies the contigs to folders in the output directory and converts everything to fasta"""
     inputs = source
     outputs = target_dir + '/output/' + title + '/' + name + '/' + 'contigs.fa'
-    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '0:05:00',  'account': 'clinicalmicrobio'}
+    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '1:00:00',  'account': 'clinicalmicrobio'}
     spec = f"""
 
         {environment}
@@ -246,13 +246,48 @@ def prokka(target_dir, title, name):
         cd {target_dir}/output/{title}/{name}
 
 
-        prokka --cpu 8 --force --outdir prokka --prefix {name} contigs.fa {debug('prokka')}
+        # hash tables
+
+        # Generate hash key from assembly
+        hash=$(cat contigs.fa | sha256sum | awk '{{print $1}}')
+
+        # Set up directories
+        hash_base="/faststorage/project/ClinicalMicrobio/database/prokka_hash/keys"
+        hash_key_dir="${{hash_base}}/${{hash}}"
+
+        # Check if the key exists
+        if [[ -d "${{hash_key_dir}}" ]]; then
+            echo "Hash key exists"
+            echo $hash
+            mkdir -p prokka
+            
+            echo -e "copying from ${{hash}}" > prokka/prokka_hash.txt
+            cp "${{hash_key_dir}}/"* prokka
+
+            # Touch it all to update the modified dates
+            touch prokka/*
+            
+            echo -e "${{hash}}" > prokka/hash.txt
+
+        else
+            
+            prokka --cpu 8 --force --outdir prokka --prefix {name} contigs.fa 
+
+            mkdir -p "${{hash_key_dir}}"
+            
+            cp prokka/* "${{hash_key_dir}}"
+
+            echo -e "{name}\t${{hash}}\tsha256sum\tasscom\t$(date)" >> ${{hash_key_dir}}/index.tab            
+
+            cp ${{hash_key_dir}}/index.tab ${{hash_base}}
+
+        fi
 
         cp prokka/*.gff annotation.gff
 
     """
             
-    return inputs, outputs , options, spec
+    return inputs, outputs, options, spec
 
 
 # MLST: Multi Locus Sequence Typing
