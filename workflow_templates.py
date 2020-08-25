@@ -236,7 +236,7 @@ def prokka(target_dir, title, name):
     #stem = '.'.join(name.split('.')[:-1])
 
     inputs  = target_dir + '/output/' + title + '/' + name + '/contigs.fa' 
-    outputs = target_dir + '/output/' + title + '/' + name + '/prokka/' + name + '.gff'
+    outputs = target_dir + '/output/' + title + '/' + name + '/' + name + '.gff'
     options = {'nodes': 1, 'cores': 8, 'memory': '4g', 'walltime': '1-12:00:00', 'account': 'clinicalmicrobio'} # initially 2 hours
     spec = f"""
 
@@ -261,8 +261,11 @@ def prokka(target_dir, title, name):
             echo $hash
             mkdir -p prokka
             
+            # log usage
             echo -e "copying from ${{hash}}" > prokka/prokka_hash.txt
-            cp "${{hash_key_dir}}/"* prokka
+            echo -e "copy\t$(pwd)/prokka\t${{hash}}\t{name}\t$(date)" >> ${{hash_key_dir}}/usage_log.tab
+            
+            cp "${{hash_key_dir}}/prokka."* prokka
 
             # Touch it all to update the modified dates
             touch prokka/*
@@ -271,20 +274,22 @@ def prokka(target_dir, title, name):
 
         else
             
-            prokka --cpu 8 --force --outdir prokka --prefix {name} contigs.fa 
+            prokka --cpu 8 --force --outdir prokka --prefix prokka contigs.fa 
 
-            mkdir -p "${{hash_key_dir}}"
-            
-            cp prokka/* "${{hash_key_dir}}"
+            if [[ -d "${{hash_base}}" ]]; then
+                mkdir -p "${{hash_key_dir}}"
 
-            echo -e "{name}\t${{hash}}\tsha256sum\tasscom\t$(date)" >> ${{hash_key_dir}}/index.tab            
+                cp prokka/prokka.* "${{hash_key_dir}}"
 
-            # TODO: if base dir exists, then cp, else not. (makes it easy to disable the hash db)
-            cp ${{hash_key_dir}}/index.tab ${{hash_base}}
+                echo -e "{name}\t${{hash}}\tsha256sum\tasscom\t$(date)" >> ${{hash_key_dir}}/index.tab
+                touch ${{hash_key_dir}}/{name}.sample_name
+
+                cat ${{hash_key_dir}}/index.tab >> ${{hash_base}}/index.tab
+            fi
 
         fi
 
-        cp prokka/*.gff annotation.gff
+        cp prokka/prokka.gff {name}.gff
 
     """
             
