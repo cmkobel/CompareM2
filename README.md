@@ -1,9 +1,12 @@
 ![logo](https://raw.githubusercontent.com/cmkobel/kma-assemblycomparator/master/scripts/logo.png "")
 
-
+## Features
 The KMA Assembly Comparator is a simple pipeline consisting of tools for the analysis of microbial genomics. The idea is that the user provides a directory of assemblies of related bacterial strains, and the pipeline will run a series of generally relevant analyses on a high performance computing cluster.
 
 The KMA Assembly Comparator supports many formats: `gb/fa/fq/gff/gfa/clw/sth` which can be any of `gz/bz2/zip`-formats compressed.
+
+Assemblycomparator uses a hash table to store and reuse the annotations of assemblies. Thus speeding up comparisons, when the same isolates are compared in different sets.
+
 
 # Installation
 In order to use the KMA Assembly Comparator, you have to install it such that you can call the main file (bash) in any directory on your system. For instance
