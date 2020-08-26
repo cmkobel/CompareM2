@@ -57,41 +57,6 @@ export BLASTP
 
 
 
-# Instead: load environment in each target, and use a shared any2fasta (speed up)
-## Check if .gwf dir exists, and prompt for resubmission.
-#if [ -d ".gwf" ]
-#then
-#    echo ""
-#    echo ""
-#    echo "${green}Notification${reset}: An analysis has already been set up on this directory."
-#    read -p " Do you wish resubmit this? [y/n] " -n 1 -r
-#    echo
-#    if [[ $REPLY =~ ^[Yy]$ ]]
-#    then
-#        echo " resubmitting..."
-#        gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py run || { echo "${red}error in resubmitting (gwf). ${reset}exiting." && exit 1; }
-#        exit 0
-#        #[[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
-#    else
-#        echo " user decided not to resubmit."
-#    fi
-#fi
-
-
-
-
-
-#echo "This is the KMA assembly comparison program"
-
-
-
-#Todo: make a test, that tests the complete pipeline. Travis-like
-
-
-# remember to install miniconda
-# TODO: In the long run, it might be nice to use a shared conda environment, between users.
-# Todo: offer to fix filenames containing weird characters (interactively, maybe)
-
 
 
 
@@ -174,7 +139,7 @@ echo
 
 # if an output dir with the same name already exists in compare/input, then move it away.
 echo "These are the jobs:"
-gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py status --status running --status submitted --status shouldrun || { echo "${red}error in gwf. ${reset}exiting." && exit 1; }
+/project/ClinicalMicrobio/faststorage/compare/environment/envs/comparator/bin/gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py status --status running --status submitted --status shouldrun || { echo "${red}error in gwf. ${reset}exiting." && exit 1; }
 
 
         
@@ -189,7 +154,7 @@ then
     # If the user agrees, run the workflow
     echo " submitting jobs..."
     echo
-    gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py run || { echo "${red}error in gwf. ${reset}exiting." && exit 1; }
+    /project/ClinicalMicrobio/faststorage/compare/environment/envs/comparator/bin/gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py run || { echo "${red}error in gwf. ${reset}exiting." && exit 1; }
     
     echo "The job list has been submitted."
     echo ""

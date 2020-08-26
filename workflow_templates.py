@@ -263,7 +263,7 @@ def prokka(target_dir, title, name):
             
             # log usage
             echo -e "copying from ${{hash}}" > prokka/prokka_hash.txt
-            echo -e "copy\t$(pwd)/prokka\t${{hash}}\t{name}\t$(date)" >> "${{hash_key_dir}}"/usage_log.tab
+            echo -e "copy\t$(pwd)/prokka\t${{hash}}\t{name}\t$(date +%F_%H-%M-%S)" | tee "${{hash_key_dir}}"/usage_log.tab
             
             cp "${{hash_key_dir}}/prokka."* prokka
 
