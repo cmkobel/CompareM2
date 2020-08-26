@@ -130,10 +130,10 @@ def summary_abricate(target_dir, title, names):
         inputs.append(target_dir + '/output/' + title + '/abricate/isolates/ncbi_' + name + '.tab')
 
 
-    outputs = [target_dir + '/output/' + title + '/abricate/abricate_ncbi_summary.tab',
-               target_dir + '/output/' + title + '/amr_virulence_summary.tab']
+    outputs = [target_dir + '/output/' + title + '/abricate/abricate_resfinder_summary.tab',
+               target_dir + '/output/' + title + '/abricate/abricate_vfdb_summary.tab']
                 
-    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '00:10:00', 'account': 'clinicalmicrobio'}
+    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '01:00:00', 'account': 'clinicalmicrobio'}
 
     
     spec = f"""
@@ -154,7 +154,7 @@ def summary_abricate(target_dir, title, names):
         abricate --nopath isolates/ecoh_*.tab --summary > abricate_ecoh_summary.tab
         abricate --nopath isolates/card_*.tab --summary > abricate_card_summary.tab
 
-        cp abricate_ncbi_summary.tab ../amr_virulence_summary.tab
+        #cp abricate_ncbi_summary.tab ../amr_virulence_summary.tab
 
 
 
@@ -263,7 +263,7 @@ def prokka(target_dir, title, name):
             
             # log usage
             echo -e "copying from ${{hash}}" > prokka/prokka_hash.txt
-            echo -e "copy\t$(pwd)/prokka\t${{hash}}\t{name}\t$(date)" >> ${{hash_key_dir}}/usage_log.tab
+            echo -e "copy\t$(pwd)/prokka\t${{hash}}\t{name}\t$(date)" >> "${{hash_key_dir}}"/usage_log.tab
             
             cp "${{hash_key_dir}}/prokka."* prokka
 
@@ -504,7 +504,8 @@ def send_mail(target_dir, title, names):
               target_dir + '/output/' + title + '/mlst.tsv',
               target_dir + '/output/' + title + '/roary/Rplots.pdf',
               target_dir + '/output/' + title + '/kraken2-table.txt',
-              target_dir + '/output/' + title + '/amr_virulence_summary.tab',
+              target_dir + '/output/' + title + '/abricate/abricate_resfinder_summary.tab',
+              target_dir + '/output/' + title + '/abricate/abricate_vfdb_summary.tab',
               target_dir + '/output/' + title + '/roary_thresholds.txt',
               target_dir + '/output/' + title + '/cg_snp_dists.tab',
               target_dir + '/output/' + title + '/core_gene_alignment.fasta',
