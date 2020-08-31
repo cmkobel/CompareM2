@@ -68,7 +68,7 @@ def copy(source, target_dir, title, name):
 def kraken2(target_dir, title, name):
     inputs = target_dir + '/output/' + title + '/' + name + '/contigs.fa'
     outputs = target_dir + '/output/' + title + '/kraken2/' + name + '_report.txt'
-    options = {'nodes': 1, 'cores': 1, 'memory': '8g', 'walltime': '1:00:00', 'account': 'clinicalmicrobio'}
+    options = {'nodes': 1, 'cores': 4, 'memory': '32g', 'walltime': '4:00:00', 'account': 'clinicalmicrobio'}
     spec = f"""
 
         {environment}
@@ -80,7 +80,7 @@ def kraken2(target_dir, title, name):
 
         cp ../{name}/contigs.fa {name}.fa
 
-        kraken2 --db /project/ClinicalMicrobio/faststorage/database/minikraken_8GB_20200312 --report {name}_report.txt {name}.fa > /dev/null 2> /dev/null
+        kraken2 --threads 4 --db /project/ClinicalMicrobio/faststorage/database/minikraken_8GB_20200312 --report {name}_report.txt {name}.fa > /dev/null 2> /dev/null
 
         rm {name}.fa
 
