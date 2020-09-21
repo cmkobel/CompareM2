@@ -18,6 +18,8 @@ environment = """\
 source /faststorage/project/ClinicalMicrobio/compare/environment/etc/profile.d/conda.sh
 conda activate comparator"""
 
+environment = "" # disabled, it was too slow. Better to waste my time, than hundreds of cpu-hours - if that is the range.
+
 
 
 
@@ -35,7 +37,8 @@ def initialize(title, source_dir, target_dir):
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '0:02:00',  'account': 'clinicalmicrobio'}
     spec = f"""
 
-        {environment}
+        #{environment}
+
 
         mkdir -p {target_dir}/output/{title}
         cd {target_dir}/output/{title}
@@ -50,15 +53,25 @@ def initialize(title, source_dir, target_dir):
 def copy(source, target_dir, title, name):
     """  Copies the contigs to folders in the output directory and converts everything to fasta"""
     inputs = source
-    outputs = target_dir + '/output/' + title + '/' + name + '/' + 'contigs.fa'
-    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '1:00:00',  'account': 'clinicalmicrobio'}
+    outputs = [target_dir + '/output/' + title + '/' + name + '/' + 'contigs.fa',
+               target_dir + '/output/' + title + '/' + name + '/' + name + '.fa']
+    options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '10:00',  'account': 'clinicalmicrobio'}
     spec = f"""
 
         {environment}
+        echo "env. done"
 
         mkdir -p {target_dir + '/output/' + title + '/' + name}
-        any2fasta "{source}" | /project/ClinicalMicrobio/faststorage/compare/scripts/py/fasta_shorten_headers.py > {target_dir + '/output/' + title + '/' + name}/contigs.fa
+        echo "mkdir done"
 
+        any2fasta "{source}" | /project/ClinicalMicrobio/faststorage/compare/scripts/py/fasta_shorten_headers.py > {target_dir + '/output/' + title + '/' + name + '/' + name + '.fa'}
+        
+        echo "any2fasta done"
+
+        cp  {target_dir + '/output/' + title + '/' + name + '/' + name + '.fa'} {target_dir + '/output/' + title + '/' + name}/contigs.fa
+        echo "copy done"
+
+        exit 0
 
     """
 
@@ -130,8 +143,9 @@ def summary_abricate(target_dir, title, names):
         inputs.append(target_dir + '/output/' + title + '/abricate/isolates/ncbi_' + name + '.tab')
 
 
-    outputs = [target_dir + '/output/' + title + '/abricate/abricate_resfinder_summary.tab',
-               target_dir + '/output/' + title + '/abricate/abricate_vfdb_summary.tab']
+    outputs = [target_dir + '/output/' + title + '/abricate/abricate_ncbi_summary.tab',
+               target_dir + '/output/' + title + '/abricate/abricate_vfdb_summary.tab',
+               target_dir + '/output/' + title + '/abricate/ncbi_all.tab']
                 
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '01:00:00', 'account': 'clinicalmicrobio'}
 
@@ -144,16 +158,30 @@ def summary_abricate(target_dir, title, names):
 
         #abricate --nopath *.tab --summary > ../amr_virulence_summary.tab
 
+        # use the built-in summary function:
+
         abricate --nopath isolates/plasmidfinder_*.tab --summary > abricate_plasmidfinder_summary.tab
-        abricate --nopath isolates/ecoli_vf_*.tab --summary > abricate_ecoli_vf_summary.tab
         abricate --nopath isolates/ncbi_*.tab --summary > abricate_ncbi_summary.tab
-        abricate --nopath isolates/resfinder_*.tab --summary > abricate_resfinder_summary.tab
-        abricate --nopath isolates/argannot_*.tab --summary > abricate_argannot_summary.tab
         abricate --nopath isolates/vfdb_*.tab --summary > abricate_vfdb_summary.tab
-        abricate --nopath isolates/megares_*.tab --summary > abricate_megares_summary.tab
-        abricate --nopath isolates/ecoh_*.tab --summary > abricate_ecoh_summary.tab
+        abricate --nopath isolates/resfinder_*.tab --summary > abricate_resfinder_summary.tab
         abricate --nopath isolates/card_*.tab --summary > abricate_card_summary.tab
 
+        # But also, cat everything together:
+
+        cat isolates/plasmidfinder_*.tab > plasmidfinder_all.tab
+        cat isolates/ncbi_*.tab > ncbi_all.tab
+        cat isolates/vfdb_*.tab > vfdb_all.tab
+        cat isolates/resfinder_*.tab > resfinder_all.tab
+        cat isolates/card_*.tab > card_all.tab
+
+
+        # These are some of the old analyses that I never used:
+
+        # abricate --nopath isolates/argannot_*.tab --summary > abricate_argannot_summary.tab
+        # abricate --nopath isolates/ecoli_vf_*.tab --summary > abricate_ecoli_vf_summary.tab
+        # abricate --nopath isolates/megares_*.tab --summary > abricate_megares_summary.tab
+        # abricate --nopath isolates/ecoh_*.tab --summary > abricate_ecoh_summary.tab
+       
         #cp abricate_ncbi_summary.tab ../amr_virulence_summary.tab
 
 
@@ -177,7 +205,7 @@ def abricate(target_dir, title, name):
     inputs = target_dir + '/output/' + title + '/' + name + '/contigs.fa'
     outputs = [target_dir + '/output/' + title + '/abricate/isolates/ncbi_' + name + '.tab']
                #target_dir + '/output/' + title + '/abricate/' + name + '.tab']
-    options = {'nodes': 1, 'cores': 1, 'memory': '8g', 'walltime': '1:00:00', 'account': 'clinicalmicrobio'}
+    options = {'nodes': 1, 'cores': 1, 'memory': '4g', 'walltime': '3:00:00', 'account': 'clinicalmicrobio'}
     spec = f"""
 
         {environment}
@@ -197,29 +225,30 @@ def abricate(target_dir, title, name):
         echo "starting plasmidfinder abrication"
         abricate --db plasmidfinder {name}.fa > plasmidfinder_{name}.tab
 
-        echo "starting ecoli_vf abrication"
-        abricate --db ecoli_vf {name}.fa > ecoli_vf_{name}.tab
-
         echo "starting ncbi abrication"
         abricate --db ncbi {name}.fa > ncbi_{name}.tab
-
-        echo "starting resfinder abrication"
-        abricate --db resfinder {name}.fa > resfinder_{name}.tab
-
-        echo "starting argannot abrication"
-        abricate --db argannot {name}.fa > argannot_{name}.tab
 
         echo "starting vfdb abrication"
         abricate --db vfdb {name}.fa > vfdb_{name}.tab
 
-        echo "starting megares abrication"
-        abricate --db megares {name}.fa > megares_{name}.tab
-
-        echo "starting ecoh abrication"
-        abricate --db ecoh {name}.fa > ecoh_{name}.tab
-
+        echo "starting resfinder abrication"
+        abricate --db resfinder {name}.fa > resfinder_{name}.tab
+ 
         echo "starting card abrication"
         abricate --db card {name}.fa > card_{name}.tab
+
+        # echo "starting argannot abrication"
+        # abricate --db argannot {name}.fa > argannot_{name}.tab
+
+        # echo "starting ecoli_vf abrication"
+        # abricate --db ecoli_vf {name}.fa > ecoli_vf_{name}.tab
+
+        # echo "starting megares abrication"
+        # abricate --db megares {name}.fa > megares_{name}.tab
+
+        # echo "starting ecoh abrication"
+        # abricate --db ecoh {name}.fa > ecoh_{name}.tab
+
 
 
 
@@ -229,6 +258,28 @@ def abricate(target_dir, title, name):
 
     return inputs, outputs, options, spec
 
+def mashtree(target_dir, title, named_contigs):
+    inputs = [target_dir + '/output/' + title + '/' + i for i in named_contigs]
+    outputs = target_dir + '/output/' + title + '/mashtree.newick' # Denne fil skal bruges til at lave træet, så det er den vigtigste. Og så også en liste over alle .gff-filer som er brugt.
+    
+    options = {'nodes': 1, 'cores': 2, 'memory': '4g', 'walltime': '01:00:00',  'account': 'clinicalmicrobio'}
+    spec = f'''
+
+        {environment}
+
+        cd {target_dir}/output/{title}
+
+
+        
+
+        
+        mashtree --numcpus 8 --tempdir /faststorage/project/ClinicalMicrobio/database/mashtree {' '.join(named_contigs)} > mashtree.newick
+
+
+    '''
+
+    return (inputs, outputs, options, spec) 
+
 
 
 def prokka(target_dir, title, name):
@@ -237,7 +288,7 @@ def prokka(target_dir, title, name):
 
     inputs  = target_dir + '/output/' + title + '/' + name + '/contigs.fa' 
     outputs = target_dir + '/output/' + title + '/' + name + '/' + name + '.gff'
-    options = {'nodes': 1, 'cores': 8, 'memory': '4g', 'walltime': '1-12:00:00', 'account': 'clinicalmicrobio'} # initially 2 hours
+    options = {'nodes': 1, 'cores': 16, 'memory': '8g', 'walltime': '12:00:00', 'account': 'clinicalmicrobio'} # initially 2 hours
     spec = f"""
 
         {environment}
@@ -263,7 +314,9 @@ def prokka(target_dir, title, name):
             
             # log usage
             echo -e "copying from ${{hash}}" > prokka/prokka_hash.txt
-            echo -e "copy\t$(pwd)/prokka\t${{hash}}\t{name}\t$(date +%F_%H-%M-%S)" | tee "${{hash_key_dir}}"/usage_log.tab
+            echo -e "copy\t$(pwd)/prokka\t${{hash}}\t{name}\t$(date +%F_%H-%M-%S)" > "${{hash_key_dir}}"/usage_log.tab
+            touch ${{hash_key_dir}}/{name}.sample_name
+
             
             cp "${{hash_key_dir}}/prokka."* prokka
 
@@ -274,7 +327,7 @@ def prokka(target_dir, title, name):
 
         else
             
-            prokka --cpu 8 --force --outdir prokka --prefix prokka contigs.fa 
+            prokka --cpu 16 --force --outdir prokka --prefix prokka contigs.fa 
 
             if [[ -d "${{hash_base}}" ]]; then
                 mkdir -p "${{hash_key_dir}}"
