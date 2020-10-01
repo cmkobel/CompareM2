@@ -143,8 +143,8 @@ def summary_abricate(target_dir, title, names):
         inputs.append(target_dir + '/output/' + title + '/abricate/isolates/ncbi_' + name + '.tab')
 
 
-    outputs = [target_dir + '/output/' + title + '/abricate/abricate_ncbi_summary.tab',
-               target_dir + '/output/' + title + '/abricate/abricate_vfdb_summary.tab',
+    outputs = [target_dir + '/output/' + title + '/abricate/ncbi_summary.tab',
+               target_dir + '/output/' + title + '/abricate/vfdb_summary.tab',
                target_dir + '/output/' + title + '/abricate/ncbi_all.tab']
                 
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '01:00:00', 'account': 'clinicalmicrobio'}
@@ -156,43 +156,35 @@ def summary_abricate(target_dir, title, names):
 
         cd {target_dir}/output/{title}/abricate
 
-        #abricate --nopath *.tab --summary > ../amr_virulence_summary.tab
-
         # use the built-in summary function:
 
-        abricate --nopath isolates/plasmidfinder_*.tab --summary > abricate_plasmidfinder_summary.tab
-        abricate --nopath isolates/ncbi_*.tab --summary > abricate_ncbi_summary.tab
-        abricate --nopath isolates/vfdb_*.tab --summary > abricate_vfdb_summary.tab
-        abricate --nopath isolates/resfinder_*.tab --summary > abricate_resfinder_summary.tab
-        abricate --nopath isolates/card_*.tab --summary > abricate_card_summary.tab
+        echo "summarizing ..."
+        abricate --nopath isolates/plasmidfinder_*.tab --summary > plasmidfinder_summary.tab
+        abricate --nopath isolates/ncbi_*.tab --summary > ncbi_summary.tab
+        abricate --nopath isolates/vfdb_*.tab --summary > vfdb_summary.tab
+        abricate --nopath isolates/resfinder_*.tab --summary > resfinder_summary.tab
+        abricate --nopath isolates/card_*.tab --summary > card_summary.tab
 
         # But also, cat everything together:
 
-        cat isolates/plasmidfinder_*.tab > plasmidfinder_all.tab
-        cat isolates/ncbi_*.tab > ncbi_all.tab
-        cat isolates/vfdb_*.tab > vfdb_all.tab
-        cat isolates/resfinder_*.tab > resfinder_all.tab
-        cat isolates/card_*.tab > card_all.tab
+        echo "headering ..."
+        all_header="FILE\tSEQUENCE\tSTART\tEND\tSTRAND\tGENE\tCOVERAGE\tCOVERAGE_MAP\tGAPS\tp_COVERAGE\tp_IDENTITY\tDATABASE\tACCESSION\tPRODUCT\tRESISTANCE"
+        echo $all_header > plasmidfinder_all.tab
+        echo $all_header > ncbi_all.tab
+        echo $all_header > vfdb_all.tab
+        echo $all_header > resfinder_all.tab
+        echo $all_header > card_all.tab
+
+        #echo "catting ..." 
+        cat isolates/plasmidfinder_*.tab >> plasmidfinder_all.tab
+        cat isolates/ncbi_*.tab >> ncbi_all.tab
+        cat isolates/vfdb_*.tab >> vfdb_all.tab
+        cat isolates/resfinder_*.tab >> resfinder_all.tab
+        cat isolates/card_*.tab >> card_all.tab
 
 
-        # These are some of the old analyses that I never used:
-
-        # abricate --nopath isolates/argannot_*.tab --summary > abricate_argannot_summary.tab
-        # abricate --nopath isolates/ecoli_vf_*.tab --summary > abricate_ecoli_vf_summary.tab
-        # abricate --nopath isolates/megares_*.tab --summary > abricate_megares_summary.tab
-        # abricate --nopath isolates/ecoh_*.tab --summary > abricate_ecoh_summary.tab
-       
-        #cp abricate_ncbi_summary.tab ../amr_virulence_summary.tab
-
-
-
-        # #collect all abricate results
-        # List=$(ls *.tab)
-        # arr=($List)
-        # first=${{arr[1]}}
-        # 
-        # cat $first | grep -E "^#" > abricate_all.tsv
-        # cat *.tab | grep -vE "^#" >> abricate_all.tsv
+        echo "done ..."
+        exit 0
 
 
     """
@@ -223,31 +215,31 @@ def abricate(target_dir, title, name):
 
 
         echo "starting plasmidfinder abrication"
-        abricate --db plasmidfinder {name}.fa > plasmidfinder_{name}.tab
+        abricate --nopath --noheader --db plasmidfinder {name}.fa > plasmidfinder_{name}.tab
 
         echo "starting ncbi abrication"
-        abricate --db ncbi {name}.fa > ncbi_{name}.tab
+        abricate --nopath --noheader --db ncbi {name}.fa > ncbi_{name}.tab
 
         echo "starting vfdb abrication"
-        abricate --db vfdb {name}.fa > vfdb_{name}.tab
+        abricate --nopath --noheader --db vfdb {name}.fa > vfdb_{name}.tab
 
         echo "starting resfinder abrication"
-        abricate --db resfinder {name}.fa > resfinder_{name}.tab
+        abricate --nopath --noheader --db resfinder {name}.fa > resfinder_{name}.tab
  
         echo "starting card abrication"
-        abricate --db card {name}.fa > card_{name}.tab
+        abricate --nopath --noheader --db card {name}.fa > card_{name}.tab
 
         # echo "starting argannot abrication"
-        # abricate --db argannot {name}.fa > argannot_{name}.tab
+        # abricate --nopath --noheader --db argannot {name}.fa > argannot_{name}.tab
 
         # echo "starting ecoli_vf abrication"
-        # abricate --db ecoli_vf {name}.fa > ecoli_vf_{name}.tab
+        # abricate --nopath --noheader --db ecoli_vf {name}.fa > ecoli_vf_{name}.tab
 
         # echo "starting megares abrication"
-        # abricate --db megares {name}.fa > megares_{name}.tab
+        # abricate --nopath --noheader --db megares {name}.fa > megares_{name}.tab
 
         # echo "starting ecoh abrication"
-        # abricate --db ecoh {name}.fa > ecoh_{name}.tab
+        # abricate --nopath --noheader --db ecoh {name}.fa > ecoh_{name}.tab
 
 
 
@@ -557,8 +549,8 @@ def send_mail(target_dir, title, names):
               target_dir + '/output/' + title + '/mlst.tsv',
               target_dir + '/output/' + title + '/roary/Rplots.pdf',
               target_dir + '/output/' + title + '/kraken2-table.txt',
-              target_dir + '/output/' + title + '/abricate/abricate_resfinder_summary.tab',
-              target_dir + '/output/' + title + '/abricate/abricate_vfdb_summary.tab',
+              target_dir + '/output/' + title + '/abricate/resfinder_summary.tab',
+              target_dir + '/output/' + title + '/abricate/vfdb_summary.tab',
               target_dir + '/output/' + title + '/roary_thresholds.txt',
               target_dir + '/output/' + title + '/cg_snp_dists.tab',
               target_dir + '/output/' + title + '/core_gene_alignment.fasta',
