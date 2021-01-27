@@ -1,0 +1,3 @@
+[submodule "tabseq"]
+	path = tabseq
+	url = git@github.com:cmkobel/tabseq.git
