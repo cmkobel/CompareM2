@@ -67,7 +67,7 @@ def copy(source, target_dir, title, name):
 
         any2fasta "{source}" | /project/ClinicalMicrobio/faststorage/compare/scripts/py/fasta_shorten_headers.py > {target_dir + '/output/' + title + '/' + name + '/' + name + '.fa'}
 
-        cat {target_dir + '/output/' + title + '/' + name + '/' + name + '.fa'} | fasta2tabseq.py --fill_sample {name} > {target_dir + '/output/' + title + '/' + name + '/' + name + '.tabseq'}
+        cat {target_dir + '/output/' + title + '/' + name + '/' + name + '.fa'} | tabseq/python/fasta2tabseq.py --fill_sample {name} > {target_dir + '/output/' + title + '/' + name + '/' + name + '.tabseq'}
         
         echo "any2fasta done"
 
