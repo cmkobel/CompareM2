@@ -16,6 +16,10 @@ export PATH=/path/to/assemblycomparator/:$PATH
 
 The program uses a conda environment to handle all dependencies. Please provide this in the conda activation command in assemblycomparator
 
+```
+echo "export COMPARATOR_CONDA_ENV=/path/to/conda/assemblycomparator/environment" >> ~/.bashrc
+```
+
 TODO: set up environment.yml
 
 If you wish to receive an email when the pipeline is done, provide your email in the `$COMPARATOR_DEFAULT_EMAIL_ADDRESS` variable.
