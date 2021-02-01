@@ -54,7 +54,8 @@ def copy(source, target_dir, title, name):
     """  Copies the contigs to folders in the output directory and converts everything to fasta"""
     inputs = source
     outputs = [target_dir + '/output/' + title + '/' + name + '/' + 'contigs.fa',
-               target_dir + '/output/' + title + '/' + name + '/' + name + '.fa']
+               target_dir + '/output/' + title + '/' + name + '/' + name + '.fa',
+               target_dir + '/output/' + title + '/' + name + '/' + name + '.tabseq']
     options = {'nodes': 1, 'cores': 1, 'memory': '1g', 'walltime': '10:00',  'account': 'clinicalmicrobio'}
     spec = f"""
 
@@ -65,6 +66,8 @@ def copy(source, target_dir, title, name):
         echo "mkdir done"
 
         any2fasta "{source}" | /project/ClinicalMicrobio/faststorage/compare/scripts/py/fasta_shorten_headers.py > {target_dir + '/output/' + title + '/' + name + '/' + name + '.fa'}
+
+        cat {target_dir + '/output/' + title + '/' + name + '/' + name + '.fa'} | fasta2tabseq.py --fill_sample {name} > {target_dir + '/output/' + title + '/' + name + '/' + name + '.tabseq'}
         
         echo "any2fasta done"
 
@@ -168,12 +171,12 @@ def summary_abricate(target_dir, title, names):
         # But also, cat everything together:
 
         echo "headering ..."
-        all_header="FILE\tSEQUENCE\tSTART\tEND\tSTRAND\tGENE\tCOVERAGE\tCOVERAGE_MAP\tGAPS\tp_COVERAGE\tp_IDENTITY\tDATABASE\tACCESSION\tPRODUCT\tRESISTANCE"
-        echo $all_header > plasmidfinder_all.tab
-        echo $all_header > ncbi_all.tab
-        echo $all_header > vfdb_all.tab
-        echo $all_header > resfinder_all.tab
-        echo $all_header > card_all.tab
+        all_header="FILE\\tSEQUENCE\\tSTART\\tEND\\tSTRAND\\tGENE\\tCOVERAGE\\tCOVERAGE_MAP\\tGAPS\\tp_COVERAGE\\tp_IDENTITY\\tDATABASE\\tACCESSION\\tPRODUCT\\tRESISTANCE"
+        echo -e $all_header > plasmidfinder_all.tab
+        echo -e $all_header > ncbi_all.tab
+        echo -e $all_header > vfdb_all.tab
+        echo -e $all_header > resfinder_all.tab
+        echo -e $all_header > card_all.tab
 
         #echo "catting ..." 
         cat isolates/plasmidfinder_*.tab >> plasmidfinder_all.tab
@@ -280,7 +283,7 @@ def prokka(target_dir, title, name):
 
     inputs  = target_dir + '/output/' + title + '/' + name + '/contigs.fa' 
     outputs = target_dir + '/output/' + title + '/' + name + '/' + name + '.gff'
-    options = {'nodes': 1, 'cores': 16, 'memory': '8g', 'walltime': '12:00:00', 'account': 'clinicalmicrobio'} # initially 2 hours
+    options = {'nodes': 1, 'cores': 16, 'memory': '8g', 'walltime': '24:00:00', 'account': 'clinicalmicrobio'} # initially 2 hours
     spec = f"""
 
         {environment}
@@ -418,7 +421,7 @@ def fasttree(target_dir, title, n):
     inputs = target_dir + '/output/' + title + '/roary/core_gene_alignment.aln'
     outputs = [target_dir + '/output/' + title + '/fasttree/tree.newick',
                target_dir + '/output/' + title + '/fasttree/tree.pdf']
-    options = {'nodes': 1, 'cores': 8, 'memory': f'{round(n*2, 0)}g', 'walltime': f'{n*60}:00', 'account': 'clinicalmicrobio'}
+    options = {'nodes': 1, 'cores': 8, 'memory': f'{round(n*8, 0)}g', 'walltime': f'{n*60}:00', 'account': 'clinicalmicrobio'}
     spec = f"""
 
         {environment}
