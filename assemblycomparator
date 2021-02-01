@@ -151,9 +151,21 @@ read -p "Do you wish to submit this job list? [y/n] " -n 1 -r
 echo    # (optional) move to a new line
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-    # If the user agrees, run the workflow
+    # If the user agrees, run the workflow  
+
+    # But first, activate conda
+    printf " activating environment \\"
+    
+    printf "\b|"
+    source /faststorage/project/ClinicalMicrobio/compare/environment/etc/profile.d/conda.sh
+    printf "\b/"
+    conda activate comparator 
+    printf "\b\b..."
+    echo
+    echo
     echo " submitting jobs..."
     echo
+
     /project/ClinicalMicrobio/faststorage/compare/environment/envs/comparator/bin/gwf -b slurm -f /project/ClinicalMicrobio/faststorage/compare/workflow.py run || { echo "${red}error in gwf. ${reset}exiting." && exit 1; }
     
     echo "The job list has been submitted."

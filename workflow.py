@@ -107,13 +107,18 @@ for raw_name in fasta_files:
 #gwf.target_from_template(sanify('cmp_kraken2_abricateall_' + title), summary_tables(target_dir, title, names))
 
 
-gwf.target_from_template(sanify('cmp_sum_kraken_' + title), summary_kraken(target_dir, title, names))
-gwf.target_from_template(sanify('cmp_sum_abricate_' + title), summary_abricate(target_dir, title, names))
+gwf.target_from_template(sanify('cmp_kraken_sum_' + title), summary_kraken(target_dir, title, names))
+gwf.target_from_template(sanify('cmp_abricate_sum_' + title), summary_abricate(target_dir, title, names))
 
 
 
 contigs = [name + '/contigs.fa' for name in names]
 gwf.target_from_template(sanify('cmp_mlst_' + title), mlst(target_dir, title, contigs))
+
+named_contigs = [name + '/' + name + '.fa' for name in names]
+gwf.target_from_template(sanify('cmp_mashtree_' + title), mashtree(target_dir, title, named_contigs))
+
+
 
 
 # submit roary
