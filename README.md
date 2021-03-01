@@ -1,4 +1,4 @@
-## asscom2
+# assemblycomparator v2
 
 ## Installation
 
