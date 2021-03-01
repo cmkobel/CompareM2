@@ -11,7 +11,7 @@
 
 ## What does it do?
 
-Some analyses are implemented, some are not yet (parenthesized programs in the list below)
+Some analyses are implemented, some are not yet.
 
 
 ### For each assembly
@@ -30,8 +30,8 @@ Some analyses are implemented, some are not yet (parenthesized programs in the l
   - [ ] [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity
   - [ ] [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
   - [ ] [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
-  - [ ] (GC3-profiling) ("fingerprinting" of the distribution of GC-content)
-  - [ ] (Identification of horizontally transferred genes)
+  - [ ] GC3-profiling ("fingerprinting" of the distribution of GC-content)
+  - [ ] Identification of horizontally transferred genes
   
   
   
