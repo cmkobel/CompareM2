@@ -16,20 +16,20 @@ import pandas as pd
 # Roadmap:
 #
 # For each assembly
-#   any2fasta (wide input format support)
-#   prokka (annotation)
-#   kraken2 (species identification)
-#   mlst (multi locus sequence typing)
-#   abricate (virulence/resistance gene identification)
-#   (Oriloc) (Identify possible replication origins, and thereby identify chromids)
+#   PEND    any2fasta (wide input format support)
+#   OK      prokka (annotation)
+#   PEND    kraken2 (species identification)
+#   OK      mlst (multi locus sequence typing)
+#   OK      abricate (virulence/resistance gene identification)
+#   PEND    (Oriloc) (Identify possible replication origins, and thereby identify chromids)
 # For each group
-#   roary (pan and core genome)
-#   snp-dists (core genome snp-distances)
-#   panito (average nucleotide identity
-#   FastTree (phylogenetic tree of core genome)
-#   IQ-tree (phylogenetic tree of core genome with bootstrapping)
-#   (GC3-profiling) ("fingerprinting" of the distribution of GC-content)
-#   (Identification of horizontally transferred genes)
+#   INP     roary (pan and core genome)
+#   PEND    snp-dists (core genome snp-distances)
+#   PEND    panito (average nucleotide identity
+#   PEND    FastTree (phylogenetic tree of core genome)
+#   PEND    IQ-tree (phylogenetic tree of core genome with bootstrapping)
+#   PEND    (GC3-profiling) ("fingerprinting" of the distribution of GC-content)
+#   PEND    (Identification of horizontally transferred genes)
 
 
 title = "test"
@@ -67,23 +67,31 @@ print(df)
 print("//")
 
 
-input_continue = input("continue? (y/n) ")
-if not input_continue.lower()[0] == "y":
-    exit("Quitting ...")
-
+#input_continue = input("continue? (y/n) ")
+#if not input_continue.lower()[0] == "y":
+#    exit("Quitting ...")
+#
 
 
 # Collect all targets
 rule all:
-    input: expand(["{out_base}/samples/{sample}/{sample}.fa", \
+    input: expand(["{out_base}/metadata.tsv", \
+                   "{out_base}/samples/{sample}/{sample}.fa", \
                    "{out_base}/samples/{sample}/prokka/{sample}.gff", \
-                   "{out_base}/roary/summary_statistics.txt"], \
+                   "{out_base}/roary/summary_statistics.txt", \
+                   "{out_base}/abricate/card_detail.tsv", \
+                   "{out_base}/mlst/mlst.tsv"], \
                   out_base = out_base_var, sample = df["sample"]) # copy
 
 
   
 
-
+# Write the df table to the directory for later reference.
+rule metadata:
+    input: df["input_file"].tolist()
+    output: "{out_base}/metadata.tsv"
+    run: 
+        df.to_csv(str(output), index_label = "index", sep = "\t")
 
 
 # Copy the input file to its new home
@@ -100,7 +108,9 @@ rule copy:
         """
 
 
-# Prokka
+##################################
+# Targets for each sample below: #
+##################################
 rule prokka:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/prokka/{sample}.gff"
@@ -115,7 +125,9 @@ rule prokka:
         """
 
 
-
+#######################################
+# Targets for the complete set below: #
+#######################################
 rule roary:
     input: expand("{out_base}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], out_base = out_base_var)
     output: "{out_base}/roary/summary_statistics.txt"
@@ -127,13 +139,53 @@ rule roary:
     container: "docker://sangerpathogens/roary"
     shell: """
 
-        #parallel --citation > /dev/null 2>&1
         roary -a -r -e --mafft -p {threads} -f {wildcards.out_base}/roary -i {params.blastp_identity} -cd {params.core_perc} {input}
 
         # todo: use kraken as well
         
 
-        echo "roary done"
+        """
+
+
+rule abricate:
+    #input: expand("{out_base}/samples/{sample}/{sample}.fa", sample = df["sample"], out_base = out_base_var)
+    input: df["input_file"].tolist()
+    output:
+        card_detail = "{out_base}/abricate/card_detail.tsv",
+        card_sum = "{out_base}/abricate/card_summary.tsv",
+        plasmidfinder_detail = "{out_base}/abricate/plasmidfinder_detail.tsv",
+        plasmidfinder_sum = "{out_base}/abricate/plasmidfinder_summary.tsv",
+        ncbi_detail = "{out_base}/abricate/ncbi_detail.tsv",
+        ncbi_sum = "{out_base}/abricate/ncbi_summary.tsv"
+    container: "docker://staphb/abricate"
+    shell: """
+
+
+        abricate --db card {input} > {output.card_detail}
+        abricate --summary {output.card_detail} > {output.card_sum}
+        
+        abricate --db plasmidfinder {input} > {output.plasmidfinder_detail}
+        abricate --summary {output.plasmidfinder_detail} > {output.plasmidfinder_sum}
+        
+        abricate --db ncbi {input} > {output.ncbi_detail}
+        abricate --summary {output.ncbi_detail} > {output.ncbi_sum}
+        
+
+
+        """
+
+
+
+
+rule mlst:
+    #input: expand("{out_base}/samples/{sample}/{sample}.fa", sample = df["sample"], out_base = out_base_var)
+    input: df["input_file"].tolist()
+    output: "{out_base}/mlst/mlst.tsv"
+    container: "docker://staphb/mlst"
+    shell: """
+
+        mlst {input} > {output}
+
         """
 
 
