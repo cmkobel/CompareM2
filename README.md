@@ -29,7 +29,7 @@ Some analyses are implemented, some are not yet.
   - [ ] [snp-dists](https://github.com/tseemann/snp-dists) (core genome snp-distances)
   - [ ] [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity
   - [x] [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
-  - [x] Mashtree (https://github.com/lskatz/mashtree) (super fast distance measurement)
+  - [x] [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement)
   - [ ] [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
   - [ ] GC3-profiling ("fingerprinting" of the distribution of GC-content)
   - [ ] Identification of horizontally transferred genes
