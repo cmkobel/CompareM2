@@ -230,7 +230,7 @@ rule roary_plots:
     input: genes = "{out_base}/roary/gene_presence_absence.csv",
         tree = "{out_base}/fasttree/fasttree.newick"
     output: "{out_base}/roary_plots/whatever"
-    container: "docker://python"
+    container: "docker://python" # Make our own python container with cairosvg perl etc...
     shell: """
         
         # Failing because matplotlib is missing...
