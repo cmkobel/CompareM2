@@ -3,7 +3,7 @@
 cores: 4
 # [--local-cores N] 
 #configfile: "configs/workflow.yaml"
-configfile: "config.json"
+configfile: "config.yaml"
 
 # [--directory DIR] 
 keep-going: true 
@@ -29,6 +29,6 @@ cluster-config: "configs/cluster.yaml"
 
 # [--jobscript SCRIPT] 
 jobname: "{name}.{jobid}.snakejob.sh" 
-use-conda: true
+#use-conda: true
 # [--conda-prefix DIR] 
 

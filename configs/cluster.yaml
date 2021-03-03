@@ -5,11 +5,11 @@ __default__:
     cpus-per-task: 1
     time: "12:00:00"
     mem: 32768
-    #output: "logs/{rule}-%j.out"
-    output: "logs/{rule}.out"
+    output: "logs/{rule}-%j.out"
+    #output: "logs/{rule}.out"
 
-    #error: "logs/{rule}-%j.err"
-    error: "logs/{rule}.err"
+    error: "logs/{rule}-%j.err"
+    #error: "logs/{rule}.err"
 
 align:
     cpus-per-task: 8

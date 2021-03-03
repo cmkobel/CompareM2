@@ -58,6 +58,11 @@ df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()]
 
 df = df.loc[df['extension'].isin(extension_whitelist)]
 
+if df.shape[0] == 0:
+    print("Error: No fasta files in the current directory. Quitting ...")
+    exit("Zero files.")
+
+
 print(df)
 print("///")
 
@@ -94,7 +99,8 @@ rule copy:
 rule prokka:
     input: "{out_base}/sample_{sample}/{sample}.fa"
     output: "{out_base}/sample_{sample}/prokka/{sample}.gff"
-    conda: "envs/prokka.yml"
+    #conda: "envs/prokka.yml"
+    container: "docker://staphb/prokka"
     threads: 4
     shell: """
 
@@ -111,7 +117,8 @@ rule roary:
     params:
         blastp_identity = 95,
         core_perc = 99
-    conda: "envs/roary.yml"
+    #conda: "envs/roary.yml"
+    container: "docker://sangerpathogens/roary"
     threads: 4
     shell: """
 
