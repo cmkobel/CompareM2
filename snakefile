@@ -66,7 +66,7 @@ if df.shape[0] == 0:
 df = df.reset_index(drop = True)
 print(df)
 print("//")
-
+print()
 
 #input_continue = input("continue? (y/n) ")
 #if not input_continue.lower()[0] == "y":
@@ -133,7 +133,7 @@ rule prokka:
 #######################################
 rule roary:
     input: expand("{out_base}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], out_base = out_base_var)
-    output: ["{out_base}/roary/summary_statistics.txt", "{out_base}/roary/core_gene_alignment.aln"]
+    output: ["{out_base}/roary/summary_statistics.txt", "{out_base}/roary/core_gene_alignment.aln", "{out_base}/roary/gene_presence_absence.csv"]
     params:
         blastp_identity = 95,
         core_perc = 99
@@ -162,6 +162,8 @@ rule abricate:
     container: "docker://staphb/abricate"
     shell: """
 
+
+        # TODO: update these databases
 
         abricate --db card {input} > {output.card_detail}
         abricate --summary {output.card_detail} > {output.card_sum}
@@ -218,9 +220,25 @@ rule fasttree:
 
         OMP_NUM_THREADS={threads}
 
-        FastTree {input} > {output}
+        FastTree -nt {input} > {output} 2> {output}.log
 
         """
+
+
+
+rule roary_plots:
+    input: genes = "{out_base}/roary/gene_presence_absence.csv",
+        tree = "{out_base}/fasttree/fasttree.newick"
+    output: "{out_base}/roary_plots/whatever"
+    container: "docker://python"
+    shell: """
+        
+        # Failing because matplotlib is missing...
+        python3 scripts/roary_plots.py {input.tree} {input.genes} > hat 2> hat.err
+
+        # TODO: add the other weird stuff from https://github.com/cmkobel/assemblycomparator/blob/61c9a891a75e2f252dc54185d74c0fbb092815e5/workflow_templates.py#L489
+        """
+
 
 
 #print(mashtree.input)
