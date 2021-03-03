@@ -26,6 +26,7 @@ import pandas as pd
 #   INP     roary (pan and core genome)
 #   PEND    snp-dists (core genome snp-distances)
 #   PEND    panito (average nucleotide identity
+#   PEND    Mashtree
 #   PEND    FastTree (phylogenetic tree of core genome)
 #   PEND    IQ-tree (phylogenetic tree of core genome with bootstrapping)
 #   PEND    (GC3-profiling) ("fingerprinting" of the distribution of GC-content)
@@ -80,7 +81,9 @@ rule all:
                    "{out_base}/samples/{sample}/prokka/{sample}.gff", \
                    "{out_base}/roary/summary_statistics.txt", \
                    "{out_base}/abricate/card_detail.tsv", \
-                   "{out_base}/mlst/mlst.tsv"], \
+                   "{out_base}/mlst/mlst.tsv", \
+                   "{out_base}/mashtree/mashtree.newick", \
+                   "{out_base}/fasttree/fasttree.newick"], \
                   out_base = out_base_var, sample = df["sample"]) # copy
 
 
@@ -92,6 +95,7 @@ rule metadata:
     output: "{out_base}/metadata.tsv"
     run: 
         df.to_csv(str(output), index_label = "index", sep = "\t")
+
 
 
 # Copy the input file to its new home
@@ -121,7 +125,6 @@ rule prokka:
 
         prokka --cpus {threads} --force --outdir {wildcards.out_base}/samples/{wildcards.sample}/prokka --prefix {wildcards.sample} {input} || echo exit 0
 
-        echo "prokka done"
         """
 
 
@@ -130,7 +133,7 @@ rule prokka:
 #######################################
 rule roary:
     input: expand("{out_base}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], out_base = out_base_var)
-    output: "{out_base}/roary/summary_statistics.txt"
+    output: ["{out_base}/roary/summary_statistics.txt", "{out_base}/roary/core_gene_alignment.aln"]
     params:
         blastp_identity = 95,
         core_perc = 99
@@ -143,7 +146,6 @@ rule roary:
 
         # todo: use kraken as well
         
-
         """
 
 
@@ -187,6 +189,42 @@ rule mlst:
         mlst {input} > {output}
 
         """
+
+
+
+
+rule mashtree:
+    #input: expand("{out_base}/samples/{sample}/{sample}.fa", sample = df["sample"], out_base = out_base_var)
+    input: df["input_file"].tolist()
+    output: "{out_base}/mashtree/mashtree.newick"
+    container: "docker://staphb/mashtree"
+    threads: 4
+    shell: """
+
+        mashtree --numcpus {threads} {input} > {output}
+
+        """
+
+
+
+
+rule fasttree:
+    #input: expand("{out_base}/samples/{sample}/{sample}.fa", sample = df["sample"], out_base = out_base_var)
+    input: "{out_base}/roary/core_gene_alignment.aln"
+    output: "{out_base}/fasttree/fasttree.newick"
+    container: "docker://staphb/fasttree"
+    threads: 4
+    shell: """
+
+        OMP_NUM_THREADS={threads}
+
+        FastTree {input} > {output}
+
+        """
+
+
+#print(mashtree.input)
+
 
 
 
