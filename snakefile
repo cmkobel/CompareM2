@@ -40,7 +40,7 @@ out_base_var = "output_asscom1"
 
 
 
-#sample_file = "input/" + title + ".tsv"
+#samples/file = "input/" + title + ".tsv"
 #reference = config["reference"]
 
 
@@ -62,16 +62,21 @@ if df.shape[0] == 0:
     print("Error: No fasta files in the current directory. Quitting ...")
     exit("Zero files.")
 
-
+df = df.reset_index(drop = True)
 print(df)
-print("///")
+print("//")
+
+
+input_continue = input("continue? (y/n) ")
+if not input_continue.lower()[0] == "y":
+    exit("Quitting ...")
 
 
 
 # Collect all targets
 rule all:
-    input: expand(["{out_base}/sample_{sample}/{sample}.fa", \
-                   "{out_base}/sample_{sample}/prokka/{sample}.gff", \
+    input: expand(["{out_base}/samples/{sample}/{sample}.fa", \
+                   "{out_base}/samples/{sample}/prokka/{sample}.gff", \
                    "{out_base}/roary/summary_statistics.txt"], \
                   out_base = out_base_var, sample = df["sample"]) # copy
 
@@ -85,7 +90,7 @@ rule all:
 rule copy:
     #input: "{sample}"
     input: lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0]
-    output: "{out_base}/sample_{sample}/{sample}.fa"
+    output: "{out_base}/samples/{sample}/{sample}.fa"
     #log: "logs/{out_base}_{wildcards.sample}.out.log"
 
     shell: """
@@ -97,14 +102,14 @@ rule copy:
 
 # Prokka
 rule prokka:
-    input: "{out_base}/sample_{sample}/{sample}.fa"
-    output: "{out_base}/sample_{sample}/prokka/{sample}.gff"
+    input: "{out_base}/samples/{sample}/{sample}.fa"
+    output: "{out_base}/samples/{sample}/prokka/{sample}.gff"
     #conda: "envs/prokka.yml"
     container: "docker://staphb/prokka"
     threads: 4
     shell: """
 
-        prokka --cpus 4 --force --outdir {wildcards.out_base}/sample_{wildcards.sample}/prokka --prefix {wildcards.sample} {input} || echo exit 0
+        prokka --cpus {threads} --force --outdir {wildcards.out_base}/samples/{wildcards.sample}/prokka --prefix {wildcards.sample} {input} || echo exit 0
 
         echo "prokka done"
         """
@@ -112,18 +117,18 @@ rule prokka:
 
 
 rule roary:
-    input: expand("{out_base}/sample_{sample}/prokka/{sample}.gff", sample = df["sample"], out_base = out_base_var)
+    input: expand("{out_base}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], out_base = out_base_var)
     output: "{out_base}/roary/summary_statistics.txt"
     params:
         blastp_identity = 95,
         core_perc = 99
     #conda: "envs/roary.yml"
+    threads: 8
     container: "docker://sangerpathogens/roary"
-    threads: 4
     shell: """
 
-        parallel --citation > /dev/null 2>&1
-        roary -a -r -e --mafft -p 4 -f {wildcards.out_base}/roary -i {params.blastp_identity} -cd {params.core_perc} {input}
+        #parallel --citation > /dev/null 2>&1
+        roary -a -r -e --mafft -p {threads} -f {wildcards.out_base}/roary -i {params.blastp_identity} -cd {params.core_perc} {input}
 
         # todo: use kraken as well
         

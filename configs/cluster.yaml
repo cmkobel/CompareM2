@@ -2,18 +2,16 @@
 
 __default__:
     account: "ClinicalMicrobio"
-    cpus-per-task: 1
+    cpus-per-task: "{threads}"
     time: "12:00:00"
-    mem: 32768
+    mem: 16384 # {mem_mb}
     output: "logs/{rule}-%j.out"
     #output: "logs/{rule}.out"
 
     error: "logs/{rule}-%j.err"
     #error: "logs/{rule}.err"
 
-align:
-    cpus-per-task: 8
+prokka:
+    cpus-per-task: 4
 
 
-tree:
-    cpus-per_tast: 8
