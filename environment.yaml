@@ -1,9 +1,10 @@
 channels:
-  - conda-forge
   - bioconda
-  - defaults
+  - conda-forge
 dependencies:
-  - graphviz=2.38.0
-  - python
   - snakemake
-  - pyyaml
+  - jinja2
+  - networkx
+  - matplotlib
+  - graphviz
+  - pysam

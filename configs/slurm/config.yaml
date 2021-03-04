@@ -1,9 +1,7 @@
 # [--snakefile FILE] 
-#cores: 2048
-cores: 4
+cores: 2048
 # [--local-cores N] 
-#configfile: "configs/workflow.yaml"
-configfile: "config.yaml"
+#configfile: "/home/cmkobel/assemblycomparator2/configs/workflow.yaml"
 
 # [--directory DIR] 
 keep-going: true 
@@ -14,7 +12,7 @@ rerun-incomplete: true
 # [--max-jobs-per-second MAX_JOBS_PER_SECOND] 
 # [--greediness GREEDINESS] 
 # [--runtime-profile FILE] 
-show-failed-logs: false
+show-failed-logs: true
 drmaa: "
     --mem={cluster.mem}
     --cpus-per-task={cluster.cpus-per-task} 
@@ -24,7 +22,8 @@ drmaa: "
     --output={cluster.output}
 "
 
-cluster-config: "configs/cluster.yaml" 
+# This should be given as a cli argument
+#cluster-config: "/home/cmkobel/assemblycomparator2/configs/slurm/cluster.yaml" 
 
 
 # [--jobscript SCRIPT] 

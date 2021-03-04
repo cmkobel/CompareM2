@@ -1,5 +1,5 @@
 
-
+# snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
 
 from os import listdir
 from os.path import isfile, join
@@ -75,6 +75,17 @@ print()
 #
 
 
+# Create the dirs
+
+try:
+    os.mkdir(out_base_var)
+    os.mkdir("logs")
+except OSError:
+    print ("Creation of the directories")
+else:
+    print ("Successfully created the directories")
+
+
 # Collect all targets
 rule all:
     input: expand(["{out_base}/metadata.tsv", \
@@ -107,6 +118,8 @@ rule copy:
     #log: "logs/{out_base}_{wildcards.sample}.out.log"
 
     shell: """
+
+        mkdir -p logs output_asscom1
 
         cp {input} {output}
 
