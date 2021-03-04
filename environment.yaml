@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - graphviz=2.38.0
+  - python
+  - snakemake
+  - pyyaml

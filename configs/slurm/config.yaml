@@ -1,0 +1,35 @@
+# [--snakefile FILE] 
+#cores: 2048
+cores: 4
+# [--local-cores N] 
+#configfile: "configs/workflow.yaml"
+configfile: "config.yaml"
+
+# [--directory DIR] 
+keep-going: true 
+rerun-incomplete: true
+# [--shadow-prefix DIR] 
+# [--reason] 
+# [--latency-wait SECONDS] 
+# [--max-jobs-per-second MAX_JOBS_PER_SECOND] 
+# [--greediness GREEDINESS] 
+# [--runtime-profile FILE] 
+show-failed-logs: false
+drmaa: "
+    --mem={cluster.mem}
+    --cpus-per-task={cluster.cpus-per-task} 
+    --time={cluster.time} 
+    --account={cluster.account}
+    --error={cluster.error} 
+    --output={cluster.output}
+"
+
+cluster-config: "configs/cluster.yaml" 
+
+
+# [--jobscript SCRIPT] 
+jobname: "{name}.{jobid}.snakejob.sh" 
+#use-conda: true
+use-singularity: true
+# [--conda-prefix DIR] 
+
