@@ -58,6 +58,7 @@ df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()]
 
 
 df = df.loc[df['extension'].isin(extension_whitelist)]
+# TODO: Filter out hidden files (starting with dot .)
 
 if df.shape[0] == 0:
     print("Error: No fasta files in the current directory. Quitting ...")
@@ -135,16 +136,20 @@ rule roary:
     input: expand("{out_base}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], out_base = out_base_var)
     output: ["{out_base}/roary/summary_statistics.txt", "{out_base}/roary/core_gene_alignment.aln", "{out_base}/roary/gene_presence_absence.csv"]
     params:
-        blastp_identity = 95,
-        core_perc = 99
+        blastp_identity = 95, # For clustering genes
+        core_perc = 99  # Definition of the core genome
     #conda: "envs/roary.yml"
     threads: 8
     container: "docker://sangerpathogens/roary"
     shell: """
 
-        roary -a -r -e --mafft -p {threads} -f {wildcards.out_base}/roary -i {params.blastp_identity} -cd {params.core_perc} {input}
 
-        # todo: use kraken as well
+        # Roary is confused by the way snakemake creates directories ahead of time.
+        # So I will delete it manually here before calling roary.
+        rm -r {wildcards.out_base}/roary
+
+        roary -a -r -e --mafft -p {threads} -i {params.blastp_identity} -cd {params.core_perc} -f {wildcards.out_base}/roary {input}
+                
         
         """
 
@@ -177,8 +182,6 @@ rule abricate:
 
 
         """
-
-
 
 
 rule mlst:
