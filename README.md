@@ -1,5 +1,8 @@
 # assemblycomparator v2
 
+# Assemblycomparator is a genomes-to-report pipeline. It is a bit like nullarbor, but it uses genomes (assemblies) instead of reads.
+
+
 ## Installation
 
  * Install Snakemake: [Official instructions](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html) 
@@ -9,10 +12,9 @@
      * Depending on your cluster configuration, you may also need [drmaa](https://anaconda.org/anaconda/drmaa). 
 
 
-## What does it do?
+## What analyses does it do?
 
-Some analyses are implemented, some are not yet.
-
+As assemblycomparator is currently under development, some analyses are not yes implemented and thouroughly tested.
 
 ### For each assembly
   - [ ] [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
