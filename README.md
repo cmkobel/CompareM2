@@ -37,6 +37,7 @@ As assemblycomparator is currently under development, some analyses are not yes 
   - [ ] [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
   - [ ] GC3-profiling ("fingerprinting" of the distribution of GC-content)
   - [ ] Identification of horizontally transferred genes
+  - [ ] A nice report easy to share with your friends and colleagues
   
   
   
