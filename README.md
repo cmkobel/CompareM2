@@ -24,7 +24,8 @@ As assemblycomparator is currently under development, some analyses are not yes 
   - [ ] [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
   - [x] [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
   - [x] [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)
-  - [ ] ([Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html)) (Identify possible replication origins, and thereby identify chromids)
+  - [ ] [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html)) (Identify possible replication origins, and thereby identify chromids)
+  - [ ] [RFplasmid](https://github.com/aldertzomer/RFPlasmid) (Identify plasmids using the pentamer-random-forest method)
 
   
   
