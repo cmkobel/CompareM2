@@ -26,7 +26,7 @@ As assemblycomparator is currently under development, some analyses are not yes 
   - [x] [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)
   - [ ] [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) (Identify possible replication origins, and thereby identify chromids)
   - [ ] [RFplasmid](https://github.com/aldertzomer/RFPlasmid) (Identify plasmids using the pentamer-random-forest method)
-  - [ ] [Kaptive](https://github.com/katholt/Kaptive)
+  - [ ] [Kaptive](https://github.com/katholt/Kaptive) (surface polysaccharide loci for Klebsiella and Acinetobacter baumannii)
 
   
   
