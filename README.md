@@ -31,6 +31,7 @@ As assemblycomparator is currently under development, some analyses are not yes 
   
 ### For each group
   - [x] [roary](https://sanger-pathogens.github.io/Roary/) (pan and core genome)
+  - [ ] [GenAPI](https://github.com/MigleSur/GenAPI) (alternative to roary)
   - [ ] [snp-dists](https://github.com/tseemann/snp-dists) (core genome snp-distances)
   - [ ] [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity
   - [x] [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
