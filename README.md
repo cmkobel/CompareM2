@@ -16,7 +16,7 @@ It is a joint project between Department of Clinical Microbiology Odense at Oden
 
 ## What analyses does it do?
 
-As assemblycomparator is currently under development, some analyses are not yes implemented and thouroughly tested.
+As assemblycomparator is currently under development, some analyses are not yet implemented and thoroughly tested.
 
 ### For each assembly
   - [ ] [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
