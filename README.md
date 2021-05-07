@@ -21,7 +21,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    git clone https://github.com/cmkobel/assemblycomparator2.git $ASSCOM2_BASE
    
    # Hint: If you haven't already installed Snakemake and its dependencies, you can do it easily now:
-   conda env create -f environment.yml 
+   cd $ASSCOM2_BASE && conda env create -f environment.yml 
    ```
    
  * Set an alias that makes it easy to run assemblycomparator2 from anywhere in your filesystem
