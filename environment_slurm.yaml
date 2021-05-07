@@ -1,0 +1,7 @@
+channels:
+  - anaconda
+  - bioconda
+  - conda-forge
+dependencies:
+  - snakemake
+  - drmaa
