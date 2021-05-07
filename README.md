@@ -38,11 +38,16 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    
  * Set an alias that makes it easy to run assemblycomparator2 from anywhere in your filesystem
    ```
-   # For local setups:
+   # For local setups (uses conda):
    echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile'" >> ~/.bashrc
    
-   # For HPC's with Slurm:
-   echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/cluster.yaml'" >> ~/.bashrc
+   # For HPC's with Slurm (uses Conda for jobs):
+   echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/cluster.yaml' --use-conda" >> ~/.bashrc
+   
+   # For HPC's with Slurm (uses Singularity for jobs):
+   echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/cluster.yaml' --use-singularity" >> ~/.bashrc
+   
+   
    ```
    
  * Optionally: Consider running the Kraken2 and mash screen set up scripts:
