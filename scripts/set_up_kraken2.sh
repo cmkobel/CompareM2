@@ -9,7 +9,7 @@ set -e
 
 # Define (manually) where you want the kraken2 database to reside
 #kraken2_database_dir=~/databases/kraken2/k2_pluspf_20210127
-kraken2_database_dir=~/ClinicalMicrobio/faststorage/database/kraken2/k2_pluspf_20210127
+kraken2_database_dir=~/ClinicalMicrobio/faststorage/database/kraken2/k2_pluspf_20210127 # For debugging
 
 # Preemptively create and enter this dir
 echo "Creating and entering ${kraken2_database_dir}"
