@@ -26,7 +26,8 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    echo "export ASSCOM2_BASE=$ASSCOM2_BASE" >> ~/.bashrc 
    
    # If you are going to use conda, it is a good idea to set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
-   echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM_BASE}/conda_base" >> ~/.bashrc
+   echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM_BASE}/conda_base" >> ~/.bashrc 
+   mkdir -p ${ASSCOM_BASE}/conda_base
    
    # Finally source your ~/.bashrc
    source ~/.bashrc
