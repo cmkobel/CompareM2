@@ -1,6 +1,5 @@
+name: fasttree
 channels:
-  - conda-forge
   - bioconda
-  - defaults
 dependencies:
-  - mlst
+  - fasttree

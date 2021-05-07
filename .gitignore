@@ -2,6 +2,7 @@
 .DS_Store
 conda_base/
 .snakemake
+output_asscom2/
 
 
 # Byte-compiled / optimized / DLL files

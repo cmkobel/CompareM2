@@ -7,8 +7,8 @@ dependencies:
   - prokka 
   #- clang
   #- perl-xml-simple
-  - perl-bioperl
-  - perl-moo
+  #- perl-bioperl
+  #- perl-moo
   #- perl-xml-libxml
 
 

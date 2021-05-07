@@ -11,7 +11,7 @@ import pandas as pd
 #import re
 
 
-
+print()
 print("         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗  ")
 print("        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗ ")
 print("        ███████║███████╗███████╗██║     ██║   ██║██╔████╔██║ █████╔╝ ")
@@ -44,7 +44,7 @@ print()
 title = "test"
 
 
-out_base_var = "output_asscom1"
+out_base_var = "output_asscom2"
 
 
 
@@ -172,7 +172,6 @@ rule kraken2:
     shell: """
 
         if [ ! -z $ASSCOM2_KRAKEN2_DB ]; then
-            echo "Using database: ${{ASSCOM_KRAKEN2_DB}}"
             kraken2 \
                 --threads 4 \
                 --db $ASSCOM2_KRAKEN2_DB \
@@ -221,7 +220,7 @@ rule roary:
         blastp_identity = 95, # For clustering genes
         core_perc = 99  # Definition of the core genome
     #conda: "envs/roary.yml"
-    threads: 8
+    threads: 4
     container: "docker://sangerpathogens/roary"
     conda: "conda_envs/roary.yaml"
     shell: """
@@ -274,6 +273,7 @@ rule mlst:
     input: df["input_file_fasta"].tolist()
     output: "{out_base}/mlst/mlst.tsv"
     container: "docker://staphb/mlst"
+    conda: "conda_envs/mlst.yaml"
     shell: """
 
         mlst {input} > {output}
@@ -304,6 +304,7 @@ rule fasttree:
     input: "{out_base}/roary/core_gene_alignment.aln"
     output: "{out_base}/fasttree/fasttree.newick"
     container: "docker://staphb/fasttree"
+    conda: "conda_envs/fasttree.yaml"
     threads: 4
     shell: """
 
