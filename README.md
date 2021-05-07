@@ -58,8 +58,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
 
 Simply run this command, and you should be all set:
 ```
-cd $ASSCOM2_BASE
-git pull
+cd $ASSCOM2_BASE && git pull
 ```
 Note: If new database have been added to kraken or mashscreen, you can rerun the above-mentioned set_up_*.sh-scripts.
 
