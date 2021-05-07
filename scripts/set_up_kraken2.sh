@@ -1,5 +1,10 @@
 #!/bin/bash
 
+###########################################################################################################################
+# This script downloads a kraken2 database, and sets a system variable so that assemblycomparator2 can find the database. #
+###########################################################################################################################
+
+# This flag makes sure the script stops if an error arises
 set -e
 
 # Define (manually) where you want the kraken2 database to reside
