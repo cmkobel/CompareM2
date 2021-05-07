@@ -12,6 +12,34 @@ It is a joint project between Department of Clinical Microbiology Odense at Oden
    * If running locally, no profile is needed
    * If you use slurm, you can utilize the included profile in configs/ pretty much as is.
      * Depending on your cluster configuration, you may also need [drmaa](https://anaconda.org/anaconda/drmaa). 
+ * Decide where you want to install assemblycomparator2
+   ``` 
+   ASSCOM2_BASE=~/assemblycomparator2
+   
+   # And save it into your .bashrc
+   echo "export ASSCOM2_BASE=$ASSCOM2_BASE" >> ~/.bashrc && source ~/.bashrc
+   ```
+ * Clone this repo into that base path
+   ```
+   git clone https://github.com/cmkobel/assemblycomparator2.git $ASSCOM2_BASE
+   ```
+ * Optionally: Consider running the Kraken2 and mash screen set up scripts:
+   ```
+   $ASSCOM2_BASE/scripts/set_up_kraken2.sh
+   $ASSCOM2_BASE/scripts/set_up_mashscren.sh
+   ```
+   
+   
+   
+   
+### Updating an existing installation
+
+Simply run this command, and you should be all set:
+```
+cd $ASSCOM2_BASE
+git pull
+```
+
 
 
 ## What analyses does it do?
