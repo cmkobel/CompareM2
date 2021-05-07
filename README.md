@@ -63,7 +63,7 @@ cd $ASSCOM2_BASE && git pull
 # You might also want to update snakemake
 conda env update --name assemblycomparator2 --file environment.yaml
 ```
-Note: If new database have been added to kraken or mashscreen, you can rerun the above-mentioned set_up_*.sh-scripts.
+Note: If new databases have been added to kraken or mashscreen, you can rerun the above-mentioned set_up_*.sh-scripts.
 
 
 
