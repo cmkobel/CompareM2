@@ -67,12 +67,12 @@ Note: If new database have been added to kraken or mashscreen, you can rerun the
 
 ## What analyses does it do?
 
-As assemblycomparator is currently under development, some analyses are not yet implemented and thoroughly tested.
+As assemblycomparator is currently under development, some analyses are not yet implemented or thoroughly tested.
 
 ### For each assembly
-  - [ ] [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
+  - [x] [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
   - [x] [prokka](https://github.com/tseemann/prokka) (annotation)
-  - [ ] [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
+  - [x] [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
   - [x] [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
   - [x] [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)
   - [ ] [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) (Identify possible replication origins, and thereby identify chromids)
