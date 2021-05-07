@@ -1,6 +1,6 @@
 # assemblycomparator2
 
-Assemblycomparator is a genomes-to-report pipeline. It is a bit like nullarbor, but it uses genomes (assemblies) instead of reads. 
+Assemblycomparator is a genomes-to-report pipeline. It is a bit like nullarbor, but it takes in genomes (assemblies) instead of reads. 
 
 It is a joint project between Department of Clinical Microbiology Odense at Odense Universityhospital, and Department of Clinical Microbiology Skejby, at Aarhus Universityhospital.
 
@@ -9,7 +9,7 @@ Make a directory with a few fasta files you want to investigate and possibly com
 Go into that directory in the terminal, and run the command `assemblycomparator2`. 
 assemblycomparator2 will then create a sub-directory containing a plethora of analyses. 
 
-We are also working on making a report, which will make it easy to explore these analyses without rummaging around on the filesystem.
+We are also working on finishing an automatically generated report, which will make it easy to explore these analyses without rummaging around on the filesystem.
 That is it!
 
 
@@ -38,16 +38,11 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    
  * Set an alias that makes it easy to run assemblycomparator2 from anywhere in your filesystem
    ```
-   # For local setups (Conda):
-   echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --cores all --use-conda'" >> ~/.bashrc
+   # For local setups (using Conda for jobs):
+   echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/local/ --use-conda'" >> ~/.bashrc
    
-   # For HPC's with Slurm (Conda):
-   echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/cluster.yaml --use-conda'" >> ~/.bashrc
-   
-   # For HPC's with Slurm (Singularity):
+   # For HPC's with Slurm (using Singularity for jobs):
    echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/cluster.yaml --use-singularity'" >> ~/.bashrc
-   
-   
    ```
    
  * Optionally: Consider running the Kraken2 and mash screen set up scripts:
