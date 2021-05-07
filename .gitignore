@@ -1,7 +1,7 @@
 # Other
 .DS_Store
 conda_base/
-
+.snakemake
 
 
 # Byte-compiled / optimized / DLL files

@@ -1,0 +1,5 @@
+name: any2fasta
+channels:
+  - bioconda
+dependencies:
+  - any2fasta

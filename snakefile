@@ -167,18 +167,19 @@ rule kraken2:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
     container: "docker://staphb/kraken2"
+    #conda: "conda_envs/kraken2.yaml"
     threads: 4
     shell: """
 
-        if [ ! -z $ASSCOM_KRAKEN2_DB ]; then
+        if [ ! -z $ASSCOM2_KRAKEN2_DB ]; then
             echo "Using database: ${{ASSCOM_KRAKEN2_DB}}"
             kraken2 \
                 --threads 4 \
-                --db $ASSCOM_KRAKEN2_DB \
+                --db $ASSCOM2_KRAKEN2_DB \
                 --report {output} \
                 {input}
         else
-            echo "The ASSCOM_KRAKEN2_DB variable is not set, and thus the kraken2 rule and its jobs will not be run. Consider using the scripts/set_up_kraken2.sh script for downloading and linking the latest kraken2 database."
+            echo "The ASSCOM2_KRAKEN2_DB variable is not set, and thus the kraken2 rule and its jobs will not be run. Consider using the scripts/set_up_kraken2.sh script for downloading and linking the latest kraken2 database."
         fi
 
     """
