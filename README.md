@@ -19,9 +19,17 @@ It is a joint project between Department of Clinical Microbiology Odense at Oden
    # And save it into your .bashrc
    echo "export ASSCOM2_BASE=$ASSCOM2_BASE" >> ~/.bashrc && source ~/.bashrc
    ```
- * Clone this repo into that base path
+ * Clone this repo into that base path, and set an alias that makes it easy to run assemblycomparator from anywhere.
    ```
    git clone https://github.com/cmkobel/assemblycomparator2.git $ASSCOM2_BASE
+   
+   # For HPC's with Slurm:
+   echo "alias assemblycomparator2='snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/cluster.yaml'"
+   
+   # For local setups:
+   echo "alias assemblycomparator2='snakemake --snakefile ${ASSCOM2_BASE}/snakefile'"
+   
+   
    ```
  * Optionally: Consider running the Kraken2 and mash screen set up scripts:
    ```
