@@ -59,6 +59,9 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
 Simply run this command, and you should be all set:
 ```
 cd $ASSCOM2_BASE && git pull
+
+# You might also want to update snakemake
+conda env update --name assemblycomparator2 --file environment.yaml
 ```
 Note: If new database have been added to kraken or mashscreen, you can rerun the above-mentioned set_up_*.sh-scripts.
 
