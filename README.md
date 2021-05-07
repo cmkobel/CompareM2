@@ -4,6 +4,15 @@ Assemblycomparator is a genomes-to-report pipeline. It is a bit like nullarbor, 
 
 It is a joint project between Department of Clinical Microbiology Odense at Odense Universityhospital, and Department of Clinical Microbiology Skejby, at Aarhus Universityhospital.
 
+## Usage
+Make a directory with a few fasta files you want to investigate and possibly compare. 
+Go into that directory in the terminal, and run the command `assemblycomparator2`. 
+assemblycomparator2 will then create a sub-directory containing a plethora of analyses. 
+
+We are also working on making a report, which will make it easy to explore these analyses without rummaging around on the filesystem.
+That is it!
+
+
 
 ## Installation
 
