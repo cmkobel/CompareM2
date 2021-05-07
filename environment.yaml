@@ -1,10 +1,7 @@
+name: assemblycomparator2
 channels:
   - bioconda
   - conda-forge
 dependencies:
   - snakemake
-  - jinja2
-  - networkx
-  - matplotlib
-  - graphviz
-  - pysam
+  - drmaa
