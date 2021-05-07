@@ -1,6 +1,6 @@
 ---
 title: "Genomes to report"
-author: "Oliver Hansen"
+author: "Oliver Hansen & Carl M. Kobel"
 date: "`r Sys.Date()`"
 output:
   prettydoc::html_pretty:
@@ -9,6 +9,34 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
+```{r}
+
+# This is useful for debugging the markdown script.
+setwd("~/assemblycomparator2/tests/E._faecium/output_asscom2/")
+
+# Import the metadata table
+# This table makes it easy for us later to convert the long paths to short and simple sample names
+metadata_file = "metadata.tsv"
+
+if (file.exists(metadata_file)) {
+    metadata_df = read_tsv(metadata_file)
+    
+    metadata_df %>%
+        #arrange(sample) %>% 
+        datatable(class = 'cell-border stripe') %>%
+        print()
+    
+    
+    # Generate a very simple table which can be used to convert long paths to sample names
+    metadata_translate = metadata_df %>% 
+        select(sample, filename = input_file_fasta)
+    
+} else {
+    stop(paste("The metadata file", metadata_file, "is not accessible."))
+}
+
+
+```
 
 ```{r Dependencies, message=TRUE, warning=TRUE, include=FALSE}
 #Dependencies
@@ -20,6 +48,29 @@ library(prettydoc)
 #library(kableExtra)
 library(DT)
 ```
+
+#assembly-stats overview
+
+Assembly statistics provided by https://github.com/sanger-pathogens/assembly-stats
+
+```{r}
+assembly_stats_file = "assembly-stats/assembly-stats.tsv"
+if (file.exists(assembly_stats_file)) {
+    assembly_stats_df = read_tsv(assembly_stats_file) 
+    
+    assembly_stats_df %>% left_join(metadata_translate) %>% 
+        select(sample, everything(), -filename) %>% 
+        arrange(sample) %>% 
+        datatable(class = 'cell-border stripe')
+            
+    
+    
+} else {
+    paste("Warning: The file", assembly_stats_file, "is not accessible.")
+}
+```
+
+
 
 ```{r fig.height=100, fig.width=100}
 #MLST overview
@@ -34,20 +85,33 @@ library(DT)
 
 ```{r mlst, echo=FALSE, message=TRUE, warning=TRUE}
 #få mlst til at spytte header ud.
-mlst <- read.table(file = 'mlst.tsv', sep = '\t', header = FALSE)
-allelnum <- length(mlst) - 3
-
-mlst %>% datatable(
-#  options = list(
-#   autoWidth = TRUE, 
-#   columnDefs = list(list(width = '300px'))),
-  class = 'cell-border stripe',
-  rownames = FALSE,
-  colnames = c('Isolate','Scheme', 'SequenceType', rep('Allel',allelnum) )
-  )
-
-  #kable() %>% 
-  #kable_paper('hover', full_width = F)
+#mlst <- read.table(file = 'mlst.tsv', sep = '\t', header = FALSE)
+mlst_file = "mlst/mlst.tsv"
+if (file.exists(mlst_file)) {
+    mlst_df <- read_tsv("mlst/mlst.tsv", col_names = F)
+    allelnum <- length(mlst_df) - 3
+    names(mlst_df) = c("filename", "scheme", "sequence_type", paste('allele_', 1:allelnum))
+    
+    
+    mlst_df %>%
+        left_join(metadata_translate) %>% 
+        select(sample, everything(), -filename) %>% 
+        arrange(sample) %>% 
+        datatable(class = 'cell-border stripe')
+        
+    
+    #mlst_df %>% datatable(
+    #  options = list(
+    #   autoWidth = TRUE, 
+    #   columnDefs = list(list(width = '300px'))),
+      #class = 'cell-border stripe',
+      #rownames = FALSE,
+      #colnames = c('Isolate','Scheme', 'SequenceType', rep('Allel',allelnum) )
+      #)
+    
+      #kable() %>% 
+      #kable_paper('hover', full_width = F)
+}
 ```
 
 ```{r}
@@ -68,25 +132,46 @@ mlst %>% datatable(
 ##Stats for the plasmidfinder database
 
 ```{r echo=FALSE, message=TRUE, warning=TRUE}
-plasmidfinder_detail <- read.table(file = 'plasmidfinder_detail.tsv', sep = '\t', header = TRUE)
 
-plasmidfinder_sum <- read.table(file = 'plasmidfinder_summary.tsv', sep = '\t', header = TRUE)
+abricate_ncbi_file = "abricate/ncbi_summarized.tsv"
+if (file.exists(abricate_ncbi_file)) {
+    abricate_ncbi_df = read_tsv(abricate_ncbi_file) %>% 
+        rename(filename = `#FILE`, num_found = NUM_FOUND)
+    
+    
+    abricate_ncbi_df %>%
+        left_join(metadata_translate) %>% 
+        select(sample, everything(), -filename) %>% 
+        arrange(sample) %>% 
+        datatable(class = 'cell-border stripe')
 
-plasmidfinder_sum %>% datatable(
-  options = list(
-   autoWidth = TRUE, 
-   columnDefs = list(list(width = '50px'))),
-  class = 'cell-border stripe',
-  rownames = FALSE
-    )
+    
+} else {
+    paste("Warning: The file", abricate_ncbi_file, "is not accessible.")
+}
 
-plasmidfinder_detail  %>% datatable(
-  options = list(
-   autoWidth = TRUE, 
-   columnDefs = list(list(width = '50px'))),
-  class = 'cell-border stripe',
-  rownames = FALSE 
- )
+
+# 
+# plasmidfinder_detail <- read.table(file = 'abricate/plasmidfinder_detailed.tsv', sep = '\t', header = TRUE)
+# 
+# 
+# plasmidfinder_sum <- read.table(file = 'abricate/plasmidfinder_summarized.tsv', sep = '\t', header = TRUE)
+# 
+# plasmidfinder_sum %>% datatable(
+#   options = list(
+#    autoWidth = TRUE, 
+#    columnDefs = list(list(width = '50px'))),
+#   class = 'cell-border stripe',
+#   rownames = FALSE
+#     )
+# 
+# plasmidfinder_detail  %>% datatable(
+#   options = list(
+#    autoWidth = TRUE, 
+#    columnDefs = list(list(width = '50px'))),
+#   class = 'cell-border stripe',
+#   rownames = FALSE 
+#  )
 ```
 
 ##Stats for the card database
