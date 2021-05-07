@@ -93,7 +93,7 @@ rule all:
                    "{out_base}/samples/{sample}/{sample}.fa", \
                    "{out_base}/samples/{sample}/prokka/{sample}.gff", \
                    "{out_base}/roary/summary_statistics.txt", \
-                   "{out_base}/abricate/card_detail.tsv", \
+                   "{out_base}/abricate/card_detailed.tsv", \
                    "{out_base}/mlst/mlst.tsv", \
                    "{out_base}/mashtree/mashtree.newick", \
                    "{out_base}/fasttree/fasttree.newick"], \
@@ -172,26 +172,26 @@ rule abricate:
     #input: expand("{out_base}/samples/{sample}/{sample}.fa", sample = df["sample"], out_base = out_base_var)
     input: df["input_file"].tolist()
     output:
-        card_detail = "{out_base}/abricate/card_detail.tsv",
-        card_sum = "{out_base}/abricate/card_summary.tsv",
-        plasmidfinder_detail = "{out_base}/abricate/plasmidfinder_detail.tsv",
-        plasmidfinder_sum = "{out_base}/abricate/plasmidfinder_summary.tsv",
-        ncbi_detail = "{out_base}/abricate/ncbi_detail.tsv",
-        ncbi_sum = "{out_base}/abricate/ncbi_summary.tsv"
+        card_detailed = "{out_base}/abricate/card_detailed.tsv",
+        card_sum = "{out_base}/abricate/card_summarized.tsv",
+        plasmidfinder_detailed = "{out_base}/abricate/plasmidfinder_detailed.tsv",
+        plasmidfinder_sum = "{out_base}/abricate/plasmidfinder_summarized.tsv",
+        ncbi_detailed = "{out_base}/abricate/ncbi_detailed.tsv",
+        ncbi_sum = "{out_base}/abricate/ncbi_summarized.tsv"
     container: "docker://staphb/abricate"
     shell: """
 
 
         # TODO: update these databases
 
-        abricate --db card {input} > {output.card_detail}
-        abricate --summary {output.card_detail} > {output.card_sum}
+        abricate --db card {input} > {output.card_detailed}
+        abricate --summary {output.card_detailed} > {output.card_sum}
         
-        abricate --db plasmidfinder {input} > {output.plasmidfinder_detail}
-        abricate --summary {output.plasmidfinder_detail} > {output.plasmidfinder_sum}
+        abricate --db plasmidfinder {input} > {output.plasmidfinder_detailed}
+        abricate --summary {output.plasmidfinder_detailed} > {output.plasmidfinder_sum}
         
-        abricate --db ncbi {input} > {output.ncbi_detail}
-        abricate --summary {output.ncbi_detail} > {output.ncbi_sum}
+        abricate --db ncbi {input} > {output.ncbi_detailed}
+        abricate --summary {output.ncbi_detailed} > {output.ncbi_sum}
         
 
 
