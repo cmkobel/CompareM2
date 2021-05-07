@@ -1,0 +1,14 @@
+name: prokka
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - prokka 
+  #- clang
+  #- perl-xml-simple
+  - perl-bioperl
+  - perl-moo
+  #- perl-xml-libxml
+
+
