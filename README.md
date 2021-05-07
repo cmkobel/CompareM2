@@ -9,7 +9,7 @@ Make a directory with a few fasta files you want to investigate and possibly com
 Go into that directory in the terminal, and run the command `assemblycomparator2`. 
 assemblycomparator2 will then create a sub-directory containing a plethora of analyses. 
 
-We are also working on making a report, which will make it easy to explore these analyses without rummaging around on the filesystem.
+We are also working on finishing an automatically generated report, which will make it easy to explore these analyses without rummaging around on the filesystem.
 That is it!
 
 
