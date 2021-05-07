@@ -222,6 +222,7 @@ rule roary:
     #conda: "envs/roary.yml"
     threads: 8
     container: "docker://sangerpathogens/roary"
+    conda: "conda_envs/roary.yaml"
     shell: """
 
 
@@ -247,6 +248,7 @@ rule abricate:
         ncbi_detailed = "{out_base}/abricate/ncbi_detailed.tsv",
         ncbi_sum = "{out_base}/abricate/ncbi_summarized.tsv"
     container: "docker://staphb/abricate"
+    conda: "conda_envs/abricate.yaml"
     shell: """
 
 

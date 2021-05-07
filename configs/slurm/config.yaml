@@ -29,6 +29,6 @@ drmaa: "
 # [--jobscript SCRIPT] 
 jobname: "{name}.{jobid}.snakejob.sh" 
 #use-conda: true
-use-singularity: true
+#use-singularity: true
 # [--conda-prefix DIR] 
 
