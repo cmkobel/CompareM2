@@ -7,34 +7,36 @@ It is a joint project between Department of Clinical Microbiology Odense at Oden
 
 ## Installation
 
- * Install Snakemake: [Official instructions](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html) 
- * Set the Snakemake [profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles) so it matches your cluster setup. 
-   * If running locally, no profile is needed
-   * If you use slurm, you can utilize the included profile in configs/ pretty much as is.
-     * Depending on your cluster configuration, you may also need [drmaa](https://anaconda.org/anaconda/drmaa). 
- * Decide where you want to install assemblycomparator2
+Assemblycomparator2 needs Snakemake and the dependencies which can be needed for running on your specific setup. I.e. DRMAA for Slurm-mananged HPC's.
+You can either follow the [official Snakemake instructions](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html) or use our guide below:
+* Decide where you want to install assemblycomparator2
    ``` 
    ASSCOM2_BASE=~/assemblycomparator2
    
    # And save it into your .bashrc
    echo "export ASSCOM2_BASE=$ASSCOM2_BASE" >> ~/.bashrc && source ~/.bashrc
    ```
- * Clone this repo into that base path, and set an alias that makes it easy to run assemblycomparator from anywhere.
+ * Clone the assemblycomparator2 GitHub-repository into that base
    ```
    git clone https://github.com/cmkobel/assemblycomparator2.git $ASSCOM2_BASE
    
-   # For HPC's with Slurm:
-   echo "alias assemblycomparator2='snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/cluster.yaml'"
-   
-   # For local setups:
-   echo "alias assemblycomparator2='snakemake --snakefile ${ASSCOM2_BASE}/snakefile'"
-   
-   
+   # Hint: If you haven't already installet Snakemake and its dependencies, you can do it easily now:
+   conda env create -f environment.yml 
    ```
+   
+ * Set an alias that makes it easy to run assemblycomparator2 from anywhere in your filesystem
+   ```
+   # For local setups:
+   echo "alias assemblycomparator2='snakemake --snakefile ${ASSCOM2_BASE}/snakefile'" >> ~/.bashrc
+   
+   # For HPC's with Slurm:
+   echo "alias assemblycomparator2='snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/cluster.yaml'" >> ~/.bashrc
+   ```
+   
  * Optionally: Consider running the Kraken2 and mash screen set up scripts:
    ```
    $ASSCOM2_BASE/scripts/set_up_kraken2.sh
-   $ASSCOM2_BASE/scripts/set_up_mashscren.sh
+   $ASSCOM2_BASE/scripts/set_up_mashscreen.sh
    ```
    
    
@@ -47,6 +49,7 @@ Simply run this command, and you should be all set:
 cd $ASSCOM2_BASE
 git pull
 ```
+Note: If new database have been added to kraken or mashscreen, you can rerun the above-mentioned set_up_*.sh-scripts.
 
 
 
