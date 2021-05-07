@@ -1,5 +1,10 @@
 # assemblycomparator v2
 
+Assemblycomparator is a genomes-to-report pipeline. It is a bit like nullarbor, but it uses genomes (assemblies) instead of reads. 
+
+It is a joint project between Department of Clinical Microbiology Odense at Odense Universityhospital, and Department of Clinical Microbiology Skejby, at Aarhus Universityhospital.
+
+
 ## Installation
 
  * Install Snakemake: [Official instructions](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html) 
@@ -9,10 +14,9 @@
      * Depending on your cluster configuration, you may also need [drmaa](https://anaconda.org/anaconda/drmaa). 
 
 
-## What does it do?
+## What analyses does it do?
 
-Some analyses are implemented, some are not yet.
-
+As assemblycomparator is currently under development, some analyses are not yet implemented and thoroughly tested.
 
 ### For each assembly
   - [ ] [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
@@ -20,12 +24,15 @@ Some analyses are implemented, some are not yet.
   - [ ] [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
   - [x] [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
   - [x] [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)
-  - [ ] ([Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html)) (Identify possible replication origins, and thereby identify chromids)
+  - [ ] [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) (Identify possible replication origins, and thereby identify chromids)
+  - [ ] [RFplasmid](https://github.com/aldertzomer/RFPlasmid) (Identify plasmids using the pentamer-random-forest method)
+  - [ ] [Kaptive](https://github.com/katholt/Kaptive) (surface polysaccharide loci for Klebsiella and Acinetobacter baumannii)
 
   
   
 ### For each group
   - [x] [roary](https://sanger-pathogens.github.io/Roary/) (pan and core genome)
+  - [ ] [GenAPI](https://github.com/MigleSur/GenAPI) (alternative to roary)
   - [ ] [snp-dists](https://github.com/tseemann/snp-dists) (core genome snp-distances)
   - [ ] [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity
   - [x] [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
@@ -33,6 +40,7 @@ Some analyses are implemented, some are not yet.
   - [ ] [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
   - [ ] GC3-profiling ("fingerprinting" of the distribution of GC-content)
   - [ ] Identification of horizontally transferred genes
+  - [ ] **A nice report easy to share with your friends and colleagues**
   
   
   
