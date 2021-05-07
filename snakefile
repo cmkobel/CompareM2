@@ -103,6 +103,7 @@ else:
 rule all:
     input: expand(["{out_base}/metadata.tsv", \
                    "{out_base}/samples/{sample}/{sample}.fa", \
+                   "{out_base}/assembly-stats/assembly-stats.tsv", \
                    "{out_base}/samples/{sample}/prokka/{sample}.gff", \
                    "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_top10.tsv", \
                    "{out_base}/roary/summary_statistics.txt", \
@@ -144,6 +145,18 @@ rule copy:
 
     """
 
+# rule assembly_stats:
+#     input: "{out_base}/samples/{sample}/{sample}.fa"
+#     output: "{out_base}/samples/{sample}/assembly-stats/{sample}_assemblystats.txt"
+#     conda: "conda_envs/assembly-stats.yaml"
+#     shell: """
+        
+#         assembly-stats -t {input} > {output}
+    
+#     """
+
+
+
 
 ##################################
 # Targets for each sample below: #
@@ -178,7 +191,8 @@ rule kraken2:
                 --threads 4 \
                 --db $ASSCOM2_KRAKEN2_DB \
                 --report {output} \
-                {input}
+                {input} \
+                > /dev/null
         else
             echo "The ASSCOM2_KRAKEN2_DB variable is not set, and thus the kraken2 rule and its jobs will not be run. Consider using the scripts/set_up_kraken2.sh script for downloading and linking the latest kraken2 database."
         fi
@@ -232,10 +246,29 @@ rule roary:
         # So I will delete it manually here before calling roary.
         rm -r {wildcards.out_base}/roary
 
-        roary -a -r -e --mafft -p {threads} -i {params.blastp_identity} -cd {params.core_perc} -f {wildcards.out_base}/roary {input}
+        roary -a -r -e --mafft \
+            -p {threads} \
+            -i {params.blastp_identity} \
+            -cd {params.core_perc} \
+            -f {wildcards.out_base}/roary \
+            {input}
                 
         
     """
+
+
+
+rule assembly_stats:
+    input: df["input_file_fasta"].tolist()
+    output: "{out_base}/assembly-stats/assembly-stats.tsv"
+    conda: "conda_envs/assembly-stats.yaml"
+    shell: """
+        
+        assembly-stats -t {input} > {output}
+    
+    """
+
+
 
 
 rule abricate:
