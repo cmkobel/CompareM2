@@ -1,7 +1,7 @@
 name: assemblycomparator2
 channels:
-  - bioconda
   - conda-forge
+  - bioconda
 dependencies:
   - snakemake
   - drmaa
