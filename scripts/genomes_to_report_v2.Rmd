@@ -8,11 +8,28 @@ output:
     highlight: github
 editor_options: 
   chunk_output_type: console
----
-```{r}
+  
+  
+  
+```{r Dependencies, message=TRUE, warning=TRUE, include=FALSE}
+#Dependencies
+library(tidyverse)
+library(prettydoc)
+#library(broom)
+#library(magrittr)
+#library(knitr)
+#library(kableExtra)
+library(DT)
 
 # This is useful for debugging the markdown script.
 setwd("~/assemblycomparator2/tests/E._faecium/output_asscom2/")
+```
+
+
+```{r}
+
+
+
 
 # Import the metadata table
 # This table makes it easy for us later to convert the long paths to short and simple sample names
@@ -36,17 +53,6 @@ if (file.exists(metadata_file)) {
 }
 
 
-```
-
-```{r Dependencies, message=TRUE, warning=TRUE, include=FALSE}
-#Dependencies
-library(tidyverse)
-library(prettydoc)
-#library(broom)
-#library(magrittr)
-#library(knitr)
-#library(kableExtra)
-library(DT)
 ```
 
 #assembly-stats overview

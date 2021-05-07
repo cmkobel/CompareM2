@@ -366,6 +366,17 @@ rule roary_plots:
 
 
 
+rule report:
+    input: "{out_base}/abricate/card_summarized.tsv"
+    output: "{out_base}/report/report.html"
+    shell: """
+
+        cd {out_base}/report
+
+        render.r ../../scripts/genomes_to_report_v2.Rmd 
+    """
+
+
 #print(mashtree.input)
 
 
