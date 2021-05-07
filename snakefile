@@ -167,11 +167,13 @@ rule kraken2:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
     container: "docker://staphb/kraken2"
-    #conda: "conda_envs/kraken2.yaml"
+    conda: "conda_envs/kraken2.yaml"
     threads: 4
     shell: """
 
+
         if [ ! -z $ASSCOM2_KRAKEN2_DB ]; then
+            echo using kraken2 database $ASSCOM2_KRAKEN2_DB
             kraken2 \
                 --threads 4 \
                 --db $ASSCOM2_KRAKEN2_DB \
