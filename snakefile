@@ -56,6 +56,8 @@ df = pd.DataFrame(data = {'input_file': present_files})
 
 df['sample'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()]
 df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()]
+df['sample_copy'] = out_base_var + "/samples/" + df['sample'] + ".fa"
+#output: "{out_base}/samples/{sample}/{sample}.fa"
 
 
 df = df.loc[df['extension'].isin(extension_whitelist)]
@@ -92,6 +94,7 @@ rule all:
     input: expand(["{out_base}/metadata.tsv", \
                    "{out_base}/samples/{sample}/{sample}.fa", \
                    "{out_base}/samples/{sample}/prokka/{sample}.gff", \
+                   "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.txt", \
                    "{out_base}/roary/summary_statistics.txt", \
                    "{out_base}/abricate/card_detailed.tsv", \
                    "{out_base}/mlst/mlst.tsv", \
@@ -112,6 +115,7 @@ rule metadata:
 
 
 # Copy the input file to its new home
+# Homogenizes the file extension as well (.fa)
 rule copy:
     #input: "{sample}"
     input: lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0]
@@ -124,7 +128,7 @@ rule copy:
 
         cp {input} {output}
 
-        """
+    """
 
 
 ##################################
@@ -138,9 +142,32 @@ rule prokka:
     threads: 4
     shell: """
 
-        prokka --cpus {threads} --force --outdir {wildcards.out_base}/samples/{wildcards.sample}/prokka --prefix {wildcards.sample} {input} || echo exit 0
+        prokka --cpus {threads} --force --outdir {wildcards.out_base}/samples/{wildcards.sample}/prokka --prefix {wildcards.sample} {input} #|| echo exit 0
 
-        """
+    """
+
+
+
+rule kraken2:
+    input: "{out_base}/samples/{sample}/{sample}.fa"
+    output: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.txt"
+    container: "docker://staphb/kraken2"
+    threads: 4
+    shell: """
+
+        if [ ! -z $ASSCOM_KRAKEN2_DB ]; then
+            kraken2 \
+                --threads 4 \
+                --db $ASSCOM_KRAKEN2_DB \
+                --report {output} \
+                {input}
+        else
+            echo "The ASSCOM_KRAKEN2_DB variable is not set, and thus the kraken2 rule and its jobs will not be run. Consider using the scripts/set_up_kraken2.sh script for downloading and linking the latest kraken2 database."
+        fi
+
+    """
+
+
 
 
 #######################################
@@ -165,7 +192,7 @@ rule roary:
         roary -a -r -e --mafft -p {threads} -i {params.blastp_identity} -cd {params.core_perc} -f {wildcards.out_base}/roary {input}
                 
         
-        """
+    """
 
 
 rule abricate:
@@ -195,7 +222,7 @@ rule abricate:
         
 
 
-        """
+    """
 
 
 rule mlst:
@@ -207,7 +234,7 @@ rule mlst:
 
         mlst {input} > {output}
 
-        """
+    """
 
 
 
@@ -222,7 +249,7 @@ rule mashtree:
 
         mashtree --numcpus {threads} {input} > {output}
 
-        """
+    """
 
 
 
@@ -239,7 +266,7 @@ rule fasttree:
 
         FastTree -nt {input} > {output} 2> {output}.log
 
-        """
+    """
 
 
 
@@ -254,7 +281,7 @@ rule roary_plots:
         python3 scripts/roary_plots.py {input.tree} {input.genes} > hat 2> hat.err
 
         # TODO: add the other weird stuff from https://github.com/cmkobel/assemblycomparator/blob/61c9a891a75e2f252dc54185d74c0fbb092815e5/workflow_templates.py#L489
-        """
+    """
 
 
 
