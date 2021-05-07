@@ -48,7 +48,9 @@ out_base_var = "output_asscom1"
 
 # First comes the machinery that lists the assembly files.
 mypath = "."
-extension_whitelist = ["fna", "fa", "fas", "fasta", "seq"]
+#extension_whitelist = ["fna", "fa", "fas", "fasta", "seq"] # old 
+extension_whitelist = ["fna", "fa", "fas", "fasta", "seq", "gb", "fq", "gff", "gfa", "clw", "sth", "gz", "bz2", "zip"]
+
 present_files = [f for f in listdir(mypath) if isfile(join(mypath,f))]
 
 
@@ -56,7 +58,7 @@ df = pd.DataFrame(data = {'input_file': present_files})
 
 df['sample'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()]
 df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()]
-df['sample_copy'] = out_base_var + "/samples/" + df['sample'] + ".fa"
+df['input_file_fasta'] = out_base_var + "/samples/" + df['sample'] + "/" + df['sample'] + ".fa"
 #output: "{out_base}/samples/{sample}/{sample}.fa"
 
 
@@ -94,7 +96,7 @@ rule all:
     input: expand(["{out_base}/metadata.tsv", \
                    "{out_base}/samples/{sample}/{sample}.fa", \
                    "{out_base}/samples/{sample}/prokka/{sample}.gff", \
-                   "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.txt", \
+                   "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_top10.tsv", \
                    "{out_base}/roary/summary_statistics.txt", \
                    "{out_base}/abricate/card_detailed.tsv", \
                    "{out_base}/mlst/mlst.tsv", \
@@ -121,12 +123,15 @@ rule copy:
     input: lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0]
     output: "{out_base}/samples/{sample}/{sample}.fa"
     #log: "logs/{out_base}_{wildcards.sample}.out.log"
-
+    container: "docker://pvstodghill/any2fasta"
     shell: """
 
         mkdir -p logs output_asscom1
 
-        cp {input} {output}
+        #cp {input} {output}
+
+        any2fasta {input} > {output}
+
 
     """
 
@@ -150,12 +155,13 @@ rule prokka:
 
 rule kraken2:
     input: "{out_base}/samples/{sample}/{sample}.fa"
-    output: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.txt"
+    output: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
     container: "docker://staphb/kraken2"
     threads: 4
     shell: """
 
         if [ ! -z $ASSCOM_KRAKEN2_DB ]; then
+            echo "Using database: ${{ASSCOM_KRAKEN2_DB}}"
             kraken2 \
                 --threads 4 \
                 --db $ASSCOM_KRAKEN2_DB \
@@ -166,6 +172,30 @@ rule kraken2:
         fi
 
     """
+
+
+rule parse_kraken2:
+    input: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
+    output: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_top10.tsv"
+    container: "docker://rocker/tidyverse"
+    shell: """
+
+        Rscript -e "
+            library(tidyverse)
+            k2 = read_tsv('{input}',
+                          col_names = c('match_percent', 'clade_mappings', 'level_mappings', 'level', 'taxonomic_id', 'clade'))
+            #k2 %>% View
+
+
+            k2 %>%
+                filter(str_detect(level, '^S.*')) %>%
+                head(10) %>%
+                format_tsv() %>%
+                write(stdout())
+            " \
+            > {output}
+
+        """
 
 
 
@@ -197,7 +227,8 @@ rule roary:
 
 rule abricate:
     #input: expand("{out_base}/samples/{sample}/{sample}.fa", sample = df["sample"], out_base = out_base_var)
-    input: df["input_file"].tolist()
+    #input: df["input_file"].tolist()
+    input: df["input_file_fasta"].tolist()
     output:
         card_detailed = "{out_base}/abricate/card_detailed.tsv",
         card_sum = "{out_base}/abricate/card_summarized.tsv",
@@ -227,7 +258,7 @@ rule abricate:
 
 rule mlst:
     #input: expand("{out_base}/samples/{sample}/{sample}.fa", sample = df["sample"], out_base = out_base_var)
-    input: df["input_file"].tolist()
+    input: df["input_file_fasta"].tolist()
     output: "{out_base}/mlst/mlst.tsv"
     container: "docker://staphb/mlst"
     shell: """
@@ -241,7 +272,7 @@ rule mlst:
 
 rule mashtree:
     #input: expand("{out_base}/samples/{sample}/{sample}.fa", sample = df["sample"], out_base = out_base_var)
-    input: df["input_file"].tolist()
+    input: df["input_file_fasta"].tolist()
     output: "{out_base}/mashtree/mashtree.newick"
     container: "docker://staphb/mashtree"
     threads: 4
@@ -251,11 +282,12 @@ rule mashtree:
 
     """
 
+# TODO:
+#rule mash_screen:
 
 
 
 rule fasttree:
-    #input: expand("{out_base}/samples/{sample}/{sample}.fa", sample = df["sample"], out_base = out_base_var)
     input: "{out_base}/roary/core_gene_alignment.aln"
     output: "{out_base}/fasttree/fasttree.newick"
     container: "docker://staphb/fasttree"
