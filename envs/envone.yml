@@ -1,6 +1,0 @@
-name: envone
-channels:
-  - bioconda
-dependencies:
-  - any2fasta
-

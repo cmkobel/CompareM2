@@ -12,6 +12,14 @@ import pandas as pd
 
 
 
+print("         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ ")
+print("        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗")
+print("        ███████║███████╗███████╗██║     ██║   ██║██╔████╔██║ █████╔╝")
+print("        ██╔══██║╚════██║╚════██║██║     ██║   ██║██║╚██╔╝██║██╔═══╝ ")
+print("        ██║  ██║███████║███████║╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗")
+print("        ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝")
+print("                      A.K.A. assemblycomparator2")
+
 
 # Roadmap:
 #
@@ -124,6 +132,7 @@ rule copy:
     output: "{out_base}/samples/{sample}/{sample}.fa"
     #log: "logs/{out_base}_{wildcards.sample}.out.log"
     container: "docker://pvstodghill/any2fasta"
+    conda: "conda_envs/any2fasta.yaml"
     shell: """
 
         mkdir -p logs output_asscom1
@@ -144,6 +153,7 @@ rule prokka:
     output: "{out_base}/samples/{sample}/prokka/{sample}.gff"
     #conda: "envs/prokka.yml"
     container: "docker://staphb/prokka"
+    conda: "conda_envs/prokka.yaml"
     threads: 4
     shell: """
 
