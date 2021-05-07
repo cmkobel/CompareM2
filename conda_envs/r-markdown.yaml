@@ -10,3 +10,4 @@ dependencies:
   - r-tidyverse
   - r-dt
   - r-prettydoc
+  - r-rmarkdown

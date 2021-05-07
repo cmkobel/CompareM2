@@ -1,6 +1,6 @@
 ---
-title: "Genomes to report"
-author: "Oliver Hansen & Carl M. Kobel"
+title: "Assemblycomparator2 Report"
+subtitle: "Developed by Oliver Hansen & Carl M. Kobel"
 date: "`r Sys.Date()`"
 output:
   prettydoc::html_pretty:
@@ -8,10 +8,10 @@ output:
     highlight: github
 editor_options: 
   chunk_output_type: console
+---
   
   
-  
-```{r Dependencies, message=TRUE, warning=TRUE, include=FALSE}
+```{r echo=FALSE, message=F, warning=F}
 #Dependencies
 library(tidyverse)
 library(prettydoc)
@@ -22,12 +22,12 @@ library(prettydoc)
 library(DT)
 
 # This is useful for debugging the markdown script.
-setwd("~/assemblycomparator2/tests/E._faecium/output_asscom2/")
+debug_dir ="~/assemblycomparator2/tests/E._faecium/output_asscom2/"
+setwd(debug_dir)
 ```
 
 
-```{r}
-
+```{r echo=FALSE, message=F, warning=F}
 
 
 
@@ -59,7 +59,7 @@ if (file.exists(metadata_file)) {
 
 Assembly statistics provided by https://github.com/sanger-pathogens/assembly-stats
 
-```{r}
+```{r echo=FALSE, message=F, warning=F}
 assembly_stats_file = "assembly-stats/assembly-stats.tsv"
 if (file.exists(assembly_stats_file)) {
     assembly_stats_df = read_tsv(assembly_stats_file) 
@@ -88,8 +88,8 @@ if (file.exists(assembly_stats_file)) {
 #You should also cite this software (currently unpublished) as:
 #Seemann T, mlst Github https://github.com/tseemann/mlst
 ```
-
-```{r mlst, echo=FALSE, message=TRUE, warning=TRUE}
+## MLST
+```{r echo=FALSE, message=F, warning=F}
 #få mlst til at spytte header ud.
 #mlst <- read.table(file = 'mlst.tsv', sep = '\t', header = FALSE)
 mlst_file = "mlst/mlst.tsv"
@@ -120,7 +120,7 @@ if (file.exists(mlst_file)) {
 }
 ```
 
-```{r}
+```{r echo=FALSE, message=F, warning=F}
 ##Abricate
 #It only supports contigs, not FASTQ reads
 #It only detects acquired resistance genes, NOT point mutations
@@ -135,9 +135,9 @@ if (file.exists(mlst_file)) {
 ```
 
 
-##Stats for the plasmidfinder database
+## NCBI Resistance genes
 
-```{r echo=FALSE, message=TRUE, warning=TRUE}
+```{r echo=FALSE, message=F, warning=F}
 
 abricate_ncbi_file = "abricate/ncbi_summarized.tsv"
 if (file.exists(abricate_ncbi_file)) {
@@ -155,6 +155,54 @@ if (file.exists(abricate_ncbi_file)) {
 } else {
     paste("Warning: The file", abricate_ncbi_file, "is not accessible.")
 }
+```
+
+## Card Resistance genes
+
+```{r echo=FALSE, message=F, warning=F}
+
+abricate_card_file = "abricate/card_summarized.tsv"
+if (file.exists(abricate_card_file)) {
+    abricate_card_df = read_tsv(abricate_card_file) %>% 
+        rename(filename = `#FILE`, num_found = NUM_FOUND)
+    
+    
+    abricate_card_df %>%
+        left_join(metadata_translate) %>% 
+        select(sample, everything(), -filename) %>% 
+        arrange(sample) %>% 
+        datatable(class = 'cell-border stripe')
+
+    
+} else {
+    paste("Warning: The file", abricate_card_file, "is not accessible.")
+}
+```
+
+## Plasmidfinder calls
+
+```{r echo=FALSE, message=F, warning=F}
+
+abricate_plasmidfinder_file = "abricate/plasmidfinder_summarized.tsv"
+if (file.exists(abricate_plasmidfinder_file)) {
+    abricate_plasmidfinder_df = read_tsv(abricate_plasmidfinder_file) %>% 
+        rename(filename = `#FILE`, num_found = NUM_FOUND)
+    
+    
+    abricate_plasmidfinder_df %>%
+        left_join(metadata_translate) %>% 
+        select(sample, everything(), -filename) %>% 
+        arrange(sample) %>% 
+        datatable(class = 'cell-border stripe')
+
+    
+} else {
+    paste("Warning: The file", abricate_plasmidfinder_file, "is not accessible.")
+}
+```
+
+```{r}
+
 
 
 # 

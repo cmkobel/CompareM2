@@ -110,7 +110,8 @@ rule all:
                    "{out_base}/abricate/card_detailed.tsv", \
                    "{out_base}/mlst/mlst.tsv", \
                    "{out_base}/mashtree/mashtree.newick", \
-                   "{out_base}/fasttree/fasttree.newick"], \
+                   "{out_base}/fasttree/fasttree.newick", \
+                   "{out_base}/report.html"], \
                   out_base = out_base_var, sample = df["sample"]) # copy
 
 
@@ -368,12 +369,23 @@ rule roary_plots:
 
 rule report:
     input: "{out_base}/abricate/card_summarized.tsv"
-    output: "{out_base}/report/report.html"
+    output: "{out_base}/report.html"
+    params:
+        markdown_template_rmd = "genomes_to_report_v2.Rmd",
+        markdown_template_html = "genomes_to_report_v2.html"
+    singularity: "docker://marcmtk/sarscov2_markdown"
+    conda: "conda_envs/r-markdown.yaml"
     shell: """
 
-        cd {out_base}/report
+        cd {wildcards.out_base}
 
-        render.r ../../scripts/genomes_to_report_v2.Rmd 
+        cp $ASSCOM2_BASE/scripts/{params.markdown_template_rmd} .
+
+        Rscript -e 'library(rmarkdown); paste("t", getwd()); rmarkdown::render("{params.markdown_template_rmd}", "html_document")'
+
+        rm {params.markdown_template_rmd}
+        mv {params.markdown_template_html} ../{output}
+        
     """
 
 
