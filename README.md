@@ -44,7 +44,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    # For HPC's with Slurm (using Singularity for jobs):
    echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/cluster.yaml --use-singularity'" >> ~/.bashrc
    ```
-   
+   Hint: You can interchange `--use-conda` and `--use-singularity` for changing how assemblycomparator2 runs the jobs.
  * Optionally: Consider running the Kraken2 and mash screen set up scripts:
    ```
    $ASSCOM2_BASE/scripts/set_up_kraken2.sh
