@@ -58,7 +58,7 @@ if (file.exists(metadata_file)) {
 
 ```
 
-## Assembly-stats 
+## Assembly statistics
 
 Assembly statistics provided by [Sanger-pathogens' assembly-stats](https://github.com/sanger-pathogens/assembly-stats#assembly-stats).
 
@@ -80,20 +80,57 @@ if (file.exists(assembly_stats_file)) {
 ```
 
 
+## Species
 
-```{r fig.height=100, fig.width=100}
-#MLST overview
+Species identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2) using the `r Sys.getenv("$ASSCOM2_BASE")` database.
 
-#The mlst software incorporates components of the PubMLST database which must be cited in any publications that use mlst:
 
-#"This publication made use of the PubMLST website (https://pubmlst.org/) developed by Keith Jolley (Jolley & Maiden 2010, BMC Bioinformatics, 11:595) and sited at the University of Oxford. The development of that website was funded by the Wellcome Trust".
 
-#You should also cite this software (currently unpublished) as:
-#Seemann T, mlst Github https://github.com/tseemann/mlst
+
+```{r echo=FALSE, message=F, warning=F}
+
+kraken2_file = "kraken2/kraken2_reports.tsv"
+if (file.exists(kraken2_file)) {
+    
+    
+    
+    
+    kraken2_df = read_tsv(kraken2_file) %>% 
+        rename(percent = match_percent)
+    
+    
+    kraken2_df %>% group_by(sample) %>% 
+        #filter(level == "S" | level == "U")
+        filter(level == "S") %>% 
+        mutate(rank = row_number(-percent),
+               rank_text = paste("hit", rank),
+               clade_text = paste0(percent, "% (", clade, ")")) %>% 
+               #clade_text = paste0(clade, " ", match_percent, ")")) %>% 
+        
+        filter(rank <= 2) %>% 
+        pivot_wider(id_cols = sample, names_from = rank_text, values_from = c(percent, clade)) %>% 
+        
+    
+    
+    
+        datatable(class = 'cell-border stripe')
+            
+    
+    
+} else {
+    paste("Warning: The file", kraken2_file, "is not accessible.")
+}
 ```
+`r if (file.exists(kraken2_file)) {paste("Using the", Sys.getenv("$ASSCOM2_BASE"), "database")}`.
+
+
+
+
+
 ## MLST
 
-Multi locus sequence typing provided by [Torsten Seemanns mlst](https://github.com/tseemann/mlst#mlst).
+Multi locus sequence typing provided by [mlst](https://github.com/tseemann/mlst#mlst).
+The mlst software incorporates components of the PubMLST database.
 ```{r echo=FALSE, message=F, warning=F}
 #få mlst til at spytte header ud.
 #mlst <- read.table(file = 'mlst.tsv', sep = '\t', header = FALSE)
@@ -141,7 +178,7 @@ if (file.exists(mlst_file)) {
 
 
 ## NCBI Resistance
-Resistance genes provided by [NCBI AMRFinder](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6811410/) via [Torsten Seemanns Abricate](https://github.com/tseemann/abricate#abricate).
+Resistance genes provided by [NCBI AMRFinder](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6811410/) via [Abricate](https://github.com/tseemann/abricate#abricate).
 
 ```{r echo=FALSE, message=F, warning=F}
 
@@ -207,33 +244,6 @@ if (file.exists(abricate_plasmidfinder_file)) {
 }
 ```
 
-```{r}
 
-
-
-# 
-# plasmidfinder_detail <- read.table(file = 'abricate/plasmidfinder_detailed.tsv', sep = '\t', header = TRUE)
-# 
-# 
-# plasmidfinder_sum <- read.table(file = 'abricate/plasmidfinder_summarized.tsv', sep = '\t', header = TRUE)
-# 
-# plasmidfinder_sum %>% datatable(
-#   options = list(
-#    autoWidth = TRUE, 
-#    columnDefs = list(list(width = '50px'))),
-#   class = 'cell-border stripe',
-#   rownames = FALSE
-#     )
-# 
-# plasmidfinder_detail  %>% datatable(
-#   options = list(
-#    autoWidth = TRUE, 
-#    columnDefs = list(list(width = '50px'))),
-#   class = 'cell-border stripe',
-#   rownames = FALSE 
-#  )
-```
-
-##Stats for the card database
 
 #### The assemblycomparator2 pipeline and this report was developed by Oliver Hansen & Carl M. Kobel

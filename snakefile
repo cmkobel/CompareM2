@@ -5,6 +5,7 @@ from os import listdir
 from os.path import isfile, join
 import yaml
 import pandas as pd
+import numpy as np
 #import time
 #import re
 #from shutil import copyfile
@@ -105,7 +106,7 @@ rule all:
                    "{out_base}/samples/{sample}/{sample}.fa", \
                    "{out_base}/assembly-stats/assembly-stats.tsv", \
                    "{out_base}/samples/{sample}/prokka/{sample}.gff", \
-                   "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_top10.tsv", \
+                   "{out_base}/kraken2/kraken2_reports.tsv", \
                    "{out_base}/roary/summary_statistics.txt", \
                    "{out_base}/abricate/card_detailed.tsv", \
                    "{out_base}/mlst/mlst.tsv", \
@@ -188,12 +189,23 @@ rule kraken2:
 
         if [ ! -z $ASSCOM2_KRAKEN2_DB ]; then
             echo using kraken2 database $ASSCOM2_KRAKEN2_DB
+
+            # Run kraken2
             kraken2 \
                 --threads 4 \
                 --db $ASSCOM2_KRAKEN2_DB \
-                --report {output} \
+                --report {output}_tmp \
                 {input} \
                 > /dev/null
+
+            # Put sample names in front
+            cat {output}_tmp \
+            | awk -v sam={wildcards.sample} '{{ print sam "\t" $0 }}' \
+            > {output}
+
+            # Remove temp file
+            rm {output}_tmp
+
         else
             echo "The ASSCOM2_KRAKEN2_DB variable is not set, and thus the kraken2 rule and its jobs will not be run. Consider using the scripts/set_up_kraken2.sh script for downloading and linking the latest kraken2 database."
         fi
@@ -201,29 +213,41 @@ rule kraken2:
     """
 
 
-rule parse_kraken2:
-    input: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
-    output: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_top10.tsv"
-    container: "docker://rocker/tidyverse"
+# rule parse_kraken2:
+#     input: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
+#     output: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_top10.tsv"
+#     run:
+#         print("hej")
+#         kraken2_report = pd.read_csv(str(input),
+#             sep = '\t',
+#             names = ['match_percent', 'clade_mappings', 'level_mappings', 'level', 'taxonomic_id', 'clade'],
+#             dtype = str)
+
+#         kraken2_report.insert(loc=0, column='sample', value=wildcards.sample)
+
+#         # Remove superfluous spaces
+#         kraken2_report = kraken2_report.apply(np.vectorize(lambda x: str(x).strip()))
+
+#         print(kraken2_report)
+
+
+#         kraken2_report.to_csv(str(output), index = False, sep = "\t")
+
+
+
+rule collect_kraken2:
+    input: expand("{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
+                   out_base = out_base_var, \
+                   sample = df["sample"])
+    output: "{out_base}/kraken2/kraken2_reports.tsv"
     shell: """
 
-        Rscript -e "
-            library(tidyverse)
-            k2 = read_tsv('{input}',
-                          col_names = c('match_percent', 'clade_mappings', 'level_mappings', 'level', 'taxonomic_id', 'clade'))
-            #k2 %>% View
+        echo -e "sample\tmatch_percent\tclade_mappings\tlevel_mappings\tlevel\ttaxonomic_id\tclade" \
+        > {output}
 
+        cat {input} >> {output}
 
-            k2 %>%
-                filter(str_detect(level, '^S.*')) %>%
-                head(10) %>%
-                format_tsv() %>%
-                write(stdout())
-            " \
-            > {output}
-
-        """
-
+    """
 
 
 
