@@ -111,7 +111,7 @@ if (file.exists(kraken2_file)) {
         pivot_wider(id_cols = sample, names_from = rank_text, values_from = c(percent, clade)) %>% 
         
     
-    
+        arrange(sample) %>% 
     
         datatable(class = 'cell-border stripe')
             
@@ -121,7 +121,7 @@ if (file.exists(kraken2_file)) {
     paste("Warning: The file", kraken2_file, "is not accessible.")
 }
 ```
-`r if (file.exists(kraken2_file)) {paste("Using the", Sys.getenv("$ASSCOM2_BASE"), "database")}`.
+`r if (file.exists(kraken2_file)) {paste("Using the", Sys.getenv("ASSCOM2_KRAKEN2_DB"), "database")}`.
 
 
 
