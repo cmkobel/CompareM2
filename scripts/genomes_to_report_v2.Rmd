@@ -60,7 +60,7 @@ if (file.exists(metadata_file)) {
 
 ## Assembly-stats 
 
-Assembly statistics provided by [Sanger-pathogens' assembly-stats](https://github.com/sanger-pathogens/assembly-stats#assembly-stats)
+Assembly statistics provided by [Sanger-pathogens' assembly-stats](https://github.com/sanger-pathogens/assembly-stats#assembly-stats).
 
 ```{r echo=FALSE, message=F, warning=F}
 assembly_stats_file = "assembly-stats/assembly-stats.tsv"
@@ -92,6 +92,8 @@ if (file.exists(assembly_stats_file)) {
 #Seemann T, mlst Github https://github.com/tseemann/mlst
 ```
 ## MLST
+
+Multi locus sequence typing provided by [Torsten Seemanns mlst](https://github.com/tseemann/mlst#mlst).
 ```{r echo=FALSE, message=F, warning=F}
 #få mlst til at spytte header ud.
 #mlst <- read.table(file = 'mlst.tsv', sep = '\t', header = FALSE)
@@ -99,7 +101,7 @@ mlst_file = "mlst/mlst.tsv"
 if (file.exists(mlst_file)) {
     mlst_df <- read_tsv("mlst/mlst.tsv", col_names = F)
     allelnum <- length(mlst_df) - 3
-    names(mlst_df) = c("filename", "scheme", "sequence_type", paste('a', 1:allelnum))
+    names(mlst_df) = c("filename", "scheme", "sequence_type", paste('al.', 1:allelnum))
     
     
     mlst_df %>%
@@ -138,7 +140,8 @@ if (file.exists(mlst_file)) {
 ```
 
 
-## NCBI Resistance genes
+## NCBI Resistance
+Resistance genes provided by [NCBI AMRFinder](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6811410/) via [Torsten Seemanns Abricate](https://github.com/tseemann/abricate#abricate).
 
 ```{r echo=FALSE, message=F, warning=F}
 
