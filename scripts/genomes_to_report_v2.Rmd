@@ -46,6 +46,7 @@ if (file.exists(metadata_file)) {
     
     # Present the metadata in the report
     metadata_df %>%
+        select(-index) %>% 
         arrange(sample) %>% 
         datatable(class = 'cell-border stripe')
     
@@ -60,7 +61,7 @@ if (file.exists(metadata_file)) {
 
 ## Assembly statistics
 
-Assembly statistics provided by [assembly-stats](https://github.com/sanger-pathogens/assembly-stats#assembly-stats).
+Assembly statistics is provided by [assembly-stats](https://github.com/sanger-pathogens/assembly-stats#assembly-stats).
 
 ```{r echo=FALSE, message=F, warning=F}
 assembly_stats_file = "assembly-stats/assembly-stats.tsv"
@@ -82,7 +83,7 @@ if (file.exists(assembly_stats_file)) {
 
 ## Species
 
-Species identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2) using the `r Sys.getenv("$ASSCOM2_BASE")` database.
+Species identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2).
 
 
 
