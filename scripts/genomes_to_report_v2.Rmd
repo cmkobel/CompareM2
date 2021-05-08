@@ -60,7 +60,7 @@ if (file.exists(metadata_file)) {
 
 ## Assembly statistics
 
-Assembly statistics provided by [Sanger-pathogens' assembly-stats](https://github.com/sanger-pathogens/assembly-stats#assembly-stats).
+Assembly statistics provided by [assembly-stats](https://github.com/sanger-pathogens/assembly-stats#assembly-stats).
 
 ```{r echo=FALSE, message=F, warning=F}
 assembly_stats_file = "assembly-stats/assembly-stats.tsv"
@@ -246,4 +246,4 @@ if (file.exists(abricate_plasmidfinder_file)) {
 
 
 
-#### The assemblycomparator2 pipeline and this report was developed by Oliver Hansen & Carl M. Kobel
+##### The [assemblycomparator2 pipeline](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) and this report is developed by Oliver Hansen & Carl M. Kobel
