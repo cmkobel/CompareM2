@@ -1,6 +1,6 @@
 ---
 title: "Assemblycomparator2 Report"
-subtitle: "Developed by Oliver Hansen & Carl M. Kobel"
+subtitle: "`r head(tail(unlist(strsplit(getwd(), "/")) ,2) ,1)`" # use the title variable from the pipeline instead somehow
 date: "`r Sys.Date()`"
 output:
   prettydoc::html_pretty:
@@ -8,6 +8,7 @@ output:
     highlight: github
 editor_options: 
   chunk_output_type: console
+#css: "max-width: 5000px; margin: auto; padding: 1em; line-height: 20px"
 ---
   
   
@@ -229,3 +230,5 @@ if (file.exists(abricate_plasmidfinder_file)) {
 ```
 
 ##Stats for the card database
+
+#### The assemblycomparator2 pipeline and this report was developed by Oliver Hansen & Carl M. Kobel
