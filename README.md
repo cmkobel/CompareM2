@@ -27,9 +27,6 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    
    # If you are going to use conda, it is a good idea to set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
    echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
-   
-   # Finally source your ~/.bashrc
-   source ~/.bashrc
    ```
  * Clone the assemblycomparator2 GitHub-repository into that base
    ```
@@ -50,10 +47,15 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    # For HPC's with Slurm (using Singularity for jobs):
    echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/cluster.yaml --use-singularity'" >> ~/.bashrc
    ```
-   Hint: You can interchange `--use-conda` and `--use-singularity` for changing how assemblycomparator2 runs the jobs. Please note that running assemblycomparator2 locally with conda is not fully developed or tested, and has a high probability of failing.
+   Hint: You can interchange `--use-conda` and `--use-singularity` for changing how assemblycomparator2 runs the jobs. Please note that running assemblycomparator2 locally with conda is not fully developed or tested, and has a high probability of failing. If you have access to Singularity, use it.
  * Optionally: Consider running the Kraken2 and mash screen set up scripts:
    ```
-   $ASSCOM2_BASE/scripts/set_up_kraken2.sh
+   # Kraken2
+   $ASSCOM2_BASE/scripts/set-up-kraken2_Standard_8GB.sh
+   # If you have a big computer, you can install the PlusPF 50GB database instead
+   $ASSCOM2_BASE/scripts/set-up-kraken2_PlusPF_50GB.sh
+   
+   # Mashscreen
    $ASSCOM2_BASE/scripts/set_up_mashscreen.sh
    ```
    
