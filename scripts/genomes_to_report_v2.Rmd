@@ -113,6 +113,8 @@ if (file.exists(sequence_lengths_file)) {
 }
 ```
 
+
+
 ```{r echo=FALSE, message=F, warning=F}
 
 # Now when the figure height has been set, we can generate the figure
@@ -142,7 +144,7 @@ if (file.exists(sequence_lengths_file)) {
     paste("Warning: The file", sequence_lengths_file, "is not accessible.")
 }
 ```
-
+*Fig. `r figno()`: Lengths of contigs for each sample. The colors have no intrinsic meaning.*
 
 
 ## Species
