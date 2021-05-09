@@ -95,6 +95,55 @@ if (file.exists(assembly_stats_file)) {
 }
 ```
 
+Lengths of contigs:
+
+```{r echo=FALSE, message=F, warning=F}
+# This chunk is needed for setting the size of the contig lengths plot
+
+sequence_lengths_file = "sequence_lengths/sequence_lengths.tsv"
+if (file.exists(sequence_lengths_file)) {
+    sequence_lengths_df = read_tsv(sequence_lengths_file, col_names = c("sample", "record", "length"))
+
+    
+    fig_height = max(2.28,
+                     (sequence_lengths_df$sample %>% length) *0.12)
+    
+    knitr::opts_chunk$set(fig.height = fig_height,
+                          fig.width = 10)
+}
+```
+
+```{r echo=FALSE, message=F, warning=F}
+
+# Now when the figure height has been set, we can generate the figure
+if (file.exists(sequence_lengths_file)) {
+    sequence_lengths_df %>%
+        group_by(sample) %>% 
+        arrange(length) %>% 
+        
+        mutate(col = row_number(-length)) %>% 
+        mutate(init = lag(length, default = 0),
+               start = cumsum(init),
+               stop = start + length - 1) %>% 
+        
+        ggplot(aes(fill=factor(col), y=sample, x=length)) + 
+    geom_bar(position="dodge", stat="identity") +
+        
+        #scale_x_log10() +
+        theme_classic() +
+        theme(legend.position = "none")
+        
+        #ggplot() + 
+        #geom_segment(aes(x = start, xend = stop, y = sample, yend = sample, color = factor(col)), size = 2)
+            
+    
+    
+} else {
+    paste("Warning: The file", sequence_lengths_file, "is not accessible.")
+}
+```
+
+
 
 ## Species
 
@@ -146,7 +195,7 @@ if (file.exists(kraken2_file)) {
 ## MLST
 
 Multi locus sequence typing provided by [mlst](https://github.com/tseemann/mlst#mlst).
-The mlst software incorporates components of the PubMLST database.
+The mlst software incorporates components of the [PubMLST](https://pubmlst.org/) database.
 ```{r echo=FALSE, message=F, warning=F}
 #få mlst til at spytte header ud.
 #mlst <- read.table(file = 'mlst.tsv', sep = '\t', header = FALSE)
@@ -259,11 +308,13 @@ if (file.exists(abricate_plasmidfinder_file)) {
     paste("Warning: The file", abricate_plasmidfinder_file, "is not accessible.")
 }
 ```
-
+------
 
 ## Pan and Core genome
 
-Roary the pan genome pipeline
+[Roary](https://sanger-pathogens.github.io/Roary/) the pan genome pipeline computes the number of orthologous genes in a number of core/pan partitions.
+
+The core genome denotes the genes which are conserved between all samples (intersection), whereas the pan genome is the union of all genes across all samples.
 
 ```{r echo=FALSE, message=F, warning=F}
 roary_summary_file = "roary/summary_statistics.txt"
@@ -275,8 +326,10 @@ if (file.exists(roary_summary_file)) {
         datatable(class = "stripe", colnames = NULL, rownames = F,  options = list(dom = 't', ordering=F), width = 400)
 }
 ```
-#### *Table `r tableno()`: Distribution of genes in different core/pan partitions.*
 
+*Table `r tableno()`: Distribution of genes in different core/pan partitions.*
+
+------
 
 
 ```{r echo=FALSE, message=F, warning=F}
@@ -306,13 +359,15 @@ if (file.exists(roary_gpa_file)) {
         filter(present >= 1) %>% 
         #View
         ggplot(aes(genes, sample, fill = factor(sum))) + geom_tile() +
-        labs(fill = "sample count") + 
+        labs(fill = "share count") + 
         theme_classic() 
 }
 ```
 
-#### *Fig. `r figno()`: Visual distribution of genes in the different samples.*
+*Fig. `r figno()`: Visual distribution of genes in the different samples. The genes are ordered in respect to the number of samples sharing them.*
 
 
 
-##### The [assemblycomparator2 pipeline](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) and this report is developed by Oliver Hansen & Carl M. Kobel
+------
+
+The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and this report is developed by Oliver Hansen & Carl M. Kobel

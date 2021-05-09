@@ -105,6 +105,7 @@ rule all:
     input: expand(["{out_base}/metadata.tsv", \
                    "{out_base}/samples/{sample}/{sample}.fa", \
                    "{out_base}/assembly-stats/assembly-stats.tsv", \
+                   "{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
                    "{out_base}/samples/{sample}/prokka/{sample}.gff", \
                    "{out_base}/kraken2/kraken2_reports.tsv", \
                    "{out_base}/roary/summary_statistics.txt", \
@@ -163,6 +164,22 @@ rule copy:
 ##################################
 # Targets for each sample below: #
 ##################################
+
+
+rule seqlen:
+    input: "{out_base}/samples/{sample}/{sample}.fa"
+    output: "{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
+    container: "docker://staphb/bioawk"
+    conda: "conda_envs/bioawk.yaml"
+    shell: """
+
+        bioawk -v sam={wildcards.sample} -c fastx '{{ print sam, $name, length($seq) }}' < {input} \
+        > {output}
+
+    """
+
+
+
 rule prokka:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/prokka/{sample}.gff"
@@ -236,18 +253,31 @@ rule kraken2:
 
 
 rule collect_kraken2:
-    input: expand("{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
-                   out_base = out_base_var, \
-                   sample = df["sample"])
-    output: "{out_base}/kraken2/kraken2_reports.tsv"
+    input:
+        kraken2 = expand("{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", out_base = out_base_var, sample = df["sample"]),
+        seqlen = expand("{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", out_base = out_base_var, sample = df["sample"])
+
+    output:
+        kraken2 = "{out_base}/kraken2/kraken2_reports.tsv",
+        seqlen = "{out_base}/sequence_lengths/sequence_lengths.tsv"
+
     shell: """
 
+        # kraken2
         echo -e "sample\tmatch_percent\tclade_mappings\tlevel_mappings\tlevel\ttaxonomic_id\tclade" \
-        > {output}
+        > {output.kraken2}
 
-        cat {input} >> {output}
+        cat {input.kraken2} >> {output.kraken2}
+
+
+        # Sequence lengths
+        cat {input.seqlen} > {output.seqlen} 
+
+
 
     """
+
+
 
 
 
@@ -388,6 +418,9 @@ rule roary_plots:
 
         # TODO: add the other weird stuff from https://github.com/cmkobel/assemblycomparator/blob/61c9a891a75e2f252dc54185d74c0fbb092815e5/workflow_templates.py#L489
     """
+
+
+
 
 
 
