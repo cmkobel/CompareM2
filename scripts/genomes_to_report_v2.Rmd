@@ -23,8 +23,23 @@ library(prettydoc)
 library(DT)
 
 # This is useful for debugging the markdown script.
-debug_dir ="~/assemblycomparator2/tests/E._faecium/output_asscom2/"
-setwd(debug_dir)
+#debug_dir ="~/assemblycomparator2/tests/E._faecium/output_asscom2/"
+#setwd(debug_dir)
+
+# A function that returns a new table number for each run
+tableno_var = 0
+tableno = function() {
+    tableno_var <<- tableno_var + 1
+    tableno_var
+}
+
+figno_var = 0
+figno = function() {
+    figno_var <<- figno_var + 1
+    figno_var
+}
+
+
 ```
 
 ## Sample overview
@@ -244,6 +259,59 @@ if (file.exists(abricate_plasmidfinder_file)) {
     paste("Warning: The file", abricate_plasmidfinder_file, "is not accessible.")
 }
 ```
+
+
+## Pan and Core genome
+
+Roary the pan genome pipeline
+
+```{r echo=FALSE, message=F, warning=F}
+roary_summary_file = "roary/summary_statistics.txt"
+if (file.exists(roary_summary_file)) {
+    paste("yes")
+    read_tsv(roary_summary_file, col_names = c("partition", "definition", "count")) %>% 
+        mutate(type = paste(partition, definition)) %>% 
+        select(type, count) %>% 
+        datatable(class = "stripe", colnames = NULL, rownames = F,  options = list(dom = 't', ordering=F), width = 400)
+}
+```
+#### *Table `r tableno()`: Distribution of genes in different core/pan partitions.*
+
+
+
+```{r echo=FALSE, message=F, warning=F}
+# This chunk is needed for setting the size of the roary gpa plot
+fig_height = max(1.6,
+                 (metadata_df$sample %>% length) *0.4)
+
+knitr::opts_chunk$set(fig.height = fig_height,
+                      fig.width = 8)
+```
+
+
+```{r echo = F, message = F, warning = F}
+roary_gpa_file = "roary/gene_presence_absence.Rtab"
+if (file.exists(roary_gpa_file)) {
+    paste("yes")
+    roary_gpa_df = read_tsv(roary_gpa_file)
+    
+    roary_gpa_df %>% 
+        #select(-Gene) %>% 
+        mutate(sum = rowSums(across(where(is.numeric)))) %>%
+        #mutate(order = 1:(dim(.)[1])) %>% View
+        mutate(genes = 1:length(Gene)) %>% 
+        select(-Gene) %>% 
+    
+        pivot_longer(c(everything(), -genes, -sum), names_to = "sample", values_to = "present") %>% 
+        filter(present >= 1) %>% 
+        #View
+        ggplot(aes(genes, sample, fill = factor(sum))) + geom_tile() +
+        labs(fill = "sample count") + 
+        theme_classic() 
+}
+```
+
+#### *Fig. `r figno()`: Visual distribution of genes in the different samples.*
 
 
 
