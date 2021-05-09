@@ -2,7 +2,10 @@
 title: "Assemblycomparator2 Report"
 #subtitle: "`r head(tail(unlist(strsplit(getwd(), "/")) ,2) ,1)`" # use the title variable from the pipeline instead somehow
 date: "`r Sys.Date()`"
-#output:
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
   #prettydoc::html_pretty:
     #theme: cayman
     #highlight: github
@@ -144,7 +147,7 @@ if (file.exists(sequence_lengths_file)) {
     paste("Warning: The file", sequence_lengths_file, "is not accessible.")
 }
 ```
-*Fig. `r figno()`: Lengths of contigs for each sample. The colors have no intrinsic meaning.*
+*Fig. `r figno()`: Lengths of contigs (fasta records) for each sample. The colors have no intrinsic meaning.*
 
 
 ## Species
