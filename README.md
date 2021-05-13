@@ -45,7 +45,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/local/ --use-conda'" >> ~/.bashrc
    
    # For HPC's with Slurm (using Singularity for jobs):
-   echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/cluster.yaml --use-singularity'" >> ~/.bashrc
+   echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml --use-singularity'" >> ~/.bashrc
    ```
    Hint: You can interchange `--use-conda` and `--use-singularity` for changing how assemblycomparator2 runs the jobs. Please note that running assemblycomparator2 locally with conda is not fully developed or tested, and has a high probability of failing. If you have access to Singularity, use it.
    
