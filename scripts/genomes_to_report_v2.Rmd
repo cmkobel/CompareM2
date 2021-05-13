@@ -173,7 +173,6 @@ Species identification is provided by [Kraken 2](https://github.com/DerrickWood/
 
 
 
-
 ```{r echo=FALSE, message=F, warning=F}
 
 kraken2_file = "kraken2/kraken2_reports.tsv"
@@ -216,6 +215,7 @@ if (file.exists(kraken2_file)) {
     paste("Warning: The file", kraken2_file, "is not accessible.")
 }
 ```
+
 `r if (file.exists(kraken2_file)) {paste("Using the", Sys.getenv("ASSCOM2_KRAKEN2_DB"), "database")}`.
 
 
@@ -287,6 +287,8 @@ if (file.exists(abricate_ncbi_file)) {
 
 ## Card Resistance genes
 
+Resistance genes provided by The Comprehensive Antibiotic Resistance Database ([Card](https://card.mcmaster.ca/)) via abricate.
+
 ```{r echo=FALSE, message=F, warning=F}
 
 abricate_card_file = "abricate/card_summarized.tsv"
@@ -311,6 +313,8 @@ if (file.exists(abricate_card_file)) {
 
 ## Plasmidfinder calls
 
+Plasmid calls provided by [PlasmidFinder](https://cge.cbs.dtu.dk/services/PlasmidFinder/) via abricate.
+
 ```{r echo=FALSE, message=F, warning=F}
 
 abricate_plasmidfinder_file = "abricate/plasmidfinder_summarized.tsv"
@@ -334,6 +338,9 @@ if (file.exists(abricate_plasmidfinder_file)) {
 
 
 ## VFDB calls
+
+Virulence factor calls provided by The virulence factor database ([VFDB](http://www.mgc.ac.cn/VFs/main.htm)) via abricate.
+"An integrated and comprehensive online resource for curating information about virulence factors of bacterial pathogens."
 
 ```{r echo=FALSE, message=F, warning=F}
 
@@ -417,6 +424,8 @@ if (file.exists(roary_gpa_file)) {
 }
 ```
 
+*Fig. `r figno()`: Visual distribution of genes in the different samples. The genes are ordered in respect to the number of samples sharing them.*
+
 
 
 
@@ -468,7 +477,9 @@ if (file.exists(fasttree_file)) {
 ```
 
 
-*Fig. `r figno()`: Visual distribution of genes in the different samples. The genes are ordered in respect to the number of samples sharing them.*
+
+*Fig. `r figno()`: Phylogenetic NJ-tree from the concatenated core genome of all samples.`
+
 
 
 
