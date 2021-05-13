@@ -52,11 +52,12 @@ if df.shape[0] == 0:
 
 
 df = df[~df["input_file"].str.startswith(".", na = False)] # Remove hidden files
-df['sample'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()] # Extract everything before the extension dot.
+df['sample_raw'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()] # Extract everything before the extension dot.
+df['sample'] = df['sample_raw'].str.replace(' ','_')
 df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extract extension
 df['input_file_fasta'] = out_base_var + "/samples/" + df['sample'] + "/" + df['sample'] + ".fa" # This is where the input file is copied to in the first snakemake rule.
 
-
+#df_mini = df_mini.apply(np.vectorize(lambda x: str(x).strip().replace(" ", ""))) # strip whitespace and replace spaces with underscores.
 
   
 # ---- Displaying filtered dataframe ready for analysis -------------
@@ -128,7 +129,7 @@ rule copy:
 
         #cp {input} {output}
 
-        any2fasta {input} > {output}
+        any2fasta "{input}" > {output}
 
 
     """

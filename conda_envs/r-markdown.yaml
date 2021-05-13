@@ -12,3 +12,4 @@ dependencies:
   - r-prettydoc
   - r-rmarkdown
   - bioconductor-ggtree
+  - r-phytools
