@@ -86,7 +86,7 @@ rule all:
     input: expand(["{out_base}/metadata.tsv", \
                    "{out_base}/assembly-stats/assembly-stats.tsv", \
                    "{out_base}/collected_results/sequence_lengths.tsv", \
-                   "{out_base}/collected_results/prokka_summaries.tsv", \
+                   "{out_base}/collected_results/prokka_summaries.txt", \
                    "{out_base}/collected_results/kraken2_reports.tsv", \
                    "{out_base}/roary/summary_statistics.txt", \
                    "{out_base}/abricate/card_detailed.tsv", \
@@ -256,11 +256,11 @@ rule collect_seqlen:
 
 rule collect_prokka:
     input: expand("{out_base}/samples/{sample}/prokka/{sample}_summary.txt", out_base = out_base_var, sample = df["sample"]),
-    output: "{out_base}/collected_results/prokka_summaries.tsv",
+    output: "{out_base}/collected_results/prokka_summaries.txt",
     shell: """
 
         # prokka
-        echo -e "sample\tvalue\tname" \
+        echo "sample value name" \
         > {output}
 
         cat {input} >> {output}

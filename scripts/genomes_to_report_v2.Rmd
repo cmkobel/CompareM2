@@ -102,6 +102,7 @@ tryCatch({
 
 ```
 
+
 Lengths of contigs:
 
 ```{r echo=FALSE, message=F, warning=F}
@@ -170,6 +171,36 @@ try({
 ```
 *Fig. `r figno()`: Lengths of contigs (fasta records) for each sample. The colors have no intrinsic meaning.*
 
+
+
+## Genome annotation
+
+Computed using the Prokka genome annotator.
+These overall statistics are extracted from the run log.
+
+```{r echo=FALSE, message=F, warning=F}
+
+try({
+    # Now when the figure height has been set, we can generate the figure
+    prokka_summaries_file = "collected_results/prokka_summaries.txt"
+    if (file.exists(prokka_summaries_file)) {
+        prokka_summaries_df = read_delim(prokka_summaries_file, delim = " ")
+        
+        prokka_summaries_df %>% pivot_wider(id_cols = sample, names_from = name, values_from = value) %>% 
+            select(sample, CDS, `unique /gene codes` = unique, tRNAs, rRNAs, CRISPRs) %>% 
+            arrange(sample) %>% 
+            datatable()
+            
+            
+        
+                
+        
+        
+    } else {
+        paste("Warning: The file", prokka_summaries_file, "is not accessible.")
+    }
+})
+```
 
 ## Species
 
@@ -469,7 +500,7 @@ The core genome phylogeny is provided with [FastTree](http://www.microbesonline.
 # This chunk is needed for setting the size of the following plot
 try({
     fig_height = max(2.4,
-                     (metadata_df$sample %>% length) * 0.8)
+                     (metadata_df$sample %>% length) * 0.6)
     
     knitr::opts_chunk$set(fig.height = fig_height,
                           fig.width = 10)
@@ -507,7 +538,7 @@ try({
 
 
 
-*Fig. `r figno()`: Phylogenetic NJ-tree from the concatenated core genome of all samples.`
+*Fig. `r figno()`: Phylogenetic NJ-tree from the concatenated core genome of all samples.*
 
 
 
