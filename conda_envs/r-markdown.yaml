@@ -11,5 +11,5 @@ dependencies:
   - r-dt
   - r-prettydoc
   - r-rmarkdown
-  - bioconductor-ggtree
   - r-phytools
+  - r-ape

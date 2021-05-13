@@ -57,6 +57,8 @@ df['sample'] = df['sample_raw'].str.replace(' ','_')
 df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extract extension
 df['input_file_fasta'] = out_base_var + "/samples/" + df['sample'] + "/" + df['sample'] + ".fa" # This is where the input file is copied to in the first snakemake rule.
 
+df = df[df['extension'].isin(extension_whitelist)] # Remove files with unsupported formats.
+
 #df_mini = df_mini.apply(np.vectorize(lambda x: str(x).strip().replace(" ", ""))) # strip whitespace and replace spaces with underscores.
 
   
@@ -72,8 +74,9 @@ print()
 # --- Make sure the log directory exists. ---------------------------
 try:
     os.mkdir("logs") # The log directory is actually not used for local setups
-except OSError as e:
-    print(e)
+except:
+    pass
+
 
 
 
@@ -396,14 +399,18 @@ rule fasttree:
 
         OMP_NUM_THREADS={threads}
 
-        FastTree -nt -gtr {input} > {output} 2> {output}.log
+        FastTree -nt -gtr {input} > {output} 2> {output}.log || echo "fasttree failed"
+
+        touch {output}
 
     """
 
 
 
 rule report:
-    input: "{out_base}/roary/roary_done.flag"
+    input:
+        roary = "{out_base}/roary/roary_done.flag",
+        fasttree = "{out_base}/fasttree/fasttree.newick",
     output: "{out_base}/report.html"
     params:
         markdown_template_rmd = "genomes_to_report_v2.Rmd",
@@ -416,7 +423,7 @@ rule report:
 
         cp $ASSCOM2_BASE/scripts/{params.markdown_template_rmd} .
 
-        Rscript -e 'library(rmarkdown); paste("t", getwd()); rmarkdown::render("{params.markdown_template_rmd}", "html_document")'
+        Rscript -e 'library(rmarkdown); rmarkdown::render("{params.markdown_template_rmd}", "html_document")'
 
         rm {params.markdown_template_rmd}
         mv {params.markdown_template_html} ../{output}

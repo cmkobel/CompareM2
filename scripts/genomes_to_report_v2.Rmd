@@ -23,12 +23,8 @@ editor_options:
 #Dependencies
 library(tidyverse)
 library(prettydoc)
-#library(broom)
-#library(magrittr)
-#library(knitr)
-#library(kableExtra)
 library(DT)
-library(ggtree)
+#library(ape) # loads later
 
 
 
@@ -242,8 +238,17 @@ try({
     mlst_file = "mlst/mlst.tsv"
     if (file.exists(mlst_file)) {
         mlst_df <- read_tsv("mlst/mlst.tsv", col_names = F)
-        allelnum <- length(mlst_df) - 3
-        names(mlst_df) = c("filename", "scheme", "sequence_type", paste('al.', 1:allelnum))
+        
+        # Generate a vector of allele columns if any exist.
+        if( length(mlst_df) > 3) { 
+            num_alleles <- length(mlst_df) - 3
+            allele_columns = paste('al.', 1:allelnum)
+        } else {
+            print("hat")
+            allele_columns = NULL
+        }
+        
+        names(mlst_df) = c("filename", "scheme", "sequence_type", allele_columns)
         
         
         mlst_df %>%
@@ -462,40 +467,41 @@ The core genome phylogeny is provided with [FastTree](http://www.microbesonline.
 
 ```{r echo=FALSE, message=F, warning=F}
 # This chunk is needed for setting the size of the following plot
-
-fig_height = max(2.4,
-                 (metadata_df$sample %>% length) * 0.8)
-
-knitr::opts_chunk$set(fig.height = fig_height,
-                      fig.width = 10)
-
+try({
+    fig_height = max(2.4,
+                     (metadata_df$sample %>% length) * 0.8)
+    
+    knitr::opts_chunk$set(fig.height = fig_height,
+                          fig.width = 10)
+})
 ```
 
 ```{r echo=FALSE, message=F, warning=F}
-fasttree_file = "fasttree/fasttree.newick"
-if (file.exists(fasttree_file)) {
+try({
+    fasttree_file = "fasttree/fasttree.newick"
+    if (file.exists(fasttree_file)) {
+    
+       tree <- ape::read.tree(fasttree_file)
+       
+       tree = phytools::midpoint.root(tree)
+       
+       #plot(tree)
+       #axis(1)
+       
+       #tree$tip.label = paste0(" ", tree$tip.label)
+       #phytools::plotTree(tree, align.tip.label = T, lwd = 1, mar = c(0,0,0,0))
+       #axis(1)
+    
+       tree$tip.label = paste0(" ", tree$tip.label)
+       ape::plot.phylo(tree, align.tip.label = T)
+       axis(1)
+           
+            
+    } else {
+        paste("Warning: The file", fasttree_file, "is not accessible.")
+    }
 
-   tree <- read.tree(fasttree_file)
-   
-   
-   tree = phytools::midpoint.root(tree)
-   #plot(tree)
-   #axis(1)
-   ggtree(tree) +
-       geom_tiplab(align = T) +
-       
-       
-       #scale_x_continuous(expand=c(0, 0.01)) +
-       scale_x_continuous(expand=expansion(mult = 0, add = c(0.001, 0.005))) +
-       #geom_treescale(width = 0.01)+
-       #xlim(0, 1) +
-       theme_tree2() +
-       labs(x = "evolutionary distance")  
-       
-        
-} else {
-    paste("Warning: The file", fasttree_file, "is not accessible.")
-}
+})
 
 ```
 
