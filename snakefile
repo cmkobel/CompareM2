@@ -3,7 +3,7 @@
 
 from os import listdir
 from os.path import isfile, join
-import yaml
+#import yaml
 import pandas as pd
 import numpy as np
 #import time
@@ -22,67 +22,52 @@ print("        ╚═╝  ╚═╝╚══════╝╚══════
 print("                      A.K.A. assemblycomparator2                     ")
 print()
 
-# Roadmap:
-#
-# For each assembly
-#   PEND    any2fasta (wide input format support)
-#   OK      prokka (annotation)
-#   PEND    kraken2 (species identification)
-#   OK      mlst (multi locus sequence typing)
-#   OK      abricate (virulence/resistance gene identification)
-#   PEND    (Oriloc) (Identify possible replication origins, and thereby identify chromids)
-# For each group
-#   INP     roary (pan and core genome)
-#   PEND    snp-dists (core genome snp-distances)
-#   PEND    panito (average nucleotide identity
-#   PEND    Mashtree
-#   PEND    FastTree (phylogenetic tree of core genome)
-#   PEND    IQ-tree (phylogenetic tree of core genome with bootstrapping)
-#   PEND    (GC3-profiling) ("fingerprinting" of the distribution of GC-content)
-#   PEND    (Identification of horizontally transferred genes)
 
 
-title = "test"
 
 
 out_base_var = "output_asscom2"
 
 
 
-
-
-#samples/file = "input/" + title + ".tsv"
 #reference = config["reference"]
 
 
-# First comes the machinery that lists the assembly files.
-mypath = "."
+# ---- Read in files in the current working directory ---------------
+
+relative_wd = "."
 #extension_whitelist = ["fna", "fa", "fas", "fasta", "seq"] # old 
 extension_whitelist = ["fna", "fa", "fas", "fasta", "seq", "gb", "fq", "gff", "gfa", "clw", "sth", "gz", "bz2", "zip"]
 
-present_files = [f for f in listdir(mypath) if isfile(join(mypath,f))]
+present_files = [f for f in listdir(relative_wd) if isfile(join(relative_wd,f))]
 
 
 df = pd.DataFrame(data = {'input_file': present_files})
 
-df['sample'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()]
-df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()]
-df['input_file_fasta'] = out_base_var + "/samples/" + df['sample'] + "/" + df['sample'] + ".fa"
-#output: "{out_base}/samples/{sample}/{sample}.fa"
-
-
-df = df.loc[df['extension'].isin(extension_whitelist)]
-# TODO: Filter out hidden files (starting with dot .)
-
+# Check that the directory is not empty.
 if df.shape[0] == 0:
     print("Error: No fasta files in the current directory. Quitting ...")
-    exit("Zero files.")
+    raise Exception("Zero files.")
+
+
+
+df = df[~df["input_file"].str.startswith(".", na = False)] # Remove hidden files
+df['sample'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()] # Extract everything before the extension dot.
+df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extract extension
+df['input_file_fasta'] = out_base_var + "/samples/" + df['sample'] + "/" + df['sample'] + ".fa" # This is where the input file is copied to in the first snakemake rule.
+
+
+
+  
+# ---- Displaying filtered dataframe ready for analysis -------------
 
 df = df.reset_index(drop = True)
 print(df)
 print("//")
 print()
 
+
+# Ask the user if they want to continue
 #input_continue = input("continue? (y/n) ")
 #if not input_continue.lower()[0] == "y":
 #    exit("Quitting ...")
@@ -93,7 +78,7 @@ print()
 
 try:
     os.mkdir(out_base_var)
-    os.mkdir("logs")
+    os.mkdir("logs") # The log directory is actually not used for local setups
 except OSError:
     print ("Creation of the directories")
 else:
@@ -139,7 +124,7 @@ rule copy:
     conda: "conda_envs/any2fasta.yaml"
     shell: """
 
-        mkdir -p logs output_asscom1
+        mkdir -p logs {wildcards.out_base}
 
         #cp {input} {output}
 
@@ -286,7 +271,7 @@ rule collect_kraken2:
 #######################################
 rule roary:
     input: expand("{out_base}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], out_base = out_base_var)
-    output: ["{out_base}/roary/summary_statistics.txt", "{out_base}/roary/core_gene_alignment.aln", "{out_base}/roary/gene_presence_absence.csv"]
+    output: ["{out_base}/roary/summary_statistics.txt", "{out_base}/roary/core_gene_alignment.aln", "{out_base}/roary/gene_presence_absence.csv", "{out_base}/roary/roary_done.flag"]
     params:
         blastp_identity = 95, # For clustering genes
         core_perc = 99  # Definition of the core genome
@@ -306,7 +291,9 @@ rule roary:
             -i {params.blastp_identity} \
             -cd {params.core_perc} \
             -f {wildcards.out_base}/roary \
-            {input}
+            {input} || echo roary failed
+
+        touch {output}
                 
         
     """
@@ -336,7 +323,10 @@ rule abricate:
         plasmidfinder_detailed = "{out_base}/abricate/plasmidfinder_detailed.tsv",
         plasmidfinder_sum = "{out_base}/abricate/plasmidfinder_summarized.tsv",
         ncbi_detailed = "{out_base}/abricate/ncbi_detailed.tsv",
-        ncbi_sum = "{out_base}/abricate/ncbi_summarized.tsv"
+        ncbi_sum = "{out_base}/abricate/ncbi_summarized.tsv",
+        vfdb_detailed = "{out_base}/abricate/vfdb_detailed.tsv",
+        vfdb_sum = "{out_base}/abricate/vfdb_summarized.tsv"
+
     container: "docker://staphb/abricate"
     conda: "conda_envs/abricate.yaml"
     shell: """
@@ -352,6 +342,11 @@ rule abricate:
         
         abricate --db ncbi {input} > {output.ncbi_detailed}
         abricate --summary {output.ncbi_detailed} > {output.ncbi_sum}
+
+        abricate --db vfdb {input} > {output.vfdb_detailed}
+        abricate --summary {output.vfdb_detailed} > {output.vfdb_sum}
+
+
         
 
 
@@ -406,18 +401,18 @@ rule fasttree:
 
 
 
-rule roary_plots:
-    input: genes = "{out_base}/roary/gene_presence_absence.csv",
-        tree = "{out_base}/fasttree/fasttree.newick"
-    output: "{out_base}/roary_plots/whatever"
-    container: "docker://python" # Make our own python container with cairosvg perl etc...
-    shell: """
+# rule roary_plots:
+#     input: genes = "{out_base}/roary/gene_presence_absence.csv",
+#         tree = "{out_base}/fasttree/fasttree.newick"
+#     output: "{out_base}/roary_plots/whatever"
+#     container: "docker://python" # Make our own python container with cairosvg perl etc...
+#     shell: """
         
-        # Failing because matplotlib is missing...
-        python3 scripts/roary_plots.py {input.tree} {input.genes} > hat 2> hat.err
+#         # Failing because matplotlib is missing...
+#         python3 scripts/roary_plots.py {input.tree} {input.genes} > hat 2> hat.err
 
-        # TODO: add the other weird stuff from https://github.com/cmkobel/assemblycomparator/blob/61c9a891a75e2f252dc54185d74c0fbb092815e5/workflow_templates.py#L489
-    """
+#         # TODO: add the other weird stuff from https://github.com/cmkobel/assemblycomparator/blob/61c9a891a75e2f252dc54185d74c0fbb092815e5/workflow_templates.py#L489
+#     """
 
 
 
@@ -425,7 +420,7 @@ rule roary_plots:
 
 
 rule report:
-    input: "{out_base}/abricate/card_summarized.tsv"
+    input: "{out_base}/roary/roary_done.flag"
     output: "{out_base}/report.html"
     params:
         markdown_template_rmd = "genomes_to_report_v2.Rmd",

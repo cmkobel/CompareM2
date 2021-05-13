@@ -229,6 +229,8 @@ if (file.exists(mlst_file)) {
     
       #kable() %>% 
       #kable_paper('hover', full_width = F)
+} else {
+    paste("Warning: The file", mlst_file, "is not accessible.")
 }
 ```
 
@@ -292,6 +294,8 @@ if (file.exists(abricate_card_file)) {
 }
 ```
 
+------ 
+
 ## Plasmidfinder calls
 
 ```{r echo=FALSE, message=F, warning=F}
@@ -315,6 +319,31 @@ if (file.exists(abricate_plasmidfinder_file)) {
 ```
 ------
 
+
+## Plasmidfinder calls
+
+```{r echo=FALSE, message=F, warning=F}
+
+abricate_vfdb_file = "abricate/vfdb_summarized.tsv"
+if (file.exists(abricate_vfdb_file)) {
+    abricate_vfdb_df = read_tsv(abricate_vfdb_file) %>% 
+        rename(filename = `#FILE`, num_found = NUM_FOUND)
+    
+    
+    abricate_vfdb_df %>%
+        left_join(metadata_translate) %>% 
+        select(sample, everything(), -filename) %>% 
+        arrange(sample) %>% 
+        datatable(class = 'cell-border stripe')
+
+    
+} else {
+    paste("Warning: The file", abricate_vfdb_file, "is not accessible.")
+}
+```
+
+------
+
 ## Pan and Core genome
 
 [Roary](https://sanger-pathogens.github.io/Roary/) the pan genome pipeline computes the number of orthologous genes in a number of core/pan partitions.
@@ -329,6 +358,8 @@ if (file.exists(roary_summary_file)) {
         mutate(type = paste(partition, definition)) %>% 
         select(type, count) %>% 
         datatable(class = "stripe", colnames = NULL, rownames = F,  options = list(dom = 't', ordering=F), width = 400)
+} else {
+    paste("Warning: The file", roary_summary_file, "is not accessible.")
 }
 ```
 
@@ -366,6 +397,8 @@ if (file.exists(roary_gpa_file)) {
         ggplot(aes(genes, sample, fill = factor(sum))) + geom_tile() +
         labs(fill = "share count") + 
         theme_classic() 
+} else {
+    paste("Warning: The file", roary_gpa_file, "is not accessible.")
 }
 ```
 
