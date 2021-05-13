@@ -33,7 +33,7 @@ out_base_var = "output_asscom2"
 #reference = config["reference"]
 
 
-# ---- Read in files in the current working directory ---------------
+# --- Read in relevant files in the current working directory ----------------
 
 relative_wd = "."
 #extension_whitelist = ["fna", "fa", "fas", "fasta", "seq"] # old 
@@ -60,7 +60,7 @@ df['input_file_fasta'] = out_base_var + "/samples/" + df['sample'] + "/" + df['s
 #df_mini = df_mini.apply(np.vectorize(lambda x: str(x).strip().replace(" ", ""))) # strip whitespace and replace spaces with underscores.
 
   
-# ---- Displaying filtered dataframe ready for analysis -------------
+# --- Displaying filtered dataframe ready for analysis --------------
 
 df = df.reset_index(drop = True)
 print(df)
@@ -68,32 +68,23 @@ print("//")
 print()
 
 
-# Ask the user if they want to continue
-#input_continue = input("continue? (y/n) ")
-#if not input_continue.lower()[0] == "y":
-#    exit("Quitting ...")
-#
 
-
-# Create the dirs
-
+# --- Make sure the log directory exists. ---------------------------
 try:
-    os.mkdir(out_base_var)
     os.mkdir("logs") # The log directory is actually not used for local setups
 except OSError as e:
     print(e)
-else:
-    print ("Successfully created the output directories.")
 
 
-# Collect all targets
+
+
+# --- Collect all targets. ------------------------------------------
 rule all:
     input: expand(["{out_base}/metadata.tsv", \
-                   "{out_base}/samples/{sample}/{sample}.fa", \
                    "{out_base}/assembly-stats/assembly-stats.tsv", \
-                   "{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
-                   "{out_base}/samples/{sample}/prokka/{sample}.gff", \
-                   "{out_base}/kraken2/kraken2_reports.tsv", \
+                   "{out_base}/collected_results/sequence_lengths.tsv", \
+                   "{out_base}/collected_results/prokka_summaries.tsv", \
+                   "{out_base}/collected_results/kraken2_reports.tsv", \
                    "{out_base}/roary/summary_statistics.txt", \
                    "{out_base}/abricate/card_detailed.tsv", \
                    "{out_base}/mlst/mlst.tsv", \
@@ -147,10 +138,8 @@ rule copy:
 
 
 
-##################################
-# Targets for each sample below: #
-##################################
 
+# --- Targets for each sample below: --------------------------------
 
 rule seqlen:
     input: "{out_base}/samples/{sample}/{sample}.fa"
@@ -170,24 +159,26 @@ rule prokka:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output:
         gff = "{out_base}/samples/{sample}/prokka/{sample}.gff",
-        txt = "{out_base}/samples/{sample}/prokka/{sample}.txt",
-        summary = "{out_base}/samples/{sample}/prokka/{sample}_summary.txt",
-
-
-    #conda: "envs/prokka.yml"
+        log = "{out_base}/samples/{sample}/prokka/{sample}.log",
+        summary = "{out_base}/samples/{sample}/prokka/{sample}_summary.txt"
     container: "docker://staphb/prokka"
     conda: "conda_envs/prokka.yaml"
     threads: 4
     shell: """
 
-        prokka --cpus {threads} --force --outdir {wildcards.out_base}/samples/{wildcards.sample}/prokka --prefix {wildcards.sample} {input} #|| echo exit 0
+        prokka \
+            --cpus {threads} \
+            --force \
+            --outdir {wildcards.out_base}/samples/{wildcards.sample}/prokka \
+            --prefix {wildcards.sample} {input} \
+            > {output.log} #|| echo exit 0
 
-        # Put sample names in front
-        cat {output.txt} \
-        | awk -v sam={wildcards.sample} '{{ print sam ": " $0 }}' \
-        > {output.summary}
-
-
+        cat {output.log} \
+            | grep "Found" \
+            | grep -E "tRNAs|rRNAs|CRISPRs|CDS|unique" \
+            | cut -d" " -f 3,4 \
+            | awk -v sam={wildcards.sample} '{{ print sam " " $0 }}' \
+            >> {output.summary}
 
     """
 
@@ -228,50 +219,48 @@ rule kraken2:
     """
 
 
-# rule parse_kraken2:
-#     input: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
-#     output: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_top10.tsv"
-#     run:
-#         print("hej")
-#         kraken2_report = pd.read_csv(str(input),
-#             sep = '\t',
-#             names = ['match_percent', 'clade_mappings', 'level_mappings', 'level', 'taxonomic_id', 'clade'],
-#             dtype = str)
-
-#         kraken2_report.insert(loc=0, column='sample', value=wildcards.sample)
-
-#         # Remove superfluous spaces
-#         kraken2_report = kraken2_report.apply(np.vectorize(lambda x: str(x).strip()))
-
-#         print(kraken2_report)
 
 
-#         kraken2_report.to_csv(str(output), index = False, sep = "\t")
-
-
+# --- Collect results among all samples -----------------------------
 
 rule collect_kraken2:
-    input:
-        kraken2 = expand("{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", out_base = out_base_var, sample = df["sample"]),
-        seqlen = expand("{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", out_base = out_base_var, sample = df["sample"])
-
-    output:
-        kraken2 = "{out_base}/kraken2/kraken2_reports.tsv",
-        seqlen = "{out_base}/sequence_lengths/sequence_lengths.tsv"
-
+    input: expand("{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", out_base = out_base_var, sample = df["sample"]),
+    output: "{out_base}/collected_results/kraken2_reports.tsv",
     shell: """
 
         # kraken2
         echo -e "sample\tmatch_percent\tclade_mappings\tlevel_mappings\tlevel\ttaxonomic_id\tclade" \
-        > {output.kraken2}
+        > {output}
 
-        cat {input.kraken2} >> {output.kraken2}
+        cat {input} >> {output} 
 
+    """
+
+
+rule collect_seqlen:
+    input: expand("{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", out_base = out_base_var, sample = df["sample"])
+    output: "{out_base}/collected_results/sequence_lengths.tsv"
+    shell: """
 
         # Sequence lengths
-        cat {input.seqlen} > {output.seqlen} 
+        echo -e "sample\trecord\tlength" \
+        > {output}
+
+        cat {input} >> {output} 
+
+    """
 
 
+rule collect_prokka:
+    input: expand("{out_base}/samples/{sample}/prokka/{sample}_summary.txt", out_base = out_base_var, sample = df["sample"]),
+    output: "{out_base}/collected_results/prokka_summaries.tsv",
+    shell: """
+
+        # prokka
+        echo -e "sample\tvalue\tname" \
+        > {output}
+
+        cat {input} >> {output}
 
     """
 
@@ -279,9 +268,12 @@ rule collect_kraken2:
 
 
 
-#######################################
-# Targets for the complete set below: #
-#######################################
+
+
+
+
+# --- Targets for the complete set below: ---------------------------
+
 rule roary:
     input: expand("{out_base}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], out_base = out_base_var)
     output: ["{out_base}/roary/summary_statistics.txt", "{out_base}/roary/core_gene_alignment.aln", "{out_base}/roary/gene_presence_absence.csv", "{out_base}/roary/roary_done.flag"]
@@ -327,8 +319,6 @@ rule assembly_stats:
 
 
 rule abricate:
-    #input: expand("{out_base}/samples/{sample}/{sample}.fa", sample = df["sample"], out_base = out_base_var)
-    #input: df["input_file"].tolist()
     input: df["input_file_fasta"].tolist()
     output:
         card_detailed = "{out_base}/abricate/card_detailed.tsv",
@@ -367,7 +357,6 @@ rule abricate:
 
 
 rule mlst:
-    #input: expand("{out_base}/samples/{sample}/{sample}.fa", sample = df["sample"], out_base = out_base_var)
     input: df["input_file_fasta"].tolist()
     output: "{out_base}/mlst/mlst.tsv"
     container: "docker://staphb/mlst"
@@ -377,7 +366,6 @@ rule mlst:
         mlst {input} > {output}
 
     """
-
 
 
 
@@ -414,24 +402,6 @@ rule fasttree:
 
 
 
-# rule roary_plots:
-#     input: genes = "{out_base}/roary/gene_presence_absence.csv",
-#         tree = "{out_base}/fasttree/fasttree.newick"
-#     output: "{out_base}/roary_plots/whatever"
-#     container: "docker://python" # Make our own python container with cairosvg perl etc...
-#     shell: """
-        
-#         # Failing because matplotlib is missing...
-#         python3 scripts/roary_plots.py {input.tree} {input.genes} > hat 2> hat.err
-
-#         # TODO: add the other weird stuff from https://github.com/cmkobel/assemblycomparator/blob/61c9a891a75e2f252dc54185d74c0fbb092815e5/workflow_templates.py#L489
-#     """
-
-
-
-
-
-
 rule report:
     input: "{out_base}/roary/roary_done.flag"
     output: "{out_base}/report.html"
@@ -454,7 +424,6 @@ rule report:
     """
 
 
-#print(mashtree.input)
 
 
 
