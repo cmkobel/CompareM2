@@ -275,7 +275,6 @@ try({
             num_alleles <- length(mlst_df) - 3
             allele_columns = paste('al.', 1:allelnum)
         } else {
-            print("hat")
             allele_columns = NULL
         }
         
