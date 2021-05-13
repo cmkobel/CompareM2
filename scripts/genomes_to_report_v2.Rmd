@@ -17,7 +17,7 @@ editor_options:
   
 ```{r echo=FALSE, message=F, warning=F}
 # This is useful for debugging the markdown script.
-#setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")
+setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")
 
 
 #Dependencies
@@ -155,10 +155,12 @@ try({
             
             
             #scale_x_log10() +
-            theme_bw() +
-             
             
-            theme(legend.position = "none")
+            theme_classic() +
+            
+            
+            theme(legend.position = "none") +
+            theme(panel.grid.major.x = element_line(colour = "grey92")) 
             
         
                 
@@ -262,6 +264,7 @@ try({
 
 Multi locus sequence typing provided by [mlst](https://github.com/tseemann/mlst#mlst).
 The mlst software incorporates components of the [PubMLST](https://pubmlst.org/) database.
+
 ```{r echo=FALSE, message=F, warning=F}
 try({
     #få mlst til at spytte header ud.
@@ -273,9 +276,10 @@ try({
         # Generate a vector of allele columns if any exist.
         if( length(mlst_df) > 3) { 
             num_alleles <- length(mlst_df) - 3
-            allele_columns = paste('al.', 1:allelnum)
+            allele_columns = paste('al.', 1:num_alleles)
         } else {
             allele_columns = NULL
+
         }
         
         names(mlst_df) = c("filename", "scheme", "sequence_type", allele_columns)
@@ -498,7 +502,7 @@ The core genome phylogeny is provided with [FastTree](http://www.microbesonline.
 ```{r echo=FALSE, message=F, warning=F}
 # This chunk is needed for setting the size of the following plot
 try({
-    fig_height = max(2.4,
+    fig_height = max(4,
                      (metadata_df$sample %>% length) * 0.6)
     
     knitr::opts_chunk$set(fig.height = fig_height,
