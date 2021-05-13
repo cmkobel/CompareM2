@@ -27,8 +27,8 @@ library(DT)
 library(ggtree)
 
 # This is useful for debugging the markdown script.
-debug_dir ="~/assemblycomparator2/tests/E._faecium/output_asscom2/"
-setwd(debug_dir)
+#debug_dir ="~/assemblycomparator2/tests/E._faecium/shorts/output_asscom2/"
+#setwd(debug_dir)
 
 # A function that returns a new table number for each run
 tableno_var = 0
@@ -197,6 +197,8 @@ if (file.exists(kraken2_file)) {
         
     
         arrange(sample) %>% 
+        
+        select(ends_with("1"), ends_with("2"), ends_with("3")) %>% 
     
         datatable(class = 'cell-border stripe')
             
@@ -248,6 +250,51 @@ if (file.exists(mlst_file)) {
     paste("Warning: The file", mlst_file, "is not accessible.")
 }
 ```
+
+
+## Core genome phylogeny
+
+The core genome phylogeny is provided with [FastTree](http://www.microbesonline.org/fasttree/) with the generalized time-reversible (GTR) model of nucleotide evolution. The plotted tree is midpoint rooted.
+
+
+```{r echo=FALSE, message=F, warning=F}
+# This chunk is needed for setting the size of the following plot
+
+fig_height = max(2.4,
+                 (metadata_df$sample %>% length) * 0.8)
+
+knitr::opts_chunk$set(fig.height = fig_height,
+                      fig.width = 10)
+
+```
+
+```{r echo=FALSE, message=F, warning=F}
+fasttree_file = "fasttree/fasttree.newick"
+if (file.exists(fasttree_file)) {
+
+   tree <- read.tree(fasttree_file)
+   
+   
+   tree = phytools::midpoint.root(tree)
+   #plot(tree)
+   #axis(1)
+   ggtree(tree) +
+       geom_tiplab(align = T) +
+       
+       
+       #scale_x_continuous(expand=c(0, 0.01)) +
+       scale_x_continuous(expand=expansion(mult = 0, add = c(0.001, 0.005)))+
+       #geom_treescale(width = 0.01)+
+       #xlim(0, 1) +
+       xlab("evolutionary distance")  +
+       theme_tree2() 
+        
+} else {
+    paste("Warning: The file", fasttree_file, "is not accessible.")
+}
+
+```
+
 
 ```{r echo=FALSE, message=F, warning=F}
 ##Abricate

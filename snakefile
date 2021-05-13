@@ -79,10 +79,10 @@ print()
 try:
     os.mkdir(out_base_var)
     os.mkdir("logs") # The log directory is actually not used for local setups
-except OSError:
-    print ("Creation of the directories")
+except OSError as e:
+    print(e)
 else:
-    print ("Successfully created the directories")
+    print ("Successfully created the output directories.")
 
 
 # Collect all targets
@@ -407,7 +407,7 @@ rule fasttree:
 
         OMP_NUM_THREADS={threads}
 
-        FastTree -nt {input} > {output} 2> {output}.log
+        FastTree -nt -gtr {input} > {output} 2> {output}.log
 
     """
 
