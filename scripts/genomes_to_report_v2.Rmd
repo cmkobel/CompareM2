@@ -24,10 +24,11 @@ library(prettydoc)
 #library(knitr)
 #library(kableExtra)
 library(DT)
+library(ggtree)
 
 # This is useful for debugging the markdown script.
-#debug_dir ="~/assemblycomparator2/tests/E._faecium/output_asscom2/"
-#setwd(debug_dir)
+debug_dir ="~/assemblycomparator2/tests/E._faecium/output_asscom2/"
+setwd(debug_dir)
 
 # A function that returns a new table number for each run
 tableno_var = 0
@@ -130,16 +131,30 @@ if (file.exists(sequence_lengths_file)) {
         mutate(init = lag(length, default = 0),
                start = cumsum(init),
                stop = start + length - 1) %>% 
+
         
-        ggplot(aes(fill=factor(col), y=sample, x=length)) + 
-    geom_bar(position="dodge", stat="identity") +
+        #mutate(sample = fct_reorder(sample, desc(sample))) %>% 
+        mutate(sample = fct_reorder(sample, desc(sample))) %>% 
+        
+        
+        
+    
+        
+        ggplot(aes(x=length, y=sample, fill=factor(col))) + 
+        
+        geom_bar(position = position_dodge2(width = 0.9, preserve = "single", reverse = T),
+                 #position = "dodge2",
+                 stat="identity") +
+        
+        
         
         #scale_x_log10() +
-        theme_classic() +
+        theme_bw() +
+         
+        
         theme(legend.position = "none")
         
-        #ggplot() + 
-        #geom_segment(aes(x = start, xend = stop, y = sample, yend = sample, color = factor(col)), size = 2)
+    
             
     
     
@@ -320,7 +335,7 @@ if (file.exists(abricate_plasmidfinder_file)) {
 ------
 
 
-## Plasmidfinder calls
+## VFDB calls
 
 ```{r echo=FALSE, message=F, warning=F}
 
@@ -334,7 +349,7 @@ if (file.exists(abricate_vfdb_file)) {
         left_join(metadata_translate) %>% 
         select(sample, everything(), -filename) %>% 
         arrange(sample) %>% 
-        datatable(class = 'cell-border stripe')
+        datatable(class = 'cell-border stripe', options = list(dom = 'ltpi'))
 
     
 } else {
@@ -354,10 +369,11 @@ The core genome denotes the genes which are conserved between all samples (inter
 roary_summary_file = "roary/summary_statistics.txt"
 if (file.exists(roary_summary_file)) {
     paste("yes")
-    read_tsv(roary_summary_file, col_names = c("partition", "definition", "count")) %>% 
-        mutate(type = paste(partition, definition)) %>% 
-        select(type, count) %>% 
-        datatable(class = "stripe", colnames = NULL, rownames = F,  options = list(dom = 't', ordering=F), width = 400)
+    read_tsv(roary_summary_file, col_names = c("ortholog class", "definition", "count")) %>% 
+        #mutate(type = paste(partition, definition)) %>% 
+        
+        #select(type, count) %>% 
+        datatable(class = "stripe", rownames = F,  options = list(dom = 't', ordering=F), width = 400)
 } else {
     paste("Warning: The file", roary_summary_file, "is not accessible.")
 }
@@ -394,8 +410,9 @@ if (file.exists(roary_gpa_file)) {
         pivot_longer(c(everything(), -genes, -sum), names_to = "sample", values_to = "present") %>% 
         filter(present >= 1) %>% 
         #View
+        mutate(sample = fct_reorder(sample, desc(sample))) %>% 
         ggplot(aes(genes, sample, fill = factor(sum))) + geom_tile() +
-        labs(fill = "share count") + 
+        labs(fill = "shared between\nsamples") + 
         theme_classic() 
 } else {
     paste("Warning: The file", roary_gpa_file, "is not accessible.")

@@ -167,7 +167,12 @@ rule seqlen:
 
 rule prokka:
     input: "{out_base}/samples/{sample}/{sample}.fa"
-    output: "{out_base}/samples/{sample}/prokka/{sample}.gff"
+    output:
+        gff = "{out_base}/samples/{sample}/prokka/{sample}.gff",
+        txt = "{out_base}/samples/{sample}/prokka/{sample}.txt",
+        summary = "{out_base}/samples/{sample}/prokka/{sample}_summary.txt",
+
+
     #conda: "envs/prokka.yml"
     container: "docker://staphb/prokka"
     conda: "conda_envs/prokka.yaml"
@@ -175,6 +180,13 @@ rule prokka:
     shell: """
 
         prokka --cpus {threads} --force --outdir {wildcards.out_base}/samples/{wildcards.sample}/prokka --prefix {wildcards.sample} {input} #|| echo exit 0
+
+        # Put sample names in front
+        cat {output.txt} \
+        | awk -v sam={wildcards.sample} '{{ print sam ": " $0 }}' \
+        > {output.summary}
+
+
 
     """
 
