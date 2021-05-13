@@ -17,7 +17,7 @@ editor_options:
   
 ```{r echo=FALSE, message=F, warning=F}
 # This is useful for debugging the markdown script.
-setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")
+#setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")
 
 
 #Dependencies
@@ -336,7 +336,7 @@ try({
         abricate_plasmidfinder_df = read_tsv(abricate_plasmidfinder_file) %>% 
             rename(filename = `#FILE`, num_found = NUM_FOUND)
         
-        aoeunaoethu
+        
         abricate_plasmidfinder_df %>%
             left_join(metadata_translate) %>% 
             select(sample, everything(), -filename) %>% 
