@@ -11,7 +11,4 @@ __default__:
     error: "logs/{rule}-%j.err"
     #error: "logs/{rule}.err"
 
-prokka:
-    cpus-per-task: 4
-
 

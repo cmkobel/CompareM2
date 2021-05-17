@@ -45,10 +45,11 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/local/ --use-conda'" >> ~/.bashrc
    
    # For HPC's with Slurm (using Singularity for jobs):
-   echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/cluster.yaml --use-singularity'" >> ~/.bashrc
+   echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml --use-singularity'" >> ~/.bashrc
    ```
    Hint: You can interchange `--use-conda` and `--use-singularity` for changing how assemblycomparator2 runs the jobs. Please note that running assemblycomparator2 locally with conda is not fully developed or tested, and has a high probability of failing. If you have access to Singularity, use it.
- * Optionally: Assemblycomparator2 comes handy with some scripts for setting up Kraken2 and Mashscreen. There are two scripts for Kraken2; one small "Standard" (8GB) and one huge "PlusPF" (50GB).
+   
+ * assemblycomparator2 supports Kraken2. If you already have a local copy of a kraken database, you can set the `ASSCOM2_KRAKEN_DB` system variable to its path. If you don't have a local copy, assemblycomparator2 comes handy with some scripts for setting up Kraken2 and Mashscreen. There are two scripts for Kraken2; one small "Standard" (8GB) and one huge "PlusPF" (50GB).
    ```
    # Kraken2
    $ASSCOM2_BASE/scripts/set-up-kraken2_Standard_8GB.sh
@@ -58,8 +59,21 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    # Mashscreen
    $ASSCOM2_BASE/scripts/set_up_mashscreen.sh
    ```
+ * When you have completed all installation steps, you should read the settings into global system memory. After this, you are ready to test the installation.
+   ```
+   source ~/.bashrc
+   ```
    
-   
+### Testing installation
+
+assemblycomparator2 comes with a handful of E. faecium assemblies (illumina/skesa) which can be used to check that everything works as expected. In order to run this test, simply go into the location of these assemblies, and run the `assemblycomparator2`-command
+   ```
+   cd ${ASSCOM2_BASE}/tests/E._faecium
+   assemblycomparator2
+   ```
+
+If you encounter problems testing your installation, please refer to the issues tab of this repository.
+
    
    
 ### Updating an existing installation

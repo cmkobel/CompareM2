@@ -16,18 +16,17 @@ editor_options:
   
   
 ```{r echo=FALSE, message=F, warning=F}
+# This is useful for debugging the markdown script.
+setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")
+
+
 #Dependencies
 library(tidyverse)
 library(prettydoc)
-#library(broom)
-#library(magrittr)
-#library(knitr)
-#library(kableExtra)
 library(DT)
+#library(ape) # loads later
 
-# This is useful for debugging the markdown script.
-#debug_dir ="~/assemblycomparator2/tests/E._faecium/output_asscom2/"
-#setwd(debug_dir)
+
 
 # A function that returns a new table number for each run
 tableno_var = 0
@@ -71,7 +70,7 @@ if (file.exists(metadata_file)) {
     
     
 } else {
-    stop(paste("The metadata file", metadata_file, "is not accessible."))
+    stop(paste("The metadata file", metadata_file, "is not accessible.")) # Should stop the script completely
 }
 
 
@@ -82,73 +81,128 @@ if (file.exists(metadata_file)) {
 Assembly statistics is provided by [assembly-stats](https://github.com/sanger-pathogens/assembly-stats#assembly-stats).
 
 ```{r echo=FALSE, message=F, warning=F}
-assembly_stats_file = "assembly-stats/assembly-stats.tsv"
-if (file.exists(assembly_stats_file)) {
-    assembly_stats_df = read_tsv(assembly_stats_file) 
+
+tryCatch({
+    assembly_stats_file = "assembly-stats/assembly-stats.tsv"
+    if (file.exists(assembly_stats_file)) {
+        assembly_stats_df = read_tsv(assembly_stats_file) 
+        
+        assembly_stats_df %>% left_join(metadata_translate) %>% 
+            select(sample, everything(), -filename, -N50n, -N70, -N70n, -N90n) %>% 
+            arrange(sample) %>% 
+            datatable(class = 'cell-border stripe')
+                
+        
+        
+    } else {
+        paste("Warning: The file", assembly_stats_file, "is not accessible.")
+    }
     
-    assembly_stats_df %>% left_join(metadata_translate) %>% 
-        select(sample, everything(), -filename) %>% 
-        arrange(sample) %>% 
-        datatable(class = 'cell-border stripe')
-            
-    
-    
-} else {
-    paste("Warning: The file", assembly_stats_file, "is not accessible.")
-}
+})
+
 ```
+
 
 Lengths of contigs:
 
 ```{r echo=FALSE, message=F, warning=F}
-# This chunk is needed for setting the size of the contig lengths plot
-
-sequence_lengths_file = "sequence_lengths/sequence_lengths.tsv"
-if (file.exists(sequence_lengths_file)) {
-    sequence_lengths_df = read_tsv(sequence_lengths_file, col_names = c("sample", "record", "length"))
-
+try({
+    # This chunk is needed for setting the size of the contig lengths plot
     
-    fig_height = max(2.28,
-                     (sequence_lengths_df$sample %>% length) *0.12)
+    sequence_lengths_file = "collected_results/sequence_lengths.tsv"
+    if (file.exists(sequence_lengths_file)) {
+        sequence_lengths_df = read_tsv(sequence_lengths_file)
     
-    knitr::opts_chunk$set(fig.height = fig_height,
-                          fig.width = 10)
-}
+        
+        fig_height = max(2.28,
+                         (sequence_lengths_df$sample %>% length) *0.12)
+        
+        knitr::opts_chunk$set(fig.height = fig_height,
+                              fig.width = 10)
+    }
+})
 ```
 
 
 
 ```{r echo=FALSE, message=F, warning=F}
-
-# Now when the figure height has been set, we can generate the figure
-if (file.exists(sequence_lengths_file)) {
-    sequence_lengths_df %>%
-        group_by(sample) %>% 
-        arrange(length) %>% 
-        
-        mutate(col = row_number(-length)) %>% 
-        mutate(init = lag(length, default = 0),
-               start = cumsum(init),
-               stop = start + length - 1) %>% 
-        
-        ggplot(aes(fill=factor(col), y=sample, x=length)) + 
-    geom_bar(position="dodge", stat="identity") +
-        
-        #scale_x_log10() +
-        theme_classic() +
-        theme(legend.position = "none")
-        
-        #ggplot() + 
-        #geom_segment(aes(x = start, xend = stop, y = sample, yend = sample, color = factor(col)), size = 2)
+try({
+    # Now when the figure height has been set, we can generate the figure
+    if (file.exists(sequence_lengths_file)) {
+        sequence_lengths_df %>%
+            group_by(sample) %>% 
+            arrange(length) %>% 
             
+            mutate(col = row_number(-length)) %>% 
+            mutate(init = lag(length, default = 0),
+                   start = cumsum(init),
+                   stop = start + length - 1) %>% 
     
-    
-} else {
-    paste("Warning: The file", sequence_lengths_file, "is not accessible.")
-}
+            
+            #mutate(sample = fct_reorder(sample, desc(sample))) %>% 
+            mutate(sample = fct_reorder(sample, desc(sample))) %>% 
+            
+            
+            
+        
+            
+            ggplot(aes(x=length, y=sample, fill=factor(col))) + 
+            
+            geom_bar(position = position_dodge2(width = 0.9, preserve = "single", reverse = T),
+                     #position = "dodge2",
+                     stat="identity") +
+            
+            
+            
+            #scale_x_log10() +
+            
+            theme_classic() +
+            
+            
+            theme(legend.position = "none") +
+            theme(panel.grid.major.x = element_line(colour = "grey92")) 
+            
+        
+                
+        
+        
+    } else {
+        paste("Warning: The file", sequence_lengths_file, "is not accessible.")
+    }
+})
 ```
 *Fig. `r figno()`: Lengths of contigs (fasta records) for each sample. The colors have no intrinsic meaning.*
 
+
+
+## Genome annotation
+
+Computed using the Prokka genome annotator.
+These overall statistics are extracted from the run log.
+
+```{r echo=FALSE, message=F, warning=F}
+
+try({
+    # Now when the figure height has been set, we can generate the figure
+    prokka_summaries_file = "collected_results/prokka_summaries.txt"
+    if (file.exists(prokka_summaries_file)) {
+        prokka_summaries_df = read_delim(prokka_summaries_file, delim = " ")
+        
+        prokka_summaries_df %>% pivot_wider(id_cols = sample, names_from = name, values_from = value) %>% 
+            select(sample, CDS, `unique /gene codes` = unique, tRNAs, rRNAs, CRISPRs) %>% 
+            arrange(sample) %>% 
+            datatable()
+            
+            
+        
+                
+        
+        
+    } else {
+        paste("Warning: The file", prokka_summaries_file, "is not accessible.")
+    }
+})
+```
 
 ## Species
 
@@ -156,41 +210,50 @@ Species identification is provided by [Kraken 2](https://github.com/DerrickWood/
 
 
 
-
 ```{r echo=FALSE, message=F, warning=F}
-
-kraken2_file = "kraken2/kraken2_reports.tsv"
-if (file.exists(kraken2_file)) {
-    
-    
-    
-    
-    kraken2_df = read_tsv(kraken2_file) %>% 
-        rename(percent = match_percent)
-    
-    
-    kraken2_df %>% group_by(sample) %>% 
-        #filter(level == "S" | level == "U")
-        filter(level == "S") %>% 
-        mutate(rank = row_number(-percent),
-               rank_text = paste("hit", rank),
-               clade_text = paste0(percent, "% (", clade, ")")) %>% 
-               #clade_text = paste0(clade, " ", match_percent, ")")) %>% 
+try({
+    kraken2_file = "collected_results/kraken2_reports.tsv"
+    if (file.exists(kraken2_file)) {
         
-        filter(rank <= 2) %>% 
-        pivot_wider(id_cols = sample, names_from = rank_text, values_from = c(percent, clade)) %>% 
         
-    
-        arrange(sample) %>% 
-    
-        datatable(class = 'cell-border stripe')
+        
+        
+        kraken2_df = read_tsv(kraken2_file) %>% 
+            rename(percent = match_percent) %>% 
+            mutate(percent = round(percent, 1))
+            #mutate(percent_str = paste(sprintf("%.1f", percent)))
+        
+        
+        kraken2_df %>% group_by(sample) %>% 
+            #filter(level == "S" | level == "U")
+            filter(level == "S") %>% 
+            mutate(rank = row_number(-percent),
+                   rank_text = paste("hit", rank),
+                   clade_text = paste0(percent, "% (", clade, ")")) %>% 
+                   #clade_text = paste0(clade, " ", match_percent, ")")) %>% 
             
+            filter(rank <= 2) %>% 
+            pivot_wider(id_cols = sample, names_from = rank_text, values_from = c(percent, clade)) %>% 
+            
+        
+            arrange(sample) %>% 
+            
+            select(ends_with("1"), ends_with("2"), ends_with("3")) %>% 
+            
+            
+            #mutate_if(is.numeric, percent = paste(sprintf("%.1f", percent)))
     
-    
-} else {
-    paste("Warning: The file", kraken2_file, "is not accessible.")
-}
+        
+            datatable(class = 'cell-border stripe')
+                
+        
+        
+    } else {
+        paste("Warning: The file", kraken2_file, "is not accessible.")
+    }
+})
 ```
+
 `r if (file.exists(kraken2_file)) {paste("Using the", Sys.getenv("ASSCOM2_KRAKEN2_DB"), "database")}`.
 
 
@@ -201,118 +264,160 @@ if (file.exists(kraken2_file)) {
 
 Multi locus sequence typing provided by [mlst](https://github.com/tseemann/mlst#mlst).
 The mlst software incorporates components of the [PubMLST](https://pubmlst.org/) database.
+
 ```{r echo=FALSE, message=F, warning=F}
-#få mlst til at spytte header ud.
-#mlst <- read.table(file = 'mlst.tsv', sep = '\t', header = FALSE)
-mlst_file = "mlst/mlst.tsv"
-if (file.exists(mlst_file)) {
-    mlst_df <- read_tsv("mlst/mlst.tsv", col_names = F)
-    allelnum <- length(mlst_df) - 3
-    names(mlst_df) = c("filename", "scheme", "sequence_type", paste('al.', 1:allelnum))
-    
-    
-    mlst_df %>%
-        left_join(metadata_translate) %>% 
-        select(sample, everything(), -filename) %>% 
-        arrange(sample) %>% 
-        datatable(class = 'cell-border stripe')
+try({
+    #få mlst til at spytte header ud.
+    #mlst <- read.table(file = 'mlst.tsv', sep = '\t', header = FALSE)
+    mlst_file = "mlst/mlst.tsv"
+    if (file.exists(mlst_file)) {
+        mlst_df <- read_tsv("mlst/mlst.tsv", col_names = F)
         
-    
-    #mlst_df %>% datatable(
-    #  options = list(
-    #   autoWidth = TRUE, 
-    #   columnDefs = list(list(width = '300px'))),
-      #class = 'cell-border stripe',
-      #rownames = FALSE,
-      #colnames = c('Isolate','Scheme', 'SequenceType', rep('Allel',allelnum) )
-      #)
-    
-      #kable() %>% 
-      #kable_paper('hover', full_width = F)
-}
+        # Generate a vector of allele columns if any exist.
+        if( length(mlst_df) > 3) { 
+            num_alleles <- length(mlst_df) - 3
+            allele_columns = paste('al.', 1:num_alleles)
+        } else {
+            allele_columns = NULL
+
+        }
+        
+        names(mlst_df) = c("filename", "scheme", "sequence_type", allele_columns)
+        
+        
+        mlst_df %>%
+            left_join(metadata_translate) %>% 
+            select(sample, everything(), -filename) %>% 
+            arrange(sample) %>% 
+            datatable(class = 'cell-border stripe')
+            
+        
+        #mlst_df %>% datatable(
+        #  options = list(
+        #   autoWidth = TRUE, 
+        #   columnDefs = list(list(width = '300px'))),
+          #class = 'cell-border stripe',
+          #rownames = FALSE,
+          #colnames = c('Isolate','Scheme', 'SequenceType', rep('Allel',allelnum) )
+          #)
+        
+          #kable() %>% 
+          #kable_paper('hover', full_width = F)
+    } else {
+        paste("Warning: The file", mlst_file, "is not accessible.")
+    }
+})
 ```
 
-```{r echo=FALSE, message=F, warning=F}
-##Abricate
-#It only supports contigs, not FASTQ reads
-#It only detects acquired resistance genes, NOT point mutations
-#It uses a DNA sequence database, not protein
-#It needs BLAST+ >= 2.7
-
-#uses the 3 databases:
-#plasmidfinder
-#Ncbi
-#card
-
-```
 
 
-## NCBI Resistance
+## Resistance
+
+### NCBI Resistance
 Resistance genes provided by [NCBI AMRFinder](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6811410/) via [Abricate](https://github.com/tseemann/abricate#abricate).
 
 ```{r echo=FALSE, message=F, warning=F}
-
-abricate_ncbi_file = "abricate/ncbi_summarized.tsv"
-if (file.exists(abricate_ncbi_file)) {
-    abricate_ncbi_df = read_tsv(abricate_ncbi_file) %>% 
-        rename(filename = `#FILE`, num_found = NUM_FOUND)
+try({
+    abricate_ncbi_file = "abricate/ncbi_summarized.tsv"
+    if (file.exists(abricate_ncbi_file)) {
+        abricate_ncbi_df = read_tsv(abricate_ncbi_file) %>% 
+            rename(filename = `#FILE`, num_found = NUM_FOUND)
+        
+        
+        abricate_ncbi_df %>%
+            left_join(metadata_translate) %>% 
+            select(sample, everything(), -filename) %>% 
+            arrange(sample) %>% 
+            datatable(class = 'cell-border stripe')
     
-    
-    abricate_ncbi_df %>%
-        left_join(metadata_translate) %>% 
-        select(sample, everything(), -filename) %>% 
-        arrange(sample) %>% 
-        datatable(class = 'cell-border stripe')
-
-    
-} else {
-    paste("Warning: The file", abricate_ncbi_file, "is not accessible.")
-}
+        
+    } else {
+        paste("Warning: The file", abricate_ncbi_file, "is not accessible.")
+    }
+})
 ```
 
-## Card Resistance genes
+### Card Resistance genes
+
+Resistance genes provided by The Comprehensive Antibiotic Resistance Database ([Card](https://card.mcmaster.ca/)) via abricate.
 
 ```{r echo=FALSE, message=F, warning=F}
-
-abricate_card_file = "abricate/card_summarized.tsv"
-if (file.exists(abricate_card_file)) {
-    abricate_card_df = read_tsv(abricate_card_file) %>% 
-        rename(filename = `#FILE`, num_found = NUM_FOUND)
+try({
+    abricate_card_file = "abricate/card_summarized.tsv"
+    if (file.exists(abricate_card_file)) {
+        abricate_card_df = read_tsv(abricate_card_file) %>% 
+            rename(filename = `#FILE`, num_found = NUM_FOUND)
+        
+        
+        abricate_card_df %>%
+            left_join(metadata_translate) %>% 
+            select(sample, everything(), -filename) %>% 
+            arrange(sample) %>% 
+            datatable(class = 'cell-border stripe')
     
-    
-    abricate_card_df %>%
-        left_join(metadata_translate) %>% 
-        select(sample, everything(), -filename) %>% 
-        arrange(sample) %>% 
-        datatable(class = 'cell-border stripe')
-
-    
-} else {
-    paste("Warning: The file", abricate_card_file, "is not accessible.")
-}
+        
+    } else {
+        paste("Warning: The file", abricate_card_file, "is not accessible.")
+    }
+})
 ```
 
-## Plasmidfinder calls
+------ 
+
+### Plasmidfinder calls
+
+Plasmid calls provided by [PlasmidFinder](https://cge.cbs.dtu.dk/services/PlasmidFinder/) via abricate.
 
 ```{r echo=FALSE, message=F, warning=F}
-
-abricate_plasmidfinder_file = "abricate/plasmidfinder_summarized.tsv"
-if (file.exists(abricate_plasmidfinder_file)) {
-    abricate_plasmidfinder_df = read_tsv(abricate_plasmidfinder_file) %>% 
-        rename(filename = `#FILE`, num_found = NUM_FOUND)
+try({
+    abricate_plasmidfinder_file = "abricate/plasmidfinder_summarized.tsv"
+    if (file.exists(abricate_plasmidfinder_file)) {
+        abricate_plasmidfinder_df = read_tsv(abricate_plasmidfinder_file) %>% 
+            rename(filename = `#FILE`, num_found = NUM_FOUND)
+        
+        
+        abricate_plasmidfinder_df %>%
+            left_join(metadata_translate) %>% 
+            select(sample, everything(), -filename) %>% 
+            arrange(sample) %>% 
+            datatable(class = 'cell-border stripe')
     
+        
+    } else {
+        paste("Warning: The file", abricate_plasmidfinder_file, "is not accessible.")
+    }
     
-    abricate_plasmidfinder_df %>%
-        left_join(metadata_translate) %>% 
-        select(sample, everything(), -filename) %>% 
-        arrange(sample) %>% 
-        datatable(class = 'cell-border stripe')
-
-    
-} else {
-    paste("Warning: The file", abricate_plasmidfinder_file, "is not accessible.")
-}
+})
 ```
+------
+
+
+### VFDB calls
+
+Virulence factor calls provided by The virulence factor database ([VFDB](http://www.mgc.ac.cn/VFs/main.htm)) via abricate.
+"An integrated and comprehensive online resource for curating information about virulence factors of bacterial pathogens."
+
+```{r echo=FALSE, message=F, warning=F}
+try({
+    abricate_vfdb_file = "abricate/vfdb_summarized.tsv"
+    if (file.exists(abricate_vfdb_file)) {
+        abricate_vfdb_df = read_tsv(abricate_vfdb_file) %>% 
+            rename(filename = `#FILE`, num_found = NUM_FOUND)
+        
+        
+        abricate_vfdb_df %>%
+            left_join(metadata_translate) %>% 
+            select(sample, everything(), -filename) %>% 
+            arrange(sample) %>% 
+            datatable(class = 'cell-border stripe', options = list(dom = 'ltpi'))
+    
+        
+    } else {
+        paste("Warning: The file", abricate_vfdb_file, "is not accessible.")
+    }
+})
+```
+
 ------
 
 ## Pan and Core genome
@@ -322,14 +427,19 @@ if (file.exists(abricate_plasmidfinder_file)) {
 The core genome denotes the genes which are conserved between all samples (intersection), whereas the pan genome is the union of all genes across all samples.
 
 ```{r echo=FALSE, message=F, warning=F}
-roary_summary_file = "roary/summary_statistics.txt"
-if (file.exists(roary_summary_file)) {
-    paste("yes")
-    read_tsv(roary_summary_file, col_names = c("partition", "definition", "count")) %>% 
-        mutate(type = paste(partition, definition)) %>% 
-        select(type, count) %>% 
-        datatable(class = "stripe", colnames = NULL, rownames = F,  options = list(dom = 't', ordering=F), width = 400)
-}
+try({
+    roary_summary_file = "roary/summary_statistics.txt"
+    if (file.exists(roary_summary_file)) {
+        paste("yes")
+        read_tsv(roary_summary_file, col_names = c("ortholog class", "definition", "count")) %>% 
+            #mutate(type = paste(partition, definition)) %>% 
+            
+            #select(type, count) %>% 
+            datatable(class = "stripe", rownames = F,  options = list(dom = 't', ordering=F), width = 400)
+    } else {
+        paste("Warning: The file", roary_summary_file, "is not accessible.")
+    }
+})
 ```
 
 *Table `r tableno()`: Distribution of genes in different core/pan partitions.*
@@ -338,38 +448,101 @@ if (file.exists(roary_summary_file)) {
 
 
 ```{r echo=FALSE, message=F, warning=F}
-# This chunk is needed for setting the size of the roary gpa plot
-fig_height = max(1.6,
-                 (metadata_df$sample %>% length) *0.4)
-
-knitr::opts_chunk$set(fig.height = fig_height,
-                      fig.width = 8)
+try({
+    # This chunk is needed for setting the size of the roary gpa plot
+    fig_height = max(1.6,
+                     (metadata_df$sample %>% length) *0.4)
+    
+    knitr::opts_chunk$set(fig.height = fig_height,
+                          fig.width = 8)
+})
 ```
 
 
 ```{r echo = F, message = F, warning = F}
-roary_gpa_file = "roary/gene_presence_absence.Rtab"
-if (file.exists(roary_gpa_file)) {
-    paste("yes")
-    roary_gpa_df = read_tsv(roary_gpa_file)
-    
-    roary_gpa_df %>% 
-        #select(-Gene) %>% 
-        mutate(sum = rowSums(across(where(is.numeric)))) %>%
-        #mutate(order = 1:(dim(.)[1])) %>% View
-        mutate(genes = 1:length(Gene)) %>% 
-        select(-Gene) %>% 
-    
-        pivot_longer(c(everything(), -genes, -sum), names_to = "sample", values_to = "present") %>% 
-        filter(present >= 1) %>% 
-        #View
-        ggplot(aes(genes, sample, fill = factor(sum))) + geom_tile() +
-        labs(fill = "share count") + 
-        theme_classic() 
-}
+try({
+    roary_gpa_file = "roary/gene_presence_absence.Rtab"
+    if (file.exists(roary_gpa_file)) {
+        paste("yes")
+        roary_gpa_df = read_tsv(roary_gpa_file)
+        
+        roary_gpa_df %>% 
+            #select(-Gene) %>% 
+            mutate(sum = rowSums(across(where(is.numeric)))) %>%
+            #mutate(order = 1:(dim(.)[1])) %>% View
+            mutate(genes = 1:length(Gene)) %>% 
+            select(-Gene) %>% 
+        
+            pivot_longer(c(everything(), -genes, -sum), names_to = "sample", values_to = "present") %>% 
+            filter(present >= 1) %>% 
+            #View
+            mutate(sample = fct_reorder(sample, desc(sample))) %>% 
+            ggplot(aes(genes, sample, fill = factor(sum))) + geom_tile() +
+            labs(fill = "shared between\nsamples") + 
+            theme_classic() 
+    } else {
+        paste("Warning: The file", roary_gpa_file, "is not accessible.")
+    }
+})
 ```
 
 *Fig. `r figno()`: Visual distribution of genes in the different samples. The genes are ordered in respect to the number of samples sharing them.*
+
+
+
+
+
+
+
+## Core genome phylogeny
+
+The core genome phylogeny is provided with [FastTree](http://www.microbesonline.org/fasttree/) with the generalized time-reversible (GTR) model of nucleotide evolution. The plotted tree is midpoint rooted.
+
+
+```{r echo=FALSE, message=F, warning=F}
+# This chunk is needed for setting the size of the following plot
+try({
+    fig_height = max(4,
+                     (metadata_df$sample %>% length) * 0.6)
+    
+    knitr::opts_chunk$set(fig.height = fig_height,
+                          fig.width = 10)
+})
+```
+
+```{r echo=FALSE, message=F, warning=F}
+try({
+    fasttree_file = "fasttree/fasttree.newick"
+    if (file.exists(fasttree_file)) {
+    
+       tree <- ape::read.tree(fasttree_file)
+       
+       tree = phytools::midpoint.root(tree)
+       
+       #plot(tree)
+       #axis(1)
+       
+       #tree$tip.label = paste0(" ", tree$tip.label)
+       #phytools::plotTree(tree, align.tip.label = T, lwd = 1, mar = c(0,0,0,0))
+       #axis(1)
+    
+       tree$tip.label = paste0(" ", tree$tip.label)
+       ape::plot.phylo(tree, align.tip.label = T)
+       axis(1)
+           
+            
+    } else {
+        paste("Warning: The file", fasttree_file, "is not accessible.")
+    }
+
+})
+
+```
+
+
+
+*Fig. `r figno()`: Phylogenetic NJ-tree from the concatenated core genome of all samples.*
+
 
 
 
