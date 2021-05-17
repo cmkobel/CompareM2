@@ -1,4 +1,4 @@
-name: assemblycomparator2
+name: assemblycomparator22
 channels:
   - conda-forge
   - bioconda
