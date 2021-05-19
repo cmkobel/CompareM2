@@ -415,7 +415,7 @@ rule report:
     params:
         markdown_template_rmd = "genomes_to_report_v2.Rmd",
         markdown_template_html = "genomes_to_report_v2.html"
-    singularity: "docker://marcmtk/sarscov2_markdown"
+    singularity: "docker://marcmtk/sarscov2_seq_report"
     conda: "conda_envs/r-markdown.yaml"
     shell: """
 
