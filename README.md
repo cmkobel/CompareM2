@@ -42,15 +42,28 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    ```
    
  * Set an alias that makes it easy to run assemblycomparator2 from anywhere in your filesystem
-   ```
-   # For local setups (using Conda for jobs):
-   echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/local/ --use-conda'" >> ~/.bashrc
+ * You have to decide whether you want to use Singularity (recommended if possible) or Conda for package management.
+
    
-   # For HPC's with Slurm (using Singularity for jobs):
+   
+### For HPC's with Slurm using Singularity
+   ```
+   # Main alias for running assemblycomparator2
    echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml --use-singularity'" >> ~/.bashrc
    
    ```
-   Hint: You can interchange `--use-conda` and `--use-singularity` for changing how assemblycomparator2 runs the jobs. Please note that running assemblycomparator2 locally with conda is not fully developed or tested, and has a high probability of failing. If you have access to Singularity, use it.
+   
+   
+### For local setups using Conda
+   ```
+   # Main alias for running assemblycomparator2
+   echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/local/ --use-conda'" >> ~/.bashrc
+   
+   # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
+   echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
+   
+   ```
+   
    
  * assemblycomparator2 supports Kraken2. If you already have a local copy of a kraken database, you can set the `ASSCOM2_KRAKEN_DB` system variable to its path. If you don't have a local copy, assemblycomparator2 comes handy with some scripts for setting up Kraken2 and Mashscreen. There are two scripts for Kraken2; one small "Standard" (8GB) and one huge "PlusPF" (50GB).
    ```
