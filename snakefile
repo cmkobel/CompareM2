@@ -147,11 +147,11 @@ rule copy:
 rule seqlen:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
-    container: "docker://staphb/bioawk"
+    #container: "docker://lbmc/bioawk"
     conda: "conda_envs/bioawk.yaml"
     shell: """
 
-        bioawk -v sam={wildcards.sample} -c fastx '{{ print sam, $name, length($seq) }}' < {input} \
+        awk -v sam={wildcards.sample} -c fastx '{{ print sam, $name, length($seq) }}' < {input} \
         > {output}
 
     """
@@ -311,6 +311,7 @@ rule roary:
 rule assembly_stats:
     input: df["input_file_fasta"].tolist()
     output: "{out_base}/assembly-stats/assembly-stats.tsv"
+    container: "docker://sangerpathogens/assembly-stats"
     conda: "conda_envs/assembly-stats.yaml"
     shell: """
         

@@ -11,4 +11,5 @@ __default__:
     error: "logs/{rule}-%j.err"
     #error: "logs/{rule}.err"
 
-
+kraken2:
+    mem: 65536
