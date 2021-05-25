@@ -24,6 +24,7 @@ editor_options:
 library(tidyverse)
 #library(prettydoc)
 library(DT)
+library(phytools)
 library(ape)
 
 
