@@ -147,11 +147,11 @@ rule copy:
 rule seqlen:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
-    #container: "docker://lbmc/bioawk"
+    container: "docker://cmkobel/bioawk"
     conda: "conda_envs/bioawk.yaml"
     shell: """
 
-        awk -v sam={wildcards.sample} -c fastx '{{ print sam, $name, length($seq) }}' < {input} \
+        bioawk -v sam={wildcards.sample} -c fastx '{{ print sam, $name, length($seq) }}' < {input} \
         > {output}
 
     """
@@ -421,6 +421,10 @@ rule report:
     shell: """
 
         cd {wildcards.out_base}
+
+        ls /home/cmkobel
+        ls /home/cmkobel/assemblycomparator2/scripts/
+        ls $ASSCOM2_BASE/scripts/{params.markdown_template_rmd}
 
         cp $ASSCOM2_BASE/scripts/{params.markdown_template_rmd} .
 
