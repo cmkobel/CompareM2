@@ -426,9 +426,7 @@ rule report:
     conda: "conda_envs/r-markdown.yaml"
     shell: """
 
-
         cd {wildcards.out_base}
-
 
         Rscript -e 'library(rmarkdown); rmarkdown::render("{params.markdown_template_rmd}", "html_document")'
 
