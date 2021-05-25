@@ -17,7 +17,7 @@ editor_options:
   
 ```{r echo=FALSE, message=F, warning=F}
 # This is useful for debugging the markdown script.
-setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")
+#setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")
 
 
 #Dependencies
@@ -478,7 +478,9 @@ try({
             #View
             mutate(sample = fct_reorder(sample, desc(sample))) %>% 
             ggplot(aes(genes, sample, fill = factor(sum))) + geom_tile() +
-            labs(fill = "shared between\nsamples") + 
+            #labs(fill = "shared between\nsamples") + 
+            labs(fill = "samples sharing the gene") + 
+            
             theme_classic() 
     } else {
         paste("Warning: The file", roary_gpa_file, "is not accessible.")

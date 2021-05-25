@@ -420,13 +420,13 @@ rule report:
     conda: "conda_envs/r-markdown.yaml"
     shell: """
 
+
         cd {wildcards.out_base}
 
-        ls /home/cmkobel
-        ls /home/cmkobel/assemblycomparator2/scripts/
-        ls $ASSCOM2_BASE/scripts/{params.markdown_template_rmd}
-
-        cp $ASSCOM2_BASE/scripts/{params.markdown_template_rmd} .
+        
+        #cp "$(echo $ASSCOM2_BASE)/scripts/{params.markdown_template_rmd}" .
+        wget --no-check-certificate https://raw.githubusercontent.com/cmkobel/assemblycomparator2/master/scripts/genomes_to_report_v2.Rmd
+        ls -l
 
         Rscript -e 'library(rmarkdown); rmarkdown::render("{params.markdown_template_rmd}", "html_document")'
 
