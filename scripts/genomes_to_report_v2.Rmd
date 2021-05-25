@@ -22,7 +22,7 @@ editor_options:
 
 #Dependencies
 library(tidyverse)
-library(prettydoc)
+#library(prettydoc)
 library(DT)
 #library(ape) # loads later
 
