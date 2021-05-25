@@ -6,3 +6,4 @@ RUN install2.r prettydoc DT
 RUN cd ~ && pwd && wget --no-check-certificate https://raw.githubusercontent.com/cmkobel/assemblycomparator2/master/scripts/genomes_to_report_v2.Rmd
 
 
+
