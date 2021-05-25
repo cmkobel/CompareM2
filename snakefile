@@ -6,6 +6,7 @@ from os.path import isfile, join
 #import yaml
 import pandas as pd
 import numpy as np
+from shutil import copyfile
 #import time
 #import re
 #from shutil import copyfile
@@ -27,7 +28,7 @@ print()
 
 
 out_base_var = "output_asscom2"
-
+report_template_file_basename = "genomes_to_report_v2.Rmd"
 
 
 #reference = config["reference"]
@@ -74,6 +75,11 @@ print()
 # --- Make sure the log directory exists. ---------------------------
 try:
     os.mkdir("logs") # The log directory is actually not used for local setups
+except:
+    pass
+
+try:
+    os.system(f"cp ${{ASSCOM2_BASE}}/scripts/{report_template_file_basename} {out_base_var}")
 except:
     pass
 
@@ -414,19 +420,15 @@ rule report:
         fasttree = "{out_base}/fasttree/fasttree.newick",
     output: "{out_base}/report.html"
     params:
-        markdown_template_rmd = "genomes_to_report_v2.Rmd",
+        markdown_template_rmd = report_template_file_basename,
         markdown_template_html = "genomes_to_report_v2.html"
-    singularity: "docker://marcmtk/sarscov2_seq_report"
+    container: "docker://cmkobel/assemblycomparator2_report"
     conda: "conda_envs/r-markdown.yaml"
     shell: """
 
 
         cd {wildcards.out_base}
 
-        
-        #cp "$(echo $ASSCOM2_BASE)/scripts/{params.markdown_template_rmd}" .
-        wget --no-check-certificate https://raw.githubusercontent.com/cmkobel/assemblycomparator2/master/scripts/genomes_to_report_v2.Rmd
-        ls -l
 
         Rscript -e 'library(rmarkdown); rmarkdown::render("{params.markdown_template_rmd}", "html_document")'
 
