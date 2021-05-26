@@ -1,5 +1,5 @@
 FROM rocker/tidyverse
-RUN install2.r prettydoc DT ape 
+RUN install2.r prettydoc DT ape phangorn
 
 
 

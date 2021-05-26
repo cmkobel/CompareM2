@@ -26,6 +26,7 @@ library(tidyverse)
 library(DT)
 #library(phytools)
 library(ape)
+library(phangorn)
 
 
 
@@ -520,7 +521,8 @@ try({
     
        tree <- ape::read.tree(fasttree_file)
        
-       tree = phytools::midpoint.root(tree)
+       #tree = phytools::midpoint.root(tree)
+       tree = phangorn::midpoint(tree)
        
        #plot(tree)
        #axis(1)
