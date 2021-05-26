@@ -29,7 +29,7 @@ That is it!
   - [roary](https://sanger-pathogens.github.io/Roary/) (pan and core genome)
   - [snp-dists](https://github.com/tseemann/snp-dists) (core genome pairwise snp-distances)
   - [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of the core genome)
-  - [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement and recognition of plasmids-of-interest)
+  - [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement)
   - **A nice report easy to share with your friends and colleagues**
 
 
@@ -141,13 +141,12 @@ In the future we might add some of the following pieces of software into assembl
 
   - [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) (Identify possible replication origins, and thereby identify chromids)
   - [RFplasmid](https://github.com/aldertzomer/RFPlasmid) (Identify plasmids using the pentamer-random-forest method)
-  - [Kaptive](https://github.com/katholt/Kaptive) (surface polysaccharide loci for Klebsiella and Acinetobacter baumannii)
+  - [Kaptive](https://github.com/katholt/Kaptive) (surface polysaccharide loci for Klebsiella and Acinetobacter baumannii) 
+  - [mash screen](https://mash.readthedocs.io/en/latest/tutorials.html) (recognition of plasmids-of-interest)
+
 
 **Batch basis**
 
-  - [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
-  - GC3-profiling ("fingerprinting" of the distribution of GC-content)
-  - Identification of horizontally transferred genes?
   - [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
   - GC3-profiling ("fingerprinting" of the distribution of GC-content)
   - Identification of horizontally transferred genes?
