@@ -13,8 +13,13 @@ database_title='k2_pluspf_20210127'         # PlusPF        Standard plus protoz
 echo title $database_title
 
 # Where to put the database
+<<<<<<< HEAD
+base_dir=~/databases/kraken2
+base_dir=~/ClinicalMicrobio/faststorage/database/kraken2
+=======
 #base_dir=~/ClinicalMicrobio/faststorage/database/kraken2
 base_dir=~/databases/kraken2
+>>>>>>> 85da2f31bb3bf38fefcea43bf13e0ff7f1846bbe
 echo basedir $base_dir
 
 # The web source to download

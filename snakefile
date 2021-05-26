@@ -6,6 +6,7 @@ from os.path import isfile, join
 #import yaml
 import pandas as pd
 import numpy as np
+from shutil import copyfile
 #import time
 #import re
 #from shutil import copyfile
@@ -27,7 +28,7 @@ print()
 
 
 out_base_var = "output_asscom2"
-
+report_template_file_basename = "genomes_to_report_v2.Rmd"
 
 
 #reference = config["reference"]
@@ -71,9 +72,20 @@ print()
 
 
 
+
 # --- Make sure the log directory exists. ---------------------------
 try:
     os.mkdir("logs") # The log directory is actually not used for local setups
+except:
+    pass
+
+try: 
+    os.mkdir("output_asscom2")
+except:
+    pass
+
+try:
+    os.system(f"cp ${{ASSCOM2_BASE}}/scripts/{report_template_file_basename} {out_base_var}")
 except:
     pass
 
@@ -93,7 +105,8 @@ rule all:
                    "{out_base}/mlst/mlst.tsv", \
                    "{out_base}/mashtree/mashtree.newick", \
                    "{out_base}/fasttree/fasttree.newick", \
-                   "{out_base}/report.html"], \
+                   "{out_base}/report.html", \
+                   "{out_base}/snp-dists/snp-dists.tsv"], \
                   out_base = out_base_var, sample = df["sample"]) # copy
 
 
@@ -147,7 +160,7 @@ rule copy:
 rule seqlen:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
-    container: "docker://staphb/bioawk"
+    container: "docker://cmkobel/bioawk"
     conda: "conda_envs/bioawk.yaml"
     shell: """
 
@@ -307,10 +320,24 @@ rule roary:
     """
 
 
+rule snp_dists:
+    input: "{out_base}/roary/core_gene_alignment.aln"
+    output: "{out_base}/snp-dists/snp-dists.tsv"
+    conda: "conda_envs/snp-dists.yaml"
+    container: "docker://staphb/snp-dists"
+    shell: """
+
+        snp-dists {input} > {output}
+
+    """
+
+
+
 
 rule assembly_stats:
     input: df["input_file_fasta"].tolist()
     output: "{out_base}/assembly-stats/assembly-stats.tsv"
+    container: "docker://sangerpathogens/assembly-stats"
     conda: "conda_envs/assembly-stats.yaml"
     shell: """
         
@@ -411,17 +438,16 @@ rule report:
     input:
         roary = "{out_base}/roary/roary_done.flag",
         fasttree = "{out_base}/fasttree/fasttree.newick",
+        snp_dists = "{out_base}/snp-dists/snp-dists.tsv"
     output: "{out_base}/report.html"
     params:
-        markdown_template_rmd = "genomes_to_report_v2.Rmd",
+        markdown_template_rmd = report_template_file_basename,
         markdown_template_html = "genomes_to_report_v2.html"
-    singularity: "docker://marcmtk/sarscov2_markdown"
+    container: "docker://cmkobel/assemblycomparator2_report"
     conda: "conda_envs/r-markdown.yaml"
     shell: """
 
         cd {wildcards.out_base}
-
-        cp $ASSCOM2_BASE/scripts/{params.markdown_template_rmd} .
 
         Rscript -e 'library(rmarkdown); rmarkdown::render("{params.markdown_template_rmd}", "html_document")'
 

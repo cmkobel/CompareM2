@@ -17,14 +17,16 @@ editor_options:
   
 ```{r echo=FALSE, message=F, warning=F}
 # This is useful for debugging the markdown script.
-setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")
+#setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")
 
 
 #Dependencies
 library(tidyverse)
-library(prettydoc)
+#library(prettydoc)
 library(DT)
-#library(ape) # loads later
+#library(phytools)
+library(ape)
+#library(phangorn)
 
 
 
@@ -232,7 +234,7 @@ try({
                    clade_text = paste0(percent, "% (", clade, ")")) %>% 
                    #clade_text = paste0(clade, " ", match_percent, ")")) %>% 
             
-            filter(rank <= 2) %>% 
+            filter(rank <= 3) %>% 
             pivot_wider(id_cols = sample, names_from = rank_text, values_from = c(percent, clade)) %>% 
             
         
@@ -478,7 +480,9 @@ try({
             #View
             mutate(sample = fct_reorder(sample, desc(sample))) %>% 
             ggplot(aes(genes, sample, fill = factor(sum))) + geom_tile() +
-            labs(fill = "shared between\nsamples") + 
+            #labs(fill = "shared between\nsamples") + 
+            labs(fill = "samples sharing the gene") + 
+            
             theme_classic() 
     } else {
         paste("Warning: The file", roary_gpa_file, "is not accessible.")
@@ -517,7 +521,9 @@ try({
     
        tree <- ape::read.tree(fasttree_file)
        
-       tree = phytools::midpoint.root(tree)
+       #tree = phytools::midpoint.root(tree)
+       #devtools::install_github("igraph/rigraph")
+       tree = phangorn::midpoint(tree)
        
        #plot(tree)
        #axis(1)

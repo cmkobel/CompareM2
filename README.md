@@ -27,6 +27,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    
    # If you are going to use conda, it is a good idea to set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
    echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
+   
    ```
  * Clone the assemblycomparator2 GitHub-repository into that base
    ```
@@ -37,17 +38,32 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    
    # Hint: If you haven't already installed Snakemake and its dependencies, you can do it easily now. (Might take a few minutes):
    cd $ASSCOM2_BASE && conda env create -f environment.yaml 
+   
    ```
    
  * Set an alias that makes it easy to run assemblycomparator2 from anywhere in your filesystem
-   ```
-   # For local setups (using Conda for jobs):
-   echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/local/ --use-conda'" >> ~/.bashrc
+ * You have to decide whether you want to use Singularity (recommended if possible) or Conda for package management.
+
    
-   # For HPC's with Slurm (using Singularity for jobs):
-   echo "alias assemblycomparator2='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml --use-singularity'" >> ~/.bashrc
+   
+### For HPC's with Slurm using Singularity
    ```
-   Hint: You can interchange `--use-conda` and `--use-singularity` for changing how assemblycomparator2 runs the jobs. Please note that running assemblycomparator2 locally with conda is not fully developed or tested, and has a high probability of failing. If you have access to Singularity, use it.
+   # Main alias for running assemblycomparator2
+   echo "alias assemblycomparator2_slurm='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml --use-singularity'" >> ~/.bashrc
+   
+   ```
+   
+   
+### For local setups using Conda
+   ```
+   # Main alias for running assemblycomparator2
+   echo "alias assemblycomparator2_local='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/local/ --use-conda'" >> ~/.bashrc
+   
+   # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
+   echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
+   
+   ```
+   
    
  * assemblycomparator2 supports Kraken2. If you already have a local copy of a kraken database, you can set the `ASSCOM2_KRAKEN_DB` system variable to its path. If you don't have a local copy, assemblycomparator2 comes handy with some scripts for setting up Kraken2 and Mashscreen. There are two scripts for Kraken2; one small "Standard" (8GB) and one huge "PlusPF" (50GB).
    ```
@@ -58,10 +74,12 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    
    # Mashscreen
    $ASSCOM2_BASE/scripts/set_up_mashscreen.sh
+   
    ```
  * When you have completed all installation steps, you should read the settings into global system memory. After this, you are ready to test the installation.
    ```
    source ~/.bashrc
+   
    ```
    
 ### Testing installation
@@ -70,6 +88,7 @@ assemblycomparator2 comes with a handful of E. faecium assemblies (illumina/skes
    ```
    cd ${ASSCOM2_BASE}/tests/E._faecium
    assemblycomparator2
+   
    ```
 
 If you encounter problems testing your installation, please refer to the issues tab of this repository.
@@ -84,6 +103,7 @@ cd $ASSCOM2_BASE && git pull
 
 # You might also want to update snakemake
 conda env update --name assemblycomparator2 --file environment.yaml
+
 ```
 Note: If new databases have been added to kraken or mashscreen, you can rerun the above-mentioned set_up_*.sh-scripts.
 
