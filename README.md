@@ -16,8 +16,6 @@ That is it!
 
 ## What analyses does it do?
 
-As assemblycomparator is currently under development, some analyses are not yet implemented or thoroughly tested.
-
 ### For each assembly
   - [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
   - [prokka](https://github.com/tseemann/prokka) (annotation)
