@@ -16,8 +16,6 @@ That is it!
 
 ## What analyses does it do?
 
-As assemblycomparator is currently under development, some analyses are not yet implemented or thoroughly tested.
-
 ### For each assembly
   - [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
   - [prokka](https://github.com/tseemann/prokka) (annotation)
@@ -29,9 +27,9 @@ As assemblycomparator is currently under development, some analyses are not yet 
 
 ### For each group
   - [roary](https://sanger-pathogens.github.io/Roary/) (pan and core genome)
-  - [snp-dists](https://github.com/tseemann/snp-dists) (core genome snp-distances)
-  - [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
-  - [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement)
+  - [snp-dists](https://github.com/tseemann/snp-dists) (core genome pairwise snp-distances)
+  - [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of the core genome)
+  - [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement and recognition of plasmids-of-interest)
   - **A nice report easy to share with your friends and colleagues**
 
 
