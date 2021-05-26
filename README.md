@@ -126,7 +126,7 @@ As assemblycomparator is currently under development, some analyses are not yet 
   - [x] [roary](https://sanger-pathogens.github.io/Roary/) (pan and core genome)
   - [ ] [GenAPI](https://github.com/MigleSur/GenAPI) (alternative to roary)
   - [x] [snp-dists](https://github.com/tseemann/snp-dists) (core genome snp-distances)
-  - [ ] [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity
+  - [ ] [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity)
   - [x] [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
   - [x] [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement)
 
@@ -137,12 +137,16 @@ As assemblycomparator is currently under development, some analyses are not yet 
 ### Future functionality 
 
 In the future we'll maybe implement the following pieces of software into assemblycomparator2.
-Sample basis
-  - [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) (Identify possible replication origins, and thereby identify chromids)
+
+**Sample basis**
+
+- [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) (Identify possible replication origins, and thereby identify chromids)
   - [RFplasmid](https://github.com/aldertzomer/RFPlasmid) (Identify plasmids using the pentamer-random-forest method)
   - [Kaptive](https://github.com/katholt/Kaptive) (surface polysaccharide loci for Klebsiella and Acinetobacter baumannii)
-Batch basis
-  - [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
+
+**Batch basis**
+
+- [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
   - GC3-profiling ("fingerprinting" of the distribution of GC-content)
   - Identification of horizontally transferred genes?
 
