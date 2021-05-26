@@ -137,7 +137,7 @@ Note: If new databases have been added to kraken or mashscreen, you can rerun th
 
 ## Future functionality 
 
-In the future we'll maybe implement the following pieces of software into assemblycomparator2.
+In the future we might add some of the following pieces of software into assemblycomparator2.
 
 **Sample basis**
 
