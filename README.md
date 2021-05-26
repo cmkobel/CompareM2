@@ -14,6 +14,31 @@ That is it!
 
 
 
+## What analyses does it do?
+
+As assemblycomparator is currently under development, some analyses are not yet implemented or thoroughly tested.
+
+### For each assembly
+  - [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
+  - [prokka](https://github.com/tseemann/prokka) (annotation)
+  - [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
+  - [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
+  - [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)
+  - [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) (generic assembly statistics)
+
+
+### For each group
+  - [roary](https://sanger-pathogens.github.io/Roary/) (pan and core genome)
+  - [snp-dists](https://github.com/tseemann/snp-dists) (core genome snp-distances)
+  - [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
+  - [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement)
+  - **A nice report easy to share with your friends and colleagues**
+
+
+
+
+
+
 ## Installation
 
 Assemblycomparator2 needs Snakemake and the dependencies which can be needed for running on your specific setup. I.e. DRMAA for Slurm-mananged HPC's.
@@ -86,7 +111,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
 
 assemblycomparator2 comes with a handful of E. faecium assemblies (illumina/skesa) which can be used to check that everything works as expected. In order to run this test, simply go into the location of these assemblies, and run the `assemblycomparator2`-command
    ```
-   cd ${ASSCOM2_BASE}/tests/E._faecium
+   cd ${ASSCOM2_BASE}/tests/E._faecium_plasmids
    assemblycomparator2
    
    ```
@@ -109,46 +134,28 @@ Note: If new databases have been added to kraken or mashscreen, you can rerun th
 
 
 
-## What analyses does it do?
 
-As assemblycomparator is currently under development, some analyses are not yet implemented or thoroughly tested.
-
-### For each assembly
-  - [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
-  - [prokka](https://github.com/tseemann/prokka) (annotation)
-  - [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
-  - [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
-  - [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)
-  - [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) (generic assembly statistics)
-
-
-### For each group
-  - [x] [roary](https://sanger-pathogens.github.io/Roary/) (pan and core genome)
-  - [ ] [GenAPI](https://github.com/MigleSur/GenAPI) (alternative to roary)
-  - [x] [snp-dists](https://github.com/tseemann/snp-dists) (core genome snp-distances)
-  - [ ] [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity)
-  - [x] [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of core genome)
-  - [x] [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement)
-
-  - [ ] **A nice report easy to share with your friends and colleagues**
-
-
-
-### Future functionality 
+## Future functionality 
 
 In the future we'll maybe implement the following pieces of software into assemblycomparator2.
 
 **Sample basis**
 
-- [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) (Identify possible replication origins, and thereby identify chromids)
+  - [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) (Identify possible replication origins, and thereby identify chromids)
   - [RFplasmid](https://github.com/aldertzomer/RFPlasmid) (Identify plasmids using the pentamer-random-forest method)
   - [Kaptive](https://github.com/katholt/Kaptive) (surface polysaccharide loci for Klebsiella and Acinetobacter baumannii)
 
 **Batch basis**
 
-- [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
+  - [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
   - GC3-profiling ("fingerprinting" of the distribution of GC-content)
   - Identification of horizontally transferred genes?
+  - [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
+  - GC3-profiling ("fingerprinting" of the distribution of GC-content)
+  - Identification of horizontally transferred genes?
+  - [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity)
+  - [GenAPI](https://github.com/MigleSur/GenAPI) (alternative to roary)
+
 
   
   
