@@ -17,7 +17,7 @@ editor_options:
   
 ```{r echo=FALSE, message=F, warning=F}
 # This is useful for debugging the markdown script.
-#setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")
+setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")
 
 
 #Dependencies
@@ -549,7 +549,7 @@ try({
 *Fig. `r figno()`: Phylogenetic NJ-tree from the concatenated core genome of all samples.*
 
 
-SNP-distances between the core gene alignments. Calculated with [snp-dists](https://github.com/tseemann/snp-dists#snp-dists)
+SNP-distances between the core gene alignment. Calculated with [snp-dists](https://github.com/tseemann/snp-dists#snp-dists).
 
 
 ```{r echo=FALSE, message=F, warning=F, fig.height = 4, fig.width = 6}
@@ -604,6 +604,7 @@ try({
 ```
 
 *Fig. `r figno()`: Pairwise distances between the samples in the core genome.*
+
 
 
 
