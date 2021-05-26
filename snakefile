@@ -105,7 +105,8 @@ rule all:
                    "{out_base}/mlst/mlst.tsv", \
                    "{out_base}/mashtree/mashtree.newick", \
                    "{out_base}/fasttree/fasttree.newick", \
-                   "{out_base}/report.html"], \
+                   "{out_base}/report.html", \
+                   "{out_base}/snp-dists/snp-dists.tsv"], \
                   out_base = out_base_var, sample = df["sample"]) # copy
 
 
@@ -319,6 +320,19 @@ rule roary:
     """
 
 
+rule snp_dists:
+    input: "{out_base}/roary/core_gene_alignment.aln"
+    output: "{out_base}/snp-dists/snp-dists.tsv"
+    conda: "conda_envs/snp-dists.yaml"
+    container: "docker://staphb/snp-dists"
+    shell: """
+
+        snp-dists {input} > {output}
+
+    """
+
+
+
 
 rule assembly_stats:
     input: df["input_file_fasta"].tolist()
@@ -424,6 +438,7 @@ rule report:
     input:
         roary = "{out_base}/roary/roary_done.flag",
         fasttree = "{out_base}/fasttree/fasttree.newick",
+        snp_dists = "{out_base}/snp-dists/snp-dists.tsv"
     output: "{out_base}/report.html"
     params:
         markdown_template_rmd = report_template_file_basename,

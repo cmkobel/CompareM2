@@ -26,7 +26,7 @@ library(tidyverse)
 library(DT)
 #library(phytools)
 library(ape)
-library(phangorn)
+#library(phangorn)
 
 
 
@@ -234,7 +234,7 @@ try({
                    clade_text = paste0(percent, "% (", clade, ")")) %>% 
                    #clade_text = paste0(clade, " ", match_percent, ")")) %>% 
             
-            filter(rank <= 2) %>% 
+            filter(rank <= 3) %>% 
             pivot_wider(id_cols = sample, names_from = rank_text, values_from = c(percent, clade)) %>% 
             
         
@@ -522,6 +522,7 @@ try({
        tree <- ape::read.tree(fasttree_file)
        
        #tree = phytools::midpoint.root(tree)
+       #devtools::install_github("igraph/rigraph")
        tree = phangorn::midpoint(tree)
        
        #plot(tree)
