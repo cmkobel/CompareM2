@@ -102,6 +102,7 @@ rule all:
                    "{out_base}/collected_results/kraken2_reports.tsv", \
                    "{out_base}/roary/summary_statistics.txt", \
                    "{out_base}/abricate/card_detailed.tsv", \
+                   "{out_base}/mashtree/mashtree.newick", \
                    "{out_base}/mlst/mlst.tsv", \
                    "{out_base}/fasttree/fasttree.newick", \
                    "{out_base}/report.html", \
@@ -399,16 +400,16 @@ rule mlst:
 
 
 rule mashtree:
-    #input: expand("{out_base}/samples/{sample}/{sample}.fa", sample = df["sample"], out_base = out_base_var)
     input: df["input_file_fasta"].tolist()
     output: "{out_base}/mashtree/mashtree.newick"
     container: "docker://staphb/mashtree"
+    conda: "conda_envs/mashtree.yaml"
     threads: 4
     shell: """
 
         mashtree --numcpus {threads} {input} > {output}
 
-    """
+    """ 
 
 # TODO:
 #rule mash_screen:
