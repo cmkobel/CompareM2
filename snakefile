@@ -103,7 +103,6 @@ rule all:
                    "{out_base}/roary/summary_statistics.txt", \
                    "{out_base}/abricate/card_detailed.tsv", \
                    "{out_base}/mlst/mlst.tsv", \
-                   "{out_base}/mashtree/mashtree.newick", \
                    "{out_base}/fasttree/fasttree.newick", \
                    "{out_base}/report.html", \
                    "{out_base}/snp-dists/snp-dists.tsv"], \
