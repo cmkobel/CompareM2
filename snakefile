@@ -28,7 +28,9 @@ print()
 
 
 out_base_var = "output_asscom2"
-report_template_file_basename = "genomes_to_report_v2.Rmd"
+report_template_file_basename_source = "genomes_to_report_v2.Rmd"
+report_template_file_basename_destination = ".genomes_to_report_v2.Rmd" # Now, hidden!
+
 
 
 #reference = config["reference"]
@@ -85,7 +87,8 @@ except:
     pass
 
 try:
-    os.system(f"cp ${{ASSCOM2_BASE}}/scripts/{report_template_file_basename} {out_base_var}")
+    os.system(f"cp ${{ASSCOM2_BASE}}/scripts/{report_template_file_basename_source} {out_base_var}/{report_template_file_basename_destination}") # Now, hidden!
+
 except:
     pass
 
@@ -441,8 +444,8 @@ rule report:
         snp_dists = "{out_base}/snp-dists/snp-dists.tsv"
     output: "{out_base}/report.html"
     params:
-        markdown_template_rmd = report_template_file_basename,
-        markdown_template_html = "genomes_to_report_v2.html"
+        markdown_template_rmd = f"{report_template_file_basename_destination}",
+        markdown_template_html = ".genomes_to_report_v2.html"
     container: "docker://cmkobel/assemblycomparator2_report"
     conda: "conda_envs/r-markdown.yaml"
     shell: """

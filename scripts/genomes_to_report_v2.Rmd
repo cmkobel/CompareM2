@@ -17,12 +17,15 @@ editor_options:
   
 ```{r echo=FALSE, message=F, warning=F}
 
+# knitr::opts_knit$set(root.dir = '~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/'}
+
 # This is useful for debugging the markdown script.
 develop = F
 if (develop) {
     # Depends on a local run of the tests/E.faecium_plasmids assemblies.
-    setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
+    setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
 }
+
 
 
 
