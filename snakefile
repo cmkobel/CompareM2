@@ -24,7 +24,7 @@ print("                      A.K.A. assemblycomparator2                     ")
 print()
 
 
-
+print(f"roary_blastp_identity: {config['roary_blastp_identity']} (default 95)")
 
 
 out_base_var = "output_asscom2"
@@ -32,6 +32,7 @@ report_template_file_basename = "genomes_to_report_v2.Rmd"
 
 
 #reference = config["reference"]
+
 
 
 # --- Read in relevant files in the current working directory ----------------
