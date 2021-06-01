@@ -462,7 +462,7 @@ try({
                      (metadata_df$sample %>% length) *0.4)
     
     knitr::opts_chunk$set(fig.height = fig_height,
-                          fig.width = 8)
+                          fig.width = 9)
 })
 ```
 
@@ -487,7 +487,7 @@ try({
             mutate(sample = fct_reorder(sample, desc(sample))) %>% 
             ggplot(aes(genes, sample, fill = factor(sum))) + geom_tile() +
             #labs(fill = "shared between\nsamples") + 
-            labs(fill = "samples sharing the gene") + 
+            labs(fill = "number of\nsamples") + 
             
             theme_classic() 
     } else {
@@ -552,8 +552,64 @@ try({
 ```
 
 
-
 *Fig. `r figno()`: Phylogenetic NJ-tree from the concatenated core genome of all samples.*
+
+
+SNP-distances between the core gene alignment. Calculated with [snp-dists](https://github.com/tseemann/snp-dists#snp-dists).
+
+
+```{r echo=FALSE, message=F, warning=F, fig.height = 4, fig.width = 6}
+try({
+    snp_dists_file = "snp-dists/snp-dists.tsv"
+    if (file.exists(snp_dists_file)) {
+        
+        snp_dists_df =read_tsv(snp_dists_file)
+        names(snp_dists_df)[1] = "sample"
+        snp_dists_df %>% 
+            arrange(sample) %>% 
+            datatable()
+        
+
+            
+    } else {
+        paste("Warning: The file", snp_dists_file, "is not accessible.")
+    }
+
+})
+
+```
+*Table `r tableno()`: Pairwise distances between the samples in the core genome.*
+
+
+
+```{r echo=FALSE, message=F, warning=F, fig.height = 3, fig.width = 9}
+try({
+    snp_dists_file = "snp-dists/snp-dists.tsv"
+    if (file.exists(snp_dists_file)) {
+
+        
+        mat = snp_dists_df %>% column_to_rownames(var = "sample")
+        mat[lower.tri(mat, diag = T)] = NA
+        mat %>% rownames_to_column("sample") %>% 
+            as.tibble() %>% 
+            pivot_longer(-sample) %>%
+            ggplot(aes(value)) +
+            geom_histogram() +
+            theme_bw()
+            
+    
+        
+        
+            
+    } else {
+        paste("Warning: The file", snp_dists_file, "is not accessible.")
+    }
+
+})
+
+```
+
+*Fig. `r figno()`: Pairwise distances between the samples in the core genome.*
 
 
 
@@ -563,4 +619,4 @@ try({
 
 ------
 
-The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and this report is developed by Oliver Hansen & Carl M. Kobel
+The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by Oliver Hansen & Carl M. Kobel
