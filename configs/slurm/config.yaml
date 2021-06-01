@@ -32,3 +32,4 @@ jobname: "{name}.{jobid}.snakejob.sh"
 #use-singularity: true
 # [--conda-prefix DIR] 
 
+latency-wait: 60

@@ -16,8 +16,14 @@ editor_options:
   
   
 ```{r echo=FALSE, message=F, warning=F}
+
 # This is useful for debugging the markdown script.
-#setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")
+develop = F
+if (develop) {
+    # Depends on a local run of the tests/E.faecium_plasmids assemblies.
+    setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
+}
+
 
 
 #Dependencies
@@ -500,7 +506,7 @@ try({
 
 ## Core genome phylogeny
 
-The core genome phylogeny is provided with [FastTree](http://www.microbesonline.org/fasttree/) with the generalized time-reversible (GTR) model of nucleotide evolution. The plotted tree is midpoint rooted.
+The core genome phylogeny is provided with [FastTree](http://www.microbesonline.org/fasttree/) with the generalized time-reversible (GTR) model of nucleotide evolution. The plotted tree is not rooted.
 
 
 ```{r echo=FALSE, message=F, warning=F}
@@ -523,7 +529,7 @@ try({
        
        #tree = phytools::midpoint.root(tree)
        #devtools::install_github("igraph/rigraph")
-       tree = phangorn::midpoint(tree)
+       #tree = phangorn::midpoint(tree)
        
        #plot(tree)
        #axis(1)
@@ -548,6 +554,9 @@ try({
 
 
 *Fig. `r figno()`: Phylogenetic NJ-tree from the concatenated core genome of all samples.*
+
+
+
 
 
 
