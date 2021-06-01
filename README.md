@@ -72,7 +72,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
 ### For HPC's with Slurm using Singularity
    ```
    # Main alias for running assemblycomparator2
-   echo "alias assemblycomparator2_slurm='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml --use-singularity'" >> ~/.bashrc
+   echo "alias assemblycomparator2_slurm='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml --use-singularity  --singularity-prefix ${ASSCOM2_BASE}/singularity_images'" >> ~/.bashrc
    
    ```
    
