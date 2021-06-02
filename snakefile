@@ -391,7 +391,7 @@ if config["mlst_scheme"] == "automatic":
     mlst_scheme_interpreted = ""
 else:
     mlst_scheme_interpreted = f"--scheme {config['mlst_scheme']}"
-print(f"Info: The mlst_scheme is set to <{mlst_scheme_interpreted}>")
+#print(f"Info: The mlst_scheme is set to <{mlst_scheme_interpreted}>") # Debug message.
 
 rule mlst:
     input: df["input_file_fasta"].tolist()
