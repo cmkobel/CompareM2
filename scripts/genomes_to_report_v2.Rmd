@@ -1,6 +1,5 @@
 ---
 title: "Assemblycomparator2 Report"
-#subtitle: "`r head(tail(unlist(strsplit(getwd(), "/")) ,2) ,1)`" # use the title variable from the pipeline instead somehow
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -17,14 +16,12 @@ editor_options:
   
 ```{r echo=FALSE, message=F, warning=F}
 
-# knitr::opts_knit$set(root.dir = '~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/'}
+
 
 # This is useful for debugging the markdown script.
-develop = F
-if (develop) {
-    # Depends on a local run of the tests/E.faecium_plasmids assemblies.
-    setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
-}
+# Depends on a local run of the tests/E.faecium_plasmids assemblies.
+# setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
+
 
 
 
@@ -117,20 +114,31 @@ tryCatch({
 Lengths of contigs:
 
 ```{r echo=FALSE, message=F, warning=F}
+# try({
+#     # This chunk is needed for setting the size of the contig lengths plot
+#     
+#     sequence_lengths_file = "collected_results/sequence_lengths.tsv"
+#     if (file.exists(sequence_lengths_file)) {
+#         sequence_lengths_df = read_tsv(sequence_lengths_file)
+#     
+#         
+#         fig_height = max(2.28,
+#                          (sequence_lengths_df$sample %>% unique %>%  length) *0.12)
+#         
+#         knitr::opts_chunk$set(fig.height = fig_height,
+#                               fig.width = 10)
+#     }
+# })
+
+
+
 try({
-    # This chunk is needed for setting the size of the contig lengths plot
+    # This chunk is needed for setting the size of sequence length comparison plot
+    fig_height = max(1.6,
+                     (metadata_df$sample %>% length) *0.4)
     
-    sequence_lengths_file = "collected_results/sequence_lengths.tsv"
-    if (file.exists(sequence_lengths_file)) {
-        sequence_lengths_df = read_tsv(sequence_lengths_file)
-    
-        
-        fig_height = max(2.28,
-                         (sequence_lengths_df$sample %>% length) *0.12)
-        
-        knitr::opts_chunk$set(fig.height = fig_height,
-                              fig.width = 10)
-    }
+    knitr::opts_chunk$set(fig.height = fig_height,
+                          fig.width = 9)
 })
 ```
 
@@ -151,27 +159,32 @@ try({
     
             
             #mutate(sample = fct_reorder(sample, desc(sample))) %>% 
-            mutate(sample = fct_reorder(sample, desc(sample))) %>% 
+            #mutate(sample = fct_reorder(sample, desc(sample))) %>% 
             
             
             
         
-            
-            ggplot(aes(x=length, y=sample, fill=factor(col))) + 
-            
-            geom_bar(position = position_dodge2(width = 0.9, preserve = "single", reverse = T),
-                     #position = "dodge2",
-                     stat="identity") +
-            
-            
-            
-            #scale_x_log10() +
-            
+            # Gammel figur
+            # ggplot(aes(x=length, y=sample, fill=factor(col))) + 
+            # geom_bar(position = position_dodge2(width = 0.9, preserve = "single", reverse = T),
+            #          #position = "dodge2",
+            #          stat="identity") +
+            # theme_classic() +
+            # theme(legend.position = "none") +
+            # theme(panel.grid.major.x = element_line(colour = "grey92")) 
+    
+            #View
+            #ungroup() %>% 
+            #mutate(col = fct_reorder(col, desc(col))) %>% 
+
+        
+            ggplot(aes(length, reorder(sample, desc(sample)), fill=reorder(col, desc(col)))) + 
+            geom_bar(stat = "identity") + 
             theme_classic() +
-            
-            
             theme(legend.position = "none") +
-            theme(panel.grid.major.x = element_line(colour = "grey92")) 
+            theme(panel.grid.major.x = element_line(colour = "grey92")) + 
+            labs(y = "sample")
+
             
         
                 
