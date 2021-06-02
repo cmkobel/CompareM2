@@ -136,6 +136,7 @@ try({
     # This chunk is needed for setting the size of sequence length comparison plot
     
     sequence_lengths_file = "collected_results/sequence_lengths.tsv"
+    #sequence_lengths_file = "~/GenomeDK/ClinicalMicrobio/faststorage/10carl/flye/comparisons/pre1/output_asscom2/collected_results/sequence_lengths.tsv"
     
         sequence_lengths_df = read_tsv(sequence_lengths_file)
     
@@ -185,7 +186,7 @@ try({
 
         
             ggplot(aes(length, reorder(sample, desc(sample)), fill=reorder(col, desc(col)))) + 
-            geom_bar(stat = "identity") + 
+            geom_bar(stat = "identity", color = "grey50") + 
             theme_classic() +
             theme(legend.position = "none") +
             theme(panel.grid.major.x = element_line(colour = "grey92")) + 
