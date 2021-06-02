@@ -1,6 +1,6 @@
 ---
 title: "Assemblycomparator2 Report"
-date: "`r Sys.Date()`"
+date: "`r Sys.time()`"
 output:
   html_document:
     toc: true
@@ -301,7 +301,7 @@ The mlst software incorporates components of the [PubMLST](https://pubmlst.org/)
 
 **How to customize the mlst-analysis**
 
-Mlst automatically detects the best scheme for typing. If you don't agree with the automatic detection, you can enforce a scheme by running assemblycomparator2 with `--config mlst_scheme=hpylori`. Replace *hpylori* with the mlst scheme you wish to use. You can find a full list of schemes in the mlst [documentation](https://github.com/tseemann/mlst#available-schemes).
+Mlst automatically detects the best scheme for typing. If you don't agree with the automatic detection, you can enforce a scheme by running assemblycomparator2 with `--config mlst_scheme=hpylori`. Replace *hpylori* with the mlst scheme you wish to use. You can find a full list of available schemes in the output directory in "mlst/mlst_schemes.txt".
 
 ```{r echo=FALSE, message=F, warning=F}
 try({

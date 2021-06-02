@@ -23,7 +23,7 @@ print("        ╚═╝  ╚═╝╚══════╝╚══════
 print("                      A.K.A. assemblycomparator2                     ")
 print()
 print(f"roary_blastp_identity: {config['roary_blastp_identity']} (default 95)")
-print(f"mlst_scheme: {config['mlst_scheme']} (default automatic)")
+print(f"mlst_scheme: {config['mlst_scheme']} (default '')")
 print()
 
 
@@ -390,16 +390,16 @@ rule abricate:
 
 rule mlst:
     input: df["input_file_fasta"].tolist()
-    output: "{out_base}/mlst/mlst.tsv"
+    output: 
+        table = "{out_base}/mlst/mlst.tsv",
+        list_ = "{out_base}/mlst/mlst_schemes.txt" 
     container: "docker://staphb/mlst"
     conda: "conda_envs/mlst.yaml"
     shell: """
 
-        mlst {input} > {output}
+        mlst {input} > {output.table}
 
-        mlst --help
-
-        mlst --list
+        mlst --list > {output.list_}
 
 
 
