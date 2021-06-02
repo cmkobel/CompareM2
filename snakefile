@@ -22,9 +22,8 @@ print("        ██║  ██║███████║███████
 print("        ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝ ")
 print("                      A.K.A. assemblycomparator2                     ")
 print()
-
-
-
+print(f"roary_blastp_identity: {config['roary_blastp_identity']} (default 95)")
+print()
 
 
 out_base_var = "output_asscom2"
@@ -34,6 +33,7 @@ report_template_file_basename = "genomes_to_report_v2.Rmd"
 
 
 #reference = config["reference"]
+
 
 
 # --- Read in relevant files in the current working directory ----------------
@@ -302,12 +302,11 @@ rule collect_prokka:
 
 
 # --- Targets for the complete set below: ---------------------------
-
 rule roary:
     input: expand("{out_base}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], out_base = out_base_var)
     output: ["{out_base}/roary/summary_statistics.txt", "{out_base}/roary/core_gene_alignment.aln", "{out_base}/roary/gene_presence_absence.csv", "{out_base}/roary/roary_done.flag"]
     params:
-        blastp_identity = 95, # For clustering genes
+        blastp_identity = int(config['roary_blastp_identity']), # = 95 # For clustering genes
         core_perc = 99  # Definition of the core genome
     #conda: "envs/roary.yml"
     threads: 4

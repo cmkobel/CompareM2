@@ -72,7 +72,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
 ### For HPC's with Slurm using Singularity
    ```
    # Main alias for running assemblycomparator2
-   echo "alias assemblycomparator2_slurm='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml --use-singularity  --singularity-prefix ${ASSCOM2_BASE}/singularity_images'" >> ~/.bashrc
+   echo "alias assemblycomparator2_slurm='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml --use-singularity  --singularity-prefix ${ASSCOM2_BASE}/singularity_images --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
    
    ```
    
@@ -80,7 +80,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
 ### For local setups using Conda
    ```
    # Main alias for running assemblycomparator2
-   echo "alias assemblycomparator2_local='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/local/ --use-conda'" >> ~/.bashrc
+   echo "alias assemblycomparator2_local='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/local/ --use-conda --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
    
    # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
    echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
