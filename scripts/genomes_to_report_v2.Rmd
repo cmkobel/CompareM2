@@ -134,11 +134,17 @@ Lengths of contigs:
 
 try({
     # This chunk is needed for setting the size of sequence length comparison plot
-    fig_height = max(1.6,
-                     (metadata_df$sample %>% length) *0.4)
     
-    knitr::opts_chunk$set(fig.height = fig_height,
-                          fig.width = 9)
+    sequence_lengths_file = "collected_results/sequence_lengths.tsv"
+    
+        sequence_lengths_df = read_tsv(sequence_lengths_file)
+    
+        fig_height = max(1.6,
+                         (metadata_df$sample %>% length) *0.4)
+        
+        knitr::opts_chunk$set(fig.height = fig_height,
+                              fig.width = 9)
+
 })
 ```
 
@@ -183,7 +189,8 @@ try({
             theme_classic() +
             theme(legend.position = "none") +
             theme(panel.grid.major.x = element_line(colour = "grey92")) + 
-            labs(y = "sample")
+            labs(y = "sample") + 
+            scale_fill_brewer(palette = "Dark2")
 
             
         
@@ -195,14 +202,16 @@ try({
     }
 })
 ```
-*Fig. `r figno()`: Lengths of contigs (fasta records) for each sample. The colors have no intrinsic meaning.*
+
+*Fig. `r figno()`: Lengths of contigs (fasta records) for each sample. The colors have no intrinsic meaning, other than highlighting the decreasing size of contigs/records in assemblies.*
 
 
 
 ## Genome annotation
 
-Computed using the Prokka genome annotator.
-These overall statistics are extracted from the run log.
+Computed using the [Prokka](https://github.com/tseemann/prokka) genome annotator:
+*Whole genome annotation is the process of identifying features of interest in a set of genomic DNA sequences, and labelling them with useful information. Prokka is a software tool to annotate bacterial, archaeal and viral genomes quickly and produce standards-compliant output files.*
+
 
 ```{r echo=FALSE, message=F, warning=F}
 
@@ -571,7 +580,7 @@ try({
 *Fig. `r figno()`: Phylogenetic NJ-tree from the concatenated core genome of all samples.*
 
 
-SNP-distances between the core gene alignment. Calculated with [snp-dists](https://github.com/tseemann/snp-dists#snp-dists).
+SNP-distances between the core gene alignment. Calculated with [snp-dists](https://github.com/tseemann/snp-dists#snp-dists). The shown table is symmetrical around the diagonal.
 
 
 ```{r echo=FALSE, message=F, warning=F, fig.height = 4, fig.width = 6}
@@ -632,7 +641,63 @@ try({
 
 
 
+----
+
+
+## Mashtree phylogeny
+
+Mashtree is developed by Lee S. Katz and extends the minhash distance technique. If the core genome of the samples is small, absent, or otherwise not representative of the collection of assemblies you wish to compare, mashtree might be informative on the overall taxonomic clusters. Please be aware that the tree is not rooted.
+
+
+```{r echo=FALSE, message=F, warning=F}
+# This chunk is needed for setting the size of the mashtree plot
+try({
+    fig_height = max(4,
+                     (metadata_df$sample %>% length) * 0.6)
+    
+    knitr::opts_chunk$set(fig.height = fig_height,
+                          fig.width = 10)
+})
+```
+
+```{r echo=FALSE, message=F, warning=F}
+try({
+    mashtree_file = "mashtree/mashtree.newick"
+    if (file.exists(mashtree_file)) {
+    
+       tree <- ape::read.tree(mashtree_file)
+       
+       #tree = phytools::midpoint.root(tree)
+       #devtools::install_github("igraph/rigraph")
+       #tree = phangorn::midpoint(tree)
+       
+       #plot(tree)
+       #axis(1)
+       
+       #tree$tip.label = paste0(" ", tree$tip.label)
+       #phytools::plotTree(tree, align.tip.label = T, lwd = 1, mar = c(0,0,0,0))
+       #axis(1)
+    
+       tree$tip.label = paste0(" ", tree$tip.label)
+       ape::plot.phylo(tree, align.tip.label = T)
+       axis(1)
+           
+            
+    } else {
+        paste("Warning: The file", mashtree_file, "is not accessible.")
+    }
+
+})
+
+```
+
+
+*Fig. `r figno()`: Approximation of a phylogenetic tree calculated with mashtree.*
+
+
+
+
 
 ------
 
-The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by Oliver Hansen & Carl M. Kobel
+The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel)
