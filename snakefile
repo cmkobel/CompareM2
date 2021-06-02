@@ -28,8 +28,8 @@ print()
 
 
 out_base_var = "output_asscom2"
-report_template_file_basename_source = "genomes_to_report_v2.Rmd"
-report_template_file_basename_destination = ".genomes_to_report_v2.Rmd" # Now, hidden!
+report_template_file_basename = "genomes_to_report_v2.Rmd"
+#report_template_file_basename_destination = ".genomes_to_report_v2.Rmd" # Now, hidden!
 
 
 
@@ -62,6 +62,12 @@ df['input_file_fasta'] = out_base_var + "/samples/" + df['sample'] + "/" + df['s
 
 df = df[df['extension'].isin(extension_whitelist)] # Remove files with unsupported formats.
 
+# Check that the directory is not empty, again.
+if df.shape[0] == 0:
+    print("Error: No fasta files in the current directory. Quitting ...(2)")
+    raise Exception("Zero files.")
+
+
 #df_mini = df_mini.apply(np.vectorize(lambda x: str(x).strip().replace(" ", ""))) # strip whitespace and replace spaces with underscores.
 
   
@@ -87,7 +93,8 @@ except:
     pass
 
 try:
-    os.system(f"cp ${{ASSCOM2_BASE}}/scripts/{report_template_file_basename_source} {out_base_var}/{report_template_file_basename_destination}") # Now, hidden!
+    #os.system(f"cp ${{ASSCOM2_BASE}}/scripts/{report_template_file_basename} {out_base_var}") # Now, hidden!
+    pass
 
 except:
     pass
@@ -121,6 +128,9 @@ rule metadata:
     output: "{out_base}/metadata.tsv"
     run: 
         df.to_csv(str(output), index_label = "index", sep = "\t")
+        os.system(f"cp ${{ASSCOM2_BASE}}/scripts/{report_template_file_basename} {out_base_var}")
+
+
 
 
 
@@ -439,13 +449,13 @@ rule fasttree:
 
 rule report:
     input:
-        roary = "{out_base}/roary/roary_done.flag",
-        fasttree = "{out_base}/fasttree/fasttree.newick",
+        roary = "{out_base}/roary/roary_done.flag", # fasttree depends on roary, so the roary dependency is not necessary.
+        fasttree = "{out_base}/fasttree/fasttree.newick", 
         snp_dists = "{out_base}/snp-dists/snp-dists.tsv"
     output: "{out_base}/report.html"
     params:
-        markdown_template_rmd = f"{report_template_file_basename_destination}",
-        markdown_template_html = ".genomes_to_report_v2.html"
+        markdown_template_rmd = f"{report_template_file_basename}",
+        markdown_template_html = "genomes_to_report_v2.html"
     container: "docker://cmkobel/assemblycomparator2_report"
     conda: "conda_envs/r-markdown.yaml"
     shell: """

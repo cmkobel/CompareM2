@@ -3,6 +3,8 @@
 conda_base/
 .snakemake
 output_asscom2/
+._*
+singularity_images
 
 
 # Byte-compiled / optimized / DLL files
