@@ -23,6 +23,7 @@ print("        ╚═╝  ╚═╝╚══════╝╚══════
 print("                      A.K.A. assemblycomparator2                     ")
 print()
 print(f"roary_blastp_identity: {config['roary_blastp_identity']} (default 95)")
+print(f"mlst_scheme: {config['mlst_scheme']} (default automatic)")
 print()
 
 
@@ -395,6 +396,12 @@ rule mlst:
     shell: """
 
         mlst {input} > {output}
+
+        mlst --help
+
+        mlst --list
+
+
 
     """
 
