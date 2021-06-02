@@ -23,7 +23,7 @@ print("        ╚═╝  ╚═╝╚══════╝╚══════
 print("                      A.K.A. assemblycomparator2                     ")
 print()
 print(f"roary_blastp_identity: {config['roary_blastp_identity']} (default 95)")
-print(f"mlst_scheme: {config['mlst_scheme']} (default '')")
+print(f"mlst_scheme: {config['mlst_scheme']} (default automatic)")
 print()
 
 
@@ -382,24 +382,30 @@ rule abricate:
         abricate --summary {output.vfdb_detailed} > {output.vfdb_sum}
 
 
-        
-
-
     """
 
 
+
+# Parse the mlst scheme for bash
+if config["mlst_scheme"] == "automatic":
+    mlst_scheme_interpreted = ""
+else:
+    mlst_scheme_interpreted = f"--scheme {config['mlst_scheme']}"
+print(f"Info: The mlst_scheme is set to <{mlst_scheme_interpreted}>")
+
 rule mlst:
     input: df["input_file_fasta"].tolist()
-    output: 
-        table = "{out_base}/mlst/mlst.tsv",
-        list_ = "{out_base}/mlst/mlst_schemes.txt" 
+    output: "{out_base}/mlst/mlst.tsv",
+    params:
+        mlst_scheme_interpreted = mlst_scheme_interpreted,
+        list_ = "{out_base}/mlst/mlst_schemes.txt"
     container: "docker://staphb/mlst"
     conda: "conda_envs/mlst.yaml"
     shell: """
 
-        mlst {input} > {output.table}
+        mlst {params.mlst_scheme_interpreted} {input} > {output}
 
-        mlst --list > {output.list_}
+        mlst --list > {params.list_}
 
 
 
