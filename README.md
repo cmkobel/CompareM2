@@ -47,7 +47,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    
    # And save it into your .bashrc
    echo "export ASSCOM2_BASE=$ASSCOM2_BASE" >> ~/.bashrc 
-   
+    
    ```
  * Clone the assemblycomparator2 GitHub-repository into that base
    ```
