@@ -48,9 +48,6 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    # And save it into your .bashrc
    echo "export ASSCOM2_BASE=$ASSCOM2_BASE" >> ~/.bashrc 
    
-   # If you are going to use conda, it is a good idea to set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
-   echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
-   
    ```
  * Clone the assemblycomparator2 GitHub-repository into that base
    ```
