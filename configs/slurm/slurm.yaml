@@ -13,3 +13,7 @@ __default__:
 
 kraken2:
     mem: 65536
+
+
+roary:
+    mem: 32768

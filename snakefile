@@ -12,7 +12,7 @@ from shutil import copyfile
 #from shutil import copyfile
 #import re
 
-
+print("/*")
 print()
 print("         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗  ")
 print("        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗ ")
@@ -299,7 +299,7 @@ rule roary:
         blastp_identity = int(config['roary_blastp_identity']), # = 95 # For clustering genes
         core_perc = 99  # Definition of the core genome
     #conda: "envs/roary.yml"
-    threads: 4
+    threads: 16
     container: "docker://sangerpathogens/roary"
     conda: "conda_envs/roary.yaml"
     shell: """
@@ -479,7 +479,7 @@ rule report:
         
     """
 
-
+print("*/")
 
 
 
