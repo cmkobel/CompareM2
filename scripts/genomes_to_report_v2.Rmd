@@ -200,7 +200,7 @@ try({
 })
 ```
 
-*Fig. `r figno()`: Lengths of fasta records for each sample. The colors have no intrinsic meaning, other than highlighting the varying sizes of records in each assembly.*
+*Fig. `r figno()`: Lengths of fasta records for each sample. The colors have no intrinsic meaning, other than highlighting the varying sizes and number of records in each assembly.*
 
 
 
