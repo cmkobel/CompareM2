@@ -30,7 +30,7 @@ That is it!
   - [snp-dists](https://github.com/tseemann/snp-dists) (core genome pairwise snp-distances)
   - [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of the core genome)
   - [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement)
-  - **A nice report easy to share with your friends and colleagues**
+  - **A nice report easy to share with your friends and colleagues ([demo](https://github.com/cmkobel/assemblycomparator2/raw/master/tests/E._faecium/output_asscom2/report.html.zip))**
 
 
 
@@ -47,10 +47,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    
    # And save it into your .bashrc
    echo "export ASSCOM2_BASE=$ASSCOM2_BASE" >> ~/.bashrc 
-   
-   # If you are going to use conda, it is a good idea to set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
-   echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
-   
+    
    ```
  * Clone the assemblycomparator2 GitHub-repository into that base
    ```
@@ -61,7 +58,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    
    # Hint: If you haven't already installed Snakemake and its dependencies, you can do it easily now. (Might take a few minutes):
    cd $ASSCOM2_BASE && conda env create -f environment.yaml 
-   
+    
    ```
    
  * Set an alias that makes it easy to run assemblycomparator2 from anywhere in your filesystem
@@ -73,7 +70,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    ```
    # Main alias for running assemblycomparator2
    echo "alias assemblycomparator2_slurm='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml --use-singularity  --singularity-prefix ${ASSCOM2_BASE}/singularity_images --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
-   
+    
    ```
    
    
@@ -84,7 +81,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    
    # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
    echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
-   
+    
    ```
    
    
@@ -97,12 +94,12 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    
    # Mashscreen
    $ASSCOM2_BASE/scripts/set_up_mashscreen.sh
-   
+    
    ```
  * When you have completed all installation steps, you should read the settings into global system memory. After this, you are ready to test the installation.
    ```
    source ~/.bashrc
-   
+    
    ```
    
 ### Testing installation
@@ -111,7 +108,7 @@ assemblycomparator2 comes with a handful of E. faecium assemblies (illumina/skes
    ```
    cd ${ASSCOM2_BASE}/tests/E._faecium_plasmids
    assemblycomparator2
-   
+    
    ```
 
 If you encounter problems testing your installation, please refer to the issues tab of this repository.
@@ -126,7 +123,7 @@ cd $ASSCOM2_BASE && git pull
 
 # You might also want to update snakemake
 conda env update --name assemblycomparator2 --file environment.yaml
-
+ 
 ```
 Note: If new databases have been added to kraken or mashscreen, you can rerun the above-mentioned set_up_*.sh-scripts.
 

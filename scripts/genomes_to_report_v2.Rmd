@@ -84,9 +84,11 @@ if (file.exists(metadata_file)) {
 
 ```
 
-## Assembly statistics
 
-Assembly statistics is provided by [assembly-stats](https://github.com/sanger-pathogens/assembly-stats#assembly-stats).
+*Table `r tableno()`: Overview of the samples analysed in this run.*
+
+
+## Assembly statistics
 
 ```{r echo=FALSE, message=F, warning=F}
 
@@ -110,8 +112,9 @@ tryCatch({
 
 ```
 
+*Table `r tableno()`: Assembly statistics is provided by [assembly-stats](https://github.com/sanger-pathogens/assembly-stats#assembly-stats). N50 indicates the length of the shortest contig that covers half of the genome.*
 
-Lengths of contigs:
+#### Lengths of contigs:
 
 ```{r echo=FALSE, message=F, warning=F}
 # try({
@@ -204,14 +207,12 @@ try({
 })
 ```
 
-*Fig. `r figno()`: Lengths of contigs (fasta records) for each sample. The colors - only available when there is a maximum of ten contigs per sample - have no intrinsic meaning, other than highlighting the decreasing size of contigs/records in assemblies.*
+*Fig. `r figno()`: Lengths of contigs (fasta records) for each sample. The colors - only available when there is a maximum of ten contigs per sample - have no intrinsic meaning, other than highlighting the decreasing size of contigs/records in each assembly.*
 
 
 
 ## Genome annotation
 
-Computed using the [Prokka](https://github.com/tseemann/prokka) genome annotator:
-*Whole genome annotation is the process of identifying features of interest in a set of genomic DNA sequences, and labelling them with useful information. Prokka is a software tool to annotate bacterial, archaeal and viral genomes quickly and produce standards-compliant output files.*
 
 
 ```{r echo=FALSE, message=F, warning=F}
@@ -238,10 +239,10 @@ try({
 })
 ```
 
+
+*Table `r tableno()`: Overview of the number of different gene types called by Prokka. Computed using the [Prokka](https://github.com/tseemann/prokka) genome annotator.*
+
 ## Species
-
-Species identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2).
-
 
 
 ```{r echo=FALSE, message=F, warning=F}
@@ -288,6 +289,9 @@ try({
 })
 ```
 
+
+*Table `r tableno()`: Listing of the 3 highest species hits for each sample. Species identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2). The percentages indicate the proportion of contigs mapping to the given taxonomic level.*
+
 `r if (file.exists(kraken2_file)) {paste("Using the", Sys.getenv("ASSCOM2_KRAKEN2_DB"), "database")}`.
 
 
@@ -296,8 +300,6 @@ try({
 
 ## MLST
 
-Multi locus sequence typing provided by [mlst](https://github.com/tseemann/mlst#mlst).
-The mlst software incorporates components of the [PubMLST](https://pubmlst.org/) database.
 
 #### How to customize the mlst-analysis
 
@@ -348,11 +350,12 @@ try({
 ```
 
 
+*Table `r tableno()`: Table of MLST results. Multi locus sequence typing provided by [mlst](https://github.com/tseemann/mlst#mlst). The mlst software incorporates components of the [PubMLST](https://pubmlst.org/) database.*
 
 ## Resistance
 
 ### NCBI Resistance
-Resistance genes provided by [NCBI AMRFinder](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6811410/) via [Abricate](https://github.com/tseemann/abricate#abricate).
+
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
@@ -375,9 +378,11 @@ try({
 })
 ```
 
+
+*Table `r tableno()`: Table of NCBI Resistance gene calls. Resistance genes provided by [NCBI AMRFinder](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6811410/) via [Abricate](https://github.com/tseemann/abricate#abricate).*
+
 ### Card Resistance genes
 
-Resistance genes provided by The Comprehensive Antibiotic Resistance Database ([Card](https://card.mcmaster.ca/)) via abricate.
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
@@ -400,11 +405,10 @@ try({
 })
 ```
 
------- 
+*Table `r tableno()`: Table of Card Resistance gene calls. Resistance genes provided by The Comprehensive Antibiotic Resistance Database ([Card](https://card.mcmaster.ca/)) via abricate.*
 
 ### Plasmidfinder calls
 
-Plasmid calls provided by [PlasmidFinder](https://cge.cbs.dtu.dk/services/PlasmidFinder/) via abricate.
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
@@ -427,13 +431,13 @@ try({
     
 })
 ```
-------
+
+*Table `r tableno()`: Table of PlasmidFinder plasmid calls. Note that plasmidfinder uses short substrings for recognizing the plasmids, and not necessarily longer sequences i.e. complete plasmid sequences. Plasmid calls provided by [PlasmidFinder](https://cge.cbs.dtu.dk/services/PlasmidFinder/) via abricate.*
+
 
 
 ### VFDB calls
 
-Virulence factor calls provided by The virulence factor database ([VFDB](http://www.mgc.ac.cn/VFs/main.htm)) via abricate.
-"An integrated and comprehensive online resource for curating information about virulence factors of bacterial pathogens."
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
@@ -456,11 +460,11 @@ try({
 })
 ```
 
-------
+*Table `r tableno()`: Table of VFDB virulence factor calls. Virulence factor calls provided by The virulence factor database ([VFDB](http://www.mgc.ac.cn/VFs/main.htm)) via abricate: An integrated and comprehensive online resource for curating information about virulence factors of bacterial pathogens.*
 
 ## Pan and Core genome
 
-[Roary](https://sanger-pathogens.github.io/Roary/) the pan genome pipeline computes the number of orthologous genes in a number of core/pan partitions.
+[Roary](https://sanger-pathogens.github.io/Roary/) the pan genome pipeline computes the number of orthologous genes in a number of core/pan spectrum partitions.
 
 The core genome denotes the genes which are conserved between all samples (intersection), whereas the pan genome is the union of all genes across all samples.
 
@@ -480,7 +484,7 @@ try({
 })
 ```
 
-*Table `r tableno()`: Distribution of genes in different core/pan partitions.*
+*Table `r tableno()`: Distribution of genes in different core/pan spectrum partitions.*
 
 ------
 
@@ -536,7 +540,7 @@ try({
 
 ## Core genome phylogeny
 
-The core genome phylogeny is provided with [FastTree](http://www.microbesonline.org/fasttree/) with the generalized time-reversible (GTR) model of nucleotide evolution. The plotted tree is not rooted.
+
 
 
 ```{r echo=FALSE, message=F, warning=F}
@@ -582,10 +586,10 @@ try({
 ```
 
 
-*Fig. `r figno()`: Phylogenetic NJ-tree from the concatenated core genome of all samples.*
+*Fig. `r figno()`: Phylogenetic NJ-tree from the concatenated core genome of all samples. The core genome phylogeny is provided with [FastTree](http://www.microbesonline.org/fasttree/) with the generalized time-reversible (GTR) model of nucleotide evolution. The plotted tree is not rooted.*
 
 
-SNP-distances between the core gene alignment. Calculated with [snp-dists](https://github.com/tseemann/snp-dists#snp-dists). The shown table is symmetrical around the diagonal.
+
 
 
 ```{r echo=FALSE, message=F, warning=F, fig.height = 4, fig.width = 6}
@@ -608,7 +612,8 @@ try({
 })
 
 ```
-*Table `r tableno()`: Pairwise distances between the samples in the core genome.*
+
+*Table `r tableno()`: Pairwise distances between the samples in the core genome. SNP-distances between the core gene alignment. Calculated with [snp-dists](https://github.com/tseemann/snp-dists#snp-dists). The shown table is symmetrical around the diagonal.*
 
 
 
