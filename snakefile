@@ -1,6 +1,6 @@
 
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
-
+import os
 from os import listdir
 from os.path import isfile, join
 #import yaml
@@ -11,7 +11,8 @@ from shutil import copyfile
 #import re
 #from shutil import copyfile
 #import re
-
+cwd = os.getcwd()
+batch_title = cwd.split("/")[-1]
 print("/*")
 print()
 print("         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗  ")
@@ -22,9 +23,10 @@ print("        ██║  ██║███████║███████
 print("        ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝ ")
 print("                      A.K.A. assemblycomparator2                     ")
 print()
+print(f"batch_title: {batch_title}")
 print(f"roary_blastp_identity: {config['roary_blastp_identity']} (default 95)")
 print(f"mlst_scheme: {config['mlst_scheme']} (default automatic)")
-print()
+
 
 
 out_base_var = "output_asscom2"
@@ -107,9 +109,9 @@ rule all:
                    "{out_base}/mashtree/mashtree.newick", \
                    "{out_base}/mlst/mlst.tsv", \
                    "{out_base}/fasttree/fasttree.newick", \
-                   "{out_base}/report.html", \
+                   "{out_base}/report_{batch_title}.html", \
                    "{out_base}/snp-dists/snp-dists.tsv"], \
-                  out_base = out_base_var, sample = df["sample"]) # copy
+                  out_base = out_base_var, sample = df["sample"], batch_title = batch_title) # copy
 
 
   
@@ -462,7 +464,8 @@ rule report:
         fasttree = "{out_base}/fasttree/fasttree.newick", 
         snp_dists = "{out_base}/snp-dists/snp-dists.tsv",
         rmarkdown_template = "{out_base}/rmarkdown_template.rmd"
-    output: "{out_base}/report.html"
+    #output: "{out_base}/report.html"
+    output: "{out_base}/report_{batch_title}.html"
     params:
         #markdown_template_rmd = "rmarkdown_template.rmd", # "genomes_to_report_v2.Rmd"
         markdown_template_html = "genomes_to_report_v2.html"
