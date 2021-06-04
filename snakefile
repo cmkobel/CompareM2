@@ -41,7 +41,7 @@ out_base_var = "output_asscom2"
 
 relative_wd = "."
 #extension_whitelist = ["fna", "fa", "fas", "fasta", "seq"] # old 
-extension_whitelist = ["fna", "fa", "fas", "fasta", "seq", "gb", "fq", "gff", "gfa", "clw", "sth", "gz", "bz2", "zip"]
+extension_whitelist = ["fna", "fa", "fas", "fasta", "seq", "gb", "fq", "gff", "gfa", "clw", "sth", "gz", "bz2"]
 
 present_files = [f for f in listdir(relative_wd) if isfile(join(relative_wd,f))]
 
