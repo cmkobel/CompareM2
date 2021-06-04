@@ -12,7 +12,7 @@ editor_options:
   chunk_output_type: console
 #css: "max-width: 5000px; margin: auto; padding: 1em; line-height: 20px"
 ---
-  
+
   
 ```{r echo=FALSE, message=F, warning=F}
 
@@ -117,37 +117,16 @@ tryCatch({
 #### Lengths of contigs:
 
 ```{r echo=FALSE, message=F, warning=F}
-# try({
-#     # This chunk is needed for setting the size of the contig lengths plot
-#     
-#     sequence_lengths_file = "collected_results/sequence_lengths.tsv"
-#     if (file.exists(sequence_lengths_file)) {
-#         sequence_lengths_df = read_tsv(sequence_lengths_file)
-#     
-#         
-#         fig_height = max(2.28,
-#                          (sequence_lengths_df$sample %>% unique %>%  length) *0.12)
-#         
-#         knitr::opts_chunk$set(fig.height = fig_height,
-#                               fig.width = 10)
-#     }
-# })
-
 
 
 try({
     # This chunk is needed for setting the size of sequence length comparison plot
+
+    fig_height = max(1.6,
+                     (metadata_df$sample %>% length) *0.4)
     
-    sequence_lengths_file = "collected_results/sequence_lengths.tsv"
-    #sequence_lengths_file = "~/GenomeDK/ClinicalMicrobio/faststorage/10carl/flye/comparisons/pre1/output_asscom2/collected_results/sequence_lengths.tsv"
-    
-        sequence_lengths_df = read_tsv(sequence_lengths_file)
-    
-        fig_height = max(1.6,
-                         (metadata_df$sample %>% length) *0.4)
-        
-        knitr::opts_chunk$set(fig.height = fig_height,
-                              fig.width = 9)
+    knitr::opts_chunk$set(fig.height = fig_height,
+                          fig.width = 9)
 
 })
 ```
@@ -157,15 +136,19 @@ try({
 ```{r echo=FALSE, message=F, warning=F}
 try({
     # Now when the figure height has been set, we can generate the figure
+    sequence_lengths_file = "collected_results/sequence_lengths.tsv"
+    
     if (file.exists(sequence_lengths_file)) {
+        sequence_lengths_df = read_tsv(sequence_lengths_file)
         sequence_lengths_df %>%
             group_by(sample) %>% 
-            arrange(length) %>% 
+            #arrange(length) %>% 
             
-            mutate(col = row_number(-length)) %>% 
+            #mutate(col = row_number(-length)) %>% 
+            mutate(col = 1:length(sample)) %>%
             mutate(init = lag(length, default = 0),
                    start = cumsum(init),
-                   stop = start + length - 1) %>% 
+                   stop = start + length - 1) %>%
     
             
             #mutate(sample = fct_reorder(sample, desc(sample))) %>% 
@@ -189,12 +172,22 @@ try({
 
         
             ggplot(aes(length, reorder(sample, desc(sample)), fill=reorder(col, desc(col)))) + 
+            #geom_bar(stat = "identity", color = "black", size = 0.3, fill = "grey50") +
+            
+            # The best way to set the colors is to use the default colorramping, because it highlights the relative of contigs.
+
             geom_bar(stat = "identity", color = "black", size = 0.3) + 
             theme_classic() +
             theme(legend.position = "none") +
             theme(panel.grid.major.x = element_line(colour = "grey92")) + 
-            labs(y = "sample") + 
-            scale_fill_brewer(palette = "Dark2")
+            labs(y = "sample") #+
+            #scale_fill_brewer(palette = "Dark2", direction = -1) +
+            
+            # Paired has 12 colors
+            #scale_fill_brewer(palette = "Paired", direction = -1) #+
+            
+            
+            #scale_x_log10()
 
             
         
@@ -207,7 +200,7 @@ try({
 })
 ```
 
-*Fig. `r figno()`: Lengths of contigs (fasta records) for each sample. The colors - only available when there is a maximum of ten contigs per sample - have no intrinsic meaning, other than highlighting the decreasing size of contigs/records in each assembly.*
+*Fig. `r figno()`: Lengths of fasta records for each sample. The colors have no intrinsic meaning, other than highlighting the varying sizes of records in each assembly.*
 
 
 
