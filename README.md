@@ -30,7 +30,7 @@ That is it!
   - [snp-dists](https://github.com/tseemann/snp-dists) (core genome pairwise snp-distances)
   - [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of the core genome)
   - [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement)
-  - **A nice report easy to share with your friends and colleagues ([demo](https://github.com/cmkobel/assemblycomparator2/raw/master/tests/E._faecium/output_asscom2/report.html.zip))**
+  - **A nice report easy to share with your friends and colleagues ([demo](https://github.com/cmkobel/assemblycomparator2/raw/master/tests/E._faecium/report.html.zip))**
 
 
 
