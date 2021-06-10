@@ -13,7 +13,7 @@ editor_options:
 #css: "max-width: 5000px; margin: auto; padding: 1em; line-height: 20px"
 ---
 
-`r paste("The report was generated in", getwd())`
+`r paste("This report was generated in", getwd())`
 ```{r echo=FALSE, message=F, warning=F}
 
 
