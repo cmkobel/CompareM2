@@ -1,5 +1,6 @@
 ---
 title: "Assemblycomparator2 Report"
+subtitle: "`r head(tail(unlist(strsplit(getwd(), '/')), 2), 1)`"
 date: "`r Sys.time()`"
 output:
   html_document:
