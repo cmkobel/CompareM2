@@ -1,5 +1,9 @@
 
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
+
+__version__ = "v2.1.0"
+__author__ = ['Carl M. Kobel', 'Oliver Kjærlund Hansen']
+
 import os
 from os import listdir
 from os.path import isfile, join
