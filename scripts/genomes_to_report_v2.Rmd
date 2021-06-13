@@ -126,7 +126,7 @@ try({
     # This chunk is needed for setting the size of sequence length comparison plot
 
     fig_height = max(1.6,
-                     (metadata_df$sample %>% length) *0.4)
+                     (metadata_df$sample %>% length) *0.2)
     
     knitr::opts_chunk$set(fig.height = fig_height,
                           fig.width = 9)
@@ -490,7 +490,7 @@ try({
 try({
     # This chunk is needed for setting the size of the roary gpa plot
     fig_height = max(1.6,
-                     (metadata_df$sample %>% length) *0.4)
+                     (metadata_df$sample %>% length) *0.2)
     
     knitr::opts_chunk$set(fig.height = fig_height,
                           fig.width = 9)
@@ -544,7 +544,7 @@ try({
 # This chunk is needed for setting the size of the following plot
 try({
     fig_height = max(4,
-                     (metadata_df$sample %>% length) * 0.6)
+                     (metadata_df$sample %>% length) * 0.4)
     
     knitr::opts_chunk$set(fig.height = fig_height,
                           fig.width = 10)
@@ -660,7 +660,7 @@ Mashtree is developed by Lee S. Katz and extends the minhash distance technique.
 # This chunk is needed for setting the size of the mashtree plot
 try({
     fig_height = max(4,
-                     (metadata_df$sample %>% length) * 0.6)
+                     (metadata_df$sample %>% length) * 0.4)
     
     knitr::opts_chunk$set(fig.height = fig_height,
                           fig.width = 10)
