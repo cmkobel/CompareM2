@@ -10,7 +10,7 @@ Go into that directory in the terminal, and run the command `assemblycomparator2
 assemblycomparator2 will then create a sub-directory containing a plethora of analyses. 
 
 #### Some useful commands
-  - Execute a 'dry run'. That is, show the jobs which will run, without triggering the computation.
+  - Execute a 'dry run'. That is, show the jobs which will run, without triggering the computation:
     
     `assemblycomparator2_slurm -n`
     
@@ -30,7 +30,7 @@ assemblycomparator2 will then create a sub-directory containing a plethora of an
 
     `assemblycomparator2_slurm --config roary_blastp_identity=90`
     
-  - Rerun a specific rule, (might be necessary if some parts of the report is missing).
+  - Rerun a specific rule, (might be necessary if some parts of the report is missing):
 
     `assemblycomparator2_slurm -R report`
     
