@@ -18,7 +18,7 @@ assemblycomparator2 will then create a sub-directory containing a plethora of an
 
     `assemblycomparator2_slurm`
     
-  - Execute all jobs up until (inclusive of) a specific rule in the job graph:
+  - Execute all jobs up until (inclusive of) a specific job in the job graph:
     
     `assemblycomparator2_slurm --until mlst`
     
