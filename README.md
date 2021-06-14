@@ -16,7 +16,7 @@ assemblycomparator2 will then create a sub-directory containing a plethora of an
     
   - Execute all jobs up until (inclusive) a specific rule in the job graph:
     
-    `assemblycomparator2_slurm --until mlst
+    `assemblycomparator2_slurm --until mlst`
     
   - Select a specific MLST-scheme to use on all of the samples: (defaults to automatic)
     
@@ -25,9 +25,9 @@ assemblycomparator2 will then create a sub-directory containing a plethora of an
   - Select a specific roary blastp-identity: (defaults to 95)
 
     `assemblycomparator2_slurm --config roary_blastp_identity=90`
-
     
   - Rerun a specific rule, (might be necessary if some parts of the report is missing).
+
     `assemblycomparator2_slurm -R report`
     
     
