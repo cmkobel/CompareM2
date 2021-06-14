@@ -5,12 +5,34 @@ Assemblycomparator is a genomes-to-report pipeline. It is a bit like nullarbor, 
 It is a joint project between Department of Clinical Microbiology Odense at Odense Universityhospital, and Department of Clinical Microbiology Skejby, at Aarhus Universityhospital.
 
 ## Usage
-Make a directory with a few fasta files you want to investigate and possibly compare. 
-Go into that directory in the terminal, and run the command `assemblycomparator2`. 
+Make a directory with the assembly-files you want to investigate and possibly compare. 
+Go into that directory in the terminal, and run the command `assemblycomparator2_slurm` or `assemblycomparator2_local`. 
 assemblycomparator2 will then create a sub-directory containing a plethora of analyses. 
 
-We are also working on finishing an automatically generated report, which will make it easy to explore these analyses without rummaging around on the filesystem.
-That is it!
+#### Some useful commands
+  - Execute a 'dry run'. That is, show the jobs which will run, without triggering the computation.
+    
+    `assemblycomparator2_slurm -n`
+    
+  - Execute all jobs up until (inclusive) a specific rule in the job graph:
+    
+    `assemblycomparator2_slurm --until mlst
+    
+  - Select a specific MLST-scheme to use on all of the samples: (defaults to automatic)
+    
+    `assemblycomparator2_slurm --config mlst_scheme=hpylori`
+    
+  - Select a specific roary blastp-identity: (defaults to 95)
+
+    `assemblycomparator2_slurm --config roary_blastp_identity=90`
+
+    
+  - Rerun a specific rule, (might be necessary if some parts of the report is missing).
+    `assemblycomparator2_slurm -R report`
+    
+    
+
+
 
 
 
