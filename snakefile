@@ -137,7 +137,7 @@ rule copy:
     #input: "{sample}"
     input: df["input_file"].tolist()
     #input: lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0]
-    output: "{out_base}/samples/{sample}/{sample}.fa"
+    output: expand("{out_base}/samples/{sample}/{sample}.fa", out_base = out_base_var, sample = df["sample"])
     #log: "logs/{out_base}_{wildcards.sample}.out.log"
     container: "docker://pvstodghill/any2fasta"
     conda: "conda_envs/any2fasta.yaml"
