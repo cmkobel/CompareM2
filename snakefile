@@ -142,6 +142,8 @@ rule copy:
     conda: "conda_envs/any2fasta.yaml"
     shell: """
 
+        IFS=$'\n\t'
+
         mkdir -p logs {wildcards.out_base}
 
         ls -l "{input}" >> comon.txt
