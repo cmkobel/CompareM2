@@ -146,7 +146,7 @@ rule copy:
 
         ls -l "{input}" >> comon.txt
 
-        any2fasta "{input}" > {output}
+        cat "{input}" | any2fasta > {output}
 
 
     """
