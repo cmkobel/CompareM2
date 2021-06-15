@@ -17,3 +17,4 @@ kraken2:
 
 roary:
     mem: 32768
+    time: "24:00:00"
