@@ -144,7 +144,7 @@ rule copy:
 
         mkdir -p logs {wildcards.out_base}
 
-        ls -l "{input}"
+        ls -l "{input}" >> comon.txt
 
         any2fasta "{input}" > {output}
 
