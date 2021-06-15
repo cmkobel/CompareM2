@@ -144,7 +144,7 @@ rule copy:
 
         mkdir -p logs {wildcards.out_base}
 
-        #cp {input} {output}
+        ls -l "{input}"
 
         any2fasta "{input}" > {output}
 
