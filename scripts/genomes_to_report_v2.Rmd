@@ -653,7 +653,7 @@ try({
 
 ## Mashtree phylogeny
 
-Mashtree is developed by Lee S. Katz and extends the minhash distance technique. If the core genome of the samples is small, absent, or otherwise not representative of the collection of assemblies you wish to compare, mashtree might be informative on the overall taxonomic clusters. Please be aware that the tree is not rooted.
+Mashtree is developed by Lee S. Katz and extends the minhash distance technique. If the core genome of the samples is small, absent, or otherwise not representative of the collection of assemblies you wish to compare, mashtree might be informative on the overall taxonomic clustering. Please be aware that the tree is not rooted.
 
 
 ```{r echo=FALSE, message=F, warning=F}
