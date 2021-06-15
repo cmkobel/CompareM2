@@ -123,7 +123,7 @@ rule all:
 
 # Write the df table to the directory for later reference.
 rule metadata:
-    input: df["input_file"].tolist()
+    input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/metadata.tsv"
     run: 
         df.to_csv(str(output), index_label = "index", sep = "\t")
