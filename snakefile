@@ -142,8 +142,6 @@ rule copy:
     conda: "conda_envs/any2fasta.yaml"
     shell: """
 
-        IFS=$'\\n\\t'
-
         any2fasta "{input}" > {output}
 
 
