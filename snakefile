@@ -135,7 +135,8 @@ rule metadata:
 # Homogenizes the file extension as well (.fa)
 rule copy:
     #input: "{sample}"
-    input: lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0]
+    input: df["input_file"].tolist()
+    #input: lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0]
     output: "{out_base}/samples/{sample}/{sample}.fa"
     #log: "logs/{out_base}_{wildcards.sample}.out.log"
     container: "docker://pvstodghill/any2fasta"
@@ -146,7 +147,7 @@ rule copy:
 
         #cp {input} {output}
         
-        ls -l "{input}"
+        ls -l "{input}" >> comon
 
         any2fasta "{input}" > {output}
 
