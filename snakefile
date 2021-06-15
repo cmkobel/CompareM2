@@ -144,7 +144,7 @@ rule copy:
 
         IFS=$'\\n\\t'
 
-        cat "{input}" | any2fasta > {output}
+        any2fasta "{input}" > {output}
 
 
     """
