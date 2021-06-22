@@ -18,7 +18,7 @@ assemblycomparator2 will then create a sub-directory containing a plethora of an
 
     `assemblycomparator2_slurm`
     
-  - If you're not sure your internet connection to the cluster will last for the full assemblycomparator2 run, attach a `&` in the end.
+  - If you're not sure your internet connection to the cluster will last for the full assemblycomparator2 run, put a `&` in the end.
   
     `assemblycomparator2_slurm &`
     
