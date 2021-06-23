@@ -125,9 +125,15 @@ rule all:
 rule metadata:
     input: expand("{out_base}/samples/{sample}/{sample}.fa", out_base = out_base_var, sample = df["sample"])
     output: "{out_base}/metadata.tsv"
-    run: 
-        df.to_csv(str(output), index_label = "index", sep = "\t")
+    params: dataframe = df.to_csv(None, index_label = "index", sep = "\t")
+    #run:
+        #df.to_csv(str(output), index_label = "index", sep = "\t")
         #os.system(f"cp ${{ASSCOM2_BASE}}/scripts/{report_template_file_basename} {out_base_var}")
+    shell: """
+
+        echo '''{params.dataframe}''' > {output}
+
+    """
 
 
 
