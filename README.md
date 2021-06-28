@@ -63,6 +63,9 @@ assemblycomparator2 will then create a sub-directory containing a plethora of an
   - **A nice report easy to share with your friends ([demo](https://github.com/cmkobel/assemblycomparator2/raw/master/tests/E._faecium/report_E._faecium.html.zip))**
 
 
+Below is a snakemake exported directed graph of the rules involved:
+![dag](https://user-images.githubusercontent.com/5913696/123610353-cca69180-d800-11eb-960c-689672edabfc.png)
+
 
 
 
