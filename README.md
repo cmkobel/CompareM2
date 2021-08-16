@@ -79,6 +79,8 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    ``` 
    ASSCOM2_BASE=~/assemblycomparator2
    
+   mkdir -p $ASSCOM2_BASE
+    
    # And save it into your .bashrc
    echo "export ASSCOM2_BASE=$ASSCOM2_BASE" >> ~/.bashrc 
     
