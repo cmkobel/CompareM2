@@ -107,6 +107,7 @@ rule all:
     input: expand(["{out_base}/metadata.tsv", \
                    "{out_base}/assembly-stats/assembly-stats.tsv", \
                    "{out_base}/collected_results/sequence_lengths.tsv", \
+                   "{out_base}/collected_results/GC_summary.tsv", \
                    "{out_base}/collected_results/prokka_summaries.txt", \
                    "{out_base}/collected_results/kraken2_reports.tsv", \
                    "{out_base}/roary/summary_statistics.txt", \
@@ -182,6 +183,20 @@ rule seqlen:
         > {output}
 
     """
+
+
+rule gc:
+    input: "{out_base}/samples/{sample}/{sample}.fa"
+    output: "{out_base}/samples/{sample}/statistics/{sample}_gc.tsv"
+    container: "docker://rocker/tidyverse"
+    conda: "conda_envs/r-tidyverse.yaml" # like r-markdown, but much simpler.
+    shell: """
+
+        Rscript --vanilla scripts/tabseq_gc.r {input} \
+        > {output}
+
+    """
+
 
 
 
@@ -279,6 +294,23 @@ rule collect_seqlen:
         cat {input} >> {output} 
 
     """
+
+rule collect_seqlen:
+    input: expand("{out_base}/samples/{sample}/statistics/{sample}_gc.tsv", out_base = out_base_var, sample = df["sample"])
+    output: "{out_base}/collected_results/GC_summary.tsv"
+    shell: """
+
+        # Sequence lengths
+        echo -e "sample\tpart\tlength\tGC" \
+        > {output}
+
+        cat {input} | grep -vE >> {output} # Append content without headers
+
+    """
+
+
+
+
 
 
 rule collect_prokka:
