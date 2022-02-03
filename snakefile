@@ -185,14 +185,14 @@ rule seqlen:
     """
 
 
-rule gc:
+rule gc_summary:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/statistics/{sample}_gc.tsv"
-    container: "docker://rocker/tidyverse"
+    container: "docker://rocker/tidyverse" # remember to add devtools
     conda: "conda_envs/r-tidyverse.yaml" # like r-markdown, but much simpler.
     shell: """
 
-        Rscript --vanilla scripts/tabseq_gc.r {input} \
+        Rscript --vanilla $ASSCOM2_BASE/scripts/tabseq_gc.r $ASSCOM2_BASE/scripts/tabseq_tiny.r {input} \
         > {output}
 
     """
@@ -295,7 +295,7 @@ rule collect_seqlen:
 
     """
 
-rule collect_seqlen:
+rule collect_gc_summary:
     input: expand("{out_base}/samples/{sample}/statistics/{sample}_gc.tsv", out_base = out_base_var, sample = df["sample"])
     output: "{out_base}/collected_results/GC_summary.tsv"
     shell: """
@@ -304,7 +304,7 @@ rule collect_seqlen:
         echo -e "sample\tpart\tlength\tGC" \
         > {output}
 
-        cat {input} | grep -vE >> {output} # Append content without headers
+        cat {input} | grep -vE "^#" >> {output} # Append content without headers
 
     """
 
