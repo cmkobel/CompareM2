@@ -695,4 +695,4 @@ try({
 
 ------------------------------------------------------------------------
 
-The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel)
+The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel) `version 2.1.1`
