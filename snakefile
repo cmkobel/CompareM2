@@ -193,7 +193,7 @@ rule gc_summary:
     shell: """
 
         Rscript --vanilla $ASSCOM2_BASE/scripts/tabseq_gc.r $ASSCOM2_BASE/scripts/tabseq_tiny.r {input} \
-        > {output}
+        > {output} 2> {output}.fail || echo what
 
     """
 
