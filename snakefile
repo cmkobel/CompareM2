@@ -192,7 +192,7 @@ rule gc_summary:
     conda: "conda_envs/r-tidyverse.yaml" # like r-markdown, but much simpler.
     shell: """
 
-        ls $ASSCOM2_BASE/scripts/tabseq_gc.r > {output.ls}
+        ls $ASSCOM2_BASE/scripts/tabseq_gc.r > {output}.ls
 
         Rscript --vanilla $ASSCOM2_BASE/scripts/tabseq_gc.r $ASSCOM2_BASE/scripts/tabseq_tiny.r {input} \
         > {output} 2> {output}.fail || echo what
