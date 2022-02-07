@@ -1,6 +1,6 @@
 ---
-title: "Assemblycomparator2 Report"
-subtitle: "`r head(tail(unlist(strsplit(getwd(), '/')), 2), 1)`"
+title: "`r head(tail(unlist(strsplit(getwd(), '/')), 2), 1)`"
+subtitle: "Assemblycomparator2 Report"
 date: "`r Sys.time()`"
 output:
   html_document:
@@ -15,15 +15,17 @@ editor_options:
 ---
 
 `r paste("This report was generated in", getwd())`
+
 ```{r echo=FALSE, message=F, warning=F}
 
-# Version: "v2.1.0"
+# Version: "v2.2.0"
 # Authors: Carl M. Kobel, Oliver Kjærlund Hansen
 
 
 # This is useful for debugging the markdown script.
 # Depends on a local run of the tests/E.faecium_plasmids assemblies.
 # setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
+setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
 
 
 
@@ -56,6 +58,7 @@ figno = function() {
 ```
 
 ## Sample overview
+
 ```{r echo=FALSE, message=F, warning=F}
 
 
@@ -76,6 +79,7 @@ if (file.exists(metadata_file)) {
     metadata_df %>%
         select(-index) %>% 
         arrange(sample) %>% 
+        
         datatable(class = 'cell-border stripe')
     
     
@@ -87,9 +91,7 @@ if (file.exists(metadata_file)) {
 
 ```
 
-
 *Table `r tableno()`: Overview of the samples analysed in this run.*
-
 
 ## Assembly statistics
 
@@ -97,7 +99,44 @@ if (file.exists(metadata_file)) {
 
 tryCatch({
     assembly_stats_file = "assembly-stats/assembly-stats.tsv"
-    if (file.exists(assembly_stats_file)) {
+    gc_summary_file = "collected_results/GC_summary.tsv"
+    
+    if (file.exists(assembly_stats_file) & file.exists(gc_summary_file) ) {
+        paste("both") # debug
+        assembly_stats_df = read_tsv(assembly_stats_file)
+        gc_summary_df = read_tsv(gc_summary_file) %>% rename(filename = sample)
+        
+        
+        # Put ALL PARTS GC and non-ALL PARTS sd(GC) together
+        assembly_stats_GC = gc_summary_df %>% 
+            filter(part == "ALL PARTS") %>% 
+            select(filename, GC) %>%
+            left_join(
+                gc_summary_df %>% 
+                    filter(part != "ALL PARTS") %>% 
+                    group_by(filename) %>% 
+                    summarize(sd(GC)),
+                by = "filename") %>% 
+            mutate_at(vars(GC, `sd(GC)`), signif, digits = 3)
+            
+        
+        
+        
+        #assembly_stats_df %>% left_join(metadata_translate) %>% 
+        assembly_stats_df %>%
+            left_join(assembly_stats_GC) %>% 
+            left_join(metadata_translate) %>% 
+            select(sample, everything(), -filename, -N50n, -N70, -N70n, -N90n) %>%
+            arrange(sample) %>% 
+            datatable(class = 'cell-border stripe')
+          
+            
+    
+        
+        
+        
+    
+    } else if (file.exists(assembly_stats_file)) { # Only assembly_stats_file exists
         assembly_stats_df = read_tsv(assembly_stats_file) 
         
         assembly_stats_df %>% left_join(metadata_translate) %>% 
@@ -108,14 +147,15 @@ tryCatch({
         
         
     } else {
-        paste("Warning: The file", assembly_stats_file, "is not accessible.")
+        paste("Warning: The file", assembly_stats_file, "and/or", gc_summary_file, "is not accessible.")
     }
     
 })
 
 ```
 
-*Table `r tableno()`: Assembly statistics is provided by [assembly-stats](https://github.com/sanger-pathogens/assembly-stats#assembly-stats). N50 indicates the sum of lengths of sequences, that covers at least half of the genome.*
+*Table `r tableno()`: Assembly statistics is provided by [assembly-stats](https://github.com/sanger-pathogens/assembly-stats#assembly-stats). N50 indicates the length of the smallest contig that (together with the longer contigs) covers at least half of the genome. sd(GC) shows variation between each fasta record.*
+
 
 #### Lengths of contigs:
 
@@ -133,8 +173,6 @@ try({
 
 })
 ```
-
-
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
@@ -205,11 +243,7 @@ try({
 
 *Fig. `r figno()`: Lengths of fasta records for each sample. The colors have no intrinsic meaning, other than highlighting the varying sizes and number of records in each assembly.*
 
-
-
 ## Genome annotation
-
-
 
 ```{r echo=FALSE, message=F, warning=F}
 
@@ -235,11 +269,9 @@ try({
 })
 ```
 
-
 *Table `r tableno()`: Overview of the number of different gene types called by Prokka. Computed using the [Prokka](https://github.com/tseemann/prokka) genome annotator.*
 
 ## Species
-
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
@@ -285,17 +317,11 @@ try({
 })
 ```
 
-
 *Table `r tableno()`: Listing of the 3 highest species hits for each sample. Species identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2). The percentages indicate the proportion of sequences (equivalent to fasta records) mapping to the given taxonomic level.*
 
 `r if (file.exists(kraken2_file)) {paste("Using the", Sys.getenv("ASSCOM2_KRAKEN2_DB"), "database")}`.
 
-
-
-
-
 ## MLST
-
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
@@ -341,9 +367,7 @@ try({
 })
 ```
 
-
 *Table `r tableno()`: Table of MLST results. Multi locus sequence typing provided by [mlst](https://github.com/tseemann/mlst#mlst). The mlst software incorporates components of the [PubMLST](https://pubmlst.org/) database.*
-
 
 #### How to customize the mlst-analysis
 
@@ -352,7 +376,6 @@ Mlst automatically detects the best scheme for typing, one sample at a time. If 
 ## Resistance
 
 ### NCBI Resistance
-
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
@@ -375,11 +398,9 @@ try({
 })
 ```
 
-
 *Table `r tableno()`: Table of NCBI Resistance gene calls. Resistance genes provided by [NCBI AMRFinder](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6811410/) via [Abricate](https://github.com/tseemann/abricate#abricate).*
 
 ### Card Resistance genes
-
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
@@ -406,7 +427,6 @@ try({
 
 ### Plasmidfinder calls
 
-
 ```{r echo=FALSE, message=F, warning=F}
 try({
     abricate_plasmidfinder_file = "abricate/plasmidfinder_summarized.tsv"
@@ -431,10 +451,7 @@ try({
 
 *Table `r tableno()`: Table of PlasmidFinder plasmid calls. Note that plasmidfinder uses short substrings for recognizing the plasmids, and not necessarily longer sequences i.e. complete plasmid sequences. Plasmid calls provided by [PlasmidFinder](https://cge.cbs.dtu.dk/services/PlasmidFinder/) via abricate.*
 
-
-
 ### VFDB calls
-
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
@@ -483,8 +500,7 @@ try({
 
 *Table `r tableno()`: Distribution of genes in different core/pan spectrum partitions.*
 
-------
-
+------------------------------------------------------------------------
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
@@ -496,7 +512,6 @@ try({
                           fig.width = 9)
 })
 ```
-
 
 ```{r echo = F, message = F, warning = F}
 try({
@@ -529,16 +544,7 @@ try({
 
 *Fig. `r figno()`: Visual distribution of genes in the different samples. The genes are ordered with respect to the number of samples sharing them.*
 
-
-
-
-
-
-
 ## Core genome phylogeny
-
-
-
 
 ```{r echo=FALSE, message=F, warning=F}
 # This chunk is needed for setting the size of the following plot
@@ -582,12 +588,7 @@ try({
 
 ```
 
-
 *Fig. `r figno()`: Phylogenetic NJ-tree from the concatenated core genome of all samples. The core genome phylogeny is provided with [FastTree](http://www.microbesonline.org/fasttree/) with the generalized time-reversible (GTR) model of nucleotide evolution. The plotted tree is not rooted.*
-
-
-
-
 
 ```{r echo=FALSE, message=F, warning=F, fig.height = 4, fig.width = 6}
 try({
@@ -612,8 +613,6 @@ try({
 
 *Table `r tableno()`: Pairwise distances between the samples in the core genome. SNP-distances between the core gene alignment. Calculated with [snp-dists](https://github.com/tseemann/snp-dists#snp-dists). The shown table is symmetrical around the diagonal.*
 
-
-
 ```{r echo=FALSE, message=F, warning=F, fig.height = 3, fig.width = 9}
 try({
     snp_dists_file = "snp-dists/snp-dists.tsv"
@@ -623,7 +622,8 @@ try({
         mat = snp_dists_df %>% column_to_rownames(var = "sample")
         mat[lower.tri(mat, diag = T)] = NA
         mat %>% rownames_to_column("sample") %>% 
-            as.tibble() %>% 
+            #as.tibble() %>% changed to as_tibble() due to warning in output.
+            as_tibble() %>% 
             pivot_longer(-sample) %>%
             ggplot(aes(value)) +
             geom_histogram() +
@@ -643,18 +643,11 @@ try({
 
 *Fig. `r figno()`: Pairwise distances between the samples in the core genome.*
 
-
-
-
-
-
-----
-
+------------------------------------------------------------------------
 
 ## Mashtree phylogeny
 
 Mashtree is developed by Lee S. Katz and extends the minhash distance technique. If the core genome of the samples is small, absent, or otherwise not representative of the collection of assemblies you wish to compare, mashtree might be informative on the overall taxonomic clustering. Please be aware that the tree is not rooted.
-
 
 ```{r echo=FALSE, message=F, warning=F}
 # This chunk is needed for setting the size of the mashtree plot
@@ -698,13 +691,8 @@ try({
 
 ```
 
-
 *Fig. `r figno()`: Approximation of a phylogenetic tree calculated with mashtree.*
 
-
-
-
-
-------
+------------------------------------------------------------------------
 
 The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel)

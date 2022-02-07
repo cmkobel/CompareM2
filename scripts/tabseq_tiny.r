@@ -1,6 +1,6 @@
 
 
-read_fasta = function(file, basename_only = T, skip = 0) {
+read_fasta = function(file, basename_only = F, skip = 0) {
 
     # For spontaneous debugging:
     # file = "~/assemblycomparator2/tests/E._faecium_plasmids/VB3240.fna"
