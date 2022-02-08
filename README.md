@@ -101,7 +101,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
  * You have to decide whether you want to use Singularity (recommended if possible) or Conda for package management.
 
    
-### Install alias to call the program
+### Install alias 
 Select A, B or C depending on whether you want to install on a slurm-enabled HPC (A, B) or a local system without slurm (C)
 #### A) For <ins>HPC's</ins> with Slurm using <ins>Conda</ins>
    ```
