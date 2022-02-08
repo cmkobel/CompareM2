@@ -12,31 +12,31 @@ assemblycomparator2 will then create a sub-directory containing a plethora of an
 #### Some useful commands
   - Execute a 'dry run'. That is, show the jobs which will run, without triggering the computation:
     
-    `assemblycomparator2_slurm -n`
+    `assemblycomparator2 -n`
     
   - Simply, run assemblycomparator on the genomes in the current directory:
 
-    `assemblycomparator2_slurm`
+    `assemblycomparator2`
     
   - If you're not sure your internet connection to the cluster will last for the full assemblycomparator2 run, put a `&` in the end.
   
-    `assemblycomparator2_slurm &`
+    `assemblycomparator2 &`
     
   - Execute all jobs up until (inclusive of) a specific job in the job graph:
     
-    `assemblycomparator2_slurm --until mlst`
+    `assemblycomparator2 --until mlst`
     
   - Select a specific MLST-scheme to use on all of the samples: (defaults to automatic)
     
-    `assemblycomparator2_slurm --config mlst_scheme=hpylori`
+    `assemblycomparator2 --config mlst_scheme=hpylori`
     
   - Select a specific roary blastp-identity: (defaults to 95)
 
-    `assemblycomparator2_slurm --config roary_blastp_identity=90`
+    `assemblycomparator2 --config roary_blastp_identity=90`
     
   - Rerun a specific rule, (might be necessary if some parts of the report is missing):
 
-    `assemblycomparator2_slurm -R report`
+    `assemblycomparator2 -R report`
     
     
 
@@ -75,7 +75,10 @@ Below is a snakemake exported directed graph of the rules involved:
 
 Assemblycomparator2 needs Snakemake and the dependencies which can be needed for running on your specific setup. I.e. DRMAA for Slurm-mananged HPC's.
 You can either follow the [official Snakemake instructions](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html) or use our guide below:
-* Decide where you want to install assemblycomparator2
+
+### 1. Preliminary Setup
+
+* Set the base directory for assemblycomparator2. You can change it to anything you'd like.
    ``` 
    ASSCOM2_BASE=~/assemblycomparator2
    
@@ -92,7 +95,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    # Optionally use the git protocol:
    # git clone git@github.com:cmkobel/assemblycomparator2.git $ASSCOM2_BASE
    
-   # Hint: If you have not already installed Snakemake and its dependencies, you can do it easily now. (Might take a few minutes):
+   # Setup a asscom2 base environment which is used to call snakemake
    cd $ASSCOM2_BASE && conda env create -f environment.yaml 
     
    ```
@@ -101,26 +104,53 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
  * You have to decide whether you want to use Singularity (recommended if possible) or Conda for package management.
 
    
-   
-### For HPC's with Slurm using Singularity
+### 2. Install Alias 
+
+Select A, B or C depending on whether you want to install on a slurm-enabled HPC (A, B) or a local system without slurm (C).
+
+#### A) For <ins>HPCs</ins> with Slurm using <ins>Conda</ins>
    ```
    # Main alias for running assemblycomparator2
-   echo "alias assemblycomparator2_slurm='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml --use-singularity  --singularity-prefix ${ASSCOM2_BASE}/singularity_images --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
-    
-   ```
-   
-   
-### For local setups using Conda
-   ```
-   # Main alias for running assemblycomparator2
-   echo "alias assemblycomparator2_local='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/local/ --use-conda --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
-   
+   echo "alias assemblycomparator2='conda activate assemblycomparator2; \
+       snakemake --snakefile ${ASSCOM2_BASE}/snakefile \
+           --profile ${ASSCOM2_BASE}/configs/slurm/ \
+           --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml \
+           --use-conda \
+           --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
+
    # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
    echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
     
    ```
    
+#### B) For <ins>HPCs</ins> with Slurm using <ins>Singularity</ins>
+   ```
+   # Main alias for running assemblycomparator2
+   echo "alias assemblycomparator2='conda activate assemblycomparator2; \
+       snakemake --snakefile ${ASSCOM2_BASE}/snakefile \
+           --profile ${ASSCOM2_BASE}/configs/slurm/ \
+           --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml \
+           --use-singularity --singularity-prefix ${ASSCOM2_BASE}/singularity_images \
+           --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
+    
+   ```
    
+#### C) For <ins>local</ins> setups using <ins>Conda</ins>
+   ```
+   # Main alias for running assemblycomparator2
+   echo "alias assemblycomparator2='conda activate assemblycomparator2; \
+       snakemake --snakefile ${ASSCOM2_BASE}/snakefile \
+           --profile ${ASSCOM2_BASE}/configs/local/ \
+           --use-conda 
+           --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
+   
+   # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
+   echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
+    
+   ```
+  
+   
+ ### Kraken2 Setup (optional)
  * assemblycomparator2 supports Kraken2. If you already have a local copy of a kraken database, you can set the `ASSCOM2_KRAKEN_DB` system variable to its path. If you don't have a local copy, assemblycomparator2 comes handy with some scripts for setting up Kraken2 and Mashscreen. There are two scripts for Kraken2; one small "Standard" (8GB) and one huge "PlusPF" (50GB).
    ```
    # Kraken2
@@ -138,7 +168,9 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
     
    ```
    
-### Testing installation
+You should now be done setting up assemblycomparator2. Go ahead and compute on the included genomes below, or try with your own fasta files.
+   
+### Testing installation (optional)
 
 assemblycomparator2 comes with a handful of E. faecium assemblies (illumina/skesa) which can be used to check that everything works as expected. In order to run this test, simply go into the location of these assemblies, and run the `assemblycomparator2`-command
    ```
@@ -151,9 +183,9 @@ If you encounter problems testing your installation, please refer to the issues 
 
    
    
-### Updating an existing installation
+### Updating an existing installation (optional)
 
-Simply run this command, and you should be all set:
+If you should -later down the line- wish to update the installation, run this command and you should be all set:
 ```
 cd $ASSCOM2_BASE && git pull
 
