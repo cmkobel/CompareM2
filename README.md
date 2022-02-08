@@ -78,7 +78,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
 
 ### 1. Preliminary Setup
 
-* Decide where you want to install assemblycomparator2
+* Set the base directory for assemblycomparator2. You can change it to anything you'd like.
    ``` 
    ASSCOM2_BASE=~/assemblycomparator2
    
