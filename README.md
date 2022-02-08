@@ -101,7 +101,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
  * You have to decide whether you want to use Singularity (recommended if possible) or Conda for package management.
 
    
-### Install alias 
+### Install Alias 
 Select A, B or C depending on whether you want to install on a slurm-enabled HPC (A, B) or a local system without slurm (C).
 #### A) For <ins>HPC's</ins> with Slurm using <ins>Conda</ins>
    ```
@@ -127,7 +127,7 @@ Select A, B or C depending on whether you want to install on a slurm-enabled HPC
     
    ```
    
-   
+ ### Kraken2 Setup (optional)
  * assemblycomparator2 supports Kraken2. If you already have a local copy of a kraken database, you can set the `ASSCOM2_KRAKEN_DB` system variable to its path. If you don't have a local copy, assemblycomparator2 comes handy with some scripts for setting up Kraken2 and Mashscreen. There are two scripts for Kraken2; one small "Standard" (8GB) and one huge "PlusPF" (50GB).
    ```
    # Kraken2
@@ -145,7 +145,7 @@ Select A, B or C depending on whether you want to install on a slurm-enabled HPC
     
    ```
    
-### Testing installation
+### Testing installation (optional)
 
 assemblycomparator2 comes with a handful of E. faecium assemblies (illumina/skesa) which can be used to check that everything works as expected. In order to run this test, simply go into the location of these assemblies, and run the `assemblycomparator2`-command
    ```
@@ -158,9 +158,9 @@ If you encounter problems testing your installation, please refer to the issues 
 
    
    
-### Updating an existing installation
+### Updating an existing installation (optional)
 
-Simply run this command, and you should be all set:
+If you should -later down the line- wish to update the installation, run this command and you should be all set:
 ```
 cd $ASSCOM2_BASE && git pull
 
