@@ -12,31 +12,31 @@ assemblycomparator2 will then create a sub-directory containing a plethora of an
 #### Some useful commands
   - Execute a 'dry run'. That is, show the jobs which will run, without triggering the computation:
     
-    `assemblycomparator2_slurm -n`
+    `assemblycomparator2 -n`
     
   - Simply, run assemblycomparator on the genomes in the current directory:
 
-    `assemblycomparator2_slurm`
+    `assemblycomparator2`
     
   - If you're not sure your internet connection to the cluster will last for the full assemblycomparator2 run, put a `&` in the end.
   
-    `assemblycomparator2_slurm &`
+    `assemblycomparator2 &`
     
   - Execute all jobs up until (inclusive of) a specific job in the job graph:
     
-    `assemblycomparator2_slurm --until mlst`
+    `assemblycomparator2 --until mlst`
     
   - Select a specific MLST-scheme to use on all of the samples: (defaults to automatic)
     
-    `assemblycomparator2_slurm --config mlst_scheme=hpylori`
+    `assemblycomparator2 --config mlst_scheme=hpylori`
     
   - Select a specific roary blastp-identity: (defaults to 95)
 
-    `assemblycomparator2_slurm --config roary_blastp_identity=90`
+    `assemblycomparator2 --config roary_blastp_identity=90`
     
   - Rerun a specific rule, (might be necessary if some parts of the report is missing):
 
-    `assemblycomparator2_slurm -R report`
+    `assemblycomparator2 -R report`
     
     
 
