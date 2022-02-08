@@ -1,8 +1,8 @@
 
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
 
-__version__ = "v2.1.0"
-__author__ = ['Carl M. Kobel', 'Oliver Kjærlund Hansen']
+__version__ = "v2.1.1"
+__author__ = 'Oliver Kjærlund Hansen & Carl M. Kobel'
 
 import os
 from os import listdir
@@ -35,6 +35,11 @@ print()
 
 
 out_base_var = "output_asscom2"
+
+base_variable = os.environ['ASSCOM2_BASE']
+
+
+print('base_variable:', base_variable)
 
 
 #reference = config["reference"]
@@ -190,12 +195,13 @@ rule gc_summary:
     output: "{out_base}/samples/{sample}/statistics/{sample}_gc.tsv"
     container: "docker://rocker/tidyverse" # remember to add devtools
     conda: "conda_envs/r-tidyverse.yaml" # like r-markdown, but much simpler.
+    params: base_variable = base_variable
     shell: """
 
-        ls $ASSCOM2_BASE/scripts/tabseq_gc.r > {output}.ls
 
-        Rscript --vanilla $ASSCOM2_BASE/scripts/tabseq_gc.r $ASSCOM2_BASE/scripts/tabseq_tiny.r {input} \
+        Rscript $ASSCOM2_BASE/scripts/tabseq_gc.r $ASSCOM2_BASE/scripts/tabseq_tiny.r {input} \
         > {output} 2> {output}.fail || echo what
+
 
     """
 
