@@ -95,7 +95,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    # Optionally use the git protocol:
    # git clone git@github.com:cmkobel/assemblycomparator2.git $ASSCOM2_BASE
    
-   # Hint: If you have not already installed Snakemake and its dependencies, you can do it easily now. (Might take a few minutes):
+   # Setup a asscom2 base environment which is used to call snakemake
    cd $ASSCOM2_BASE && conda env create -f environment.yaml 
     
    ```
