@@ -101,23 +101,23 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
  * You have to decide whether you want to use Singularity (recommended if possible) or Conda for package management.
 
    
-
-### For <ins>HPC's</ins> with Slurm using <ins>Conda</ins>
+### Install alias to call the program
+Select A, B or C depending on whether you want to install on a slurm-enabled HPC (A, B) or a local system without slurm (C)
+#### A) For <ins>HPC's</ins> with Slurm using <ins>Conda</ins>
    ```
    # Main alias for running assemblycomparator2
    echo "alias assemblycomparator2_slurm='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml --use-conda --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
     
    ```
    
-### For <ins>HPC's</ins> with Slurm using <ins>Singularity</ins>
+#### B) For <ins>HPC's</ins> with Slurm using <ins>Singularity</ins>
    ```
    # Main alias for running assemblycomparator2
    echo "alias assemblycomparator2_slurm='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/slurm/ --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml --use-singularity  --singularity-prefix ${ASSCOM2_BASE}/singularity_images --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
     
    ```
    
-   
-### For <ins>local</ins> setups using <ins>Conda</ins>
+#### C) For <ins>local</ins> setups using <ins>Conda</ins>
    ```
    # Main alias for running assemblycomparator2
    echo "alias assemblycomparator2_local='conda activate assemblycomparator2; snakemake --snakefile ${ASSCOM2_BASE}/snakefile --profile ${ASSCOM2_BASE}/configs/local/ --use-conda --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
