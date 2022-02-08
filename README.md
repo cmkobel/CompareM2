@@ -75,6 +75,9 @@ Below is a snakemake exported directed graph of the rules involved:
 
 Assemblycomparator2 needs Snakemake and the dependencies which can be needed for running on your specific setup. I.e. DRMAA for Slurm-mananged HPC's.
 You can either follow the [official Snakemake instructions](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html) or use our guide below:
+
+### 1. Preliminary Setup
+
 * Decide where you want to install assemblycomparator2
    ``` 
    ASSCOM2_BASE=~/assemblycomparator2
@@ -101,8 +104,10 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
  * You have to decide whether you want to use Singularity (recommended if possible) or Conda for package management.
 
    
-### Install Alias 
+### 2. Install Alias 
+
 Select A, B or C depending on whether you want to install on a slurm-enabled HPC (A, B) or a local system without slurm (C).
+
 #### A) For <ins>HPC's</ins> with Slurm using <ins>Conda</ins>
    ```
    # Main alias for running assemblycomparator2
@@ -126,6 +131,7 @@ Select A, B or C depending on whether you want to install on a slurm-enabled HPC
    echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
     
    ```
+  
    
  ### Kraken2 Setup (optional)
  * assemblycomparator2 supports Kraken2. If you already have a local copy of a kraken database, you can set the `ASSCOM2_KRAKEN_DB` system variable to its path. If you don't have a local copy, assemblycomparator2 comes handy with some scripts for setting up Kraken2 and Mashscreen. There are two scripts for Kraken2; one small "Standard" (8GB) and one huge "PlusPF" (50GB).
@@ -144,6 +150,8 @@ Select A, B or C depending on whether you want to install on a slurm-enabled HPC
    source ~/.bashrc
     
    ```
+   
+You should now be done setting up assemblycomparator2. Go ahead and compute on the included genomes below, or try with your own fasta files.
    
 ### Testing installation (optional)
 
