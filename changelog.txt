@@ -1,0 +1,10 @@
+
+2.1.1
+- Simple GC statistics added to output and report 
+
+
+2.1.0
+- Bug and stability issues fixed
+
+2.0.0
+- Completely new system based on snakemake using both slurm and singularity
