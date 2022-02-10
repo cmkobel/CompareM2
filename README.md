@@ -141,7 +141,7 @@ Select A, B or C depending on whether you want to install on a slurm-enabled HPC
    echo "alias assemblycomparator2='conda activate assemblycomparator2; \
        snakemake --snakefile ${ASSCOM2_BASE}/snakefile \
            --profile ${ASSCOM2_BASE}/configs/local/ \
-           --use-conda 
+           --use-conda \
            --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
    
    # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
