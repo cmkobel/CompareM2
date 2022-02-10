@@ -33,3 +33,6 @@ jobname: "{name}.{jobid}.snakejob.sh"
 # [--conda-prefix DIR] 
 
 latency-wait: 160 # This might seem excessive, but on GenomeDK increasing this value seemed to help with some tentatively failed jobs.
+
+
+# TODO: clean up this file.
