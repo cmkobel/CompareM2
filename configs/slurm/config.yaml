@@ -32,4 +32,4 @@ jobname: "{name}.{jobid}.snakejob.sh"
 #use-singularity: true
 # [--conda-prefix DIR] 
 
-latency-wait: 160
+latency-wait: 160 # This might seem excessive, but on GenomeDK increasing this value seemed to help with some tentatively failed jobs.
