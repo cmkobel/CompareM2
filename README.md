@@ -193,7 +193,9 @@ cd $ASSCOM2_BASE && git pull
 conda env update --name assemblycomparator2 --file environment.yaml
 
 # If you wish to update the job-environments, you can simply delete the contents of $SNAKEMAKE_CONDA_PREFIX
-rm -r $SNAKEMAKE_CONDA_PREFIX/*
+rm -r $SNAKEMAKE_CONDA_PREFIX/* 
+# .. The environments will then be reinstalled from scratch next time you run assemblycomparator2
+
 ```
 Note: If new databases have been added to kraken or mashscreen, you can rerun the above-mentioned set_up_*.sh-scripts.
 
