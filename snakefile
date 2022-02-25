@@ -1,4 +1,4 @@
-
+  
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
 
 __version__ = "v2.1.1"
@@ -213,7 +213,10 @@ rule prokka:
     output:
         gff = "{out_base}/samples/{sample}/prokka/{sample}.gff",
         log = "{out_base}/samples/{sample}/prokka/{sample}.log",
-        summary = "{out_base}/samples/{sample}/prokka/{sample}_summary.txt"
+        tsv = "{out_base}/samples/{sample}/prokka/{sample}.tsv",
+        summary = "{out_base}/samples/{sample}/prokka/{sample}_summary.txt",
+        tsv_named = "{out_base}/samples/{sample}/prokka/{sample}_named.tsv"
+
     container: "docker://staphb/prokka"
     conda: "conda_envs/prokka.yaml"
     threads: 4
@@ -231,7 +234,11 @@ rule prokka:
             | grep -E "tRNAs|rRNAs|CRISPRs|CDS|unique" \
             | cut -d" " -f 3,4 \
             | awk -v sam={wildcards.sample} '{{ print sam " " $0 }}' \
-            >> {output.summary}
+            >> {output.summary} # jeg undrer mig over hvorfor den har to gt question mark
+
+        cat {output.tsv} \
+            | awk -v sam={wildcards.sample} '{{ print $0 "\t" sam }}' \
+            > {output.tsv_named}
 
     """
 
@@ -324,6 +331,21 @@ rule collect_gc_summary:
 rule collect_prokka:
     input: expand("{out_base}/samples/{sample}/prokka/{sample}_summary.txt", out_base = out_base_var, sample = df["sample"]),
     output: "{out_base}/collected_results/prokka_summaries.txt",
+    shell: """
+
+        # prokka
+        echo "sample value name" \
+        > {output}
+
+        cat {input} >> {output}
+
+    """
+
+
+
+rule collect_prokka_genes:
+    input: expand("{out_base}/samples/{sample}/prokka/{sample}.tsv", out_base = out_base_var, sample = df["sample"]),
+    output: "{out_base}/collected_results/prokka_genes.",
     shell: """
 
         # prokka
