@@ -214,8 +214,8 @@ rule prokka:
         gff = "{out_base}/samples/{sample}/prokka/{sample}.gff",
         log = "{out_base}/samples/{sample}/prokka/{sample}.log",
         tsv = "{out_base}/samples/{sample}/prokka/{sample}.tsv",
-        summary = "{out_base}/samples/{sample}/prokka/{sample}_summary.txt",
-        tsv_named = "{out_base}/samples/{sample}/prokka/{sample}_named.tsv"
+        summary_txt = "{out_base}/samples/{sample}/prokka/{sample}_summary.txt",
+        labelled_tsv = "{out_base}/samples/{sample}/prokka/{sample}_named.tsv"
 
     container: "docker://staphb/prokka"
     conda: "conda_envs/prokka.yaml"
@@ -234,11 +234,11 @@ rule prokka:
             | grep -E "tRNAs|rRNAs|CRISPRs|CDS|unique" \
             | cut -d" " -f 3,4 \
             | awk -v sam={wildcards.sample} '{{ print sam " " $0 }}' \
-            >> {output.summary} # jeg undrer mig over hvorfor den har to gt question mark
+            >> {output.summary_txt} # jeg undrer mig over hvorfor den har to gt question mark
 
         cat {output.tsv} \
             | awk -v sam={wildcards.sample} '{{ print $0 "\t" sam }}' \
-            > {output.tsv_named}
+            > {output.labelled_tsv}
 
     """
 
