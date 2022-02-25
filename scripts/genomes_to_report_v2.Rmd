@@ -250,11 +250,11 @@ try({
 
 try({
     # Now when the figure height has been set, we can generate the figure
-    prokka_summaries_file = "collected_results/prokka_summaries.txt"
-    if (file.exists(prokka_summaries_file)) {
-        prokka_summaries_df = read_delim(prokka_summaries_file, delim = " ")
+    prokka_summarized_file = "collected_results/prokka_summarized.txt"
+    if (file.exists(prokka_summarized_file)) {
+        prokka_summarized_df = read_delim(prokka_summarized_file, delim = " ")
         
-        prokka_summaries_df %>% pivot_wider(id_cols = sample, names_from = name, values_from = value) %>% 
+        prokka_summarized_df %>% pivot_wider(id_cols = sample, names_from = name, values_from = value) %>% 
             select(sample, CDS, `unique /gene codes` = unique, tRNAs, rRNAs, CRISPRs) %>% 
             arrange(sample) %>% 
             datatable()
@@ -265,7 +265,7 @@ try({
         
         
     } else {
-        paste("Warning: The file", prokka_summaries_file, "is not accessible.")
+        paste("Warning: The file", prokka_summarized_file, "is not accessible.")
     }
 })
 ```
