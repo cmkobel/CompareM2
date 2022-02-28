@@ -1,3 +1,5 @@
+2.1.2
+- Sample pathway enrichment analysis with clusterProfiler which is integrated into the report.
 
 2.1.1
 - Simple GC statistics added to output and report 
