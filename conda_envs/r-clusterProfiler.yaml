@@ -1,0 +1,7 @@
+name: r-clusterProfiler
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - r-tidyverse
+  - bioconductor-clusterprofiler

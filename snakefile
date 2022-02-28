@@ -116,6 +116,7 @@ rule all:
                    "{out_base}/collected_results/GC_summary.tsv", \
                    "{out_base}/collected_results/prokka_summarized.txt", \
                    "{out_base}/collected_results/kraken2_reports.tsv", \
+                   "{out_base}/collected_results/sample_pathway_enrichment_analysis.tsv", \
                    "{out_base}/roary/summary_statistics.txt", \
                    "{out_base}/abricate/card_detailed.tsv", \
                    "{out_base}/mashtree/mashtree.newick", \
@@ -355,20 +356,36 @@ rule collect_prokka:
 
 
 
-rule collect_prokka_genes:
-    input: expand("{out_base}/samples/{sample}/prokka/{sample}.tsv", out_base = out_base_var, sample = df["sample"]),
-    output: "{out_base}/collected_results/prokka_genes.",
+# rule collect_prokka_genes:
+#     input: expand("{out_base}/samples/{sample}/prokka/{sample}.tsv", out_base = out_base_var, sample = df["sample"]),
+#     output: "{out_base}/collected_results/prokka_genes.",
+#     shell: """
+
+#         # prokka
+#         echo "sample value name" \
+#         > {output}
+
+#         cat {input} >> {output}
+
+#     """
+
+
+
+
+
+
+rule sample_pathway_enrichment_analysis:
+    input: "{out_base}/collected_results/prokka_labelled.tsv"
+    output: "{out_base}/collected_results/sample_pathway_enrichment_analysis.tsv"
+    conda: "conda_envs/r-clusterProfiler.yaml"
     shell: """
 
-        # prokka
-        echo "sample value name" \
-        > {output}
 
-        cat {input} >> {output}
+        Rscript $ASSCOM2_BASE/scripts/sample_pathway_enrichment_analysis.R $ASSCOM2_BASE/assets/ko {input} \
+        > {output} 2> {output}.fail || echo what
+
 
     """
-
-
 
 
 
