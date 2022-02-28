@@ -250,11 +250,11 @@ try({
 
 try({
     # Now when the figure height has been set, we can generate the figure
-    prokka_summaries_file = "collected_results/prokka_summaries.txt"
-    if (file.exists(prokka_summaries_file)) {
-        prokka_summaries_df = read_delim(prokka_summaries_file, delim = " ")
+    prokka_summarized_file = "collected_results/prokka_summarized.txt"
+    if (file.exists(prokka_summarized_file)) {
+        prokka_summarized_df = read_delim(prokka_summarized_file, delim = " ")
         
-        prokka_summaries_df %>% pivot_wider(id_cols = sample, names_from = name, values_from = value) %>% 
+        prokka_summarized_df %>% pivot_wider(id_cols = sample, names_from = name, values_from = value) %>% 
             select(sample, CDS, `unique /gene codes` = unique, tRNAs, rRNAs, CRISPRs) %>% 
             arrange(sample) %>% 
             datatable()
@@ -265,12 +265,12 @@ try({
         
         
     } else {
-        paste("Warning: The file", prokka_summaries_file, "is not accessible.")
+        paste("Warning: The file", prokka_summarized_file, "is not accessible.")
     }
 })
 ```
 
-*Table `r tableno()`: Overview of the number of different gene types called by Prokka. Computed using the [Prokka](https://github.com/tseemann/prokka) genome annotator.*
+*Table `r tableno()`: Overview of the number of different gene types. Called using the [Prokka](https://github.com/tseemann/prokka) genome annotator.*
 
 ## Species
 
@@ -318,7 +318,7 @@ try({
 })
 ```
 
-*Table `r tableno()`: Listing of the 3 highest species hits for each sample. Species identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2). The percentages indicate the proportion of sequences (equivalent to fasta records) mapping to the given taxonomic level.*
+*Table `r tableno()`: Listing of the 3 highest species hits for each sample. Species identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2). The percentages indicate the proportion of sequences (equivalent to fasta records) mapping to the species.*
 
 `r if (file.exists(kraken2_file)) {paste("Using the", Sys.getenv("ASSCOM2_KRAKEN2_DB"), "database")}`.
 
@@ -368,13 +368,15 @@ try({
 })
 ```
 
-*Table `r tableno()`: Table of MLST results. Multi locus sequence typing provided by [mlst](https://github.com/tseemann/mlst#mlst). The mlst software incorporates components of the [PubMLST](https://pubmlst.org/) database.*
+*Table `r tableno()`: Table of MLST (Multi Locus Sequence Typing) results. Called with [mlst](https://github.com/tseemann/mlst#mlst) which incorporates components of the [PubMLST](https://pubmlst.org/) database.*
 
 #### How to customize the mlst-analysis
 
 Mlst automatically detects the best scheme for typing, one sample at a time. If you don't agree with the automatic detection, you can enforce a single scheme across all samples by (re)running assemblycomparator2 with the trailing command-line argument: `--config mlst_scheme=hpylori -R mlst report`. Replace *hpylori* with the mlst scheme you wish to use. You can find a full list of available schemes in the output directory in "mlst/mlst_schemes.txt".
 
 ## Resistance
+
+The resistance typing results below are all called with [Abricate](https://github.com/tseemann/abricate#abricate), using different underlying databases:
 
 ### NCBI Resistance
 
@@ -399,7 +401,7 @@ try({
 })
 ```
 
-*Table `r tableno()`: Table of NCBI Resistance gene calls. Resistance genes provided by [NCBI AMRFinder](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6811410/) via [Abricate](https://github.com/tseemann/abricate#abricate).*
+*Table `r tableno()`: Table of NCBI Resistance gene calls called with [NCBI AMRFinder](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6811410/).*
 
 ### Card Resistance genes
 
@@ -424,7 +426,7 @@ try({
 })
 ```
 
-*Table `r tableno()`: Table of Card Resistance gene calls. Resistance genes provided by The Comprehensive Antibiotic Resistance Database ([Card](https://card.mcmaster.ca/)) via abricate.*
+*Table `r tableno()`: Table of [Card](https://card.mcmaster.ca/) (Comprehensive Antibiotic Resistance Database) results*
 
 ### Plasmidfinder calls
 
@@ -450,7 +452,7 @@ try({
 })
 ```
 
-*Table `r tableno()`: Table of PlasmidFinder plasmid calls. Note that plasmidfinder uses short substrings for recognizing the plasmids, and not necessarily longer sequences i.e. complete plasmid sequences. Plasmid calls provided by [PlasmidFinder](https://cge.cbs.dtu.dk/services/PlasmidFinder/) via abricate.*
+*Table `r tableno()`: Table of [PlasmidFinder](https://cge.cbs.dtu.dk/services/PlasmidFinder/) plasmid calls. Note that plasmidfinder uses short substrings for recognizing the plasmids, and not necessarily longer sequences i.e. complete plasmid sequences.*
 
 ### VFDB calls
 
@@ -475,7 +477,74 @@ try({
 })
 ```
 
-*Table `r tableno()`: Table of VFDB virulence factor calls. Virulence factor calls provided by The virulence factor database ([VFDB](http://www.mgc.ac.cn/VFs/main.htm)) via abricate: An integrated and comprehensive online resource for curating information about virulence factors of bacterial pathogens.*
+*Table `r tableno()`: Table of [VFDB](http://www.mgc.ac.cn/VFs/main.htm)virulence factor calls: "An integrated and comprehensive online resource for curating information about virulence factors of bacterial pathogens".*
+
+
+## Functional Enrichment
+
+[KEGG Orthology](https://www.genome.jp/kegg/ko.html) is a curated database of most known orthologous genes. The ortholog grouping makes it possible to transfer knowledge about pathways and their genes, from one set of species to another. In this analysis we ask the question; whether more genes from a specific pathway are present in the genome compared to what we expect by chance. The p-value tells us what the probability is of observing the present genes from each pathway, given that the genomes are randomly generated. The p-values are then corrected for multiple testing using the Benjamini-Hochberg method. Only significant results are shown in the figure.
+
+The pathways can be looked up at [KEGG Pathway](https://www.genome.jp/kegg/pathway.html).
+
+
+
+
+```{r echo=FALSE, message=F, warning=F}
+sample_pathway_enrichment_analysis_file = "collected_results/sample_pathway_enrichment_analysis.tsv"
+
+try({
+    if (file.exists(sample_pathway_enrichment_analysis_file)) {
+        sample_pathway_enrichment_analysis_df = read_tsv(sample_pathway_enrichment_analysis_file) %>% 
+            separate(generatio, into = c("k", "n"), sep = "/", remove = F) %>% 
+            separate(bgratio, into = c("M", "N"), sep = "/", remove = F) %>% 
+            mutate_at(c("k", "n", "M", "N"), as.numeric) %>% 
+            mutate(
+                sample = paste0(sample, " {", n, "}"),
+                description = paste0(description, " [", M, "]")
+                #myratio = paste0((k/M) %>% signif(1), "%")
+            )
+      } else {
+    paste("Warning: The file", sample_pathway_enrichment_analysis_file, "is not accessible.")
+
+    }
+})
+
+```
+
+```{r echo=FALSE, message=F, warning=F}
+# This chunk is needed for setting the size of the following plot.
+try({
+    fig_height = max(4, (sample_pathway_enrichment_analysis_df$description %>% unique() %>% length()) * 0.4)
+    
+    fig_width = max(8, (metadata_df$sample %>% length()) * 1)
+
+    
+    
+    
+    knitr::opts_chunk$set(fig.height = fig_height,
+                          fig.width = fig_width)
+})
+```
+
+
+```{r echo=FALSE, message=F, warning=F}
+# It shouldn't be necessary to use the metadata_translate table, as the factors should already be ordered alphabetically.
+try({
+    sample_pathway_enrichment_analysis_df %>% 
+        ggplot(aes(sample, description, fill = `p.adjust`, label = k)) +
+        geom_tile() + 
+        geom_text(color = "grey95", size = 3) +
+        labs(y = "KEGG pathway", fill = "adjusted\np-value") + 
+        theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+})
+
+
+```
+
+*Fig. `r figno()`: KEGG pathways which are significantly enriched for in each full genome. The darker the color, the more significant the enrichment is. The color of each tile shows the fdr-adjusted p-value which has been adjusted for each sample independently. The text on the tile denotes the number of genes that the genome contains from the listed pathway. The numbers in the square bracket next to each pathway denotes the total size of that pathway. The curly braces next to the sample names denote the number of genes in the genome that are contained in the complete KEGG orthology database. Results are obtained using [clusterProfiler](https://github.com/YuLab-SMU/clusterProfiler). The background is defined as the full database of 13224 genes.*
+
+
+
 
 ## Pan and Core genome
 
@@ -648,7 +717,8 @@ try({
 
 ## Mashtree phylogeny
 
-Mashtree is developed by Lee S. Katz and extends the minhash distance technique. If the core genome of the samples is small, absent, or otherwise not representative of the collection of assemblies you wish to compare, mashtree might be informative on the overall taxonomic clustering. Please be aware that the tree is not rooted.
+[Mashtree](https://github.com/lskatz/mashtree) extends on the minhash distance measure. Mashtree overcomes limitations of classical methods (like neighbor-joining, maximum-likelihood etc.) where the size of the core genome between all samples is limited. The plotted tree is not rooted.
+
 
 ```{r echo=FALSE, message=F, warning=F}
 # This chunk is needed for setting the size of the mashtree plot
@@ -696,4 +766,4 @@ try({
 
 ------------------------------------------------------------------------
 
-The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel) `version 2.1.1`
+The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel) `version 2.2.0`

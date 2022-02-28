@@ -1,3 +1,6 @@
+2.2.0
+- Sample pathway enrichment analysis with clusterProfiler which is integrated into the report.
+- Considering going away from singularity: Too much maintenance and too little return when it has to work with conda anyway. I haven't completely decided yet, but leaning strongly.
 
 2.1.1
 - Simple GC statistics added to output and report 
@@ -8,3 +11,7 @@
 
 2.0.0
 - Completely new system based on snakemake using both slurm and singularity
+
+
+REMINDER
+Remember to change both the snakefile version and the genomes_to_report_v2.Rmd version.

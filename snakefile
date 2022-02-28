@@ -1,7 +1,7 @@
-
+  
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
 
-__version__ = "v2.1.1"
+__version__ = "v2.2.0"
 __author__ = 'Oliver Kjærlund Hansen & Carl M. Kobel'
 
 import os
@@ -26,6 +26,7 @@ print("        ██╔══██║╚════██║╚════�
 print("        ██║  ██║███████║███████║╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗ ")
 print("        ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝ ")
 print("                      A.K.A. assemblycomparator2                     ")
+print("                github.com/cmkobel/assemblycomparator2               ")
 print()
 print(f"            batch_title:            {batch_title}")
 print(f"            roary_blastp_identity:  {config['roary_blastp_identity']} (default 95)")
@@ -113,8 +114,9 @@ rule all:
                    "{out_base}/assembly-stats/assembly-stats.tsv", \
                    "{out_base}/collected_results/sequence_lengths.tsv", \
                    "{out_base}/collected_results/GC_summary.tsv", \
-                   "{out_base}/collected_results/prokka_summaries.txt", \
+                   "{out_base}/collected_results/prokka_summarized.txt", \
                    "{out_base}/collected_results/kraken2_reports.tsv", \
+                   "{out_base}/collected_results/sample_pathway_enrichment_analysis.tsv", \
                    "{out_base}/roary/summary_statistics.txt", \
                    "{out_base}/abricate/card_detailed.tsv", \
                    "{out_base}/mashtree/mashtree.newick", \
@@ -213,7 +215,10 @@ rule prokka:
     output:
         gff = "{out_base}/samples/{sample}/prokka/{sample}.gff",
         log = "{out_base}/samples/{sample}/prokka/{sample}.log",
-        summary = "{out_base}/samples/{sample}/prokka/{sample}_summary.txt"
+        tsv = "{out_base}/samples/{sample}/prokka/{sample}.tsv",
+        summarized_txt = "{out_base}/samples/{sample}/prokka/{sample}_summary.txt",
+        labelled_tsv = "{out_base}/samples/{sample}/prokka/{sample}_labelled.tsv"
+
     container: "docker://staphb/prokka"
     conda: "conda_envs/prokka.yaml"
     threads: 4
@@ -231,7 +236,11 @@ rule prokka:
             | grep -E "tRNAs|rRNAs|CRISPRs|CDS|unique" \
             | cut -d" " -f 3,4 \
             | awk -v sam={wildcards.sample} '{{ print sam " " $0 }}' \
-            >> {output.summary}
+            >> {output.summarized_txt} # jeg undrer mig over hvorfor den har to gt question mark
+
+        cat {output.tsv} \
+            | awk -v sam={wildcards.sample} '{{ print $0 "\t" sam }}' \
+            > {output.labelled_tsv}
 
     """
 
@@ -322,19 +331,61 @@ rule collect_gc_summary:
 
 
 rule collect_prokka:
-    input: expand("{out_base}/samples/{sample}/prokka/{sample}_summary.txt", out_base = out_base_var, sample = df["sample"]),
-    output: "{out_base}/collected_results/prokka_summaries.txt",
+    input:
+        summarized_txt = expand("{out_base}/samples/{sample}/prokka/{sample}_summary.txt", out_base = out_base_var, sample = df["sample"]),
+        labelled_tsv = expand("{out_base}/samples/{sample}/prokka/{sample}_labelled.tsv", out_base = out_base_var, sample = df["sample"]),
+    output: 
+        summarized_txt = "{out_base}/collected_results/prokka_summarized.txt",
+        labelled_tsv = "{out_base}/collected_results/prokka_labelled.tsv",
     shell: """
 
         # prokka
         echo "sample value name" \
-        > {output}
+        > {output.summarized_txt}
 
-        cat {input} >> {output}
+        cat {input.summarized_txt} >> {output.summarized_txt}
+
+
+        cat {input.labelled_tsv} > {output.labelled_tsv}
+
+
+
+
 
     """
 
 
+
+# rule collect_prokka_genes:
+#     input: expand("{out_base}/samples/{sample}/prokka/{sample}.tsv", out_base = out_base_var, sample = df["sample"]),
+#     output: "{out_base}/collected_results/prokka_genes.",
+#     shell: """
+
+#         # prokka
+#         echo "sample value name" \
+#         > {output}
+
+#         cat {input} >> {output}
+
+#     """
+
+
+
+
+
+
+rule sample_pathway_enrichment_analysis:
+    input: "{out_base}/collected_results/prokka_labelled.tsv"
+    output: "{out_base}/collected_results/sample_pathway_enrichment_analysis.tsv"
+    conda: "conda_envs/r-clusterProfiler.yaml"
+    shell: """
+
+
+        Rscript $ASSCOM2_BASE/scripts/sample_pathway_enrichment_analysis.R $ASSCOM2_BASE/assets/ko {input} \
+            > {output}
+
+
+    """
 
 
 
