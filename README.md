@@ -26,6 +26,8 @@ assemblycomparator2 will then create a sub-directory containing a plethora of an
   
     `assemblycomparator2 &`
     
+##### A bit more advanced controls 
+    
   - Execute all jobs up until (inclusive of) a specific job in the job graph:
     
     `assemblycomparator2 --until mlst`
