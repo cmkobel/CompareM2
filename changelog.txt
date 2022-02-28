@@ -13,5 +13,5 @@
 - Completely new system based on snakemake using both slurm and singularity
 
 
-INFO
+REMINDER
 Remember to change both the snakefile version and the genomes_to_report_v2.Rmd version.

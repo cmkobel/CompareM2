@@ -382,7 +382,7 @@ rule sample_pathway_enrichment_analysis:
 
 
         Rscript $ASSCOM2_BASE/scripts/sample_pathway_enrichment_analysis.R $ASSCOM2_BASE/assets/ko {input} \
-        > {output} 2> {output}.fail || echo what
+            > {output}
 
 
     """

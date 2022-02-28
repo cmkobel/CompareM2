@@ -18,7 +18,7 @@ if (F) {
 
 
 message("these are the args: ", args)
-message("this is ko_file:", ko_file)
+message("this is ko_file: ", ko_file)
 message("this is annotation_file: ", annotation_file)
 
 

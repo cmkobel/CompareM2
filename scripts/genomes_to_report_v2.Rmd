@@ -26,7 +26,7 @@ editor_options:
 # Depends on a local run of the tests/E.faecium_plasmids assemblies.
 # setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
 
-setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
+#setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
 
 
 
@@ -482,48 +482,67 @@ try({
 
 ## Functional Enrichment
 
-KEGG Orthology is a curated database of most known orthologous genes. The ortholog grouping makes it possible to apply knowledge about genes from one species to other species. In this analysis we ask the question; whether more genes from a specific pathway are present compared to what we expect by chance. The p-value tells us what the probability is, of observing the present genes from each pathway, given that the genomes are randomly generated. The p-values are corrected for false discovery rate for each sample. Only significant results are shown.
+[KEGG Orthology](https://www.genome.jp/kegg/ko.html) is a curated database of most known orthologous genes. The ortholog grouping makes it possible to transfer knowledge about pathways and their genes, from one set of species to another. In this analysis we ask the question; whether more genes from a specific pathway are present in the genome compared to what we expect by chance. The p-value tells us what the probability is of observing the present genes from each pathway, given that the genomes are randomly generated. The p-values are then corrected for multiple testing using the Benjamini-Hochberg method. Only significant results are shown in the figure.
 
 The pathways can be looked up at [KEGG Pathway](https://www.genome.jp/kegg/pathway.html).
 
 
 
 
-
-
-```{r}
-
+```{r echo=FALSE, message=F, warning=F}
 sample_pathway_enrichment_analysis_file = "collected_results/sample_pathway_enrichment_analysis.tsv"
-sample_pathway_enrichment_analysis_df = read_tsv(sample_pathway_enrichment_analysis_file)
+
+try({
+    if (file.exists(sample_pathway_enrichment_analysis_file)) {
+        sample_pathway_enrichment_analysis_df = read_tsv(sample_pathway_enrichment_analysis_file) %>% 
+            separate(generatio, into = c("k", "n"), sep = "/", remove = F) %>% 
+            separate(bgratio, into = c("M", "N"), sep = "/", remove = F) %>% 
+            mutate_at(c("k", "n", "M", "N"), as.numeric) %>% 
+            mutate(
+                sample = paste0(sample, " {", n, "}"),
+                description = paste0(description, " [", M, "]")
+                #myratio = paste0((k/M) %>% signif(1), "%")
+            )
+      } else {
+    paste("Warning: The file", sample_pathway_enrichment_analysis_file, "is not accessible.")
+
+    }
+})
 
 ```
-
-
 
 ```{r echo=FALSE, message=F, warning=F}
 # This chunk is needed for setting the size of the following plot.
 try({
-    fig_height = max(4,
-                     (sample_pathway_enrichment_analysis_df$description %>% unique() %>% length()) * 0.4)
+    fig_height = max(4, (sample_pathway_enrichment_analysis_df$description %>% unique() %>% length()) * 0.4)
+    
+    fig_width = max(8, (metadata_df$sample %>% length()) * 1)
+
+    
+    
     
     knitr::opts_chunk$set(fig.height = fig_height,
-                          fig.width = 10)
+                          fig.width = fig_width)
 })
 ```
 
 
-```{r}
+```{r echo=FALSE, message=F, warning=F}
 # It shouldn't be necessary to use the metadata_translate table, as the factors should already be ordered alphabetically.
-sample_pathway_enrichment_analysis_df %>% 
-    ggplot(aes(sample, description, fill = `p.adjust`, label = generatio)) +
-    geom_tile() + 
-    geom_text(color = "white", size = 3) +
-    labs(y = "KEGG pathway") + 
-    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+try({
+    sample_pathway_enrichment_analysis_df %>% 
+        ggplot(aes(sample, description, fill = `p.adjust`, label = k)) +
+        geom_tile() + 
+        geom_text(color = "grey95", size = 3) +
+        labs(y = "KEGG pathway", fill = "adjusted\np-value") + 
+        theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+})
 
 
 ```
-*Fig. `r figno()`: KEGG pathways which are significantly enriched for in each full genome. The p-values are fdr-adjusted for each sample independently. The text on the tiles (k/n) are the clusterProfiler geneRatios: k is the overlap between the genes in the genome and the genes in the pathway. n is the overlap between genes in the genome and all genes in the collected pathways of the KEGG database. Results are obtained using [clusterProfiler](https://github.com/YuLab-SMU/clusterProfiler).*
+
+*Fig. `r figno()`: KEGG pathways which are significantly enriched for in each full genome. The darker the color, the more significant the enrichment is. The color of each tile shows the fdr-adjusted p-value which has been adjusted for each sample independently. The text on the tile denotes the number of genes that the genome contains from the listed pathway. The numbers in the square bracket next to each pathway denotes the total size of that pathway. The curly braces next to the sample names denote the number of genes in the genome that are contained in the complete KEGG orthology database. Results are obtained using [clusterProfiler](https://github.com/YuLab-SMU/clusterProfiler). The background is defined as the full database of 13224 genes.*
+
 
 
 
