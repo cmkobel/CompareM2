@@ -1,16 +1,9 @@
 Sys.setenv(LANG = "en") # Enforce english error messages on all systems.
-message("loading libs..")
+message("loading tidyverse ..")
 library(tidyverse)
-message("2 ..")
+message("load clusterProfiler..")
 library(clusterProfiler) # Possible bug: I'm a bit worried that the download will fail on HPC systems. Not all HPC environments (i.e. singularity) allow internet access.. But: If it fails downloading, it can maybe use internal data?
 
-
-# This is a fucked up hack. Does not seem like a good solution.
-# if (!require("BiocManager", quietly = TRUE))
-#     install.packages("BiocManager")
-# 
-# BiocManager::install("clusterProfiler")
-# message("done")
 
 
 args = commandArgs(trailingOnly = TRUE)
@@ -129,14 +122,14 @@ for (sample in names(signatures)) {
 
 # Write analysis to disk
 write("Writing enrichment analysis to STDOUT", stderr())
-sample_pathway_enrichment_analysis%>% 
+sample_pathway_enrichment_analysis %>% 
     format_tsv() %>%
     cat()
 
 
 
 # II. Perform set operations so as to showcase unique genes and their pathways in each sample
-
+# I don't know what really makes sense. I think what I want to know is, which features are on the same plasmid. So I need to read the full gff file from prokka so I can put in the plasmid names. Maybe not something that should be visualized in the report, but it could be nice as a supplemental table.
 
 
 

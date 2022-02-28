@@ -26,7 +26,7 @@ editor_options:
 # Depends on a local run of the tests/E.faecium_plasmids assemblies.
 # setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
 
-#setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
+setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
 
 
 
@@ -270,7 +270,7 @@ try({
 })
 ```
 
-*Table `r tableno()`: Overview of the number of different gene types called by Prokka. Computed using the [Prokka](https://github.com/tseemann/prokka) genome annotator.*
+*Table `r tableno()`: Overview of the number of different gene types. Called using the [Prokka](https://github.com/tseemann/prokka) genome annotator.*
 
 ## Species
 
@@ -318,7 +318,7 @@ try({
 })
 ```
 
-*Table `r tableno()`: Listing of the 3 highest species hits for each sample. Species identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2). The percentages indicate the proportion of sequences (equivalent to fasta records) mapping to the given taxonomic level.*
+*Table `r tableno()`: Listing of the 3 highest species hits for each sample. Species identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2). The percentages indicate the proportion of sequences (equivalent to fasta records) mapping to the species.*
 
 `r if (file.exists(kraken2_file)) {paste("Using the", Sys.getenv("ASSCOM2_KRAKEN2_DB"), "database")}`.
 
@@ -368,13 +368,15 @@ try({
 })
 ```
 
-*Table `r tableno()`: Table of MLST results. Multi locus sequence typing provided by [mlst](https://github.com/tseemann/mlst#mlst). The mlst software incorporates components of the [PubMLST](https://pubmlst.org/) database.*
+*Table `r tableno()`: Table of MLST (Multi Locus Sequence Typing) results. Called with [mlst](https://github.com/tseemann/mlst#mlst) which incorporates components of the [PubMLST](https://pubmlst.org/) database.*
 
 #### How to customize the mlst-analysis
 
 Mlst automatically detects the best scheme for typing, one sample at a time. If you don't agree with the automatic detection, you can enforce a single scheme across all samples by (re)running assemblycomparator2 with the trailing command-line argument: `--config mlst_scheme=hpylori -R mlst report`. Replace *hpylori* with the mlst scheme you wish to use. You can find a full list of available schemes in the output directory in "mlst/mlst_schemes.txt".
 
 ## Resistance
+
+The resistance typing results below are all called with [Abricate](https://github.com/tseemann/abricate#abricate), using different underlying databases:
 
 ### NCBI Resistance
 
@@ -399,7 +401,7 @@ try({
 })
 ```
 
-*Table `r tableno()`: Table of NCBI Resistance gene calls. Resistance genes provided by [NCBI AMRFinder](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6811410/) via [Abricate](https://github.com/tseemann/abricate#abricate).*
+*Table `r tableno()`: Table of NCBI Resistance gene calls called with [NCBI AMRFinder](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6811410/).*
 
 ### Card Resistance genes
 
@@ -424,7 +426,7 @@ try({
 })
 ```
 
-*Table `r tableno()`: Table of Card Resistance gene calls. Resistance genes provided by The Comprehensive Antibiotic Resistance Database ([Card](https://card.mcmaster.ca/)) via abricate.*
+*Table `r tableno()`: Table of [Card](https://card.mcmaster.ca/) (Comprehensive Antibiotic Resistance Database) results*
 
 ### Plasmidfinder calls
 
@@ -450,7 +452,7 @@ try({
 })
 ```
 
-*Table `r tableno()`: Table of PlasmidFinder plasmid calls. Note that plasmidfinder uses short substrings for recognizing the plasmids, and not necessarily longer sequences i.e. complete plasmid sequences. Plasmid calls provided by [PlasmidFinder](https://cge.cbs.dtu.dk/services/PlasmidFinder/) via abricate.*
+*Table `r tableno()`: Table of [PlasmidFinder](https://cge.cbs.dtu.dk/services/PlasmidFinder/) plasmid calls. Note that plasmidfinder uses short substrings for recognizing the plasmids, and not necessarily longer sequences i.e. complete plasmid sequences.*
 
 ### VFDB calls
 
@@ -475,7 +477,55 @@ try({
 })
 ```
 
-*Table `r tableno()`: Table of VFDB virulence factor calls. Virulence factor calls provided by The virulence factor database ([VFDB](http://www.mgc.ac.cn/VFs/main.htm)) via abricate: An integrated and comprehensive online resource for curating information about virulence factors of bacterial pathogens.*
+*Table `r tableno()`: Table of [VFDB](http://www.mgc.ac.cn/VFs/main.htm)virulence factor calls: "An integrated and comprehensive online resource for curating information about virulence factors of bacterial pathogens".*
+
+
+## Functional Enrichment
+
+KEGG Orthology is a curated database of most known orthologous genes. The ortholog grouping makes it possible to apply knowledge about genes from one species to other species. In this analysis we ask the question; whether more genes from a specific pathway are present compared to what we expect by chance. The p-value tells us what the probability is, of observing the present genes from each pathway, given that the genomes are randomly generated. The p-values are corrected for false discovery rate for each sample. Only significant results are shown.
+
+The pathways can be looked up at [KEGG Pathway](https://www.genome.jp/kegg/pathway.html).
+
+
+
+
+
+
+```{r}
+
+sample_pathway_enrichment_analysis_file = "collected_results/sample_pathway_enrichment_analysis.tsv"
+sample_pathway_enrichment_analysis_df = read_tsv(sample_pathway_enrichment_analysis_file)
+
+```
+
+
+
+```{r echo=FALSE, message=F, warning=F}
+# This chunk is needed for setting the size of the following plot.
+try({
+    fig_height = max(4,
+                     (sample_pathway_enrichment_analysis_df$description %>% unique() %>% length()) * 0.4)
+    
+    knitr::opts_chunk$set(fig.height = fig_height,
+                          fig.width = 10)
+})
+```
+
+
+```{r}
+# It shouldn't be necessary to use the metadata_translate table, as the factors should already be ordered alphabetically.
+sample_pathway_enrichment_analysis_df %>% 
+    ggplot(aes(sample, description, fill = `p.adjust`, label = generatio)) +
+    geom_tile() + 
+    geom_text(color = "white", size = 3) +
+    labs(y = "KEGG pathway") + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+
+
+```
+*Fig. `r figno()`: KEGG pathways which are significantly enriched for in each full genome. The p-values are fdr-adjusted for each sample independently. The text on the tiles (k/n) are the clusterProfiler geneRatios: k is the overlap between the genes in the genome and the genes in the pathway. n is the overlap between genes in the genome and all genes in the collected pathways of the KEGG database. Results are obtained using [clusterProfiler](https://github.com/YuLab-SMU/clusterProfiler).*
+
+
 
 ## Pan and Core genome
 
@@ -648,7 +698,8 @@ try({
 
 ## Mashtree phylogeny
 
-Mashtree is developed by Lee S. Katz and extends the minhash distance technique. If the core genome of the samples is small, absent, or otherwise not representative of the collection of assemblies you wish to compare, mashtree might be informative on the overall taxonomic clustering. Please be aware that the tree is not rooted.
+[Mashtree](https://github.com/lskatz/mashtree) extends on the minhash distance measure. Mashtree overcomes limitations of classical methods (like neighbor-joining, maximum-likelihood etc.) where the size of the core genome between all samples is limited. The plotted tree is not rooted.
+
 
 ```{r echo=FALSE, message=F, warning=F}
 # This chunk is needed for setting the size of the mashtree plot
@@ -696,4 +747,4 @@ try({
 
 ------------------------------------------------------------------------
 
-The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel) `version 2.1.1`
+The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel) `version 2.1.2`
