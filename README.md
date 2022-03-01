@@ -59,6 +59,7 @@ assemblycomparator2 will then create a sub-directory containing a plethora of an
   - [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
   - [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)
   - [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) (generic assembly statistics)
+  - [clusterProfiler KEGG](https://yulab-smu.top/biomedical-knowledge-mining-book/clusterprofiler-kegg.html) (pathway enrichment analysis)
 
 
 ### For each group
