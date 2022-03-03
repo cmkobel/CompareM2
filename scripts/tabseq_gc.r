@@ -19,7 +19,7 @@ message("this is the genome: ", genome_fasta)
 
 
 message("sourcing tiny tabseq")
-source(tiny_tabseq, )
+source(tiny_tabseq)
 
 
 if (development) {

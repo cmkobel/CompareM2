@@ -406,6 +406,8 @@ rule roary:
     conda: "conda_envs/roary.yaml"
     shell: """
 
+        # Silence parallel's citation pester:
+        echo "will cite" | parallel --citation > /dev/null 2> /dev/null
 
         # Roary is confused by the way snakemake creates directories ahead of time.
         # So I will delete it manually here before calling roary.
