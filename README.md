@@ -113,7 +113,7 @@ It isn't a must; but we highly recommend using mamba instead of conda. If you do
  * You have to decide whether you want to use Singularity (recommended if possible) or Conda for package management.
 
    
-### 2. Install Alias 
+### 2. Install the alias 
 
 Select A, B or C depending on whether you want to install on a slurm-enabled HPC (A, B) or a local system without slurm (C).
 
