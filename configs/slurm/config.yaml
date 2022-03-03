@@ -2,6 +2,7 @@
 cores: 2048
 # [--local-cores N] 
 #configfile: "/home/cmkobel/assemblycomparator2/configs/workflow.yaml"
+jobs: 200
 
 # [--directory DIR] 
 keep-going: true 
