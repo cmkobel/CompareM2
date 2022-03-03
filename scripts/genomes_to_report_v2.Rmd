@@ -477,12 +477,12 @@ try({
 })
 ```
 
-*Table `r tableno()`: Table of [VFDB](http://www.mgc.ac.cn/VFs/main.htm)virulence factor calls: "An integrated and comprehensive online resource for curating information about virulence factors of bacterial pathogens".*
+*Table `r tableno()`: Table of [VFDB](http://www.mgc.ac.cn/VFs/main.htm) virulence factor calls: "An integrated and comprehensive online resource for curating information about virulence factors of bacterial pathogens".*
 
 
 ## Functional Enrichment
 
-[KEGG Orthology](https://www.genome.jp/kegg/ko.html) is a curated database of most known orthologous genes. The ortholog grouping makes it possible to transfer knowledge about pathways and their genes, from one set of species to another. In this analysis we ask the question; whether more genes from a specific pathway are present in the genome compared to what we expect by chance. The p-value tells us what the probability is of observing the present genes from each pathway, given that the genomes are randomly generated. The p-values are then corrected for multiple testing using the Benjamini-Hochberg method. Only significant results are shown in the figure.
+[KEGG Orthology](https://www.genome.jp/kegg/ko.html) is a curated database of most known orthologous genes. The ortholog grouping makes it possible to transfer knowledge about pathways and their genes, from one set of species to another. In this analysis we ask the question; whether more genes from a specific pathway are present in the genome compared to what we expect by chance. The p-value tells us what the probability is of observing the present genes from each pathway, given that the genomes are randomly generated. The p-values are then corrected for multiple testing using the Benjamini-Hochberg method. Only statistically significant results are shown in the figure.
 
 The pathways can be looked up at [KEGG Pathway](https://www.genome.jp/kegg/pathway.html).
 
