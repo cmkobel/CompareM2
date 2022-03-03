@@ -123,6 +123,7 @@ Select A, B or C depending on whether you want to install on a slurm-enabled HPC
            --profile ${ASSCOM2_BASE}/configs/slurm/ \
            --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml \
            --use-conda \
+           --conda-frontend mamba \
            --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
 
    # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
@@ -149,6 +150,7 @@ Select A, B or C depending on whether you want to install on a slurm-enabled HPC
        snakemake --snakefile ${ASSCOM2_BASE}/snakefile \
            --profile ${ASSCOM2_BASE}/configs/local/ \
            --use-conda \
+           --conda-frontend mamba \
            --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
    
    # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
