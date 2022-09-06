@@ -117,7 +117,7 @@ It isn't a must; but we highly recommend using mamba instead of conda. If you do
 
 Select A, B or C depending on whether you want to install on a slurm-enabled HPC (A, B) or a local system without slurm (C).
 
-#### A) For <ins>HPCs</ins> with Slurm using <ins>Conda</ins>
+#### Option A) For <ins>HPCs</ins> with Slurm using <ins>Conda</ins>
    ```
    # Main alias for running assemblycomparator2
    echo "alias assemblycomparator2='conda activate assemblycomparator2; \
@@ -133,7 +133,7 @@ Select A, B or C depending on whether you want to install on a slurm-enabled HPC
     
    ```
    
-#### B) For <ins>HPCs</ins> with Slurm using <ins>Singularity</ins>
+#### Option B) For <ins>HPCs</ins> with Slurm using <ins>Singularity</ins>
    ```
    # Main alias for running assemblycomparator2
    echo "alias assemblycomparator2='conda activate assemblycomparator2; \
@@ -145,7 +145,7 @@ Select A, B or C depending on whether you want to install on a slurm-enabled HPC
     
    ```
    
-#### C) For <ins>local</ins> setups using <ins>Conda</ins>
+#### Option C) For <ins>local</ins> setups using <ins>Conda</ins>
    ```
    # Main alias for running assemblycomparator2
    echo "alias assemblycomparator2='conda activate assemblycomparator2; \
