@@ -87,6 +87,11 @@ It isn't a must; but we highly recommend using mamba instead of conda. If you do
 
 ### 1. Preliminary Setup
 
+* We recommend that you use mamba instead of conda:
+   ```
+   conda install -n base -c conda-forge mamba
+   ```
+
 * Set the base directory for assemblycomparator2. You can change it to anything you'd like.
    ``` 
    ASSCOM2_BASE=~/assemblycomparator2
