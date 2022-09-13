@@ -1,3 +1,7 @@
+# In the hpc-conda-slurm instance, this file is pointed to indirectly with --profile
+# --profile /cluster/work/users/cmkobel/assemblycomparator2/configs/slurm/
+
+
 # [--snakefile FILE] 
 cores: 2048
 # [--local-cores N] 
@@ -14,14 +18,41 @@ rerun-incomplete: true
 # [--greediness GREEDINESS] 
 # [--runtime-profile FILE] 
 show-failed-logs: true
-drmaa: "
-    --mem={cluster.mem}
-    --cpus-per-task={cluster.cpus-per-task} 
-    --time={cluster.time} 
+#drmaa: "
+#    --mem={cluster.mem}
+#    --cpus-per-task={cluster.cpus-per-task} 
+#    --time={cluster.time} 
+#    --account={cluster.account}
+#    --error={cluster.error} 
+#    --output={cluster.output}
+#"
+
+
+cluster:
+  mkdir -p logs/{rule} &&
+  sbatch
+    --cpus-per-task={threads}
+    --mem-per-cpu={resources.mem_mb}
+    --job-name=smk-{rule}-{wildcards}
+    --output=logs/{rule}/{rule}-{wildcards}-%j.out
+    --time={cluster.time}
     --account={cluster.account}
-    --error={cluster.error} 
-    --output={cluster.output}
-"
+
+
+
+
+#cluster:
+#  mkdir -p logs/{rule} &&
+#  sbatch
+#    --partition={resources.partition}
+#    --qos={resources.qos}
+#    --cpus-per-task={threads}
+#    --mem={resources.mem_mb}
+#    --job-name=smk-{rule}-{wildcards}
+#    --output=logs/{rule}/{rule}-{wildcards}-%j.out
+#    --account=myaccount
+
+
 
 # This should be given as a cli argument
 #cluster-config: "/home/cmkobel/assemblycomparator2/configs/slurm/cluster.yaml" 

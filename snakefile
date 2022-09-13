@@ -127,6 +127,14 @@ rule all:
                   out_base = out_base_var, sample = df["sample"], batch_title = batch_title) # copy
 
 
+
+# Dummy test
+rule test:
+    output: "test_done.flag"
+    shell: """
+        sleep 5
+        touch {output}
+    """
   
 
 # Write the df table to the directory for later reference.
