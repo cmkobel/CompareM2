@@ -1,7 +1,8 @@
 # In the hpc-conda-slurm instance, this file is pointed to indirectly with --cluster-config
 #--cluster-config /cluster/work/users/cmkobel/assemblycomparator2/configs/slurm/slurm.yaml
 # This feature is deprecated, and should be removed. https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration-deprecated
-# Even though it is deprecated, it still seems to be the best way of making it work.
+# Even though it is deprecated, it still seems to be the best way of making it work, otherwise I would have to give these arguments on the command line.
+
 
 # config file for the job execution on cluster 
 
@@ -10,16 +11,15 @@ __default__:
     account: "nn9864k"
     cpus-per-task: "{threads}"
     time: "12:00:00"
-    mem_mb: 16384 # {mem_mb}
+    mem_mb: 16384 
+
     output: "logs/{rule}-%j.out"
     #output: "logs/{rule}.out"
-
     error: "logs/{rule}-%j.err"
     #error: "logs/{rule}.err"
 
 kraken2:
     mem: 65536
-
 
 roary:
     mem: 32768

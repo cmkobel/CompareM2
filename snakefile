@@ -133,6 +133,7 @@ rule test:
     output: "test_done.flag"
     shell: """
         sleep 5
+        sleep 3600
         touch {output}
     """
   

@@ -11,6 +11,8 @@ jobs: 200
 # [--directory DIR] 
 keep-going: true 
 rerun-incomplete: true
+keep-incomplete: true
+
 # [--shadow-prefix DIR] 
 # [--reason] 
 # [--latency-wait SECONDS] 
@@ -31,12 +33,17 @@ show-failed-logs: true
 cluster:
   mkdir -p logs/{rule} &&
   sbatch
+    --parsable
     --cpus-per-task={threads}
     --mem-per-cpu={resources.mem_mb}
-    --job-name=smk-{rule}-{wildcards}
+    --job-name=ac2_{rule}_{wildcards} 
     --output=logs/{rule}/{rule}-{wildcards}-%j.out
     --time={cluster.time}
     --account={cluster.account}
+
+
+cluster-cancel: "scancel"
+#FileNotFoundError: [Errno 2] No such file or directory: 'scancel %j'
 
 
 
