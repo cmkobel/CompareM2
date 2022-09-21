@@ -110,8 +110,11 @@ It isn't a must; but we highly recommend using mamba instead of conda. If you do
    # git clone git@github.com:cmkobel/assemblycomparator2.git $ASSCOM2_BASE
    
    # Setup a asscom2 base environment which is used to call snakemake
-   cd $ASSCOM2_BASE && mamba env create -f environment.yaml 
-    
+   cd $ASSCOM2_BASE
+   mamba env create -f environment.yaml
+   mamba env create -f ac2_report.yaml
+   
+   
    ```
    
  * Set an alias that makes it easy to run assemblycomparator2 from anywhere in your filesystem
