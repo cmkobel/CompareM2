@@ -27,7 +27,7 @@ rule report:
 		cd output_asscom2
 		cp {base_variable}/scripts/genomes_to_report_v2.Rmd rmarkdown_template.rmd
 		ls
-		Rscript -e 'getwd(); rmarkdown::render("rmarkdown_template.rmd", "html_document")'
+		Rscript -e 'getwd(); rmarkdown::render("rmarkdown_template.rmd", "html_document")' 
 
 		mv rmarkdown_template.html report_{batch_title}.html
 		ls
