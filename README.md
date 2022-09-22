@@ -83,7 +83,6 @@ Below is a snakemake exported directed graph of the rules involved:
 Assemblycomparator2 needs Snakemake and the dependencies which can be needed for running on your specific setup. I.e. DRMAA for Slurm-mananged HPC's.
 You can either follow the [official Snakemake instructions](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html) or use our guide below.
 
-It isn't a must; but we highly recommend using mamba instead of conda. If you don't have mamba, it can be added to you conda installation with `$ conda install -c conda-forge mamba`
 
 ### 1. Preliminary Setup
 
@@ -112,7 +111,7 @@ It isn't a must; but we highly recommend using mamba instead of conda. If you do
    # Setup a asscom2 base environment which is used to call snakemake
    cd $ASSCOM2_BASE
    mamba env create -f environment.yaml
-   mamba env create -f ac2_report.yaml
+   mamba env create -f asscom2_report.yaml
    
    
    ```
