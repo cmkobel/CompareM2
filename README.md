@@ -111,7 +111,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    # Setup a asscom2 base environment which is used to call snakemake
    cd $ASSCOM2_BASE
    mamba env create -f environment.yaml
-   mamba env create -f asscom2_report.yaml
+   mamba env create -f env_asscom2_report.yaml
    
    
    ```
