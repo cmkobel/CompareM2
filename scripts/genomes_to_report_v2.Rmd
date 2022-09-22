@@ -330,7 +330,7 @@ try({
     #mlst <- read.table(file = 'mlst.tsv', sep = '\t', header = FALSE)
     mlst_file = "output_asscom2/mlst/mlst.tsv"
     if (file.exists(mlst_file)) {
-        mlst_df <- read_tsv("mlst/mlst.tsv", col_names = F)
+        mlst_df <- read_tsv("output_asscom2/mlst/mlst.tsv", col_names = F)
         
         # Generate a vector of allele columns if any exist.
         if( length(mlst_df) > 3) { 
