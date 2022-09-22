@@ -105,6 +105,10 @@ except:
 
 
 
+# The modification time of this file tells the report subpipeline whether it needs to run. Thus, void_report is called in the end of every successful rule.
+void_report = f"touch {out_base_var}/.asscom2_void_report.flag"
+
+
 
 
 
@@ -132,11 +136,13 @@ rule all:
 rule test:
     output: "test_done.flag"
     shell: """
-        sleep 5
-        sleep 3600
+        #sleep 5
         touch {output}
+
+        {void_report}
     """
   
+
 
 # Write the df table to the directory for later reference.
 rule metadata:
@@ -149,6 +155,8 @@ rule metadata:
     shell: """
 
         echo '''{params.dataframe}''' > {output}
+
+
 
     """
 
@@ -592,6 +600,43 @@ rule report:
         mv rmarkdown_template.html ../{output}
         
     """
+
+
+# # This rule calls an external pipeline in a subdirectory of ASSCOM2_BASE
+# rule call_report:
+#     conda: "conda_envs/r-markdown.yaml" # I assume this environment will be inherited down to the final rule report in the report_subpipeline?
+#     output: "{out_base}/new_report_{batch_title}.html"
+#     shell: """
+
+#     snakemake \
+#         --snakefile $ASSCOM2_BASE/report/snakefile \
+#         out_base=$pwd
+
+#     """
+
+
+
+# Call the report subpipeline
+report_call = f"""
+    mkdir -p logs; \
+    snakemake \
+        --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
+        --cores 4 \
+        --use-conda \
+        --config out_base=$(pwd) base_variable={base_variable} 2> logs/report.err.log 
+    """
+
+onsuccess:
+    print("onsuccess: calling report subpipeline ...")
+    shell(report_call)
+
+onerror:
+    print("onerror: calling report subpipeline ...")
+    shell(report_call)
+
+
+
+
 
 print("*/")
 
