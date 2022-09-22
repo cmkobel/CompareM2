@@ -6,10 +6,10 @@ It works by calling an alias that invokes the activation of a conda environment 
 
 It is a joint project between Department of Clinical Microbiology Odense at Odense Universityhospital, and Department of Clinical Microbiology Skejby, at Aarhus Universityhospital.
 
-Assemblycomparator performs a palette of analyses on your genomes, and compares them. The main results from these analyses are summarized in a html-report that can be easily be distributed.
+Assemblycomparator performs a palette of analyses on your genomes, and compares them. The main results from these analyses are summarized in a html-report that can be easily distributed.
 
 ## Usage
-Make a directory with the assembly-files you want to investigate with assemblycomparator2. 
+Open your terminal. Make a directory with the assembly-files you want to investigate with assemblycomparator2. 
 Go into that directory in the terminal, and run the command `assemblycomparator2_slurm` or `assemblycomparator2_local`. 
 assemblycomparator2 will then create a sub-directory containing a plethora of analyses. 
 
@@ -111,7 +111,6 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    # Setup a asscom2 base environment which is used to call snakemake
    cd $ASSCOM2_BASE
    mamba env create -f environment.yaml
-   mamba env create -f environment_asscom2_report.yaml
    
    
    ```
