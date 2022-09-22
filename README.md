@@ -1,4 +1,4 @@
-# assemblycomparator2
+# assemblycomparator2 🦠 📇
 
 Assemblycomparator is a genomes-to-report pipeline. It is a bit like nullarbor, but it takes in genomes (assemblies) instead of reads. 
 
