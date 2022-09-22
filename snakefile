@@ -120,7 +120,6 @@ rule all:
                    "{out_base}/collected_results/GC_summary.tsv", \
                    "{out_base}/collected_results/prokka_summarized.txt", \
                    "{out_base}/collected_results/kraken2_reports.tsv", \
-                   "{out_base}/collected_results/sample_pathway_enrichment_analysis.tsv", \
                    "{out_base}/roary/summary_statistics.txt", \
                    "{out_base}/abricate/card_detailed.tsv", \
                    "{out_base}/mashtree/mashtree.newick", \

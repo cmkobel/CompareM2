@@ -3,5 +3,6 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
+  - r=3.6
   - r-tidyverse
   - bioconductor-clusterprofiler
