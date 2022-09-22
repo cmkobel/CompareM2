@@ -115,6 +115,7 @@ void_report = f"touch {out_base_var}/.asscom2_void_report.flag"
 # --- Collect all targets. ------------------------------------------
 rule all:
     input: expand(["{out_base}/metadata.tsv", \
+                   "{out_base}/.install_report_environment_aot.flag", \
                    "{out_base}/assembly-stats/assembly-stats.tsv", \
                    "{out_base}/collected_results/sequence_lengths.tsv", \
                    "{out_base}/collected_results/GC_summary.tsv", \
@@ -156,7 +157,7 @@ rule metadata:
         echo '''{params.dataframe}''' > {output}
 
 
-
+        {void_report}
     """
 
 
@@ -174,7 +175,7 @@ rule copy:
 
         any2fasta "{input}" > {output}
 
-
+        {void_report}
     """
 
 
@@ -205,6 +206,7 @@ rule seqlen:
         bioawk -v sam={wildcards.sample} -c fastx '{{ print sam, $name, length($seq) }}' < {input} \
         > {output}
 
+        {void_report}
     """
 
 
@@ -221,6 +223,7 @@ rule gc_summary:
         > {output} 2> {output}.fail || echo what
 
 
+        {void_report}
     """
 
 
@@ -258,6 +261,8 @@ rule prokka:
             | awk -v sam={wildcards.sample} '{{ print $0 "\t" sam }}' \
             > {output.labelled_tsv}
 
+
+        {void_report}
     """
 
 
@@ -294,6 +299,7 @@ rule kraken2:
             echo "The ASSCOM2_KRAKEN2_DB variable is not set, and thus the kraken2 rule and its jobs will not be run. Consider using the scripts/set_up_kraken2.sh script for downloading and linking the latest kraken2 database."
         fi
 
+        {void_report}
     """
 
 
@@ -326,6 +332,7 @@ rule collect_seqlen:
 
         cat {input} >> {output} 
 
+        {void_report}
     """
 
 rule collect_gc_summary:
@@ -339,6 +346,7 @@ rule collect_gc_summary:
 
         cat {input} | grep -vE "^#" >> {output} # Append content without headers
 
+        {void_report}
     """
 
 
@@ -367,7 +375,7 @@ rule collect_prokka:
 
 
 
-
+        {void_report}
     """
 
 
@@ -400,7 +408,7 @@ rule sample_pathway_enrichment_analysis:
         Rscript $ASSCOM2_BASE/scripts/sample_pathway_enrichment_analysis.R $ASSCOM2_BASE/assets/ko {input} \
             > {output}
 
-
+        {void_report}
     """
 
 
@@ -438,7 +446,7 @@ rule roary:
 
         touch {output}
                 
-        
+        {void_report}
     """
 
 
@@ -451,6 +459,7 @@ rule snp_dists:
 
         snp-dists {input} > {output}
 
+        {void_report}
     """
 
 
@@ -464,7 +473,8 @@ rule assembly_stats:
     shell: """
         
         assembly-stats -t {input} > {output}
-    
+
+        {void_report}
     """
 
 
@@ -502,6 +512,7 @@ rule abricate:
         abricate --summary {output.vfdb_detailed} > {output.vfdb_sum}
 
 
+        {void_report}
     """
 
 
@@ -527,8 +538,7 @@ rule mlst:
 
         mlst --list > {params.list_}
 
-
-
+        {void_report}
     """
 
 
@@ -543,6 +553,7 @@ rule mashtree:
 
         mashtree --numcpus {threads} {input} > {output}
 
+        {void_report}
     """ 
 
 # TODO:
@@ -564,6 +575,7 @@ rule fasttree:
 
         touch {output}
 
+        {void_report}
     """
 
 
@@ -573,46 +585,48 @@ rule fetch_report_template:
 
         cp $ASSCOM2_BASE/scripts/genomes_to_report_v2.Rmd {output}
 
+        {void_report}
     """
 
 
-rule report:
-    input:
-        roary = "{out_base}/roary/roary_done.flag", # fasttree depends on roary, so the roary dependency is not necessary.
-        fasttree = "{out_base}/fasttree/fasttree.newick", 
-        snp_dists = "{out_base}/snp-dists/snp-dists.tsv",
-        rmarkdown_template = "{out_base}/rmarkdown_template.rmd"
-    #output: "{out_base}/report.html"
-    output: "{out_base}/report_{batch_title}.html"
-    params:
-        #markdown_template_rmd = "rmarkdown_template.rmd", # "genomes_to_report_v2.Rmd"
-        markdown_template_html = "genomes_to_report_v2.html"
-    container: "docker://cmkobel/assemblycomparator2_report"
+# rule report:
+#     input:
+#         roary = "{out_base}/roary/roary_done.flag", # fasttree depends on roary, so the roary dependency is not necessary.
+#         fasttree = "{out_base}/fasttree/fasttree.newick", 
+#         snp_dists = "{out_base}/snp-dists/snp-dists.tsv",
+#         rmarkdown_template = "{out_base}/rmarkdown_template.rmd"
+#     #output: "{out_base}/report.html"
+#     output: "{out_base}/report_{batch_title}.html"
+#     params:
+#         #markdown_template_rmd = "rmarkdown_template.rmd", # "genomes_to_report_v2.Rmd"
+#         markdown_template_html = "genomes_to_report_v2.html"
+#     container: "docker://cmkobel/assemblycomparator2_report"
+#     conda: "conda_envs/r-markdown.yaml"
+#     shell: """
+
+#         cd {wildcards.out_base}
+
+#         Rscript -e 'library(rmarkdown); rmarkdown::render("rmarkdown_template.rmd", "html_document")'
+
+#         rm rmarkdown_template.rmd
+#         mv rmarkdown_template.html ../{output}
+        
+#     """
+
+
+
+# This rule might seem silly, but it makes sure that the report environment is ready to rock when the report subpipeline eventually is run: This has two pros:
+#    1) The vastly faster mamba configuration in the asscom2 pipeline is used
+#    2) The conda/mamba debugging is taken care of, without having to wait for jobs to finish on fresh installations.
+# Since all snakemake conda environments are installed in $SNAKEMAKE_CONDA_PREFIX set to ${ASSCOM2_BASE}/conda_base, reuse is guaranteed.
+rule install_report_environment_aot:
+    output: touch("{out_base}/.install_report_environment_aot.flag")
     conda: "conda_envs/r-markdown.yaml"
     shell: """
 
-        cd {wildcards.out_base}
+        echo OK
 
-        Rscript -e 'library(rmarkdown); rmarkdown::render("rmarkdown_template.rmd", "html_document")'
-
-        rm rmarkdown_template.rmd
-        mv rmarkdown_template.html ../{output}
-        
     """
-
-
-# # This rule calls an external pipeline in a subdirectory of ASSCOM2_BASE
-# rule call_report:
-#     conda: "conda_envs/r-markdown.yaml" # I assume this environment will be inherited down to the final rule report in the report_subpipeline?
-#     output: "{out_base}/new_report_{batch_title}.html"
-#     shell: """
-
-#     snakemake \
-#         --snakefile $ASSCOM2_BASE/report/snakefile \
-#         out_base=$pwd
-
-#     """
-
 
 
 # Call the report subpipeline
@@ -622,7 +636,7 @@ report_call = f"""
         --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
         --cores 4 \
         --use-conda \
-        --config out_base=$(pwd) base_variable={base_variable} 2> logs/report.err.log 
+        --config out_base=$(pwd) base_variable={base_variable} batch_title={batch_title} 2> logs/report.err.log 
     """
 
 onsuccess:

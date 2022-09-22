@@ -1,10 +1,9 @@
-
-
-
+# This subpipeline checks if the void report flag (.asscom2_void_report.flag) file has been modified by a rule in the parent pipeline. If so, the report will be rendered.
 
 
 out_base = config['out_base']
 base_variable = config['base_variable']
+batch_title = config['batch_title']
 
 
 print('report subpipeline: out_base:', out_base)
@@ -18,8 +17,7 @@ rule all:
 # Runs locally, because why not.
 # Should only run if {out_base}/output_asscom2 is newer (modified) than the report
 rule report:
-	input: "{out_base}/output_asscom2/.asscom2_void_report.flag" # Means that rule report will only run when outputs have changed.
-	#conda: "r-markdown.yaml"
+	input: "{out_base}/output_asscom2/.asscom2_void_report.flag" # Means that rule report will only run when outputs from parent pipeline has changed.
 	conda: f"{base_variable}/conda_envs/r-markdown.yaml"
 	output: "{out_base}/report.html"
 	shell: """
