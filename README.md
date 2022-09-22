@@ -6,7 +6,7 @@ It works by calling an alias that invokes the activation of a conda environment 
 
 It is a joint project between Department of Clinical Microbiology Odense at Odense Universityhospital, and Department of Clinical Microbiology Skejby, at Aarhus Universityhospital.
 
-Assemblycomparator performs a palette of analyses on your genomes, and compares them. The main results from these analyses are summarized in a html-report that can be easily be distributed.
+Assemblycomparator performs a palette of analyses on your genomes, and compares them. The main results from these analyses are summarized in a html-report that can be easily distributed.
 
 ## Usage
 Make a directory with the assembly-files you want to investigate with assemblycomparator2. 
