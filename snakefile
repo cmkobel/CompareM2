@@ -634,6 +634,7 @@ rule install_report_environment_aot:
 report_call = f"""
     mkdir -p logs; \
     snakemake \
+        -p \
         --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
         --cores 4 \
         --use-conda \

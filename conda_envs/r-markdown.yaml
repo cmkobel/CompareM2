@@ -13,3 +13,4 @@ dependencies:
   - r-rmarkdown
   - r-phytools
   - r-ape
+  - zip
