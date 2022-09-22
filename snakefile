@@ -629,12 +629,18 @@ rule install_report_environment_aot:
 
     """
 
+# Just a dummy rule if you wanna force the report
+# assemblycomparator2 --until report
+rule report:
+    shell: """
+        {void_report}
+    """
+
 
 # Call the report subpipeline
 report_call = f"""
     mkdir -p logs; \
     snakemake \
-        -p \
         --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
         --cores 4 \
         --use-conda \
