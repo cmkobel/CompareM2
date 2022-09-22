@@ -1,0 +1,15 @@
+name: r
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+  - r
+dependencies:
+  - r-base
+  - r-essentials
+  - r-tidyverse
+  - r-dt
+  - r-prettydoc
+  - r-rmarkdown
+  - r-phytools
+  - r-ape
