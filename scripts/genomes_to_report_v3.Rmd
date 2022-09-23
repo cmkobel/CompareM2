@@ -1,0 +1,72 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+# Preamble
+library(tidyverse)
+# setwd("~/assemblycomparator2/tests/E._faecium_plasmids/")
+```
+
+
+```{r}
+# Register inputs
+file_prefix = "../assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/"
+possible_inputs = tribble(
+    ~section,       ~file,
+    "metadata",     paste0(file_prefix, "metadata.tsv"),
+    
+    "abricate",     paste0(file_prefix, "abricate/card_detailed.tsv"),
+    "abricate",     paste0(file_prefix, "abricate/card_summarized.tsv"),
+    
+    "fse",          paste0(file_prefix, "fse/data.txt"),
+)
+```
+
+
+```{r, echo=TRUE}
+# Mark if the files exist
+inputs_df = possible_inputs %>%
+    mutate(section = factor(section, levels = unique(section)), # keep the initial ordering of the sections.
+           exists = file.exists(file), 
+           basename = basename(file)) |> 
+    select(section, basename, exists, file)
+
+inputs_df
+
+```
+
+
+```{r}
+
+# Make a list that can easily be intuitively accessed with R base syntax
+inputs = inputs_df |> 
+    group_by(name = section) |> 
+    summarize(value = all(exists)) |> 
+    pivot_wider()
+
+inputs
+```
+
+`r if (inputs$metadata) { "" }`
+`r if (inputs$metadata) { "# Section Metadata" }`
+`r if (inputs$metadata) { "In this section the metadata will briefly be presented." }`
+
+
+
+
+
+`r if (inputs$abricate) { "" }`
+`r if (inputs$abricate) { "# Section Abricate" }`
+`r if (inputs$abricate) { "In this section we will present the output from abricate." }`
+
+
+
+`r if (inputs$fse) { "" }`
+`r if (inputs$fse) { "# Section Abricate" }`
+`r if (inputs$fse) { "In this section we will present the output from fse." }`
+
+
+
+
