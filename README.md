@@ -109,8 +109,7 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    # git clone git@github.com:cmkobel/assemblycomparator2.git $ASSCOM2_BASE
    
    # Setup a asscom2 base environment which is used to call snakemake
-   cd $ASSCOM2_BASE
-   mamba env create -f environment.yaml
+   cd $ASSCOM2_BASE && mamba env create -f environment.yaml
    
    
    ```
@@ -121,17 +120,14 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    
 ### 2. Install the alias 
 
-Select A, B or C depending on whether you want to install on a slurm-enabled HPC (A, B) or a local system without slurm (C).
+Select A or B depending on whether you want to install on a slurm-enabled HPC or a local system without slurm.
 
 #### Option A) For <ins>HPCs</ins> with Slurm using <ins>Conda</ins>
    ```
    # Main alias for running assemblycomparator2
    echo "alias assemblycomparator2='conda activate assemblycomparator2; \
        snakemake --snakefile ${ASSCOM2_BASE}/snakefile \
-           --profile ${ASSCOM2_BASE}/configs/slurm/ \
-           --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml \
-           --use-conda \
-           --conda-frontend mamba \
+           --profile ${ASSCOM2_BASE}/profile/slurm/ \
            --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
 
    # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
@@ -139,26 +135,13 @@ Select A, B or C depending on whether you want to install on a slurm-enabled HPC
     
    ```
    
-#### Option B) For <ins>HPCs</ins> with Slurm using <ins>Singularity</ins>
-   ```
-   # Main alias for running assemblycomparator2
-   echo "alias assemblycomparator2='conda activate assemblycomparator2; \
-       snakemake --snakefile ${ASSCOM2_BASE}/snakefile \
-           --profile ${ASSCOM2_BASE}/configs/slurm/ \
-           --cluster-config ${ASSCOM2_BASE}/configs/slurm/slurm.yaml \
-           --use-singularity --singularity-prefix ${ASSCOM2_BASE}/singularity_images \
-           --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
-    
-   ```
    
-#### Option C) For <ins>local</ins> setups using <ins>Conda</ins>
+#### Option B) For <ins>local</ins> setups using <ins>Conda</ins>
    ```
    # Main alias for running assemblycomparator2
    echo "alias assemblycomparator2='conda activate assemblycomparator2; \
        snakemake --snakefile ${ASSCOM2_BASE}/snakefile \
-           --profile ${ASSCOM2_BASE}/configs/local/ \
-           --use-conda \
-           --conda-frontend mamba \
+           --profile ${ASSCOM2_BASE}/profile/local/ \
            --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
    
    # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
