@@ -126,7 +126,6 @@ rule all:
                    "{out_base}/mashtree/mashtree.newick", \
                    "{out_base}/mlst/mlst.tsv", \
                    "{out_base}/fasttree/fasttree.newick", \
-                   "{out_base}/checkm/output", \
                    "{out_base}/snp-dists/snp-dists.tsv"], \
                   out_base = out_base_var, sample = df["sample"], batch_title = batch_title) # copy
 
