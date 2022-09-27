@@ -14,8 +14,7 @@ rule all:
 	input: expand("{out_base}/report_{batch_title}.html", out_base = out_base, batch_title = batch_title)
 
 
-# Runs locally, because why not.
-# Should only run if {out_base} is newer (modified) than the report
+# Runs on the front end because it is quick anyway, and it sucks having to wait for the job scheduler.
 rule report:
 	input: "{out_base}/.asscom2_void_report.flag" # This is the file being touched when void_report is called in every rule in the parent pipeline.
 	conda: f"{base_variable}/conda_envs/r-markdown.yaml"
@@ -45,32 +44,6 @@ rule report:
 
 	"""
 
-
-# rule report:
-#     input:
-#         roary = "{out_base}/roary/roary_done.flag", # fasttree depends on roary, so the roary dependency is not necessary.
-#         fasttree = "{out_base}/fasttree/fasttree.newick", 
-#         snp_dists = "{out_base}/snp-dists/snp-dists.tsv",
-#         rmarkdown_template = "{out_base}/rmarkdown_template.rmd"
-#     #output: "{out_base}/report.html"
-#     output: "{out_base}/report_{batch_title}.html"
-#     params:
-#         #markdown_template_rmd = "rmarkdown_template.rmd", # "genomes_to_report_v2.Rmd"
-#         markdown_template_html = "genomes_to_report_v2.html"
-#     container: "docker://cmkobel/assemblycomparator2_report"
-#     conda: "conda_envs/r-markdown.yaml"
-#     shell: """
-
-#         cd {wildcards.out_base}
-
-
-
-#         Rscript -e 'library(rmarkdown); rmarkdown::render("rmarkdown_template.rmd", "html_document")'
-
-#         rm rmarkdown_template.rmd
-#         mv rmarkdown_template.html ../{output}
-        
-#     """
 
 
 
