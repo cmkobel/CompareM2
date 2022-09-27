@@ -9,7 +9,7 @@ It is a joint project between Department of Clinical Microbiology Odense at Oden
 Assemblycomparator performs a palette of analyses on your genomes, and compares them. The main results from these analyses are summarized in a html-report that can be easily distributed.
 
 ## Usage
-Open your terminal. Make a directory with the assembly-files you want to investigate with assemblycomparator2. 
+Make a directory with the assembly-files you want to investigate with assemblycomparator2. 
 Go into that directory in the terminal, and run the command `assemblycomparator2_slurm` or `assemblycomparator2_local`. 
 assemblycomparator2 will then create a sub-directory containing a plethora of analyses. 
 
