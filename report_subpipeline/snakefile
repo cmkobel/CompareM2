@@ -17,7 +17,7 @@ rule all:
 # Runs locally, because why not.
 # Should only run if {out_base} is newer (modified) than the report
 rule report:
-	input: "{out_base}/.asscom2_void_report.flag" # Means that rule report will only run when outputs from parent pipeline has changed.
+	input: "{out_base}/.asscom2_void_report.flag" # This is the file being touched when void_report is called in every rule in the parent pipeline.
 	conda: f"{base_variable}/conda_envs/r-markdown.yaml"
 	output: "{out_base}/report_{batch_title}.html"
 	shell: """
