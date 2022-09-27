@@ -161,6 +161,7 @@ rule copy:
 
 
 # Write the df table to the directory for later reference.
+# Why isn't this a run: instead of a shell: ?
 rule metadata:
     input: expand("{out_base}/samples/{sample}/{sample}.fa", out_base = out_base_var, sample = df["sample"])
     output: "{out_base}/metadata.tsv"
