@@ -3,6 +3,8 @@ cores: all
 
 keep-going: true 
 rerun-incomplete: true
-
 show-failed-logs: true
-conda-frontend: conda
+
+use-conda: true
+conda-frontend: mamba
+
