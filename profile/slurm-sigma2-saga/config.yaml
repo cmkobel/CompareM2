@@ -43,19 +43,13 @@ cluster:
 
 default-resources:
   - mem_mb=1024
-  - disk_mb=1024
+  #- disk_mb=1024 # saga doesn't care
   - runtime='12:00:00'
   - tmpdir='$SCRATCH'
   - partition=normal
   
   
 
-set-resources:
-  - annotate:mem_mb=65536
-  - philosopher_database:mem_mb=65536 # use mem_mb, not mem
-  - msfragger:mem_mb=515537 # max on gdk is 515538
-  - msfragger:partition=bigmem
-  - ionquant:mem_mb=65536
 
 
 
