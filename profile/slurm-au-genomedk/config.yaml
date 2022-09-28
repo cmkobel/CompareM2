@@ -33,7 +33,8 @@ cluster:
     --error=logs/%j-{rule}.err.log
     --time={resources.runtime}
     --account=supacow
-    --partition={resources.partition}
+ 
+#--partition={resources.partition}
     
 
 
