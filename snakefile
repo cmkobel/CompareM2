@@ -466,8 +466,8 @@ rule roary:
     #conda: "envs/roary.yml"
     threads: 16
     resources:
-        mem_mb: 32768
-        runtime: "24:00:00" # Well, fuck me if this doesn't work on PBS
+        mem_mb = 32768,
+        runtime = "24:00:00" # Well, fuck me if this doesn't work on PBS
     container: "docker://sangerpathogens/roary"
     conda: "conda_envs/roary.yaml"
     shell: """
