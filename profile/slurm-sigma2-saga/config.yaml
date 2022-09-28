@@ -14,7 +14,8 @@ show-failed-logs: true
 # ---- Conda/Mamba ----
 use-conda: true
 conda-frontend: 'mamba'
-conda-prefix: "conda_base/"
+#conda-prefix: "conda_base/" # Much better to use the $SNAKEMAKE_CONDA_PREFIX instead, as all workflows can then use the same envs.
+
 
 
 
