@@ -311,7 +311,7 @@ rule kraken2:
     conda: "conda_envs/kraken2.yaml"
     threads: 4
     resources:
-        mem_mb: 65536
+        mem_mb = 65536
     shell: """
 
 
