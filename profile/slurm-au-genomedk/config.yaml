@@ -23,8 +23,6 @@ conda-frontend: 'mamba'
 cluster-cancel: "scancel"
 
 cluster:
-  echo "{resources.mem_mb}" &&
-  echo "{resources.partition}" &&
   mkdir -p logs/old/ &&
   sbatch
     --parsable
@@ -42,21 +40,19 @@ cluster:
 
 default-resources:
   - mem_mb=1024
-  - disk_mb=1024
+  #- disk_mb=1024 # genomedk doesn't care 
   - runtime='12:00:00'
   - tmpdir='$SCRATCH'
-  - partition=normal
+  #- partition=normal # genomedk doesn't care too much about partitions (https://genome.au.dk/docs/interacting-with-the-queue/#why-is-the-partition-i-chose-being-ignored)
   
   
+# TODO: check if this info can be put in the main config file instead?
+#set-resources:
+#  - kraken2: mem_mb = 65536
+#  - roary: mem_mb = 32768
+#  - roary: runtime = "24:00:00"
 
-set-resources:
-  - annotate:mem_mb=65536
-  - philosopher_database:mem_mb=65536 # use mem_mb, not mem
-  - msfragger:mem_mb=515537 # max on gdk is 515538
-  - msfragger:partition=bigmem
-  - ionquant:mem_mb=65536
-
-
+# Honestly, wouldn't it be better to set these resources directly in the snakefile instead?
 
 
 # ---- Old unused stuff ----
