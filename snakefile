@@ -310,6 +310,8 @@ rule kraken2:
     container: "docker://staphb/kraken2"
     conda: "conda_envs/kraken2.yaml"
     threads: 4
+    resources:
+        mem_mb: 65536
     shell: """
 
 
@@ -463,6 +465,9 @@ rule roary:
         core_perc = 99  # Definition of the core genome
     #conda: "envs/roary.yml"
     threads: 16
+    resources:
+        mem_mb: 32768
+        runtime: "24:00:00" # Well, fuck me if this doesn't work on PBS
     container: "docker://sangerpathogens/roary"
     conda: "conda_envs/roary.yaml"
     shell: """
