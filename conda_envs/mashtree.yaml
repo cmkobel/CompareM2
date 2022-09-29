@@ -1,4 +1,4 @@
-name: mashtree
+name: mashtree
 channels:
   - bioconda
 dependencies
