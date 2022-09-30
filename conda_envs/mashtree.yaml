@@ -2,7 +2,7 @@ name: mashtree
 channels:
   - bioconda
 dependencies
-  - mashtree
+  - mashtree=1.2.0 # Version 1.2.1 is broken
   
 
 
