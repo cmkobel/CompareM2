@@ -1,5 +1,6 @@
 name: roary
 channels:
+  - conda-forge
   - r
   - defaults
   - conda-forge
