@@ -86,7 +86,7 @@ if df.shape[0] == 0:
 # --- Displaying filtered dataframe ready for analysis --------------
 
 df = df.reset_index(drop = True)
-print(df)
+print(df[['input_file', 'sample', 'extension']])
 print("//")
 print()
 
