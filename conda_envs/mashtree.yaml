@@ -1,17 +1,6 @@
 name: mashtree
 channels:
+  - conda-forge
   - bioconda
-dependencies
-  - mashtree=1.2.0
-# Version 1.2.1 is broken
-  
-
-
-#name: mashtree
-#channels:
-#  - conda-forge
-#  - bioconda
-#  - defaults
-#dependencies:
-#  - mashtree
-#  - mash
+dependencies:
+  - mashtree
