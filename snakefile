@@ -473,7 +473,7 @@ rule roary:
     shell: """
     
         # Since I reinstalled conda, I've had problems with "Can't locate Bio/Roary/CommandLine/Roary.pm in INC". Below is a hacky fix
-        export PERL5LIB=${ASSCOM2_BASE}/conda_base/cb2c45f856dadd1ac9e7b44b3f7fdb08_/lib/perl5/site_perl/5.22.0
+        export PERL5LIB=$ASSCOM2_BASE/conda_base/cb2c45f856dadd1ac9e7b44b3f7fdb08_/lib/perl5/site_perl/5.22.0
 
         # Silence parallel's citation pester:
         echo "will cite" | parallel --citation > /dev/null 2> /dev/null
