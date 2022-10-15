@@ -529,6 +529,9 @@ rule gtdbtk:
     params:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{out_base}/gtdbtk/"
+    threads: 16
+    resources:
+        mem_mb = 60000
     conda: "conda_envs/gtdbtk.yaml"
     shell: """
 
