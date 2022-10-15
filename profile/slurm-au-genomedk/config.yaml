@@ -23,6 +23,7 @@ conda-frontend: 'mamba'
 cluster-cancel: "scancel"
 
 cluster:
+  echo {wildcards.out_base} &&
   mkdir -p logs/old/ &&
   sbatch
     --parsable
