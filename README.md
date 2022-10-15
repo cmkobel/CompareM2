@@ -123,7 +123,7 @@ Select A or B depending on whether you want to install on a slurm-enabled HPC or
 #### Option A) For <ins>HPCs</ins> with Slurm using <ins>Conda</ins>
    ```
    # Main alias for running assemblycomparator2
-   echo "alias assemblycomparator2='conda run --name assemblycomparator2 \
+   echo "alias assemblycomparator2='conda run --live-stream --name assemblycomparator2 \
        snakemake --snakefile ${ASSCOM2_BASE}/snakefile \
            --profile ${ASSCOM2_BASE}/profile/slurm/ \
            --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
@@ -137,7 +137,7 @@ Select A or B depending on whether you want to install on a slurm-enabled HPC or
 #### Option B) For <ins>local</ins> setups using <ins>Conda</ins>
    ```
    # Main alias for running assemblycomparator2
-   echo "alias assemblycomparator2='conda run --name assemblycomparator2 \
+   echo "alias assemblycomparator2='conda run --live-stream --name assemblycomparator2 \
        snakemake --snakefile ${ASSCOM2_BASE}/snakefile \
            --profile ${ASSCOM2_BASE}/profile/local/ \
            --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
