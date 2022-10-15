@@ -123,6 +123,7 @@ rule all:
                    "{out_base}/mashtree/mashtree.newick", \
                    "{out_base}/mlst/mlst.tsv", \
                    "{out_base}/fasttree/fasttree.newick", \
+                   "{out_base}/gtdbtk.flag", \
                    "{out_base}/snp-dists/snp-dists.tsv"], \
                   out_base = out_base_var, sample = df["sample"], batch_title = batch_title) # copy
 
@@ -520,6 +521,33 @@ rule assembly_stats:
         {void_report}
     """
 
+
+rule gtdbtk:
+    input: df["input_file_fasta"].tolist()
+    output: touch("{out_base}/gtdbtk.flag")
+    params:
+        genome_dir = "{out_base}/gtdbtk/assemblies"
+        out_dir = "{out_base}/gtdbtk/"
+    conda: "conda_envs/gtdbtk.yaml"
+    shell: """
+
+        # soft link all assemblies
+        mkdir -p {params.genome_dir}
+        ln -s {input} {params.genome_dir}
+        ls {params.genome_dir}
+
+
+        # echo $GTDB...
+        gtdbtk classify_wf -h
+        # gtdbtk classify_wf \
+        #     --genome_dir {params.genome_dir} \
+        #     --out_dir {params.out_dir}
+
+
+
+
+
+    """ 
 
 
 
