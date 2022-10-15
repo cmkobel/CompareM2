@@ -124,7 +124,7 @@ rule all:
                    "{out_base}/mashtree/mashtree.newick", \
                    "{out_base}/mlst/mlst.tsv", \
                    "{out_base}/fasttree/fasttree.newick", \
-                   "{out_base}/gtdbtk.flag", \
+                   "{out_base}/gtdbtk/done.flag", \
                    "{out_base}/snp-dists/snp-dists.tsv"], \
                   out_base = out_base_var, sample = df["sample"], batch_title = batch_title) # copy
 
@@ -525,12 +525,14 @@ rule assembly_stats:
 
 rule gtdbtk:
     input: df["input_file_fasta"].tolist()
-    output: touch("{out_base}/gtdbtk.flag")
+    output: touch("{out_base}/gtdbtk/done.flag")
     params:
         batchfile = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{out_base}/gtdbtk/"
     conda: "conda_envs/gtdbtk.yaml"
     shell: """
+
+        echo "GTDBTK_DATA_PATH is $GTDBTK_DATA_PATH"
 
         # Create batchfile
         echo '''{params.batchfile}''' > {wildcards.out_base}/gtdbtk/batchfile.tsv
