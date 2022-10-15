@@ -86,7 +86,8 @@ if df.shape[0] == 0:
 # --- Displaying filtered dataframe ready for analysis --------------
 
 df = df.reset_index(drop = True)
-print(df[['input_file', 'sample', 'extension']])
+#print(df[['input_file', 'sample', 'extension']])
+print(df)
 print("//")
 print()
 
@@ -526,24 +527,18 @@ rule gtdbtk:
     input: df["input_file_fasta"].tolist()
     output: touch("{out_base}/gtdbtk.flag")
     params:
-        genome_dir = "{out_base}/gtdbtk/assemblies"
+        batchfile = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{out_base}/gtdbtk/"
     conda: "conda_envs/gtdbtk.yaml"
     shell: """
 
-        # soft link all assemblies
-        mkdir -p {params.genome_dir}
-        ln -s {input} {params.genome_dir}
-        ls {params.genome_dir}
+        # Create batchfile
+        echo '''{params.batchfile}''' > {wildcards.out_base}/gtdbtk/batchfile.tsv
 
 
         # echo $GTDB...
         gtdbtk classify_wf -h
-        # gtdbtk classify_wf \
-        #     --genome_dir {params.genome_dir} \
-        #     --out_dir {params.out_dir}
-
-
+        # gtdbtk classify_wf --batchfile {wildcards.out_base}/gtdbtk/batchfile.tsv --out_dir {params.out_dir}
 
 
 
