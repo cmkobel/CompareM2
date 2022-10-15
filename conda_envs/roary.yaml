@@ -1,12 +1,22 @@
-name: roary
+name: roary_man
 channels:
-  - conda-forge
-  - r
-  - defaults
   - conda-forge
   - bioconda
 dependencies:
   - roary
+
+
+
+# Can't locate roary.pm in @INC for this one:
+# name: roary
+# channels:
+#   - conda-forge
+#   - r
+#   - defaults
+#   - conda-forge
+#   - bioconda
+# dependencies:
+#   - roary
 
 
 
