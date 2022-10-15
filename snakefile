@@ -468,8 +468,6 @@ rule roary:
     conda: "conda_envs/roary.yaml"
     shell: """
     
-        echo conda prefix thaz
-        echo $CONDA_PREFIX
         
         # Since I reinstalled conda, I've had problems with "Can't locate Bio/Roary/CommandLine/Roary.pm in INC". Below is a hacky fix
         export PERL5LIB=$CONDA_PREFIX/lib/perl5/site_perl/5.22.0
