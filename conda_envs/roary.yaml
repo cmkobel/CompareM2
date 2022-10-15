@@ -1,4 +1,4 @@
-name: roary_man
+name: roary
 channels:
   - conda-forge
   - bioconda
