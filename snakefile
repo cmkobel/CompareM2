@@ -527,7 +527,7 @@ rule gtdbtk:
     input: df["input_file_fasta"].tolist()
     output: touch("{out_base}/gtdbtk/done.flag")
     params:
-        batchfile = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
+        batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{out_base}/gtdbtk/"
     conda: "conda_envs/gtdbtk.yaml"
     shell: """
@@ -535,12 +535,16 @@ rule gtdbtk:
         echo "GTDBTK_DATA_PATH is $GTDBTK_DATA_PATH"
 
         # Create batchfile
-        echo '''{params.batchfile}''' > {wildcards.out_base}/gtdbtk/batchfile.tsv
+        echo '''{params.batchfile_content}''' > {wildcards.out_base}/gtdbtk/batchfile.tsv
 
+        # Takes a few minutes
+        # gtdbtk check_install
 
-        # echo $GTDB...
         gtdbtk classify_wf -h
-        # gtdbtk classify_wf --batchfile {wildcards.out_base}/gtdbtk/batchfile.tsv --out_dir {params.out_dir}
+        
+        gtdbtk classify_wf \
+            --batchfile {wildcards.out_base}/gtdbtk/batchfile.tsv \
+            --out_dir {params.out_dir}
 
 
 
