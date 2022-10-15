@@ -32,7 +32,8 @@ cluster:
     --output={wildcards.out_base}/logs/%j-{rule}.out.log
     --error={wildcards.out_base}/logs/%j-{rule}.err.log
     --time={resources.runtime}
-    --account=supacow
+    --account=ClinicalMicrobio # ClinicalMicrobio or supacow
+
  
 #--partition={resources.partition}
     

@@ -547,7 +547,8 @@ rule gtdbtk:
         
         gtdbtk classify_wf \
             --batchfile {wildcards.out_base}/gtdbtk/batchfile.tsv \
-            --out_dir {params.out_dir}
+            --out_dir {params.out_dir} \
+            --force
 
 
 
