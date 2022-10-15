@@ -93,11 +93,7 @@ print()
 
 
 
-# --- Make sure the log directory exists. ---------------------------
-try:
-    os.mkdir("logs") # The log directory is actually not used for local setups
-except:
-    pass
+# --- Make sure the output directory exists. ---------------------------
 
 try: 
     os.mkdir("output_asscom2")
