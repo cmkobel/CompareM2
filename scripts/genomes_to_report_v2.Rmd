@@ -332,14 +332,17 @@ try({
     gtdbtk_file = "output_asscom2/gtdbtk/gtdbtk.bac.summary.tsv"
     if (file.exists(gtdbtk_file)) {
         
-        gtdbtk_df = read_tsv(gtdbtk_file) 
+        gtdbtk_df = read_tsv(gtdbtk_file) %>% 
+            select(sample = user_genome, classification, fastani_ani, fastani_reference)
         
-        gtdbtk_df %>% 
-            select(sample = user_genome, classification, fastani_ani, fastani_reference) %>% 
+        
+        # Force the table to show missing samples by left joining onto the metadata table.
+        metadata_translate %>% 
+            select(sample) %>% 
+            left_join(gtdbtk_df) %>% 
             arrange(sample) %>% 
             datatable(class = 'cell-border stripe')
                 
-        
         
     } else {
         paste("Warning: The file", gtdbtk_file, "is not accessible.")

@@ -540,9 +540,6 @@ rule gtdbtk:
         # Create batchfile
         echo '''{params.batchfile_content}''' > {wildcards.out_base}/gtdbtk/batchfile.tsv
 
-        # Takes a few minutes
-        # gtdbtk check_install
-
         gtdbtk classify_wf -h
         
         gtdbtk classify_wf \
@@ -551,8 +548,11 @@ rule gtdbtk:
             --cpus {threads} \
             --force
 
+        # Homogenize database version number
         cp {out_base}/gtdbtk/gtdbtk.bac120.summary.tsv {out_base}/gtdbtk/gtdbtk.bac.summary.tsv
 
+
+        {void_report}
 
 
     """ 
