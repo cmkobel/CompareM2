@@ -350,7 +350,7 @@ try({
 })
 ```
 
-*Table `r tableno()`: Species classification provided by the [GTDB-tk](https://github.com/Ecogenomics/GTDBTk) classify workflow. 
+*Table `r tableno()`: Species classification provided by the [GTDB-tk](https://github.com/Ecogenomics/GTDBTk) classify workflow.*
 
 `r if (file.exists(gtdbtk_file)) {paste("Using the", Sys.getenv("GTDBTK_DATA_PATH"), "database")}`.
 
