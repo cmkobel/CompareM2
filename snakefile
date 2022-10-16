@@ -151,6 +151,8 @@ rule copy:
     #log: "logs/{out_base}_{wildcards.sample}.out.log"
     container: "docker://pvstodghill/any2fasta"
     conda: "conda_envs/any2fasta.yaml"
+    resources:
+        runtime = "01:00:00"
     shell: """
 
         any2fasta "{input}" > {output}
@@ -165,6 +167,8 @@ rule metadata:
     input: expand("{out_base}/samples/{sample}/{sample}.fa", out_base = out_base_var, sample = df["sample"])
     output: "{out_base}/metadata.tsv"
     params: dataframe = df.to_csv(None, index_label = "index", sep = "\t")
+    resources:
+        runtime = "01:00:00"
     #run:
         #df.to_csv(str(output), index_label = "index", sep = "\t")
         #os.system(f"cp ${{ASSCOM2_BASE}}/scripts/{report_template_file_basename} {out_base_var}")
