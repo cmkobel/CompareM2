@@ -549,7 +549,7 @@ rule gtdbtk:
             --force
 
         # Homogenize database version number
-        cp {out_base}/gtdbtk/gtdbtk.bac120.summary.tsv {out_base}/gtdbtk/gtdbtk.bac.summary.tsv
+        cp {wildcards.out_base}/gtdbtk/gtdbtk.bac120.summary.tsv {output}
 
 
         {void_report}
