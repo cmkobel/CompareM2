@@ -26,7 +26,8 @@ editor_options:
 # Depends on a local run of the tests/E.faecium_plasmids assemblies.
 # setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
 
-#setwd("~/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
+setwd("~/assemblycomparator2/tests/E._faecium/")    
+
 
 
 
@@ -272,7 +273,7 @@ try({
 
 *Table `r tableno()`: Overview of the number of different gene types. Called using the [Prokka](https://github.com/tseemann/prokka) genome annotator.*
 
-## Species
+## Kraken2 taxonomical classification
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
@@ -321,6 +322,43 @@ try({
 *Table `r tableno()`: Listing of the 3 highest species hits for each sample. Species identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2). The percentages indicate the proportion of sequences (equivalent to fasta records) mapping to the species.*
 
 `r if (file.exists(kraken2_file)) {paste("Using the", Sys.getenv("ASSCOM2_KRAKEN2_DB"), "database")}`.
+
+
+
+## GTDB bacteria taxonomical classification
+
+```{r echo=FALSE, message=F, warning=F}
+try({
+    gtdbtk_file = "output_asscom2/gtdbtk/gtdbtk.bac.summary.tsv"
+    if (file.exists(gtdbtk_file)) {
+        
+        gtdbtk_df = read_tsv(gtdbtk_file) 
+        
+        gtdbtk_df %>% 
+            select(sample = user_genome, classification, fastani_ani, fastani_reference) %>% 
+            arrange(sample) %>% 
+            datatable(class = 'cell-border stripe')
+                
+        
+        
+    } else {
+        paste("Warning: The file", gtdbtk_file, "is not accessible.")
+    }
+})
+```
+
+*Table `r tableno()`: Species classification provided by the [GTDB-tk](https://github.com/Ecogenomics/GTDBTk) classify workflow. 
+
+`r if (file.exists(gtdbtk_file)) {paste("Using the", Sys.getenv("GTDBTK_DATA_PATH"), "database")}`.
+
+
+
+
+
+
+
+
+
 
 ## MLST
 
