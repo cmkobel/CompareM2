@@ -532,7 +532,7 @@ rule gtdbtk:
     threads: 8
     resources:
         mem_mb = 60000
-    #conda: "conda_envs/gtdbtk.yaml"
+    conda: "conda_envs/gtdbtk.yaml"
     shell: """
 
         echo "GTDBTK_DATA_PATH is $GTDBTK_DATA_PATH"
