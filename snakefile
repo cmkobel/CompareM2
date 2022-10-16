@@ -715,6 +715,8 @@ rule install_report_environment_aot:
 # assemblycomparator2 --until report
 # TODO: Should never run on the queue system
 rule report:
+    resources:
+        runtime = "00:01:00"
     shell: """
         {void_report}
     """
