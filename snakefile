@@ -628,13 +628,19 @@ rule mlst:
 
 rule mashtree:
     input: df["input_file_fasta"].tolist()
-    output: "{out_base}/mashtree/mashtree.newick"
+    output: 
+        tree = "{out_base}/mashtree/mashtree.newick",
+        dist = "{out_base}/mashtree/mashtree.newick"
     container: "docker://staphb/mashtree"
     conda: "conda_envs/mashtree.yaml"
     threads: 4
     shell: """
 
-        mashtree --numcpus {threads} {input} > {output}
+        mashtree \
+            --numcpus {threads} \
+            --outmatrix {output.dist} \
+            {input} > {output.tree}
+
 
         {void_report}
     """ 
