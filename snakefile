@@ -1,4 +1,4 @@
-  
+
 
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
 
@@ -656,6 +656,8 @@ rule fasttree:
     container: "docker://staphb/fasttree"
     conda: "conda_envs/fasttree.yaml"
     threads: 4
+    resources:
+        mem_mb = 10000
     shell: """
 
         OMP_NUM_THREADS={threads}
