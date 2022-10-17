@@ -5,7 +5,7 @@ jobs: 1000 # max parallel jobs
 keep-going: true 
 #rerun-incomplete: true
 latency-wait: 120
-keep-incomplete: true
+keep-incomplete: false # Should be true for debugging rules.
 
 # This one could be cool to have working 
 show-failed-logs: true

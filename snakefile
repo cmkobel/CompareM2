@@ -628,13 +628,19 @@ rule mlst:
 
 rule mashtree:
     input: df["input_file_fasta"].tolist()
-    output: "{out_base}/mashtree/mashtree.newick"
+    output: 
+        tree = "{out_base}/mashtree/mashtree.newick",
+        dist = "{out_base}/mashtree/mash_dist.tsv"
     container: "docker://staphb/mashtree"
     conda: "conda_envs/mashtree.yaml"
     threads: 4
     shell: """
 
-        mashtree --numcpus {threads} {input} > {output}
+        mashtree \
+            --numcpus {threads} \
+            --outmatrix {output.dist} \
+            {input} > {output.tree}
+
 
         {void_report}
     """ 
@@ -715,6 +721,8 @@ rule install_report_environment_aot:
 # assemblycomparator2 --until report
 # TODO: Should never run on the queue system
 rule report:
+    resources:
+        runtime = "00:01:00"
     shell: """
         {void_report}
     """
