@@ -630,7 +630,7 @@ rule mashtree:
     input: df["input_file_fasta"].tolist()
     output: 
         tree = "{out_base}/mashtree/mashtree.newick",
-        dist = "{out_base}/mashtree/mashtree.newick"
+        dist = "{out_base}/mashtree/mash_dist.tsv"
     container: "docker://staphb/mashtree"
     conda: "conda_envs/mashtree.yaml"
     threads: 4
