@@ -148,25 +148,9 @@ Select A or B depending on whether you want to install on a slurm-enabled HPC or
    ```
   
    
- ### Kraken2 Setup (optional)
- * assemblycomparator2 supports Kraken2. If you already have a local copy of a kraken database, you can set the `ASSCOM2_KRAKEN_DB` system variable to its path. If you don't have a local copy, assemblycomparator2 comes handy with some scripts for setting up Kraken2 and Mashscreen. There are two scripts for Kraken2; one small "Standard" (8GB) and one huge "PlusPF" (50GB).
-   ```
-   # Kraken2
-   $ASSCOM2_BASE/scripts/set-up-kraken2_Standard_8GB.sh
-   # or:
-   $ASSCOM2_BASE/scripts/set-up-kraken2_PlusPF_50GB.sh
-   
-   # Mashscreen
-   $ASSCOM2_BASE/scripts/set_up_mashscreen.sh
-    
-   ```
- * When you have completed all installation steps, you should read the settings into global system memory. After this, you are ready to test the installation.
-   ```
-   source ~/.bashrc
-    
-   ```
-   
-You should now be done setting up assemblycomparator2. Go ahead and compute on the included genomes below, or try with your own fasta files.
+ ### Setup of dasabases
+ * Kraken2: If you already have a local copy of a [kraken2 database](https://benlangmead.github.io/aws-indexes/k2), you can set the `ASSCOM2_KRAKEN_DB` system variable to its path. 
+ * GTDB-tk: Download the [GTDB-tk database](https://ecogenomics.github.io/GTDBTk/installing/index.html#gtdb-tk-reference-data) and set the `GTDBTK_DATA_PATH` variable to point to its directory.
    
 ### Testing installation (optional)
 
