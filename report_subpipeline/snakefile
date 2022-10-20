@@ -26,11 +26,23 @@ rule report:
 		# The rmd will run from the wd where the template is located. Therefore we need to copy it into here before rendering.
 		cp {base_variable}/scripts/genomes_to_report_v2.Rmd rmarkdown_template.rmd
 		Rscript -e 'rmarkdown::render("rmarkdown_template.rmd", "html_document", output_file = "{output}", quiet = T)' 
-
 		rm rmarkdown_template.rmd
 		
+		
+		# Use the end script if it exists
+		end_script={wildcards.out_base}/report_subpipeline/scripts/end_script.sh
+		if test -f "$end_script"; then
+		    echo "report subpipeline: end_script exists."
+		    ./$end_script {batch_title} output_asscom2/report_{batch_title}.html 
+		fi
+		
+		
+		# Create a zip archive of the report
 		cd output_asscom2
 		zip {output}.zip report_{batch_title}.html || echo failed to zip
+		
+		
+
 
 		echo "report subpipeline: report written to {output}"
 		echo "    ______________________________  "
