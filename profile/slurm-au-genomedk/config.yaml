@@ -1,5 +1,5 @@
 
-local-cores: 8 # front end / head node cores
+local-cores: 16 # front end / head node cores
 cores: 2048 # cluster cores
 jobs: 1000 # max parallel jobs
 keep-going: true 
