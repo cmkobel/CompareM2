@@ -535,7 +535,7 @@ rule gtdbtk:
         out_dir = "{out_base}/gtdbtk/"
     threads: 8
     resources:
-        mem_mb = 60000
+        mem_mb = 150000 # Last time I remember, it used 130000
     conda: "conda_envs/gtdbtk.yaml"
     shell: """
 
