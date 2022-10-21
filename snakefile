@@ -356,6 +356,8 @@ rule kraken2:
 rule collect_kraken2:
     input: expand("{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", out_base = out_base_var, sample = df["sample"]),
     output: "{out_base}/collected_results/kraken2_reports.tsv",
+    resources:
+        runtime = "01:00:00"
     shell: """
 
         # kraken2
@@ -370,6 +372,8 @@ rule collect_kraken2:
 rule collect_seqlen:
     input: expand("{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", out_base = out_base_var, sample = df["sample"])
     output: "{out_base}/collected_results/sequence_lengths.tsv"
+    resources:
+        runtime = "01:00:00"
     shell: """
 
         # Sequence lengths
@@ -384,6 +388,8 @@ rule collect_seqlen:
 rule collect_gc_summary:
     input: expand("{out_base}/samples/{sample}/statistics/{sample}_gc.tsv", out_base = out_base_var, sample = df["sample"])
     output: "{out_base}/collected_results/GC_summary.tsv"
+    resources:
+        runtime = "01:00:00"
     shell: """
 
         # Sequence lengths
@@ -407,6 +413,8 @@ rule collect_prokka:
     output: 
         summarized_txt = "{out_base}/collected_results/prokka_summarized.txt",
         labelled_tsv = "{out_base}/collected_results/prokka_labelled.tsv",
+    resources:
+        runtime = "01:00:00"
     shell: """
 
         # prokka
