@@ -280,6 +280,8 @@ rule prokka:
 
     container: "docker://staphb/prokka"
     conda: "conda_envs/prokka.yaml"
+    resources:
+        mem_mb = 8192
     threads: 4
     shell: """
       
