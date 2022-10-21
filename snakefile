@@ -282,6 +282,8 @@ rule prokka:
     conda: "conda_envs/prokka.yaml"
     threads: 4
     shell: """
+      
+        HMMER_NCPU={threads}
 
         prokka \
             --cpus {threads} \
