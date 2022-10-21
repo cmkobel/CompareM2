@@ -33,7 +33,7 @@ rule report:
 		end_script={base_variable}/report_subpipeline/scripts/end_script.sh
 		if test -f "$end_script"; then
 		    echo "report subpipeline: end_script exists."
-		    ./$end_script {batch_title} output_asscom2/report_{batch_title}.html 
+		    . $end_script {batch_title} output_asscom2/report_{batch_title}.html 
 		fi
 		
 		
