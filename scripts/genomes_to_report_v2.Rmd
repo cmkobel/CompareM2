@@ -26,7 +26,7 @@ editor_options:
 # Depends on a local run of the tests/E.faecium_plasmids assemblies.
 # setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
 
-#setwd("~/assemblycomparator2/tests/E._faecium/")    
+setwd("~/assemblycomparator2/tests/E._faecium/")    
 
 
 
@@ -687,8 +687,8 @@ try({
        #axis(1)
     
        tree$tip.label = paste0(" ", tree$tip.label)
-       ape::plot.phylo(tree, align.tip.label = T)
-       axis(1)
+       ape::plot.phylo(tree, align.tip.label = T); axis(1)
+       ## Error in axis(1) : plot.new has not been called yet
            
             
     } else {
