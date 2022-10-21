@@ -1,5 +1,5 @@
 ---
-title: "`r head(tail(unlist(strsplit(getwd(), '/')), 2), 1)`"
+title: "`r head(tail(unlist(strsplit(getwd(), '/')), 1), 1)`"
 subtitle: "Assemblycomparator2 Report"
 date: "`r Sys.time()`"
 output:
