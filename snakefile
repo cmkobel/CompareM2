@@ -20,14 +20,15 @@ cwd = os.getcwd()
 batch_title = cwd.split("/")[-1]
 print("/*")
 print()
-print("         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗  ")
-print("        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗ ")
-print("        ███████║███████╗███████╗██║     ██║   ██║██╔████╔██║ █████╔╝ ")
-print("        ██╔══██║╚════██║╚════██║██║     ██║   ██║██║╚██╔╝██║██╔═══╝  ")
-print("        ██║  ██║███████║███████║╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗ ")
-print("        ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝ ")
-print("                      A.K.A. assemblycomparator2                     ")
-print("                github.com/cmkobel/assemblycomparator2               ")
+print("         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ ")
+print("        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗")
+print("        ███████║███████╗███████╗██║     ██║   ██║██╔████╔██║ █████╔╝")
+print("        ██╔══██║╚════██║╚════██║██║     ██║   ██║██║╚██╔╝██║██╔═══╝ ")
+print("        ██║  ██║███████║███████║╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗")
+print("        ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝")
+print("                       A.K.A. assemblycomparator2                   ")
+print("                         Please log issues at:                      ")
+print("              github.com/cmkobel/assemblycomparator2/issues         ")
 print()
 print(f"            batch_title:            {batch_title}")
 print(f"            roary_blastp_identity:  {config['roary_blastp_identity']} (default 95)")
@@ -279,8 +280,12 @@ rule prokka:
 
     container: "docker://staphb/prokka"
     conda: "conda_envs/prokka.yaml"
+    resources:
+        mem_mb = 8192
     threads: 4
     shell: """
+      
+        HMMER_NCPU={threads}
 
         prokka \
             --cpus {threads} \
@@ -351,6 +356,8 @@ rule kraken2:
 rule collect_kraken2:
     input: expand("{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", out_base = out_base_var, sample = df["sample"]),
     output: "{out_base}/collected_results/kraken2_reports.tsv",
+    resources:
+        runtime = "01:00:00"
     shell: """
 
         # kraken2
@@ -365,6 +372,8 @@ rule collect_kraken2:
 rule collect_seqlen:
     input: expand("{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", out_base = out_base_var, sample = df["sample"])
     output: "{out_base}/collected_results/sequence_lengths.tsv"
+    resources:
+        runtime = "01:00:00"
     shell: """
 
         # Sequence lengths
@@ -379,6 +388,8 @@ rule collect_seqlen:
 rule collect_gc_summary:
     input: expand("{out_base}/samples/{sample}/statistics/{sample}_gc.tsv", out_base = out_base_var, sample = df["sample"])
     output: "{out_base}/collected_results/GC_summary.tsv"
+    resources:
+        runtime = "01:00:00"
     shell: """
 
         # Sequence lengths
@@ -402,6 +413,8 @@ rule collect_prokka:
     output: 
         summarized_txt = "{out_base}/collected_results/prokka_summarized.txt",
         labelled_tsv = "{out_base}/collected_results/prokka_labelled.tsv",
+    resources:
+        runtime = "01:00:00"
     shell: """
 
         # prokka
@@ -535,7 +548,7 @@ rule gtdbtk:
         out_dir = "{out_base}/gtdbtk/"
     threads: 8
     resources:
-        mem_mb = 60000
+        mem_mb = 150000 # Last time I remember, it used 130000
     conda: "conda_envs/gtdbtk.yaml"
     shell: """
 
