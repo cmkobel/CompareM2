@@ -281,7 +281,8 @@ rule prokka:
     container: "docker://staphb/prokka"
     conda: "conda_envs/prokka.yaml"
     resources:
-        mem_mb = 8192
+        mem_mb = 8192,
+        tmpdir = "{out_base}/samples/{sample}/prokka/tmp/" # I never had problems with prokka before changing the tmpdir. Maybe something else though.
     threads: 4
     shell: """
       
