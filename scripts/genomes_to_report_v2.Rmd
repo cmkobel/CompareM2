@@ -26,7 +26,7 @@ editor_options:
 # Depends on a local run of the tests/E.faecium_plasmids assemblies.
 # setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
 
-setwd("~/assemblycomparator2/tests/E._faecium/")    
+#setwd("~/assemblycomparator2/tests/E._faecium/")    
 
 
 
