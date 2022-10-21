@@ -555,15 +555,17 @@ try({
 ```{r echo=FALSE, message=F, warning=F}
 # This chunk is needed for setting the size of the following plot.
 try({
-    fig_height = max(4, (sample_pathway_enrichment_analysis_df$description %>% unique() %>% length()) * 0.4)
+    if (file.exists(sample_pathway_enrichment_analysis_file)) {
+        fig_height = max(4, (sample_pathway_enrichment_analysis_df$description %>% unique() %>% length()) * 0.4)
+        
+        fig_width = max(8, (metadata_df$sample %>% length()) * 1)
     
-    fig_width = max(8, (metadata_df$sample %>% length()) * 1)
-
-    
-    
-    
-    knitr::opts_chunk$set(fig.height = fig_height,
-                          fig.width = fig_width)
+        
+        
+        
+        knitr::opts_chunk$set(fig.height = fig_height,
+                              fig.width = fig_width)
+    }
 })
 ```
 
@@ -571,12 +573,14 @@ try({
 ```{r echo=FALSE, message=F, warning=F}
 # It shouldn't be necessary to use the metadata_translate table, as the factors should already be ordered alphabetically.
 try({
-    sample_pathway_enrichment_analysis_df %>% 
-        ggplot(aes(sample, description, fill = `p.adjust`, label = k)) +
-        geom_tile() + 
-        geom_text(color = "grey95", size = 3) +
-        labs(y = "KEGG pathway", fill = "adjusted\np-value") + 
-        theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+    if (file.exists(sample_pathway_enrichment_analysis_file)) {
+        sample_pathway_enrichment_analysis_df %>% 
+            ggplot(aes(sample, description, fill = `p.adjust`, label = k)) +
+            geom_tile() + 
+            geom_text(color = "grey95", size = 3) +
+            labs(y = "KEGG pathway", fill = "adjusted\np-value") + 
+            theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+    }
 })
 
 
