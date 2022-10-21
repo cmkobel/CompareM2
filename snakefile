@@ -670,7 +670,7 @@ rule fasttree:
     conda: "conda_envs/fasttree.yaml"
     threads: 4
     resources:
-        mem_mb = 10000
+        mem_mb = 10001
     shell: """
 
         OMP_NUM_THREADS={threads}
