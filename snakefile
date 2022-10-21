@@ -286,14 +286,13 @@ rule prokka:
     threads: 4
     shell: """
       
-        HMMER_NCPU={threads}
 
         prokka \
             --cpus {threads} \
             --force \
             --outdir {wildcards.out_base}/samples/{wildcards.sample}/prokka \
             --prefix {wildcards.sample} {input} \
-            > {output.log} #|| echo exit 0
+            > {output.log} 
 
         cat {output.log} \
             | grep "Found" \
