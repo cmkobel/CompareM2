@@ -690,7 +690,7 @@ rule fasttree:
     threads: 4
     retries: 1
     resources:
-        mem_mb = get_mem_fasttree
+        mem_mb = get_mem_fasttree,
         runntime = "23:59:59"
     shell: """
 
