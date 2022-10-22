@@ -459,6 +459,10 @@ rule sample_pathway_enrichment_analysis:
 
 
 # --- Targets for the complete set below: ---------------------------
+
+def get_mem_roary(wildcards, attempt): 
+    return [32000, 64000, 128000][attempt-1]
+
 rule roary:
     input: 
         metadata = "{out_base}/metadata.tsv",
@@ -469,9 +473,11 @@ rule roary:
         core_perc = 99  # Definition of the core genome
     #conda: "envs/roary.yml"
     threads: 16
+    retries: 3
     resources:
-        mem_mb = 32768,
-        runtime = "24:00:00" # Well, fuck me if this doesn't work on PBS
+        #mem_mb = 32768,
+        mem_mb = get_mem_roary,
+        runtime = "23:59:59" # Well, fuck me if this doesn't work on PBS
     container: "docker://sangerpathogens/roary"
     conda: "conda_definitions/roary.yaml"
     shell: """
@@ -598,14 +604,14 @@ rule abricate:
 
         # TODO: update these databases
 
+        abricate --db ncbi {input.fasta} > {output.ncbi_detailed}
+        abricate --summary {output.ncbi_detailed} > {output.ncbi_sum}
+
         abricate --db card {input.fasta} > {output.card_detailed}
         abricate --summary {output.card_detailed} > {output.card_sum}
         
         abricate --db plasmidfinder {input.fasta} > {output.plasmidfinder_detailed}
         abricate --summary {output.plasmidfinder_detailed} > {output.plasmidfinder_sum}
-        
-        abricate --db ncbi {input.fasta} > {output.ncbi_detailed}
-        abricate --summary {output.ncbi_detailed} > {output.ncbi_sum}
 
         abricate --db vfdb {input.fasta} > {output.vfdb_detailed}
         abricate --summary {output.vfdb_detailed} > {output.vfdb_sum}
@@ -654,6 +660,8 @@ rule mashtree:
     container: "docker://staphb/mashtree"
     conda: "conda_definitions/mashtree.yaml"
     threads: 4
+    resources:
+        mem_mb = 16000
     shell: """
 
         mashtree \
@@ -668,6 +676,8 @@ rule mashtree:
 # TODO:
 #rule mash_screen:
 
+def get_mem_fasttree(wildcards, attempt): 
+    return [8000, 64000][attempt-1]
 
 
 rule fasttree:
@@ -678,8 +688,10 @@ rule fasttree:
     container: "docker://staphb/fasttree"
     conda: "conda_definitions/fasttree.yaml"
     threads: 4
+    retries: 2
     resources:
-        mem_mb = 10001
+        mem_mb = get_mem_fasttree
+        runntime = "23:59:59"
     shell: """
 
         OMP_NUM_THREADS={threads}
