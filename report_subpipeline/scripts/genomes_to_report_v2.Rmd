@@ -333,7 +333,8 @@ try({
     if (file.exists(gtdbtk_file)) {
         
         gtdbtk_df = read_tsv(gtdbtk_file) %>% 
-            select(sample = user_genome, classification, fastani_ani, fastani_reference)
+            select(sample = user_genome, classification, fastani_ani, fastani_reference) %>% 
+            mutate(classification = classification %>% str_replace_all(";", "<br />")) # New line at each taxa level
         
         
         # Force the table to show missing samples by left joining onto the metadata table.
@@ -341,7 +342,7 @@ try({
             select(sample) %>% 
             left_join(gtdbtk_df) %>% 
             arrange(sample) %>% 
-            datatable(class = 'cell-border stripe')
+            datatable(class = 'cell-border stripe', escape = F)
                 
         
     } else {

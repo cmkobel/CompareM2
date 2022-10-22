@@ -1,0 +1,6 @@
+name: checkm
+channels:
+  - anaconda
+dependencies:
+  - wget
+  

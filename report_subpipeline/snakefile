@@ -1,9 +1,9 @@
 # This subpipeline checks if the void report flag (.asscom2_void_report.flag) file has been modified by a rule in the parent pipeline. If so, the report will be rendered.
 
 
-out_base = config['out_base']
-base_variable = config['base_variable']
-batch_title = config['batch_title']
+out_base = config['out_base'] # output_asscom2
+base_variable = config['base_variable'] # path/to/gitrepo/assemblycomparator2
+batch_title = config['batch_title'] # E.g. E._faecium 
 
 
 print('report subpipeline: out_base:', out_base)
@@ -14,47 +14,53 @@ rule all:
 	input: expand("{out_base}/report_{batch_title}.html", out_base = out_base, batch_title = batch_title)
 
 
-# Runs on the front end because it is quick anyway, and it sucks having to wait for the job scheduler.
+# Runs on the front end because it is quick anyway.
+# This rule needs to be inside its own snakefile, as it is the only way I can run it on onerror/onsuccess
 rule report:
-	input: "{out_base}/.asscom2_void_report.flag" # This is the file being touched when void_report is called in every rule in the parent pipeline.
-	conda: f"{base_variable}/conda_envs/r-markdown.yaml"
-	output: "{out_base}/report_{batch_title}.html"
-	shell: """
+    input:
+        flag = "{out_base}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
+        metadata = "{out_base}/metadata.tsv" # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
+    conda: "conda_definitions/r-markdown.yaml"
+    params: 
+        end_script = f"{base_variable}/report_subpipeline/scripts/end_script.sh"
+    output: "{out_base}/report_{batch_title}.html"
+    #output: expand("{out_base}/report_{batch_title}.html", out_base = out_base, batch_title = batch_title)
+    shell: """
 
-		echo "report subpipeline: initializing report ..."
-	
-		# The rmd will run from the wd where the template is located. Therefore we need to copy it into here before rendering.
-		cp {base_variable}/scripts/genomes_to_report_v2.Rmd rmarkdown_template.rmd
-		Rscript -e 'rmarkdown::render("rmarkdown_template.rmd", "html_document", output_file = "{output}", quiet = T)' 
-		rm rmarkdown_template.rmd
-		
-		
-		# Use the end script if it exists
-		end_script={base_variable}/report_subpipeline/scripts/end_script.sh
-		if test -f "$end_script"; then
-		    echo "report subpipeline: end_script exists."
-		    . $end_script {batch_title} output_asscom2/report_{batch_title}.html 
-		fi
-		
-		
-		# Create a zip archive of the report
-		cd output_asscom2
-		zip {output}.zip report_{batch_title}.html || echo failed to zip
-		
-		
+        echo "report subpipeline: initializing report ..."
+    
+        # The rmd will run from the wd where the template is located. Therefore we need to copy it into here before rendering.
+        cp {base_variable}/report_subpipeline/scripts/genomes_to_report_v2.Rmd rmarkdown_template.rmd
+        Rscript -e 'rmarkdown::render("rmarkdown_template.rmd", "html_document", output_file = "{output}", quiet = T)' 
+        rm rmarkdown_template.rmd
+        
+        
+        # Use the end script if it exists
+        if test -f "{params.end_script}"; then
+            echo "report subpipeline: end_script exists."
+            . {params.end_script} {batch_title} output_asscom2/report_{batch_title}.html 
+        fi
+        
+        
+        # Create a zip archive of the report
+        cd output_asscom2
+        zip {output}.zip report_{batch_title}.html || echo failed to zip
+        
+        
 
 
-		echo "report subpipeline: report written to {output}"
-		echo "    ______________________________  "
-		echo "   < The report has been rendered > "
-		echo "    ------------------------------  "
-		echo "           \\   ^__^                "
-		echo "            \\  (oo)\\_______        "
-		echo "               (__)\\       )\\/\\    "
-		echo "                   ||----w |        "
-		echo "                   ||     ||        "
+        echo "report subpipeline: report written to {output}"
+        echo "    ______________________________  "
+        echo "   < The report has been rendered > "
+        echo "    ------------------------------  "
+        echo "           \\   ^__^                "
+        echo "            \\  (oo)\\_______        "
+        echo "               (__)\\       )\\/\\    "
+        echo "                   ||----w |        "
+        echo "                   ||     ||        "
 
-	"""
+    """
+
 
 
 
