@@ -473,7 +473,7 @@ rule roary:
         core_perc = 99  # Definition of the core genome
     #conda: "envs/roary.yml"
     threads: 16
-    retries: 3
+    retries: 2
     resources:
         #mem_mb = 32768,
         mem_mb = get_mem_roary,
@@ -551,7 +551,7 @@ rule gtdbtk:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{out_base}/gtdbtk/"
     threads: 8
-    retries: 4
+    retries: 3
     resources:
         #mem_mb = 150000 # Last time I remember, it used 130000
         mem_mb = get_mem_gtdbtk
@@ -688,7 +688,7 @@ rule fasttree:
     container: "docker://staphb/fasttree"
     conda: "conda_definitions/fasttree.yaml"
     threads: 4
-    retries: 2
+    retries: 1
     resources:
         mem_mb = get_mem_fasttree
         runntime = "23:59:59"
