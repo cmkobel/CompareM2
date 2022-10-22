@@ -5,6 +5,6 @@ channels:
 #  - defaults
 dependencies:
   - prokka 
-#  - openjdk
+  - openjdk=16
   
 
