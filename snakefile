@@ -236,7 +236,7 @@ rule metadata:
 
 # --- Targets for each sample below: --------------------------------
 
-rule individual_seqlen:
+rule seqlen_individual:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
     container: "docker://cmkobel/bioawk"
@@ -250,7 +250,7 @@ rule individual_seqlen:
     """
 
 
-rule individual_gc_summary:
+rule gc_summary_individual:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/statistics/{sample}_gc.tsv"
     container: "docker://rocker/tidyverse" # remember to add devtools
@@ -269,7 +269,7 @@ rule individual_gc_summary:
 
 
 
-rule individual_prokka:
+rule prokka_individual:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output:
         gff = "{out_base}/samples/{sample}/prokka/{sample}.gff",
@@ -280,6 +280,7 @@ rule individual_prokka:
 
     container: "docker://staphb/prokka"
     conda: "conda_definitions/prokka.yaml"
+    benchmark: "{out_base}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
     resources:
         mem_mb = 8192
     threads: 4
@@ -310,7 +311,7 @@ rule individual_prokka:
 
 
 
-rule individual_kraken2:
+rule kraken2_individual:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
     container: "docker://staphb/kraken2"
@@ -318,6 +319,7 @@ rule individual_kraken2:
     threads: 4
     resources:
         mem_mb = 65536
+    benchmark: "{out_base}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
     shell: """
 
 
@@ -543,6 +545,7 @@ rule gtdbtk:
     resources:
         mem_mb = 150000 # Last time I remember, it used 130000
     conda: "conda_definitions/gtdbtk.yaml"
+    benchmark: "{out_base}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
 
         echo "GTDBTK_DATA_PATH is $GTDBTK_DATA_PATH"
