@@ -7,7 +7,6 @@
 #  - 2: The (absolute?) path to the report html file.
 
 
-# This example sends an email
-#if [ -z ${ASSCOM2_EMAIL+x} ]; then 
-#    mail -s "ac2 report $1" -a $2 youreamailaddress@example.com <<< "The assemblycomparator2 report for project $1 has been rendered and is attached in this email."
-#fi
+# This example below sends an email
+# mail -s "ac2 report $1" -a $2 youreamailaddress@example.com <<< "The assemblycomparator2 report for project $1 has been rendered and is attached in this email."
+
