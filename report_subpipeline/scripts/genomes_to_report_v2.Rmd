@@ -119,7 +119,7 @@ tryCatch({
                     group_by(filename) %>% 
                     summarize(sd(GC)),
                 by = "filename") %>% 
-            mutate_at(vars(GC, `sd(GC)`), signif, digits = 3)
+            mutate_at(vars(GC, `sd(GC)`), signif, digits = 4)
             
         
         
