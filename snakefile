@@ -533,6 +533,9 @@ rule assembly_stats:
     """
 
 
+def get_mem_gtdbtk(wildcards, attempt): 
+    return [150000, 300000, 400000, 500000][attempt-1]
+
 rule gtdbtk:
     input: 
         metadata = "{out_base}/metadata.tsv",
@@ -543,7 +546,8 @@ rule gtdbtk:
         out_dir = "{out_base}/gtdbtk/"
     threads: 8
     resources:
-        mem_mb = 150000 # Last time I remember, it used 130000
+        #mem_mb = 150000 # Last time I remember, it used 130000
+        mem_mb = get_mem_gtdbtk
     conda: "conda_definitions/gtdbtk.yaml"
     benchmark: "{out_base}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
