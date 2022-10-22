@@ -131,6 +131,7 @@ rule all:
 
 
 
+
 # Dummy test
 rule test:
     output: ".test_done.flag"
@@ -142,12 +143,12 @@ rule test:
     """
 
 
-
 # Copy the input file to its new home
 # Homogenizes the file extension as well (.fa)
 rule copy:
     #input: "{sample}"
-    input: lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0]
+    input: 
+        genome = lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0],
     output: "{out_base}/samples/{sample}/{sample}.fa"
     #log: "logs/{out_base}_{wildcards.sample}.out.log"
     container: "docker://pvstodghill/any2fasta"
@@ -156,8 +157,7 @@ rule copy:
         runtime = "01:00:00"
     shell: """
 
-        any2fasta "{input}" > {output}
-
+        any2fasta "{input.genome}" > {output}
 
     """  
 
