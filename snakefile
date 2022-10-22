@@ -293,7 +293,7 @@ rule prokka_individual:
             --force \
             --outdir {wildcards.out_base}/samples/{wildcards.sample}/prokka \
             --prefix {wildcards.sample} {input} \
-            > {output.log} 
+            > tee {output.log} 
 
         cat {output.log} \
             | grep "Found" \
