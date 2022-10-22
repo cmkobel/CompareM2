@@ -2,9 +2,9 @@ name: prokka
 channels:
   - conda-forge
   - bioconda
-  - defaults
+#  - defaults
 dependencies:
   - prokka 
-  - openjdk
+#  - openjdk
   
 
