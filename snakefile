@@ -281,6 +281,7 @@ rule prokka_individual:
     container: "docker://staphb/prokka"
     conda: "conda_definitions/prokka.yaml"
     benchmark: "{out_base}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
+    retries: 3
     resources:
         mem_mb = 8192
     threads: 4
