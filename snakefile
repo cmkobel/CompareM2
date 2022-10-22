@@ -544,7 +544,7 @@ rule gtdbtk:
     threads: 8
     resources:
         mem_mb = 150000 # Last time I remember, it used 130000
-    #conda: "conda_definitions/gtdbtk.yaml"
+    conda: "conda_definitions/gtdbtk.yaml"
     benchmark: "{out_base}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
 
