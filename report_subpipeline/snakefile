@@ -22,7 +22,7 @@ rule report:
         metadata = "{out_base}/metadata.tsv" # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
     conda: "conda_definitions/r-markdown.yaml"
     params: 
-        end_script = f"{base_variable}/report_subpipeline/scripts/end_script.sh"
+        end_script = f"{base_variable}/report_subpipeline/scripts/report_end_script.sh"
     output: "{out_base}/report_{batch_title}.html"
     #output: expand("{out_base}/report_{batch_title}.html", out_base = out_base, batch_title = batch_title)
     shell: """
