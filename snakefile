@@ -545,6 +545,7 @@ rule gtdbtk:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{out_base}/gtdbtk/"
     threads: 8
+    retries: 4
     resources:
         #mem_mb = 150000 # Last time I remember, it used 130000
         mem_mb = get_mem_gtdbtk
