@@ -287,8 +287,6 @@ rule prokka_individual:
     threads: 4
     shell: """
       
-        # Fix for openjdk 17.0.3 and newer
-        JAVA_TOOL_OPTIONS="-Xlog:disable -Xlog:all=warning:stderr:uptime,level,tags"
         minced --version 
         
         prokka \
