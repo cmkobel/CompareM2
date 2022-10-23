@@ -572,6 +572,7 @@ rule gtdbtk:
             --batchfile {wildcards.out_base}/gtdbtk/batchfile.tsv \
             --out_dir {params.out_dir} \
             --cpus {threads} \
+            --keep_intermediates \
             --force
 
         # Homogenize database version number
