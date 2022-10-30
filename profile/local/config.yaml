@@ -1,7 +1,7 @@
 
 cores: all
 
-keep-going: true 
+keep-going: false # Should be true for debugging 
 rerun-incomplete: true
 show-failed-logs: true
 

@@ -276,17 +276,18 @@ rule prokka_individual:
         log = "{out_base}/samples/{sample}/prokka/{sample}.log",
         tsv = "{out_base}/samples/{sample}/prokka/{sample}.tsv",
         summarized_txt = "{out_base}/samples/{sample}/prokka/{sample}_summary.txt",
-        labelled_tsv = "{out_base}/samples/{sample}/prokka/{sample}_labelled.tsv"
+        labelled_tsv = "{out_base}/samples/{sample}/prokka/{sample}_labelled.tsv",
+        labelled_gff = "{out_base}/samples/{sample}/prokka/{sample}_labelled.gff"
 
     container: "docker://staphb/prokka"
     conda: "conda_definitions/prokka.yaml"
     benchmark: "{out_base}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
-    #retries: 3 # too hacky
     resources:
         mem_mb = 8192
     threads: 4
     shell: """
       
+        # For debugging of minced
         minced --version 
         
         prokka \
@@ -296,6 +297,7 @@ rule prokka_individual:
             --prefix {wildcards.sample} {input} \
             > tee {output.log} 
 
+        # Label summary file
         cat {output.log} \
             | grep "Found" \
             | grep -E "tRNAs|rRNAs|CRISPRs|CDS|unique" \
@@ -303,9 +305,17 @@ rule prokka_individual:
             | awk -v sam={wildcards.sample} '{{ print sam " " $0 }}' \
             >> {output.summarized_txt} # jeg undrer mig over hvorfor den har to gt question mark
 
+        # Label tsv file
         cat {output.tsv} \
             | awk -v sam={wildcards.sample} '{{ print $0 "\t" sam }}' \
             > {output.labelled_tsv}
+
+
+        # Remove fasta from gff and add sample label
+        gff_fasta_start=$(grep --line-number --extended-regexp "^##FASTA" {output.gff} | cut -f1 -d:)
+        head --lines $((-1+$gff_fasta_start)) {output.gff} \
+            | awk -v sam={wildcards.sample} '{{ print $0 "\t" sam }}' \
+            > {output.labelled_gff}
 
 
 
@@ -372,7 +382,7 @@ rule kraken2:
     """
 
 
-rule seqlen:
+rule sequence_lengths:
     input: expand("{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", out_base = out_base_var, sample = df["sample"])
     output: "{out_base}/collected_results/sequence_lengths.tsv"
     resources:
@@ -411,25 +421,26 @@ rule gc_summary:
 
 rule prokka:
     input:
+        metadata = "{out_base}/metadata.tsv",
         summarized_txt = expand("{out_base}/samples/{sample}/prokka/{sample}_summary.txt", out_base = out_base_var, sample = df["sample"]),
         labelled_tsv = expand("{out_base}/samples/{sample}/prokka/{sample}_labelled.tsv", out_base = out_base_var, sample = df["sample"]),
+        labelled_gff = expand("{out_base}/samples/{sample}/prokka/{sample}_labelled.gff", out_base = out_base_var, sample = df["sample"]),
+
     output: 
         summarized_txt = "{out_base}/collected_results/prokka_summarized.txt",
         labelled_tsv = "{out_base}/collected_results/prokka_labelled.tsv",
+        labelled_gff = "{out_base}/collected_results/prokka_labelled.gff",
+
     resources:
         runtime = "01:00:00"
     shell: """
 
-        # prokka
-        echo "sample value name" \
-        > {output.summarized_txt}
-
-        cat {input.summarized_txt} >> {output.summarized_txt}
-
+        echo "sample value name" > {output.summarized_txt}
+        cat {input.summarized_txt} >> {output.summarized_txt} 
 
         cat {input.labelled_tsv} > {output.labelled_tsv}
 
-
+        cat {input.labelled_gff} > {output.labelled_gff}
 
 
         {void_report}

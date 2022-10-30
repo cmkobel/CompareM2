@@ -26,7 +26,7 @@ editor_options:
 # Depends on a local run of the tests/E.faecium_plasmids assemblies.
 # setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
 
-#setwd("~/assemblycomparator2/tests/E._faecium/")    
+setwd("~/assemblycomparator2/tests/E._faecium/")    
 
 
 
@@ -182,44 +182,44 @@ try({
     sequence_lengths_file = "output_asscom2/collected_results/sequence_lengths.tsv"
     
     if (file.exists(sequence_lengths_file)) {
-        sequence_lengths_df = read_tsv(sequence_lengths_file)
-        sequence_lengths_df %>%
+        sequence_lengths_df = read_tsv(sequence_lengths_file) %>%
             group_by(sample) %>% 
-            #arrange(length) %>% 
-            
-            #mutate(col = row_number(-length)) %>% 
             mutate(col = 1:length(sample)) %>%
             mutate(init = lag(length, default = 0),
                    start = cumsum(init),
-                   stop = start + length - 1) %>%
-    
-            
-            #mutate(sample = fct_reorder(sample, desc(sample))) %>% 
-            #mutate(sample = fct_reorder(sample, desc(sample))) %>% 
-            
-            
-            
+                   stop = start + length - 1) %>% 
+            # mutate(sample_ = fct_reorder(sample, desc(factor(sample)))) %>% 
+            # mutate(sample__ = factor(sample, levels = sample %>% unique %>% sort(decreasing = T))) %>% 
+            # mutate(sample___ = fct_rev(factor(sample))) %>% 
+            # mutate(sample____ = reorder(sample, desc(sample))) %>% 
+            # pull(sample____)
+            identity()
         
-            # Gammel figur
-            # ggplot(aes(x=length, y=sample, fill=factor(col))) + 
-            # geom_bar(position = position_dodge2(width = 0.9, preserve = "single", reverse = T),
-            #          #position = "dodge2",
-            #          stat="identity") +
-            # theme_classic() +
-            # theme(legend.position = "none") +
-            # theme(panel.grid.major.x = element_line(colour = "grey92")) 
-    
-            #View
-            #ungroup() %>% 
-            #mutate(col = fct_reorder(col, desc(col))) %>% 
+        
+        sequence_lengths_df_ = sequence_lengths_df %>% 
+            left_join(ribosomes, by = c("sample", "record")) %>% 
+            mutate(plot_start = start + r_start,
+                   plot_end = stop + r_end) %>% 
+            mutate(target = str_extract(r_product %>% str_trim(), "^\\d+|DnaA$"))# %>% 
+            # filter(S_ribosomal_RNA == "16")
+        
 
-        
+
+
+        sequence_lengths_df %>%         
             ggplot(aes(length, reorder(sample, desc(sample)), fill=reorder(col, desc(col)))) + 
+            #ggplot(aes(length, sample, fill=reorder(col, desc(col)))) + 
+            
             #geom_bar(stat = "identity", color = "black", size = 0.3, fill = "grey50") +
             
             # The best way to set the colors is to use the default colorramping, because it highlights the relative of contigs.
 
             geom_bar(stat = "identity", color = "black", size = 0.3) + 
+
+            geom_point(mapping = aes(x = plot_start), data = sequence_lengths_df_ %>% filter(str_detect(target, "16")), shape = 5, alpha = 0.7, size = 1) +
+            geom_point(mapping = aes(x = plot_start), data = sequence_lengths_df_ %>% filter(str_detect(target, "DnaA")), shape = 4, alpha = 0.7, size = 2) +
+            
+            
             theme_classic() +
             theme(legend.position = "none") +
             theme(panel.grid.major.x = element_line(colour = "grey92")) + 
