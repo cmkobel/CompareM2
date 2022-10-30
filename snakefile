@@ -115,6 +115,7 @@ void_report = f"touch {out_base_var}/.asscom2_void_report.flag"
 rule all:
     input: expand(["{out_base}/metadata.tsv", \
                    "{out_base}/.install_report_environment_aot.flag", \
+                   "{out_base}/collected_results/GC3.tsv", \
                    "{out_base}/assembly-stats/assembly-stats.tsv", \
                    "{out_base}/collected_results/sequence_lengths.tsv", \
                    "{out_base}/collected_results/GC_summary.tsv", \
@@ -234,7 +235,14 @@ rule metadata:
 
 
 
+
+
+
 # --- Targets for each sample below: --------------------------------
+
+
+
+
 
 rule seqlen_individual:
     input: "{out_base}/samples/{sample}/{sample}.fa"
@@ -258,11 +266,8 @@ rule gc_summary_individual:
     params: base_variable = base_variable
     shell: """
 
-
         Rscript $ASSCOM2_BASE/scripts/tabseq_gc.r $ASSCOM2_BASE/scripts/tabseq_tiny.r {input} \
         > {output} 2> {output}.fail || echo what
-
-
 
     """
 
@@ -277,7 +282,10 @@ rule prokka_individual:
         tsv = "{out_base}/samples/{sample}/prokka/{sample}.tsv",
         summarized_txt = "{out_base}/samples/{sample}/prokka/{sample}_summary.txt",
         labelled_tsv = "{out_base}/samples/{sample}/prokka/{sample}_labelled.tsv",
-        labelled_gff = "{out_base}/samples/{sample}/prokka/{sample}_labelled.gff"
+        labelled_gff = "{out_base}/samples/{sample}/prokka/{sample}_labelled.gff",
+
+        ffn = "{out_base}/samples/{sample}/prokka/{sample}.ffn",
+
 
     container: "docker://staphb/prokka"
     conda: "conda_definitions/prokka.yaml"
@@ -318,6 +326,19 @@ rule prokka_individual:
             > {output.labelled_gff}
 
 
+
+    """
+
+
+rule GC3_individual:
+    input: "{out_base}/samples/{sample}/prokka/{sample}.ffn"
+    output: "{out_base}/samples/{sample}/GC3/{sample}_GC3.tsv"
+    conda: "conda_definitions/python3.yaml"
+    resources:
+        runtime = "01:00:00",
+    shell: """
+
+        $ASSCOM2_BASE/scripts/GC3.py {input} {wildcards.sample} > {output}
 
     """
 
@@ -364,6 +385,19 @@ rule kraken2_individual:
 
 
 # --- Collect results among all samples -----------------------------
+
+rule GC3:
+    input:
+        metadata = "{out_base}/metadata.tsv",
+        GC3 = expand("{out_base}/samples/{sample}/GC3/{sample}_GC3.tsv", out_base = out_base_var, sample = df["sample"])
+    output: "{out_base}/collected_results/GC3.tsv"
+    shell: """
+
+        echo -e "sample\theader\tlength\tn_GC3\tGC3" > {output}
+
+        cat {input.GC3} >> {output}
+
+    """
 
 rule kraken2:
     input: expand("{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", out_base = out_base_var, sample = df["sample"]),
