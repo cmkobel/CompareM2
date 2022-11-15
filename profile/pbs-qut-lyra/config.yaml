@@ -1,0 +1,40 @@
+
+local-cores: 16 # front end / head node cores
+cores: 2048 # cluster cores
+jobs: 1000 # max parallel jobs
+keep-going: true 
+#rerun-incomplete: true
+latency-wait: 120
+keep-incomplete: true # Should be true for debugging rules.
+
+# This one does not currently work, but could be really cool to have.
+show-failed-logs: true
+
+
+# ---- Conda/Mamba ----
+use-conda: true
+conda-frontend: 'mamba'
+#conda-prefix: "conda_base/" # No, much better to use the $SNAKEMAKE_CONDA_PREFIX instead, as all workflows can then use the same envs.
+
+
+# ---- QUT CMR Lyra specifics ----
+cluster-cancel: "qdel"
+
+
+cluster:
+  qsub 
+    -V
+    -A kobel 
+    -q microbiome 
+    -l select=1:ncpus={threads}:mem={resources.mem_mb}mb,walltime={resources.runtime}
+
+ 
+
+default-resources:
+  - mem_mb=1024
+  #- disk_mb=1024 # lyra doesn't care 
+  - runtime='12:00:00'
+  - tmpdir='$SCRATCH'
+  #- partition=normal # partitions are not used with pbs?
+  
+  
