@@ -18,23 +18,9 @@ conda-frontend: 'mamba'
 
 
 
-# ---- Sigma2 Saga SLURM specifics ----
 # ---- QUT CMR Lyra specifics ----
 
-#cluster-cancel: "scancel"
 cluster-cancel: "qdel"
-
-# cluster:
-#   mkdir -p output_asscom2/logs/old/ &&
-#   sbatch
-#     --parsable
-#     --cpus-per-task={threads}
-#     --mem={resources.mem_mb}
-#     --job-name=ac2_{rule}_{wildcards}
-#     --output=output_asscom2/logs/%j-{rule}.out.log
-#     --error=output_asscom2/logs/%j-{rule}.err.log
-#     --time={resources.runtime}
-#     --account=ClinicalMicrobio # ClinicalMicrobio or supacow
 
 
 
@@ -62,41 +48,4 @@ default-resources:
   #- partition=normal # genomedk doesn't care too much about partitions (https://genome.au.dk/docs/interacting-with-the-queue/#why-is-the-partition-i-chose-being-ignored)
   
   
-# TODO: check if this info can be put in the main config file instead?
-#set-resources:
-#  - kraken2: mem_mb = 65536
-#  - roary: mem_mb = 32768
-#  - roary: runtime = "24:00:00"
-
-# Honestly, wouldn't it be better to set these resources directly in the snakefile instead?
-
-
-# ---- Old unused stuff ----
-#cluster: "sbatch -A {cluster.account} -t {cluster.time} -p {cluster.partition} --mem {cluster.mem} --error={cluster.error} --output={cluster.output}"
-# drmaa: "
-#     --mem={cluster.mem_mb} 
-#     --cpus-per-task={cluster.cpus-per-task} 
-#     --time={cluster.time} 
-#     --account={cluster.account}
-#     --error={cluster.error} 
-#     --output={cluster.output}
-# "
-#retries: 2
-#cluster: "sbatch --account {cluster.account} --time {cluster.time} --mem {cluster.mem_mb} --error={cluster.error} --output={cluster.output}"
-
-# [--local-cores N] 
-#local-cores: 2
-#configfile: "configs/workflow.yaml"
-#configfile: "config.yaml"
-# [--snakefile FILE] 
-
-# While still being possible, cluster configuration has been deprecated by the introduction of Profiles. (https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles)
-#cluster-config: "profiles/slurm/cluster.yaml" 
-
-
-# ---- Singularity ----
-#use-singularity: True
-#singularity-prefix: "/faststorage/home/cmkobel/singularity_images/"
-
-
 
