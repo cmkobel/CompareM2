@@ -205,6 +205,9 @@ In the future we might add some of the following pieces of software into assembl
   - [GenAPI](https://github.com/MigleSur/GenAPI) (alternative to roary)
 
 
+
   
-Development will continue. 
+Development will continue:
+  - [BUSCO](https://busco.ezlab.org/) (Benchmarking sets of Universal Single-Copy Orthologs.)
+  - singlem
   
