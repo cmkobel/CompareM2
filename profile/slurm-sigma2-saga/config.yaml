@@ -24,8 +24,6 @@ conda-frontend: 'mamba'
 cluster-cancel: "scancel"
 
 cluster:
-  echo "{resources.mem_mb}" &&
-  echo "{resources.partition}" &&
   mkdir -p logs/old/ &&
   sbatch
     --parsable

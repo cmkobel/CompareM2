@@ -115,6 +115,7 @@ void_report = f"touch {out_base_var}/.asscom2_void_report.flag"
 rule all:
     input: expand(["{out_base}/metadata.tsv", \
                    "{out_base}/.install_report_environment_aot.flag", \
+                   "{out_base}/checkm2/checkm2.tsv", \
                    "{out_base}/assembly-stats/assembly-stats.tsv", \
                    "{out_base}/collected_results/sequence_lengths.tsv", \
                    "{out_base}/collected_results/GC_summary.tsv", \
@@ -182,7 +183,7 @@ rule metadata:
     """
 
 
-
+# Mac-only problem (possibly only on M1 which no one uses anyway..)
 # Seems that checkm doesn't work on mac. pplacer does not exist, and I get errors:
 #   AttributeError: 'MarkerGeneFinder' object has no attribute '__reportProgress'
 #   AttributeError: 'MarkerGeneFinder' object has no attribute '__processBin'
@@ -193,25 +194,28 @@ rule metadata:
 #   [2022-09-27 10:35:56] ERROR: Models must be parsed before identifying HMM hits.
 #   I will have to consider if I will develop this on linux, or find an alternative.
 # rules download_checkm and checkm have been disabled below
-# rule download_checkm:
-#    output:
-#        flag = touch("{out_base}/.checkm_OK.flag")
-#    conda: "conda_definitions/wget.yaml"
-#    params:
-#        directory = base_variable + "/databases/checkm/"
-#    shell: """
-#
-#    # Check if the database exists. 
-#    # If it doesn't, download/untar the db
-#    if [ ! -f {params.directory}/checkm_OK.flag ]; then    
-#
-#        wget --directory-prefix={params.directory} https://data.ace.uq.edu.au/public/CheckM_databases/checkm_data_2015_01_16.tar.gz 
-#        tar -xvf {params.directory}/checkm_data_2015_01_16.tar.gz -C {params.directory}
-#        touch {params.directory}/checkm_OK.flag
-#
-#    fi
-#
-#    """
+# rule checkm_download:
+#     output:
+#         flag = touch("{out_base}/.checkm_OK.flag")
+#     conda: "conda_definitions/wget.yaml"
+#     params:
+#         directory = base_variable + "/databases/checkm/" # trailing slash??
+#     shell: """
+ 
+#     # Check if the database exists. 
+#     # If it doesn't, download/untar the db
+#     if [ ! -f {params.directory}/checkm_OK.flag ]; then    
+ 
+#         mkdir -p {params.directory}
+#         wget --directory-prefix={params.directory} https://data.ace.uq.edu.au/public/CheckM_databases/checkm_data_2015_01_16.tar.gz 
+#         tar -xvf {params.directory}/checkm_data_2015_01_16.tar.gz -C {params.directory}
+#         touch {params.directory}/checkm_OK.flag # This is just to make sure that the process went well.
+ 
+#     fi
+
+#     # If the flag exists already, then the .checkm_OK.flag will be touched immediately by snakemake
+ 
+#     """
 #
 #rule checkm:
 #    input: "{out_base}/.checkm_OK.flag"
@@ -229,6 +233,48 @@ rule metadata:
 #
 #    """
 
+
+
+# --- CheckM2 --------------------------------------------------------
+
+# checkm2 is a bit tricky since it requires a manual installation. If
+# it turns out that it is neccessary to have the git download in the 
+# same directory as where it is run, then it might not be feasible to 
+# use it at all.
+rule checkm2:
+    input:
+        metadata = "{out_base}/metadata.tsv",
+        fasta = df["input_file_fasta"].tolist()
+    output: 
+        dir = directory("{out_base}/checkm2/genomes"),
+        table = touch("{out_base}/checkm2/checkm2.tsv")
+    conda: "conda_definitions/checkm2.yaml"
+    threads: 1
+    resources:
+        mem_mb = 4000,
+    params:
+        copy_of_input_genomes = out_base_var + "/checkm2/genomes",
+        base_variable = base_variable # where assemblycomparator2 is installed
+    shell: """
+
+        # Setup instructions for checkm2 (because there is no conda package and I'm too lazy to make one)
+        #   - Make snakemake create the environment with the specific yaml that is requested here
+        #   - Manually activate that environment and run the setup instructions (python setup.py install) from the github repo:
+        #       https://github.com/chklovski/CheckM2/blob/badae4e495fc415e3acc8eacc66989f5c574787d/README.md
+        #   - That is it.        
+
+        # As long as the correct conda environment is activated, the install script will install checkm correctly in the bin/ directory of that environment.
+        
+        mkdir -p {output.dir} # I'm not sure why snakemake doesn't create this directory.
+        cp {input.fasta} {output.dir}
+        
+        checkm2 predict \
+            --input {output.dir} \
+            --output-directory {output.dir}/output \
+            --extension .fa \
+            --force
+
+    """
 
 
 
@@ -295,7 +341,7 @@ rule prokka_individual:
             --force \
             --outdir {wildcards.out_base}/samples/{wildcards.sample}/prokka \
             --prefix {wildcards.sample} {input} \
-            > tee {output.log} 
+            | tee {output.log} 
 
         # Label summary file
         cat {output.log} \
