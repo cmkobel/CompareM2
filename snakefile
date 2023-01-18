@@ -251,7 +251,7 @@ rule checkm2:
     conda: "conda_definitions/checkm2.yaml"
     threads: 1
     resources:
-        mem_mb = 4000,
+        mem_mb = 16000,
     params:
         copy_of_input_genomes = out_base_var + "/checkm2/genomes",
         base_variable = base_variable # where assemblycomparator2 is installed
@@ -268,7 +268,8 @@ rule checkm2:
         mkdir -p {output.dir} # I'm not sure why snakemake doesn't create this directory.
         cp {input.fasta} {output.dir}
         
-        checkm2 predict \
+        #checkm2 predict \
+        {params.base_variable}/assets/checkm2
             --input {output.dir} \
             --output-directory {output.dir}/output \
             --extension .fa \
