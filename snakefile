@@ -246,15 +246,16 @@ rule checkm2:
         metadata = "{out_base}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist()
     output: 
-        dir = directory("{out_base}/checkm2/genomes"),
-        table = touch("{out_base}/checkm2/checkm2.tsv")
+        #dir = directory("{out_base}/checkm2/genomes"),
+        table = touch("{out_base}/checkm2/checkm2.tsv"),
+        diamond = touch("{out_base}/checkm2/diamond_output/DIAMOND_RESULTS.tsv")
     conda: "conda_definitions/checkm2.yaml"
     threads: 1
     resources:
         mem_mb = 16000,
     params:
-        copy_of_input_genomes = out_base_var + "/checkm2/genomes",
-        base_variable = base_variable # where assemblycomparator2 is installed
+        rule_dir = out_base_var + "/checkm2",
+        base_variable = base_variable
     shell: """
 
         # Setup instructions for checkm2 (because there is no conda package and I'm too lazy to make one)
@@ -265,15 +266,17 @@ rule checkm2:
 
         # As long as the correct conda environment is activated, the install script will install checkm correctly in the bin/ directory of that environment.
         
-        mkdir -p {output.dir} # I'm not sure why snakemake doesn't create this directory.
-        cp {input.fasta} {output.dir}
+        #mkdir -p {params.rule_dir}/genomes
+        #cp {input.fasta} {params.rule_dir}/genomes
         
-        #checkm2 predict \
-        {params.base_variable}/assets/checkm2
-            --input {output.dir} \
-            --output-directory {output.dir}/output \
+        #checkm2 predict 
+        {params.base_variable}/assets/checkm2 predict \
+            --input {input.fasta} \
+            --output-directory {params.rule_dir} \
             --extension .fa \
             --force
+
+        
 
     """
 
