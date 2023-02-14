@@ -125,6 +125,7 @@ rule all:
                    "{out_base}/abricate/card_detailed.tsv", \
                    "{out_base}/mashtree/mashtree.newick", \
                    "{out_base}/mlst/mlst.tsv", \
+                   "{out_base}/busco/{sample}/busco_done.flag", \
                    "{out_base}/fasttree/fasttree.newick", \
                    "{out_base}/gtdbtk/gtdbtk.bac.summary.tsv", \
                    "{out_base}/snp-dists/snp-dists.tsv"], \
@@ -245,8 +246,7 @@ rule checkm2:
     input:
         metadata = "{out_base}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist()
-    output: 
-        #dir = directory("{out_base}/checkm2/genomes"),
+    output:
         table = touch("{out_base}/checkm2/checkm2.tsv"),
         diamond = touch("{out_base}/checkm2/diamond_output/DIAMOND_RESULTS.tsv")
     conda: "conda_definitions/checkm2.yaml"
@@ -258,25 +258,11 @@ rule checkm2:
         base_variable = base_variable
     shell: """
 
-        # Setup instructions for checkm2 (because there is no conda package and I'm too lazy to make one)
-        #   - Make snakemake create the environment with the specific yaml that is requested here
-        #   - Manually activate that environment and run the setup instructions (python setup.py install) from the github repo:
-        #       https://github.com/chklovski/CheckM2/blob/badae4e495fc415e3acc8eacc66989f5c574787d/README.md
-        #   - That is it.        
-
-        # As long as the correct conda environment is activated, the install script will install checkm correctly in the bin/ directory of that environment.
-        
-        #mkdir -p {params.rule_dir}/genomes
-        #cp {input.fasta} {params.rule_dir}/genomes
-        
-        #checkm2 predict 
         {params.base_variable}/assets/checkm2 predict \
             --input {input.fasta} \
             --output-directory {params.rule_dir} \
             --extension .fa \
             --force
-
-        
 
     """
 
@@ -411,6 +397,34 @@ rule kraken2_individual:
     """
 
 
+rule busco_individual:
+    input: 
+        #metadata = "{out_base}/metadata.tsv", # not necessary as this is just an sample individual rule
+        #fasta = df["input_file_fasta"].tolist()
+        "{out_base}/samples/{sample}/{sample}.fa"
+    output: 
+        flag = "{out_base}/busco/{sample}/busco_done.flag"
+    params:
+        base_variable = base_variable,
+        out_dir = "{out_base}/busco/{sample}"
+    conda: "conda_definitions/busco.yaml"
+    threads = 2,
+    resources:
+        mem_mb = 2048
+        runtime = "06:00:00"
+    shell: """
+
+        # https://gitlab.com/ezlab/busco
+        busco \
+            --cpu {threads} \
+            --in {input} \
+            --out {params.out_dir} \
+            --mode geno \
+            --auto-lineage-prok \
+            --force \
+            --download_path {params.base_variable}/busco_downloads/
+
+    """
 
 
 # --- Collect results among all samples -----------------------------
@@ -711,6 +725,7 @@ rule mlst:
 
         {void_report}
     """
+
 
 
 
