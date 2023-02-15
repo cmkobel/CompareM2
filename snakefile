@@ -113,24 +113,24 @@ void_report = f"touch {out_base_var}/.asscom2_void_report.flag"
 
 # --- Collect all targets. ------------------------------------------
 rule all:
-    input: expand(["{out_base}/metadata.tsv", \
-                   "{out_base}/.install_report_environment_aot.flag", \
-                   "{out_base}/checkm2/checkm2.tsv", \
-                   "{out_base}/assembly-stats/assembly-stats.tsv", \
-                   "{out_base}/collected_results/sequence_lengths.tsv", \
-                   "{out_base}/collected_results/GC_summary.tsv", \
-                   "{out_base}/collected_results/prokka_summarized.txt", \
-                   "{out_base}/collected_results/kraken2_reports.tsv", \
-                   "{out_base}/roary/summary_statistics.txt", \
-                   "{out_base}/abricate/card_detailed.tsv", \
-                   "{out_base}/mashtree/mashtree.newick", \
-                   "{out_base}/mlst/mlst.tsv", \
-                   "{out_base}/samples/{sample}/busco/busco_done.flag", \
-                   "{out_base}/collected_results/busco.tsv", \
-                   "{out_base}/fasttree/fasttree.newick", \
-                   "{out_base}/gtdbtk/gtdbtk.bac.summary.tsv", \
-                   "{out_base}/snp-dists/snp-dists.tsv"], \
-                  out_base = out_base_var, sample = df["sample"], batch_title = batch_title) # copy
+    input: expand([\
+        "{out_base}/metadata.tsv", \
+        "{out_base}/.install_report_environment_aot.flag", \
+        "{out_base}/checkm2/checkm2.tsv", \
+        "{out_base}/assembly-stats/assembly-stats.tsv", \
+        "{out_base}/collected_results/sequence_lengths.tsv", \
+        "{out_base}/collected_results/GC_summary.tsv", \
+        "{out_base}/collected_results/prokka_summarized.txt", \
+        "{out_base}/collected_results/kraken2_reports.tsv", \
+        "{out_base}/roary/summary_statistics.txt", \
+        "{out_base}/abricate/card_detailed.tsv", \
+        "{out_base}/mashtree/mashtree.newick", \
+        "{out_base}/mlst/mlst.tsv", \
+        "{out_base}/collected_results/busco.tsv", \
+        "{out_base}/fasttree/fasttree.newick", \
+        "{out_base}/gtdbtk/gtdbtk.bac.summary.tsv", \
+        "{out_base}/snp-dists/snp-dists.tsv"], \
+        out_base = out_base_var) 
 
 
 
@@ -365,7 +365,7 @@ rule kraken2_individual:
     output: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
     container: "docker://staphb/kraken2"
     conda: "conda_definitions/kraken2.yaml"
-    threads: 4
+    threads: 2
     resources:
         mem_mb = 65536
     benchmark: "{out_base}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
@@ -377,7 +377,7 @@ rule kraken2_individual:
 
             # Run kraken2
             kraken2 \
-                --threads 4 \
+                --threads {threads} \
                 --db $ASSCOM2_KRAKEN2_DB \
                 --report {output}_tmp \
                 {input} \
@@ -397,12 +397,51 @@ rule kraken2_individual:
 
     """
 
+# This rule runs once, downloading the busco dataset that is needed for rule busco_individual.
+# Make sure that this job is run on a node that has internet access.
+rule busco_download:
+    output:
+        touch("{base_variable}/databases/busco/busco_download_done.flag")
+    conda: "conda_definitions/busco.yaml"
+    shell: """
+
+        
+        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        if [ -f "{wildcards.base_variable}/databases/busco/busco_download_done.flag" ]; then    
+
+            >&2 echo "Flag exists: touch it to update the mtime ..."
+            touch {output}
+            
+        else
+
+            >&2 echo "Flag doesn't exist: Download database and touch the flag ..."
+
+            # Busco is a bit stupid in the way that it requires an input file, but doesn't read it when you just download.
+            touch dummy.fasta
+            
+            # https://busco.ezlab.org/busco_userguide.html#download-and-automated-update
+            busco \
+                --in dummy.fasta \
+                --out shouldnotbenecessarytosettheoutdirwhenjustdownloading \
+                --mode geno \
+                --auto-lineage-prok \
+                --force \
+                --download_path {wildcards.base_variable}/databases/busco \
+                --download prokaryota
+            
+            touch {output}
+
+            # Clean up 
+            rm dummy.fasta
+        
+        fi
+
+    """
 
 rule busco_individual:
     input: 
-        #metadata = "{out_base}/metadata.tsv", # not necessary as this is just an sample individual rule
-        #fasta = df["input_file_fasta"].tolist()
-        "{out_base}/samples/{sample}/{sample}.fa"
+        busco_download = expand("{base_variable}/databases/busco/busco_download_done.flag", base_variable = base_variable),
+        fasta = "{out_base}/samples/{sample}/{sample}.fa"
     output: 
         flag = touch("{out_base}/samples/{sample}/busco/busco_done.flag"),
         table_labelled = "{out_base}/samples/{sample}/busco/full_table_labelled.tsv"
@@ -418,10 +457,10 @@ rule busco_individual:
     shell: """
 
 
-        # https://gitlab.com/ezlab/busco
+        # https://busco.ezlab.org/busco_userguide.html#offline
         busco \
             --cpu {threads} \
-            --in {input} \
+            --in {input.fasta} \
             --out {params.out_dir} \
             --mode geno \
             --auto-lineage-prok \
@@ -431,17 +470,20 @@ rule busco_individual:
             --offline 
             #--download prokaryota
             
+        # Potentially remove the comment block below in the case that rule busco_download works out well.
+        ## To set it up the first time, swap "--offline" with "--download prokaryota"
+        ## This will not run the analysis, but just download to the path set.
+        ## Info: Obviously make sure to only download with a single job, otherwise the downloads will overlap and corrupt..
+        ## Info: Consider adding virus on top of downloading prokaryota
 
-        # To set it up the first time, swap "--offline" with "--download prokaryota"
-        # This will not run the analysis, but just download to the path set.
-        # Info: Obviously make sure to only download with a single job, otherwise the downloads will overlap and corrupt..
-        # Info: Consider adding virus on top of downloading prokaryota
+
 
 
         # We don't know which lineage will be used, so I'm grabbing it with the following grob pattern:
         cat {wildcards.out_base}/samples/{wildcards.sample}/busco/run_*/full_table.tsv \
         | awk '{{ print $0 "\t{wildcards.sample}" }}' \
         > {output.table_labelled}
+
 
     """
 
