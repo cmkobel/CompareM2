@@ -126,7 +126,7 @@ rule all:
                    "{out_base}/mashtree/mashtree.newick", \
                    "{out_base}/mlst/mlst.tsv", \
                    "{out_base}/samples/{sample}/busco/busco_done.flag", \
-                   "{out_base}/collected_results/busco_bacteria_odb10.tsv", \
+                   "{out_base}/collected_results/busco.tsv", \
                    "{out_base}/fasttree/fasttree.newick", \
                    "{out_base}/gtdbtk/gtdbtk.bac.summary.tsv", \
                    "{out_base}/snp-dists/snp-dists.tsv"], \
@@ -157,7 +157,8 @@ rule copy:
     container: "docker://pvstodghill/any2fasta"
     conda: "conda_definitions/any2fasta.yaml"
     resources:
-        runtime = "01:00:00"
+        mem_mb = 512,
+        runtime = "00:10:00"
     shell: """
 
         any2fasta "{input.genome}" > {output}
@@ -405,15 +406,15 @@ rule busco_individual:
         "{out_base}/samples/{sample}/{sample}.fa"
     output: 
         flag = touch("{out_base}/samples/{sample}/busco/busco_done.flag"),
-        table = "{out_base}/samples/{sample}/busco/run_bacteria_odb10/full_table.tsv",
-        table_labelled = "{out_base}/samples/{sample}/busco/run_bacteria_odb10/full_table_labelled.tsv"
+        table_labelled = "{out_base}/samples/{sample}/busco/full_table_labelled.tsv"
     params:
         base_variable = base_variable,
+        #out_base = out_base_var,
         out_dir = "{out_base}/samples/{sample}/busco"
     conda: "conda_definitions/busco.yaml"
     threads: 1
     resources:
-        mem_mb = 2048,
+        mem_mb = 4096,
         runtime = "06:00:00"
     shell: """
 
@@ -435,9 +436,11 @@ rule busco_individual:
         # To set it up the first time, swap "--offline" with "--download prokaryota"
         # This will not run the analysis, but just download to the path set.
         # Info: Obviously make sure to only download with a single job, otherwise the downloads will overlap and corrupt..
+        # Info: Consider adding virus on top of downloading prokaryota
 
 
-        cat {output.table} \
+        # We don't know which lineage will be used, so I'm grabbing it with the following grob pattern:
+        cat {wildcards.out_base}/samples/{wildcards.sample}/busco/run_*/full_table.tsv \
         | awk '{{ print $0 "\t{wildcards.sample}" }}' \
         > {output.table_labelled}
 
@@ -449,8 +452,9 @@ rule busco_individual:
 rule busco:
     input: 
         metadata = "{out_base}/metadata.tsv",
-        tables = expand("{out_base}/samples/{sample}/busco/run_bacteria_odb10/full_table_labelled.tsv", out_base = out_base_var, sample = df["sample"]),
-    output: "{out_base}/collected_results/busco_bacteria_odb10.tsv"
+        #tables = expand("{out_base}/samples/{sample}/busco/run_bacteria_odb10/full_table_labelled.tsv", out_base = out_base_var, sample = df["sample"]),
+        tables = expand("{out_base}/samples/{sample}/busco/full_table_labelled.tsv", out_base = out_base_var, sample = df["sample"]),
+    output: "{out_base}/collected_results/busco.tsv"
     resources: 
         runtime = "01:00:00"
     shell: """
