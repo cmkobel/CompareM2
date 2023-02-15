@@ -284,7 +284,6 @@ rule seqlen_individual:
         bioawk -v sam={wildcards.sample} -c fastx '{{ print sam, $name, length($seq) }}' < {input} \
         > {output}
 
-
     """
 
 
@@ -414,8 +413,8 @@ rule busco_individual:
     conda: "conda_definitions/busco.yaml"
     threads: 1
     resources:
-        mem_mb = 4096,
-        runtime = "06:00:00"
+        mem_mb = 8192,
+        runtime = "06:00:00",
     shell: """
 
 
@@ -456,7 +455,8 @@ rule busco:
         tables = expand("{out_base}/samples/{sample}/busco/full_table_labelled.tsv", out_base = out_base_var, sample = df["sample"]),
     output: "{out_base}/collected_results/busco.tsv"
     resources: 
-        runtime = "01:00:00"
+        mem_mb = 128,
+        runtime = "00:10:00"
     shell: """
 
         # Set header
@@ -464,9 +464,9 @@ rule busco:
         > {output}
 
         # Append sample labelled tabels
-        cat {input} >> {output}
+        cat {input.tables} >> {output}
 
-        {void_report} # TODO: Add busco summary to report.
+        {void_report} # TODO: Make a nice summary in the report.
 
     """
 
