@@ -125,7 +125,8 @@ rule all:
                    "{out_base}/abricate/card_detailed.tsv", \
                    "{out_base}/mashtree/mashtree.newick", \
                    "{out_base}/mlst/mlst.tsv", \
-                   "{out_base}/busco/{sample}/busco_done.flag", \
+                   "{out_base}/samples/{sample}/busco/busco_done.flag", \
+                   "{out_base}/collected_results/busco_bacteria_odb10.tsv", \
                    "{out_base}/fasttree/fasttree.newick", \
                    "{out_base}/gtdbtk/gtdbtk.bac.summary.tsv", \
                    "{out_base}/snp-dists/snp-dists.tsv"], \
@@ -403,16 +404,19 @@ rule busco_individual:
         #fasta = df["input_file_fasta"].tolist()
         "{out_base}/samples/{sample}/{sample}.fa"
     output: 
-        flag = "{out_base}/busco/{sample}/busco_done.flag"
+        flag = touch("{out_base}/samples/{sample}/busco/busco_done.flag"),
+        table = "{out_base}/samples/{sample}/busco/run_bacteria_odb10/full_table.tsv",
+        table_labelled = "{out_base}/samples/{sample}/busco/run_bacteria_odb10/full_table_labelled.tsv"
     params:
         base_variable = base_variable,
-        out_dir = "{out_base}/busco/{sample}"
+        out_dir = "{out_base}/samples/{sample}/busco"
     conda: "conda_definitions/busco.yaml"
-    threads = 2,
+    threads: 1
     resources:
-        mem_mb = 2048
+        mem_mb = 2048,
         runtime = "06:00:00"
     shell: """
+
 
         # https://gitlab.com/ezlab/busco
         busco \
@@ -422,12 +426,46 @@ rule busco_individual:
             --mode geno \
             --auto-lineage-prok \
             --force \
-            --download_path {params.base_variable}/busco_downloads/
+            --tar \
+            --download_path {params.base_variable}/databases/busco \
+            --offline 
+            #--download prokaryota
+            
+
+        # To set it up the first time, swap "--offline" with "--download prokaryota"
+        # This will not run the analysis, but just download to the path set.
+        # Info: Obviously make sure to only download with a single job, otherwise the downloads will overlap and corrupt..
+
+
+        cat {output.table} \
+        | awk '{{ print $0 "\t{wildcards.sample}" }}' \
+        > {output.table_labelled}
 
     """
 
 
 # --- Collect results among all samples -----------------------------
+
+rule busco:
+    input: 
+        metadata = "{out_base}/metadata.tsv",
+        tables = expand("{out_base}/samples/{sample}/busco/run_bacteria_odb10/full_table_labelled.tsv", out_base = out_base_var, sample = df["sample"]),
+    output: "{out_base}/collected_results/busco_bacteria_odb10.tsv"
+    resources: 
+        runtime = "01:00:00"
+    shell: """
+
+        # Set header
+        echo -e "busco_id\tstatus\tsequence\tgene_start\tgene_End\tstrand\tscore\tlength\torthodb_url\tdescription\tsample" \
+        > {output}
+
+        # Append sample labelled tabels
+        cat {input} >> {output}
+
+        {void_report} # TODO: Add busco summary to report.
+
+    """
+
 
 rule kraken2:
     input: expand("{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", out_base = out_base_var, sample = df["sample"]),

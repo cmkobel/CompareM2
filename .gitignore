@@ -138,3 +138,9 @@ dmypy.json
 .pyre/
 .Rproj.user
 .Rhistory
+
+tests/
+busco_downloads
+databases/
+trash/
+
