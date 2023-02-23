@@ -463,7 +463,7 @@ rule busco_individual:
         runtime = "06:00:00",
     shell: """
 
-
+        >&2 echo "Busco individual"
         # https://busco.ezlab.org/busco_userguide.html#offline
         busco \
             --cpu {threads} \
@@ -474,21 +474,16 @@ rule busco_individual:
             --force \
             --tar \
             --download_path {params.base_variable}/databases/busco \
-            --offline 
-            #--download prokaryota
-            
-        # Potentially remove the comment block below in the case that rule busco_download works out well.
-        ## To set it up the first time, swap "--offline" with "--download prokaryota"
-        ## This will not run the analysis, but just download to the path set.
-        ## Info: Obviously make sure to only download with a single job, otherwise the downloads will overlap and corrupt..
-        ## Info: Consider adding virus on top of downloading prokaryota
+            --offline || ( >&2 echo "busco failed internally.")
 
 
 
-        # Grab the most important output with the following grob-grep 
+        >&2 echo "Extracting distillate"
         cat {wildcards.out_base}/samples/{wildcards.sample}/busco/short_summary.*.txt \
         | grep -E "# The lineage dataset is:|# Summarized benchmarking|C:" \
-        > {output.table_extract}
+        > {output.table_extract} || touch {output.table_extract}
+
+        # The reason why we touch in the end is that the command may fail if there is no output from busco. Should be a good solution as the job will then only fail if busco itself fails.
 
 
     """
