@@ -276,10 +276,13 @@ rule checkm2:
 
 # --- Targets for each sample below: --------------------------------
 
-rule seqlen_individual:
+rule sequence_lengths_individual:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
     container: "docker://cmkobel/bioawk"
+    resources:
+        runtime = "01:00:00",
+        mem_mb = 128,
     conda: "conda_definitions/bioawk.yaml"
     shell: """
 
@@ -294,7 +297,7 @@ rule gc_summary_individual:
     output: "{out_base}/samples/{sample}/statistics/{sample}_gc.tsv"
     container: "docker://rocker/tidyverse" # remember to add devtools
     conda: "conda_definitions/r-tidyverse.yaml" # like r-markdown, but much simpler.
-    params: base_variable = base_variable
+    params: base_variable = base_variable,
     shell: """
 
 
@@ -322,7 +325,7 @@ rule prokka_individual:
     conda: "conda_definitions/prokka.yaml"
     benchmark: "{out_base}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
     resources:
-        mem_mb = 8192
+        mem_mb = 8192,
     threads: 4
     shell: """
       
@@ -369,7 +372,7 @@ rule kraken2_individual:
     conda: "conda_definitions/kraken2.yaml"
     threads: 2
     resources:
-        mem_mb = 65536
+        mem_mb = 65536,
     benchmark: "{out_base}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
     shell: """
 
@@ -445,14 +448,14 @@ rule busco_download:
 rule busco_individual:
     input: 
         busco_download = expand("{base_variable}/databases/busco/busco_download_done.flag", base_variable = base_variable),
-        fasta = "{out_base}/samples/{sample}/{sample}.fa"
+        fasta = "{out_base}/samples/{sample}/{sample}.fa",
     output: 
         flag = touch("{out_base}/samples/{sample}/busco/busco_done.flag"),
         table_extract = "{out_base}/samples/{sample}/busco/short_summary_extract.tsv"
     params:
         base_variable = base_variable,
         #out_base = out_base_var,
-        out_dir = "{out_base}/samples/{sample}/busco"
+        out_dir = "{out_base}/samples/{sample}/busco",
     conda: "conda_definitions/busco.yaml"
     threads: 1
     resources:
@@ -501,7 +504,7 @@ rule busco:
     output: "{out_base}/collected_results/busco.tsv"
     resources: 
         mem_mb = 128,
-        runtime = "00:10:00"
+        runtime = "00:10:00",
     shell: """
 
         cat {input.tables} >> {output}
@@ -515,7 +518,7 @@ rule kraken2:
     input: expand("{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", out_base = out_base_var, sample = df["sample"]),
     output: "{out_base}/collected_results/kraken2_reports.tsv",
     resources:
-        runtime = "01:00:00"
+        runtime = "01:00:00",
     shell: """
 
         # kraken2
@@ -532,7 +535,7 @@ rule sequence_lengths:
     input: expand("{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", out_base = out_base_var, sample = df["sample"])
     output: "{out_base}/collected_results/sequence_lengths.tsv"
     resources:
-        runtime = "01:00:00"
+        runtime = "01:00:00",
     shell: """
 
         # Sequence lengths
@@ -548,7 +551,7 @@ rule gc_summary:
     input: expand("{out_base}/samples/{sample}/statistics/{sample}_gc.tsv", out_base = out_base_var, sample = df["sample"])
     output: "{out_base}/collected_results/GC_summary.tsv"
     resources:
-        runtime = "01:00:00"
+        runtime = "01:00:00",
     shell: """
 
         # Sequence lengths
@@ -578,7 +581,7 @@ rule prokka:
         labelled_gff = "{out_base}/collected_results/prokka_labelled.gff",
 
     resources:
-        runtime = "01:00:00"
+        runtime = "01:00:00",
     shell: """
 
         echo "sample value name" > {output.summarized_txt}
@@ -625,18 +628,18 @@ def get_mem_roary(wildcards, attempt):
 rule roary:
     input: 
         metadata = "{out_base}/metadata.tsv",
-        gff = expand("{out_base}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], out_base = out_base_var)
+        gff = expand("{out_base}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], out_base = out_base_var),
     output: ["{out_base}/roary/summary_statistics.txt", "{out_base}/roary/core_gene_alignment.aln", "{out_base}/roary/gene_presence_absence.csv", "{out_base}/roary/roary_done.flag"]
     params:
         blastp_identity = int(config['roary_blastp_identity']), # = 95 # For clustering genes
-        core_perc = 99  # Definition of the core genome
+        core_perc = 99,  # Definition of the core genome
     #conda: "envs/roary.yml"
     threads: 16
     #retries: 2
     resources:
         #mem_mb = 32768,
         mem_mb = get_mem_roary,
-        runtime = "23:59:59" # Well, fuck me if this doesn't work on PBS
+        runtime = "23:59:59", # Well, fuck me if this doesn't work on PBS
     container: "docker://sangerpathogens/roary"
     conda: "conda_definitions/roary.yaml"
     shell: """
@@ -669,7 +672,7 @@ rule roary:
 rule snp_dists:
     input: 
         metadata = "{out_base}/metadata.tsv",
-        aln = "{out_base}/roary/core_gene_alignment.aln"
+        aln = "{out_base}/roary/core_gene_alignment.aln",
     output: "{out_base}/snp-dists/snp-dists.tsv"
     conda: "conda_definitions/snp-dists.yaml"
     container: "docker://staphb/snp-dists"
@@ -686,7 +689,7 @@ rule snp_dists:
 rule assembly_stats:
     input: 
         metadata = "{out_base}/metadata.tsv",
-        fasta = df["input_file_fasta"].tolist()
+        fasta = df["input_file_fasta"].tolist(),
     output: "{out_base}/assembly-stats/assembly-stats.tsv"
     container: "docker://sangerpathogens/assembly-stats"
     conda: "conda_definitions/assembly-stats.yaml"
@@ -704,7 +707,7 @@ def get_mem_gtdbtk(wildcards, attempt):
 rule gtdbtk:
     input: 
         metadata = "{out_base}/metadata.tsv",
-        fasta = df["input_file_fasta"].tolist()
+        fasta = df["input_file_fasta"].tolist(),
     output: "{out_base}/gtdbtk/gtdbtk.bac.summary.tsv"
     params:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
@@ -712,8 +715,8 @@ rule gtdbtk:
     threads: 8
     #retries: 3
     resources:
-        #mem_mb = 150000 # Last time I remember, it used 130000
-        mem_mb = get_mem_gtdbtk
+        #mem_mb = 150000, # Last time I remember, it used 130000
+        mem_mb = get_mem_gtdbtk,
     conda: "conda_definitions/gtdbtk.yaml"
     benchmark: "{out_base}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
@@ -755,7 +758,7 @@ rule abricate:
         ncbi_detailed = "{out_base}/abricate/ncbi_detailed.tsv",
         ncbi_sum = "{out_base}/abricate/ncbi_summarized.tsv",
         vfdb_detailed = "{out_base}/abricate/vfdb_detailed.tsv",
-        vfdb_sum = "{out_base}/abricate/vfdb_summarized.tsv"
+        vfdb_sum = "{out_base}/abricate/vfdb_summarized.tsv",
 
     container: "docker://staphb/abricate"
     conda: "conda_definitions/abricate.yaml"
@@ -784,19 +787,19 @@ rule abricate:
 
 # Parse the mlst scheme for bash
 if config["mlst_scheme"] == "automatic":
-    mlst_scheme_interpreted = ""
+    mlst_scheme_interpreted = "",
 else:
-    mlst_scheme_interpreted = f"--scheme {config['mlst_scheme']}"
+    mlst_scheme_interpreted = f"--scheme {config['mlst_scheme']}",
 #print(f"Info: The mlst_scheme is set to <{mlst_scheme_interpreted}>") # Debug message.
 
 rule mlst:
     input: 
         metadata = "{out_base}/metadata.tsv",
-        fasta = df["input_file_fasta"].tolist()
+        fasta = df["input_file_fasta"].tolist(),
     output: "{out_base}/mlst/mlst.tsv",
     params:
         mlst_scheme_interpreted = mlst_scheme_interpreted,
-        list_ = "{out_base}/mlst/mlst_schemes.txt"
+        list_ = "{out_base}/mlst/mlst_schemes.txt",
     container: "docker://staphb/mlst"
     conda: "conda_definitions/mlst.yaml"
     shell: """
@@ -814,15 +817,15 @@ rule mlst:
 rule mashtree:
     input: 
         metadata = "{out_base}/metadata.tsv",
-        fasta = df["input_file_fasta"].tolist()
+        fasta = df["input_file_fasta"].tolist(),
     output: 
         tree = "{out_base}/mashtree/mashtree.newick",
-        dist = "{out_base}/mashtree/mash_dist.tsv"
+        dist = "{out_base}/mashtree/mash_dist.tsv",
     container: "docker://staphb/mashtree"
     conda: "conda_definitions/mashtree.yaml"
     threads: 4
     resources:
-        mem_mb = 16000
+        mem_mb = 16000,
     shell: """
 
         mashtree \
@@ -844,7 +847,7 @@ def get_mem_fasttree(wildcards, attempt):
 rule fasttree:
     input:
         metadata = "{out_base}/metadata.tsv",
-        fasta = "{out_base}/roary/core_gene_alignment.aln"
+        fasta = "{out_base}/roary/core_gene_alignment.aln",
     output: "{out_base}/fasttree/fasttree.newick"
     container: "docker://staphb/fasttree"
     conda: "conda_definitions/fasttree.yaml"
@@ -852,7 +855,7 @@ rule fasttree:
     #retries: 1
     resources:
         mem_mb = get_mem_fasttree,
-        runntime = "23:59:59"
+        runntime = "23:59:59",
     shell: """
 
         OMP_NUM_THREADS={threads}
@@ -919,7 +922,7 @@ rule install_report_environment_aot:
 # TODO: Should never run on the queue system
 rule report:
     resources:
-        runtime = "00:01:00"
+        runtime = "00:01:00",
     shell: """
         {void_report}
     """
