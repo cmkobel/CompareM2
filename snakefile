@@ -474,8 +474,10 @@ rule busco_individual:
             --force \
             --tar \
             --download_path {params.base_variable}/databases/busco \
-            --offline || ( >&2 echo "busco failed internally.")
+            --offline || ( >&2 echo "asscom2: Busco failed internally.")
 
+        # Unfortunately, busco fails (exitcode > 0) when the input file cannot be successfully annotated. This has the consequence that the collection script (rule busco) will not run on the rest of the samples. As a fix to this, I've made it so it just prints an error message to stderr instead, and proceeds.
+        # Alas, a derived consequence of this solution is that if busco really fails internally NOT because of the input file being a garbage genome, it is going to be harder to debug, as the job will look like it completed successfully.
 
 
         >&2 echo "Extracting distillate"
@@ -483,7 +485,7 @@ rule busco_individual:
         | grep -E "# The lineage dataset is:|# Summarized benchmarking|C:" \
         > {output.table_extract} || touch {output.table_extract}
 
-        # The reason why we touch in the end is that the command may fail if there is no output from busco. Should be a good solution as the job will then only fail if busco itself fails.
+        # The reason why we touch in the end is that the command may fail if there is no output from busco. 
 
 
     """
