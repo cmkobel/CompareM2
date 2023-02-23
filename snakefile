@@ -105,7 +105,9 @@ except:
 
 
 # The modification time of this file tells the report subpipeline whether it needs to run. Thus, void_report is called in the end of every successful rule.
-void_report = f"touch {out_base_var}/.asscom2_void_report.flag"
+#void_report = f"touch {out_base_var}/.asscom2_void_report.flag"
+void_report = f"echo $(date --iso-8601=seconds) >> {out_base_var}/.asscom2_void_report.flag"
+
 
 
 
@@ -122,11 +124,11 @@ rule all:
         "{out_base}/collected_results/GC_summary.tsv", \
         "{out_base}/collected_results/prokka_summarized.txt", \
         "{out_base}/collected_results/kraken2_reports.tsv", \
+        "{out_base}/collected_results/busco.tsv", \
         "{out_base}/roary/summary_statistics.txt", \
         "{out_base}/abricate/card_detailed.tsv", \
         "{out_base}/mashtree/mashtree.newick", \
         "{out_base}/mlst/mlst.tsv", \
-        "{out_base}/collected_results/busco.tsv", \
         "{out_base}/fasttree/fasttree.newick", \
         "{out_base}/gtdbtk/gtdbtk.bac.summary.tsv", \
         "{out_base}/snp-dists/snp-dists.tsv"], \
@@ -409,12 +411,12 @@ rule busco_download:
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
         if [ -f "{wildcards.base_variable}/databases/busco/busco_download_done.flag" ]; then    
 
-            >&2 echo "Flag exists: touch it to update the mtime ..."
+            >&2 echo "Flag exists already: touch it to update the mtime ..."
             touch {output}
             
         else
 
-            >&2 echo "Flag doesn't exist: Download database and touch the flag ..."
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 
             # Busco is a bit stupid in the way that it requires an input file, but doesn't read it when you just download.
             touch dummy.fasta
@@ -428,6 +430,8 @@ rule busco_download:
                 --force \
                 --download_path {wildcards.base_variable}/databases/busco \
                 --download prokaryota
+
+            # Info: You can also swap "--download prokaryota" with "--download virus" if you're feeling adventurous ...
             
             touch {output}
 
@@ -444,7 +448,7 @@ rule busco_individual:
         fasta = "{out_base}/samples/{sample}/{sample}.fa"
     output: 
         flag = touch("{out_base}/samples/{sample}/busco/busco_done.flag"),
-        table_labelled = "{out_base}/samples/{sample}/busco/full_table_labelled.tsv"
+        table_extract = "{out_base}/samples/{sample}/busco/short_summary_extract.tsv"
     params:
         base_variable = base_variable,
         #out_base = out_base_var,
@@ -478,11 +482,10 @@ rule busco_individual:
 
 
 
-
-        # We don't know which lineage will be used, so I'm grabbing it with the following grob pattern:
-        cat {wildcards.out_base}/samples/{wildcards.sample}/busco/run_*/full_table.tsv \
-        | awk '{{ print $0 "\t{wildcards.sample}" }}' \
-        > {output.table_labelled}
+        # Grab the most important output with the following grob-grep 
+        cat {wildcards.out_base}/samples/{wildcards.sample}/busco/short_summary.*.txt \
+        | grep -E "# The lineage dataset is:|# Summarized benchmarking|C:" \
+        > {output.table_extract}
 
 
     """
@@ -493,19 +496,14 @@ rule busco_individual:
 rule busco:
     input: 
         metadata = "{out_base}/metadata.tsv",
-        #tables = expand("{out_base}/samples/{sample}/busco/run_bacteria_odb10/full_table_labelled.tsv", out_base = out_base_var, sample = df["sample"]),
-        tables = expand("{out_base}/samples/{sample}/busco/full_table_labelled.tsv", out_base = out_base_var, sample = df["sample"]),
+        #tables = expand("{out_base}/samples/{sample}/busco/run_bacteria_odb10/short_summary_extract.tsv", out_base = out_base_var, sample = df["sample"]),
+        tables = expand("{out_base}/samples/{sample}/busco/short_summary_extract.tsv", out_base = out_base_var, sample = df["sample"]),
     output: "{out_base}/collected_results/busco.tsv"
     resources: 
         mem_mb = 128,
         runtime = "00:10:00"
     shell: """
 
-        # Set header
-        echo -e "busco_id\tstatus\tsequence\tgene_start\tgene_End\tstrand\tscore\tlength\torthodb_url\tdescription\tsample" \
-        > {output}
-
-        # Append sample labelled tabels
         cat {input.tables} >> {output}
 
         {void_report} # TODO: Make a nice summary in the report.
