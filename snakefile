@@ -16,8 +16,13 @@ from shutil import copyfile
 #import re
 #from shutil import copyfile
 #import re
+
+
+# ---- Read important variables -----------------------------------------------
 cwd = os.getcwd()
 batch_title = cwd.split("/")[-1]
+base_variable = os.environ['ASSCOM2_BASE']
+
 print("/*")
 print()
 print("         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ ")
@@ -29,20 +34,19 @@ print("        ╚═╝  ╚═╝╚══════╝╚══════
 print("                       A.K.A. assemblycomparator2                   ")
 print("                         Please log issues at:                      ")
 print("              github.com/cmkobel/assemblycomparator2/issues         ")
-print()
-print(f"            batch_title:            {batch_title}")
-print(f"            roary_blastp_identity:  {config['roary_blastp_identity']} (default 95)")
-print(f"            mlst_scheme:            {config['mlst_scheme']} (default automatic)")
-print()
-
+print("                                                                    ")
+print(f"    batch_title:           {batch_title}")
+print(f"    roary_blastp_identity: {config['roary_blastp_identity']} (default 95)")
+print(f"    mlst_scheme:           {config['mlst_scheme']} (default automatic)   ")
+print(f"    base_variable:         {base_variable}                               ")
+print(f"    kraken2 database:      {config['asscom2_kraken2_db']}                ")
+print(f"    gtdb:                  {config['gtdbtk_data_path']}                  ")
 
 
 out_base_var = "output_asscom2"
 
-base_variable = os.environ['ASSCOM2_BASE']
 
 
-print('base_variable:', base_variable)
 
 
 #reference = config["reference"]
@@ -84,8 +88,8 @@ if df.shape[0] == 0:
 #df_mini = df_mini.apply(np.vectorize(lambda x: str(x).strip().replace(" ", ""))) # strip whitespace and replace spaces with underscores.
 
   
-# --- Displaying filtered dataframe ready for analysis --------------
-
+# --- Displaying filtered dataframe ready for analysis ------------------------
+print() # Padding
 df = df.reset_index(drop = True)
 #print(df[['input_file', 'sample', 'extension']])
 print(df)
@@ -95,7 +99,7 @@ print()
 
 
 
-# --- Make sure the output directory exists. ---------------------------
+# --- Make sure the output directory exists. ----------------------------------
 
 try: 
     os.mkdir("output_asscom2")
@@ -368,6 +372,8 @@ rule prokka_individual:
 rule kraken2_individual:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
+    params: 
+        asscom2_kraken2_db = config["asscom2_kraken2_db"],
     container: "docker://staphb/kraken2"
     conda: "conda_definitions/kraken2.yaml"
     threads: 2
@@ -376,6 +382,7 @@ rule kraken2_individual:
     benchmark: "{out_base}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
     shell: """
 
+        ASSCOM2_KRAKEN2_DB={params.asscom2_kraken2_db}
 
         if [ ! -z $ASSCOM2_KRAKEN2_DB ]; then
             echo using kraken2 database $ASSCOM2_KRAKEN2_DB
@@ -708,7 +715,8 @@ rule gtdbtk:
     output: "{out_base}/gtdbtk/gtdbtk.bac.summary.tsv"
     params:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
-        out_dir = "{out_base}/gtdbtk/"
+        out_dir = "{out_base}/gtdbtk/",
+        gtdbtk_data_path = config["gtdbtk_data_path"],
     threads: 8
     #retries: 3
     resources:
@@ -718,7 +726,7 @@ rule gtdbtk:
     benchmark: "{out_base}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
 
-        echo "GTDBTK_DATA_PATH is $GTDBTK_DATA_PATH"
+        export GTDBTK_DATA_PATH={params.gtdbtk_data_path}
 
         # Create batchfile
         echo '''{params.batchfile_content}''' > {wildcards.out_base}/gtdbtk/batchfile.tsv

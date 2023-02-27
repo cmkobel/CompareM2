@@ -2,3 +2,7 @@ roary_blastp_identity: 95
 mlst_scheme: automatic
 #checkm_filename
 
+
+
+asscom2_kraken2_db: "/cluster/projects/nn9864k/shared/databases/k2_pluspf_20210127"
+gtdbtk_data_path: "/cluster/projects/nn9864k/shared/databases/release207_v2"
