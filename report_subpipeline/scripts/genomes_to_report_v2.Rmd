@@ -585,7 +585,7 @@ try({
 })
 ```
 
-*Table `r tableno()`: Table of [BUSCO](https://busco.ezlab.org/) "BUSCO estimates the completeness and redundancy of processed genomic data based on universal single-copy orthologs.". C: Complete, S: Complete and single-copy, D: Complete and duplicated, F: Fragmented, M: Missing, n: Total BUSCO groups searched*
+*Table `r tableno()`: Table of [BUSCO](https://busco.ezlab.org/) "BUSCO estimates the completeness and redundancy of processed genomic data based on universal single-copy orthologs.". The following columns are printed as percents [%]: C: Complete, S: Complete and single-copy, D: Complete and duplicated, F: Fragmented, M: Missing, n: Total BUSCO groups searched*
 
 
 ## Functional Enrichment

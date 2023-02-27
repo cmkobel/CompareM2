@@ -898,7 +898,7 @@ rule install_report_environment_aot:
     """
 
 # Just a dummy rule if you wanna force the report
-# assemblycomparator2 --forcerun report
+# assemblycomparator2 --until report --forcerun report
 # TODO: Should never run on the queue system. Update: not sure if that is attainable?
 rule report:
     resources:
