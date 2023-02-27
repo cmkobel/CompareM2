@@ -26,7 +26,7 @@ editor_options:
 # Depends on a local run of the tests/E.faecium_plasmids assemblies.
 # setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
 
-#setwd("~/assemblycomparator2/tests/E._faecium/")    
+#setwd("/cluster/projects/nn9864k/cmkobel/assemblycomparator2/tests/E._faecium")     # Development
 
 
 
@@ -520,6 +520,72 @@ try({
 ```
 
 *Table `r tableno()`: Table of [VFDB](http://www.mgc.ac.cn/VFs/main.htm) virulence factor calls: "An integrated and comprehensive online resource for curating information about virulence factors of bacterial pathogens".*
+
+
+
+
+## BUSCO
+
+```{r echo=FALSE, message=F, warning=F}
+try({
+    busco_extract_file = "output_asscom2/collected_results/busco.tsv"
+    if (file.exists(busco_extract_file)) {
+
+        # Read raw input
+        busco_raw = read_lines(busco_extract_file)
+
+        # Disentangle extract
+        busco_raw_parsed = tibble(a = busco_raw) %>% 
+            pull(a) %>% 
+            str_match("dataset is: (.+) \\(|for file (.+.fa)|(C:.+)") %>% # Three matching groups. One for each piece of information. 
+            as_tibble() %>% 
+            mutate(
+                value = coalesce(V2, V3, V4),
+                name = (0:(length(busco_raw)-1))%%3,
+                group = case_when(
+                    str_detect(busco_raw, "dataset is:") ~ 1,
+                    TRUE ~ 0),
+                group = cumsum(group),
+            ) %>% 
+            pivot_wider(id_cols = group) %>% 
+            rename(lineage = `0`, file = `1`, results = `2`)
+
+        # Make pretty table
+        busco_df = busco_raw_parsed %>% 
+            #select(-file) %>%
+            select(-group) %>% 
+            mutate(filename_short = basename(file))%>%
+            select(-file) %>% 
+            separate(results, c("pre_CS", "D", "F", "M", "n"), sep = ",", extra = "drop") %>% 
+            separate(pre_CS, c("C", "S"), "\\[") %>% 
+            mutate(D = str_remove(D, "\\]")) %>% 
+            
+            mutate(
+                C = str_extract(C, "\\d+.\\d+") %>% as.numeric,
+                S = str_extract(S, "\\d+.\\d+") %>% as.numeric,
+                D = str_extract(D, "\\d+.\\d+") %>% as.numeric,
+                F = str_extract(F, "\\d+.\\d+") %>% as.numeric,
+                M = str_extract(M, "\\d+.\\d+") %>% as.numeric,
+                n = str_extract(n, "\\d+") %>% as.numeric
+            )
+
+
+        # Present
+        metadata_translate %>%
+            mutate(filename_short = basename(filename)) %>%
+            left_join(busco_df, by = "filename_short") %>%
+            select(-filename_short, -filename) %>%
+            arrange(lineage) %>%
+            datatable(class = 'cell-border stripe', options = list(dom = 'ltpi'))
+
+
+    } else {
+        paste("Warning: The file", busco_extract_file, "is not accessible.")
+    }
+})
+```
+
+*Table `r tableno()`: Table of [BUSCO](https://busco.ezlab.org/) "BUSCO estimates the completeness and redundancy of processed genomic data based on universal single-copy orthologs.". C: Complete, S: Complete and single-copy, D: Complete and duplicated, F: Fragmented, M: Missing, n: Total BUSCO groups searched*
 
 
 ## Functional Enrichment
