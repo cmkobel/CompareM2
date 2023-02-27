@@ -883,31 +883,6 @@ rule fetch_report_template:
     """
 
 
-# rule report:
-#     input:
-#         roary = "{out_base}/roary/roary_done.flag", # fasttree depends on roary, so the roary dependency is not necessary.
-#         fasttree = "{out_base}/fasttree/fasttree.newick", 
-#         snp_dists = "{out_base}/snp-dists/snp-dists.tsv",
-#         rmarkdown_template = "{out_base}/rmarkdown_template.rmd"
-#     #output: "{out_base}/report.html"
-#     output: "{out_base}/report_{batch_title}.html"
-#     params:
-#         #markdown_template_rmd = "rmarkdown_template.rmd", # "genomes_to_report_v2.Rmd"
-#         markdown_template_html = "genomes_to_report_v2.html"
-#     container: "docker://cmkobel/assemblycomparator2_report"
-#     conda: "conda_definitions/r-markdown.yaml"
-#     shell: """
-
-#         cd {wildcards.out_base}
-
-#         Rscript -e 'library(rmarkdown); rmarkdown::render("rmarkdown_template.rmd", "html_document")'
-
-#         rm rmarkdown_template.rmd
-#         mv rmarkdown_template.html ../{output}
-        
-#     """
-
-
 
 # This rule might seem silly, but it makes sure that the report environment is ready to rock when the report subpipeline eventually is run: This has two pros:
 #    1) The vastly faster mamba configuration in the asscom2 pipeline is used
@@ -923,8 +898,8 @@ rule install_report_environment_aot:
     """
 
 # Just a dummy rule if you wanna force the report
-# assemblycomparator2 --until report
-# TODO: Should never run on the queue system
+# assemblycomparator2 --forcerun report
+# TODO: Should never run on the queue system. Update: not sure if that is attainable?
 rule report:
     resources:
         runtime = "00:01:00",
