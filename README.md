@@ -69,8 +69,7 @@ assemblycomparator2 will then create a sub-directory containing a plethora of an
 
 
 Below is a snakemake exported directed graph of the rules involved:
-![dag](https://user-images.githubusercontent.com/5913696/123612417-cd402780-d802-11eb-81e8-617356fb62cf.png)
-
+![dag](https://user-images.githubusercontent.com/5913696/221563240-08804656-0213-4d9a-8431-e37254bb88c4.png)
 
 
 
