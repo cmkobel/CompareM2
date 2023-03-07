@@ -519,7 +519,9 @@ rule busco:
 
 
 rule kraken2:
-    input: expand("{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", out_base = out_base_var, sample = df["sample"]),
+    input: 
+        metadata = "{out_base}/metadata.tsv",
+        reports = expand("{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", out_base = out_base_var, sample = df["sample"]),
     output: "{out_base}/collected_results/kraken2_reports.tsv",
     resources:
         runtime = "01:00:00",
@@ -529,7 +531,7 @@ rule kraken2:
         echo -e "sample\tmatch_percent\tclade_mappings\tlevel_mappings\tlevel\ttaxonomic_id\tclade" \
         > {output}
 
-        cat {input} >> {output} 
+        cat {input.reports} >> {output} 
 
         {void_report}
     """
