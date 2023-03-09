@@ -604,8 +604,8 @@ try({
             geom_point() +
             geom_text(color = "black", alpha = 0.5, check_overlap = T, hjust = 0, vjust = 0, size = 2.5) +
             labs(
-                x = "Completeness (C) [%]",
-                y = "Fragmentation (F) [%]") +
+                x = "Complete (C) [%]",
+                y = "Fragmented (F) [%]") +
             theme_bw()
 
 
