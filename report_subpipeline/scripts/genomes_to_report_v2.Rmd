@@ -26,7 +26,7 @@ editor_options:
 # Depends on a local run of the tests/E.faecium_plasmids assemblies.
 # setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
 
-setwd("/cluster/projects/nn9864k/cmkobel/assemblycomparator2/tests/E._faecium")     # Development
+#setwd("/cluster/projects/nn9864k/cmkobel/assemblycomparator2/tests/E._faecium")     # Development
 
 
 
