@@ -758,7 +758,7 @@ try({
 })
 ```
 
-*Fig. `r figno()`: Visual distribution of genes in the different samples. The genes are ordered with respect to the number of samples sharing them.*
+*Fig. `r figno()`: Visual distribution of genes in the different samples. The genes are ordered and colored by the number of samples sharing them.*
 
 ## Core genome phylogeny
 
