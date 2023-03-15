@@ -370,7 +370,7 @@ try({
 })
 ```
 
-*Fig. `r figno()`: BUSCO Completeness VS Fragmentation. Axes are in percents. Colored by lineage. For each sample, only the best lineage match (in terms of completeness) is shown.*
+*Fig. `r figno()`: BUSCO Completeness VS Fragmentation. Axes are in percents. Colored by lineage. For each sample, only the best lineage match (in terms of completeness) is shown. Samples in the lower right corner are relatively better.*
 
 
 
@@ -390,7 +390,15 @@ try({
             select(sample) %>%
             left_join(checkm2_raw, by = c("sample" = "Name")) %>%
             
+            mutate(
+                Completeness_Model_Used = str_replace(Completeness_Model_Used, "Neural Network", "NN"),
+                Average_Gene_Length = round(Average_Gene_Length, 1)
+            ) %>%
             rename_with(str_replace_all, pattern = "_", replacement = " ")
+
+            
+
+
         
         checkm2_presentable %>%
             datatable(class = 'cell-border stripe')
@@ -434,7 +442,7 @@ try({
 
 
 
-*Fig. `r figno()`: [Checkm2](https://github.com/chklovski/CheckM2) results. Axes are in percents. Colored by coding density.*
+*Fig. `r figno()`: [Checkm2](https://github.com/chklovski/CheckM2) results. Axes are in percents. Colored by coding density. Samples in the lower right corner are relatively better.*
 
 
 

@@ -92,7 +92,7 @@ if df.shape[0] == 0:
 print() # Padding
 df = df.reset_index(drop = True)
 #print(df[['input_file', 'sample', 'extension']])
-print(df)
+print(df[['input_file', 'extension', 'input_file_fasta']])
 print("//")
 print()
 
