@@ -246,12 +246,46 @@ rule metadata:
 
 # --- CheckM2 --------------------------------------------------------
 
+
+
+rule checkm2_download:
+    output:
+        touch("{base_variable}/databases/checkm2/checkm2_download_done.flag")
+    params:
+        download_path = "{base_variable}/databases/checkm2"
+        checkm2_binary = "{base_variable}/assets/checkm2
+    conda: "conda_definitions/checkm2.yaml"
+    shell: """
+
+        
+        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        if [ -f "{wildcards.base_variable}/databases/checkm2/checkm2_download_done.flag" ]; then    
+
+            >&2 echo "Flag exists already: touch it to update the mtime ..."
+            touch {output}
+            
+        else
+
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
+        
+            {params.checkm2_binary} database \
+                --download \
+                --path {params.download_path}
+            
+            touch {output}
+        
+        fi
+
+    """
+
+
 # checkm2 is a bit tricky since it requires a manual installation. If
 # it turns out that it is neccessary to have the git download in the 
 # same directory as where it is run, then it might not be feasible to 
 # use it at all.
 rule checkm2:
     input:
+        checkm2_download = expand("{base_variable}/databases/checkm2/checkm2_download_done.flag", base_variable = base_variable), #expanding this variable shouldn't be necessary?
         metadata = "{out_base}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist()
     output:
@@ -263,10 +297,12 @@ rule checkm2:
         mem_mb = 16000,
     params:
         rule_dir = out_base_var + "/checkm2",
-        base_variable = base_variable
+        base_variable = base_variable,
+        checkm2_binary = "{base_variable}/assets/checkm2,
+
     shell: """
 
-        {params.base_variable}/assets/checkm2 predict \
+        {params.checkm2_binary} predict \
             --input {input.fasta} \
             --output-directory {params.rule_dir} \
             --extension .fa \

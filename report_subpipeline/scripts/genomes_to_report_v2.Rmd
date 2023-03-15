@@ -585,6 +585,9 @@ try({
         busco_df_meta %>% 
             datatable(class = 'cell-border stripe', options = list(dom = 'ltpi'))
 
+        busco_df_meta %>% 
+            write_tsv("output_asscom2/collected_results/export_busco.tsv")
+
 
     } else {
         paste("Warning: The file", busco_extract_file, "is not accessible.")
@@ -749,7 +752,7 @@ try({
             mutate(sample = fct_reorder(sample, desc(sample))) %>% 
             ggplot(aes(genes, sample, fill = factor(sum))) + geom_tile() +
             #labs(fill = "shared between\nsamples") + 
-            labs(fill = "number of\nsamples") + 
+            labs(fill = "number of\nsamples") +
             
             theme_classic() 
     } else {
@@ -758,7 +761,7 @@ try({
 })
 ```
 
-*Fig. `r figno()`: Visual distribution of genes in the different samples. The genes are ordered and colored by the number of samples sharing them.*
+*Fig. `r figno()`: Distribution of genes in the different samples. Each vertical line represents a gene, and all lines have the same width regardless of the size of the gene it represents. The genes are ordered and colored by the number of samples sharing them.*
 
 ## Core genome phylogeny
 
