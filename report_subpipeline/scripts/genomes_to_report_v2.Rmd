@@ -26,7 +26,7 @@ editor_options:
 # Depends on a local run of the tests/E.faecium_plasmids assemblies.
 # setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
 
-setwd("/cluster/projects/nn9864k/cmkobel/assemblycomparator2/tests/E._faecium")     # Development
+#setwd("/cluster/projects/nn9864k/cmkobel/assemblycomparator2/tests/E._faecium")     # Development
 
 
 
@@ -348,7 +348,7 @@ try({
 
 *Table `r tableno()`: Table of [BUSCO](https://busco.ezlab.org/) "BUSCO estimates the completeness and redundancy of processed genomic data based on universal single-copy orthologs.". The following columns are printed as percents [%]: C: Complete, S: Complete and single-copy, D: Complete and duplicated, F: Fragmented, M: Missing, n: Total BUSCO groups searched. For each sample, only the best lineage match (in terms of completeness) is shown.*
 
-```{r echo=FALSE, message=F, warning=F, fig.height = 5.5, fig.width = 8}
+```{r echo=FALSE, message=F, warning=F, fig.height = 4.8, fig.width = 8}
 try({
     if (file.exists(busco_extract_file)) {
 
@@ -408,7 +408,7 @@ try({
 
 
 
-```{r echo=FALSE, message=F, warning=F, fig.height = 5.5, fig.width = 8}
+```{r echo=FALSE, message=F, warning=F, fig.height = 4.8, fig.width = 8}
 try({
     if (file.exists(checkm2_file)) {
 
