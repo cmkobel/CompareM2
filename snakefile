@@ -252,8 +252,8 @@ rule checkm2_download:
     output:
         touch("{base_variable}/databases/checkm2/checkm2_download_done.flag")
     params:
-        download_path = "{base_variable}/databases/checkm2"
-        checkm2_binary = "{base_variable}/assets/checkm2
+        download_path = "{base_variable}/databases/checkm2",
+        checkm2_binary = "{base_variable}/assets/checkm2/bin/checkm2",
     conda: "conda_definitions/checkm2.yaml"
     shell: """
 
@@ -271,6 +271,8 @@ rule checkm2_download:
             {params.checkm2_binary} database \
                 --download \
                 --path {params.download_path}
+
+            # Consider doing the testrun here
             
             touch {output}
         
@@ -286,6 +288,7 @@ rule checkm2_download:
 rule checkm2:
     input:
         checkm2_download = expand("{base_variable}/databases/checkm2/checkm2_download_done.flag", base_variable = base_variable), #expanding this variable shouldn't be necessary?
+        #checkm2_download = f"{base_variable}/databases/checkm2/checkm2_download_done.flag",
         metadata = "{out_base}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist()
     output:
@@ -298,7 +301,7 @@ rule checkm2:
     params:
         rule_dir = out_base_var + "/checkm2",
         base_variable = base_variable,
-        checkm2_binary = "{base_variable}/assets/checkm2,
+        checkm2_binary = expand("{base_variable}/assets/checkm2/bin/checkm2", base_variable = base_variable)
 
     shell: """
 
@@ -792,7 +795,7 @@ rule gtdbtk:
 rule abricate:
     input: 
         metadata = "{out_base}/metadata.tsv",
-        fasta = df["input_file_fasta"].tolist()
+        fasta = df["input_file_fasta"].tolist(),
     output:
         card_detailed = "{out_base}/abricate/card_detailed.tsv",
         card_sum = "{out_base}/abricate/card_summarized.tsv",

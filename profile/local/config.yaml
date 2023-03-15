@@ -1,10 +1,13 @@
-
+# Resources
 cores: all
 
+# Policies
 keep-going: true 
 rerun-incomplete: true
 show-failed-logs: true
+rerun-triggers: "mtime"
 
+# Conda stuff
 use-conda: true
 conda-frontend: mamba
 

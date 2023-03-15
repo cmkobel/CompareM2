@@ -866,7 +866,7 @@ try({
 
 ## Mashtree phylogeny
 
-[Mashtree](https://github.com/lskatz/mashtree) extends on the minhash distance measure. Mashtree overcomes limitations of classical methods (like neighbor-joining, maximum-likelihood etc.) where the size of the core genome between all samples is limited. The plotted tree is not rooted.
+[Mashtree](https://github.com/lskatz/mashtree) computes an approximation of ANI using the minhash distance measure. On these distances, a phylogenetic tree is then created using the neighbor-joining algorithm. The plotted tree is not rooted.
 
 
 ```{r echo=FALSE, message=F, warning=F}
