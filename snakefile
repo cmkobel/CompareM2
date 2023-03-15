@@ -295,7 +295,7 @@ rule checkm2:
         table = touch("{out_base}/checkm2/checkm2.tsv"),
         diamond = touch("{out_base}/checkm2/diamond_output/DIAMOND_RESULTS.tsv")
     conda: "conda_definitions/checkm2.yaml"
-    threads: 1
+    threads: 8
     resources:
         mem_mb = 16000,
     params:
@@ -306,6 +306,7 @@ rule checkm2:
     shell: """
 
         {params.checkm2_binary} predict \
+            --threads {threads} \
             --input {input.fasta} \
             --output-directory {params.rule_dir} \
             --extension .fa \
