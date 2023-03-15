@@ -304,6 +304,8 @@ rule checkm2:
             --extension .fa \
             --force
 
+        {void_report}
+
     """
 
 
