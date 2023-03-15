@@ -122,7 +122,7 @@ rule all:
     input: expand([\
         "{out_base}/metadata.tsv", \
         "{out_base}/.install_report_environment_aot.flag", \
-        "{out_base}/checkm2/checkm2.tsv", \
+        "{out_base}/checkm2/quality_report.tsv", \
         "{out_base}/assembly-stats/assembly-stats.tsv", \
         "{out_base}/collected_results/sequence_lengths.tsv", \
         "{out_base}/collected_results/GC_summary.tsv", \
@@ -247,19 +247,16 @@ rule metadata:
 # --- CheckM2 --------------------------------------------------------
 
 
-
 rule checkm2_download:
     output:
-        touch("{base_variable}/databases/checkm2/checkm2_download_done.flag")
+        flag = touch("{base_variable}/databases/checkm2/checkm2_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
     params:
         download_path = "{base_variable}/databases/checkm2",
-        checkm2_binary = "{base_variable}/assets/checkm2/bin/checkm2",
-    conda: "conda_definitions/checkm2.yaml"
+    conda: "conda_definitions/checkm2_conda.yaml"
     shell: """
 
-        
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
-        if [ -f "{wildcards.base_variable}/databases/checkm2/checkm2_download_done.flag" ]; then    
+        if [ -f "{output}" ]; then
 
             >&2 echo "Flag exists already: touch it to update the mtime ..."
             touch {output}
@@ -268,11 +265,12 @@ rule checkm2_download:
 
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
         
-            {params.checkm2_binary} database \
+            checkm2 database \
                 --download \
                 --path {params.download_path}
 
-            # Consider doing the testrun here
+            # Consider running checkm2 testrun. Is time and resource consuming though.
+            # checkm2 testrun 
             
             touch {output}
         
@@ -281,31 +279,24 @@ rule checkm2_download:
     """
 
 
-# checkm2 is a bit tricky since it requires a manual installation. If
-# it turns out that it is neccessary to have the git download in the 
-# same directory as where it is run, then it might not be feasible to 
-# use it at all.
 rule checkm2:
     input:
-        checkm2_download = expand("{base_variable}/databases/checkm2/checkm2_download_done.flag", base_variable = base_variable), #expanding this variable shouldn't be necessary?
-        #checkm2_download = f"{base_variable}/databases/checkm2/checkm2_download_done.flag",
+        checkm2_download = expand("{base_variable}/databases/checkm2/checkm2_download_done.flag", base_variable = base_variable), #expanding this variable shouldn't be necessary, but it is, because the variable is not present in the output.
         metadata = "{out_base}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist()
     output:
-        table = touch("{out_base}/checkm2/checkm2.tsv"),
+        table = touch("{out_base}/checkm2/quality_report.tsv"),
         diamond = touch("{out_base}/checkm2/diamond_output/DIAMOND_RESULTS.tsv")
-    conda: "conda_definitions/checkm2.yaml"
+    conda: "conda_definitions/checkm2_conda.yaml"
     threads: 8
     resources:
         mem_mb = 16000,
     params:
         rule_dir = out_base_var + "/checkm2",
         base_variable = base_variable,
-        checkm2_binary = expand("{base_variable}/assets/checkm2/bin/checkm2", base_variable = base_variable)
-
     shell: """
 
-        {params.checkm2_binary} predict \
+        checkm2 predict \
             --threads {threads} \
             --input {input.fasta} \
             --output-directory {params.rule_dir} \
@@ -332,6 +323,8 @@ rule sequence_lengths_individual:
 
         bioawk -v sam={wildcards.sample} -c fastx '{{ print sam, $name, length($seq) }}' < {input} \
         > {output}
+
+        # TODO: Consider whether seqkit stats might be faster?
 
     """
 
@@ -453,13 +446,13 @@ rule kraken2_individual:
 # Make sure that this job is run on a node that has internet access.
 rule busco_download:
     output:
-        touch("{base_variable}/databases/busco/busco_download_done.flag")
+        touch("{base_variable}/databases/busco/busco_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
     conda: "conda_definitions/busco.yaml"
     shell: """
 
         
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
-        if [ -f "{wildcards.base_variable}/databases/busco/busco_download_done.flag" ]; then    
+        if [ -f "{output}" ]; then    
 
             >&2 echo "Flag exists already: touch it to update the mtime ..."
             touch {output}
