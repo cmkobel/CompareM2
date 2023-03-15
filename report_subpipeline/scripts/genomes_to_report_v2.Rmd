@@ -404,7 +404,7 @@ try({
 
 ```
 
-*Table `r tableno()`: [Checkm2](https://github.com/chklovski/CheckM2) output. *
+*Table `r tableno()`: [Checkm2](https://github.com/chklovski/CheckM2) results. *
 
 
 
@@ -431,6 +431,12 @@ try({
 })
 
 ```
+
+
+
+*Fig. `r figno()`: [Checkm2](https://github.com/chklovski/CheckM2) results. Axes are in percents. Colored by coding density.*
+
+
 
 
 
