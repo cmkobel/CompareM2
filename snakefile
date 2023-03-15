@@ -291,6 +291,7 @@ rule checkm2:
     threads: 8
     resources:
         mem_mb = 16000,
+        runtime = "24:00:00",
     params:
         rule_dir = out_base_var + "/checkm2",
         base_variable = base_variable,
