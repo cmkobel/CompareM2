@@ -4,4 +4,4 @@ channels:
   - bioconda
 dependencies:
   - mamba
-  - snakemake
+  - snakemake=7.18.2 # Sorry, but they changed the runtime parsing, and I haven't had time to go through and update those.
