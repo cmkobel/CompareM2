@@ -25,14 +25,14 @@ conda-frontend: 'mamba'
 cluster-cancel: "scancel"
 
 cluster:
-  mkdir -p logs/old/ &&
+  mkdir -p results_ac2/logs/old &&
   sbatch
     --parsable
     --cpus-per-task={threads}
     --mem={resources.mem_mb}
     --job-name=ac2_{rule}_{wildcards}
-    --output=logs/%j-{rule}.out.log
-    --error=logs/%j-{rule}.err.log
+    --output=results_ac2/logs/%j-{rule}.out.log
+    --error=results_ac2/logs/%j-{rule}.err.log
     --time={resources.runtime}
     --account=nn9864k
     --partition={resources.partition}

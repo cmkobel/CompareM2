@@ -103,11 +103,11 @@ print()
 
 # --- Make sure the output directory exists. ----------------------------------
 
-try: 
-    os.mkdir("output_asscom2")
+""" try: 
+    os.mkdir(f"{results_directory}") # If running with local profile, the directory won't be created. I'm not sure if it needs to though?
 except:
     pass
-
+ """
 
 
 # The modification time of this file tells the report subpipeline whether it needs to run. Thus, void_report is called in the end of every successful rule.
@@ -932,7 +932,7 @@ rule fetch_report_template:
 #    2) The conda/mamba debugging is taken care of, without having to wait for jobs to finish on fresh installations.
 # Since all snakemake conda environments are installed in $SNAKEMAKE_CONDA_PREFIX set to ${ASSCOM2_BASE}/conda_base, reuse is guaranteed.
 rule install_report_environment_aot:
-    output: touch("{results_directory}/.install_report_environment_aot.flag")
+    output: touch(f"{results_directory}/.install_report_environment_aot.flag")
     conda: "report_subpipeline/conda_definitions/r-markdown.yaml"
     shell: """
 
@@ -954,12 +954,12 @@ rule report:
 
 # Call the report subpipeline
 report_call = f"""
-    mkdir -p output_asscom2/logs; \
+    mkdir -p {results_directory}/logs; \
     snakemake \
         --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
         --cores 4 \
         --use-conda \
-        --config results_directory=$(pwd)/output_asscom2 base_variable={base_variable} batch_title={batch_title} 2> output_asscom2/logs/report.err.log 
+        --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title} 2> {results_directory}/logs/report.err.log 
     """
 
 onsuccess:

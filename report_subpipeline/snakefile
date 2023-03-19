@@ -1,30 +1,31 @@
 # This subpipeline checks if the void report flag (.asscom2_void_report.flag) file has been modified by a rule in the parent pipeline. If so, the report will be rendered.
 
 
-out_base = config['out_base'] # output_asscom2
+results_directory = config['results_directory'] # results_ac2
 base_variable = config['base_variable'] # path/to/gitrepo/assemblycomparator2
 batch_title = config['batch_title'] # E.g. E._faecium 
 
 
-print('report subpipeline: out_base:', out_base)
+print('report subpipeline: results_directory:', results_directory)
 print('report subpipeline: base_variable:', base_variable)
 
 
 rule all:
-	input: expand("{out_base}/report_{batch_title}.html", out_base = out_base, batch_title = batch_title)
+	input: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
 
 
 # Runs on the front end because it is quick anyway.
 # This rule needs to be inside its own snakefile, as it is the only way I can run it on onerror/onsuccess
 rule report:
     input:
-        flag = "{out_base}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
-        metadata = "{out_base}/metadata.tsv" # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
+        flag = "{results_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
+        metadata = "{results_directory}/metadata.tsv" # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
     conda: "conda_definitions/r-markdown.yaml"
     params: 
-        end_script = f"{base_variable}/report_subpipeline/scripts/report_end_script.sh"
-    output: "{out_base}/report_{batch_title}.html"
-    #output: expand("{out_base}/report_{batch_title}.html", out_base = out_base, batch_title = batch_title)
+        end_script = f"{base_variable}/report_subpipeline/scripts/report_end_script.sh",
+        results_directory = results_directory,
+    output: "{results_directory}/report_{batch_title}.html"
+    #output: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
     shell: """
 
         echo "report subpipeline: initializing report ..."
@@ -38,12 +39,12 @@ rule report:
         # Use the end script if it exists
         if test -f "{params.end_script}"; then
             echo "report subpipeline: end_script exists."
-            . {params.end_script} {batch_title} output_asscom2/report_{batch_title}.html 
+            . {params.end_script} {batch_title} {results_directory}/report_{batch_title}.html 
         fi
         
         
         # Create a zip archive of the report
-        cd output_asscom2
+        cd {results_directory}
         zip {output}.zip report_{batch_title}.html || echo failed to zip
         
         

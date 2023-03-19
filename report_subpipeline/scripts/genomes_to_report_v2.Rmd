@@ -24,7 +24,7 @@ editor_options:
 
 # This is useful for debugging the markdown script.
 # Depends on a local run of the tests/E.faecium_plasmids assemblies.
-# setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/output_asscom2/")    
+# setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/results_ac2/")    
 
 #setwd("/cluster/projects/nn9864k/cmkobel/assemblycomparator2/tests/E._faecium")     # Development
 
@@ -67,7 +67,7 @@ figno = function() {
 
 # Import the metadata table
 # This table makes it easy for us later to convert the long paths to short and simple sample names
-metadata_file = "output_asscom2/metadata.tsv"
+metadata_file = "results_ac2/metadata.tsv"
 
 if (file.exists(metadata_file)) {
     metadata_df = read_tsv(metadata_file)
@@ -100,8 +100,8 @@ if (file.exists(metadata_file)) {
 ```{r echo=FALSE, message=F, warning=F}
 
 tryCatch({
-    assembly_stats_file = "output_asscom2/assembly-stats/assembly-stats.tsv"
-    gc_summary_file = "output_asscom2/collected_results/GC_summary.tsv"
+    assembly_stats_file = "results_ac2/assembly-stats/assembly-stats.tsv"
+    gc_summary_file = "results_ac2/collected_results/GC_summary.tsv"
     
     if (file.exists(assembly_stats_file) & file.exists(gc_summary_file) ) {
         paste("both") # debug
@@ -179,7 +179,7 @@ try({
 ```{r echo=FALSE, message=F, warning=F}
 try({
     # Now when the figure height has been set, we can generate the figure
-    sequence_lengths_file = "output_asscom2/collected_results/sequence_lengths.tsv"
+    sequence_lengths_file = "results_ac2/collected_results/sequence_lengths.tsv"
     
     if (file.exists(sequence_lengths_file)) {
         sequence_lengths_df = read_tsv(sequence_lengths_file)
@@ -251,7 +251,7 @@ try({
 
 try({
     # Now when the figure height has been set, we can generate the figure
-    prokka_summarized_file = "output_asscom2/collected_results/prokka_summarized.txt"
+    prokka_summarized_file = "results_ac2/collected_results/prokka_summarized.txt"
     if (file.exists(prokka_summarized_file)) {
         prokka_summarized_df = read_delim(prokka_summarized_file, delim = " ")
         
@@ -279,7 +279,7 @@ try({
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
-    busco_extract_file = "output_asscom2/collected_results/busco.tsv"
+    busco_extract_file = "results_ac2/collected_results/busco.tsv"
     if (file.exists(busco_extract_file)) {
 
         # Read raw input
@@ -337,7 +337,7 @@ try({
             datatable(class = 'cell-border stripe', options = list(dom = 'ltpi'))
 
         busco_df_meta %>% 
-            write_tsv("output_asscom2/collected_results/export_busco.tsv")
+            write_tsv("results_ac2/collected_results/export_busco.tsv")
 
 
     } else {
@@ -379,7 +379,7 @@ try({
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
-    checkm2_file = "output_asscom2/checkm2/quality_report.tsv"
+    checkm2_file = "results_ac2/checkm2/quality_report.tsv"
     if (file.exists(checkm2_file)) {
 
         # Read raw input
@@ -452,7 +452,7 @@ try({
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
-    kraken2_file = "output_asscom2/collected_results/kraken2_reports.tsv"
+    kraken2_file = "results_ac2/collected_results/kraken2_reports.tsv"
     if (file.exists(kraken2_file)) {
         
         
@@ -504,7 +504,7 @@ try({
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
-    gtdbtk_file = "output_asscom2/gtdbtk/gtdbtk.bac.summary.tsv"
+    gtdbtk_file = "results_ac2/gtdbtk/gtdbtk.bac.summary.tsv"
     if (file.exists(gtdbtk_file)) {
         
         gtdbtk_df = read_tsv(gtdbtk_file) %>% 
@@ -545,9 +545,9 @@ try({
 try({
     #få mlst til at spytte header ud.
     #mlst <- read.table(file = 'mlst.tsv', sep = '\t', header = FALSE)
-    mlst_file = "output_asscom2/mlst/mlst.tsv"
+    mlst_file = "results_ac2/mlst/mlst.tsv"
     if (file.exists(mlst_file)) {
-        mlst_df <- read_tsv("output_asscom2/mlst/mlst.tsv", col_names = F)
+        mlst_df <- read_tsv("results_ac2/mlst/mlst.tsv", col_names = F)
         
         # Generate a vector of allele columns if any exist.
         if( length(mlst_df) > 3) { 
@@ -599,7 +599,7 @@ The resistance typing results below are all called with [Abricate](https://githu
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
-    abricate_ncbi_file = "output_asscom2/abricate/ncbi_summarized.tsv"
+    abricate_ncbi_file = "results_ac2/abricate/ncbi_summarized.tsv"
     if (file.exists(abricate_ncbi_file)) {
         abricate_ncbi_df = read_tsv(abricate_ncbi_file) %>% 
             rename(filename = `#FILE`, num_found = NUM_FOUND)
@@ -624,7 +624,7 @@ try({
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
-    abricate_card_file = "output_asscom2/abricate/card_summarized.tsv"
+    abricate_card_file = "results_ac2/abricate/card_summarized.tsv"
     if (file.exists(abricate_card_file)) {
         abricate_card_df = read_tsv(abricate_card_file) %>% 
             rename(filename = `#FILE`, num_found = NUM_FOUND)
@@ -649,7 +649,7 @@ try({
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
-    abricate_plasmidfinder_file = "output_asscom2/abricate/plasmidfinder_summarized.tsv"
+    abricate_plasmidfinder_file = "results_ac2/abricate/plasmidfinder_summarized.tsv"
     if (file.exists(abricate_plasmidfinder_file)) {
         abricate_plasmidfinder_df = read_tsv(abricate_plasmidfinder_file) %>% 
             rename(filename = `#FILE`, num_found = NUM_FOUND)
@@ -712,7 +712,7 @@ The pathways can be looked up at [KEGG Pathway](https://www.genome.jp/kegg/pathw
 
 
 ```{r echo=FALSE, message=F, warning=F}
-sample_pathway_enrichment_analysis_file = "output_asscom2/collected_results/sample_pathway_enrichment_analysis.tsv"
+sample_pathway_enrichment_analysis_file = "results_ac2/collected_results/sample_pathway_enrichment_analysis.tsv"
 
 try({
     if (file.exists(sample_pathway_enrichment_analysis_file)) {
@@ -780,7 +780,7 @@ The core genome denotes the genes which are conserved between all samples (inter
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
-    roary_summary_file = "output_asscom2/roary/summary_statistics.txt"
+    roary_summary_file = "results_ac2/roary/summary_statistics.txt"
     if (file.exists(roary_summary_file)) {
         paste("yes")
         read_tsv(roary_summary_file, col_names = c("ortholog class", "definition", "count")) %>% 
@@ -811,7 +811,7 @@ try({
 
 ```{r echo = F, message = F, warning = F}
 try({
-    roary_gpa_file = "output_asscom2/roary/gene_presence_absence.Rtab"
+    roary_gpa_file = "results_ac2/roary/gene_presence_absence.Rtab"
     if (file.exists(roary_gpa_file)) {
         paste("yes")
         roary_gpa_df = read_tsv(roary_gpa_file)
@@ -855,7 +855,7 @@ try({
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
-    fasttree_file = "output_asscom2/fasttree/fasttree.newick"
+    fasttree_file = "results_ac2/fasttree/fasttree.newick"
     if (file.exists(fasttree_file)) {
     
        tree <- ape::read.tree(fasttree_file)
@@ -888,7 +888,7 @@ try({
 
 ```{r echo=FALSE, message=F, warning=F, fig.height = 4, fig.width = 6}
 try({
-    snp_dists_file = "output_asscom2/snp-dists/snp-dists.tsv"
+    snp_dists_file = "results_ac2/snp-dists/snp-dists.tsv"
     if (file.exists(snp_dists_file)) {
         
         snp_dists_df =read_tsv(snp_dists_file)
@@ -911,7 +911,7 @@ try({
 
 ```{r echo=FALSE, message=F, warning=F, fig.height = 3, fig.width = 9}
 try({
-    snp_dists_file = "output_asscom2/snp-dists/snp-dists.tsv"
+    snp_dists_file = "results_ac2/snp-dists/snp-dists.tsv"
     if (file.exists(snp_dists_file)) {
 
         
@@ -959,7 +959,7 @@ try({
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
-    mashtree_file = "output_asscom2/mashtree/mashtree.newick"
+    mashtree_file = "results_ac2/mashtree/mashtree.newick"
     if (file.exists(mashtree_file)) {
     
        tree <- ape::read.tree(mashtree_file)
