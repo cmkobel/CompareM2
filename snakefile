@@ -21,7 +21,7 @@ from shutil import copyfile
 # ---- Read important variables -----------------------------------------------
 cwd = os.getcwd()
 batch_title = cwd.split("/")[-1]
-base_variable = os.environ['ASSCOM2_BASE']
+base_variable = os.environ['ASSCOM2_BASE'] # rename to ASSCOM2_BASE
 
 print("/*")
 print()
@@ -43,9 +43,11 @@ print(f"    kraken2 database:      {config['asscom2_kraken2_db']}               
 print(f"    gtdb:                  {config['gtdbtk_data_path']}                  ")
 
 
-out_base_var = "output_asscom2"
+#results_directory = "output_asscom2"
 
 
+
+results_directory = "results_ac2"
 
 
 
@@ -75,7 +77,7 @@ df = df[~df["input_file"].str.startswith(".", na = False)] # Remove hidden files
 df['sample_raw'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()] # Extract everything before the extension dot.
 df['sample'] = df['sample_raw'].str.replace(' ','_')
 df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extract extension
-df['input_file_fasta'] = out_base_var + "/samples/" + df['sample'] + "/" + df['sample'] + ".fa" # This is where the input file is copied to in the first snakemake rule.
+df['input_file_fasta'] = results_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fa" # This is where the input file is copied to in the first snakemake rule.
 
 df = df[df['extension'].isin(extension_whitelist)] # Remove files with unsupported formats.
 
@@ -109,8 +111,8 @@ except:
 
 
 # The modification time of this file tells the report subpipeline whether it needs to run. Thus, void_report is called in the end of every successful rule.
-#void_report = f"touch {out_base_var}/.asscom2_void_report.flag"
-void_report = f"date -Iseconds >> {out_base_var}/.asscom2_void_report.flag"
+#void_report = f"touch {results_directory}/.asscom2_void_report.flag"
+void_report = f"date -Iseconds >> {results_directory}/.asscom2_void_report.flag"
 
 
 
@@ -120,23 +122,23 @@ void_report = f"date -Iseconds >> {out_base_var}/.asscom2_void_report.flag"
 # --- Collect all targets. ------------------------------------------
 rule all:
     input: expand([\
-        "{out_base}/metadata.tsv", \
-        "{out_base}/.install_report_environment_aot.flag", \
-        "{out_base}/checkm2/quality_report.tsv", \
-        "{out_base}/assembly-stats/assembly-stats.tsv", \
-        "{out_base}/collected_results/sequence_lengths.tsv", \
-        "{out_base}/collected_results/GC_summary.tsv", \
-        "{out_base}/collected_results/prokka_summarized.txt", \
-        "{out_base}/collected_results/kraken2_reports.tsv", \
-        "{out_base}/collected_results/busco.tsv", \
-        "{out_base}/roary/summary_statistics.txt", \
-        "{out_base}/abricate/card_detailed.tsv", \
-        "{out_base}/mashtree/mashtree.newick", \
-        "{out_base}/mlst/mlst.tsv", \
-        "{out_base}/fasttree/fasttree.newick", \
-        "{out_base}/gtdbtk/gtdbtk.bac.summary.tsv", \
-        "{out_base}/snp-dists/snp-dists.tsv"], \
-        out_base = out_base_var) 
+        "{results_directory}/metadata.tsv", \
+        "{results_directory}/.install_report_environment_aot.flag", \
+        "{results_directory}/checkm2/quality_report.tsv", \
+        "{results_directory}/assembly-stats/assembly-stats.tsv", \
+        "{results_directory}/collected_results/sequence_lengths.tsv", \
+        "{results_directory}/collected_results/GC_summary.tsv", \
+        "{results_directory}/collected_results/prokka_summarized.txt", \
+        "{results_directory}/collected_results/kraken2_reports.tsv", \
+        "{results_directory}/collected_results/busco.tsv", \
+        "{results_directory}/roary/summary_statistics.txt", \
+        "{results_directory}/abricate/card_detailed.tsv", \
+        "{results_directory}/mashtree/mashtree.newick", \
+        "{results_directory}/mlst/mlst.tsv", \
+        "{results_directory}/fasttree/fasttree.newick", \
+        "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv", \
+        "{results_directory}/snp-dists/snp-dists.tsv"], \
+        results_directory = results_directory) 
 
 
 
@@ -158,8 +160,8 @@ rule copy:
     #input: "{sample}"
     input: 
         genome = lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0],
-    output: "{out_base}/samples/{sample}/{sample}.fa"
-    #log: "logs/{out_base}_{wildcards.sample}.out.log"
+    output: "{results_directory}/samples/{sample}/{sample}.fa"
+    #log: "logs/{results_directory}_{wildcards.sample}.out.log"
     container: "docker://pvstodghill/any2fasta"
     conda: "conda_definitions/any2fasta.yaml"
     resources:
@@ -175,14 +177,14 @@ rule copy:
 # Write the df table to the directory for later reference.
 # Why isn't this a run: instead of a shell: ?
 rule metadata:
-    input: expand("{out_base}/samples/{sample}/{sample}.fa", out_base = out_base_var, sample = df["sample"]) # From rule copy
-    output: "{out_base}/metadata.tsv"
+    input: expand("{results_directory}/samples/{sample}/{sample}.fa", results_directory = results_directory, sample = df["sample"]) # From rule copy
+    output: "{results_directory}/metadata.tsv"
     params: dataframe = df.to_csv(None, index_label = "index", sep = "\t")
     resources:
         runtime = "01:00:00"
     #run:
         #df.to_csv(str(output), index_label = "index", sep = "\t")
-        #os.system(f"cp ${{ASSCOM2_BASE}}/scripts/{report_template_file_basename} {out_base_var}")
+        #os.system(f"cp ${{ASSCOM2_BASE}}/scripts/{report_template_file_basename} {results_directory}")
     shell: """
 
         echo '''{params.dataframe}''' > {output}
@@ -205,7 +207,7 @@ rule metadata:
 # rules download_checkm and checkm have been disabled below
 # rule checkm_download:
 #     output:
-#         flag = touch("{out_base}/.checkm_OK.flag")
+#         flag = touch("{results_directory}/.checkm_OK.flag")
 #     conda: "conda_definitions/wget.yaml"
 #     params:
 #         directory = base_variable + "/databases/checkm/" # trailing slash??
@@ -227,8 +229,8 @@ rule metadata:
 #     """
 #
 #rule checkm:
-#    input: "{out_base}/.checkm_OK.flag"
-#    output: touch("{out_base}/checkm/output")
+#    input: "{results_directory}/.checkm_OK.flag"
+#    output: touch("{results_directory}/checkm/output")
 #    conda: "conda_definitions/checkm.yaml"
 #    params:
 #            directory = base_variable + "/databases/checkm/"
@@ -282,18 +284,18 @@ rule checkm2_download:
 rule checkm2:
     input:
         checkm2_download = expand("{base_variable}/databases/checkm2/checkm2_download_done.flag", base_variable = base_variable), #expanding this variable shouldn't be necessary, but it is, because the variable is not present in the output.
-        metadata = "{out_base}/metadata.tsv",
+        metadata = "{results_directory}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist()
     output:
-        table = touch("{out_base}/checkm2/quality_report.tsv"),
-        diamond = touch("{out_base}/checkm2/diamond_output/DIAMOND_RESULTS.tsv")
+        table = touch("{results_directory}/checkm2/quality_report.tsv"),
+        diamond = touch("{results_directory}/checkm2/diamond_output/DIAMOND_RESULTS.tsv")
     conda: "conda_definitions/checkm2_conda.yaml"
     threads: 8
     resources:
         mem_mb = 16000,
         runtime = "24:00:00",
     params:
-        rule_dir = out_base_var + "/checkm2",
+        rule_dir = results_directory + "/checkm2",
         base_variable = base_variable,
     shell: """
 
@@ -315,8 +317,8 @@ rule checkm2:
 # --- Targets for each sample below: --------------------------------
 
 rule sequence_lengths_individual:
-    input: "{out_base}/samples/{sample}/{sample}.fa"
-    output: "{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
+    input: "{results_directory}/samples/{sample}/{sample}.fa"
+    output: "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
     container: "docker://cmkobel/bioawk"
     resources:
         runtime = "01:00:00",
@@ -334,8 +336,8 @@ rule sequence_lengths_individual:
 
 # This is either hacky or slow, and should be removed. Use seqkit or something like that instead.
 rule gc_summary_individual:
-    input: "{out_base}/samples/{sample}/{sample}.fa"
-    output: "{out_base}/samples/{sample}/statistics/{sample}_gc.tsv"
+    input: "{results_directory}/samples/{sample}/{sample}.fa"
+    output: "{results_directory}/samples/{sample}/statistics/{sample}_gc.tsv"
     container: "docker://rocker/tidyverse" # remember to add devtools
     conda: "conda_definitions/r-tidyverse.yaml" # like r-markdown, but much simpler.
     params: base_variable = base_variable,
@@ -353,18 +355,18 @@ rule gc_summary_individual:
 
 
 rule prokka_individual:
-    input: "{out_base}/samples/{sample}/{sample}.fa"
+    input: "{results_directory}/samples/{sample}/{sample}.fa"
     output:
-        gff = "{out_base}/samples/{sample}/prokka/{sample}.gff",
-        log = "{out_base}/samples/{sample}/prokka/{sample}.log",
-        tsv = "{out_base}/samples/{sample}/prokka/{sample}.tsv",
-        summarized_txt = "{out_base}/samples/{sample}/prokka/{sample}_summary.txt",
-        labelled_tsv = "{out_base}/samples/{sample}/prokka/{sample}_labelled.tsv",
-        labelled_gff = "{out_base}/samples/{sample}/prokka/{sample}_labelled.gff"
+        gff = "{results_directory}/samples/{sample}/prokka/{sample}.gff",
+        log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
+        tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
+        summarized_txt = "{results_directory}/samples/{sample}/prokka/{sample}_summary.txt",
+        labelled_tsv = "{results_directory}/samples/{sample}/prokka/{sample}_labelled.tsv",
+        labelled_gff = "{results_directory}/samples/{sample}/prokka/{sample}_labelled.gff"
 
     container: "docker://staphb/prokka"
     conda: "conda_definitions/prokka.yaml"
-    benchmark: "{out_base}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 4
@@ -376,7 +378,7 @@ rule prokka_individual:
         prokka \
             --cpus {threads} \
             --force \
-            --outdir {wildcards.out_base}/samples/{wildcards.sample}/prokka \
+            --outdir {wildcards.results_directory}/samples/{wildcards.sample}/prokka \
             --prefix {wildcards.sample} {input} \
             | tee {output.log} 
 
@@ -407,8 +409,8 @@ rule prokka_individual:
 
 # Kraken is for reads, so why are we using it here without shredding the reads?
 rule kraken2_individual:
-    input: "{out_base}/samples/{sample}/{sample}.fa"
-    output: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
+    input: "{results_directory}/samples/{sample}/{sample}.fa"
+    output: "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
     params: 
         asscom2_kraken2_db = config["asscom2_kraken2_db"],
     container: "docker://staphb/kraken2"
@@ -416,7 +418,7 @@ rule kraken2_individual:
     threads: 2
     resources:
         mem_mb = 65536,
-    benchmark: "{out_base}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
     shell: """
 
         ASSCOM2_KRAKEN2_DB={params.asscom2_kraken2_db}
@@ -492,14 +494,14 @@ rule busco_download:
 rule busco_individual:
     input: 
         busco_download = expand("{base_variable}/databases/busco/busco_download_done.flag", base_variable = base_variable),
-        fasta = "{out_base}/samples/{sample}/{sample}.fa",
+        fasta = "{results_directory}/samples/{sample}/{sample}.fa",
     output: 
-        flag = touch("{out_base}/samples/{sample}/busco/busco_done.flag"),
-        table_extract = "{out_base}/samples/{sample}/busco/short_summary_extract.tsv"
+        flag = touch("{results_directory}/samples/{sample}/busco/busco_done.flag"),
+        table_extract = "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv"
     params:
         base_variable = base_variable,
-        #out_base = out_base_var,
-        out_dir = "{out_base}/samples/{sample}/busco",
+        #results_directory = results_directory,
+        out_dir = "{results_directory}/samples/{sample}/busco",
     conda: "conda_definitions/busco.yaml"
     threads: 1
     resources:
@@ -525,7 +527,7 @@ rule busco_individual:
 
 
         >&2 echo "Extracting distillate"
-        cat {wildcards.out_base}/samples/{wildcards.sample}/busco/short_summary.*.txt \
+        cat {wildcards.results_directory}/samples/{wildcards.sample}/busco/short_summary.*.txt \
         | grep -E "# The lineage dataset is:|# Summarized benchmarking|C:" \
         > {output.table_extract} || touch {output.table_extract}
 
@@ -539,10 +541,10 @@ rule busco_individual:
 
 rule busco:
     input: 
-        metadata = "{out_base}/metadata.tsv",
-        #tables = expand("{out_base}/samples/{sample}/busco/run_bacteria_odb10/short_summary_extract.tsv", out_base = out_base_var, sample = df["sample"]),
-        tables = expand("{out_base}/samples/{sample}/busco/short_summary_extract.tsv", out_base = out_base_var, sample = df["sample"]),
-    output: "{out_base}/collected_results/busco.tsv"
+        metadata = "{results_directory}/metadata.tsv",
+        #tables = expand("{results_directory}/samples/{sample}/busco/run_bacteria_odb10/short_summary_extract.tsv", results_directory = results_directory, sample = df["sample"]),
+        tables = expand("{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", results_directory = results_directory, sample = df["sample"]),
+    output: "{results_directory}/collected_results/busco.tsv"
     resources: 
         mem_mb = 128,
         runtime = "00:10:00",
@@ -557,9 +559,9 @@ rule busco:
 
 rule kraken2:
     input: 
-        metadata = "{out_base}/metadata.tsv",
-        reports = expand("{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", out_base = out_base_var, sample = df["sample"]),
-    output: "{out_base}/collected_results/kraken2_reports.tsv",
+        metadata = "{results_directory}/metadata.tsv",
+        reports = expand("{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", results_directory = results_directory, sample = df["sample"]),
+    output: "{results_directory}/collected_results/kraken2_reports.tsv",
     resources:
         runtime = "01:00:00",
     shell: """
@@ -575,8 +577,8 @@ rule kraken2:
 
 
 rule sequence_lengths:
-    input: expand("{out_base}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", out_base = out_base_var, sample = df["sample"])
-    output: "{out_base}/collected_results/sequence_lengths.tsv"
+    input: expand("{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", results_directory = results_directory, sample = df["sample"])
+    output: "{results_directory}/collected_results/sequence_lengths.tsv"
     resources:
         runtime = "01:00:00",
     shell: """
@@ -591,8 +593,8 @@ rule sequence_lengths:
     """
 
 rule gc_summary:
-    input: expand("{out_base}/samples/{sample}/statistics/{sample}_gc.tsv", out_base = out_base_var, sample = df["sample"])
-    output: "{out_base}/collected_results/GC_summary.tsv"
+    input: expand("{results_directory}/samples/{sample}/statistics/{sample}_gc.tsv", results_directory = results_directory, sample = df["sample"])
+    output: "{results_directory}/collected_results/GC_summary.tsv"
     resources:
         runtime = "01:00:00",
     shell: """
@@ -613,15 +615,15 @@ rule gc_summary:
 
 rule prokka:
     input:
-        metadata = "{out_base}/metadata.tsv",
-        summarized_txt = expand("{out_base}/samples/{sample}/prokka/{sample}_summary.txt", out_base = out_base_var, sample = df["sample"]),
-        labelled_tsv = expand("{out_base}/samples/{sample}/prokka/{sample}_labelled.tsv", out_base = out_base_var, sample = df["sample"]),
-        labelled_gff = expand("{out_base}/samples/{sample}/prokka/{sample}_labelled.gff", out_base = out_base_var, sample = df["sample"]),
+        metadata = "{results_directory}/metadata.tsv",
+        summarized_txt = expand("{results_directory}/samples/{sample}/prokka/{sample}_summary.txt", results_directory = results_directory, sample = df["sample"]),
+        labelled_tsv = expand("{results_directory}/samples/{sample}/prokka/{sample}_labelled.tsv", results_directory = results_directory, sample = df["sample"]),
+        labelled_gff = expand("{results_directory}/samples/{sample}/prokka/{sample}_labelled.gff", results_directory = results_directory, sample = df["sample"]),
 
     output: 
-        summarized_txt = "{out_base}/collected_results/prokka_summarized.txt",
-        labelled_tsv = "{out_base}/collected_results/prokka_labelled.tsv",
-        labelled_gff = "{out_base}/collected_results/prokka_labelled.gff",
+        summarized_txt = "{results_directory}/collected_results/prokka_summarized.txt",
+        labelled_tsv = "{results_directory}/collected_results/prokka_labelled.tsv",
+        labelled_gff = "{results_directory}/collected_results/prokka_labelled.gff",
 
     resources:
         runtime = "01:00:00",
@@ -645,8 +647,8 @@ rule prokka:
 
 
 rule sample_pathway_enrichment_analysis:
-    input: "{out_base}/collected_results/prokka_labelled.tsv"
-    output: "{out_base}/collected_results/sample_pathway_enrichment_analysis.tsv"
+    input: "{results_directory}/collected_results/prokka_labelled.tsv"
+    output: "{results_directory}/collected_results/sample_pathway_enrichment_analysis.tsv"
     conda: "conda_definitions/r-clusterProfiler.yaml"
     shell: """
 
@@ -670,10 +672,10 @@ def get_mem_roary(wildcards, attempt):
 
 rule roary:
     input: 
-        metadata = "{out_base}/metadata.tsv",
-        gff = expand("{out_base}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], out_base = out_base_var),
+        metadata = "{results_directory}/metadata.tsv",
+        gff = expand("{results_directory}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], results_directory = results_directory),
     output:
-        analyses = ["{out_base}/roary/summary_statistics.txt", "{out_base}/roary/core_gene_alignment.aln", "{out_base}/roary/gene_presence_absence.csv", "{out_base}/roary/roary_done.flag"]
+        analyses = ["{results_directory}/roary/summary_statistics.txt", "{results_directory}/roary/core_gene_alignment.aln", "{results_directory}/roary/gene_presence_absence.csv", "{results_directory}/roary/roary_done.flag"]
     params:
         blastp_identity = int(config['roary_blastp_identity']), # = 95 # For clustering genes
         core_perc = 99,  # Definition of the core genome
@@ -696,14 +698,14 @@ rule roary:
         echo "will cite" | parallel --citation > /dev/null 2> /dev/null
 
         # Roary is confused by the way snakemake creates directories ahead of time.
-        rm -r {wildcards.out_base}/roary
+        rm -r {wildcards.results_directory}/roary
 
 
         roary -a -r -e --mafft \
             -p {threads} \
             -i {params.blastp_identity} \
             -cd {params.core_perc} \
-            -f {wildcards.out_base}/roary \
+            -f {wildcards.results_directory}/roary \
             {input.gff}
             
         {void_report}
@@ -713,9 +715,9 @@ rule roary:
 
 rule snp_dists:
     input: 
-        metadata = "{out_base}/metadata.tsv",
-        aln = "{out_base}/roary/core_gene_alignment.aln",
-    output: "{out_base}/snp-dists/snp-dists.tsv"
+        metadata = "{results_directory}/metadata.tsv",
+        aln = "{results_directory}/roary/core_gene_alignment.aln",
+    output: "{results_directory}/snp-dists/snp-dists.tsv"
     conda: "conda_definitions/snp-dists.yaml"
     container: "docker://staphb/snp-dists"
     shell: """
@@ -730,9 +732,9 @@ rule snp_dists:
 
 rule assembly_stats:
     input: 
-        metadata = "{out_base}/metadata.tsv",
+        metadata = "{results_directory}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist(),
-    output: "{out_base}/assembly-stats/assembly-stats.tsv"
+    output: "{results_directory}/assembly-stats/assembly-stats.tsv"
     container: "docker://sangerpathogens/assembly-stats"
     conda: "conda_definitions/assembly-stats.yaml"
     shell: """
@@ -748,12 +750,12 @@ def get_mem_gtdbtk(wildcards, attempt):
 
 rule gtdbtk:
     input: 
-        metadata = "{out_base}/metadata.tsv",
+        metadata = "{results_directory}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist(),
-    output: "{out_base}/gtdbtk/gtdbtk.bac.summary.tsv"
+    output: "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv"
     params:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
-        out_dir = "{out_base}/gtdbtk/",
+        out_dir = "{results_directory}/gtdbtk/",
         gtdbtk_data_path = config["gtdbtk_data_path"],
     threads: 8
     #retries: 3
@@ -761,25 +763,25 @@ rule gtdbtk:
         #mem_mb = 150000, # Last time I remember, it used 130000
         mem_mb = get_mem_gtdbtk,
     conda: "conda_definitions/gtdbtk.yaml"
-    benchmark: "{out_base}/benchmarks/benchmark.gtdbtk.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
 
         export GTDBTK_DATA_PATH={params.gtdbtk_data_path}
 
         # Create batchfile
-        echo '''{params.batchfile_content}''' > {wildcards.out_base}/gtdbtk/batchfile.tsv
+        echo '''{params.batchfile_content}''' > {wildcards.results_directory}/gtdbtk/batchfile.tsv
 
         gtdbtk classify_wf -h
         
         gtdbtk classify_wf \
-            --batchfile {wildcards.out_base}/gtdbtk/batchfile.tsv \
+            --batchfile {wildcards.results_directory}/gtdbtk/batchfile.tsv \
             --out_dir {params.out_dir} \
             --cpus {threads} \
             --keep_intermediates \
             --force
 
         # Homogenize database version number
-        cp {wildcards.out_base}/gtdbtk/gtdbtk.bac120.summary.tsv {output}
+        cp {wildcards.results_directory}/gtdbtk/gtdbtk.bac120.summary.tsv {output}
 
 
         {void_report}
@@ -791,17 +793,17 @@ rule gtdbtk:
 
 rule abricate:
     input: 
-        metadata = "{out_base}/metadata.tsv",
+        metadata = "{results_directory}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist(),
     output:
-        card_detailed = "{out_base}/abricate/card_detailed.tsv",
-        card_sum = "{out_base}/abricate/card_summarized.tsv",
-        plasmidfinder_detailed = "{out_base}/abricate/plasmidfinder_detailed.tsv",
-        plasmidfinder_sum = "{out_base}/abricate/plasmidfinder_summarized.tsv",
-        ncbi_detailed = "{out_base}/abricate/ncbi_detailed.tsv",
-        ncbi_sum = "{out_base}/abricate/ncbi_summarized.tsv",
-        vfdb_detailed = "{out_base}/abricate/vfdb_detailed.tsv",
-        vfdb_sum = "{out_base}/abricate/vfdb_summarized.tsv",
+        card_detailed = "{results_directory}/abricate/card_detailed.tsv",
+        card_sum = "{results_directory}/abricate/card_summarized.tsv",
+        plasmidfinder_detailed = "{results_directory}/abricate/plasmidfinder_detailed.tsv",
+        plasmidfinder_sum = "{results_directory}/abricate/plasmidfinder_summarized.tsv",
+        ncbi_detailed = "{results_directory}/abricate/ncbi_detailed.tsv",
+        ncbi_sum = "{results_directory}/abricate/ncbi_summarized.tsv",
+        vfdb_detailed = "{results_directory}/abricate/vfdb_detailed.tsv",
+        vfdb_sum = "{results_directory}/abricate/vfdb_summarized.tsv",
 
     container: "docker://staphb/abricate"
     conda: "conda_definitions/abricate.yaml"
@@ -837,12 +839,12 @@ else:
 
 rule mlst:
     input: 
-        metadata = "{out_base}/metadata.tsv",
+        metadata = "{results_directory}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist(),
-    output: "{out_base}/mlst/mlst.tsv",
+    output: "{results_directory}/mlst/mlst.tsv",
     params:
         mlst_scheme_interpreted = mlst_scheme_interpreted,
-        list_ = "{out_base}/mlst/mlst_schemes.txt",
+        list_ = "{results_directory}/mlst/mlst_schemes.txt",
     container: "docker://staphb/mlst"
     conda: "conda_definitions/mlst.yaml"
     shell: """
@@ -859,11 +861,11 @@ rule mlst:
 
 rule mashtree:
     input: 
-        metadata = "{out_base}/metadata.tsv",
+        metadata = "{results_directory}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist(),
     output: 
-        tree = "{out_base}/mashtree/mashtree.newick",
-        dist = "{out_base}/mashtree/mash_dist.tsv",
+        tree = "{results_directory}/mashtree/mashtree.newick",
+        dist = "{results_directory}/mashtree/mash_dist.tsv",
     container: "docker://staphb/mashtree"
     conda: "conda_definitions/mashtree.yaml"
     threads: 4
@@ -889,9 +891,9 @@ def get_mem_fasttree(wildcards, attempt):
 
 rule fasttree:
     input:
-        metadata = "{out_base}/metadata.tsv",
-        fasta = "{out_base}/roary/core_gene_alignment.aln",
-    output: "{out_base}/fasttree/fasttree.newick"
+        metadata = "{results_directory}/metadata.tsv",
+        fasta = "{results_directory}/roary/core_gene_alignment.aln",
+    output: "{results_directory}/fasttree/fasttree.newick"
     container: "docker://staphb/fasttree"
     conda: "conda_definitions/fasttree.yaml"
     threads: 4
@@ -915,7 +917,7 @@ rule fasttree:
 
 
 rule fetch_report_template:
-    output: "{out_base}/rmarkdown_template.rmd"
+    output: "{results_directory}/rmarkdown_template.rmd"
     shell: """
 
         cp $ASSCOM2_BASE/scripts/genomes_to_report_v2.Rmd {output}
@@ -930,7 +932,7 @@ rule fetch_report_template:
 #    2) The conda/mamba debugging is taken care of, without having to wait for jobs to finish on fresh installations.
 # Since all snakemake conda environments are installed in $SNAKEMAKE_CONDA_PREFIX set to ${ASSCOM2_BASE}/conda_base, reuse is guaranteed.
 rule install_report_environment_aot:
-    output: touch("{out_base}/.install_report_environment_aot.flag")
+    output: touch("{results_directory}/.install_report_environment_aot.flag")
     conda: "report_subpipeline/conda_definitions/r-markdown.yaml"
     shell: """
 
@@ -957,7 +959,7 @@ report_call = f"""
         --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
         --cores 4 \
         --use-conda \
-        --config out_base=$(pwd)/output_asscom2 base_variable={base_variable} batch_title={batch_title} 2> output_asscom2/logs/report.err.log 
+        --config results_directory=$(pwd)/output_asscom2 base_variable={base_variable} batch_title={batch_title} 2> output_asscom2/logs/report.err.log 
     """
 
 onsuccess:
