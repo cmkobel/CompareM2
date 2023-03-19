@@ -110,7 +110,7 @@ except:
 
 # The modification time of this file tells the report subpipeline whether it needs to run. Thus, void_report is called in the end of every successful rule.
 #void_report = f"touch {out_base_var}/.asscom2_void_report.flag"
-void_report = f"echo $(date --iso-8601=seconds) >> {out_base_var}/.asscom2_void_report.flag"
+void_report = f"date -Iseconds >> {out_base_var}/.asscom2_void_report.flag"
 
 
 
@@ -332,6 +332,7 @@ rule sequence_lengths_individual:
     """
 
 
+# This is either hacky or slow, and should be removed. Use seqkit or something like that instead.
 rule gc_summary_individual:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/statistics/{sample}_gc.tsv"
@@ -404,7 +405,7 @@ rule prokka_individual:
     """
 
 
-
+# Kraken is for reads, so why are we using it here without shredding the reads?
 rule kraken2_individual:
     input: "{out_base}/samples/{sample}/{sample}.fa"
     output: "{out_base}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
@@ -671,7 +672,8 @@ rule roary:
     input: 
         metadata = "{out_base}/metadata.tsv",
         gff = expand("{out_base}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], out_base = out_base_var),
-    output: ["{out_base}/roary/summary_statistics.txt", "{out_base}/roary/core_gene_alignment.aln", "{out_base}/roary/gene_presence_absence.csv", "{out_base}/roary/roary_done.flag"]
+    output:
+        analyses = ["{out_base}/roary/summary_statistics.txt", "{out_base}/roary/core_gene_alignment.aln", "{out_base}/roary/gene_presence_absence.csv", "{out_base}/roary/roary_done.flag"]
     params:
         blastp_identity = int(config['roary_blastp_identity']), # = 95 # For clustering genes
         core_perc = 99,  # Definition of the core genome
@@ -686,7 +688,6 @@ rule roary:
     conda: "conda_definitions/roary.yaml"
     shell: """
     
-        
         # Since I reinstalled conda, I've had problems with "Can't locate Bio/Roary/CommandLine/Roary.pm in INC". Below is a hacky fix
         export PERL5LIB=$CONDA_PREFIX/lib/perl5/site_perl/5.22.0
         
@@ -695,19 +696,18 @@ rule roary:
         echo "will cite" | parallel --citation > /dev/null 2> /dev/null
 
         # Roary is confused by the way snakemake creates directories ahead of time.
-        # So I will delete it manually here before calling roary.
         rm -r {wildcards.out_base}/roary
+
 
         roary -a -r -e --mafft \
             -p {threads} \
             -i {params.blastp_identity} \
             -cd {params.core_perc} \
             -f {wildcards.out_base}/roary \
-            {input.gff} || echo roary failed
-
-        touch {output}
-                
+            {input.gff}
+            
         {void_report}
+
     """
 
 
@@ -903,11 +903,14 @@ rule fasttree:
 
         OMP_NUM_THREADS={threads}
 
-        FastTree -nt -gtr {input.fasta} > {output} 2> {output}.log || echo "fasttree failed"
-
-        touch {output}
+        FastTree \
+            -nt \
+            -gtr {input.fasta} \
+        > {output} \
+        2> {output}.log 
 
         {void_report}
+
     """
 
 
