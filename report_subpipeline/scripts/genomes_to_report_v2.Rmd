@@ -27,6 +27,9 @@ editor_options:
 # setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/results_ac2/")    
 
 #setwd("/cluster/projects/nn9864k/cmkobel/assemblycomparator2/tests/E._faecium")     # Development
+setwd("/cluster/home/cmkobel/memokobel/15_bio326/synthetic_rumen/output/metabat2/06_compare_best_with_lives")     # Development
+
+
 
 
 
@@ -332,12 +335,14 @@ try({
             left_join(busco_df %>% filter(rank == 1), by = "filename_short") %>%
             select(-filename_short, -filename, -rank) %>%
             arrange(lineage)
+
+        busco_df_meta %>% 
+            write_tsv("results_ac2/collected_results/export_busco.tsv")
         
         busco_df_meta %>% 
             datatable(class = 'cell-border stripe', options = list(dom = 'ltpi'))
 
-        busco_df_meta %>% 
-            write_tsv("results_ac2/collected_results/export_busco.tsv")
+
 
 
     } else {

@@ -502,6 +502,7 @@ rule busco_individual:
         base_variable = base_variable,
         #results_directory = results_directory,
         out_dir = "{results_directory}/samples/{sample}/busco",
+        exit_code = "{results_directory}/.exitcodes/busco_{sample}.txt",
     conda: "conda_definitions/busco.yaml"
     threads: 1
     resources:
@@ -509,6 +510,8 @@ rule busco_individual:
         runtime = "06:00:00",
     shell: """
 
+
+        set +e
         >&2 echo "Busco individual"
         # https://busco.ezlab.org/busco_userguide.html#offline
         busco \
@@ -521,6 +524,7 @@ rule busco_individual:
             --tar \
             --download_path {params.base_variable}/databases/busco \
             --offline || ( >&2 echo "asscom2: Busco failed internally.")
+        echo $? > {params.exit_code}
 
         # Unfortunately, busco fails (exitcode > 0) when the input file cannot be successfully annotated. This has the consequence that the collection script (rule busco) will not run on the rest of the samples. As a fix to this, I've made it so it just prints an error message to stderr instead, and proceeds.
         # Alas, a derived consequence of this solution is that if busco really fails internally NOT because of the input file being a garbage genome, it is going to be harder to debug, as the job will look like it completed successfully.
@@ -675,7 +679,7 @@ rule roary:
         metadata = "{results_directory}/metadata.tsv",
         gff = expand("{results_directory}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], results_directory = results_directory),
     output:
-        analyses = ["{results_directory}/roary/summary_statistics.txt", "{results_directory}/roary/core_gene_alignment.aln", "{results_directory}/roary/gene_presence_absence.csv", "{results_directory}/roary/roary_done.flag"]
+        analyses = ["{results_directory}/roary/summary_statistics.txt", "{results_directory}/roary/core_gene_alignment.aln", "{results_directory}/roary/gene_presence_absence.csv"]
     params:
         blastp_identity = int(config['roary_blastp_identity']), # = 95 # For clustering genes
         core_perc = 99,  # Definition of the core genome
@@ -687,7 +691,8 @@ rule roary:
         mem_mb = get_mem_roary,
         runtime = "23:59:59", # Well, fuck me if this doesn't work on PBS
     container: "docker://sangerpathogens/roary"
-    conda: "conda_definitions/roary.yaml"
+    conda: "conda_definitions/roary_old.yaml" 
+    #conda: "conda_definitions/roary.yaml" 
     shell: """
     
         # Since I reinstalled conda, I've had problems with "Can't locate Bio/Roary/CommandLine/Roary.pm in INC". Below is a hacky fix
