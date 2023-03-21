@@ -334,7 +334,7 @@ rule sequence_lengths_individual:
     """
 
 
-# This is either hacky or slow, and should be removed. Use seqkit or something like that instead.
+# TODO: This is either hacky or slow, and should be removed. Use seqkit or something like that instead.
 rule gc_summary_individual:
     input: "{results_directory}/samples/{sample}/{sample}.fa"
     output: "{results_directory}/samples/{sample}/statistics/{sample}_gc.tsv"
@@ -968,11 +968,11 @@ report_call = f"""
     """
 
 onsuccess:
-    print("onsuccess: calling report subpipeline ...")
+    print("On success: calling report subpipeline ...")
     shell(report_call)
 
 onerror:
-    print("onerror: calling report subpipeline ...")
+    print("On error: calling report subpipeline ...")
     shell(report_call)
 
 
