@@ -1,4 +1,4 @@
-name: checkm
+name: wget
 channels:
   - anaconda
 dependencies:

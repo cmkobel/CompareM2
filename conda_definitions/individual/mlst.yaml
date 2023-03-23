@@ -1,6 +1,7 @@
+name: mlst
 channels:
   - conda-forge
   - bioconda
-  - defaults
+  - defaults    
 dependencies:
-  - abricate
+  - mlst

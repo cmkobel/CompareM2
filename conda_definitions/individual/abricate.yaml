@@ -1,6 +1,7 @@
+name: abricate
 channels:
   - conda-forge
   - bioconda
-  - defaults    
+  - defaults
 dependencies:
-  - mlst
+  - abricate

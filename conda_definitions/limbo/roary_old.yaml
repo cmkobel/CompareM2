@@ -1,0 +1,37 @@
+name: roary
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - roary
+
+
+
+# Can't locate roary.pm in @INC for this one:
+# name: roary
+# channels:
+#   - conda-forge
+#   - r
+#   - defaults
+#   - conda-forge
+#   - bioconda
+# dependencies:
+#   - roary
+
+
+
+
+
+#old file below:
+
+#name: roary
+#channels:
+#  - r
+#  - defaults
+#  - conda-forge
+#  - bioconda
+#dependencies:
+#  #- cd-hit>=4.6 # Roary needs cd-hit 4.6 or higher. Please upgrade and try again. Maybe there is just something wrong with the version parser
+#  - r-ggplot2=3.3.3 # https://stackoverflow.com/a/68003758 There is a +ggsave() in the code which is not supported by ggplot2 versions higher than this.
+#  - roary
+#

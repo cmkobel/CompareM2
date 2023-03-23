@@ -1,0 +1,14 @@
+# These tools are collected because they currently use the same python version, 3.8.15
+name: py_3_8_tools
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - gtdbtk
+dependencies:
+  - checkm2
+  - gtdbtk
+
+
+# gtdbtk
+# checkm2_conda
