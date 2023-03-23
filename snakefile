@@ -502,7 +502,7 @@ rule busco_individual:
         base_variable = base_variable,
         #results_directory = results_directory,
         out_dir = "{results_directory}/samples/{sample}/busco",
-        exit_code = "{results_directory}/.exitcodes/busco_{sample}.txt",
+        exit_code = "{results_directory}/.exitcode_busco_{sample}.txt",
     conda: "conda_definitions/busco.yaml"
     threads: 1
     resources:
@@ -511,7 +511,7 @@ rule busco_individual:
     shell: """
 
 
-        set +e
+        set +e # Accept non-zero exit status
         >&2 echo "Busco individual"
         # https://busco.ezlab.org/busco_userguide.html#offline
         busco \
@@ -523,8 +523,8 @@ rule busco_individual:
             --force \
             --tar \
             --download_path {params.base_variable}/databases/busco \
-            --offline || ( >&2 echo "asscom2: Busco failed internally.")
-        echo $? > {params.exit_code}
+            --offline 
+        echo -e "{wildcards.sample}\tbusco\t$?" > {params.exit_code}
 
         # Unfortunately, busco fails (exitcode > 0) when the input file cannot be successfully annotated. This has the consequence that the collection script (rule busco) will not run on the rest of the samples. As a fix to this, I've made it so it just prints an error message to stderr instead, and proceeds.
         # Alas, a derived consequence of this solution is that if busco really fails internally NOT because of the input file being a garbage genome, it is going to be harder to debug, as the job will look like it completed successfully.
@@ -786,7 +786,17 @@ rule gtdbtk:
             --force
 
         # Homogenize database version number
-        cp {wildcards.results_directory}/gtdbtk/gtdbtk.bac120.summary.tsv {output}
+        #cp {wildcards.results_directory}/gtdbtk/gtdbtk.bac120.summary.tsv {output}
+        # New better version below that also incorporates archaea
+        #cat {wildcards.results_directory}/gtdbtk/gtdbtk.*.summary.tsv {output}
+        
+
+        # Even better: Should be tested on originals
+        echo -e "user_genome\tclassification\tfastani_reference\tfastani_reference_radius\tfastani_taxonomy\tfastani_ani\tfastani_af\tclosest_placement_reference\tclosest_placement_radius\tclosest_placement_taxonomy\tclosest_placement_ani\tclosest_placement_af\tpplacer_taxonomy\tclassification_method\tnote\tother_related_references(genome_id,species_name,radius,ANI,AF)\tmsa_percent\ttranslation_table\tred_value\twarnings" \
+        > {output}
+        tail -n +2 {wildcards.results_directory}/gtdbtk/gtdbtk.*.summary.tsv \
+        >> {output}
+        
 
 
         {void_report}
