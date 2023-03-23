@@ -2,6 +2,7 @@
 
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
 
+# testing key
 __version__ = "v2.3.0"
 __author__ = 'Oliver Kjærlund Hansen & Carl M. Kobel'
 
