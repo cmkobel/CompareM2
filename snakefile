@@ -364,7 +364,6 @@ rule prokka_individual:
         summarized_txt = "{results_directory}/samples/{sample}/prokka/{sample}_summary.txt",
         labelled_tsv = "{results_directory}/samples/{sample}/prokka/{sample}_labelled.tsv",
         labelled_gff = "{results_directory}/samples/{sample}/prokka/{sample}_labelled.gff"
-
     container: "docker://staphb/prokka"
     conda: "conda_definitions/prokka.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
@@ -389,7 +388,7 @@ rule prokka_individual:
             | grep -E "tRNAs|rRNAs|CRISPRs|CDS|unique" \
             | cut -d" " -f 3,4 \
             | awk -v sam={wildcards.sample} '{{ print sam " " $0 }}' \
-            >> {output.summarized_txt} # jeg undrer mig over hvorfor den har to gt question mark
+            > {output.summarized_txt} # jeg undrer mig over hvorfor den har to gt question mark # update: I dared to remove it, gotta be bold.
 
         # Label tsv file
         cat {output.tsv} \
@@ -650,7 +649,7 @@ rule prokka:
 
 
 
-
+# This one doesn't seem to work, I don't know what is up?
 rule sample_pathway_enrichment_analysis:
     input: "{results_directory}/collected_results/prokka_labelled.tsv"
     output: "{results_directory}/collected_results/sample_pathway_enrichment_analysis.tsv"
@@ -692,7 +691,7 @@ rule roary:
         mem_mb = get_mem_roary,
         runtime = "23:59:59", # Well, fuck me if this doesn't work on PBS
     container: "docker://sangerpathogens/roary"
-    conda: "conda_definitions/roary_old.yaml" 
+    #conda: "conda_definitions/roary_old.yaml" 
     #conda: "conda_definitions/roary.yaml" 
     shell: """
     
