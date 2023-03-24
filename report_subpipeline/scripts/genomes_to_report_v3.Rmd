@@ -1,0 +1,36 @@
+---
+title: "aeo"
+subtitle: "Assemblycomparator2 Report"
+date: "`r Sys.time()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+  #prettydoc::html_pretty:
+    #theme: cayman
+    #highlight: github
+editor_options: 
+  chunk_output_type: console
+#css: "max-width: 5000px; margin: auto; padding: 1em; line-height: 20px"
+---
+
+```{r echo=FALSE, message=F, warning=F}
+
+
+# Print Quick
+pq = function(logical, input) {
+    if (logical) {
+        paste(input)
+    } 
+}
+
+section_A = T
+```
+
+
+# Section test
+# Mind you, you can also set eval = T/F to control output, but then there will be no alternative output, but that could possibly be controlled in the beginning I guess
+```{r child = 'report_section_A.rmd'}
+```
+
+

@@ -1,0 +1,14 @@
+
+`r pq(section_A, "# Section A")`
+
+`r pq(section_A, "This section is only printed if the section_A variable is set to true.")`
+
+`r pq(!section_A, "#### Section A is disabled due to lack of input files.")`
+
+
+```{r, eval = section_A, echo = F, warning = F, message = F, error = T}
+paste("This code chunk is part of section A")
+message("messy message")
+warning("warny warning")
+
+```
