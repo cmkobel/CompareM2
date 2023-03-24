@@ -31,7 +31,7 @@ editor_options:
 
 # axodines
 # /home/axodines/assemblycomparator2/conda_base/7747644331801b571bf2c3eb25e862b1_
-setwd("/cluster/home/cmkobel/axodines/assemblycomparator2/tests/MAGs")     # Development
+#setwd("/cluster/home/cmkobel/axodines/assemblycomparator2/tests/MAGs")     # Development
 #getwd()
 
 
