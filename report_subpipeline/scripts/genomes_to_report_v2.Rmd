@@ -29,7 +29,10 @@ editor_options:
 #setwd("/cluster/projects/nn9864k/cmkobel/assemblycomparator2/tests/E._faecium")     # Development
 #setwd("/cluster/home/cmkobel/memokobel/15_bio326/synthetic_rumen/output/metabat2/06_compare_best_with_lives")     # Development
 
-
+# axodines
+# /home/axodines/assemblycomparator2/conda_base/7747644331801b571bf2c3eb25e862b1_
+setwd("/cluster/home/cmkobel/axodines/assemblycomparator2/tests/MAGs")     # Development
+#getwd()
 
 
 
@@ -278,7 +281,7 @@ try({
 
 
 
-## BUSCO
+## BUSCO old
 
 ```{r echo=FALSE, message=F, warning=F}
 try({
@@ -356,6 +359,70 @@ try({
         #             )
         #         )
         #     )
+
+
+
+    } else {
+        paste("Warning: The file", busco_extract_file, "is not accessible.")
+    }
+})
+```
+
+
+
+## BUSCO
+
+```{r echo=FALSE, message=F, warning=F}
+try({
+    busco_extract_file = "results_ac2/collected_results/busco.tsv"
+    if (file.exists(busco_extract_file)) {
+
+        
+        busco_raw = read_delim(busco_extract_file, delim = ": ", col_names = c("name", "value"))
+
+        busco_df = busco_raw %>% 
+            mutate(id = (name == "in") %>% as.integer() %>% cumsum()) %>% 
+            mutate(value = str_remove(value, ",$")) %>% 
+            
+            pivot_wider(id_cols = id)  %>% 
+            select(-id)  %>% 
+            rename(file = `in`, lineage = name) %>% 
+            mutate(file = basename(file)) %>% 
+
+            separate(one_line_summary, c("pre_CS", "D", "F", "M", "n"), sep = ",", extra = "drop") %>% 
+            separate(pre_CS, c("C", "S"), "\\[") %>% 
+            mutate(D = str_remove(D, "\\]")) %>% 
+            
+            mutate(
+                C = str_extract(C, "\\d+.\\d+") %>% as.numeric,
+                S = str_extract(S, "\\d+.\\d+") %>% as.numeric,
+                D = str_extract(D, "\\d+.\\d+") %>% as.numeric,
+                F = str_extract(F, "\\d+.\\d+") %>% as.numeric,
+                M = str_extract(M, "\\d+.\\d+") %>% as.numeric,
+                n = str_extract(n, "\\d+") %>% as.numeric
+            ) %>% 
+            group_by(file) %>% 
+            arrange(desc(C)) %>% 
+            mutate(rank = 1:n()) %>% 
+            ungroup()
+
+
+
+        # Present table
+        busco_df_meta = metadata_translate %>%
+            mutate(file = basename(filename)) %>%
+            left_join(busco_df %>% filter(rank == 1), by = "file") %>%
+            select(-file, -filename, -rank) %>%
+            arrange(lineage)
+        busco_df_meta
+
+        busco_df_meta %>% 
+            write_tsv("results_ac2/collected_results/export_busco.tsv")
+        
+        busco_df_meta %>% 
+            datatable(class = 'cell-border stripe', options = list(dom = 'ltpi'))
+
+
 
 
 

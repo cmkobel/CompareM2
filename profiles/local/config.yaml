@@ -6,6 +6,8 @@ keep-going: true
 rerun-incomplete: true
 show-failed-logs: true
 rerun-triggers: "mtime"
+keep-incomplete: true # true for debugging
+
 
 # Conda stuff
 use-conda: true

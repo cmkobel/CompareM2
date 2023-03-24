@@ -170,7 +170,7 @@ rule copy:
         runtime = "00:10:00"
     shell: """
 
-        any2fasta {input.genome:q} > {output:q}
+        any2fasta {input.genome:q} > {output}
 
     """  
 
@@ -430,9 +430,12 @@ rule kraken2_individual:
             kraken2 \
                 --threads {threads} \
                 --db $ASSCOM2_KRAKEN2_DB \
+                --confidence 0.15 \
                 --report {output}_tmp \
                 {input} \
                 > /dev/null
+
+            # Argument on confidence parameter https://www.biostars.org/p/402619/
 
             # Put sample names in front
             cat {output}_tmp \
@@ -504,11 +507,16 @@ rule busco_individual:
         out_dir = "{results_directory}/samples/{sample}/busco",
         exit_code = "{results_directory}/.exitcode_busco_{sample}.txt",
     conda: "conda_definitions/busco.yaml"
-    threads: 1
+    threads: 2
     resources:
         mem_mb = 8192,
         runtime = "06:00:00",
     shell: """
+
+
+        # Busco fails (exitcode > 0) when the input file cannot be successfully annotated.
+        # This has the consequence that the collection script (rule busco) will not run on the rest of the samples. As a fix to this, I've made it so it just prints an error message to stderr instead, and proceeds.
+        # Alas, a derived consequence of this solution is that if busco really fails internally NOT because of the input file being a garbage genome, it is going to be harder to debug, as the job will look like it completed successfully.
 
 
         set +e # Accept non-zero exit status
@@ -526,16 +534,33 @@ rule busco_individual:
             --offline 
         echo -e "{wildcards.sample}\tbusco\t$?" > {params.exit_code}
 
-        # Unfortunately, busco fails (exitcode > 0) when the input file cannot be successfully annotated. This has the consequence that the collection script (rule busco) will not run on the rest of the samples. As a fix to this, I've made it so it just prints an error message to stderr instead, and proceeds.
-        # Alas, a derived consequence of this solution is that if busco really fails internally NOT because of the input file being a garbage genome, it is going to be harder to debug, as the job will look like it completed successfully.
+        
+
+        >&2 echo "debug1"
+        ### New: Using JSON
+
+        # Cat all auto lineage results together or create empty file
+        cat {wildcards.results_directory}/samples/{wildcards.sample}/busco/auto_lineage/*/short_summary.json \
+        > {output.table_extract}_temp || touch {output.table_extract}_temp
+
+        >&2 echo "debug2"
+        # Extract relevant features
+        cat {output.table_extract}_temp \
+        | grep -oE "(\\"in\\"|\\"name\\"|\\"one_line_summary\\").+" \
+        > {output.table_extract}
+
+        >&2 echo "debug3"
+        # Clean up
+        rm {output.table_extract}_temp
+
+        >&2 echo "debug4"
 
 
-        >&2 echo "Extracting distillate"
-        cat {wildcards.results_directory}/samples/{wildcards.sample}/busco/short_summary.*.txt \
-        | grep -E "# The lineage dataset is:|# Summarized benchmarking|C:" \
-        > {output.table_extract} || touch {output.table_extract}
 
-        # The reason why we touch in the end is that the command may fail if there is no output from busco. 
+
+
+
+
 
 
     """
@@ -691,7 +716,7 @@ rule roary:
         mem_mb = get_mem_roary,
         runtime = "23:59:59", # Well, fuck me if this doesn't work on PBS
     container: "docker://sangerpathogens/roary"
-    conda: "conda_definitions/roary.yaml" 
+    #conda: "conda_definitions/roary.yaml" 
     shell: """
     
         # Since I reinstalled conda, I've had problems with "Can't locate Bio/Roary/CommandLine/Roary.pm in INC". Below is a hacky fix
