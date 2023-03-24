@@ -343,6 +343,20 @@ try({
             datatable(class = 'cell-border stripe', options = list(dom = 'ltpi'))
 
 
+        # busco_df_meta %>%
+        #     datatable(
+        #         extensions = 'Buttons',
+        #         options = list(
+        #             dom = 'Blfrtip',
+        #             buttons = c('csv', 'excel'),
+        #             #buttons = c(list(extend = "csv", filename = "junk")),
+        #             lengthMenu = list(
+        #                 c(10,25,50,-1),
+        #                 c(10,25,50, "All")
+        #             )
+        #         )
+        #     )
+
 
 
     } else {
