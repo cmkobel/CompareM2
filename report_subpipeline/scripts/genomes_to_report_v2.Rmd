@@ -27,7 +27,7 @@ editor_options:
 # setwd("~/GenomeDK/assemblycomparator2/tests/E._faecium_plasmids/results_ac2/")    
 
 #setwd("/cluster/projects/nn9864k/cmkobel/assemblycomparator2/tests/E._faecium")     # Development
-setwd("/cluster/home/cmkobel/memokobel/15_bio326/synthetic_rumen/output/metabat2/06_compare_best_with_lives")     # Development
+#setwd("/cluster/home/cmkobel/memokobel/15_bio326/synthetic_rumen/output/metabat2/06_compare_best_with_lives")     # Development
 
 
 
