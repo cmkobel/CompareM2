@@ -76,7 +76,7 @@ if df.shape[0] == 0:
 
 df = df[~df["input_file"].str.startswith(".", na = False)] # Remove hidden files
 df['sample_raw'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()] # Extract everything before the extension dot.
-df['sample'] = df['sample_raw'].str.replace(' ','_')
+df['sample'] = df['sample_raw'].str.replace(' ','_').str.replace(',','_')
 df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extract extension
 df['input_file_fasta'] = results_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fa" # This is where the input file is copied to in the first snakemake rule.
 
@@ -170,7 +170,7 @@ rule copy:
         runtime = "00:10:00"
     shell: """
 
-        any2fasta "{input.genome}" > {output}
+        any2fasta {input.genome:q} > {output:q}
 
     """  
 
