@@ -7,15 +7,30 @@ output:
     toc: true
     toc_depth: 2
   #prettydoc::html_pretty:
-    #theme: cayman
+    theme: cayman
     #highlight: github
 editor_options: 
   chunk_output_type: console
 #css: "max-width: 5000px; margin: auto; padding: 1em; line-height: 20px"
 ---
 
+
+
 ```{r echo=FALSE, message=F, warning=F}
 
+# DEBUG, remember to comment out for git pushes
+results_directory = "~/axodines/assemblycomparator2/tests/MAGs/results_ac2" # debug
+
+setwd("~/axodines/assemblycomparator2/report_subpipeline/scripts")
+
+
+
+```
+
+
+```{r echo=FALSE, message=F, warning=F}
+
+## Define functions
 
 # Print Quick
 pq = function(logical, input) {
@@ -24,13 +39,14 @@ pq = function(logical, input) {
     } 
 }
 
-section_A = T
+s_prokka = T
 ```
+
+
 
 
 # Section test
 # Mind you, you can also set eval = T/F to control output, but then there will be no alternative output, but that could possibly be controlled in the beginning I guess
-```{r child = 'report_section_A.rmd'}
+```{r child = "section_prokka.rmd"}
 ```
-
 
