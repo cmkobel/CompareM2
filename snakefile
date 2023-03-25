@@ -505,7 +505,6 @@ rule busco_individual:
         base_variable = base_variable,
         #results_directory = results_directory,
         out_dir = "{results_directory}/samples/{sample}/busco",
-        exit_code = "{results_directory}/.exitcode_busco_{sample}.txt",
     conda: "conda_definitions/busco.yaml"
     threads: 2
     resources:
@@ -513,13 +512,11 @@ rule busco_individual:
         runtime = "06:00:00",
     shell: """
 
+        # Busco fails because of a problem with the sepp package. This doesn't really matter as we just want the completeness results.
+        # But, this means that we need a hacky workaround to let this job exit gracefully (exit code 0) on the basis of whether any completeness results have been written to disk.
+        # Hence, the actual exit code of busco, we will ignore.
 
-        # Busco fails (exitcode > 0) when the input file cannot be successfully annotated.
-        # This has the consequence that the collection script (rule busco) will not run on the rest of the samples. As a fix to this, I've made it so it just prints an error message to stderr instead, and proceeds.
-        # Alas, a derived consequence of this solution is that if busco really fails internally NOT because of the input file being a garbage genome, it is going to be harder to debug, as the job will look like it completed successfully.
 
-
-        set +e # Accept non-zero exit status
         >&2 echo "Busco individual"
         # https://busco.ezlab.org/busco_userguide.html#offline
         busco \
@@ -531,19 +528,20 @@ rule busco_individual:
             --force \
             --tar \
             --download_path {params.base_variable}/databases/busco \
-            --offline 
-        echo -e "{wildcards.sample}\tbusco\t$?" > {params.exit_code}
+            --offline || (>&2 echo "ac2: busco failed internally")
 
-        
 
         >&2 echo "debug1"
         ### New: Using JSON
 
-        # Cat all auto lineage results together or create empty file
-        cat {wildcards.results_directory}/samples/{wildcards.sample}/busco/auto_lineage/*/short_summary.json \
-        > {output.table_extract}_temp || touch {output.table_extract}_temp
 
-        >&2 echo "debug2"
+        # Cat all auto lineage results together or create empty file
+        # The following cat command will fail if the glob doesn't resolve any files: This is the wanted behaviour.
+        cat {wildcards.results_directory}/samples/{wildcards.sample}/busco/auto_lineage/*/short_summary.json \
+        > {output.table_extract}_temp         
+        
+        >&2 echo "Results clearly must exist ... "
+        
         # Extract relevant features
         cat {output.table_extract}_temp \
         | grep -oE "(\\"in\\"|\\"name\\"|\\"one_line_summary\\").+" \
@@ -554,14 +552,6 @@ rule busco_individual:
         rm {output.table_extract}_temp
 
         >&2 echo "debug4"
-
-
-
-
-
-
-
-
 
     """
 
