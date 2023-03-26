@@ -129,7 +129,6 @@ rule all:
         "{results_directory}/assembly-stats/assembly-stats.tsv", \
         "{results_directory}/collected_results/sequence_lengths.tsv", \
         "{results_directory}/collected_results/GC_summary.tsv", \
-        "{results_directory}/collected_results/prokka_summarized.txt", \
         "{results_directory}/collected_results/kraken2_reports.tsv", \
         "{results_directory}/collected_results/busco.tsv", \
         "{results_directory}/roary/summary_statistics.txt", \
@@ -361,9 +360,7 @@ rule prokka_individual:
         gff = "{results_directory}/samples/{sample}/prokka/{sample}.gff",
         log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
-        summarized_txt = "{results_directory}/samples/{sample}/prokka/{sample}_summary.txt",
-        labelled_tsv = "{results_directory}/samples/{sample}/prokka/{sample}_labelled.tsv",
-        labelled_gff = "{results_directory}/samples/{sample}/prokka/{sample}_labelled.gff"
+        gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}_nofasta.gff",
     container: "docker://staphb/prokka"
     conda: "conda_definitions/prokka.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
@@ -378,33 +375,31 @@ rule prokka_individual:
         prokka \
             --cpus {threads} \
             --force \
+            --rfam \
             --outdir {wildcards.results_directory}/samples/{wildcards.sample}/prokka \
             --prefix {wildcards.sample} {input} \
-            | tee {output.log} 
+        | tee {output.log} 
 
-        # Label summary file
-        cat {output.log} \
-            | grep "Found" \
-            | grep -E "tRNAs|rRNAs|CRISPRs|CDS|unique" \
-            | cut -d" " -f 3,4 \
-            | awk -v sam={wildcards.sample} '{{ print sam " " $0 }}' \
-            > {output.summarized_txt} # jeg undrer mig over hvorfor den har to gt question mark # update: I dared to remove it, gotta be bold.
-
-        # Label tsv file
-        cat {output.tsv} \
-            | awk -v sam={wildcards.sample} '{{ print $0 "\t" sam }}' \
-            > {output.labelled_tsv}
-
-
+        # I don't remember what I'm actually using this output for?
         # Remove fasta from gff and add sample label
         gff_fasta_start=$(grep --line-number --extended-regexp "^##FASTA" {output.gff} | cut -f1 -d:)
-        head --lines $((-1+$gff_fasta_start)) {output.gff} \
-            | awk -v sam={wildcards.sample} '{{ print $0 "\t" sam }}' \
-            > {output.labelled_gff}
-
-
+        head --lines $(($gff_fasta_start-1)) {output.gff} \
+        > {output.gff_nofasta}
 
     """
+
+
+
+
+rule prokka:
+    input:
+        gff = expand(
+            "{results_directory}/samples/{sample}/prokka/{sample}.gff",
+            results_directory = results_directory,
+            sample = df["sample"]
+        ),
+
+
 
 
 # Kraken is for reads, so why are we using it here without shredding the reads?
@@ -630,34 +625,6 @@ rule gc_summary:
 
 
 
-
-
-rule prokka:
-    input:
-        metadata = "{results_directory}/metadata.tsv",
-        summarized_txt = expand("{results_directory}/samples/{sample}/prokka/{sample}_summary.txt", results_directory = results_directory, sample = df["sample"]),
-        labelled_tsv = expand("{results_directory}/samples/{sample}/prokka/{sample}_labelled.tsv", results_directory = results_directory, sample = df["sample"]),
-        labelled_gff = expand("{results_directory}/samples/{sample}/prokka/{sample}_labelled.gff", results_directory = results_directory, sample = df["sample"]),
-
-    output: 
-        summarized_txt = "{results_directory}/collected_results/prokka_summarized.txt",
-        labelled_tsv = "{results_directory}/collected_results/prokka_labelled.tsv",
-        labelled_gff = "{results_directory}/collected_results/prokka_labelled.gff",
-
-    resources:
-        runtime = "01:00:00",
-    shell: """
-
-        echo "sample value name" > {output.summarized_txt}
-        cat {input.summarized_txt} >> {output.summarized_txt} 
-
-        cat {input.labelled_tsv} > {output.labelled_tsv}
-
-        cat {input.labelled_gff} > {output.labelled_gff}
-
-
-        {void_report}
-    """
 
 
 
@@ -988,6 +955,7 @@ report_call = f"""
         --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
         --cores 4 \
         --use-conda \
+        -p \
         --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title} 2> {results_directory}/logs/report.err.log 
     """
 

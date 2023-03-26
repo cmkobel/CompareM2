@@ -23,7 +23,9 @@ rule report:
     conda: "conda_definitions/r-markdown.yaml"
     params: 
         end_script = f"{base_variable}/report_subpipeline/scripts/report_end_script.sh",
+        base_variable = base_variable,
         results_directory = results_directory,
+        batch_title = batch_title,
     output: "{results_directory}/report_{batch_title}.html"
     #output: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
     shell: """
@@ -31,10 +33,25 @@ rule report:
         echo "report subpipeline: initializing report ..."
     
         # The rmd will run from the wd where the template is located. Therefore we need to copy it into here before rendering.
-        cp {base_variable}/report_subpipeline/scripts/genomes_to_report_v2.Rmd rmarkdown_template.rmd
-        Rscript -e 'rmarkdown::render("rmarkdown_template.rmd", "html_document", output_file = "{output}", quiet = T)' 
-        rm rmarkdown_template.rmd
+        # cp {base_variable}/report_subpipeline/scripts/genomes_to_report_v2.Rmd rmarkdown_template.rmd
+        # Rscript -e 'rmarkdown::render("rmarkdown_template.rmd", "html_document", output_file = "{output}", quiet = T)' 
+        # rm rmarkdown_template.rmd
+
+
+        Rscript -e '
+            base_variable = "{params.base_variable}"
+            results_directory = "{params.results_directory}"
+            batch_title = "{params.batch_title}"
+
+            rmarkdown::render(
+                input = "{base_variable}/report_subpipeline/scripts/genomes_to_report_v3.Rmd",
+                output_format = "html_document",
+                output_file = "{output}",
+                knit_root_dir = "{params.results_directory}",
+                quiet = F
+            )' 
         
+
         
         # Use the end script if it exists
         if test -f "{params.end_script}"; then

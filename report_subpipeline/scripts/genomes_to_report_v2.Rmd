@@ -16,7 +16,7 @@ editor_options:
 
 `r paste("This report was generated in", getwd())`
 
-```{r echo=FALSE, message=F, warning=F}
+```{r global-setup echo=FALSE, message=F, warning=F}
 
 # Version: "v2.2.0"
 # Authors: Carl M. Kobel, Oliver Kjærlund Hansen
@@ -67,7 +67,7 @@ figno = function() {
 
 ## Sample overview
 
-```{r echo=FALSE, message=F, warning=F}
+```{r sample-overview echo=FALSE, message=F, warning=F}
 
 
 

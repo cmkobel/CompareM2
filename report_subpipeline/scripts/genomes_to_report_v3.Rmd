@@ -1,5 +1,5 @@
 ---
-title: "aeo"
+title: "`r batch_title`"
 subtitle: "Assemblycomparator2 Report"
 date: "`r Sys.time()`"
 output:
@@ -7,7 +7,7 @@ output:
     toc: true
     toc_depth: 2
   #prettydoc::html_pretty:
-    theme: cayman
+    theme: readable
     #highlight: github
 editor_options: 
   chunk_output_type: console
@@ -16,21 +16,64 @@ editor_options:
 
 
 
-```{r echo=FALSE, message=F, warning=F}
+```{r dependencies, echo=F, message=F, warning=F}
 
-# DEBUG, remember to comment out for git pushes
-results_directory = "~/axodines/assemblycomparator2/tests/MAGs/results_ac2" # debug
+# Dependencies
 
-setwd("~/axodines/assemblycomparator2/report_subpipeline/scripts")
-
+library(tidyverse)
+library(DT)
+library(ape)
+#library(prettydoc)
+#library(phytools)
+#library(phangorn)
 
 
 ```
 
 
-```{r echo=FALSE, message=F, warning=F}
 
-## Define functions
+#### Temporary debug information
+```{r debug, echo=F, message=F, warning=F, error = F}
+
+
+
+# DEBUG setup for vscode on KTFL running R on ssh to saga
+debug = F
+if (debug) {
+    base_variable = "~/axodines/assemblycomparator2"
+    results_directory = "results_ac2"
+    batch_title = "MAGs"
+    setwd("~/axodines/assemblycomparator2/tests/MAGs")
+}
+
+#results_directory = "~/axodines/assemblycomparator2/tests/MAGs/results_ac2" # debug
+#setwd("~/axodines/assemblycomparator2/report_subpipeline/scripts")
+
+
+
+tribble(
+    ~name,                  ~value,
+    "base_variable",        base_variable,
+    "results_directory",    results_directory,
+    "batch_title",          batch_title,
+)
+```
+
+
+`r paste("This report was generated for results in", results_directory)`
+
+
+```{r global-setup, echo=F, message=F, warning=F}
+
+
+## Global variables
+#base_variable = "~/assemblycomparator2/" # I need to find a way of pulling this out of thin air. Maybe there's a way of passing commands through the render call, or I can
+report_scripts = paste0(base_variable, "/report_subpipeline/scripts/")
+
+
+
+
+## Global functions
 
 # Print Quick
 pq = function(logical, input) {
@@ -39,14 +82,79 @@ pq = function(logical, input) {
     } 
 }
 
+# A function that returns a new global table enumerator for each call
+tableno_var = 0
+tableno = function() {
+    tableno_var <<- tableno_var + 1
+    tableno_var
+}
+
+# Same, but for figures
+figno_var = 0
+figno = function() {
+    figno_var <<- figno_var + 1
+    figno_var
+}
+
+
+
+
+```
+
+
+
+
+```{r switchboard, echo=FALSE, message=F, warning=F}
+
+# Section switchboard
 s_prokka = T
 ```
 
 
 
 
-# Section test
-# Mind you, you can also set eval = T/F to control output, but then there will be no alternative output, but that could possibly be controlled in the beginning I guess
-```{r child = "section_prokka.rmd"}
+## Sample overview
+
+```{r sample-overview, echo=FALSE, message=F, warning=F}
+
+
+
+# Import the metadata table
+# This table makes it easy for us later to convert the long paths to short and simple sample names
+metadata_file = paste0(results_directory, "/metadata.tsv")
+
+if (file.exists(metadata_file)) {
+    metadata_df = read_tsv(metadata_file)
+    
+    
+    # Generate a very simple table which can be used to convert long paths or their basenames to sample names
+    metadata_translate = metadata_df %>% 
+        select(sample, file_long = input_file_fasta) %>%
+        mutate(file = basename(file_long))
+    
+
+    # Present the metadata in the report
+    metadata_df %>%
+        select(-index) %>% 
+        datatable(class = 'cell-border stripe')
+    
+    
+    
+} else {
+    stop(paste("The metadata file", metadata_file, "is not accessible.")) # Should stop the script completely
+}
+
+### Sections below
 ```
+
+*Table `r tableno()`: Overview of the samples analysed in this run.*
+
+
+```{r pp, child = paste0(report_scripts, "section_prokka.rmd")}
+```
+
+
+
+
+
 

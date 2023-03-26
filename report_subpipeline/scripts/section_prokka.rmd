@@ -1,0 +1,25 @@
+`r pq(s_prokka, "# Genomic annotation using Prokka")`
+
+`r pq(!s_prokka, "#### Section A is disabled due to lack of input files.")`
+
+```{r prokka-table, eval = s_prokka, echo = F, message = F, warning = F, error = T}
+# if error = T, then the try is unneccesary, because the errors are simply written out instead of being try-catched. This is more informative and makes debugging easier.
+
+files = Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt"))
+
+prokka_summary = read_delim(files, id = "file", comment = "#", col_names = c("name", "value"), delim = ": ") %>%
+    select(file, name, value) %>%
+    mutate(sample = basename(file) %>% str_remove("\\.txt$")) %>%
+    pivot_wider(id_cols = sample) %>%
+    select(-orgaenism)
+
+
+metadata_translate %>%
+    select(sample) %>%
+    left_join(prokka_summary, by = "sample") %>%
+    datatable()
+
+
+```
+
+*Table `r tableno()`: Overview of the number of different gene types. Called using the [Prokka](https://github.com/tseemann/prokka) genome annotator.*
