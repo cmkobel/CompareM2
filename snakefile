@@ -393,6 +393,7 @@ rule prokka_individual:
 
 rule prokka:
     input:
+        metadata = "{results_directory}/metadata.tsv",
         gff = expand(
             "{results_directory}/samples/{sample}/prokka/{sample}.gff",
             results_directory = results_directory,

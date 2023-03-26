@@ -97,19 +97,55 @@ figno = function() {
 }
 
 
+dtable = function(X) {
+    
+    datatable(X,
+        extensions = c("Buttons","KeyTable"), 
+        options = list(
+            dom = '<"top"B>frtip',
+            buttons = list('csv', 'excel'),
+            keys = T
+        ),
+        rownames=F
+    )
+}
+
+create_dt <- function(x){
+    DT::datatable(x,
+        extensions = 'Buttons',
+        options = list(
+            dom = 'Blfrtip',
+            buttons = c('copy', 'csv', 'excel'),
+            lengthMenu = list(
+                c(10,25,50,-1),
+                c(10,25,50,
+                "All")
+            )
+        )
+    )
+}
+
+custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T) {
+    DT::datatable(
+        x,
+        options = list(
+            dom = dom,
+            ordering = ordering,
+            #buttons = c('copy', 'csv', 'excel')
+            buttons = list(
+                'copy',
+                list(extend = "csv", filename = filename),
+                list(extend = "excel", filename = filename)
+            )
+        ),
+        rownames = F,
+        extensions = 'Buttons',
+    )
+}
+
 
 
 ```
-
-
-
-
-```{r switchboard, echo=FALSE, message=F, warning=F}
-
-# Section switchboard
-s_prokka = T
-```
-
 
 
 
@@ -126,6 +162,7 @@ metadata_file = paste0(results_directory, "/metadata.tsv")
 if (file.exists(metadata_file)) {
     metadata_df = read_tsv(metadata_file)
     
+    N = metadata_df %>% nrow() # global variable
     
     # Generate a very simple table which can be used to convert long paths or their basenames to sample names
     metadata_translate = metadata_df %>% 
@@ -150,7 +187,90 @@ if (file.exists(metadata_file)) {
 *Table `r tableno()`: Overview of the samples analysed in this run.*
 
 
-```{r pp, child = paste0(report_scripts, "section_prokka.rmd")}
+### Report section overview
+
+Whether each analysis in assemblycomparator is run depends on the presence of valid output files.
+
+```{r switchboard, echo=FALSE, message=F, warning=F}
+
+# Pull all globs and show which are done/presentable
+
+# glob = list()
+
+# glob$assembly_stats = Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv"))
+# glob$prokka = Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt"))
+# glob$busco = Sys.glob(paste0(results_directory, "/samples/*/busco/*_omesnatoehsnatoe_extract.tsv"))
+
+# Each section of this report is rendered on the basis of the presence of relevant result files.
+# In the table below, the globs, and expected number of globs are defined. 
+section_definition_table = tribble(
+    ~section, ~expectation, ~glob,
+    "assembly_stats",   1, Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv")),
+    #"sequence_lengths", 99, Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv")),
+    "prokka",           N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
+    "busco",            N, Sys.glob(paste0(results_directory, "/samples/*/busco/*.txt")),
+    "roary",            1, Sys.glob(paste0(results_directory, "/samples/*/roray/*.txt")),
+
+    ) %>%
+    #group_by(section) %>%
+    mutate(n_files = lengths(glob))
+
+
+# This list is used out in the individual sections to access the correct files.
+glob_list = section_definition_table %>%
+    select(section, glob) %>%
+    deframe() # Convert to list
+
+# The render variable is finally used to toggle the rendering of each section in the report.
+render = lapply(glob_list, function(x) {length(x) > 0})
+
+
+# Present which analysis results will be rendered in the report
+# glob %>%
+#     lapply(length) %>%
+#     as_tibble() %>%
+#     pivot_longer(everything(), names_to = "section", values_to = "n_files") %>%
+#     mutate(
+#         decision = case_when(
+#             n_files > 0 ~ paste("yes"),
+#             TRUE ~ "no"),
+#         results = paste0(decision, " (", n_files, ")" )
+#     ) %>%
+#     select(section, `results (files)` = results) %>%
+#     custom_dt(dom = "t")
+
+section_definition_table %>%
+    mutate(
+        render = case_when(
+            #n_files > 0 ~ paste("yes"),
+            n_files == expectation ~ "🟢 yes",
+            n_files > 0 ~ "🟡 yes, partially",
+            n_files == 0 ~ "🔴 no"),
+        `n / expected` = paste0(n_files, " / ", expectation)
+    ) %>%
+    select(section, `n / expected`, render) %>%
+    custom_dt(dom = "t", ordering = F)
+
+# Define a variable that can be used to query whether each section of the report should be rendered
+
+
+```
+
+The table above summarizes the number of results files to be processed for each analysis. 
+
+
+
+
+```{r child = paste0(report_scripts, "section_assembly_stats.rmd")}
+```
+
+
+```{r child = paste0(report_scripts, "section_sequence_lengths.rmd")}
+```
+
+
+```{r child = paste0(report_scripts, "section_prokka.rmd")}
+
 ```
 
 
