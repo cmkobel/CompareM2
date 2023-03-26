@@ -261,7 +261,7 @@ The table above summarizes the number of results files to be processed for each 
 
 
 
-```{r child = paste0(report_scripts, "section_assembly_stats.rmd")}
+```{r child = paste0(report_scripts, "section_assembly_stats.rmd"), eval = render$assembly_stats}
 ```
 
 
