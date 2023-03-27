@@ -32,7 +32,7 @@ library(ape)
 
 
 
-#### Temporary debug information
+
 ```{r debug, echo=F, message=F, warning=F, error = F}
 
 
@@ -46,21 +46,10 @@ if (debug) {
     setwd("~/axodines/assemblycomparator2/tests/MAGs")
 }
 
-#results_directory = "~/axodines/assemblycomparator2/tests/MAGs/results_ac2" # debug
-#setwd("~/axodines/assemblycomparator2/report_subpipeline/scripts")
-
-
-
-tribble(
-    ~name,                  ~value,
-    "base_variable",        base_variable,
-    "results_directory",    results_directory,
-    "batch_title",          batch_title,
-)
 ```
 
 
-`r paste("This report was generated using the results located at", results_directory)`
+`r paste0("This report was generated using the results located at ", results_directory, " using the installation at ", base_variable, ".")`
 
 
 ```{r global-setup, echo=F, message=F, warning=F}
@@ -157,44 +146,40 @@ paste_ = function(x, ...) {
 ```{r sample-overview, echo=FALSE, message=F, warning=F}
 
 # Import the metadata table
-# This table makes it easy for us later to convert the long paths to short and simple sample names
+# metadata_translate makes it easy for us later to convert the long paths to short and simple sample names, also highlights potential missing sample analyses
+
 metadata_file = paste0(results_directory, "/metadata.tsv")
 
-if (file.exists(metadata_file)) {
-    metadata_df = read_tsv(metadata_file) %>%
-        arrange(sample) # Alphabetical
-    
-    N = metadata_df %>% nrow() # global variable
-    
-    # Generate a very simple table which can be used to convert long paths or their basenames to sample names
-    metadata_translate = metadata_df %>% 
-        select(sample, file_long = input_file_fasta) %>%
-        mutate(
-            file = basename(file_long)
-        )
-    
+metadata_df = read_tsv(metadata_file) %>%
+    arrange(sample) # Alphabetical
 
-    # Present the metadata in the report
-    metadata_df %>%
-        select(input_file, sample) %>% 
-        custom_dt("metadata")
+N = metadata_df %>% nrow() # global variable
+
+# Generate a very simple table which can be used to convert long paths or their basenames to sample names
+metadata_translate = metadata_df %>% 
+    select(sample, file_long = input_file_fasta) %>%
+    mutate(
+        file = basename(file_long)
+    )
+
+
+# Present the metadata in the report
+metadata_df %>%
+    select(input_file, sample) %>% 
+    datatable() # This one is not downloadable
+
 
     
     
-    
-} else {
-    stop(paste("The metadata file", metadata_file, "is not accessible.")) # Should stop the script completely
-}
-
 ### Sections below
 ```
 
-*Table `r tableno()`: Overview of the samples analysed in this run.*
+*Table `r tableno()`: Overview of the samples analysed in this batch.*
 
 
 ### Report section overview
 
-Here is an overview of number of result files that have been found for each analysis. A report section is only rendered if relevant result files are present for that analysis.
+Here is an overview of the number of result files that have been found for each analysis. A report section is only rendered if relevant result files are present for that analysis.
 
 ```{r switchboard, echo=FALSE, message=F, warning=F}
 
@@ -209,12 +194,15 @@ Here is an overview of number of result files that have been found for each anal
 # Each section of this report is rendered on the basis of the presence of relevant result files.
 # In the table below, the globs, and expected number of globs are defined. 
 section_definition_table = tribble(
+
     ~section, ~expectation, ~glob,
     "assembly_stats",   1, Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv")),
     "sequence_lengths", N, Sys.glob(paste0(results_directory, "/samples/*/sequence_lengths/*.tsv")),
     "prokka",           N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
     "busco",            N, Sys.glob(paste0(results_directory, "/samples/*/busco/*.txt")),
     "roary",            1, Sys.glob(paste0(results_directory, "/samples/*/roray/*.txt")),
+    "mashtree",            1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick")),
+
 
     ) %>%
     #group_by(section) %>%
@@ -230,24 +218,10 @@ glob_list = section_definition_table %>%
 render = lapply(glob_list, function(x) {length(x) > 0})
 
 
-# Present which analysis results will be rendered in the report
-# glob %>%
-#     lapply(length) %>%
-#     as_tibble() %>%
-#     pivot_longer(everything(), names_to = "section", values_to = "n_files") %>%
-#     mutate(
-#         decision = case_when(
-#             n_files > 0 ~ paste("yes"),
-#             TRUE ~ "no"),
-#         results = paste0(decision, " (", n_files, ")" )
-#     ) %>%
-#     select(section, `results (files)` = results) %>%
-#     custom_dt(dom = "t")
-
 section_definition_table %>%
     mutate(
         render = case_when(
-            #n_files > 0 ~ paste("yes"),
+            n_files > expectation ~ "error", # Hopefully this won't ever happen
             n_files == expectation ~ "🟢 yes",
             n_files > 0 ~ "🟡 yes, partially",
             n_files == 0 ~ "🔴 no"),
@@ -277,8 +251,18 @@ section_definition_table %>%
 
 ```
 
+```{r child = paste0(report_scripts, "section_mashtree.rmd"), eval = render$mashtree}
+
+```
 
 
 
 
 
+
+
+
+------------------------------------------------------------------------
+
+The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel) `version 2.3.0`
+Licensed under [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)

@@ -1,31 +1,13 @@
+#### Assemblies and their contigs:
 
 
 
-
-#### Lengths of contigs:
-
-```{r, echo=FALSE, message=F, warning=F}
-
-
-try({
-    # This chunk is needed for setting the size of the forthcoming plot
-    knitr::opts_chunk$set(
-        fig.height = max(1.6, N*0.2),
-        fig.width = 9
-    )
-
-})
-```
-
-```{r, echo=FALSE, message=F, warning=F}
+```{r sequence_lengths, echo=FALSE, message=F, warning=F, fig.height = max(1.8, N*0.2), fig.width = 10}
 
 
 
 sequence_lengths_df = read_tsv(glob_list$sequence_lengths, id = "file_long", comment = "#", col_names = c("name", "length", "GC", "GC-Skew")) %>%
     mutate(sample = basename(file_long) %>% str_remove("_seqlen.tsv"))
-
-
-
 
 
 metadata_translate %>%
@@ -48,12 +30,7 @@ metadata_translate %>%
     labs(y = "sample") +
     scale_fill_viridis_c()
 
-
-
-
-            
-        
         
 ```
 
-*Fig. `r figno()`: Lengths of fasta records for each sample. The colors have no intrinsic meaning, other than highlighting the varying sizes and number of records in each assembly.*
+*Fig. `r figno()`: Visualization of the length of each fasta record for each sample. The colors show the mean GC content for each record (contig).*

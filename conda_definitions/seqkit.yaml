@@ -1,0 +1,5 @@
+name: seqkit
+channels:
+  - bioconda
+dependencies:
+  - seqkit
