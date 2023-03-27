@@ -1,6 +1,6 @@
 ## Genomic annotation
 
-```{r prokka-table, eval = render$prokka, echo = F, message = F, warning = F, error = T}
+```{r prokka-table, echo = F, message = F, warning = F, error = T}
 
 
 
@@ -14,7 +14,7 @@ prokka_summary = read_delim(glob_list$prokka, id = "file", comment = "#", col_na
 metadata_translate %>%
     select(sample) %>%
     left_join(prokka_summary, by = "sample") %>%
-    datatable()
+    custom_dt("prokka")
 
 
 ```

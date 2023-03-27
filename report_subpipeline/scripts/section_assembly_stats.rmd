@@ -17,7 +17,7 @@ metadata_translate %>%
     select(sample, file_long) %>%
     left_join(assembly_stats_df, by = c("file_long" = "filename")) %>%
     select(sample, everything(), -file_long, -N50n, -N70, -N70n, -N90n) %>%
-    datatable()
+    custom_dt("assembly_stats", dom = "Blfrtip")
 
 
 ```

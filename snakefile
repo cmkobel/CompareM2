@@ -2,8 +2,7 @@
 
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
 
-# testing key
-__version__ = "v2.4.0" # Two places to bump. Here and in the bottom of the report.
+__version__ = "v2.4.0" # Ttree places to bump. Here, in the bottom of the report, in the report snakefile
 __author__ = 'Oliver Kjærlund Hansen & Carl M. Kobel'
 
 import os
@@ -193,60 +192,7 @@ rule metadata:
     """
 
 
-# Mac-only problem (possibly only on M1 which no one uses anyway..)
-# Seems that checkm doesn't work on mac. pplacer does not exist, and I get errors:
-#   AttributeError: 'MarkerGeneFinder' object has no attribute '__reportProgress'
-#   AttributeError: 'MarkerGeneFinder' object has no attribute '__processBin'
-#   [2022-09-27 10:35:55] INFO: Saving HMM info to file.
-#   [2022-09-27 10:35:55] INFO: Calculating genome statistics for 3 bins with 1 threads:
-#   ...
-#   [2022-09-27 10:35:56] INFO: Extracting marker genes to align.
-#   [2022-09-27 10:35:56] ERROR: Models must be parsed before identifying HMM hits.
-#   I will have to consider if I will develop this on linux, or find an alternative.
-# rules download_checkm and checkm have been disabled below
-# rule checkm_download:
-#     output:
-#         flag = touch("{results_directory}/.checkm_OK.flag")
-#     conda: "conda_definitions/wget.yaml"
-#     params:
-#         directory = base_variable + "/databases/checkm/" # trailing slash??
-#     shell: """
- 
-#     # Check if the database exists. 
-#     # If it doesn't, download/untar the db
-#     if [ ! -f {params.directory}/checkm_OK.flag ]; then    
- 
-#         mkdir -p {params.directory}
-#         wget --directory-prefix={params.directory} https://data.ace.uq.edu.au/public/CheckM_databases/checkm_data_2015_01_16.tar.gz 
-#         tar -xvf {params.directory}/checkm_data_2015_01_16.tar.gz -C {params.directory}
-#         touch {params.directory}/checkm_OK.flag # This is just to make sure that the process went well.
- 
-#     fi
-
-#     # If the flag exists already, then the .checkm_OK.flag will be touched immediately by snakemake
- 
-#     """
-#
-#rule checkm:
-#    input: "{results_directory}/.checkm_OK.flag"
-#    output: touch("{results_directory}/checkm/output")
-#    conda: "conda_definitions/checkm.yaml"
-#    params:
-#            directory = base_variable + "/databases/checkm/"
-#    shell: """
-#
-#        checkm data setRoot {params.directory}
-#        
-#
-#
-#        checkm lineage_wf /Users/kartoffel/assemblycomparator2/tests/E._faecium ./output
-#
-#    """
-
-
-
 # --- CheckM2 --------------------------------------------------------
-
 
 rule checkm2_download:
     output:
@@ -287,7 +233,6 @@ rule checkm2:
         fasta = df["input_file_fasta"].tolist()
     output:
         table = touch("{results_directory}/checkm2/quality_report.tsv"),
-        diamond = touch("{results_directory}/checkm2/diamond_output/DIAMOND_RESULTS.tsv")
     conda: "conda_definitions/checkm2_conda.yaml"
     threads: 8
     resources:

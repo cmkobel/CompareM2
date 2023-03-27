@@ -21,11 +21,11 @@ tree <- ape::read.tree(mashtree_file)
 #axis(1)
 
 tree$tip.label = paste0(" ", tree$tip.label)
-ape::plot.phylo(tree, align.tip.label = T)
+ape::plot.phylo(tree, align.tip.label = T, font = 1)
 axis(1)
            
            
 
 ```
 
-*Fig. `r figno()`: Approximation of a phylogenetic tree calculated with mashtree.*
+*Fig. `r figno()`: Approximation of a phylogenetic tree calculated with mashtree. The horizontal axis is equivalent to 1-ANI.*

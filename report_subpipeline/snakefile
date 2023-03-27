@@ -1,6 +1,10 @@
 # This subpipeline checks if the void report flag (.asscom2_void_report.flag) file has been modified by a rule in the parent pipeline. If so, the report will be rendered.
 
 
+__version__ = "v2.4.0" 
+__author__ = 'Carl M. Kobel'
+
+
 results_directory = config['results_directory'] # results_ac2
 base_variable = config['base_variable'] # path/to/gitrepo/assemblycomparator2
 batch_title = config['batch_title'] # E.g. E._faecium 

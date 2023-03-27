@@ -107,14 +107,18 @@ create_dt <- function(x){
             buttons = c('copy', 'csv', 'excel'),
             lengthMenu = list(
                 c(10,25,50,-1),
-                c(10,25,50,
-                "All")
+                c(10,25,50, "All")
             )
         )
     )
 }
 
 custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T) {
+    
+    name = paste(batch_title, filename, sep = "_")
+    
+    write_tsv(x, paste0(results_directory, "/collected_results/", name, ".tsv")) # Save a copy on the harddisk for people without browsers.
+    
     DT::datatable(
         x,
         options = list(
@@ -122,9 +126,12 @@ custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T) {
             ordering = ordering,
             #buttons = c('copy', 'csv', 'excel')
             buttons = list(
-                'copy',
-                list(extend = "csv", filename = paste(batch_title, filename, sep = "_")),
-                list(extend = "excel", filename = paste(batch_title, filename, sep = "_"))
+                list(extend = "csv", filename = name),
+                list(extend = "excel", filename = name)
+            ),
+            lengthMenu = list(
+                c(10,25,50,-1),
+                c(10,25,50, "All")
             )
         ),
         rownames = F,
@@ -167,6 +174,7 @@ metadata_translate = metadata_df %>%
 metadata_df %>%
     select(input_file, sample) %>% 
     datatable() # This one is not downloadable
+    #custom_dt()
 
 
     
@@ -196,12 +204,13 @@ Here is an overview of the number of result files that have been found for each 
 section_definition_table = tribble(
 
     ~section, ~expectation, ~glob,
-    "assembly_stats",   1, Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv")),
-    "sequence_lengths", N, Sys.glob(paste0(results_directory, "/samples/*/sequence_lengths/*.tsv")),
-    "prokka",           N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
-    "busco",            N, Sys.glob(paste0(results_directory, "/samples/*/busco/*.txt")),
-    "roary",            1, Sys.glob(paste0(results_directory, "/samples/*/roray/*.txt")),
-    "mashtree",            1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick")),
+    "assembly_stats",    1, Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv")),
+    "sequence_lengths",  N, Sys.glob(paste0(results_directory, "/samples/*/sequence_lengths/*.tsv")),
+    "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
+    "busco",             N, Sys.glob(paste0(results_directory, "/samples/*/busco/short_summary_extract.tsv")),
+    "checkm2",           1, Sys.glob(paste0(results_directory, "/checkm2/quality_report.tsv")),
+    "roary",             1, Sys.glob(paste0(results_directory, "/samples/*/roray/*.txt")),
+    "mashtree",          1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick")),
 
 
     ) %>%
@@ -251,9 +260,16 @@ section_definition_table %>%
 
 ```
 
+
+```{r child = paste0(report_scripts, "section_checkm2.rmd"), eval = render$checkm2}
+
+```
+
 ```{r child = paste0(report_scripts, "section_mashtree.rmd"), eval = render$mashtree}
 
 ```
+
+
 
 
 
