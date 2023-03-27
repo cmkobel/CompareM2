@@ -127,7 +127,6 @@ rule all:
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/assembly-stats/assembly-stats.tsv", \
         "{results_directory}/collected_results/kraken2_reports.tsv", \
-        "{results_directory}/collected_results/busco.tsv", \
         "{results_directory}/roary/summary_statistics.txt", \
         "{results_directory}/abricate/card_detailed.tsv", \
         "{results_directory}/mashtree/mashtree.newick", \
@@ -475,19 +474,7 @@ rule busco_individual:
 rule busco:
     input: 
         metadata = "{results_directory}/metadata.tsv",
-        #tables = expand("{results_directory}/samples/{sample}/busco/run_bacteria_odb10/short_summary_extract.tsv", results_directory = results_directory, sample = df["sample"]),
         tables = expand("{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", results_directory = results_directory, sample = df["sample"]),
-    output: "{results_directory}/collected_results/busco.tsv"
-    resources: 
-        mem_mb = 128,
-        runtime = "00:10:00",
-    shell: """
-
-        cat {input.tables} >> {output}
-
-        {void_report} # TODO: Make a nice summary in the report.
-
-    """
 
 
 rule kraken2:

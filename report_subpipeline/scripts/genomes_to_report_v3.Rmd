@@ -16,7 +16,7 @@ editor_options:
 
 
 
-```{r dependencies, echo=F, message=F, warning=F}
+```{r setup-dependencies, echo=F, message=F, warning=F}
 
 # Dependencies
 
@@ -33,7 +33,7 @@ library(ape)
 
 
 
-```{r debug, echo=F, message=F, warning=F, error = F}
+```{r setup-debug, echo=F, message=F, warning=F, error = F}
 
 
 
@@ -52,7 +52,7 @@ if (debug) {
 `r paste0("This report was generated using the results located at ", results_directory, " using the installation at ", base_variable, ".")`
 
 
-```{r global-setup, echo=F, message=F, warning=F}
+```{r setup-globals, echo=F, message=F, warning=F}
 
 
 ## Global variables
@@ -189,7 +189,7 @@ metadata_df %>%
 
 Here is an overview of the number of result files that have been found for each analysis. A report section is only rendered if relevant result files are present for that analysis.
 
-```{r switchboard, echo=FALSE, message=F, warning=F, error = T}
+```{r sample-switchboard, echo=FALSE, message=F, warning=F, error = T}
 
 # Pull all globs and show which are done/presentable
 
@@ -247,33 +247,34 @@ section_definition_table %>%
 
 
 
-
+---
 ```{r child = paste0(report_scripts, "section_assembly_stats.rmd"), eval = render$assembly_stats}
 ```
 
-
+---
 ```{r child = paste0(report_scripts, "section_sequence_lengths.rmd"), eval = render$sequence_lengths}
 ```
 
-
+---
 ```{r child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}
 
 ```
 
-
+---
 ```{r child = paste0(report_scripts, "section_busco.rmd"), eval = render$busco}
 
 ```
 
-
+---
 ```{r child = paste0(report_scripts, "section_checkm2.rmd"), eval = render$checkm2}
 
 ```
 
+---
 ```{r child = paste0(report_scripts, "section_mashtree.rmd"), eval = render$mashtree}
 
 ```
-
+---
 
 
 

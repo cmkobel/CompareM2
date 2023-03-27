@@ -1,6 +1,6 @@
 ## Genomic annotation
 
-```{r prokka-table, echo = F, message = F, warning = F, error = T}
+```{r prokka, echo = F, message = F, warning = F, error = T}
 
 
 

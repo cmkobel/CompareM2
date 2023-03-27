@@ -2,16 +2,6 @@
 
 ```{r busco, echo=FALSE, message=F, warning=F, error = T}
 
-
-
-
-## BUSCO
-
-```{r echo=FALSE, message=F, warning=F}
-
-
-
-
 busco_raw = read_delim(glob_list$busco, delim = ": ", col_names = c("name", "value"))
 busco_df = busco_raw %>% 
     mutate(id = (name == "in") %>% as.integer() %>% cumsum()) %>% 
@@ -58,17 +48,18 @@ busco_df_meta %>%
 busco_df_meta %>%
     select(sample, `C&S` = S, `C&D` = D, F, M) %>%
     pivot_longer(-sample) %>%
-    mutate(name = factor(name, levels = c("F", "M","C&D", "C&S"))) %>%
+    mutate(name = factor(name, levels = c("M", "F","C&D", "C&S"))) %>%
     ggplot(aes(value, reorder(sample, desc(sample)), fill = name)) + 
     geom_bar(position = "stack", stat = "identity") + 
-    theme(legend.position = "bottom") +
     scale_fill_manual(
         values = c(rgb(235/255, 73/255, 71/255), rgb(241/255, 230/255, 76/255), rgb(67/255, 151/255, 202/255), rgb(98/255, 185/255, 234/255)),
         guide = guide_legend(reverse = TRUE)) +
     labs(
         x = "percent",
         y = "sample",
-    )
+    ) + 
+    theme_classic() +
+    theme(legend.position = "bottom") 
 
 
 ```
