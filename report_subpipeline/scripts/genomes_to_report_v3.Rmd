@@ -248,29 +248,23 @@ section_definition_table %>%
 
 
 ---
-
-```{r child = paste0(report_scripts, "section_assembly_stats.rmd"), eval = render$assembly_stats}```
-
+```{r child = paste0(report_scripts, "section_assembly_stats.rmd"), eval = render$assembly_stats}
+```
 ---
-
-```{r child = paste0(report_scripts, "section_sequence_lengths.rmd"), eval = render$sequence_lengths}```
-
+```{r child = paste0(report_scripts, "section_sequence_lengths.rmd"), eval = render$sequence_lengths}
+```
 ---
-
-```{r child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}```
-
+```{r child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}
+```
 ---
-
-```{r child = paste0(report_scripts, "section_busco.rmd"), eval = render$busco}```
-
+```{r child = paste0(report_scripts, "section_busco.rmd"), eval = render$busco}
+```
 ---
-
-```{r child = paste0(report_scripts, "section_checkm2.rmd"), eval = render$checkm2}```
-
+```{r child = paste0(report_scripts, "section_checkm2.rmd"), eval = render$checkm2}
+```
 ---
-
-```{r child = paste0(report_scripts, "section_mashtree.rmd"), eval = render$mashtree}```
-
+```{r child = paste0(report_scripts, "section_mashtree.rmd"), eval = render$mashtree}
+```
 ---
 
 
