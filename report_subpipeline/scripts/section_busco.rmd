@@ -36,7 +36,7 @@ busco_df_meta = metadata_translate %>%
 
 
 busco_df_meta %>% 
-    custom_dt()
+    custom_dt("busco")
 
 ```
 
@@ -46,9 +46,9 @@ busco_df_meta %>%
 ```{r busco-plot, echo = F, message = F, warning = F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
 
 busco_df_meta %>%
-    select(sample, `C&S` = S, `C&D` = D, F, M) %>%
+    select(sample, `S` = S, `D` = D, F, M) %>%
     pivot_longer(-sample) %>%
-    mutate(name = factor(name, levels = c("M", "F","C&D", "C&S"))) %>%
+    mutate(name = factor(name, levels = c("M", "F","D", "S"))) %>%
     ggplot(aes(value, reorder(sample, desc(sample)), fill = name)) + 
     geom_bar(position = "stack", stat = "identity") + 
     scale_fill_manual(
@@ -57,6 +57,7 @@ busco_df_meta %>%
     labs(
         x = "percent",
         y = "sample",
+        fill = "Busco\nclass"
     ) + 
     theme_classic() +
     theme(legend.position = "bottom") 
@@ -64,7 +65,7 @@ busco_df_meta %>%
 
 ```
 
-*Fig. `r figno()`: BUSCO results visualized. Legend: C&S: Complete and single-copy; C&D: Complete and duplicated; F: Fragmented; M: Missing. For each sample, only the best lineage match (in terms of completeness) is shown.*
+*Fig. `r figno()`: BUSCO results visualized. Legend: S: Complete and single-copy; D: Complete and duplicated; F: Fragmented; M: Missing. For each sample, only the best lineage match (in terms of completeness) is shown.*
 
 
 
