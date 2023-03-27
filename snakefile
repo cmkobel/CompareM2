@@ -76,7 +76,7 @@ if df.shape[0] == 0:
 
 df = df[~df["input_file"].str.startswith(".", na = False)] # Remove hidden files
 df['sample_raw'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()] # Extract everything before the extension dot.
-df['sample'] = df['sample_raw'].str.replace(' ','_').str.replace(',','_')
+df['sample'] = df['sample_raw'].str.replace(' ','_').str.replace(',','_') # Convert spaces and commas to underscore 
 df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extract extension
 df['input_file_fasta'] = results_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fa" # This is where the input file is copied to in the first snakemake rule.
 
@@ -127,8 +127,6 @@ rule all:
         "{results_directory}/.install_report_environment_aot.flag", \
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/assembly-stats/assembly-stats.tsv", \
-        "{results_directory}/collected_results/sequence_lengths.tsv", \
-        "{results_directory}/collected_results/GC_summary.tsv", \
         "{results_directory}/collected_results/kraken2_reports.tsv", \
         "{results_directory}/collected_results/busco.tsv", \
         "{results_directory}/roary/summary_statistics.txt", \
@@ -137,8 +135,9 @@ rule all:
         "{results_directory}/mlst/mlst.tsv", \
         "{results_directory}/fasttree/fasttree.newick", \
         "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv", \
-        "{results_directory}/snp-dists/snp-dists.tsv"], \
-        results_directory = results_directory) 
+        "{results_directory}/snp-dists/snp-dists.tsv", \
+        "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"], \
+        results_directory = results_directory, sample = df["sample"]) 
 
 
 
@@ -319,37 +318,20 @@ rule checkm2:
 rule sequence_lengths_individual:
     input: "{results_directory}/samples/{sample}/{sample}.fa"
     output: "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
-    container: "docker://cmkobel/bioawk"
     resources:
         runtime = "01:00:00",
         mem_mb = 128,
-    conda: "conda_definitions/bioawk.yaml"
+    conda: "conda_definitions/seqkit.yaml"
     shell: """
-
-        bioawk -v sam={wildcards.sample} -c fastx '{{ print sam, $name, length($seq) }}' < {input} \
-        > {output}
 
         # TODO: Consider whether seqkit stats might be faster?
 
-    """
-
-
-# TODO: This is either hacky or slow, and should be removed. Use seqkit or something like that instead.
-rule gc_summary_individual:
-    input: "{results_directory}/samples/{sample}/{sample}.fa"
-    output: "{results_directory}/samples/{sample}/statistics/{sample}_gc.tsv"
-    container: "docker://rocker/tidyverse" # remember to add devtools
-    conda: "conda_definitions/r-tidyverse.yaml" # like r-markdown, but much simpler.
-    params: base_variable = base_variable,
-    shell: """
-
-
-        Rscript $ASSCOM2_BASE/scripts/tabseq_gc.r $ASSCOM2_BASE/scripts/tabseq_tiny.r {input} \
-        > {output} 2> {output}.fail || echo what
-
-
+        seqkit fx2tab {input} -l -g -G -n -H \
+        > {output}
 
     """
+
+
 
 
 
@@ -360,7 +342,7 @@ rule prokka_individual:
         gff = "{results_directory}/samples/{sample}/prokka/{sample}.gff",
         log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
-        gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}_nofasta.gff",
+        gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta",
     container: "docker://staphb/prokka"
     conda: "conda_definitions/prokka.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
@@ -393,7 +375,7 @@ rule prokka_individual:
 
 rule prokka:
     input:
-        metadata = "{results_directory}/metadata.tsv",
+        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
         gff = expand(
             "{results_directory}/samples/{sample}/prokka/{sample}.gff",
             results_directory = results_directory,
@@ -406,7 +388,9 @@ rule prokka:
 # Kraken is for reads, so why are we using it here without shredding the reads?
 rule kraken2_individual:
     input: "{results_directory}/samples/{sample}/{sample}.fa"
-    output: "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
+    output: 
+        report = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv",
+        full = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_full.tsv",
     params: 
         asscom2_kraken2_db = config["asscom2_kraken2_db"],
     container: "docker://staphb/kraken2"
@@ -417,33 +401,22 @@ rule kraken2_individual:
     benchmark: "{results_directory}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
     shell: """
 
+        # Define database from config
         ASSCOM2_KRAKEN2_DB={params.asscom2_kraken2_db}
+        echo using kraken2 database $ASSCOM2_KRAKEN2_DB
 
-        if [ ! -z $ASSCOM2_KRAKEN2_DB ]; then
-            echo using kraken2 database $ASSCOM2_KRAKEN2_DB
+        # Run kraken2
+        kraken2 \
+            --threads {threads} \
+            --db $ASSCOM2_KRAKEN2_DB \
+            --confidence 0.15 \
+            --report {output.report}_tmp \
+            --report-minimizer-data \
+            {input} \
+            > {output.full}
 
-            # Run kraken2
-            kraken2 \
-                --threads {threads} \
-                --db $ASSCOM2_KRAKEN2_DB \
-                --confidence 0.15 \
-                --report {output}_tmp \
-                {input} \
-                > /dev/null
+        # Argument on confidence parameter https://www.biostars.org/p/402619/
 
-            # Argument on confidence parameter https://www.biostars.org/p/402619/
-
-            # Put sample names in front
-            cat {output}_tmp \
-            | awk -v sam={wildcards.sample} '{{ print sam "\t" $0 }}' \
-            > {output}
-
-            # Remove temp file
-            rm {output}_tmp
-
-        else
-            echo "The ASSCOM2_KRAKEN2_DB variable is not set, and thus the kraken2 rule and its jobs will not be run. Consider using the scripts/set_up_kraken2.sh script for downloading and linking the latest kraken2 database."
-        fi
 
     """
 
@@ -592,36 +565,13 @@ rule kraken2:
 
 
 rule sequence_lengths:
-    input: expand("{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", results_directory = results_directory, sample = df["sample"])
-    output: "{results_directory}/collected_results/sequence_lengths.tsv"
-    resources:
-        runtime = "01:00:00",
-    shell: """
+    input: 
+        expand(
+            "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv",
+            results_directory = results_directory,
+            sample = df["sample"]
+    )
 
-        # Sequence lengths
-        echo -e "sample\trecord\tlength" \
-        > {output}
-
-        cat {input} >> {output} 
-
-        {void_report}
-    """
-
-rule gc_summary:
-    input: expand("{results_directory}/samples/{sample}/statistics/{sample}_gc.tsv", results_directory = results_directory, sample = df["sample"])
-    output: "{results_directory}/collected_results/GC_summary.tsv"
-    resources:
-        runtime = "01:00:00",
-    shell: """
-
-        # Sequence lengths
-        echo -e "sample\tpart\tlength\tGC" \
-        > {output}
-
-        cat {input} | grep -vE "^#" >> {output} # Append content without headers
-
-        {void_report}
-    """
 
 
 

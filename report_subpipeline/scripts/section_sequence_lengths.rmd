@@ -8,82 +8,80 @@
 
 
 try({
-    # This chunk is needed for setting the size of sequence length comparison plot
-
-    fig_height = max(1.6,
-                     (metadata_df$sample %>% length) *0.2)
-    
-    knitr::opts_chunk$set(fig.height = fig_height,
-                          fig.width = 9)
+    # This chunk is needed for setting the size of the forthcoming plot
+    knitr::opts_chunk$set(
+        fig.height = max(1.6, N*0.2),
+        fig.width = 9
+    )
 
 })
 ```
 
 ```{r, echo=FALSE, message=F, warning=F}
-try({
-    # Now when the figure height has been set, we can generate the figure
-    sequence_lengths_file = "results_ac2/collected_results/sequence_lengths.tsv"
+
+# Now when the figure height has been set, we can generate the figure
+
+sequence_lengths_df = read_tsv(glob_list$sequence_lengths, id = "file_long", comment = "#", col_names = c("name", "length", "GC", "GC-Skew")) %>%
+    mutate(sample = basename(file_long) %>% str_remove("_seqlen.tsv"))
+
+
+metadata_translate %>%
+    left_join(sequence_lengths_df, by = "sample") %>%
+
+    group_by(sample) %>% 
+    #arrange(length) %>% 
     
-    if (file.exists(sequence_lengths_file)) {
-        sequence_lengths_df = read_tsv(sequence_lengths_file)
-        sequence_lengths_df %>%
-            group_by(sample) %>% 
-            #arrange(length) %>% 
-            
-            #mutate(col = row_number(-length)) %>% 
-            mutate(col = 1:length(sample)) %>%
-            mutate(init = lag(length, default = 0),
-                   start = cumsum(init),
-                   stop = start + length - 1) %>%
+    #mutate(col = row_number(-length)) %>% 
+    mutate(col = 1:length(sample)) %>% # should be n()
+    mutate(init = lag(length, default = 0),
+            start = cumsum(init),
+            stop = start + length - 1) %>%
+
     
-            
-            #mutate(sample = fct_reorder(sample, desc(sample))) %>% 
-            #mutate(sample = fct_reorder(sample, desc(sample))) %>% 
-            
-            
-            
-        
-            # Gammel figur
-            # ggplot(aes(x=length, y=sample, fill=factor(col))) + 
-            # geom_bar(position = position_dodge2(width = 0.9, preserve = "single", reverse = T),
-            #          #position = "dodge2",
-            #          stat="identity") +
-            # theme_classic() +
-            # theme(legend.position = "none") +
-            # theme(panel.grid.major.x = element_line(colour = "grey92")) 
+    #mutate(sample = fct_reorder(sample, desc(sample))) %>% 
+    #mutate(sample = fct_reorder(sample, desc(sample))) %>% 
     
-            #View
-            #ungroup() %>% 
-            #mutate(col = fct_reorder(col, desc(col))) %>% 
+    
+
+
+# Gammel figur
+# ggplot(aes(x=length, y=sample, fill=factor(col))) + 
+# geom_bar(position = position_dodge2(width = 0.9, preserve = "single", reverse = T),
+#          #position = "dodge2",
+#          stat="identity") +
+# theme_classic() +
+# theme(legend.position = "none") +
+# theme(panel.grid.major.x = element_line(colour = "grey92")) 
+
+#View
+#ungroup() %>% 
+#mutate(col = fct_reorder(col, desc(col))) %>% 
+
+
+    ggplot(aes(length, reorder(sample, desc(sample)), fill=GC)) + 
+    #geom_bar(stat = "identity", color = "black", size = 0.3, fill = "grey50") +
+
+    # The best way to set the colors is to use the default colorramping, because it highlights the relative of contigs.
+
+    geom_bar(stat = "identity", color = "black", linewidth = 0.2) + 
+    theme_classic() +
+    theme(legend.position = "none") +
+    theme(panel.grid.major.x = element_line(colour = "grey92")) + 
+    labs(y = "sample") +
+    scale_fill_viridis_c()
+    #scale_fill_brewer(palette = "Dark2", direction = -1) +
+
+    # Paired has 12 colors
+    #scale_fill_brewer(palette = "Paired", direction = -1) #+
+
+
+    #scale_x_log10()
 
         
-            ggplot(aes(length, reorder(sample, desc(sample)), fill=reorder(col, desc(col)))) + 
-            #geom_bar(stat = "identity", color = "black", size = 0.3, fill = "grey50") +
-            
-            # The best way to set the colors is to use the default colorramping, because it highlights the relative of contigs.
-
-            geom_bar(stat = "identity", color = "black", linewidth = 0.2) + 
-            theme_classic() +
-            theme(legend.position = "none") +
-            theme(panel.grid.major.x = element_line(colour = "grey92")) + 
-            labs(y = "sample") #+
-            #scale_fill_brewer(palette = "Dark2", direction = -1) +
-            
-            # Paired has 12 colors
-            #scale_fill_brewer(palette = "Paired", direction = -1) #+
-            
-            
-            #scale_x_log10()
 
             
         
-                
         
-        
-    } else {
-        paste("Warning: The file", sequence_lengths_file, "is not accessible.")
-    }
-})
 ```
 
 *Fig. `r figno()`: Lengths of fasta records for each sample. The colors have no intrinsic meaning, other than highlighting the varying sizes and number of records in each assembly.*
