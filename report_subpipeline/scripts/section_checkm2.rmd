@@ -1,0 +1,56 @@
+## Checkm2
+
+```{r checkm2, echo = F, message = F, warning = F, error = T}
+
+
+
+
+
+# Read raw input
+checkm2_raw = read_tsv(glob_list$checkm2)
+
+checkm2_presentable = metadata_translate %>%
+    select(sample) %>%
+    left_join(checkm2_raw, by = c("sample" = "Name")) %>%
+    
+    mutate(
+        Completeness_Model_Used = str_replace(Completeness_Model_Used, "Neural Network", "NN"),
+        Average_Gene_Length = round(Average_Gene_Length, 1)
+    ) %>%
+    rename_with(str_replace_all, pattern = "_", replacement = " ")
+    
+
+checkm2_presentable %>%
+    custom_dt("checkm2")
+
+
+```
+
+*Table `r tableno()`: [Checkm2](https://github.com/chklovski/CheckM2) results. *
+
+
+
+```{r checkm2_plot, echo=FALSE, message=F, warning=F, error = T, fig.height = 4.8, fig.width = 10}
+
+checkm2_presentable %>%
+    ggplot(aes(Completeness, Contamination, color = `Coding Density`, label = sample)) +
+    geom_point() +
+    geom_text(color = "black", alpha = 0.5, check_overlap = T, hjust = 0, vjust = 0, size = 2.5) +
+    labs(
+        x = "Completeness [%]",
+        y = "Contamination [%]") +
+    scale_color_viridis_b() +
+    theme_bw()
+
+```
+
+
+
+*Fig. `r figno()`: [Checkm2](https://github.com/chklovski/CheckM2) results. Axes are in percents. Colored by coding density. Samples in the lower right corner are relatively better.*
+
+
+
+
+```
+
+*Table `r tableno()`: Overview of the number of different gene types. Called using the [Prokka](https://github.com/tseemann/prokka) genome annotator.*
