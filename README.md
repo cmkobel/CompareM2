@@ -83,12 +83,12 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
 
 ### 1. Preliminary Setup
 
-* We recommend that you use mamba instead of conda:
+* We recommend that you use a base environment with mamba to start the pipeline:
    ```
    conda install -n base -c conda-forge mamba
    ```
 
-* Set the base directory for assemblycomparator2. You can change it to anything you'd like.
+* Set the base directory for assemblycomparator2. If neccessary, you can change it to anything you'd like.
    ``` 
    ASSCOM2_BASE=~/assemblycomparator2
    
