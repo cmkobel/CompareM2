@@ -1,0 +1,81 @@
+## BUSCO
+
+```{r busco, echo=FALSE, message=F, warning=F, error = T}
+
+
+
+
+## BUSCO
+
+```{r echo=FALSE, message=F, warning=F}
+
+
+
+
+busco_raw = read_delim(glob_list$busco, delim = ": ", col_names = c("name", "value"))
+busco_df = busco_raw %>% 
+    mutate(id = (name == "in") %>% as.integer() %>% cumsum()) %>% 
+    mutate(value = str_remove(value, ",$")) %>% 
+    
+    pivot_wider(id_cols = id)  %>% 
+    select(-id)  %>% 
+    rename(file = `in`, lineage = name) %>% 
+    mutate(file = basename(file)) %>% 
+    separate(one_line_summary, c("pre_CS", "D", "F", "M", "n"), sep = ",", extra = "drop") %>% 
+    separate(pre_CS, c("C", "S"), "\\[") %>% 
+    mutate(D = str_remove(D, "\\]")) %>% 
+    
+    mutate(
+        C = str_extract(C, "\\d+.\\d+") %>% as.numeric,
+        S = str_extract(S, "\\d+.\\d+") %>% as.numeric,
+        D = str_extract(D, "\\d+.\\d+") %>% as.numeric,
+        F = str_extract(F, "\\d+.\\d+") %>% as.numeric,
+        M = str_extract(M, "\\d+.\\d+") %>% as.numeric,
+        n = str_extract(n, "\\d+") %>% as.numeric
+    ) %>% 
+    group_by(file) %>% 
+    arrange(desc(C)) %>% 
+    mutate(rank = 1:n()) %>% 
+    ungroup()
+
+# Present table
+busco_df_meta = metadata_translate %>%
+    left_join(busco_df %>% filter(rank == 1), by = "file") %>%
+    select(-file, -file_long, -rank) %>%
+    arrange(lineage)
+
+
+busco_df_meta %>% 
+    custom_dt()
+
+```
+
+*Table `r tableno()`: Table of [BUSCO](https://busco.ezlab.org/) "BUSCO estimates the completeness and redundancy of processed genomic data based on universal single-copy orthologs.". The following columns are printed as percents [%]: C: Complete, S: Complete and single-copy, D: Complete and duplicated, F: Fragmented, M: Missing, n: Total BUSCO groups searched. For each sample, only the best lineage match (in terms of completeness) is shown.*
+
+
+```{r busco-plot, echo = F, message = F, warning = F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
+
+busco_df_meta %>%
+    select(sample, `C&S` = S, `C&D` = D, F, M) %>%
+    pivot_longer(-sample) %>%
+    mutate(name = factor(name, levels = c("F", "M","C&D", "C&S"))) %>%
+    ggplot(aes(value, reorder(sample, desc(sample)), fill = name)) + 
+    geom_bar(position = "stack", stat = "identity") + 
+    theme(legend.position = "bottom") +
+    scale_fill_manual(
+        values = c(rgb(235/255, 73/255, 71/255), rgb(241/255, 230/255, 76/255), rgb(67/255, 151/255, 202/255), rgb(98/255, 185/255, 234/255)),
+        guide = guide_legend(reverse = TRUE)) +
+    labs(
+        x = "percent",
+        y = "sample",
+    )
+
+
+```
+
+*Fig. `r figno()`: BUSCO results visualized. Legend: C&S: Complete and single-copy; C&D: Complete and duplicated; F: Fragmented; M: Missing. For each sample, only the best lineage match (in terms of completeness) is shown.*
+
+
+
+
+

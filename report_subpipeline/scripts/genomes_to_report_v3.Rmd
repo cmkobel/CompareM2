@@ -261,6 +261,11 @@ section_definition_table %>%
 ```
 
 
+```{r child = paste0(report_scripts, "section_busco.rmd"), eval = render$busco}
+
+```
+
+
 ```{r child = paste0(report_scripts, "section_checkm2.rmd"), eval = render$checkm2}
 
 ```
