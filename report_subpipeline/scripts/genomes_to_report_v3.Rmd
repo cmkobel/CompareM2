@@ -143,7 +143,7 @@ paste_ = function(x, ...) {
 
 ## Sample overview
 
-```{r sample-overview, echo=FALSE, message=F, warning=F}
+```{r sample-overview, echo=FALSE, message=F, warning=F, error = T}
 
 # Import the metadata table
 # metadata_translate makes it easy for us later to convert the long paths to short and simple sample names, also highlights potential missing sample analyses
@@ -181,7 +181,7 @@ metadata_df %>%
 
 Here is an overview of the number of result files that have been found for each analysis. A report section is only rendered if relevant result files are present for that analysis.
 
-```{r switchboard, echo=FALSE, message=F, warning=F}
+```{r switchboard, echo=FALSE, message=F, warning=F, error = T}
 
 # Pull all globs and show which are done/presentable
 
@@ -264,5 +264,4 @@ section_definition_table %>%
 
 ------------------------------------------------------------------------
 
-The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel) `version 2.3.0`
-Licensed under [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)
+The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel) `version 2.4.0`.

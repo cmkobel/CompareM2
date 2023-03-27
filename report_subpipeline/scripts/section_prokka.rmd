@@ -1,10 +1,10 @@
-#r pq(render$prokka, "## Genomic annotation using Prokka")
+## Genomic annotation
 
 ```{r prokka-table, eval = render$prokka, echo = F, message = F, warning = F, error = T}
 
 
 
-prokka_summary = read_delim(files, id = "file", comment = "#", col_names = c("name", "value"), delim = ": ") %>%
+prokka_summary = read_delim(glob_list$prokka, id = "file", comment = "#", col_names = c("name", "value"), delim = ": ") %>%
     select(file, name, value) %>%
     mutate(sample = basename(file) %>% str_remove("\\.txt$")) %>%
     pivot_wider(id_cols = sample) %>%
