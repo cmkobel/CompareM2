@@ -19,65 +19,37 @@ try({
 
 ```{r, echo=FALSE, message=F, warning=F}
 
-# Now when the figure height has been set, we can generate the figure
+
 
 sequence_lengths_df = read_tsv(glob_list$sequence_lengths, id = "file_long", comment = "#", col_names = c("name", "length", "GC", "GC-Skew")) %>%
     mutate(sample = basename(file_long) %>% str_remove("_seqlen.tsv"))
+
+
+
 
 
 metadata_translate %>%
     left_join(sequence_lengths_df, by = "sample") %>%
 
     group_by(sample) %>% 
-    #arrange(length) %>% 
-    
-    #mutate(col = row_number(-length)) %>% 
-    mutate(col = 1:length(sample)) %>% # should be n()
-    mutate(init = lag(length, default = 0),
-            start = cumsum(init),
-            stop = start + length - 1) %>%
 
-    
-    #mutate(sample = fct_reorder(sample, desc(sample))) %>% 
-    #mutate(sample = fct_reorder(sample, desc(sample))) %>% 
-    
-    
+    mutate(
+        init = lag(length, default = 0),
+        start = cumsum(init),
+        stop = start + length - 1
+    ) %>%
+    ungroup() %>%
 
-
-# Gammel figur
-# ggplot(aes(x=length, y=sample, fill=factor(col))) + 
-# geom_bar(position = position_dodge2(width = 0.9, preserve = "single", reverse = T),
-#          #position = "dodge2",
-#          stat="identity") +
-# theme_classic() +
-# theme(legend.position = "none") +
-# theme(panel.grid.major.x = element_line(colour = "grey92")) 
-
-#View
-#ungroup() %>% 
-#mutate(col = fct_reorder(col, desc(col))) %>% 
-
-
-    ggplot(aes(length, reorder(sample, desc(sample)), fill=GC)) + 
-    #geom_bar(stat = "identity", color = "black", size = 0.3, fill = "grey50") +
-
-    # The best way to set the colors is to use the default colorramping, because it highlights the relative of contigs.
-
+    ggplot(aes(length, reorder(sample, desc(sample)), fill = GC)) + 
     geom_bar(stat = "identity", color = "black", linewidth = 0.2) + 
     theme_classic() +
-    theme(legend.position = "none") +
+    theme(legend.position = "bottom") +
     theme(panel.grid.major.x = element_line(colour = "grey92")) + 
     labs(y = "sample") +
     scale_fill_viridis_c()
-    #scale_fill_brewer(palette = "Dark2", direction = -1) +
-
-    # Paired has 12 colors
-    #scale_fill_brewer(palette = "Paired", direction = -1) #+
 
 
-    #scale_x_log10()
 
-        
 
             
         

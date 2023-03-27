@@ -134,14 +134,19 @@ custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T) {
             #buttons = c('copy', 'csv', 'excel')
             buttons = list(
                 'copy',
-                list(extend = "csv", filename = filename),
-                list(extend = "excel", filename = filename)
+                list(extend = "csv", filename = paste(batch_title, filename, sep = "_")),
+                list(extend = "excel", filename = paste(batch_title, filename, sep = "_"))
             )
         ),
         rownames = F,
         extensions = 'Buttons',
     )
 }
+
+paste_ = function(x, ...) {
+    paste(x, ..., sep = "_")
+}
+
 
 ```
 
@@ -156,20 +161,24 @@ custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T) {
 metadata_file = paste0(results_directory, "/metadata.tsv")
 
 if (file.exists(metadata_file)) {
-    metadata_df = read_tsv(metadata_file)
+    metadata_df = read_tsv(metadata_file) %>%
+        arrange(sample) # Alphabetical
     
     N = metadata_df %>% nrow() # global variable
     
     # Generate a very simple table which can be used to convert long paths or their basenames to sample names
     metadata_translate = metadata_df %>% 
         select(sample, file_long = input_file_fasta) %>%
-        mutate(file = basename(file_long))
+        mutate(
+            file = basename(file_long)
+        )
     
 
     # Present the metadata in the report
     metadata_df %>%
-        select(-index) %>% 
-        datatable(class = 'cell-border stripe')
+        select(input_file, sample) %>% 
+        custom_dt("metadata")
+
     
     
     
