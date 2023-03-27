@@ -24,7 +24,6 @@ tree$tip.label = paste0(" ", tree$tip.label)
 ape::plot.phylo(tree, align.tip.label = T, font = 1)
 axis(1)
            
-           
 
 ```
 
