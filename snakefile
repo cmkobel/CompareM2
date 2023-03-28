@@ -931,6 +931,7 @@ rule install_report_environment_aot:
 
 # Just a dummy rule if you wanna force the report
 # assemblycomparator2 --until report
+# It isn't enough to just touch the file. The report_subpipeline will not be triggered if the file is empty. Thus we add the date, and we have a nice debug log for seeing when the report was triggered.
 # Will only but run if asked to. No need to use --forcerun, since snakemake states this in the output: "reason: Rules with neither input nor output files are always executed."
 rule report:
     run: # No need to allocate a job on the cluster for this small job.
