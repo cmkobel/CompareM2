@@ -41,6 +41,7 @@ rule report:
         # Rscript -e 'rmarkdown::render("rmarkdown_template.rmd", "html_document", output_file = "{output}", quiet = T)' 
         # rm rmarkdown_template.rmd
 
+        mkdir -p {params.results_directory}/tables # Directory for the rmarkdown to write its compiled tables to.
 
         Rscript -e '
             base_variable = "{params.base_variable}"

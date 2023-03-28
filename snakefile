@@ -126,7 +126,7 @@ rule all:
         "{results_directory}/.install_report_environment_aot.flag", \
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/assembly-stats/assembly-stats.tsv", \
-        "{results_directory}/collected_results/kraken2_reports.tsv", \
+        "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/roary/summary_statistics.txt", \
         "{results_directory}/abricate/card_detailed.tsv", \
         "{results_directory}/mashtree/mashtree.newick", \
@@ -329,9 +329,65 @@ rule prokka:
 
 
 
-# Kraken is for reads, so why are we using it here without shredding the reads?
+
+rule kraken2_download:
+    output:
+        touch("{base_variable}/databases/kraken2/kraken2_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+    params: 
+        asscom2_kraken_db = config['asscom2_kraken2_db'],
+    conda: "conda_definitions/curl.yaml"
+    shell: """
+
+        # TODO: Make a way to check for internet access instead of just crashing. Same for busco and checkm2
+
+        ## Pick a db from this list
+        # https://benlangmead.github.io/aws-indexes/k2
+
+        
+        ## Shortcuts. Select no bigger than the size of your RAM
+        
+        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # 49GB Standard
+        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_08gb_20230314.tar.gz" #  8GB Standard
+        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_16gb_20230314.tar.gz" # 16GB Standard
+        
+
+
+        db_destination="{wildcards.base_variable}/databases/kraken2/kraken2_db.tar.gz"
+
+        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        if [ -f "{output}" ]; then    
+
+            >&2 echo "Flag exists already: touch it to update the mtime ..."
+            touch {output}
+            
+        else
+
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
+
+            >&2 echo "Downlading $db_pick to $db_destination"
+            mkdir -p $(dirname "$db_destination")
+            curl "$db_pick" --output {wildcards.base_variable}/databases/kraken2/kraken2_db.tar.gz
+
+            >&2 echo "Decompressing file ..."
+            # tar -xf ...
+
+            touch {output}
+
+        fi
+
+    """
+
+
+
+
+# Kraken is for reads, so why are we using it here without shredding the reads, or at least doing some proportion analysis.
+
+
+
 rule kraken2_individual:
-    input: "{results_directory}/samples/{sample}/{sample}.fa"
+    input: 
+        assembly = expand("{results_directory}/samples/{sample}/{sample}.fa", results_directory = results_directory, sample = df["sample"]),
+        database = expand("{base_variable}/databases/kraken2/kraken2_download_done.flag", base_variable = base_variable),
     output: 
         report = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv",
         full = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_full.tsv",
@@ -341,7 +397,7 @@ rule kraken2_individual:
     conda: "conda_definitions/kraken2.yaml"
     threads: 2
     resources:
-        mem_mb = 65536,
+        mem_mb = 32768,
     benchmark: "{results_directory}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
     shell: """
 
@@ -356,7 +412,7 @@ rule kraken2_individual:
             --confidence 0.15 \
             --report {output.report}_tmp \
             --report-minimizer-data \
-            {input} \
+            {input.assembly} \
             > {output.full}
 
         # Argument on confidence parameter https://www.biostars.org/p/402619/
@@ -473,36 +529,21 @@ rule busco_individual:
 
 rule busco:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
-        tables = expand("{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", results_directory = results_directory, sample = df["sample"]),
+        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
+        tables = expand("{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", results_directory = results_directory, sample = df["sample"])
 
 
+#echo -e "sample\tmatch_percent\tclade_mappings\tlevel_mappings\tlevel\ttaxonomic_id\tclade" \
 rule kraken2:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
-        reports = expand("{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", results_directory = results_directory, sample = df["sample"]),
-    output: "{results_directory}/collected_results/kraken2_reports.tsv",
-    resources:
-        runtime = "01:00:00",
-    shell: """
-
-        # kraken2
-        echo -e "sample\tmatch_percent\tclade_mappings\tlevel_mappings\tlevel\ttaxonomic_id\tclade" \
-        > {output}
-
-        cat {input.reports} >> {output} 
-
-        {void_report}
-    """
+        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
+        reports = expand("{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", results_directory = results_directory, sample = df["sample"])
 
 
 rule sequence_lengths:
     input: 
-        expand(
-            "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv",
-            results_directory = results_directory,
-            sample = df["sample"]
-    )
+        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
+        lengths = expand("{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", results_directory = results_directory, sample = df["sample"])
 
 
 
