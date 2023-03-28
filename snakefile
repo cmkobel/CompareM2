@@ -17,6 +17,11 @@ from shutil import copyfile
 #from shutil import copyfile
 #import re
 
+# For void_report
+import subprocess
+import datetime
+        
+
 
 # --- Read important variables -----------------------------------------------
 cwd = os.getcwd()
@@ -137,16 +142,6 @@ rule all:
         "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"], \
         results_directory = results_directory, sample = df["sample"]) 
 
-
-# Dummy test
-rule test:
-    output: ".test_done.flag"
-    shell: """
-        #sleep 5
-        touch {output}
-
-        {void_report}
-    """
 
 
 # Copy the input file to its new home
@@ -935,15 +930,14 @@ rule install_report_environment_aot:
     """
 
 # Just a dummy rule if you wanna force the report
-# assemblycomparator2 --until report --forcerun report
-# TODO: Should never run on the queue system. Update: not sure if that is attainable?
-# Will only but always run if asked to, since snakemake states this in the output: "reason: Rules with neither input nor output files are always executed."
+# assemblycomparator2 --until report
+# Will only but run if asked to. No need to use --forcerun, since snakemake states this in the output: "reason: Rules with neither input nor output files are always executed."
 rule report:
-    resources:
-        runtime = "00:01:00",
-    shell: """
-        {void_report}
-    """
+    run: # No need to allocate a job on the cluster for this small job.
+        now = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        with open(f"{results_directory}/.asscom2_void_report.flag", "a") as void_report_file:
+            void_report_file.write(f"ss_{now}\n")
+
 
 
 # Call the report subpipeline
