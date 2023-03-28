@@ -1,8 +1,8 @@
-#### Assemblies and their contigs:
+## Contig sizes and GC-content
 
 
 
-```{r sequence_lengths, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
+```{r sequence_lengths-table, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
 
 
 
@@ -10,10 +10,23 @@ sequence_lengths_df = read_tsv(glob_list$sequence_lengths, id = "file_long", com
     mutate(sample = basename(file_long) %>% str_remove("_seqlen.tsv"))
 
 
-metadata_translate %>%
-    left_join(sequence_lengths_df, by = "sample") %>%
 
-    group_by(sample) %>% 
+sequence_lengths_meta_df = metadata_translate %>%
+    left_join(sequence_lengths_df, by = "sample") 
+
+    
+
+# Calculate weighted GC from contig GC
+sample_GC = sequence_lengths_meta_df %>%
+    group_by(sample) %>%
+    mutate(weighted_GC = GC * length/sum(length)) %>%
+    summarize(GC_total = sum(weighted_GC) %>% round(1))
+
+
+
+sequence_lengths_meta_df %>%
+
+    group_by(sample) %>%
 
     mutate(
         init = lag(length, default = 0),
@@ -22,12 +35,18 @@ metadata_translate %>%
     ) %>%
     ungroup() %>%
 
-    ggplot(aes(length, reorder(sample, desc(sample)), fill = GC)) + 
+    left_join(sample_GC) %>% 
+    mutate(
+        sample_and_GC = paste0(sample, " (", GC_total, "%)")
+    ) %>%
+
+
+    ggplot(aes(length, reorder(sample_and_GC, desc(sample_and_GC)), fill = GC)) + 
     geom_bar(stat = "identity", color = "black", linewidth = 0.2) + 
     theme_classic() +
     theme(legend.position = "bottom") +
     theme(panel.grid.major.x = element_line(colour = "grey92")) + 
-    labs(y = "sample") +
+    labs(y = "sample (GC%)") +
     scale_fill_viridis_c()
 
         

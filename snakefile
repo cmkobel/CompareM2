@@ -185,35 +185,204 @@ rule metadata:
 
 
 
+# --- Downloads -----------------------------------------------------
 
-
-rule checkm2:
-    input:
-        checkm2_download = expand("{base_variable}/databases/checkm2/checkm2_download_done.flag", base_variable = base_variable), #expanding this variable shouldn't be necessary, but it is, because the variable is not present in the output.
-        metadata = "{results_directory}/metadata.tsv",
-        fasta = df["input_file_fasta"].tolist()
+# This rule runs once, downloading the busco dataset that is needed for rule busco_individual.
+# Make sure that this job is run on a node that has internet access.
+rule busco_download:
     output:
-        table = touch("{results_directory}/checkm2/quality_report.tsv"),
-    conda: "conda_definitions/checkm2_conda.yaml"
-    threads: 8
-    resources:
-        mem_mb = 16000,
-        runtime = "24:00:00",
-    params:
-        rule_dir = results_directory + "/checkm2",
-        base_variable = base_variable,
+        touch("{base_variable}/databases/busco/busco_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+    conda: "conda_definitions/busco.yaml"
     shell: """
 
-        checkm2 predict \
-            --threads {threads} \
-            --input {input.fasta} \
-            --output-directory {params.rule_dir} \
-            --extension .fa \
-            --force
+>&2 echo "Checking for internet access using google."
+        ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Error. It seems like you don't have internet access? Please make sure your machine has internet access."
+        
+        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        if [ -f "{output}" ]; then    
 
-        {void_report}
+            >&2 echo "Flag exists already: touch it to update the mtime ..."
+            touch {output}
+            
+        else
+
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
+
+            # Busco is a bit stupid in the way that it requires an input file, but doesn't read it when you just download.
+            touch dummy.fasta
+            
+            # https://busco.ezlab.org/busco_userguide.html#download-and-automated-update
+            busco \
+                --in dummy.fasta \
+                --out shouldnotbenecessarytosettheoutdirwhenjustdownloading \
+                --mode geno \
+                --auto-lineage-prok \
+                --force \
+                --download_path {wildcards.base_variable}/databases/busco \
+                --download prokaryota
+
+            # Info: You can also swap "--download prokaryota" with "--download virus" if you're feeling adventurous ...
+            
+            touch {output}
+
+            # Clean up 
+            rm dummy.fasta
+        
+        fi
 
     """
+
+
+
+rule checkm2_download:
+    output:
+        #flag = touch("{base_variable}/databases/checkm2/checkm2_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        database = expand("{base_variable}/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd", base_variable = base_variable),
+    params:
+        download_path = expand("{base_variable}/databases/checkm2", base_variable = base_variable),
+    conda: "conda_definitions/checkm2_conda.yaml"
+    shell: """
+
+        >&2 echo "Checking for internet access using google."
+        ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Error. It seems like you don't have internet access? Please make sure your machine has internet access."
+
+        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        if [ -f "{output}" ]; then
+
+            >&2 echo "Flag exists already: touch it to update the mtime ..."
+            touch {output}
+            
+        else
+
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
+        
+            checkm2 database \
+                --download \
+                --path {params.download_path}
+
+            # Consider running checkm2 testrun. Is time and resource consuming though.
+            # checkm2 testrun 
+            
+            touch {output}
+        
+        fi
+
+    """
+
+
+
+rule kraken2_download:
+    output:
+        flag = touch("{base_variable}/databases/kraken2/kraken2_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+    #params: 
+        #asscom2_kraken_db = config['asscom2_kraken2_db'],
+    conda: "conda_definitions/curl.yaml"
+    shell: """
+
+>&2 echo "Checking for internet access using google."
+        ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Error. It seems like you don't have internet access? Please make sure your machine has internet access."
+
+        # TODO: Make a way to check for internet access instead of just crashing. Same for busco and checkm2
+
+        ## Pick a db from this list
+        # https://benlangmead.github.io/aws-indexes/k2
+
+        
+        ## Shortcuts. Select no bigger than the size of your RAM
+        
+        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # 49GB Standard
+        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_08gb_20230314.tar.gz" #  8GB Standard
+        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_16gb_20230314.tar.gz" # 16GB Standard
+        
+
+        db_destination="{wildcards.base_variable}/databases/kraken2/kraken2_db.tar.gz"
+
+        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        if [ -f "{output}" ]; then    
+
+            >&2 echo "Flag exists already: touch it to update the mtime ..."
+            touch {output}
+            
+        else
+
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
+
+            >&2 echo "Downlading $db_pick to $db_destination"
+            mkdir -p $(dirname "$db_destination")
+            curl "$db_pick" \
+                --output "$db_destination"
+
+            >&2 echo "Decompressing ..."
+            tar \
+                -xf $db_destination \
+                --directory $(dirname $db_destination)
+
+            >&2 echo "kraken2 DB setup completed"
+            echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname $db_destination)/info.txt
+            touch {output}
+
+        fi
+
+    """
+
+
+
+
+rule gtdb_download:
+    output:
+        flag = touch("{base_variable}/databases/gtdb/gtdb_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+    #params: 
+        #asscom2_gtdb_db = config['asscom2_gtdb_db'],
+    conda: "conda_definitions/curl.yaml"
+    shell: """
+
+        
+        >&2 echo "Checking for internet access using google."
+        ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Error. It seems like you don't have internet access? Please make sure your machine has internet access."
+
+        # TODO: Make a way to check for internet access instead of just crashing. Same for busco and checkm2
+
+        # https://ecogenomics.github.io/GTDBTk/installing/index.html
+
+        # Pick a source file
+        #db_pick="https://data.gtdb.ecogenomic.org/releases/latest/auxillary_files/gtdbtk_v2_data.tar.gz"
+        db_pick="https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_v2_data.tar.gz" # alternative mirror, maybe faster in europe
+
+        db_destination="{wildcards.base_variable}/databases/gtdb/gtdb_db.tar.gz" # Should be defined from 
+
+        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        if [ -f "{output}" ]; then    
+
+            >&2 echo "Flag exists already: touch it to update the mtime ..."
+            touch {output}
+            
+        else
+
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
+
+            >&2 echo "Downlading $db_pick to $db_destination"
+            mkdir -p $(dirname "$db_destination")
+            curl "$db_pick" \
+                --output "$db_destination"
+
+            >&2 echo "Decompressing ..."
+            tar \
+                -xf $db_destination \
+                --directory $(dirname $db_destination)
+
+            >&2 echo "gtdb DB setup completed"
+            echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname $db_destination)/info.txt
+            touch {output}
+
+        fi
+
+    """
+
+
+# ---- Other -------------------------------------------------------------------
+
+
+
 
 
 
@@ -446,202 +615,36 @@ rule sequence_lengths:
 
 
 
-
-# --- Downloads -----------------------------------------------------
-
-# This rule runs once, downloading the busco dataset that is needed for rule busco_individual.
-# Make sure that this job is run on a node that has internet access.
-rule busco_download:
-    output:
-        touch("{base_variable}/databases/busco/busco_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-    conda: "conda_definitions/busco.yaml"
-    shell: """
-
->&2 echo "Checking for internet access using google."
-        ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Error. It seems like you don't have internet access? Please make sure your machine has internet access."
-        
-        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
-        if [ -f "{output}" ]; then    
-
-            >&2 echo "Flag exists already: touch it to update the mtime ..."
-            touch {output}
-            
-        else
-
-            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
-
-            # Busco is a bit stupid in the way that it requires an input file, but doesn't read it when you just download.
-            touch dummy.fasta
-            
-            # https://busco.ezlab.org/busco_userguide.html#download-and-automated-update
-            busco \
-                --in dummy.fasta \
-                --out shouldnotbenecessarytosettheoutdirwhenjustdownloading \
-                --mode geno \
-                --auto-lineage-prok \
-                --force \
-                --download_path {wildcards.base_variable}/databases/busco \
-                --download prokaryota
-
-            # Info: You can also swap "--download prokaryota" with "--download virus" if you're feeling adventurous ...
-            
-            touch {output}
-
-            # Clean up 
-            rm dummy.fasta
-        
-        fi
-
-    """
-
-
-
-rule checkm2_download:
-    output:
-        flag = touch("{base_variable}/databases/checkm2/checkm2_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-    params:
-        download_path = "{base_variable}/databases/checkm2",
-    conda: "conda_definitions/checkm2_conda.yaml"
-    shell: """
-
->&2 echo "Checking for internet access using google."
-        ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Error. It seems like you don't have internet access? Please make sure your machine has internet access."
-
-        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
-        if [ -f "{output}" ]; then
-
-            >&2 echo "Flag exists already: touch it to update the mtime ..."
-            touch {output}
-            
-        else
-
-            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
-        
-            checkm2 database \
-                --download \
-                --path {params.download_path}
-
-            # Consider running checkm2 testrun. Is time and resource consuming though.
-            # checkm2 testrun 
-            
-            touch {output}
-        
-        fi
-
-    """
-
-
-
-rule kraken2_download:
-    output:
-        flag = touch("{base_variable}/databases/kraken2/kraken2_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-    #params: 
-        #asscom2_kraken_db = config['asscom2_kraken2_db'],
-    conda: "conda_definitions/curl.yaml"
-    shell: """
-
->&2 echo "Checking for internet access using google."
-        ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Error. It seems like you don't have internet access? Please make sure your machine has internet access."
-
-        # TODO: Make a way to check for internet access instead of just crashing. Same for busco and checkm2
-
-        ## Pick a db from this list
-        # https://benlangmead.github.io/aws-indexes/k2
-
-        
-        ## Shortcuts. Select no bigger than the size of your RAM
-        
-        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # 49GB Standard
-        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_08gb_20230314.tar.gz" #  8GB Standard
-        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_16gb_20230314.tar.gz" # 16GB Standard
-        
-
-        db_destination="{wildcards.base_variable}/databases/kraken2/kraken2_db.tar.gz"
-
-        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
-        if [ -f "{output}" ]; then    
-
-            >&2 echo "Flag exists already: touch it to update the mtime ..."
-            touch {output}
-            
-        else
-
-            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
-
-            >&2 echo "Downlading $db_pick to $db_destination"
-            mkdir -p $(dirname "$db_destination")
-            curl "$db_pick" \
-                --output "$db_destination"
-
-            >&2 echo "Decompressing ..."
-            tar \
-                -xf $db_destination \
-                --directory $(dirname $db_destination)
-
-            >&2 echo "kraken2 DB setup completed"
-            echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname $db_destination)/info.txt
-            touch {output}
-
-        fi
-
-    """
-
-
-
-
-rule gtdb_download:
-    output:
-        flag = touch("{base_variable}/databases/gtdb/gtdb_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-    #params: 
-        #asscom2_gtdb_db = config['asscom2_gtdb_db'],
-    conda: "conda_definitions/curl.yaml"
-    shell: """
-
-        
-        >&2 echo "Checking for internet access using google."
-        ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Error. It seems like you don't have internet access? Please make sure your machine has internet access."
-
-        # TODO: Make a way to check for internet access instead of just crashing. Same for busco and checkm2
-
-        # https://ecogenomics.github.io/GTDBTk/installing/index.html
-
-        # Pick a source file
-        #db_pick="https://data.gtdb.ecogenomic.org/releases/latest/auxillary_files/gtdbtk_v2_data.tar.gz"
-        db_pick="https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_v2_data.tar.gz" # alternative mirror, maybe faster in europe
-
-        db_destination="{wildcards.base_variable}/databases/gtdb/gtdb_db.tar.gz" # Should be defined from 
-
-        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
-        if [ -f "{output}" ]; then    
-
-            >&2 echo "Flag exists already: touch it to update the mtime ..."
-            touch {output}
-            
-        else
-
-            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
-
-            >&2 echo "Downlading $db_pick to $db_destination"
-            mkdir -p $(dirname "$db_destination")
-            curl "$db_pick" \
-                --output "$db_destination"
-
-            >&2 echo "Decompressing ..."
-            tar \
-                -xf $db_destination \
-                --directory $(dirname $db_destination)
-
-            >&2 echo "gtdb DB setup completed"
-            echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname $db_destination)/info.txt
-            touch {output}
-
-        fi
-
-    """
-
-
 # --- Targets for the complete set below: ---------------------------
 
+rule checkm2:
+    input:
+        metadata = "{results_directory}/metadata.tsv",
+        #checkm2_download = expand("{base_variable}/databases/checkm2/checkm2_download_done.flag", base_variable = base_variable), #expanding this variable shouldn't be necessary, but it is, because the variable is not present in the output.
+        database = expand("{base_variable}/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd", base_variable = base_variable),
+        fasta = df["input_file_fasta"].tolist()
+    output:
+        table = touch("{results_directory}/checkm2/quality_report.tsv"),
+    conda: "conda_definitions/checkm2_conda.yaml"
+    threads: 8
+    resources:
+        mem_mb = 16000,
+        runtime = "24:00:00",
+    params:
+        rule_dir = results_directory + "/checkm2",
+        base_variable = base_variable,
+    shell: """
+
+        checkm2 predict \
+            --threads {threads} \
+            --input {input.fasta} \
+            --output-directory {params.rule_dir} \
+            --extension .fa \
+            --force
+
+        {void_report}
+
+    """
 
 
 
