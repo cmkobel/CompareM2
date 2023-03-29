@@ -14,7 +14,7 @@ checkm2_presentable = metadata_translate %>%
     left_join(checkm2_raw, by = c("sample" = "Name")) %>%
     
     mutate(
-        Completeness_Model_Used = str_replace(Completeness_Model_Used, "Neural Network", "NN"),
+        #Completeness_Model_Used = str_replace(Completeness_Model_Used, "Neural Network", "NN"),
         Average_Gene_Length = round(Average_Gene_Length, 1)
     ) %>%
     rename_with(str_replace_all, pattern = "_", replacement = " ")

@@ -966,7 +966,6 @@ rule report:
 # Call the report subpipeline
 report_call = f"""
     mkdir -p {results_directory}/logs; \
-    cp -v {{log}} {{results_directory}}/logs/ac2_$(date -Iseconds).log || echo error copying log;
     snakemake \
         --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
         --cores 4 \
