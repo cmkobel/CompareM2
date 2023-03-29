@@ -1,5 +1,5 @@
 ---
-title: "aeo"
+title: "`r batch_title`"
 subtitle: "Assemblycomparator2 Report"
 date: "`r Sys.time()`"
 output:
@@ -7,15 +7,71 @@ output:
     toc: true
     toc_depth: 2
   #prettydoc::html_pretty:
-    #theme: cayman
+    theme: readable
     #highlight: github
 editor_options: 
   chunk_output_type: console
 #css: "max-width: 5000px; margin: auto; padding: 1em; line-height: 20px"
 ---
+<style>
+table {
+  white-space: nowrap; /* Do not wrap table cell contents. */
+}
+</style>
 
-```{r echo=FALSE, message=F, warning=F}
+`` `{r}
+## code
+`` `
 
+
+
+```{r setup-dependencies, echo=F, message=F, warning=F}
+
+# Dependencies
+
+library(tidyverse)
+library(DT)
+library(ape)
+#library(prettydoc)
+#library(phytools)
+#library(phangorn)
+
+
+```
+
+
+
+
+```{r setup-debug, echo=F, message=F, warning=F, error = F}
+
+
+
+# DEBUG setup for vscode on KTFL running R on ssh to saga
+debug = F
+if (debug) {
+    base_variable = "~/axodines/assemblycomparator2"
+    results_directory = "results_ac2"
+    batch_title = "MAGs"
+    setwd("~/axodines/assemblycomparator2/tests/MAGs")
+}
+
+```
+
+
+`r paste0("This report was generated using the results located at ", results_directory, " using the installation at ", base_variable, ".")`
+
+
+```{r setup-globals, echo=F, message=F, warning=F}
+
+
+## Global variables
+#base_variable = "~/assemblycomparator2/" # I need to find a way of pulling this out of thin air. Maybe there's a way of passing commands through the render call, or I can
+report_scripts = paste0(base_variable, "/report_subpipeline/scripts/")
+
+
+
+
+## Global functions
 
 # Print Quick
 pq = function(logical, input) {
@@ -24,13 +80,228 @@ pq = function(logical, input) {
     } 
 }
 
-section_A = T
+# A function that returns a new global table enumerator for each call
+tableno_var = 0
+tableno = function() {
+    tableno_var <<- tableno_var + 1
+    tableno_var
+}
+
+# Same, but for figures
+figno_var = 0
+figno = function() {
+    figno_var <<- figno_var + 1
+    figno_var
+}
+
+
+dtable = function(X) {
+    
+    datatable(X,
+        extensions = c("Buttons","KeyTable"), 
+        options = list(
+            dom = '<"top"B>frtip',
+            buttons = list('csv', 'excel'),
+            keys = T
+        ),
+        rownames=F
+    )
+}
+
+create_dt <- function(x){
+    DT::datatable(x,
+        extensions = 'Buttons',
+        options = list(
+            dom = 'Blfrtip',
+            buttons = c('copy', 'csv', 'excel'),
+            lengthMenu = list(
+                c(10,25,50,-1),
+                c(10,25,50, "All")
+            )
+        )
+    )
+}
+
+custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T) {
+    
+    name = paste(batch_title, filename, sep = "_")
+    
+    write_tsv(x, paste0(results_directory, "/tables/", name, ".tsv")) # Save a copy on the harddisk for people without browsers.
+    
+    DT::datatable(
+        x,
+        options = list(
+            dom = dom,
+            ordering = ordering,
+            #buttons = c('copy', 'csv', 'excel')
+            buttons = list(
+                list(extend = "csv", filename = name),
+                list(extend = "excel", filename = name)
+            ),
+            lengthMenu = list(
+                c(10,25,50,-1),
+                c(10,25,50, "All")
+            )
+        ),
+        rownames = F,
+        extensions = 'Buttons',
+    )
+}
+
+paste_ = function(x, ...) {
+    paste(x, ..., sep = "_")
+}
+
+
+```
+
+# Overview
+
+## Samples
+
+```{r sample-overview, echo=FALSE, message=F, warning=F, error = T}
+
+# Import the metadata table
+# metadata_translate makes it easy for us later to convert the long paths to short and simple sample names, also highlights potential missing sample analyses
+
+metadata_file = paste0(results_directory, "/metadata.tsv")
+
+metadata_df = read_tsv(metadata_file) %>%
+    arrange(sample) # Alphabetical
+
+N = metadata_df %>% nrow() # global variable
+
+# Generate a very simple table which can be used to convert long paths or their basenames to sample names
+metadata_translate = metadata_df %>% 
+    select(sample, file_long = input_file_fasta) %>%
+    mutate(
+        file = basename(file_long)
+    )
+
+
+# Present the metadata in the report
+metadata_df %>%
+    select(input_file, sample) %>% 
+    datatable() # This one is not downloadable
+    #custom_dt()
+
+
+    
+    
+### Sections below
+```
+
+*Table `r tableno()`: Overview of the samples analysed in this batch.*
+
+
+### Report sections
+
+Here is an overview of the number of result files that have been found for each analysis. A report section is only rendered if relevant result files are present for that analysis. 
+
+```{r sample-switchboard, echo=FALSE, message=F, warning=F, error = T}
+
+# Pull all globs and show which are done/presentable
+
+# glob = list()
+
+# glob$assembly_stats = Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv"))
+# glob$prokka = Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt"))
+# glob$busco = Sys.glob(paste0(results_directory, "/samples/*/busco/*_omesnatoehsnatoe_extract.tsv"))
+
+# Each section of this report is rendered on the basis of the presence of relevant result files.
+# In the table below, the globs, and expected number of globs are defined. 
+section_definition_table = tribble(
+
+    ~section, ~expectation, ~glob,
+    "assembly_stats",    1, Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv")),
+    "sequence_lengths",  N, Sys.glob(paste0(results_directory, "/samples/*/sequence_lengths/*.tsv")),
+    "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
+    "busco",             N, Sys.glob(paste0(results_directory, "/samples/*/busco/short_summary_extract.tsv")),
+    "checkm2",           1, Sys.glob(paste0(results_directory, "/checkm2/quality_report.tsv")),
+    "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
+    "kraken2",           N, Sys.glob(paste0(results_directory, "/samples/*/kraken2/*kraken2_report.tsv")),
+    "roary",             1, Sys.glob(paste0(results_directory, "/samples/*/roray/*.txt")),
+    "mashtree",          1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick")),
+
+
+    ) %>%
+    #group_by(section) %>%
+    mutate(n_files = lengths(glob))
+
+
+# This list is used out in the individual sections to access the correct files.
+glob_list = section_definition_table %>%
+    select(section, glob) %>%
+    deframe() # Convert to list
+
+# The render variable is finally used to toggle the rendering of each section in the report.
+render = lapply(glob_list, function(x) {length(x) > 0})
+
+
+section_definition_table %>%
+    mutate(
+        render = case_when(
+            n_files > expectation ~ "error", # Hopefully this won't ever happen
+            n_files == expectation ~ "🟢 yes",
+            n_files > 0 ~ "🟡 yes, partially",
+            n_files == 0 ~ "🔴 no"),
+        `n / expected` = paste0(n_files, " / ", expectation)
+    ) %>%
+    select(section, `n / expected`, render) %>%
+    custom_dt("sections", dom = "t", ordering = F)
+
+# Define a variable that can be used to query whether each section of the report should be rendered
+
+
+# By the way: Remember to have double new lines between the dash-lines (---) and the r child chunks. Otherwise the parsing gets weird, with figure texts becoming headers.
+
 ```
 
 
-# Section test
-# Mind you, you can also set eval = T/F to control output, but then there will be no alternative output, but that could possibly be controlled in the beginning I guess
-```{r child = 'report_section_A.rmd'}
+*Table `r tableno()`: Overview of sections that are rendered in this report. "n / expected" shows the number of analysis files versus how many are expected to be present. When any files are present for an section, the section will be rendered.*
+
+
+
+---
+
+# Quality Control
+
+```{r child = paste0(report_scripts, "section_assembly_stats.rmd"), eval = render$assembly_stats}
+```
+
+```{r child = paste0(report_scripts, "section_sequence_lengths.rmd"), eval = render$sequence_lengths}
+```
+
+```{r child = paste0(report_scripts, "section_busco.rmd"), eval = render$busco}
+```
+
+```{r child = paste0(report_scripts, "section_checkm2.rmd"), eval = render$checkm2}
+```
+
+```{r child = paste0(report_scripts, "section_kraken2.rmd"), eval = render$kraken2}
 ```
 
 
+
+# Comparisons
+
+```{r child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}
+```
+
+```{r child = paste0(report_scripts, "section_mashtree.rmd"), eval = render$mashtree}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------
+
+The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel) `version 2.4.0`.

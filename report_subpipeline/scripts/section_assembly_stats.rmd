@@ -1,0 +1,27 @@
+
+## Assembly statistics
+
+
+
+```{r assembly_stats, echo = F, message = F, warning = F, error = T}
+
+
+
+
+
+#assembly_stats_df = read_tsv(glob$assembly_stats) 
+assembly_stats_df = read_tsv(glob_list$assembly_stats) 
+        
+
+metadata_translate %>%
+    select(sample, file_long) %>%
+    left_join(assembly_stats_df, by = c("file_long" = "filename")) %>%
+    select(sample, everything(), -file_long, -N50n, -N70, -N70n, -N90n) %>%
+    custom_dt("assembly_stats", dom = "Blfrtip")
+
+
+```
+
+*Table `r tableno()`: Assembly statistics is provided by [assembly-stats](https://github.com/sanger-pathogens/assembly-stats#assembly-stats). N50 indicates the length of the smallest contig that (together with the longer contigs) covers at least half of the genome.*
+
+---

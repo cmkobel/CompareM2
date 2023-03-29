@@ -1,0 +1,70 @@
+## Kraken2
+
+```{r kraken2, echo = F, message = F, warning = F, error = T}
+
+
+
+#  (D)omain
+#  (K)ingdom
+#  (P)hylum
+#  (C)lass
+#  (O)rder
+#  (F)amily
+#  (G)enus
+#  or (S)pecies.
+
+kraken2_df = read_tsv(glob_list$kraken2, id = "file", comment = "#", col_names = c("percent", "root_fragments", "taxon_fragments", "taxon_minimizers", "db_minimizers", "rank", "id", "name"))  %>% 
+    mutate(sample = basename(file) %>% str_remove("_kraken2_report.tsv")) %>%
+    group_by(sample) %>%
+    filter(rank %in% c("U", "D", "K", "P", "C", "O", "F", "G", "S")) %>% # Only look at these levels
+
+    # Make human readable. This is robust to missing factors
+    mutate(
+        rank_long = recode_factor(
+            rank,
+            U = "unclassified",
+            D = "domain",
+            K = "kingdom",
+            P = "phylum",
+            C = "class",
+            O = "order",
+            provingthatmissingvariablesarenotaproblem = "hattespase",
+            F = "family",
+            G = "genus",
+            S = "species"
+        )
+    ) %>% 
+    #mutate(depth = 1:n()) %>%view()
+    #filter(depth <= 8) %>% # 6 is the number of levels we're looking at
+    #distinct(rank_long) %>%
+    #view()
+    
+    # Can't decide how to shorten the numbers
+    mutate(name_percent = paste0(round(percent, 1), "% ", name)) %>%
+    #mutate(name_percent = paste0(signif(percent, 2), "% ", name)) %>%
+    
+    distinct(rank_long, .keep_all = T) %>% # Will keep up til the first unique rank 
+    
+    ungroup() %>%
+    pivot_wider(id_cols = sample, names_from = rank_long, values_from = name_percent, values_fill = "-") 
+
+
+
+
+metadata_translate %>%
+    select(sample) %>%
+    left_join(kraken2_df) %>%
+    custom_dt("kraken2")
+
+
+
+```
+
+
+*Table `r tableno()`: Kraken2 results. For each sample, only the best hit is shown. Taxonomical identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2). The percentages indicate the number of fragments that are covered by the respective clade.
+
+
+
+
+
+---

@@ -2,8 +2,7 @@
 
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
 
-# testing key
-__version__ = "v2.3.0"
+__version__ = "v2.4.0" # Ttree places to bump. Here, in the bottom of the report, in the report snakefile
 __author__ = 'Oliver Kjærlund Hansen & Carl M. Kobel'
 
 import os
@@ -18,8 +17,13 @@ from shutil import copyfile
 #from shutil import copyfile
 #import re
 
+# For void_report
+import subprocess
+import datetime
+        
 
-# ---- Read important variables -----------------------------------------------
+
+# --- Read important variables -----------------------------------------------
 cwd = os.getcwd()
 batch_title = cwd.split("/")[-1]
 base_variable = os.environ['ASSCOM2_BASE'] # rename to ASSCOM2_BASE
@@ -40,8 +44,8 @@ print(f"    batch_title:           {batch_title}")
 print(f"    roary_blastp_identity: {config['roary_blastp_identity']} (default 95)")
 print(f"    mlst_scheme:           {config['mlst_scheme']} (default automatic)   ")
 print(f"    base_variable:         {base_variable}                               ")
-print(f"    kraken2 database:      {config['asscom2_kraken2_db']}                ")
-print(f"    gtdb:                  {config['gtdbtk_data_path']}                  ")
+#print(f"    kraken2 database:      {config['asscom2_kraken2_db']}                ")
+#print(f"    gtdb:                  {config['gtdbtk_data_path']}                  ")
 
 
 #results_directory = "output_asscom2"
@@ -76,7 +80,7 @@ if df.shape[0] == 0:
 
 df = df[~df["input_file"].str.startswith(".", na = False)] # Remove hidden files
 df['sample_raw'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()] # Extract everything before the extension dot.
-df['sample'] = df['sample_raw'].str.replace(' ','_').str.replace(',','_')
+df['sample'] = df['sample_raw'].str.replace(' ','_').str.replace(',','_') # Convert spaces and commas to underscore 
 df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extract extension
 df['input_file_fasta'] = results_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fa" # This is where the input file is copied to in the first snakemake rule.
 
@@ -127,32 +131,17 @@ rule all:
         "{results_directory}/.install_report_environment_aot.flag", \
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/assembly-stats/assembly-stats.tsv", \
-        "{results_directory}/collected_results/sequence_lengths.tsv", \
-        "{results_directory}/collected_results/GC_summary.tsv", \
-        "{results_directory}/collected_results/prokka_summarized.txt", \
-        "{results_directory}/collected_results/kraken2_reports.tsv", \
-        "{results_directory}/collected_results/busco.tsv", \
+        "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/roary/summary_statistics.txt", \
         "{results_directory}/abricate/card_detailed.tsv", \
         "{results_directory}/mashtree/mashtree.newick", \
         "{results_directory}/mlst/mlst.tsv", \
         "{results_directory}/fasttree/fasttree.newick", \
         "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv", \
-        "{results_directory}/snp-dists/snp-dists.tsv"], \
-        results_directory = results_directory) 
+        "{results_directory}/snp-dists/snp-dists.tsv", \
+        "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"], \
+        results_directory = results_directory, sample = df["sample"]) 
 
-
-
-
-# Dummy test
-rule test:
-    output: ".test_done.flag"
-    shell: """
-        #sleep 5
-        touch {output}
-
-        {void_report}
-    """
 
 
 # Copy the input file to its new home
@@ -195,267 +184,15 @@ rule metadata:
     """
 
 
-# Mac-only problem (possibly only on M1 which no one uses anyway..)
-# Seems that checkm doesn't work on mac. pplacer does not exist, and I get errors:
-#   AttributeError: 'MarkerGeneFinder' object has no attribute '__reportProgress'
-#   AttributeError: 'MarkerGeneFinder' object has no attribute '__processBin'
-#   [2022-09-27 10:35:55] INFO: Saving HMM info to file.
-#   [2022-09-27 10:35:55] INFO: Calculating genome statistics for 3 bins with 1 threads:
-#   ...
-#   [2022-09-27 10:35:56] INFO: Extracting marker genes to align.
-#   [2022-09-27 10:35:56] ERROR: Models must be parsed before identifying HMM hits.
-#   I will have to consider if I will develop this on linux, or find an alternative.
-# rules download_checkm and checkm have been disabled below
-# rule checkm_download:
-#     output:
-#         flag = touch("{results_directory}/.checkm_OK.flag")
-#     conda: "conda_definitions/wget.yaml"
-#     params:
-#         directory = base_variable + "/databases/checkm/" # trailing slash??
-#     shell: """
- 
-#     # Check if the database exists. 
-#     # If it doesn't, download/untar the db
-#     if [ ! -f {params.directory}/checkm_OK.flag ]; then    
- 
-#         mkdir -p {params.directory}
-#         wget --directory-prefix={params.directory} https://data.ace.uq.edu.au/public/CheckM_databases/checkm_data_2015_01_16.tar.gz 
-#         tar -xvf {params.directory}/checkm_data_2015_01_16.tar.gz -C {params.directory}
-#         touch {params.directory}/checkm_OK.flag # This is just to make sure that the process went well.
- 
-#     fi
 
-#     # If the flag exists already, then the .checkm_OK.flag will be touched immediately by snakemake
- 
-#     """
-#
-#rule checkm:
-#    input: "{results_directory}/.checkm_OK.flag"
-#    output: touch("{results_directory}/checkm/output")
-#    conda: "conda_definitions/checkm.yaml"
-#    params:
-#            directory = base_variable + "/databases/checkm/"
-#    shell: """
-#
-#        checkm data setRoot {params.directory}
-#        
-#
-#
-#        checkm lineage_wf /Users/kartoffel/assemblycomparator2/tests/E._faecium ./output
-#
-#    """
-
-
-
-# --- CheckM2 --------------------------------------------------------
-
-
-rule checkm2_download:
-    output:
-        flag = touch("{base_variable}/databases/checkm2/checkm2_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-    params:
-        download_path = "{base_variable}/databases/checkm2",
-    conda: "conda_definitions/checkm2_conda.yaml"
-    shell: """
-
-        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
-        if [ -f "{output}" ]; then
-
-            >&2 echo "Flag exists already: touch it to update the mtime ..."
-            touch {output}
-            
-        else
-
-            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
-        
-            checkm2 database \
-                --download \
-                --path {params.download_path}
-
-            # Consider running checkm2 testrun. Is time and resource consuming though.
-            # checkm2 testrun 
-            
-            touch {output}
-        
-        fi
-
-    """
-
-
-rule checkm2:
-    input:
-        checkm2_download = expand("{base_variable}/databases/checkm2/checkm2_download_done.flag", base_variable = base_variable), #expanding this variable shouldn't be necessary, but it is, because the variable is not present in the output.
-        metadata = "{results_directory}/metadata.tsv",
-        fasta = df["input_file_fasta"].tolist()
-    output:
-        table = touch("{results_directory}/checkm2/quality_report.tsv"),
-        diamond = touch("{results_directory}/checkm2/diamond_output/DIAMOND_RESULTS.tsv")
-    conda: "conda_definitions/checkm2_conda.yaml"
-    threads: 8
-    resources:
-        mem_mb = 16000,
-        runtime = "24:00:00",
-    params:
-        rule_dir = results_directory + "/checkm2",
-        base_variable = base_variable,
-    shell: """
-
-        checkm2 predict \
-            --threads {threads} \
-            --input {input.fasta} \
-            --output-directory {params.rule_dir} \
-            --extension .fa \
-            --force
-
-        {void_report}
-
-    """
-
-
-
-
-
-# --- Targets for each sample below: --------------------------------
-
-rule sequence_lengths_individual:
-    input: "{results_directory}/samples/{sample}/{sample}.fa"
-    output: "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
-    container: "docker://cmkobel/bioawk"
-    resources:
-        runtime = "01:00:00",
-        mem_mb = 128,
-    conda: "conda_definitions/bioawk.yaml"
-    shell: """
-
-        bioawk -v sam={wildcards.sample} -c fastx '{{ print sam, $name, length($seq) }}' < {input} \
-        > {output}
-
-        # TODO: Consider whether seqkit stats might be faster?
-
-    """
-
-
-# TODO: This is either hacky or slow, and should be removed. Use seqkit or something like that instead.
-rule gc_summary_individual:
-    input: "{results_directory}/samples/{sample}/{sample}.fa"
-    output: "{results_directory}/samples/{sample}/statistics/{sample}_gc.tsv"
-    container: "docker://rocker/tidyverse" # remember to add devtools
-    conda: "conda_definitions/r-tidyverse.yaml" # like r-markdown, but much simpler.
-    params: base_variable = base_variable,
-    shell: """
-
-
-        Rscript $ASSCOM2_BASE/scripts/tabseq_gc.r $ASSCOM2_BASE/scripts/tabseq_tiny.r {input} \
-        > {output} 2> {output}.fail || echo what
-
-
-
-    """
-
-
-
-
-rule prokka_individual:
-    input: "{results_directory}/samples/{sample}/{sample}.fa"
-    output:
-        gff = "{results_directory}/samples/{sample}/prokka/{sample}.gff",
-        log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
-        tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
-        summarized_txt = "{results_directory}/samples/{sample}/prokka/{sample}_summary.txt",
-        labelled_tsv = "{results_directory}/samples/{sample}/prokka/{sample}_labelled.tsv",
-        labelled_gff = "{results_directory}/samples/{sample}/prokka/{sample}_labelled.gff"
-    container: "docker://staphb/prokka"
-    conda: "conda_definitions/prokka.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
-    resources:
-        mem_mb = 8192,
-    threads: 4
-    shell: """
-      
-        # For debugging of minced
-        minced --version 
-        
-        prokka \
-            --cpus {threads} \
-            --force \
-            --outdir {wildcards.results_directory}/samples/{wildcards.sample}/prokka \
-            --prefix {wildcards.sample} {input} \
-            | tee {output.log} 
-
-        # Label summary file
-        cat {output.log} \
-            | grep "Found" \
-            | grep -E "tRNAs|rRNAs|CRISPRs|CDS|unique" \
-            | cut -d" " -f 3,4 \
-            | awk -v sam={wildcards.sample} '{{ print sam " " $0 }}' \
-            > {output.summarized_txt} # jeg undrer mig over hvorfor den har to gt question mark # update: I dared to remove it, gotta be bold.
-
-        # Label tsv file
-        cat {output.tsv} \
-            | awk -v sam={wildcards.sample} '{{ print $0 "\t" sam }}' \
-            > {output.labelled_tsv}
-
-
-        # Remove fasta from gff and add sample label
-        gff_fasta_start=$(grep --line-number --extended-regexp "^##FASTA" {output.gff} | cut -f1 -d:)
-        head --lines $((-1+$gff_fasta_start)) {output.gff} \
-            | awk -v sam={wildcards.sample} '{{ print $0 "\t" sam }}' \
-            > {output.labelled_gff}
-
-
-
-    """
-
-
-# Kraken is for reads, so why are we using it here without shredding the reads?
-rule kraken2_individual:
-    input: "{results_directory}/samples/{sample}/{sample}.fa"
-    output: "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv"
-    params: 
-        asscom2_kraken2_db = config["asscom2_kraken2_db"],
-    container: "docker://staphb/kraken2"
-    conda: "conda_definitions/kraken2.yaml"
-    threads: 2
-    resources:
-        mem_mb = 65536,
-    benchmark: "{results_directory}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
-    shell: """
-
-        ASSCOM2_KRAKEN2_DB={params.asscom2_kraken2_db}
-
-        if [ ! -z $ASSCOM2_KRAKEN2_DB ]; then
-            echo using kraken2 database $ASSCOM2_KRAKEN2_DB
-
-            # Run kraken2
-            kraken2 \
-                --threads {threads} \
-                --db $ASSCOM2_KRAKEN2_DB \
-                --confidence 0.15 \
-                --report {output}_tmp \
-                {input} \
-                > /dev/null
-
-            # Argument on confidence parameter https://www.biostars.org/p/402619/
-
-            # Put sample names in front
-            cat {output}_tmp \
-            | awk -v sam={wildcards.sample} '{{ print sam "\t" $0 }}' \
-            > {output}
-
-            # Remove temp file
-            rm {output}_tmp
-
-        else
-            echo "The ASSCOM2_KRAKEN2_DB variable is not set, and thus the kraken2 rule and its jobs will not be run. Consider using the scripts/set_up_kraken2.sh script for downloading and linking the latest kraken2 database."
-        fi
-
-    """
+# --- Downloads -----------------------------------------------------
 
 # This rule runs once, downloading the busco dataset that is needed for rule busco_individual.
 # Make sure that this job is run on a node that has internet access.
 rule busco_download:
     output:
-        touch("{base_variable}/databases/busco/busco_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        #touch("{base_variable}/databases/busco/busco_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        database_representative = touch("{base_variable}/databases/busco/file_versions.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
     conda: "conda_definitions/busco.yaml"
     shell: """
 
@@ -467,6 +204,9 @@ rule busco_download:
             touch {output}
             
         else
+
+            >&2 echo "Checking for internet access using google."
+            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
 
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 
@@ -485,6 +225,7 @@ rule busco_download:
 
             # Info: You can also swap "--download prokaryota" with "--download virus" if you're feeling adventurous ...
             
+            mkdir -p $(dirname {output})
             touch {output}
 
             # Clean up 
@@ -494,9 +235,284 @@ rule busco_download:
 
     """
 
+
+
+rule checkm2_download:
+    output:
+        #flag = touch("{base_variable}/databases/checkm2/checkm2_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        database_representative = expand("{base_variable}/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd", base_variable = base_variable),
+    params:
+        download_path = expand("{base_variable}/databases/checkm2", base_variable = base_variable),
+    conda: "conda_definitions/checkm2_conda.yaml"
+    shell: """
+
+
+        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        if [ -f "{output}" ]; then
+
+            >&2 echo "Flag exists already: touch it to update the mtime ..."
+            touch {output}
+            
+        else
+
+            >&2 echo "Checking for internet access using google."
+            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
+
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
+        
+            checkm2 database \
+                --download \
+                --path {params.download_path}
+
+            # Consider running checkm2 testrun. Is time and resource consuming though.
+            # checkm2 testrun 
+            
+            mkdir -p $(dirname {output})
+            touch {output}
+        
+        fi
+
+    """
+
+
+
+rule kraken2_download:
+    output:
+        database_representative = touch("{base_variable}/databases/kraken2/hash.k2d") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+    #params: 
+        #asscom2_kraken_db = config['asscom2_kraken2_db'],
+    conda: "conda_definitions/curl.yaml"
+    shell: """
+
+
+        # TODO: Make a way to check for internet access instead of just crashing. Same for busco and checkm2
+
+        ## Pick a db from this list
+        # https://benlangmead.github.io/aws-indexes/k2
+
+        
+        ## Shortcuts. Select no bigger than the size of your RAM
+    
+        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # Standard 49GB
+        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_08gb_20230314.tar.gz" # Standard  8GB
+        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_16gb_20230314.tar.gz" # Standard 16GB
+        
+
+        db_destination="{wildcards.base_variable}/databases/kraken2/kraken2_db.tar.gz"
+
+        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        if [ -f "{output}" ]; then    
+
+            >&2 echo "Flag exists already: touch it to update the mtime ..."
+            touch {output}
+            
+        else
+
+            >&2 echo "Checking for internet access using google."
+            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
+
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
+
+            >&2 echo "Downlading $db_pick to $db_destination"
+            mkdir -p $(dirname "$db_destination")
+            curl "$db_pick" \
+                --output "$db_destination"
+
+            >&2 echo "Decompressing ..."
+            tar \
+                -xfv $db_destination \
+                --directory $(dirname $db_destination)
+
+            >&2 echo "kraken2 DB setup completed"
+            echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname $db_destination)/info.txt
+
+            mkdir -p $(dirname {output})
+            touch {output}
+
+        fi
+
+    """
+
+
+
+
+rule gtdb_download:
+    output:
+        #flag = touch("{base_variable}/databases/gtdb/gtdb_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        database_representative = touch("{base_variable}/databases/gtdb/release207_v2/taxonomy/gtdb_taxonomy.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+
+    #params: 
+        #asscom2_gtdb_db = config['asscom2_gtdb_db'],
+    conda: "conda_definitions/curl.yaml"
+    shell: """
+
+        # TODO: Make a way to check for internet access instead of just crashing. Same for busco and checkm2
+
+        # https://ecogenomics.github.io/GTDBTk/installing/index.html
+
+        # Pick a source file
+        db_pick="https://data.gtdb.ecogenomic.org/releases/latest/auxillary_files/gtdbtk_v2_data.tar.gz"
+        #db_pick="https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_v2_data.tar.gz" # alternative mirror, maybe faster in europe? Seems a bit unstable at time of writing.
+
+        db_destination="{wildcards.base_variable}/databases/gtdb/gtdb_db.tar.gz" # Should be defined from 
+
+        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        if [ -f "{output}" ]; then    
+
+            >&2 echo "Flag exists already: touch it to update the mtime ..."
+            touch {output}
+            
+        else
+
+            >&2 echo "Checking for internet access using google."
+            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
+
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
+
+            >&2 echo "Downlading $db_pick to $db_destination"
+            mkdir -p $(dirname "$db_destination")
+            curl "$db_pick" \
+                --output "$db_destination"
+
+            >&2 echo "Decompressing ..."
+            tar \
+                -xfv $db_destination \
+                --directory $(dirname $db_destination)
+
+            >&2 echo "gtdb DB setup completed"
+            echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname $db_destination)/info.txt
+
+            mkdir -p $(dirname {output})
+            touch {output}
+
+        fi
+
+    """
+
+
+# ---- Other -------------------------------------------------------------------
+
+
+
+
+
+
+
+
+# --- Targets for each sample below: --------------------------------
+
+rule sequence_lengths_individual:
+    input: "{results_directory}/samples/{sample}/{sample}.fa"
+    output: "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
+    resources:
+        runtime = "01:00:00",
+        mem_mb = 128,
+    conda: "conda_definitions/seqkit.yaml"
+    shell: """
+
+        # TODO: Consider whether seqkit stats might be faster?
+
+        seqkit fx2tab {input} -l -g -G -n -H \
+        > {output}
+
+    """
+
+
+
+
+
+
+rule prokka_individual:
+    input: "{results_directory}/samples/{sample}/{sample}.fa"
+    output:
+        gff = "{results_directory}/samples/{sample}/prokka/{sample}.gff",
+        log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
+        tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
+        gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta",
+    container: "docker://staphb/prokka"
+    conda: "conda_definitions/prokka.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
+    resources:
+        mem_mb = 8192,
+    threads: 4
+    shell: """
+      
+        # For debugging of minced
+        minced --version 
+        
+        prokka \
+            --cpus {threads} \
+            --force \
+            --rfam \
+            --outdir {wildcards.results_directory}/samples/{wildcards.sample}/prokka \
+            --prefix {wildcards.sample} {input} \
+        | tee {output.log} 
+
+        # I don't remember what I'm actually using this output for?
+        # Remove fasta from gff and add sample label
+        gff_fasta_start=$(grep --line-number --extended-regexp "^##FASTA" {output.gff} | cut -f1 -d:)
+        head --lines $(($gff_fasta_start-1)) {output.gff} \
+        > {output.gff_nofasta}
+
+    """
+
+
+
+
+
+
+
+
+
+
+
+# Kraken is for reads, so why are we using it here without shredding the reads, or at least doing some proportion analysis.
+
+
+# It looks like loading the database takes as long as analysing  the sample, so it might be faster (and more cpu-hour efficient) to just run all samples in the same job. Unfortunately, it doesn't seem to be possible.
+rule kraken2_individual:
+    input: 
+        assembly = "{results_directory}/samples/{sample}/{sample}.fa",
+        database = expand("{base_variable}/databases/kraken2/hash.k2d", base_variable = base_variable),
+    output: 
+        report = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv",
+        full = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_full.tsv",
+    params: 
+        #asscom2_kraken2_db = config["asscom2_kraken2_db"],
+           base_variable = base_variable,
+    container: "docker://staphb/kraken2"
+    conda: "conda_definitions/kraken2.yaml"
+    threads: 2
+    resources:
+        mem_mb = 16384,
+    benchmark: "{results_directory}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
+    shell: """
+
+        db_path="{params.base_variable}/databases/kraken2"
+        echo using kraken2 database $db_path
+
+
+        # Run kraken2
+        # https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown
+        kraken2 \
+            --threads {threads} \
+            --db $db_path \
+            --confidence 0.15 \
+            --report {output.report} \
+            --report-minimizer-data \
+            {input.assembly} \
+            > {output.full}
+
+        # Argument on confidence parameter https://www.biostars.org/p/402619/
+
+
+    """
+
+
 rule busco_individual:
     input: 
-        busco_download = expand("{base_variable}/databases/busco/busco_download_done.flag", base_variable = base_variable),
+        #busco_download = expand("{base_variable}/databases/busco/busco_download_done.flag", base_variable = base_variable),
+        busco_download = expand("{base_variable}/databases/busco/file_versions.tsv", base_variable = base_variable),
         fasta = "{results_directory}/samples/{sample}/{sample}.fa",
     output: 
         flag = touch("{results_directory}/samples/{sample}/busco/busco_done.flag"),
@@ -506,7 +522,7 @@ rule busco_individual:
         #results_directory = results_directory,
         out_dir = "{results_directory}/samples/{sample}/busco",
     conda: "conda_definitions/busco.yaml"
-    threads: 2
+    threads: 1 # Because run_sepp hangs for a long time, not doing anything, I'd rather have more processes started on my small CPU.
     resources:
         mem_mb = 8192,
         runtime = "06:00:00",
@@ -553,138 +569,101 @@ rule busco_individual:
 
         >&2 echo "debug4"
 
+        {void_report}
+
     """
 
 
 # --- Collect results among all samples -----------------------------
 
-rule busco:
-    input: 
-        metadata = "{results_directory}/metadata.tsv",
-        #tables = expand("{results_directory}/samples/{sample}/busco/run_bacteria_odb10/short_summary_extract.tsv", results_directory = results_directory, sample = df["sample"]),
-        tables = expand("{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", results_directory = results_directory, sample = df["sample"]),
-    output: "{results_directory}/collected_results/busco.tsv"
-    resources: 
-        mem_mb = 128,
-        runtime = "00:10:00",
-    shell: """
-
-        cat {input.tables} >> {output}
-
-        {void_report} # TODO: Make a nice summary in the report.
-
-    """
-
-
-rule kraken2:
-    input: 
-        metadata = "{results_directory}/metadata.tsv",
-        reports = expand("{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", results_directory = results_directory, sample = df["sample"]),
-    output: "{results_directory}/collected_results/kraken2_reports.tsv",
-    resources:
-        runtime = "01:00:00",
-    shell: """
-
-        # kraken2
-        echo -e "sample\tmatch_percent\tclade_mappings\tlevel_mappings\tlevel\ttaxonomic_id\tclade" \
-        > {output}
-
-        cat {input.reports} >> {output} 
-
-        {void_report}
-    """
-
-
-rule sequence_lengths:
-    input: expand("{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", results_directory = results_directory, sample = df["sample"])
-    output: "{results_directory}/collected_results/sequence_lengths.tsv"
-    resources:
-        runtime = "01:00:00",
-    shell: """
-
-        # Sequence lengths
-        echo -e "sample\trecord\tlength" \
-        > {output}
-
-        cat {input} >> {output} 
-
-        {void_report}
-    """
-
-rule gc_summary:
-    input: expand("{results_directory}/samples/{sample}/statistics/{sample}_gc.tsv", results_directory = results_directory, sample = df["sample"])
-    output: "{results_directory}/collected_results/GC_summary.tsv"
-    resources:
-        runtime = "01:00:00",
-    shell: """
-
-        # Sequence lengths
-        echo -e "sample\tpart\tlength\tGC" \
-        > {output}
-
-        cat {input} | grep -vE "^#" >> {output} # Append content without headers
-
-        {void_report}
-    """
-
-
-
-
 
 
 rule prokka:
     input:
-        metadata = "{results_directory}/metadata.tsv",
-        summarized_txt = expand("{results_directory}/samples/{sample}/prokka/{sample}_summary.txt", results_directory = results_directory, sample = df["sample"]),
-        labelled_tsv = expand("{results_directory}/samples/{sample}/prokka/{sample}_labelled.tsv", results_directory = results_directory, sample = df["sample"]),
-        labelled_gff = expand("{results_directory}/samples/{sample}/prokka/{sample}_labelled.gff", results_directory = results_directory, sample = df["sample"]),
-
-    output: 
-        summarized_txt = "{results_directory}/collected_results/prokka_summarized.txt",
-        labelled_tsv = "{results_directory}/collected_results/prokka_labelled.tsv",
-        labelled_gff = "{results_directory}/collected_results/prokka_labelled.gff",
-
-    resources:
-        runtime = "01:00:00",
-    shell: """
-
-        echo "sample value name" > {output.summarized_txt}
-        cat {input.summarized_txt} >> {output.summarized_txt} 
-
-        cat {input.labelled_tsv} > {output.labelled_tsv}
-
-        cat {input.labelled_gff} > {output.labelled_gff}
+        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
+        gff = expand(
+            "{results_directory}/samples/{sample}/prokka/{sample}.gff",
+            results_directory = results_directory,
+            sample = df["sample"]
+        ),
 
 
-        {void_report}
-    """
+rule busco:
+    input: 
+        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
+        tables = expand("{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", results_directory = results_directory, sample = df["sample"])
 
 
+#echo -e "sample\tmatch_percent\tclade_mappings\tlevel_mappings\tlevel\ttaxonomic_id\tclade" \
+rule kraken2:
+    input: 
+        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
+        reports = expand("{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", results_directory = results_directory, sample = df["sample"])
 
 
-
-
-# This one doesn't seem to work, I don't know what is up?
-rule sample_pathway_enrichment_analysis:
-    input: "{results_directory}/collected_results/prokka_labelled.tsv"
-    output: "{results_directory}/collected_results/sample_pathway_enrichment_analysis.tsv"
-    conda: "conda_definitions/r-clusterProfiler.yaml"
-    shell: """
-
-
-        Rscript $ASSCOM2_BASE/scripts/sample_pathway_enrichment_analysis.R $ASSCOM2_BASE/assets/ko {input} \
-            > {output}
-
-        {void_report}
-    """
+rule sequence_lengths:
+    input: 
+        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
+        lengths = expand("{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", results_directory = results_directory, sample = df["sample"])
 
 
 
 
+
+
+
+
+
+
+
+# # This one doesn't seem to work, I don't know what is up? Could be nice to have it fixed.
+# rule sample_pathway_enrichment_analysis:
+#     input: "{results_directory}/collected_results/prokka_labelled.tsv"
+#     output: "{results_directory}/collected_results/sample_pathway_enrichment_analysis.tsv"
+#     conda: "conda_definitions/r-clusterProfiler.yaml"
+#     shell: """
+
+
+#         Rscript $ASSCOM2_BASE/scripts/sample_pathway_enrichment_analysis.R $ASSCOM2_BASE/assets/ko {input} \
+#             > {output}
+
+#         {void_report}
+#     """
 
 
 
 # --- Targets for the complete set below: ---------------------------
+
+rule checkm2:
+    input:
+        metadata = "{results_directory}/metadata.tsv",
+        #checkm2_download = expand("{base_variable}/databases/checkm2/checkm2_download_done.flag", base_variable = base_variable), #expanding this variable shouldn't be necessary, but it is, because the variable is not present in the output.
+        database = expand("{base_variable}/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd", base_variable = base_variable),
+        fasta = df["input_file_fasta"].tolist()
+    output:
+        table = touch("{results_directory}/checkm2/quality_report.tsv"),
+    conda: "conda_definitions/checkm2_conda.yaml"
+    threads: 8
+    resources:
+        mem_mb = 16000,
+        runtime = "24:00:00",
+    params:
+        rule_dir = results_directory + "/checkm2",
+        base_variable = base_variable,
+    shell: """
+
+        checkm2 predict \
+            --threads {threads} \
+            --input {input.fasta} \
+            --output-directory {params.rule_dir} \
+            --extension .fa \
+            --force
+
+        {void_report}
+
+    """
+
+
 
 def get_mem_roary(wildcards, attempt): 
     return [32000, 64000, 128000][attempt-1]
@@ -770,12 +749,14 @@ def get_mem_gtdbtk(wildcards, attempt):
 rule gtdbtk:
     input: 
         metadata = "{results_directory}/metadata.tsv",
+        db_flag = expand("{base_variable}/databases/gtdb/release207_v2/taxonomy/gtdb_taxonomy.tsv", base_variable = base_variable),
         fasta = df["input_file_fasta"].tolist(),
     output: "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv"
     params:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{results_directory}/gtdbtk/",
-        gtdbtk_data_path = config["gtdbtk_data_path"],
+        base_variable = base_variable,
+        #gtdbtk_data_path = config["gtdbtk_data_path"],
     threads: 8
     #retries: 3
     resources:
@@ -785,7 +766,7 @@ rule gtdbtk:
     benchmark: "{results_directory}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
 
-        export GTDBTK_DATA_PATH={params.gtdbtk_data_path}
+        export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release207_v2" # Should be defined from 
 
         # Create batchfile
         echo '''{params.batchfile_content}''' > {wildcards.results_directory}/gtdbtk/batchfile.tsv
@@ -793,6 +774,7 @@ rule gtdbtk:
         gtdbtk classify_wf -h
         
         gtdbtk classify_wf \
+            --skip_ani_screen \
             --batchfile {wildcards.results_directory}/gtdbtk/batchfile.tsv \
             --out_dir {params.out_dir} \
             --cpus {threads} \
@@ -970,24 +952,26 @@ rule install_report_environment_aot:
     """
 
 # Just a dummy rule if you wanna force the report
-# assemblycomparator2 --until report --forcerun report
-# TODO: Should never run on the queue system. Update: not sure if that is attainable?
-# Will only but always run if asked to, since snakemake states this in the output: "reason: Rules with neither input nor output files are always executed."
+# assemblycomparator2 --until report
+# It isn't enough to just touch the file. The report_subpipeline will not be triggered if the file is empty. Thus we add the date, and we have a nice debug log for seeing when the report was triggered.
+# Will only but run if asked to. No need to use --forcerun, since snakemake states this in the output: "reason: Rules with neither input nor output files are always executed."
 rule report:
-    resources:
-        runtime = "00:01:00",
-    shell: """
-        {void_report}
-    """
+    run: # No need to allocate a job on the cluster for this small job.
+        now = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        with open(f"{results_directory}/.asscom2_void_report.flag", "a") as void_report_file:
+            void_report_file.write(f"ss_{now}\n")
+
 
 
 # Call the report subpipeline
 report_call = f"""
     mkdir -p {results_directory}/logs; \
+    cp -v {{log}} {{results_directory}}/loegs/ac2_$(date -Iseconds).log || echo error copying log;
     snakemake \
         --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
         --cores 4 \
         --use-conda \
+        -p \
         --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title} 2> {results_directory}/logs/report.err.log 
     """
 

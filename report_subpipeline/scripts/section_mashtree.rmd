@@ -1,0 +1,32 @@
+## Mashtree phylogeny
+
+[Mashtree](https://github.com/lskatz/mashtree) computes an approximation of ANI using the minhash distance measure. On these distances, a phylogenetic tree is then created using the neighbor-joining algorithm. The plotted tree is not rooted.
+
+
+```{r mashtree, echo=FALSE, message=F, warning=F, error = T, fig_height = max(3, N*0.6), fig_width = 10}
+
+mashtree_file = glob_list$mashtree
+
+tree <- ape::read.tree(mashtree_file)
+
+#tree = phytools::midpoint.root(tree)
+#devtools::install_github("igraph/rigraph")
+#tree = phangorn::midpoint(tree)
+
+#plot(tree)
+#axis(1)
+
+#tree$tip.label = paste0(" ", tree$tip.label)
+#phytools::plotTree(tree, align.tip.label = T, lwd = 1, mar = c(0,0,0,0))
+#axis(1)
+
+tree$tip.label = paste0(" ", tree$tip.label)
+ape::plot.phylo(tree, align.tip.label = T, font = 1, cex = 0.73)
+axis(1)
+           
+
+```
+
+*Fig. `r figno()`: Approximation of a phylogenetic tree calculated with mashtree. The horizontal axis is equivalent to 1-ANI.*
+
+---

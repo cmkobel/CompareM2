@@ -1,0 +1,24 @@
+## Genomic annotation
+
+```{r prokka, echo = F, message = F, warning = F, error = T}
+
+
+
+prokka_summary = read_delim(glob_list$prokka, id = "file", comment = "#", col_names = c("name", "value"), delim = ": ") %>%
+    select(file, name, value) %>%
+    mutate(sample = basename(file) %>% str_remove("\\.txt$")) %>%
+    pivot_wider(id_cols = sample) %>%
+    select(-organism)
+
+
+metadata_translate %>%
+    select(sample) %>%
+    left_join(prokka_summary, by = "sample") %>%
+    custom_dt("prokka")
+
+
+```
+
+*Table `r tableno()`: Overview of the number of different gene types. Called using the [Prokka](https://github.com/tseemann/prokka) genome annotator.*
+
+---

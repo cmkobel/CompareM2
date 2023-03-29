@@ -1,0 +1,57 @@
+## Contig sizes and GC-content
+
+
+
+```{r sequence_lengths-table, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
+
+
+
+sequence_lengths_df = read_tsv(glob_list$sequence_lengths, id = "file_long", comment = "#", col_names = c("name", "length", "GC", "GC-Skew")) %>%
+    mutate(sample = basename(file_long) %>% str_remove("_seqlen.tsv"))
+
+
+
+sequence_lengths_meta_df = metadata_translate %>%
+    left_join(sequence_lengths_df, by = "sample") 
+
+    
+
+# Calculate weighted GC from contig GC
+sample_GC = sequence_lengths_meta_df %>%
+    group_by(sample) %>%
+    mutate(weighted_GC = GC * length/sum(length)) %>%
+    summarize(GC_total = sum(weighted_GC) %>% round(1))
+
+
+
+sequence_lengths_meta_df %>%
+
+    group_by(sample) %>%
+
+    mutate(
+        init = lag(length, default = 0),
+        start = cumsum(init),
+        stop = start + length - 1
+    ) %>%
+    ungroup() %>%
+
+    left_join(sample_GC) %>% 
+    mutate(
+        sample_and_GC = paste0(sample, " (", GC_total, "%)")
+    ) %>%
+
+
+    ggplot(aes(length, reorder(sample_and_GC, desc(sample_and_GC)), fill = GC)) + 
+    geom_bar(stat = "identity", color = "black", linewidth = 0.2) + 
+    theme_classic() +
+    theme(legend.position = "bottom") +
+    theme(panel.grid.major.x = element_line(colour = "grey92")) + 
+    labs(y = "sample (GC%)") +
+    scale_fill_viridis_c()
+
+        
+```
+
+*Fig. `r figno()`: Visualization of the length of each fasta record for each sample. The colors show the mean GC content for each record (contig).*
+
+---
