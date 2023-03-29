@@ -1,6 +1,6 @@
 ## Kraken2
 
-```{r prokka, echo = F, message = F, warning = F, error = T}
+```{r kraken2, echo = F, message = F, warning = F, error = T}
 
 
 
@@ -60,6 +60,11 @@ metadata_translate %>%
 
 ```
 
-*Table `r tableno()`: Overview of the number of different gene types. Called using the [Prokka](https://github.com/tseemann/prokka) genome annotator.*
+
+*Table `r tableno()`: Kraken2 results. For each sample, only the best hit is shown. Taxonomical identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2). The percentages indicate the number of fragments that are covered by the respective clade.
+
+
+
+
 
 ---
