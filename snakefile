@@ -192,7 +192,7 @@ rule metadata:
 rule busco_download:
     output:
         #touch("{base_variable}/databases/busco/busco_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        touch("{base_variable}/databases/busco/file_versions.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        database_representative = touch("{base_variable}/databases/busco/file_versions.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
     conda: "conda_definitions/busco.yaml"
     shell: """
 
@@ -225,6 +225,7 @@ rule busco_download:
 
             # Info: You can also swap "--download prokaryota" with "--download virus" if you're feeling adventurous ...
             
+            mkdir -p $(dirname {output})
             touch {output}
 
             # Clean up 
@@ -239,7 +240,7 @@ rule busco_download:
 rule checkm2_download:
     output:
         #flag = touch("{base_variable}/databases/checkm2/checkm2_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        database = expand("{base_variable}/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd", base_variable = base_variable),
+        database_representative = expand("{base_variable}/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd", base_variable = base_variable),
     params:
         download_path = expand("{base_variable}/databases/checkm2", base_variable = base_variable),
     conda: "conda_definitions/checkm2_conda.yaml"
@@ -266,6 +267,7 @@ rule checkm2_download:
             # Consider running checkm2 testrun. Is time and resource consuming though.
             # checkm2 testrun 
             
+            mkdir -p $(dirname {output})
             touch {output}
         
         fi
@@ -276,7 +278,7 @@ rule checkm2_download:
 
 rule kraken2_download:
     output:
-        flag = touch("{base_variable}/databases/kraken2/hash.k2d") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        database_representative = touch("{base_variable}/databases/kraken2/hash.k2d") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
     #params: 
         #asscom2_kraken_db = config['asscom2_kraken2_db'],
     conda: "conda_definitions/curl.yaml"
@@ -323,6 +325,8 @@ rule kraken2_download:
 
             >&2 echo "kraken2 DB setup completed"
             echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname $db_destination)/info.txt
+
+            mkdir -p $(dirname {output})
             touch {output}
 
         fi
@@ -335,7 +339,7 @@ rule kraken2_download:
 rule gtdb_download:
     output:
         #flag = touch("{base_variable}/databases/gtdb/gtdb_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        flag = touch("{base_variable}/databases/gtdb/release207_v2/taxonomy/gtdb_taxonomy.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        database_representative = touch("{base_variable}/databases/gtdb/release207_v2/taxonomy/gtdb_taxonomy.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
 
     #params: 
         #asscom2_gtdb_db = config['asscom2_gtdb_db'],
@@ -377,6 +381,8 @@ rule gtdb_download:
 
             >&2 echo "gtdb DB setup completed"
             echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname $db_destination)/info.txt
+
+            mkdir -p $(dirname {output})
             touch {output}
 
         fi
@@ -768,6 +774,7 @@ rule gtdbtk:
         gtdbtk classify_wf -h
         
         gtdbtk classify_wf \
+            --skip_ani_screen \
             --batchfile {wildcards.results_directory}/gtdbtk/batchfile.tsv \
             --out_dir {params.out_dir} \
             --cpus {threads} \
