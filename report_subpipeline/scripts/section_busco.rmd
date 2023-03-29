@@ -68,6 +68,4 @@ busco_df_meta %>%
 *Fig. `r figno()`: BUSCO results visualized. Legend: S: Complete and single-copy; D: Complete and duplicated; F: Fragmented; M: Missing. For each sample, only the best lineage match (in terms of completeness) is shown.*
 
 
-
-
-
+---

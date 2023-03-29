@@ -53,3 +53,5 @@ sequence_lengths_meta_df %>%
 ```
 
 *Fig. `r figno()`: Visualization of the length of each fasta record for each sample. The colors show the mean GC content for each record (contig).*
+
+---

@@ -13,3 +13,7 @@ keep-incomplete: true # true for debugging
 use-conda: true
 conda-frontend: mamba
 
+
+# Local setup for a typical workstation
+resources:
+  - mem_mb=31000

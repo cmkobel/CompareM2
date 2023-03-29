@@ -28,3 +28,5 @@ axis(1)
 ```
 
 *Fig. `r figno()`: Approximation of a phylogenetic tree calculated with mashtree. The horizontal axis is equivalent to 1-ANI.*
+
+---

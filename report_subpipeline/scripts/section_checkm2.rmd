@@ -49,5 +49,4 @@ checkm2_presentable %>%
 *Fig. `r figno()`: [Checkm2](https://github.com/chklovski/CheckM2) results. Axes are in percents. Colored by coding density. Samples in the lower right corner are relatively better.*
 
 
-
-
+---

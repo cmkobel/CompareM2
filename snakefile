@@ -191,12 +191,11 @@ rule metadata:
 # Make sure that this job is run on a node that has internet access.
 rule busco_download:
     output:
-        touch("{base_variable}/databases/busco/busco_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        #touch("{base_variable}/databases/busco/busco_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        touch("{base_variable}/databases/busco/file_versions.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
     conda: "conda_definitions/busco.yaml"
     shell: """
 
->&2 echo "Checking for internet access using google."
-        ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Error. It seems like you don't have internet access? Please make sure your machine has internet access."
         
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
         if [ -f "{output}" ]; then    
@@ -205,6 +204,9 @@ rule busco_download:
             touch {output}
             
         else
+
+            >&2 echo "Checking for internet access using google."
+            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
 
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 
@@ -243,8 +245,6 @@ rule checkm2_download:
     conda: "conda_definitions/checkm2_conda.yaml"
     shell: """
 
-        >&2 echo "Checking for internet access using google."
-        ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Error. It seems like you don't have internet access? Please make sure your machine has internet access."
 
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
         if [ -f "{output}" ]; then
@@ -253,6 +253,9 @@ rule checkm2_download:
             touch {output}
             
         else
+
+            >&2 echo "Checking for internet access using google."
+            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
 
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
         
@@ -273,14 +276,12 @@ rule checkm2_download:
 
 rule kraken2_download:
     output:
-        flag = touch("{base_variable}/databases/kraken2/kraken2_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        flag = touch("{base_variable}/databases/kraken2/hash.k2d") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
     #params: 
         #asscom2_kraken_db = config['asscom2_kraken2_db'],
     conda: "conda_definitions/curl.yaml"
     shell: """
 
->&2 echo "Checking for internet access using google."
-        ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Error. It seems like you don't have internet access? Please make sure your machine has internet access."
 
         # TODO: Make a way to check for internet access instead of just crashing. Same for busco and checkm2
 
@@ -289,10 +290,10 @@ rule kraken2_download:
 
         
         ## Shortcuts. Select no bigger than the size of your RAM
-        
-        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # 49GB Standard
-        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_08gb_20230314.tar.gz" #  8GB Standard
-        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_16gb_20230314.tar.gz" # 16GB Standard
+    
+        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # Standard 49GB
+        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_08gb_20230314.tar.gz" # Standard  8GB
+        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_16gb_20230314.tar.gz" # Standard 16GB
         
 
         db_destination="{wildcards.base_variable}/databases/kraken2/kraken2_db.tar.gz"
@@ -305,6 +306,9 @@ rule kraken2_download:
             
         else
 
+            >&2 echo "Checking for internet access using google."
+            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
+
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 
             >&2 echo "Downlading $db_pick to $db_destination"
@@ -314,7 +318,7 @@ rule kraken2_download:
 
             >&2 echo "Decompressing ..."
             tar \
-                -xf $db_destination \
+                -xfv $db_destination \
                 --directory $(dirname $db_destination)
 
             >&2 echo "kraken2 DB setup completed"
@@ -330,23 +334,21 @@ rule kraken2_download:
 
 rule gtdb_download:
     output:
-        flag = touch("{base_variable}/databases/gtdb/gtdb_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        #flag = touch("{base_variable}/databases/gtdb/gtdb_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        flag = touch("{base_variable}/databases/gtdb/release207_v2/taxonomy/gtdb_taxonomy.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+
     #params: 
         #asscom2_gtdb_db = config['asscom2_gtdb_db'],
     conda: "conda_definitions/curl.yaml"
     shell: """
-
-        
-        >&2 echo "Checking for internet access using google."
-        ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Error. It seems like you don't have internet access? Please make sure your machine has internet access."
 
         # TODO: Make a way to check for internet access instead of just crashing. Same for busco and checkm2
 
         # https://ecogenomics.github.io/GTDBTk/installing/index.html
 
         # Pick a source file
-        #db_pick="https://data.gtdb.ecogenomic.org/releases/latest/auxillary_files/gtdbtk_v2_data.tar.gz"
-        db_pick="https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_v2_data.tar.gz" # alternative mirror, maybe faster in europe
+        db_pick="https://data.gtdb.ecogenomic.org/releases/latest/auxillary_files/gtdbtk_v2_data.tar.gz"
+        #db_pick="https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_v2_data.tar.gz" # alternative mirror, maybe faster in europe? Seems a bit unstable at time of writing.
 
         db_destination="{wildcards.base_variable}/databases/gtdb/gtdb_db.tar.gz" # Should be defined from 
 
@@ -358,6 +360,9 @@ rule gtdb_download:
             
         else
 
+            >&2 echo "Checking for internet access using google."
+            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
+
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 
             >&2 echo "Downlading $db_pick to $db_destination"
@@ -367,7 +372,7 @@ rule gtdb_download:
 
             >&2 echo "Decompressing ..."
             tar \
-                -xf $db_destination \
+                -xfv $db_destination \
                 --directory $(dirname $db_destination)
 
             >&2 echo "gtdb DB setup completed"
@@ -458,28 +463,31 @@ rule prokka_individual:
 # Kraken is for reads, so why are we using it here without shredding the reads, or at least doing some proportion analysis.
 
 
-
+# It looks like loading the database takes as long as analysing  the sample, so it might be faster (and more cpu-hour efficient) to just run all samples in the same job. Unfortunately, it doesn't seem to be possible.
 rule kraken2_individual:
     input: 
-        assembly = expand("{results_directory}/samples/{sample}/{sample}.fa", results_directory = results_directory, sample = df["sample"]),
-        database = expand("{base_variable}/databases/kraken2/kraken2_download_done.flag", base_variable = base_variable),
+        assembly = "{results_directory}/samples/{sample}/{sample}.fa",
+        database = expand("{base_variable}/databases/kraken2/hash.k2d", base_variable = base_variable),
     output: 
         report = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv",
         full = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_full.tsv",
-    #params: 
+    params: 
         #asscom2_kraken2_db = config["asscom2_kraken2_db"],
+           base_variable = base_variable,
     container: "docker://staphb/kraken2"
     conda: "conda_definitions/kraken2.yaml"
     threads: 2
     resources:
-        mem_mb = 32768,
+        mem_mb = 16384,
     benchmark: "{results_directory}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
     shell: """
 
-        db_path="{wildcards.base_variable}/databases/kraken2"
+        db_path="{params.base_variable}/databases/kraken2"
         echo using kraken2 database $db_path
 
+
         # Run kraken2
+        # https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown
         kraken2 \
             --threads {threads} \
             --db $db_path \
@@ -497,7 +505,8 @@ rule kraken2_individual:
 
 rule busco_individual:
     input: 
-        busco_download = expand("{base_variable}/databases/busco/busco_download_done.flag", base_variable = base_variable),
+        #busco_download = expand("{base_variable}/databases/busco/busco_download_done.flag", base_variable = base_variable),
+        busco_download = expand("{base_variable}/databases/busco/file_versions.tsv", base_variable = base_variable),
         fasta = "{results_directory}/samples/{sample}/{sample}.fa",
     output: 
         flag = touch("{results_directory}/samples/{sample}/busco/busco_done.flag"),
@@ -507,7 +516,7 @@ rule busco_individual:
         #results_directory = results_directory,
         out_dir = "{results_directory}/samples/{sample}/busco",
     conda: "conda_definitions/busco.yaml"
-    threads: 2
+    threads: 1 # Because run_sepp hangs for a long time, not doing anything, I'd rather have more processes started on my small CPU.
     resources:
         mem_mb = 8192,
         runtime = "06:00:00",
@@ -553,6 +562,8 @@ rule busco_individual:
         rm {output.table_extract}_temp
 
         >&2 echo "debug4"
+
+        {void_report}
 
     """
 
@@ -732,12 +743,13 @@ def get_mem_gtdbtk(wildcards, attempt):
 rule gtdbtk:
     input: 
         metadata = "{results_directory}/metadata.tsv",
-        db_flag = expand("{base_variable}/databases/gtdb/gtdb_download_done.flag", base_variable = base_variable),
+        db_flag = expand("{base_variable}/databases/gtdb/release207_v2/taxonomy/gtdb_taxonomy.tsv", base_variable = base_variable),
         fasta = df["input_file_fasta"].tolist(),
     output: "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv"
     params:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{results_directory}/gtdbtk/",
+        base_variable = base_variable,
         #gtdbtk_data_path = config["gtdbtk_data_path"],
     threads: 8
     #retries: 3
@@ -748,7 +760,7 @@ rule gtdbtk:
     benchmark: "{results_directory}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
 
-        export GTDBTK_DATA_PATH="{wildcards.base_variable}/databases/gtdb/" # Should be defined from 
+        export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release207_v2" # Should be defined from 
 
         # Create batchfile
         echo '''{params.batchfile_content}''' > {wildcards.results_directory}/gtdbtk/batchfile.tsv

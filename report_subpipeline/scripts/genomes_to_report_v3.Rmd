@@ -13,6 +13,15 @@ editor_options:
   chunk_output_type: console
 #css: "max-width: 5000px; margin: auto; padding: 1em; line-height: 20px"
 ---
+<style>
+table {
+  white-space: nowrap; /* Do not wrap table cell contents. */
+}
+</style>
+
+`` `{r}
+## code
+`` `
 
 
 
@@ -146,9 +155,9 @@ paste_ = function(x, ...) {
 
 ```
 
+# Overview
 
-
-## Sample overview
+## Samples
 
 ```{r sample-overview, echo=FALSE, message=F, warning=F, error = T}
 
@@ -185,9 +194,9 @@ metadata_df %>%
 *Table `r tableno()`: Overview of the samples analysed in this batch.*
 
 
-### Report section overview
+### Report sections
 
-Here is an overview of the number of result files that have been found for each analysis. A report section is only rendered if relevant result files are present for that analysis.
+Here is an overview of the number of result files that have been found for each analysis. A report section is only rendered if relevant result files are present for that analysis. 
 
 ```{r sample-switchboard, echo=FALSE, message=F, warning=F, error = T}
 
@@ -210,7 +219,7 @@ section_definition_table = tribble(
     "busco",             N, Sys.glob(paste0(results_directory, "/samples/*/busco/short_summary_extract.tsv")),
     "checkm2",           1, Sys.glob(paste0(results_directory, "/checkm2/quality_report.tsv")),
     "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
-    "kraken2",           N, Sys.glob(paste0(results_directory, "/kraken2/kraken2_report.tsv")),
+    "kraken2",           N, Sys.glob(paste0(results_directory, "/samples/*/kraken2/*kraken2_report.tsv")),
     "roary",             1, Sys.glob(paste0(results_directory, "/samples/*/roray/*.txt")),
     "mashtree",          1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick")),
 
@@ -239,7 +248,7 @@ section_definition_table %>%
         `n / expected` = paste0(n_files, " / ", expectation)
     ) %>%
     select(section, `n / expected`, render) %>%
-    custom_dt(dom = "t", ordering = F)
+    custom_dt("sections", dom = "t", ordering = F)
 
 # Define a variable that can be used to query whether each section of the report should be rendered
 
@@ -249,40 +258,38 @@ section_definition_table %>%
 ```
 
 
+*Table `r tableno()`: Overview of sections that are rendered in this report. "n / expected" shows the number of analysis files versus how many are expected to be present. When any files are present for an section, the section will be rendered.*
 
 
 
 ---
+
+# Quality Control
 
 ```{r child = paste0(report_scripts, "section_assembly_stats.rmd"), eval = render$assembly_stats}
 ```
 
----
-
 ```{r child = paste0(report_scripts, "section_sequence_lengths.rmd"), eval = render$sequence_lengths}
 ```
-
----
-
-```{r child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}
-```
-
----
 
 ```{r child = paste0(report_scripts, "section_busco.rmd"), eval = render$busco}
 ```
 
----
-
 ```{r child = paste0(report_scripts, "section_checkm2.rmd"), eval = render$checkm2}
 ```
 
----
+```{r child = paste0(report_scripts, "section_kraken2.rmd"), eval = render$kraken2}
+```
+
+
+
+# Comparisons
+
+```{r child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}
+```
 
 ```{r child = paste0(report_scripts, "section_mashtree.rmd"), eval = render$mashtree}
 ```
-
----
 
 
 

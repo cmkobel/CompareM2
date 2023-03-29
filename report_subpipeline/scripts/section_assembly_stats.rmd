@@ -23,3 +23,5 @@ metadata_translate %>%
 ```
 
 *Table `r tableno()`: Assembly statistics is provided by [assembly-stats](https://github.com/sanger-pathogens/assembly-stats#assembly-stats). N50 indicates the length of the smallest contig that (together with the longer contigs) covers at least half of the genome.*
+
+---

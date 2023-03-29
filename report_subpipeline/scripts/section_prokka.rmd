@@ -20,3 +20,5 @@ metadata_translate %>%
 ```
 
 *Table `r tableno()`: Overview of the number of different gene types. Called using the [Prokka](https://github.com/tseemann/prokka) genome annotator.*
+
+---
