@@ -53,10 +53,8 @@ rule report:
                 output_format = "html_document",
                 output_file = "{output}",
                 knit_root_dir = "{params.results_directory}",
-                quiet = F
+                quiet = T
             )' 
-        
-
         
         # Use the end script if it exists
         if test -f "{params.end_script}"; then
