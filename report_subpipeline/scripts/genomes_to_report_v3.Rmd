@@ -19,9 +19,7 @@ table {
 }
 </style>
 
-`` `{r}
-## code
-`` `
+
 
 
 
@@ -51,8 +49,13 @@ debug = F
 if (debug) {
     base_variable = "~/axodines/assemblycomparator2"
     results_directory = "results_ac2"
-    batch_title = "MAGs"
     setwd("~/axodines/assemblycomparator2/tests/MAGs")
+
+
+    base_variable = "~/axodines/assemblycomparator2"
+    results_directory = "results_ac2"
+    setwd("~/axodines/assemblycomparator2/tests/synth_rumen")
+    batch_title = basename(getwd())
 }
 
 ```
