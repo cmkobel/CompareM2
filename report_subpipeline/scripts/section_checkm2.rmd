@@ -30,21 +30,7 @@ checkm2_presentable %>%
 
 
 
-```{r checkm2_plot, echo=FALSE, message=F, warning=F, error = T, fig.height = 4.8, fig.width = 10}
-
-checkm2_presentable %>%
-    ggplot(aes(Completeness, Contamination, color = `Coding Density`, label = sample)) +
-    geom_point() +
-    geom_text(color = "black", alpha = 0.5, check_overlap = T, hjust = 0, vjust = 0, size = 2.5) +
-    labs(
-        x = "Completeness [%]",
-        y = "Contamination [%]") +
-    scale_color_viridis_b() +
-    theme_bw()
-
-```
-
-```{r checkm2_plot_new, echo=FALSE, message=F, warning=F, error = T, fig.height = 4.8, fig.width = 10}
+```{r checkm2_plot_new, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
 
 # New better plot. 
 # checkm2_presentable  %>% 
@@ -59,36 +45,54 @@ checkm2_presentable %>%
 
 
 left = checkm2_presentable  %>% 
-    select(sample, Completeness, Contamination, `Completeness Model Used`) %>%
-    ggplot(aes(Contamination, sample)) + 
-    geom_col(fill = "yellow") +
-    scale_x_reverse()
+    ggplot(aes(Contamination, reorder(sample, desc(sample)))) + 
+    geom_col(fill = "#aa00a7") +
+    scale_x_reverse() + 
+    theme_bw() + 
+    theme(
+        panel.border = element_blank(),
+        #panel.grid.major = element_blank(), 
+        #panel.grid.minor = element_blank(),
+        axis.line.x = element_line(colour = "black", linewidth = rel(1)),
+    ) + 
+    labs(
+        y = "sample"
+    )
 
 right = checkm2_presentable  %>% 
-    select(sample, Completeness, Contamination, `Completeness Model Used`) %>%
-    ggplot(aes(Completeness, sample)) + 
-    geom_col(fill = "blue") +
-    scale_x_reverse()
+    ggplot(aes(Completeness, reorder(sample, desc(sample)))) + 
+    geom_col(fill = "#00ab0e") +
+    theme_bw() +
+    theme(
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+
+        panel.border = element_blank(),
+        #panel.grid.major = element_blank(), 
+        #panel.grid.minor = element_blank(),
+        axis.line.x = element_line(colour = "black", linewidth = rel(1))
+    )
 
 
-grid.draw(ggplotGrob(left))
-md_inset <- viewport(x = 0, y = 0, 
-                     just = c("left", "bottom"),
-                     width = 0.35, height = 0.35)
-pushViewport(md_inset)
-grid.draw(rectGrob(gp = gpar(alpha = 0.5, col = "white")))
-grid.draw(rectGrob(gp = gpar(fill = NA, col = "black")))
-grid.draw(ggplotGrob(right))
-popViewport()
+    
+
+
+# Plot contamination and completeness side by side, scaled by max value of each (to get roughly the same ratio)
+grid.arrange(left, right,
+    ncol = 2,
+    widths = c(
+        max(checkm2_presentable$Contamination), 
+        max(checkm2_presentable$Completeness)
+        )
+    )
 
 
 ```
 
 
 
-
-
-*Fig. `r figno()`: [Checkm2](https://github.com/chklovski/CheckM2) results. Axes are in percents. Colored by coding density. Samples in the lower right corner are relatively better.*
+*Fig. `r figno()`: [Checkm2](https://github.com/chklovski/CheckM2) results. Axes are in percents.*
 
 
 ---
