@@ -1,0 +1,18 @@
+name: roary_new
+channels:
+  - conda-forge
+  - bioconda
+  - r
+  - defaults
+dependencies:
+  - roary
+
+
+
+# Warning: This only works if you set the channel priority to flexible. Not strict.
+# conda config --set channel_priority flexible
+# 
+# Install roary
+#
+# Then set it back with
+# conda config --set channel_priority strict
