@@ -293,9 +293,9 @@ rule kraken2_download:
         
         ## Shortcuts. Select no bigger than the size of your RAM
     
-        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # Standard 49GB
+        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # Standard 49GB
         #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_08gb_20230314.tar.gz" # Standard  8GB
-        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_16gb_20230314.tar.gz" # Standard 16GB
+        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_16gb_20230314.tar.gz" # Standard 16GB
         
 
         db_destination="{wildcards.base_variable}/databases/kraken2/kraken2_db.tar.gz"
@@ -320,7 +320,7 @@ rule kraken2_download:
 
             >&2 echo "Decompressing ..."
             tar \
-                -xfv $db_destination \
+                -xvf $db_destination \
                 --directory $(dirname $db_destination)
 
             >&2 echo "kraken2 DB setup completed"
@@ -376,7 +376,7 @@ rule gtdb_download:
 
             >&2 echo "Decompressing ..."
             tar \
-                -xfv $db_destination \
+                -xvf $db_destination \
                 --directory $(dirname $db_destination)
 
             >&2 echo "gtdb DB setup completed"

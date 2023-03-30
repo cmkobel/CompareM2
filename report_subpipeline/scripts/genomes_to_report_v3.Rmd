@@ -128,7 +128,7 @@ create_dt <- function(x){
 
 custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T) {
     
-    name = paste(batch_title, filename, sep = "-")
+    name = paste(batch_title, filename, sep = "_")
     
     write_tsv(x, paste0(results_directory, "/tables/", name, ".tsv")) # Save a copy on the harddisk for people without browsers.
     
