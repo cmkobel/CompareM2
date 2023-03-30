@@ -13,4 +13,6 @@ dependencies:
   - r-rmarkdown
   - r-phytools
   - r-ape
+  - r-gridextra
   - zip
+  

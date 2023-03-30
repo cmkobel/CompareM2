@@ -44,6 +44,48 @@ checkm2_presentable %>%
 
 ```
 
+```{r checkm2_plot_new, echo=FALSE, message=F, warning=F, error = T, fig.height = 4.8, fig.width = 10}
+
+# New better plot. 
+# checkm2_presentable  %>% 
+
+#     select(sample, Completeness, Contamination, `Completeness Model Used`) %>%
+#     pivot_longer(c(Completeness, Contamination))  %>% 
+
+#     ggplot(aes(value, sample)) + 
+#     geom_col() +
+#     facet_wrap(~name)
+    #scale_x_reverse()
+
+
+left = checkm2_presentable  %>% 
+    select(sample, Completeness, Contamination, `Completeness Model Used`) %>%
+    ggplot(aes(Contamination, sample)) + 
+    geom_col(fill = "yellow") +
+    scale_x_reverse()
+
+right = checkm2_presentable  %>% 
+    select(sample, Completeness, Contamination, `Completeness Model Used`) %>%
+    ggplot(aes(Completeness, sample)) + 
+    geom_col(fill = "blue") +
+    scale_x_reverse()
+
+
+grid.draw(ggplotGrob(left))
+md_inset <- viewport(x = 0, y = 0, 
+                     just = c("left", "bottom"),
+                     width = 0.35, height = 0.35)
+pushViewport(md_inset)
+grid.draw(rectGrob(gp = gpar(alpha = 0.5, col = "white")))
+grid.draw(rectGrob(gp = gpar(fill = NA, col = "black")))
+grid.draw(ggplotGrob(right))
+popViewport()
+
+
+```
+
+
+
 
 
 *Fig. `r figno()`: [Checkm2](https://github.com/chklovski/CheckM2) results. Axes are in percents. Colored by coding density. Samples in the lower right corner are relatively better.*

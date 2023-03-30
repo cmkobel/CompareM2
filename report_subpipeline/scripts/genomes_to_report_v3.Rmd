@@ -159,7 +159,6 @@ paste_ = function(x, ...) {
 
 ```
 
-# Overview
 
 ## Samples
 
@@ -268,7 +267,7 @@ section_definition_table %>%
 
 ---
 
-# Quality Control
+
 
 ```{r child = paste0(report_scripts, "section_assembly_stats.rmd"), eval = render$assembly_stats}
 ```
@@ -284,10 +283,6 @@ section_definition_table %>%
 
 ```{r child = paste0(report_scripts, "section_kraken2.rmd"), eval = render$kraken2}
 ```
-
-
-
-# Comparisons
 
 ```{r child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}
 ```

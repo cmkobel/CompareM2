@@ -454,6 +454,8 @@ rule prokka_individual:
         head --lines $(($gff_fasta_start-1)) {output.gff} \
         > {output.gff_nofasta}
 
+        {void_report}
+
     """
 
 
