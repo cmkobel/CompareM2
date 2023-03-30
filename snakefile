@@ -134,6 +134,7 @@ rule all:
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv", \
+        "{results_directory}/roary/summary_statistics.txt", \
         "{results_directory}/mashtree/mashtree.newick"], \
         results_directory = results_directory, sample = df["sample"]) 
 
@@ -409,6 +410,7 @@ rule sequence_lengths_individual:
         runtime = "01:00:00",
         mem_mb = 128,
     conda: "conda_definitions/seqkit.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_individual.{sample}.tsv"
     shell: """
 
         # TODO: Consider whether seqkit stats might be faster?
@@ -485,10 +487,10 @@ rule kraken2_individual:
            base_variable = base_variable,
     container: "docker://staphb/kraken2"
     conda: "conda_definitions/kraken2.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
     threads: 2
     resources:
-        mem_mb = 50176,
-    benchmark: "{results_directory}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
+        mem_mb = 64000,
     shell: """
 
         db_path="{params.base_variable}/databases/kraken2"
@@ -525,6 +527,7 @@ rule busco_individual:
         #results_directory = results_directory,
         out_dir = "{results_directory}/samples/{sample}/busco",
     conda: "conda_definitions/busco.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.busco_individual.{sample}.tsv"
     threads: 1 # Because run_sepp hangs for a long time, not doing anything, I'd rather have more processes started on my small CPU.
     resources:
         mem_mb = 8192,
@@ -646,6 +649,7 @@ rule checkm2:
     output:
         table = touch("{results_directory}/checkm2/quality_report.tsv"),
     conda: "conda_definitions/checkm2_conda.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.checkm2.tsv"
     threads: 8
     resources:
         mem_mb = 16000,
@@ -681,6 +685,7 @@ rule roary:
         blastp_identity = int(config['roary_blastp_identity']), # = 95 # For clustering genes
         core_perc = 99,  # Definition of the core genome
     #conda: "envs/roary.yml"
+    benchmark: "{results_directory}/benchmarks/benchmark.roary.tsv"
     threads: 16
     #retries: 2
     resources:
@@ -688,7 +693,7 @@ rule roary:
         mem_mb = get_mem_roary,
         runtime = "23:59:59", # Well, fuck me if this doesn't work on PBS
     container: "docker://sangerpathogens/roary"
-    #conda: "conda_definitions/roary.yaml" 
+    conda: "conda_definitions/roary_new.yaml" 
     shell: """
     
         # Since I reinstalled conda, I've had problems with "Can't locate Bio/Roary/CommandLine/Roary.pm in INC". Below is a hacky fix
@@ -720,6 +725,7 @@ rule snp_dists:
         aln = "{results_directory}/roary/core_gene_alignment.aln",
     output: "{results_directory}/snp-dists/snp-dists.tsv"
     conda: "conda_definitions/snp-dists.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.snp_dists.tsv"
     container: "docker://staphb/snp-dists"
     shell: """
 
@@ -738,6 +744,7 @@ rule assembly_stats:
     output: "{results_directory}/assembly-stats/assembly-stats.tsv"
     container: "docker://sangerpathogens/assembly-stats"
     conda: "conda_definitions/assembly-stats.yaml"
+    benchmark: "{results_directory}/benchmarks/assembly_stats.tsv"
     shell: """
         
         assembly-stats -t {input.fasta} > {output}
@@ -821,8 +828,8 @@ rule abricate:
 
     container: "docker://staphb/abricate"
     conda: "conda_definitions/abricate.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.abricate.tsv"
     shell: """
-
 
         # TODO: update these databases
 
@@ -861,6 +868,7 @@ rule mlst:
         list_ = "{results_directory}/mlst/mlst_schemes.txt",
     container: "docker://staphb/mlst"
     conda: "conda_definitions/mlst.yaml"
+    benchmark: "{results_directory}/benchmarks/mlst.tsv"
     shell: """
 
         mlst {params.mlst_scheme_interpreted} {input.fasta} > {output}
@@ -882,6 +890,7 @@ rule mashtree:
         dist = "{results_directory}/mashtree/mash_dist.tsv",
     container: "docker://staphb/mashtree"
     conda: "conda_definitions/mashtree.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.mashtree.tsv"
     threads: 4
     resources:
         mem_mb = 16000,
@@ -910,6 +919,7 @@ rule fasttree:
     output: "{results_directory}/fasttree/fasttree.newick"
     container: "docker://staphb/fasttree"
     conda: "conda_definitions/fasttree.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.fasttree.tsv"
     threads: 4
     #retries: 1
     resources:
@@ -930,14 +940,14 @@ rule fasttree:
     """
 
 
-rule fetch_report_template:
-    output: "{results_directory}/rmarkdown_template.rmd"
-    shell: """
+# rule fetch_report_template:
+#     output: "{results_directory}/rmarkdown_template.rmd"
+#     shell: """
 
-        cp $ASSCOM2_BASE/scripts/genomes_to_report_v2.Rmd {output}
+#         cp $ASSCOM2_BASE/scripts/genomes_to_report_v2.Rmd {output}
 
-        {void_report}
-    """
+#         {void_report}
+#     """
 
 
 
@@ -963,7 +973,6 @@ rule report:
         now = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         with open(f"{results_directory}/.asscom2_void_report.flag", "a") as void_report_file:
             void_report_file.write(f"ss_{now}\n")
-
 
 
 # Call the report subpipeline
