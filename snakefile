@@ -130,11 +130,11 @@ rule all:
         "{results_directory}/metadata.tsv", \
         "{results_directory}/.install_report_environment_aot.flag", \
         "{results_directory}/assembly-stats/assembly-stats.tsv", \
-        "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"], \
+        "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv", \
-        "{results_directory}/mashtree/mashtree.newick", \
+        "{results_directory}/mashtree/mashtree.newick"], \
         results_directory = results_directory, sample = df["sample"]) 
 
         # temporary disabled

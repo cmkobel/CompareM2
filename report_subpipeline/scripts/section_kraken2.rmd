@@ -61,7 +61,7 @@ metadata_translate %>%
 ```
 
 
-*Table `r tableno()`: Kraken2 results. For each sample, only the best hit is shown. Taxonomical identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2). The percentages indicate the number of fragments that are covered by the respective clade.
+*Table `r tableno()`: Kraken2 results. For each sample, only the best hit is shown. Taxonomical identification is provided by [Kraken 2](https://github.com/DerrickWood/kraken2/wiki/About-Kraken-2). The percentages indicate the number of fragments that are covered by the respective clade.*
 
 
 
