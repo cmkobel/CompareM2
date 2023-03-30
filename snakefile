@@ -129,19 +129,20 @@ rule all:
     input: expand([\
         "{results_directory}/metadata.tsv", \
         "{results_directory}/.install_report_environment_aot.flag", \
-        "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/assembly-stats/assembly-stats.tsv", \
-        "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
-        "{results_directory}/roary/summary_statistics.txt", \
-        "{results_directory}/abricate/card_detailed.tsv", \
-        "{results_directory}/mashtree/mashtree.newick", \
-        "{results_directory}/mlst/mlst.tsv", \
-        "{results_directory}/fasttree/fasttree.newick", \
-        "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv", \
-        "{results_directory}/snp-dists/snp-dists.tsv", \
         "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"], \
+        "{results_directory}/checkm2/quality_report.tsv", \
+        "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
+        "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv", \
+        "{results_directory}/mashtree/mashtree.newick", \
         results_directory = results_directory, sample = df["sample"]) 
 
+        # temporary disabled
+        #"{results_directory}/roary/summary_statistics.txt", \
+        #"{results_directory}/abricate/card_detailed.tsv", \
+        #"{results_directory}/mlst/mlst.tsv", \
+        #"{results_directory}/fasttree/fasttree.newick", \
+        #"{results_directory}/snp-dists/snp-dists.tsv", \
 
 
 # Copy the input file to its new home
@@ -486,7 +487,7 @@ rule kraken2_individual:
     conda: "conda_definitions/kraken2.yaml"
     threads: 2
     resources:
-        mem_mb = 16384,
+        mem_mb = 50176,
     benchmark: "{results_directory}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
     shell: """
 
