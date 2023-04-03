@@ -132,12 +132,13 @@ rule all:
         "{results_directory}/assembly-stats/assembly-stats.tsv", \
         "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
         "{results_directory}/checkm2/quality_report.tsv", \
-        "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
+        "{results_directory}/kraken2/kraken2_report.tsv", \
         "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv", \
         "{results_directory}/roary/summary_statistics.txt", \
         "{results_directory}/mashtree/mashtree.newick"], \
         results_directory = results_directory, sample = df["sample"]) 
 
+        #"{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         # temporary disabled
         #"{results_directory}/roary/summary_statistics.txt", \
         #"{results_directory}/abricate/card_detailed.tsv", \
@@ -297,7 +298,7 @@ rule kraken2_download:
         
         ## Shortcuts. Select no bigger than the size of your RAM
     
-        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # Standard 49GB
+        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # Standard 49GB
         #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_08gb_20230314.tar.gz" # Standard  8GB
         #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_16gb_20230314.tar.gz" # Standard 16GB
         
@@ -512,6 +513,70 @@ rule kraken2_individual:
 
         # Argument on confidence parameter https://www.biostars.org/p/402619/
 
+
+    """
+
+# I see that much time is spent just reading the database from disk. It would be much more efficient to just read the database once, and then iterate through each sample. This can be accomplished be catting all files together.
+rule kraken2_all:
+    input: 
+        #assembly = "{results_directory}/samples/{sample}/{sample}.fa",
+        #database = expand("{base_variable}/databases/kraken2/hash.k2d", base_variable = base_variable),
+        metadata = "{results_directory}/metadata.tsv",
+        fasta = df["input_file_fasta"].tolist(),
+        database = expand("{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag", base_variable = base_variable),
+    output: 
+        #report = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv",
+        #full = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_full.tsv",
+        report = "{results_directory}/kraken2/kraken2_report.tsv",
+        full = "{results_directory}/kraken2/kraken2_full.tsv",
+        
+    params: 
+        #asscom2_kraken2_db = config["asscom2_kraken2_db"],
+        temporary_concatenation = "{results_directory}/kraken2/temporary_concatenation.fa",
+        base_variable = base_variable,
+
+    container: "docker://staphb/kraken2"
+    conda: "conda_definitions/kraken2.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.kraken2_all.tsv"
+    threads: 8
+    resources:
+        mem_mb = 64000,
+    shell: """
+
+        db_path="{params.base_variable}/databases/kraken2"
+        echo using kraken2 database $db_path
+
+
+        # Reset concatenation file
+        rm {params.temporary_concatenation} || echo no file ...
+
+        # Concatenate assemblies with an &&&& separator
+        for fasta in {input.fasta} ; do
+            bn=$(basename $fasta)
+            echo "Catting  ${{bn}} ..."
+            sed "s/>.*/&\&\&\&\&\"$bn\"/" $fasta \
+            >> {params.temporary_concatenation}
+        done
+
+
+        head {params.temporary_concatenation}
+
+        # Run kraken2
+        # https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown
+        kraken2 \
+            --threads {threads} \
+            --db $db_path \
+            --confidence 0.1 \
+            --report {output.report} \
+            --report-minimizer-data \
+            {params.temporary_concatenation} \
+            > {output.full}
+
+        # Argument on confidence parameter https://www.biostars.org/p/402619/
+
+
+        # Clean up
+        rm {params.temporary_concatenation}
 
     """
 
