@@ -781,8 +781,6 @@ rule gtdbtk:
 
         # Create batchfile
         echo '''{params.batchfile_content}''' > {wildcards.results_directory}/gtdbtk/batchfile.tsv
-
-        gtdbtk classify_wf -h
         
         gtdbtk classify_wf \
             --skip_ani_screen \
