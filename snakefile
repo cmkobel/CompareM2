@@ -194,10 +194,10 @@ rule metadata:
 rule busco_download:
     output:
         #touch("{base_variable}/databases/busco/busco_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        database_representative = touch("{base_variable}/databases/busco/file_versions.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        #database_representative = touch("{base_variable}/databases/busco/file_versions.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        database_representative = touch("{base_variable}/databases/busco/ac2_busco_database_representative.flag") # Should point to the directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
     conda: "conda_definitions/busco.yaml"
     shell: """
-
         
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
         if [ -f "{output}" ]; then    
@@ -242,7 +242,8 @@ rule busco_download:
 rule checkm2_download:
     output:
         #flag = touch("{base_variable}/databases/checkm2/checkm2_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        database_representative = expand("{base_variable}/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd", base_variable = base_variable),
+        #database_representative = expand("{base_variable}/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd", base_variable = base_variable),
+        database_representative = expand("{base_variable}/databases/checkm2/ac2_checkm2_database_representative.flag", base_variable = base_variable), 
     params:
         download_path = expand("{base_variable}/databases/checkm2", base_variable = base_variable),
     conda: "conda_definitions/checkm2_conda.yaml"
@@ -280,7 +281,8 @@ rule checkm2_download:
 
 rule kraken2_download:
     output:
-        database_representative = touch("{base_variable}/databases/kraken2/hash.k2d") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        #database_representative = touch("{base_variable}/databases/kraken2/hash.k2d"), # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        database_representative = touch("{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag"),
     #params: 
         #asscom2_kraken_db = config['asscom2_kraken2_db'],
     conda: "conda_definitions/curl.yaml"
@@ -340,9 +342,8 @@ rule kraken2_download:
 
 rule gtdb_download:
     output:
-        database_representative = touch("{base_variable}/databases/gtdb/gtdb_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        #database_representative = touch("{base_variable}/databases/gtdb/release207_v2/taxonomy/gtdb_taxonomy.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-
+        #database_representative = touch("{base_variable}/databases/gtdb/gtdb_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        database_representative = touch("{base_variable}/databases/gtdb/ac2_gtdb_database_representative.flag")
     #params: 
         #asscom2_gtdb_db = config['asscom2_gtdb_db'],
     conda: "conda_definitions/curl.yaml"
@@ -478,7 +479,8 @@ rule prokka_individual:
 rule kraken2_individual:
     input: 
         assembly = "{results_directory}/samples/{sample}/{sample}.fa",
-        database = expand("{base_variable}/databases/kraken2/hash.k2d", base_variable = base_variable),
+        #database = expand("{base_variable}/databases/kraken2/hash.k2d", base_variable = base_variable),
+        database = expand("{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag", base_variable = base_variable),
     output: 
         report = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv",
         full = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_full.tsv",
@@ -516,8 +518,9 @@ rule kraken2_individual:
 
 rule busco_individual:
     input: 
-        #busco_download = expand("{base_variable}/databases/busco/busco_download_done.flag", base_variable = base_variable),
-        busco_download = expand("{base_variable}/databases/busco/file_versions.tsv", base_variable = base_variable),
+        metadata = "{results_directory}/metadata.tsv",
+        #busco_download = expand("{base_variable}/databases/busco/file_versions.tsv", base_variable = base_variable), # This is a bad idea, because it requires a complete reinstall if snakemake somehow removes the file, which is quite likely.
+        database_representative = expand("{base_variable}/databases/busco/ac2_busco_database_representative.flag", base_variable = base_variable),
         fasta = "{results_directory}/samples/{sample}/{sample}.fa",
     output: 
         flag = touch("{results_directory}/samples/{sample}/busco/busco_done.flag"),
@@ -644,7 +647,8 @@ rule checkm2:
     input:
         metadata = "{results_directory}/metadata.tsv",
         #checkm2_download = expand("{base_variable}/databases/checkm2/checkm2_download_done.flag", base_variable = base_variable), #expanding this variable shouldn't be necessary, but it is, because the variable is not present in the output.
-        database = expand("{base_variable}/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd", base_variable = base_variable),
+        #database = expand("{base_variable}/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd", base_variable = base_variable),
+        database = expand("{base_variable}/databases/checkm2/ac2_checkm2_database_representative.flag", base_variable = base_variable),
         fasta = df["input_file_fasta"].tolist()
     output:
         table = touch("{results_directory}/checkm2/quality_report.tsv"),
@@ -760,7 +764,9 @@ rule gtdbtk:
     input: 
         metadata = "{results_directory}/metadata.tsv",
         #db_flag = expand("{base_variable}/databases/gtdb/release207_v2/taxonomy/gtdb_taxonomy.tsv", base_variable = base_variable),
-        database_representative = expand("{base_variable}/databases/gtdb/gtdb_download_done.flag", base_variable = base_variable),
+        #database_representative = expand("{base_variable}/databases/gtdb/gtdb_download_done.flag", base_variable = base_variable),
+        #database_representative = expand("{base_variable}/databases/gtdb/gtdb_download_done.flag", base_variable = base_variable),
+        database_representative = expand("{base_variable}/databases/gtdb/ac2_gtdb_database_representative.flag", base_variable = base_variable),
         fasta = df["input_file_fasta"].tolist(),
     output: "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv"
     params:

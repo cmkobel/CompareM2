@@ -7,4 +7,8 @@ mlst_scheme: automatic
 #asscom2_kraken2_db: "/cluster/projects/nn9864k/shared/databases/k2_pluspf_20210127"
 #gtdbtk_data_path: "/cluster/projects/nn9864k/shared/databases/release207_v2"
 
-
+# TODO: Find a way of having {base_variable} or some other word to point to the base directory.
+database_absolute_path_busco: "{base_variable}/databases/busco" # The directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
+database_absolute_path_gtdb: "{base_variable}/databases/gtdb" # The directory where the following files reside: "release207_v2" (or newer versions)
+database_absolute_path_checkm2: "{base_variable}/databases/checkm2" # The directory where the following files reside: "CheckM2_database/"
+database_absolute_path_kraken2: "{base_variable}/databases/kraken2" # The directory where the following files reside: hash.k2d"
