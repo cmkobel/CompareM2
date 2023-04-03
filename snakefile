@@ -336,7 +336,7 @@ rule kraken2_download:
     """
 
 
-gtdbtk
+
 
 rule gtdb_download:
     output:
@@ -760,7 +760,7 @@ rule gtdbtk:
     input: 
         metadata = "{results_directory}/metadata.tsv",
         #db_flag = expand("{base_variable}/databases/gtdb/release207_v2/taxonomy/gtdb_taxonomy.tsv", base_variable = base_variable),
-        db_flag = expand("{base_variable}/databases/gtdb/gtdb_download_done.flag", base_variable = base_variable),
+        database_representative = expand("{base_variable}/databases/gtdb/gtdb_download_done.flag", base_variable = base_variable),
         fasta = df["input_file_fasta"].tolist(),
     output: "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv"
     params:
@@ -777,7 +777,7 @@ rule gtdbtk:
     benchmark: "{results_directory}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
 
-        export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release207_v2" # Should be defined from 
+        export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release207_v2" # Should be defined from config file, and not be hardwired.
 
         # Create batchfile
         echo '''{params.batchfile_content}''' > {wildcards.results_directory}/gtdbtk/batchfile.tsv
