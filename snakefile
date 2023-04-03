@@ -336,12 +336,12 @@ rule kraken2_download:
     """
 
 
-
+gtdbtk
 
 rule gtdb_download:
     output:
-        #flag = touch("{base_variable}/databases/gtdb/gtdb_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        database_representative = touch("{base_variable}/databases/gtdb/release207_v2/taxonomy/gtdb_taxonomy.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        database_representative = touch("{base_variable}/databases/gtdb/gtdb_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
+        #database_representative = touch("{base_variable}/databases/gtdb/release207_v2/taxonomy/gtdb_taxonomy.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
 
     #params: 
         #asscom2_gtdb_db = config['asscom2_gtdb_db'],
@@ -378,7 +378,7 @@ rule gtdb_download:
 
             >&2 echo "Decompressing ..."
             tar \
-                -xvf $db_destination \
+                -xf $db_destination \
                 --directory $(dirname $db_destination)
 
             >&2 echo "gtdb DB setup completed"
@@ -759,7 +759,8 @@ def get_mem_gtdbtk(wildcards, attempt):
 rule gtdbtk:
     input: 
         metadata = "{results_directory}/metadata.tsv",
-        db_flag = expand("{base_variable}/databases/gtdb/release207_v2/taxonomy/gtdb_taxonomy.tsv", base_variable = base_variable),
+        #db_flag = expand("{base_variable}/databases/gtdb/release207_v2/taxonomy/gtdb_taxonomy.tsv", base_variable = base_variable),
+        db_flag = expand("{base_variable}/databases/gtdb/gtdb_download_done.flag", base_variable = base_variable),
         fasta = df["input_file_fasta"].tolist(),
     output: "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv"
     params:

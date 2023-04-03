@@ -220,18 +220,22 @@ section_definition_table = tribble(
     ~section, ~expectation, ~glob,
     "assembly_stats",    1, Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv")),
     "sequence_lengths",  N, Sys.glob(paste0(results_directory, "/samples/*/sequence_lengths/*.tsv")),
-    "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
     "busco",             N, Sys.glob(paste0(results_directory, "/samples/*/busco/short_summary_extract.tsv")),
     "checkm2",           1, Sys.glob(paste0(results_directory, "/checkm2/quality_report.tsv")),
     "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
     "kraken2",           N, Sys.glob(paste0(results_directory, "/samples/*/kraken2/*kraken2_report.tsv")),
-    "roary",             1, Sys.glob(paste0(results_directory, "/samples/*/roray/*.txt")),
+    "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
+    #"roary_summary",             1, Sys.glob(paste0(results_directory, "/roary/summary_statistics.txt")),
+    "roary",             1, Sys.glob(paste0(results_directory, "/roary/gene_presence_absence.Rtab")),
+
     "mashtree",          1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick")),
-
-
     ) %>%
     #group_by(section) %>%
     mutate(n_files = lengths(glob))
+
+
+
+
 
 
 # This list is used out in the individual sections to access the correct files.
@@ -263,7 +267,7 @@ section_definition_table %>%
 ```
 
 
-*Table `r tableno()`: Overview of sections that are rendered in this report. "n / expected" shows the number of analysis files versus how many are expected to be present. When any files are present for an section, the section will be rendered.*
+*Table `r tableno()`: Overview of sections that are rendered in this report. "n / expected" shows the number of analysis files versus how many are expected to be present. Sections are only rendered if relevant files exist.*
 
 
 

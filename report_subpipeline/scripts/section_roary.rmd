@@ -1,0 +1,115 @@
+## Core genome
+
+```{r roary, echo = F, message = F, warning = F, error = T}
+
+
+
+glob_list$roary
+
+
+plot_df = read_tsv(glob_list$roary) %>% 
+    #select(-Gene) %>%
+    mutate(shared_by = rowSums(across(where(is.numeric)))) %>%
+    #mutate(order = 1:(dim(.)[1])) %>% View
+    mutate(genes = 1:length(Gene)) %>% 
+    select(-Gene) %>% 
+
+    pivot_longer(c(everything(), -genes, -shared_by), names_to = "sample", values_to = "present") %>% 
+    filter(present >= 1)  %>%
+    #glimpse()
+    mutate(genes = fct_reorder2(factor(genes), shared_by, desc(sample)))
+
+#plot_df$shared_by  %>% table()
+
+plot_df %>%
+    ggplot(aes(genes, sample, fill = factor(shared_by))) +
+    geom_tile() +
+    #labs(fill = "shared between\nsamples") + 
+    labs(fill = "number of\nsamples") +
+    
+    theme_classic()
+
+```
+
+*Table `r tableno()`: Overview of the number of different gene types. Called using the [Prokka](https://github.com/tseemann/prokka) genome annotator.*
+
+---
+
+
+
+
+
+
+
+
+
+###### 
+
+
+## Pan and Core genome
+
+[Roary](https://sanger-pathogens.github.io/Roary/) the pan genome pipeline computes the number of orthologous genes in a number of core/pan spectrum partitions.
+
+The core genome denotes the genes which are conserved between all samples (intersection), whereas the pan genome is the union of all genes across all samples.
+
+```{r echo=FALSE, message=F, warning=F}
+try({
+    roary_summary_file = "results_ac2/roary/summary_statistics.txt"
+    if (file.exists(roary_summary_file)) {
+        paste("yes")
+        read_tsv(roary_summary_file, col_names = c("ortholog class", "definition", "count")) %>% 
+            #mutate(type = paste(partition, definition)) %>% 
+            
+            #select(type, count) %>% 
+            datatable(class = "stripe", rownames = F,  options = list(dom = 't', ordering=F), width = 400)
+    } else {
+        paste("Warning: The file", roary_summary_file, "is not accessible.")
+    }
+})
+```
+
+*Table `r tableno()`: Distribution of genes in different core/pan spectrum partitions.*
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE, message=F, warning=F}
+try({
+    # This chunk is needed for setting the size of the roary gpa plot
+    fig_height = max(1.6,
+                     (metadata_df$sample %>% length) *0.2)
+    
+    knitr::opts_chunk$set(fig.height = fig_height,
+                          fig.width = 9)
+})
+```
+
+```{r echo = F, message = F, warning = F}
+try({
+    roary_gpa_file = "results_ac2/roary/gene_presence_absence.Rtab"
+    if (file.exists(roary_gpa_file)) {
+        paste("yes")
+        roary_gpa_df = read_tsv(roary_gpa_file)
+        
+        roary_gpa_df %>% 
+            #select(-Gene) %>% 
+            mutate(sum = rowSums(across(where(is.numeric)))) %>%
+            #mutate(order = 1:(dim(.)[1])) %>% View
+            mutate(genes = 1:length(Gene)) %>% 
+            select(-Gene) %>% 
+        
+            pivot_longer(c(everything(), -genes, -sum), names_to = "sample", values_to = "present") %>% 
+            filter(present >= 1) %>% 
+            #View
+            mutate(sample = fct_reorder(sample, desc(sample))) %>% 
+            ggplot(aes(genes, sample, fill = factor(sum))) + geom_tile() +
+            #labs(fill = "shared between\nsamples") + 
+            labs(fill = "number of\nsamples") +
+            
+            theme_classic() 
+    } else {
+        paste("Warning: The file", roary_gpa_file, "is not accessible.")
+    }
+})
+```
+
+*Fig. `r figno()`: Distribution of genes in the different samples. Each vertical line represents a gene, and all lines have the same width regardless of the size of the gene it represents. The genes are ordered and colored by the number of samples sharing them.*
