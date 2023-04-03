@@ -783,7 +783,6 @@ rule gtdbtk:
         echo '''{params.batchfile_content}''' > {wildcards.results_directory}/gtdbtk/batchfile.tsv
         
         gtdbtk classify_wf \
-            --skip_ani_screen \
             --batchfile {wildcards.results_directory}/gtdbtk/batchfile.tsv \
             --out_dir {params.out_dir} \
             --cpus {threads} \
