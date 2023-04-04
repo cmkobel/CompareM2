@@ -17,6 +17,10 @@ editor_options:
 table {
   white-space: nowrap; /* Do not wrap table cell contents. */
 }
+
+p {
+    color: black;
+}
 </style>
 
 
