@@ -80,7 +80,7 @@ if df.shape[0] == 0:
 
 df = df[~df["input_file"].str.startswith(".", na = False)] # Remove hidden files
 df['sample_raw'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()] # Extract everything before the extension dot.
-df['sample'] = df['sample_raw'].str.replace(' ','_').str.replace(',','_') # Convert spaces and commas to underscore 
+df['sample'] = df['sample_raw'].str.replace(' ','_').str.replace(',','_').str.replace('"','_').str.replace('\'','_') # Convert punctuation marks to underscores: Makes everything easier.
 df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extract extension
 df['input_file_fasta'] = results_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fa" # This is where the input file is copied to in the first snakemake rule.
 
@@ -132,13 +132,13 @@ rule all:
         "{results_directory}/assembly-stats/assembly-stats.tsv", \
         "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
         "{results_directory}/checkm2/quality_report.tsv", \
-        "{results_directory}/kraken2/kraken2_report.tsv", \
-        "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv", \
+        "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
+        "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
         "{results_directory}/roary/summary_statistics.txt", \
         "{results_directory}/mashtree/mashtree.newick"], \
         results_directory = results_directory, sample = df["sample"]) 
 
-        #"{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
+        
         # temporary disabled
         #"{results_directory}/roary/summary_statistics.txt", \
         #"{results_directory}/abricate/card_detailed.tsv", \
@@ -181,7 +181,6 @@ rule metadata:
     shell: """
 
         echo '''{params.dataframe}''' > {output}
-
 
         {void_report}
     """
@@ -298,7 +297,7 @@ rule kraken2_download:
         
         ## Shortcuts. Select no bigger than the size of your RAM
     
-        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # Standard 49GB
+        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # Standard 49GB
         #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_08gb_20230314.tar.gz" # Standard  8GB
         #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_16gb_20230314.tar.gz" # Standard 16GB
         
@@ -465,18 +464,64 @@ rule prokka_individual:
 
 
 
+# I see that much time is spent just reading the database from disk. It is much more efficient to just read the database once, and then iterate through each sample. This can be accomplished be catting all files together, keeping track of the sample names.
+# rule kraken2:
+#     input: 
+#         metadata = "{results_directory}/metadata.tsv",
+#         fasta = df["input_file_fasta"].tolist(),
+#         database = expand("{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag", base_variable = base_variable),
+#     output: 
+#         report = "{results_directory}/kraken2/kraken2_report.tsv",
+#         full = "{results_directory}/kraken2/kraken2_full.tsv",
+#     params: 
+#         #asscom2_kraken2_db = config["asscom2_kraken2_db"],
+#         temporary_concatenation = "{results_directory}/kraken2/temporary_concatenation.fa",
+#         base_variable = base_variable,
+#     container: "docker://staphb/kraken2"
+#     conda: "conda_definitions/kraken2.yaml"
+#     benchmark: "{results_directory}/benchmarks/benchmark.kraken2_all.tsv"
+#     threads: 8
+#     resources:
+#         mem_mb = 64000,
+#     shell: """
+
+#         db_path="{params.base_variable}/databases/kraken2"
+#         echo using kraken2 database $db_path
+
+#         # Purge old concatenation file
+#         test -f {params.temporary_concatenation} && rm {params.temporary_concatenation}
+
+#         # Concatenate assemblies with an &&&& separator in the header
+#         for fasta in {input.fasta:q}; do
+#             bn=$(basename $fasta)
+#             echo "Catting ${{bn}} ..."
+
+#             sed "s/>.*/&\&\&\&\&\"$bn\"/" $fasta \
+#             >> {params.temporary_concatenation}
+
+#         done
 
 
+#         # Run kraken2
+#         # https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown
+#         kraken2 \
+#             --threads {threads} \
+#             --db $db_path \
+#             --report {output.report} \
+#             --use-mpa-style \
+#             --use-names \
+#             {params.temporary_concatenation} \
+#             > {output.full}
+
+#         # Argument on confidence parameter https://www.biostars.org/p/402619/ --confidence 0.1 \
 
 
+#         # Clean up
+#         rm {params.temporary_concatenation}
 
+#         {void_report}
+#     """
 
-
-
-# Kraken is for reads, so why are we using it here without shredding the reads, or at least doing some proportion analysis.
-
-
-# It looks like loading the database takes as long as analysing  the sample, so it might be faster (and more cpu-hour efficient) to just run all samples in the same job. Unfortunately, it doesn't seem to be possible.
 rule kraken2_individual:
     input: 
         assembly = "{results_directory}/samples/{sample}/{sample}.fa",
@@ -505,7 +550,7 @@ rule kraken2_individual:
         kraken2 \
             --threads {threads} \
             --db $db_path \
-            --confidence 0.15 \
+            --confidence 0.1 \
             --report {output.report} \
             --report-minimizer-data \
             {input.assembly} \
@@ -515,71 +560,6 @@ rule kraken2_individual:
 
 
     """
-
-# I see that much time is spent just reading the database from disk. It would be much more efficient to just read the database once, and then iterate through each sample. This can be accomplished be catting all files together.
-rule kraken2_all:
-    input: 
-        #assembly = "{results_directory}/samples/{sample}/{sample}.fa",
-        #database = expand("{base_variable}/databases/kraken2/hash.k2d", base_variable = base_variable),
-        metadata = "{results_directory}/metadata.tsv",
-        fasta = df["input_file_fasta"].tolist(),
-        database = expand("{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag", base_variable = base_variable),
-    output: 
-        #report = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv",
-        #full = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_full.tsv",
-        report = "{results_directory}/kraken2/kraken2_report.tsv",
-        full = "{results_directory}/kraken2/kraken2_full.tsv",
-        
-    params: 
-        #asscom2_kraken2_db = config["asscom2_kraken2_db"],
-        temporary_concatenation = "{results_directory}/kraken2/temporary_concatenation.fa",
-        base_variable = base_variable,
-
-    container: "docker://staphb/kraken2"
-    conda: "conda_definitions/kraken2.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.kraken2_all.tsv"
-    threads: 8
-    resources:
-        mem_mb = 64000,
-    shell: """
-
-        db_path="{params.base_variable}/databases/kraken2"
-        echo using kraken2 database $db_path
-
-
-        # Reset concatenation file
-        rm {params.temporary_concatenation} || echo no file ...
-
-        # Concatenate assemblies with an &&&& separator
-        for fasta in {input.fasta} ; do
-            bn=$(basename $fasta)
-            echo "Catting  ${{bn}} ..."
-            sed "s/>.*/&\&\&\&\&\"$bn\"/" $fasta \
-            >> {params.temporary_concatenation}
-        done
-
-
-        head {params.temporary_concatenation}
-
-        # Run kraken2
-        # https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown
-        kraken2 \
-            --threads {threads} \
-            --db $db_path \
-            --confidence 0.1 \
-            --report {output.report} \
-            --report-minimizer-data \
-            {params.temporary_concatenation} \
-            > {output.full}
-
-        # Argument on confidence parameter https://www.biostars.org/p/402619/
-
-
-        # Clean up
-        rm {params.temporary_concatenation}
-
-    """
-
 
 rule busco_individual:
     input: 
@@ -655,30 +635,25 @@ rule busco_individual:
 rule prokka:
     input:
         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-        gff = expand(
-            "{results_directory}/samples/{sample}/prokka/{sample}.gff",
-            results_directory = results_directory,
-            sample = df["sample"]
-        ),
+        gff = expand("{results_directory}/samples/{sample}/prokka/{sample}.gff", results_directory = results_directory, sample = df["sample"]),
 
 
 rule busco:
     input: 
         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-        tables = expand("{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", results_directory = results_directory, sample = df["sample"])
+        tables = expand("{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", results_directory = results_directory, sample = df["sample"]),
 
 
-#echo -e "sample\tmatch_percent\tclade_mappings\tlevel_mappings\tlevel\ttaxonomic_id\tclade" \
 rule kraken2:
     input: 
         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-        reports = expand("{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", results_directory = results_directory, sample = df["sample"])
+        reports = expand("{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", results_directory = results_directory, sample = df["sample"]),
 
 
 rule sequence_lengths:
     input: 
         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-        lengths = expand("{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", results_directory = results_directory, sample = df["sample"])
+        lengths = expand("{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", results_directory = results_directory, sample = df["sample"]),
 
 
 
@@ -760,9 +735,9 @@ rule roary:
     resources:
         #mem_mb = 32768,
         mem_mb = get_mem_roary,
-        runtime = "23:59:59", # Well, fuck me if this doesn't work on PBS
+        runtime = "23:59:59",
     container: "docker://sangerpathogens/roary"
-    conda: "conda_definitions/roary_conda_config--set_channel_priority_flexible.yaml" 
+    conda: "conda_definitions/roary_see-comments-in-this-file.yaml"
     shell: """
     
         # Since I reinstalled conda, I've had problems with "Can't locate Bio/Roary/CommandLine/Roary.pm in INC". Below is a hacky fix
@@ -833,7 +808,7 @@ rule gtdbtk:
         #database_representative = expand("{base_variable}/databases/gtdb/gtdb_download_done.flag", base_variable = base_variable),
         database_representative = expand("{base_variable}/databases/gtdb/ac2_gtdb_database_representative.flag", base_variable = base_variable),
         fasta = df["input_file_fasta"].tolist(),
-    output: "{results_directory}/gtdbtk/gtdbtk.bac.summary.tsv"
+    output: "{results_directory}/gtdbtk/gtdbtk.summary.tsv"
     params:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{results_directory}/gtdbtk/",
@@ -844,6 +819,7 @@ rule gtdbtk:
     resources:
         #mem_mb = 150000, # Last time I remember, it used 130000
         mem_mb = get_mem_gtdbtk,
+        runtime = "2-00:00:00"
     conda: "conda_definitions/gtdbtk.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """

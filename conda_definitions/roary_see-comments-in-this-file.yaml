@@ -10,7 +10,7 @@ dependencies:
 
 
 # Warning: This only works if you set the channel priority to flexible. Not strict.
-# conda config --set channel_priority flexible
+# conda config --set channel_priority false
 # 
 # Install roary
 #

@@ -1,4 +1,4 @@
-name: r
+name: r-markdown
 channels:
   - conda-forge
   - bioconda
