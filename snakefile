@@ -122,7 +122,7 @@ void_report = f"date -Iseconds >> {results_directory}/.asscom2_void_report.flag"
 
 
 
-localrules: metadata, checkm2_download, kraken2_download, busco_download, gtdb_download, report
+localrules: metadata, checkm2_download, kraken2_download, busco_download, gtdb_download, report, install_report_environment_aot
 
 # --- Collect all targets. ------------------------------------------
 rule all:
@@ -895,7 +895,6 @@ rule abricate:
 
         abricate --db vfdb {input.fasta} > {output.vfdb_detailed}
         abricate --summary {output.vfdb_detailed} > {output.vfdb_sum}
-
 
         {void_report}
     """

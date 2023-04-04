@@ -30,11 +30,13 @@ table {
 library(tidyverse)
 library(DT)
 library(ape)
+library(gridExtra)
+
+# I failed trying looking for a package that would robustly midpoint root the tree.
 #library(prettydoc)
 #library(phytools)
 #library(phangorn)
 
-library(gridExtra)
 
 
 ```
