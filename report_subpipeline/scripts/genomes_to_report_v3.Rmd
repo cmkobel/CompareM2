@@ -130,7 +130,7 @@ create_dt <- function(x){
     )
 }
 
-custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T) {
+custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, width = NULL) {
     
     name = paste(batch_title, filename, sep = "_")
     
@@ -152,7 +152,9 @@ custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T) {
             )
         ),
         rownames = F,
+        width = width,
         extensions = 'Buttons',
+
     )
 }
 
@@ -189,8 +191,8 @@ metadata_translate = metadata_df %>%
 # Present the metadata in the report
 metadata_df %>%
     select(input_file, sample) %>% 
-    datatable() # This one is not downloadable
-    #custom_dt()
+    #datatable() # This one is not downloadable
+    custom_dt()
 
 
     
@@ -259,7 +261,7 @@ section_definition_table %>%
         `n / expected` = paste0(n_files, " / ", expectation)
     ) %>%
     select(section, `n / expected`, render) %>%
-    custom_dt("sections", dom = "t", ordering = F)
+    custom_dt("sections", dom = "t", ordering = F, width = 500)
 
 # Define a variable that can be used to query whether each section of the report should be rendered
 

@@ -1,37 +1,82 @@
-## Core genome
-
-```{r roary, echo = F, message = F, warning = F, error = T}
 
 
 
-glob_list$roary
+## Pan and Core genome
+
+[Roary](https://sanger-pathogens.github.io/Roary/) the pan genome pipeline computes the number of orthologous genes in a number of core/pan spectrum partitions.
+
+The core genome denotes the genes which are conserved between all samples (intersection), whereas the pan genome is the union of all genes across all samples.
+
+```{r roary-table, echo=FALSE, message=F, warning=F, error=T}
+
+roary_summary_file = paste0(results_directory, "/roary/summary_statistics.txt")
+
+
+if (file.exists(roary_summary_file)) {
+
+read_tsv(roary_summary_file, col_names = c("partition", "definition", "count")) %>% 
+
+    custom_dt(dom = "t", ordering = F, width = 500)
+
+}
+
+```
+
+*Table `r tableno()`: Distribution of genes in different core/pan spectrum partitions.*
+
+
+
+```{r roary-matrix, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
+
+
+
+
 
 
 plot_df = read_tsv(glob_list$roary) %>% 
     #select(-Gene) %>%
     mutate(shared_by = rowSums(across(where(is.numeric)))) %>%
     #mutate(order = 1:(dim(.)[1])) %>% View
-    mutate(genes = 1:length(Gene)) %>% 
-    select(-Gene) %>% 
+    #mutate(gene_ = 1:n()) %>% 
+    #select(-Gene) %>% 
 
-    pivot_longer(c(everything(), -genes, -shared_by), names_to = "sample", values_to = "present") %>% 
+    pivot_longer(c(everything(), -Gene, -shared_by), names_to = "sample", values_to = "present") %>% 
     filter(present >= 1)  %>%
     #glimpse()
-    mutate(genes = fct_reorder2(factor(genes), shared_by, desc(sample)))
+    #mutate(gene_ = fct_reorder2(factor(gene_), shared_by)) %>% 
+    drop_na() %>% 
 
-#plot_df$shared_by  %>% table()
+    # Two options
+    #arrange(shared_by, desc(sample)) %>% 
+    arrange(sample, shared_by) %>% 
+
+    mutate(gene_order = 1:n()) %>% 
+    mutate(gene_num = Gene %>% factor %>% as.integer()) %>% 
+    identity()
+
+
 
 plot_df %>%
-    ggplot(aes(genes, sample, fill = factor(shared_by))) +
+    ggplot(aes(reorder(Gene, gene_order), reorder(sample, desc(sample)), fill = factor(shared_by))) +
     geom_tile() +
     #labs(fill = "shared between\nsamples") + 
-    labs(fill = "number of\nsamples") +
     
-    theme_classic()
+    
+
+    theme_classic() +
+    theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+    ) +
+    labs(
+        x = "gene",
+        y = "sample",
+        fill = "number of\nsamples",
+    )
 
 ```
+*Fig. `r figno()`: Distribution of genes in the different samples. Each vertical line represents a gene, and all lines have the same width regardless of the size of the gene it represents. The genes are colored by the number of samples sharing them.*
 
-*Table `r tableno()`: Overview of the number of different gene types. Called using the [Prokka](https://github.com/tseemann/prokka) genome annotator.*
 
 ---
 
@@ -45,30 +90,6 @@ plot_df %>%
 
 ###### 
 
-
-## Pan and Core genome
-
-[Roary](https://sanger-pathogens.github.io/Roary/) the pan genome pipeline computes the number of orthologous genes in a number of core/pan spectrum partitions.
-
-The core genome denotes the genes which are conserved between all samples (intersection), whereas the pan genome is the union of all genes across all samples.
-
-```{r echo=FALSE, message=F, warning=F}
-try({
-    roary_summary_file = "results_ac2/roary/summary_statistics.txt"
-    if (file.exists(roary_summary_file)) {
-        paste("yes")
-        read_tsv(roary_summary_file, col_names = c("ortholog class", "definition", "count")) %>% 
-            #mutate(type = paste(partition, definition)) %>% 
-            
-            #select(type, count) %>% 
-            datatable(class = "stripe", rownames = F,  options = list(dom = 't', ordering=F), width = 400)
-    } else {
-        paste("Warning: The file", roary_summary_file, "is not accessible.")
-    }
-})
-```
-
-*Table `r tableno()`: Distribution of genes in different core/pan spectrum partitions.*
 
 ------------------------------------------------------------------------
 

@@ -830,12 +830,15 @@ rule gtdbtk:
     benchmark: "{results_directory}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
 
+        # TODO: Using skip-ani-screen is not optimal, as it possibly speeds up a lot.
+
         export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release207_v2" # Should be defined from config file, and not be hardwired.
 
         # Create batchfile
         echo '''{params.batchfile_content}''' > {wildcards.results_directory}/gtdbtk/batchfile.tsv
         
         gtdbtk classify_wf \
+            --skip_ani_screen \
             --batchfile {wildcards.results_directory}/gtdbtk/batchfile.tsv \
             --out_dir {params.out_dir} \
             --cpus {threads} \
@@ -1010,7 +1013,7 @@ rule install_report_environment_aot:
     conda: "report_subpipeline/conda_definitions/r-markdown.yaml"
     shell: """
 
-        echo OK
+        echo "Report conda environment OK ..."
 
     """
 
