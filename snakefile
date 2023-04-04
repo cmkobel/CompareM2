@@ -762,7 +762,10 @@ rule roary:
             -i {params.blastp_identity} \
             -cd {params.core_perc} \
             -f {wildcards.results_directory}/roary \
+            --group_limit 100000 \
             {input.gff}
+
+        # Default group limit is 50000
             
         {void_report}
 
@@ -819,6 +822,7 @@ rule gtdbtk:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{results_directory}/gtdbtk/",
         base_variable = base_variable,
+        mash_db = f"{base_variable}/databases/gtdb_sketch/mash_db.msh",
         #gtdbtk_data_path = config["gtdbtk_data_path"],
     threads: 8
     #retries: 3
@@ -831,6 +835,7 @@ rule gtdbtk:
     shell: """
 
         # TODO: Using skip-ani-screen is not optimal, as it possibly speeds up a lot.
+        mkdir -p $(dirname {params.mash_db})
 
         export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release207_v2" # Should be defined from config file, and not be hardwired.
 
@@ -838,8 +843,7 @@ rule gtdbtk:
         echo '''{params.batchfile_content}''' > {wildcards.results_directory}/gtdbtk/batchfile.tsv
         
         gtdbtk classify_wf \
-            --skip_ani_screen \
-            --mash_db
+            --mash_db {params.mash_db} \
             --batchfile {wildcards.results_directory}/gtdbtk/batchfile.tsv \
             --out_dir {params.out_dir} \
             --cpus {threads} \

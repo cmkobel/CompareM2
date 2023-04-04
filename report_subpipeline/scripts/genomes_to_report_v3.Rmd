@@ -228,10 +228,11 @@ section_definition_table = tribble(
     "checkm2",           1, Sys.glob(paste0(results_directory, "/checkm2/quality_report.tsv")),
     "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
     "kraken2",           N, Sys.glob(paste0(results_directory, "/samples/*/kraken2/*kraken2_report.tsv")),
+    #abricate
+    #mlst
     "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
-    #"roary_summary",             1, Sys.glob(paste0(results_directory, "/roary/summary_statistics.txt")),
     "roary",             1, Sys.glob(paste0(results_directory, "/roary/gene_presence_absence.Rtab")),
-
+    #"roary_summary",             1, Sys.glob(paste0(results_directory, "/roary/summary_statistics.txt")), # Just reuse the presence of the other roary file
     "mashtree",          1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick")),
     ) %>%
     #group_by(section) %>%
@@ -271,7 +272,7 @@ section_definition_table %>%
 ```
 
 
-*Table `r tableno()`: Overview of sections that are rendered in this report. "n / expected" shows the number of analysis files versus how many are expected to be present. Sections are only rendered if relevant files exist.*
+*Table `r tableno()`: Overview of sections that are rendered in this report. "n / expected" shows the number of analysis files versus how many are expected to be present. Sections are only rendered if relevant files exist. Analyses that perform comparisons between samples generally only output one set of results independent on the number of input files*
 
 
 
