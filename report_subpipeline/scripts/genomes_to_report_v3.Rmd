@@ -1,13 +1,13 @@
 ---
 title: "`r batch_title`"
-subtitle: "Assemblycomparator2 Report"
+subtitle: "assemblycomparator2 Report"
 date: "`r Sys.time()`"
 output:
   html_document:
     toc: true
     toc_depth: 2
   #prettydoc::html_pretty:
-    theme: spacelab
+    theme: sandstone
     #highlight: github
 editor_options: 
   chunk_output_type: console
