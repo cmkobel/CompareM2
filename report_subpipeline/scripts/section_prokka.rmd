@@ -6,9 +6,13 @@
 
 prokka_summary = read_delim(glob_list$prokka, id = "file", comment = "#", col_names = c("name", "value"), delim = ": ") %>%
     select(file, name, value) %>%
-    mutate(sample = basename(file) %>% str_remove("\\.txt$")) %>%
-    pivot_wider(id_cols = sample) %>%
-    select(-organism)
+    filter(name != "organism") %>%
+    filter(str_detect(value, "\\d")) %>%
+    mutate(
+        sample = basename(file) %>% str_remove("\\.txt$"),
+        value = as.numeric(value)
+    ) %>%
+    pivot_wider(id_cols = sample, values_fill = 0)
 
 
 metadata_translate %>%

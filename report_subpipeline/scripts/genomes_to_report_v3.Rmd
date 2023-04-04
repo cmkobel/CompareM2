@@ -7,7 +7,7 @@ output:
     toc: true
     toc_depth: 2
   #prettydoc::html_pretty:
-    theme: readable
+    theme: spacelab
     #highlight: github
 editor_options: 
   chunk_output_type: console
