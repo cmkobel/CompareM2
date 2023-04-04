@@ -543,7 +543,7 @@ rule kraken2_individual:
     benchmark: "{results_directory}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
     threads: 2
     resources:
-        mem_mb = 64000,
+        mem_mb = 75000,
     shell: """
 
         db_path="{params.base_variable}/databases/kraken2"
@@ -723,6 +723,7 @@ rule checkm2:
 
 def get_mem_roary(wildcards, attempt): 
     return [32000, 64000, 128000][attempt-1]
+
 
 rule roary:
     input: 
