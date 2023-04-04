@@ -192,7 +192,7 @@ metadata_translate = metadata_df %>%
 metadata_df %>%
     select(input_file, sample) %>% 
     #datatable() # This one is not downloadable
-    custom_dt()
+    custom_dt("samples")
 
 
     
@@ -226,8 +226,8 @@ section_definition_table = tribble(
     "sequence_lengths",  N, Sys.glob(paste0(results_directory, "/samples/*/sequence_lengths/*.tsv")),
     "busco",             N, Sys.glob(paste0(results_directory, "/samples/*/busco/short_summary_extract.tsv")),
     "checkm2",           1, Sys.glob(paste0(results_directory, "/checkm2/quality_report.tsv")),
-    "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
     "kraken2",           N, Sys.glob(paste0(results_directory, "/samples/*/kraken2/*kraken2_report.tsv")),
+    "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
     #abricate
     #mlst
     "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
@@ -293,6 +293,9 @@ section_definition_table %>%
 ```
 
 ```{r child = paste0(report_scripts, "section_kraken2.rmd"), eval = render$kraken2}
+```
+
+```{r child = paste0(report_scripts, "section_gtdbtk.rmd"), eval = render$gtdbtk}
 ```
 
 ```{r child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}

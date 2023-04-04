@@ -16,7 +16,7 @@ if (file.exists(roary_summary_file)) {
 
 read_tsv(roary_summary_file, col_names = c("partition", "definition", "count")) %>% 
 
-    custom_dt(dom = "t", ordering = F, width = 500)
+    custom_dt("roary", dom = "t", ordering = F, width = 500)
 
 }
 
@@ -28,19 +28,14 @@ read_tsv(roary_summary_file, col_names = c("partition", "definition", "count")) 
 
 ```{r roary-matrix, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
 
-
-
-
-
-
 plot_df = read_tsv(glob_list$roary) %>% 
     mutate(shared_by = rowSums(across(where(is.numeric)))) %>%
     pivot_longer(c(everything(), -Gene, -shared_by), names_to = "sample", values_to = "present") %>% 
     filter(present >= 1)  %>%
 
     # Two sorting options:
-    #arrange(shared_by, desc(sample)) %>% 
-    arrange(sample, shared_by) %>% 
+    arrange(shared_by, desc(sample)) %>% 
+    #arrange(sample, shared_by) %>% 
 
     mutate(gene_order = 1:n()) %>% 
     mutate(gene_num = Gene %>% factor() %>% as.integer()) %>% 
@@ -64,6 +59,7 @@ plot_df %>%
     )
 
 ```
+
 *Fig. `r figno()`: Genes shared between samples. Each vertical line represents a gene, and all lines have the same width regardless of the size of the gene. The genes are colored by the number of samples sharing them.*
 
 

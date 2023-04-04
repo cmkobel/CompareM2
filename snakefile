@@ -859,7 +859,7 @@ rule gtdbtk:
         # Even better: Should be tested on originals
         echo -e "user_genome\tclassification\tfastani_reference\tfastani_reference_radius\tfastani_taxonomy\tfastani_ani\tfastani_af\tclosest_placement_reference\tclosest_placement_radius\tclosest_placement_taxonomy\tclosest_placement_ani\tclosest_placement_af\tpplacer_taxonomy\tclassification_method\tnote\tother_related_references(genome_id,species_name,radius,ANI,AF)\tmsa_percent\ttranslation_table\tred_value\twarnings" \
         > {output}
-        tail -n +2 {wildcards.results_directory}/gtdbtk/gtdbtk.*.summary.tsv \
+        tail --quiet -n +2 {wildcards.results_directory}/gtdbtk/gtdbtk.*.summary.tsv \
         >> {output}
         
 
