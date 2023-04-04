@@ -297,6 +297,9 @@ section_definition_table %>%
 ```{r child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}
 ```
 
+```{r child = paste0(report_scripts, "section_roary.rmd"), eval = render$roary}
+```
+
 ```{r child = paste0(report_scripts, "section_mashtree.rmd"), eval = render$mashtree}
 ```
 

@@ -34,24 +34,16 @@ read_tsv(roary_summary_file, col_names = c("partition", "definition", "count")) 
 
 
 plot_df = read_tsv(glob_list$roary) %>% 
-    #select(-Gene) %>%
     mutate(shared_by = rowSums(across(where(is.numeric)))) %>%
-    #mutate(order = 1:(dim(.)[1])) %>% View
-    #mutate(gene_ = 1:n()) %>% 
-    #select(-Gene) %>% 
-
     pivot_longer(c(everything(), -Gene, -shared_by), names_to = "sample", values_to = "present") %>% 
     filter(present >= 1)  %>%
-    #glimpse()
-    #mutate(gene_ = fct_reorder2(factor(gene_), shared_by)) %>% 
-    drop_na() %>% 
 
-    # Two options
+    # Two sorting options:
     #arrange(shared_by, desc(sample)) %>% 
     arrange(sample, shared_by) %>% 
 
     mutate(gene_order = 1:n()) %>% 
-    mutate(gene_num = Gene %>% factor %>% as.integer()) %>% 
+    mutate(gene_num = Gene %>% factor() %>% as.integer()) %>% 
     identity()
 
 
@@ -59,9 +51,6 @@ plot_df = read_tsv(glob_list$roary) %>%
 plot_df %>%
     ggplot(aes(reorder(Gene, gene_order), reorder(sample, desc(sample)), fill = factor(shared_by))) +
     geom_tile() +
-    #labs(fill = "shared between\nsamples") + 
-    
-    
 
     theme_classic() +
     theme(
@@ -75,7 +64,7 @@ plot_df %>%
     )
 
 ```
-*Fig. `r figno()`: Distribution of genes in the different samples. Each vertical line represents a gene, and all lines have the same width regardless of the size of the gene it represents. The genes are colored by the number of samples sharing them.*
+*Fig. `r figno()`: Distribution of genes in the different samples. Each vertical line represents a gene, and all lines have the same width regardless of the size of the gene it represents. The genes are colored by the number of samples sharing them. Analyses that perform comparisons between samples generally only output one set of results independent on the number of input files.*
 
 
 ---
@@ -83,54 +72,3 @@ plot_df %>%
 
 
 
-
-
-
-
-
-###### 
-
-
-------------------------------------------------------------------------
-
-```{r echo=FALSE, message=F, warning=F}
-try({
-    # This chunk is needed for setting the size of the roary gpa plot
-    fig_height = max(1.6,
-                     (metadata_df$sample %>% length) *0.2)
-    
-    knitr::opts_chunk$set(fig.height = fig_height,
-                          fig.width = 9)
-})
-```
-
-```{r echo = F, message = F, warning = F}
-try({
-    roary_gpa_file = "results_ac2/roary/gene_presence_absence.Rtab"
-    if (file.exists(roary_gpa_file)) {
-        paste("yes")
-        roary_gpa_df = read_tsv(roary_gpa_file)
-        
-        roary_gpa_df %>% 
-            #select(-Gene) %>% 
-            mutate(sum = rowSums(across(where(is.numeric)))) %>%
-            #mutate(order = 1:(dim(.)[1])) %>% View
-            mutate(genes = 1:length(Gene)) %>% 
-            select(-Gene) %>% 
-        
-            pivot_longer(c(everything(), -genes, -sum), names_to = "sample", values_to = "present") %>% 
-            filter(present >= 1) %>% 
-            #View
-            mutate(sample = fct_reorder(sample, desc(sample))) %>% 
-            ggplot(aes(genes, sample, fill = factor(sum))) + geom_tile() +
-            #labs(fill = "shared between\nsamples") + 
-            labs(fill = "number of\nsamples") +
-            
-            theme_classic() 
-    } else {
-        paste("Warning: The file", roary_gpa_file, "is not accessible.")
-    }
-})
-```
-
-*Fig. `r figno()`: Distribution of genes in the different samples. Each vertical line represents a gene, and all lines have the same width regardless of the size of the gene it represents. The genes are ordered and colored by the number of samples sharing them.*
