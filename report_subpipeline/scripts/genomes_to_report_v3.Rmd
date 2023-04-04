@@ -7,8 +7,9 @@ output:
     toc: true
     toc_depth: 2
   #prettydoc::html_pretty:
-    theme: sandstone
+    theme: flatly
     #highlight: github
+    center: false
 editor_options: 
   chunk_output_type: console
 #css: "max-width: 5000px; margin: auto; padding: 1em; line-height: 20px"
@@ -20,6 +21,8 @@ table {
 
 p {
     color: black;
+    font-family: Georgia,"Times New Roman",Times,serif;
+    font-size: 16px;
 }
 </style>
 
