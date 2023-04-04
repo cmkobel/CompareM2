@@ -122,7 +122,7 @@ void_report = f"date -Iseconds >> {results_directory}/.asscom2_void_report.flag"
 
 
 
-
+localrules: metadata, checkm2_download, kraken2_download, busco_download, gtdb_download, report
 
 # --- Collect all targets. ------------------------------------------
 rule all:
@@ -145,6 +145,11 @@ rule all:
         #"{results_directory}/mlst/mlst.tsv", \
         #"{results_directory}/fasttree/fasttree.newick", \
         #"{results_directory}/snp-dists/snp-dists.tsv", \
+
+
+
+
+
 
 
 # Copy the input file to its new home
@@ -1014,10 +1019,44 @@ rule install_report_environment_aot:
 # It isn't enough to just touch the file. The report_subpipeline will not be triggered if the file is empty. Thus we add the date, and we have a nice debug log for seeing when the report was triggered.
 # Will only but run if asked to. No need to use --forcerun, since snakemake states this in the output: "reason: Rules with neither input nor output files are always executed."
 rule report:
-    run: # No need to allocate a job on the cluster for this small job.
-        now = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-        with open(f"{results_directory}/.asscom2_void_report.flag", "a") as void_report_file:
-            void_report_file.write(f"ss_{now}\n")
+    shell: """
+        
+        {void_report}
+
+    """
+
+
+
+
+
+## Pseudo targets:
+
+# Makes it easy to check that all databases are installed properly. Eventually for touching the database representatives in case of using prior installations.
+rule downloads:
+    input:
+        expand(\
+            ["{base_variable}/databases/checkm2/ac2_checkm2_database_representative.flag", \ 
+            "{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag", \
+            "{base_variable}/databases/busco/ac2_busco_database_representative.flag", \
+            "{base_variable}/databases/gtdb/ac2_gtdb_database_representative.flag"], \
+            base_variable = base_variable),
+
+
+# Blink-of-an-eye analysis
+rule fast:
+    input:
+        expand(\
+            ["{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
+            "{results_directory}/assembly-stats/assembly-stats.tsv", \
+            "{results_directory}/mashtree/mashtree.newick"], \
+            results_directory = results_directory, \
+            sample = df["sample"]) # TODO: define the expansion in each rule instead.
+            
+
+
+
+
+
 
 
 # Call the report subpipeline
