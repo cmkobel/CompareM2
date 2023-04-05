@@ -24,6 +24,10 @@ p {
     font-family: Georgia,"Times New Roman",Times,serif;
     font-size: 16px;
 }
+
+html {
+    background-color: #FFFAFA;
+}
 </style>
 
 

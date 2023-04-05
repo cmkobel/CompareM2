@@ -34,7 +34,7 @@ plot_df = read_tsv(glob_list$roary) %>%
     filter(present >= 1)  %>%
 
     # Two sorting options:
-    arrange(shared_by, desc(sample)) %>% 
+    arrange(desc(shared_by), desc(sample)) %>% 
     #arrange(sample, shared_by) %>% 
 
     mutate(gene_order = 1:n()) %>% 
