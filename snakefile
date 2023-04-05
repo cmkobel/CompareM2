@@ -137,6 +137,8 @@ rule all:
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
+        "{results_directory}/mlst/mlst.tsv", \
+        "{results_directory}/abricate/card_detailed.tsv", \
         "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
         "{results_directory}/roary/summary_statistics.txt", \
         "{results_directory}/mashtree/mashtree.newick"], \
@@ -145,8 +147,6 @@ rule all:
         
         # temporary disabled
         #"{results_directory}/roary/summary_statistics.txt", \
-        #"{results_directory}/abricate/card_detailed.tsv", \
-        #"{results_directory}/mlst/mlst.tsv", \
         #"{results_directory}/fasttree/fasttree.newick", \
         #"{results_directory}/snp-dists/snp-dists.tsv", \
 
@@ -1078,8 +1078,7 @@ report_call = f"""
         --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
         --cores 4 \
         --use-conda \
-        -p \
-        --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title} 2> {results_directory}/logs/report.err.log 
+        --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title} 
     """
 
 onsuccess:

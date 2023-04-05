@@ -27,6 +27,10 @@ p {
 }
 
 
+.shaded {
+    color: #929292;
+}
+
 
 </style>
 
@@ -49,7 +53,7 @@ library(gridExtra)
 #library(phangorn)
 
 
-
+aosnte
 ```
 
 
@@ -232,21 +236,20 @@ Here is an overview of the number of result files that have been found for each 
 # In the table below, the globs, and expected number of globs are defined. 
 section_definition_table = tribble(
 
-    ~section, ~expectation, ~glob,
+    ~section,            ~expectation,                         ~glob,
+
     "assembly_stats",    1, Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv")),
     "sequence_lengths",  N, Sys.glob(paste0(results_directory, "/samples/*/sequence_lengths/*.tsv")),
     "busco",             N, Sys.glob(paste0(results_directory, "/samples/*/busco/short_summary_extract.tsv")),
     "checkm2",           1, Sys.glob(paste0(results_directory, "/checkm2/quality_report.tsv")),
     "kraken2",           N, Sys.glob(paste0(results_directory, "/samples/*/kraken2/*kraken2_report.tsv")),
     "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
-    #abricate
-    #mlst
+    "mlst",              1, Sys.glob(paste0(results_directory, "mlst/mlst.tsv")),
+    "abricate",          1, Sys.glob(paste0(results_directory, "abricate/card_detailed.tsv")),
     "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
-    "roary",             1, Sys.glob(paste0(results_directory, "/roary/gene_presence_absence.Rtab")),
-    #"roary_summary",             1, Sys.glob(paste0(results_directory, "/roary/summary_statistics.txt")), # Just reuse the presence of the other roary file
+    "roary",             1, Sys.glob(paste0(results_directory, "/roary/gene_presence_absence.Rtab")), # This also counts for the roary summary file.
     "mashtree",          1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick")),
     ) %>%
-    #group_by(section) %>%
     mutate(n_files = lengths(glob))
 
 
@@ -266,7 +269,7 @@ render = lapply(glob_list, function(x) {length(x) > 0})
 section_definition_table %>%
     mutate(
         render = case_when(
-            n_files > expectation ~ "error", # Hopefully this won't ever happen
+            n_files > expectation ~ "🟢 yes, extra", # This should only happen if samples are deleted from the input directory. But isn't a problem as we're left joining onto the metadata table.
             n_files == expectation ~ "🟢 yes",
             n_files > 0 ~ "🟡 yes, partially",
             n_files == 0 ~ "🔴 no"),
@@ -329,6 +332,10 @@ section_definition_table %>%
 
 
 
-------------------------------------------------------------------------
 
-The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel) `version 2.4.1`. The software is licensed under [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)
+
+
+
+
+<p class = "shaded">[assemblycomparator2 v2.4.1](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) genomes to report pipeline. Copyright (C) 2023  [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)</p>
+
