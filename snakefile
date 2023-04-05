@@ -131,9 +131,11 @@ rule all:
         "{results_directory}/.install_report_environment_aot.flag", \
         "{results_directory}/assembly-stats/assembly-stats.tsv", \
         "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
+        "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
+        "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
         "{results_directory}/roary/summary_statistics.txt", \
         "{results_directory}/mashtree/mashtree.newick"], \
         results_directory = results_directory, sample = df["sample"]) 
