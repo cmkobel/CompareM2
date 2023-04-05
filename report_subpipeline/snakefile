@@ -1,7 +1,7 @@
 # This subpipeline checks if the void report flag (.asscom2_void_report.flag) file has been modified by a rule in the parent pipeline. If so, the report will be rendered.
 
 
-__version__ = "v2.4.0" 
+__version__ = "v2.4.1" 
 __author__ = 'Carl M. Kobel'
 
 

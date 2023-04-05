@@ -19,15 +19,15 @@ table {
   white-space: nowrap; /* Do not wrap table cell contents. */
 }
 
+/* Use serif fonts for text. Not in tables. */
 p {
     color: black;
     font-family: Georgia,"Times New Roman",Times,serif;
     font-size: 16px;
 }
 
-html {
-    background-color: #FFFAFA;
-}
+
+
 </style>
 
 
@@ -331,4 +331,4 @@ section_definition_table %>%
 
 ------------------------------------------------------------------------
 
-The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel) `version 2.4.0`.
+The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel) `version 2.4.1`. The software is licensed under [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)

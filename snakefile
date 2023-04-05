@@ -2,8 +2,10 @@
 
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
 
-__version__ = "v2.4.0" # Ttree places to bump. Here, in the bottom of the report, in the report snakefile
+__version__ = "v2.4.1" # Three places to bump. Here, in the bottom of the report, in the report snakefile. Remember to add to the changelog.txt file.
 __author__ = 'Oliver Kjærlund Hansen & Carl M. Kobel'
+
+
 
 import os
 from os import listdir
@@ -925,7 +927,7 @@ rule mlst:
     output: "{results_directory}/mlst/mlst.tsv",
     params:
         mlst_scheme_interpreted = mlst_scheme_interpreted,
-        list_ = "{results_directory}/mlst/mlst_schemes.txt",
+        list_ = "{results_directory}/mlst/mlst_schemes.txt", 
     container: "docker://staphb/mlst"
     conda: "conda_definitions/mlst.yaml"
     benchmark: "{results_directory}/benchmarks/mlst.tsv"
@@ -933,6 +935,7 @@ rule mlst:
 
         mlst {params.mlst_scheme_interpreted} {input.fasta} > {output}
 
+        # Dump available mlst databases
         mlst --list > {params.list_}
 
         {void_report}
@@ -960,7 +963,6 @@ rule mashtree:
             --numcpus {threads} \
             --outmatrix {output.dist} \
             {input.fasta} > {output.tree}
-
 
         {void_report}
     """ 
