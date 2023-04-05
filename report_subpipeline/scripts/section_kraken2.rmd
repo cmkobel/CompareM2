@@ -40,7 +40,8 @@ kraken2_df = read_tsv(glob_list$kraken2, id = "file", comment = "#", col_names =
     #view()
     
     # Can't decide how to shorten the numbers
-    mutate(name_percent = paste0(round(percent, 1), "% ", name)) %>%
+    #mutate(name_percent = paste0(round(percent, 1), "% ", name)) %>%
+    mutate(name_percent = paste0(name, " ", round(percent, 1), "%")) %>%
     #mutate(name_percent = paste0(signif(percent, 2), "% ", name)) %>%
     
     distinct(rank_long, .keep_all = T) %>% # Will keep up til the first unique rank 
