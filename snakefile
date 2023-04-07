@@ -832,7 +832,8 @@ rule gtdbtk:
     #retries: 3
     resources:
         #mem_mb = 150000, # Last time I remember, it used 130000
-        mem_mb = get_mem_gtdbtk,
+        # mem_mb = get_mem_gtdbtk, # works great, but I want to use a limited amount to test a potential hardware upgrade
+        mem_mb = 131072,
         runtime = "2-00:00:00"
     conda: "conda_definitions/gtdbtk.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.gtdbtk.tsv"
