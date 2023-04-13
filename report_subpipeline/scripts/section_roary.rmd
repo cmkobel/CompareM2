@@ -9,6 +9,7 @@ The core genome denotes the genes which are conserved between all samples (inter
 
 ```{r roary-table, echo=FALSE, message=F, warning=F, error=T}
 
+
 roary_summary_file = paste0(results_directory, "/roary/summary_statistics.txt")
 
 

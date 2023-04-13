@@ -51,16 +51,26 @@ library(gridExtra)
 # DEBUG setup for vscode on KTFL running R on ssh to saga
 debug = F
 if (debug) {
+    # MAGs on axodines
     base_variable = "~/axodines/assemblycomparator2"
     results_directory = "results_ac2"
     setwd("~/axodines/assemblycomparator2/tests/MAGs")
     batch_title = basename(getwd())
 
-
+    # synth rumen on axodines
     base_variable = "~/axodines/assemblycomparator2"
     results_directory = "results_ac2"
     setwd("~/axodines/assemblycomparator2/tests/synth_rumen")
     batch_title = basename(getwd())
+    
+    
+    # synth rumen copied to local
+    base_variable = "~/assemblycomparator2"
+    results_directory = "results_ac2"
+    setwd("~/assemblycomparator2/tests/synth_rumen")
+    batch_title = basename(getwd())
+    
+    
 }
 
 ```
