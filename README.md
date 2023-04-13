@@ -156,7 +156,7 @@ assemblycomparator2 comes with a handful of E. faecium assemblies (illumina/skes
     
    ```
 
-If you encounter problems testing your installation, please refer to the issues tab of this repository.
+If you encounter problems installing, testing or using assemblycomparator2, please refer to the issues tab of this repository.
 
    
    
