@@ -171,6 +171,8 @@ rule copy:
         #runtime = "00:10:00",
         runtime = "00:20:00", # quickfix. Future: put specific long times for orion
     shell: """
+    
+        echo "Job started ..."
 
         any2fasta {input.genome:q} > {output}
 
