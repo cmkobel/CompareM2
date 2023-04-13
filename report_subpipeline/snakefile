@@ -38,6 +38,9 @@ rule report:
     #output: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
     shell: """
         
+	chmod 777 .
+	chmod 777 {params.results_directory}
+	
         mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.
         Rscript -e '
             base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"
