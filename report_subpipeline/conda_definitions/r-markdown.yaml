@@ -5,7 +5,7 @@ channels:
   - defaults
   - r
 dependencies:
-  - r-base
+  - r-base=4.2.2
   - r-essentials
   - r-tidyverse
   - r-dt
