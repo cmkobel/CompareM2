@@ -1,14 +1,15 @@
 ---
 title: "`r batch_title`"
-subtitle: "Assemblycomparator2 Report"
+subtitle: "assemblycomparator2 Report"
 date: "`r Sys.time()`"
 output:
   html_document:
     toc: true
     toc_depth: 2
   #prettydoc::html_pretty:
-    theme: readable
+    theme: flatly
     #highlight: github
+    center: false
 editor_options: 
   chunk_output_type: console
 #css: "max-width: 5000px; margin: auto; padding: 1em; line-height: 20px"
@@ -17,6 +18,20 @@ editor_options:
 table {
   white-space: nowrap; /* Do not wrap table cell contents. */
 }
+
+/* Use serif fonts for text. Not in tables. */
+p {
+    color: black;
+    font-family: Georgia,"Times New Roman",Times,serif;
+    font-size: 16px;
+}
+
+
+.shaded {
+    color: #929292;
+}
+
+
 </style>
 
 
@@ -202,7 +217,7 @@ metadata_translate = metadata_df %>%
 metadata_df %>%
     select(input_file, sample) %>% 
     #datatable() # This one is not downloadable
-    custom_dt()
+    custom_dt("samples")
 
 
     
@@ -231,20 +246,20 @@ Here is an overview of the number of result files that have been found for each 
 # In the table below, the globs, and expected number of globs are defined. 
 section_definition_table = tribble(
 
-    ~section, ~expectation, ~glob,
+    ~section,            ~expectation,                         ~glob,
+
     "assembly_stats",    1, Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv")),
     "sequence_lengths",  N, Sys.glob(paste0(results_directory, "/samples/*/sequence_lengths/*.tsv")),
     "busco",             N, Sys.glob(paste0(results_directory, "/samples/*/busco/short_summary_extract.tsv")),
     "checkm2",           1, Sys.glob(paste0(results_directory, "/checkm2/quality_report.tsv")),
-    "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
     "kraken2",           N, Sys.glob(paste0(results_directory, "/samples/*/kraken2/*kraken2_report.tsv")),
+    "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
+    "mlst",              1, Sys.glob(paste0(results_directory, "mlst/mlst.tsv")),
+    "abricate",          1, Sys.glob(paste0(results_directory, "abricate/card_detailed.tsv")),
     "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
-    #"roary_summary",             1, Sys.glob(paste0(results_directory, "/roary/summary_statistics.txt")),
-    "roary",             1, Sys.glob(paste0(results_directory, "/roary/gene_presence_absence.Rtab")),
-
+    "roary",             1, Sys.glob(paste0(results_directory, "/roary/gene_presence_absence.Rtab")), # This also counts for the roary summary file.
     "mashtree",          1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick")),
     ) %>%
-    #group_by(section) %>%
     mutate(n_files = lengths(glob))
 
 
@@ -264,7 +279,7 @@ render = lapply(glob_list, function(x) {length(x) > 0})
 section_definition_table %>%
     mutate(
         render = case_when(
-            n_files > expectation ~ "error", # Hopefully this won't ever happen
+            n_files > expectation ~ "🟢 yes, extra", # This should only happen if samples are deleted from the input directory. But isn't a problem as we're left joining onto the metadata table.
             n_files == expectation ~ "🟢 yes",
             n_files > 0 ~ "🟡 yes, partially",
             n_files == 0 ~ "🔴 no"),
@@ -281,7 +296,7 @@ section_definition_table %>%
 ```
 
 
-*Table `r tableno()`: Overview of sections that are rendered in this report. "n / expected" shows the number of analysis files versus how many are expected to be present. Sections are only rendered if relevant files exist.*
+*Table `r tableno()`: Overview of sections that are rendered in this report. "n / expected" shows the number of analysis files versus how many are expected to be present. Sections are only rendered if relevant files exist. Analyses that perform comparisons between samples generally only output one set of results independent on the number of input files*
 
 
 
@@ -304,6 +319,9 @@ section_definition_table %>%
 ```{r child = paste0(report_scripts, "section_kraken2.rmd"), eval = render$kraken2}
 ```
 
+```{r child = paste0(report_scripts, "section_gtdbtk.rmd"), eval = render$gtdbtk}
+```
+
 ```{r child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}
 ```
 
@@ -324,6 +342,10 @@ section_definition_table %>%
 
 
 
-------------------------------------------------------------------------
 
-The [assemblycomparator2](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) pipeline and report is developed by [Oliver Hansen](https://github.com/oliverh2020) & [Carl M. Kobel](https://github.com/cmkobel) `version 2.4.0`.
+
+
+
+
+<p class = "shaded">[assemblycomparator2 v2.4.1](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) genomes to report pipeline. Copyright (C) 2019-2023 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)</p>
+

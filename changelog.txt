@@ -1,3 +1,10 @@
+
+2.4.1
+  - Adjusting the new report and fix minor bugs
+
+2.4.0
+  - New report based on child sections
+
 2.3.0
 - Disabled pathway enrichment as conda failed
 - Implemented GTDB-tk

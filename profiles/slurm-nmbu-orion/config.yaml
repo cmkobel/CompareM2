@@ -42,8 +42,8 @@ cluster:
 default-resources:
   - mem_mb=1024
   #- disk_mb=1024 # saga doesn't care
-  - runtime='12:00:00'
-  - tmpdir='$SCRATCH'
+  - runtime="12:00:00"
+  - tmpdir="/work/users"
   - partition=smallmem,hugemem
   
   

@@ -1,7 +1,7 @@
 # This subpipeline checks if the void report flag (.asscom2_void_report.flag) file has been modified by a rule in the parent pipeline. If so, the report will be rendered.
 
 
-__version__ = "v2.4.0" 
+__version__ = "v2.4.1" 
 __author__ = 'Carl M. Kobel'
 
 
@@ -15,7 +15,9 @@ print('report subpipeline: base_variable:', base_variable)
 
 
 rule all:
-	input: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
+	input: expand(\
+        "{results_directory}/report_{batch_title}.html", \
+        results_directory = results_directory, batch_title = batch_title)
 
 
 # Runs on the front end because it is quick anyway.
@@ -23,54 +25,39 @@ rule all:
 rule report:
     input:
         flag = "{results_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
-        metadata = "{results_directory}/metadata.tsv" # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
+        metadata = "{results_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
     conda: "conda_definitions/r-markdown.yaml"
     params: 
-        end_script = f"{base_variable}/report_subpipeline/scripts/report_end_script.sh",
         base_variable = base_variable,
         results_directory = results_directory,
         batch_title = batch_title,
-    output: "{results_directory}/report_{batch_title}.html"
+        end_script = f"{base_variable}/report_subpipeline/scripts/report_end_script.sh",
+
+    output: 
+        html = "{results_directory}/report_{batch_title}.html",
     #output: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
     shell: """
-
-        echo "report subpipeline: initializing report ..."
-    
-        # The rmd will run from the wd where the template is located. Therefore we need to copy it into here before rendering.
-        # cp {base_variable}/report_subpipeline/scripts/genomes_to_report_v2.Rmd rmarkdown_template.rmd
-        # Rscript -e 'rmarkdown::render("rmarkdown_template.rmd", "html_document", output_file = "{output}", quiet = T)' 
-        # rm rmarkdown_template.rmd
-
-        mkdir -p {params.results_directory}/tables # Directory for the rmarkdown to write its compiled tables to.
-
+        
+        mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.
         Rscript -e '
-            base_variable = "{params.base_variable}"
-            results_directory = "{params.results_directory}"
-            batch_title = "{params.batch_title}"
-
+            base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"
             rmarkdown::render(
                 input = "{base_variable}/report_subpipeline/scripts/genomes_to_report_v3.Rmd",
                 output_format = "html_document",
-                output_file = "{output}",
+                output_file = "{output.html}",
                 knit_root_dir = "{params.results_directory}",
-                quiet = T
-            )' 
-        
-        # Use the end script if it exists
-        if test -f "{params.end_script}"; then
-            echo "report subpipeline: end_script exists."
-            . {params.end_script} {batch_title} {results_directory}/report_{batch_title}.html 
-        fi
+            )'
+
+
+                # End script
+        test -f "{params.end_script}" && . {params.end_script} {batch_title} {results_directory}/report_{batch_title}.html 
         
         
         # Create a zip archive of the report
-        cd {results_directory}
-        zip {output}.zip report_{batch_title}.html || echo failed to zip
-        
-        
+        cd {results_directory} 
+        zip {output.html}.zip {output.html} || echo failed to zip
 
-
-        echo "report subpipeline: report written to {output}"
+        echo "report subpipeline: report written to {output.html}"
         echo "    ______________________________  "
         echo "   < The report has been rendered > "
         echo "    ------------------------------  "
@@ -81,6 +68,8 @@ rule report:
         echo "                   ||     ||        "
 
     """
+
+
 
 
 

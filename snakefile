@@ -2,8 +2,10 @@
 
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
 
-__version__ = "v2.4.0" # Ttree places to bump. Here, in the bottom of the report, in the report snakefile
+__version__ = "v2.4.1" # Three places to bump. Here, in the bottom of the report, in the report snakefile. Remember to add to the changelog.txt file.
 __author__ = 'Oliver Kjærlund Hansen & Carl M. Kobel'
+
+
 
 import os
 from os import listdir
@@ -131,9 +133,13 @@ rule all:
         "{results_directory}/.install_report_environment_aot.flag", \
         "{results_directory}/assembly-stats/assembly-stats.tsv", \
         "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
+        "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
+        "{results_directory}/mlst/mlst.tsv", \
+        "{results_directory}/abricate/card_detailed.tsv", \
+        "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
         "{results_directory}/roary/summary_statistics.txt", \
         "{results_directory}/mashtree/mashtree.newick"], \
         results_directory = results_directory, sample = df["sample"]) 
@@ -141,8 +147,6 @@ rule all:
         
         # temporary disabled
         #"{results_directory}/roary/summary_statistics.txt", \
-        #"{results_directory}/abricate/card_detailed.tsv", \
-        #"{results_directory}/mlst/mlst.tsv", \
         #"{results_directory}/fasttree/fasttree.newick", \
         #"{results_directory}/snp-dists/snp-dists.tsv", \
 
@@ -762,7 +766,10 @@ rule roary:
             -i {params.blastp_identity} \
             -cd {params.core_perc} \
             -f {wildcards.results_directory}/roary \
+            --group_limit 100000 \
             {input.gff}
+
+        # Default group limit is 50000
             
         {void_report}
 
@@ -819,18 +826,21 @@ rule gtdbtk:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{results_directory}/gtdbtk/",
         base_variable = base_variable,
+        mash_db = f"{base_variable}/databases/gtdb_sketch/mash_db.msh",
         #gtdbtk_data_path = config["gtdbtk_data_path"],
     threads: 8
     #retries: 3
     resources:
         #mem_mb = 150000, # Last time I remember, it used 130000
-        mem_mb = get_mem_gtdbtk,
+        # mem_mb = get_mem_gtdbtk, # works great, but I want to use a limited amount to test a potential hardware upgrade
+        mem_mb = 131072,
         runtime = "2-00:00:00"
     conda: "conda_definitions/gtdbtk.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
 
         # TODO: Using skip-ani-screen is not optimal, as it possibly speeds up a lot.
+        mkdir -p $(dirname {params.mash_db})
 
         export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release207_v2" # Should be defined from config file, and not be hardwired.
 
@@ -838,8 +848,7 @@ rule gtdbtk:
         echo '''{params.batchfile_content}''' > {wildcards.results_directory}/gtdbtk/batchfile.tsv
         
         gtdbtk classify_wf \
-            --skip_ani_screen \
-            --mash_db
+            --mash_db {params.mash_db} \
             --batchfile {wildcards.results_directory}/gtdbtk/batchfile.tsv \
             --out_dir {params.out_dir} \
             --cpus {threads} \
@@ -855,7 +864,7 @@ rule gtdbtk:
         # Even better: Should be tested on originals
         echo -e "user_genome\tclassification\tfastani_reference\tfastani_reference_radius\tfastani_taxonomy\tfastani_ani\tfastani_af\tclosest_placement_reference\tclosest_placement_radius\tclosest_placement_taxonomy\tclosest_placement_ani\tclosest_placement_af\tpplacer_taxonomy\tclassification_method\tnote\tother_related_references(genome_id,species_name,radius,ANI,AF)\tmsa_percent\ttranslation_table\tred_value\twarnings" \
         > {output}
-        tail -n +2 {wildcards.results_directory}/gtdbtk/gtdbtk.*.summary.tsv \
+        tail --quiet -n +2 {wildcards.results_directory}/gtdbtk/gtdbtk.*.summary.tsv \
         >> {output}
         
 
@@ -919,7 +928,7 @@ rule mlst:
     output: "{results_directory}/mlst/mlst.tsv",
     params:
         mlst_scheme_interpreted = mlst_scheme_interpreted,
-        list_ = "{results_directory}/mlst/mlst_schemes.txt",
+        list_ = "{results_directory}/mlst/mlst_schemes.txt", 
     container: "docker://staphb/mlst"
     conda: "conda_definitions/mlst.yaml"
     benchmark: "{results_directory}/benchmarks/mlst.tsv"
@@ -927,6 +936,7 @@ rule mlst:
 
         mlst {params.mlst_scheme_interpreted} {input.fasta} > {output}
 
+        # Dump available mlst databases
         mlst --list > {params.list_}
 
         {void_report}
@@ -954,7 +964,6 @@ rule mashtree:
             --numcpus {threads} \
             --outmatrix {output.dist} \
             {input.fasta} > {output.tree}
-
 
         {void_report}
     """ 
@@ -1070,8 +1079,7 @@ report_call = f"""
         --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
         --cores 4 \
         --use-conda \
-        -p \
-        --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title} 2> {results_directory}/logs/report.err.log 
+        --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title} 
     """
 
 onsuccess:
