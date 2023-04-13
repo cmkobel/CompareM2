@@ -169,7 +169,7 @@ rule copy:
     resources:
         mem_mb = 512,
         #runtime = "00:10:00",
-        runtime = "00:30:00", # quickfix. Future: put specific long times for orion
+        runtime = "00:20:00", # quickfix. Future: put specific long times for orion
     shell: """
 
         any2fasta {input.genome:q} > {output}
