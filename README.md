@@ -145,11 +145,7 @@ Select A or B depending on whether you want to install on a slurm-enabled HPC or
    echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
     
    ```
-  
    
- ### Setup of dasabases
- * Kraken2: If you already have a local copy of a [kraken2 database](https://benlangmead.github.io/aws-indexes/k2), you can set the `ASSCOM2_KRAKEN_DB` system variable to its path. 
- * GTDB-tk: Download the [GTDB-tk database](https://ecogenomics.github.io/GTDBTk/installing/index.html#gtdb-tk-reference-data) and set the `GTDBTK_DATA_PATH` variable to point to its directory.
    
 ### Testing installation (optional)
 
