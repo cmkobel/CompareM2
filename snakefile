@@ -168,7 +168,8 @@ rule copy:
     conda: "conda_definitions/any2fasta.yaml"
     resources:
         mem_mb = 512,
-        runtime = "00:10:00"
+        #runtime = "00:10:00",
+        runtime = "00:30:00", # quickfix. Future: put specific long times for orion
     shell: """
 
         any2fasta {input.genome:q} > {output}
