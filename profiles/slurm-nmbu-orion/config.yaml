@@ -1,7 +1,8 @@
-
 local-cores: 8 # front end / head node cores
-cores: 2048 # cluster cores
-jobs: 1000 # max parallel jobs
+cores: 128 # cluster cores
+jobs: 128 # max parallel jobs
+max-jobs-per-second: 3
+max-status-checks-per-second: 3
 keep-going: true 
 #rerun-incomplete: true
 latency-wait: 120
@@ -19,8 +20,11 @@ conda-frontend: 'mamba'
 
 
 # ---- Specific resources for Orion (Orion is a bit sluggish)
+
+set-threads:
+  - copy=3
+
 set-resources:
-  - copy:threads=5
   - copy:mem_mb="1025"
 
 
@@ -46,14 +50,11 @@ cluster:
 default-resources:
   - threads=2
   - mem_mb=1024
-  #- disk_mb=1024 # saga doesn't care
   - runtime="12:00:00"
   - tmpdir="/work/users"
   - partition=smallmem,hugemem
   
 
-    #set-resources:
-    #- copy:threads=5
 
 
 
