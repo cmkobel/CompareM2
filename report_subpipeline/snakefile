@@ -42,7 +42,7 @@ rule report:
 	#chmod 777 {params.results_directory}
 	
         # First, copy the scripts. Otherwise the knit dir will not be writable. We don't have time to reinstall on scratch
-        cp -r {base_variable}/report_subpipeline/scripts .
+        cp -r {base_variable}/report_subpipeline/scripts scripts_temporary
         
         
 
@@ -51,12 +51,14 @@ rule report:
         Rscript -e '
             base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"
             rmarkdown::render(
-                input = "scripts/genomes_to_report_v3.Rmd",
+                input = "scripts_temporary/genomes_to_report_v3.Rmd",
                 output_format = "html_document",
                 output_file = "{output.html}",
                 knit_root_dir = "{params.results_directory}",
             )'
 
+        # Clean up 
+        rm -r scripts_temporary
 
                 # End script
         test -f "{params.end_script}" && . {params.end_script} {batch_title} {results_directory}/report_{batch_title}.html 

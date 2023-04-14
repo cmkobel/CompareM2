@@ -177,7 +177,8 @@ rule copy:
         echo "Waiting $wait_s seconds"
         sleep $wait_s
 
-        any2fasta {input.genome:q} > {output}
+        #any2fasta {input.genome:q} > {output}
+        cat {input.genome:q} > {output}
 
     """  
 
