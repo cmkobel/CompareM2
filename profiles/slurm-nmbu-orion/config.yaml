@@ -26,6 +26,7 @@ set-threads:
 
 set-resources:
   - copy:mem_mb="1025"
+  - copy:runtime="01:00:00"
 
 
 # ----  Specifics ----
