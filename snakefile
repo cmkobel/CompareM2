@@ -426,7 +426,6 @@ rule sequence_lengths_individual:
     output: "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
     resources:
         runtime = "01:00:00",
-        mem_mb = 128,
     conda: "conda_definitions/seqkit.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_individual.{sample}.tsv"
     shell: """
