@@ -18,9 +18,13 @@ conda-frontend: 'mamba'
 #conda-prefix: "conda_base/" # Much better to use the $SNAKEMAKE_CONDA_PREFIX instead, as all workflows can then use the same envs.
 
 
+# ---- Specific resources for Orion (Orion is a bit sluggish)
+set-resources:
+  - copy:threads=5
+  - copy:memb_mb="1025"
 
 
-# ---- Sigma2 Saga SLURM specifics ----
+# ----  Specifics ----
 
 cluster-cancel: "scancel"
 
@@ -47,7 +51,10 @@ default-resources:
   - tmpdir="/work/users"
   - partition=smallmem,hugemem
   
-  
+
+    #set-resources:
+    #- copy:threads=5
+
 
 
 
