@@ -172,7 +172,10 @@ rule copy:
         runtime = "00:20:00", # quickfix. Future: put specific long times for orion
     shell: """
     
-        echo "Job started ..."
+        # Orion is overloaded, this is a hacky fix. Reminds me that there should be a way of submitting jobs to slurm in a more batchy way?
+        wait_s=$(( $RANDOM % 10 ))
+        echo "Waiting $wait_s seconds"
+        sleep $wait_s
 
         any2fasta {input.genome:q} > {output}
 
