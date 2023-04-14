@@ -21,7 +21,7 @@ conda-frontend: 'mamba'
 # ---- Specific resources for Orion (Orion is a bit sluggish)
 set-resources:
   - copy:threads=5
-  - copy:memb_mb="1025"
+  - copy:mem_mb="1025"
 
 
 # ----  Specifics ----
