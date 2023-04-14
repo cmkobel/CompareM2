@@ -38,14 +38,20 @@ rule report:
     #output: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
     shell: """
         
-	chmod 777 .
-	chmod 777 {params.results_directory}
+	#chmod 777 .
+	#chmod 777 {params.results_directory}
+	
+        # First, copy the scripts. Otherwise the knit dir will not be writable. We don't have time to reinstall on scratch
+        cp -r {base_variable}/report_subpipeline/scripts .
+        
+        
+
 	
         mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.
         Rscript -e '
             base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"
             rmarkdown::render(
-                input = "{base_variable}/report_subpipeline/scripts/genomes_to_report_v3.Rmd",
+                input = "scripts/genomes_to_report_v3.Rmd",
                 output_format = "html_document",
                 output_file = "{output.html}",
                 knit_root_dir = "{params.results_directory}",
