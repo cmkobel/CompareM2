@@ -416,7 +416,6 @@ rule gtdb_download:
 
 
 
-
 # --- Targets for each sample below: --------------------------------
 
 rule sequence_lengths_individual:
