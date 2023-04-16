@@ -166,6 +166,7 @@ rule copy:
     #log: "logs/{results_directory}_{wildcards.sample}.out.log"
     container: "docker://pvstodghill/any2fasta"
     #conda: "conda_definitions/any2fasta.yaml"
+    threads: 1
     resources:
         mem_mb = 256,
         runtime = "00:10:00",
