@@ -166,7 +166,7 @@ rule copy:
     #log: "logs/{results_directory}_{wildcards.sample}.out.log"
     container: "docker://pvstodghill/any2fasta"
     #conda: "conda_definitions/any2fasta.yaml"
-    threads: 1
+    threads: 1 # Weirdly, or bugly, there must be a thread n definition in the rule. Otherwise, the set-threads option (in the orion profile) will not be taken up. 
     resources:
         mem_mb = 256,
         runtime = "00:10:00",
