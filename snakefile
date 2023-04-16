@@ -166,11 +166,9 @@ rule copy:
     #log: "logs/{results_directory}_{wildcards.sample}.out.log"
     container: "docker://pvstodghill/any2fasta"
     #conda: "conda_definitions/any2fasta.yaml"
-    threads: 4
     resources:
-        mem_mb = 512,
-        #runtime = "00:10:00",
-        runtime = "00:20:00", # quickfix. Future: put specific long times for orion
+        mem_mb = 256,
+        runtime = "00:10:00",
     shell: """
     
         # Orion is overloaded, this is a hacky fix. Reminds me that there should be a way of submitting jobs to slurm in a more batchy way?
@@ -429,8 +427,6 @@ rule sequence_lengths_individual:
     conda: "conda_definitions/seqkit.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_individual.{sample}.tsv"
     shell: """
-
-        # TODO: Consider whether seqkit stats might be faster?
 
         seqkit fx2tab {input} -l -g -G -n -H \
         > {output}
