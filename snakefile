@@ -724,6 +724,7 @@ rule checkm2:
             --input {input.fasta} \
             --output-directory {params.rule_dir} \
             --extension .fa \
+            --database_path $ASSCOM2_BASE/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd \
             --force
 
         {void_report}
