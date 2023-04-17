@@ -21,12 +21,16 @@ conda-frontend: 'mamba'
 
 # ---- Specific resources for Orion (Orion is a bit sluggish)
 
+# Orion sometimes has some oversaturated nodes. This means that jobs submitted to this node will never finish. The only escape is by setting a higher core count which will decrease the computing density?
 set-threads:
   - copy=3
+  - sequence_lengths_individual=2
+
 
 set-resources:
   - copy:mem_mb="1025"
   - copy:runtime="01:00:00"
+
 
 
 # ----  Specifics ----
@@ -75,11 +79,11 @@ default-resources:
 #retries: 2
 #cluster: "sbatch --account {cluster.account} --time {cluster.time} --mem {cluster.mem_mb} --error={cluster.error} --output={cluster.output}"
 
-# [--local-cores N] 
+
 #local-cores: 2
 #configfile: "configs/workflow.yaml"
 #configfile: "config.yaml"
-# [--snakefile FILE] 
+
 
 # While still being possible, cluster configuration has been deprecated by the introduction of Profiles. (https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles)
 #cluster-config: "profiles/slurm/cluster.yaml" 
