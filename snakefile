@@ -422,6 +422,7 @@ rule gtdb_download:
 rule sequence_lengths_individual:
     input: "{results_directory}/samples/{sample}/{sample}.fa"
     output: "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
+    threads: 1
     resources:
         runtime = "01:00:00",
     conda: "conda_definitions/seqkit.yaml"
