@@ -10,7 +10,7 @@ keep-incomplete: true
 rerun-triggers: "mtime" # only schedule jobs to rerun if there has been a change in mtime of input/output files. That is: ignore code changes
 
 # This one could be cool to have working 
-show-failed-logs: true
+show-failed-logs: false
 
 
 # ---- Conda/Mamba ----
