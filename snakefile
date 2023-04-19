@@ -159,26 +159,18 @@ rule all:
 # Copy the input file to its new home
 # Homogenizes the file extension as well (.fa)
 rule copy:
-    #input: "{sample}"
     input: 
         genome = lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0],
     output: "{results_directory}/samples/{sample}/{sample}.fa"
-    #log: "logs/{results_directory}_{wildcards.sample}.out.log"
     container: "docker://pvstodghill/any2fasta"
-    #conda: "conda_definitions/any2fasta.yaml"
+    conda: "conda_definitions/any2fasta.yaml"
     threads: 1 # Weirdly, or bugly, there must be a thread n definition in the rule. Otherwise, the set-threads option (in the orion profile) will not be taken up. 
     resources:
         mem_mb = 256,
         runtime = "00:10:00",
     shell: """
     
-        # Orion is overloaded, this is a hacky fix. Reminds me that there should be a way of submitting jobs to slurm in a more batchy way?
-        wait_s=$(( $RANDOM % 10 ))
-        echo "Waiting $wait_s seconds"
-        sleep $wait_s
-
-        #any2fasta {input.genome:q} > {output}
-        cat {input.genome:q} > {output}
+        any2fasta {input.genome:q} > {output}
 
     """  
 
