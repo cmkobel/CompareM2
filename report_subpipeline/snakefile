@@ -37,16 +37,12 @@ rule report:
         html = "{results_directory}/report_{batch_title}.html",
     #output: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
     shell: """
-        
-	#chmod 777 .
-	#chmod 777 {params.results_directory}
-	
-        # First, copy the scripts. Otherwise the knit dir will not be writable. We don't have time to reinstall on scratch
-        cp -r {base_variable}/report_subpipeline/scripts scripts_temporary
-        
-        
 
-	
+
+	# When sharing environments by multiple users: Pandoc creates an intermediary .md file that reside next to the .Rmd file that is used to create the report. Because the directory where this .Rmd file resides may not be writable by the user that is executing the workflow. Thus, as a solution, we'll copy the whole script/ directory where this .Rmd resides to the current working directory.
+        cp -r {base_variable}/report_subpipeline/scripts scripts_temporary
+
+
         mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.
         Rscript -e '
             base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"
