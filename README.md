@@ -108,6 +108,8 @@ You can either follow the [official Snakemake instructions](https://snakemake.re
    # Setup a asscom2 base environment which is used to call snakemake
    cd $ASSCOM2_BASE && mamba env create -f environment.yaml
    
+   #  It is recommended to use the strict channel policy in conda
+   conda config --set channel_priority strict
    
    ```
    
