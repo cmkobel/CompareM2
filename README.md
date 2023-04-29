@@ -131,6 +131,9 @@ Select A or B depending on whether you want to install on a slurm-enabled HPC or
 
    # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
    echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
+   
+   # Then source your ~/.bashrc
+   source ~/.bashrc
     
    ```
    
@@ -145,9 +148,26 @@ Select A or B depending on whether you want to install on a slurm-enabled HPC or
    
    # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
    echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
+   
+   # Then source your ~/.bashrc
+   source ~/.bashrc
     
    ```
+
    
+### Create conda environments 
+
+Before you start using assemblycomparator2 you might want to install the environments for each of the jobs that assemblycomparator2 will run.
+
+
+```
+
+assemblycomparator2 --conda-create-envs-only
+ 
+```
+
+
+
    
 ### Testing installation (optional)
 
@@ -158,7 +178,7 @@ assemblycomparator2 comes with a handful of E. faecium assemblies (illumina/skes
     
    ```
 
-If you encounter problems installing, testing or using assemblycomparator2, please refer to the issues tab of this repository.
+If you encounter problems installing, testing or using assemblycomparator2, please an issue on the [github issue tracker](https://github.com/cmkobel/assemblycomparator2/issues).
 
    
    
