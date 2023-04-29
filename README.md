@@ -191,12 +191,12 @@ cd $ASSCOM2_BASE && git pull
 # You might also want to update snakemake
 conda env update --name assemblycomparator2 --file environment.yaml
 
-# If you wish to update the job-environments, you can simply delete the contents of $SNAKEMAKE_CONDA_PREFIX
-rm -r $SNAKEMAKE_CONDA_PREFIX/* 
-# .. The environments will then be reinstalled from scratch next time you run assemblycomparator2
+# Then create possibly new environments.
+assemblycomparator2 --conda-create-envs-only
+
 
 ```
-Note: If new databases have been added to kraken or mashscreen, you can rerun the above-mentioned set_up_*.sh-scripts.
+
 
 
 
@@ -211,6 +211,7 @@ In the future we might add some of the following pieces of software into assembl
   - [RFplasmid](https://github.com/aldertzomer/RFPlasmid) (Identify plasmids using the pentamer-random-forest method)
   - [Kaptive](https://github.com/katholt/Kaptive) (surface polysaccharide loci for Klebsiella and Acinetobacter baumannii) 
   - [mash screen](https://mash.readthedocs.io/en/latest/tutorials.html) (recognition of plasmids-of-interest)
+  - [SingleM](https://wwood.github.io/singlem/)
 
 
 **Batch basis**
@@ -218,13 +219,12 @@ In the future we might add some of the following pieces of software into assembl
   - [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
   - GC3-profiling ("fingerprinting" of the distribution of GC-content)
   - Identification of horizontally transferred genes?
-  - [panito](https://github.com/sanger-pathogens/panito) (average nucleotide identity)
   - [GenAPI](https://github.com/MigleSur/GenAPI) (alternative to roary)
 
 
 
   
 Development will continue:
-  - [BUSCO](https://busco.ezlab.org/) (Benchmarking sets of Universal Single-Copy Orthologs.)
-  - singlem
+
+
   
