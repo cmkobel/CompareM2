@@ -3,7 +3,24 @@
 [Mashtree](https://github.com/lskatz/mashtree) computes an approximation of ANI using the minhash distance measure. On these distances, a phylogenetic tree is then created using the neighbor-joining algorithm. The plotted tree is not rooted.
 
 
-```{r mashtree, echo=FALSE, message=F, warning=F, error = T, fig_height = max(3, N*0.8), fig_width = 10}
+
+
+```{r mashtree-size, echo=FALSE, message=F, warning=F, error = T}
+# This chunk is needed for setting the size of the mashtree plot
+try({
+    fig_height = max(4,
+                     N * 0.3)
+    
+    knitr::opts_chunk$set(fig.height = fig_height,
+                          fig.width = 10)
+})
+```
+
+
+
+
+
+```{r mashtree, echo=FALSE, message=F, warning=F, error = T, fig_height = max(4, N*0.3), fig_width = 10}
 
 mashtree_file = glob_list$mashtree
 
