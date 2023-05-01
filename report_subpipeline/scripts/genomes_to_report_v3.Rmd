@@ -66,6 +66,18 @@ library(gridExtra)
 # DEBUG setup for vscode on KTFL running R on ssh to saga
 debug = F
 if (debug) {
+    # E._faecium_30 on thylakoid
+    base_variable = "~/assemblycomparator2"
+    results_directory = "results_ac2"
+    setwd("~/assemblycomparator2/tests/E._faecium_30")
+    batch_title = basename(getwd())
+
+    # MAGs on thylakoid
+    base_variable = "~/assemblycomparator2"
+    results_directory = "results_ac2"
+    setwd("~/assemblycomparator2/tests/MAGs")
+    batch_title = basename(getwd())
+
     # MAGs on axodines
     base_variable = "~/axodines/assemblycomparator2"
     results_directory = "results_ac2"
@@ -155,7 +167,7 @@ create_dt <- function(x){
     )
 }
 
-custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, width = NULL) {
+custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, width = NULL, show_n = 10) {
     
     name = paste(batch_title, filename, sep = "_")
     
@@ -172,8 +184,8 @@ custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, wid
                 list(extend = "excel", filename = name)
             ),
             lengthMenu = list(
-                c(10,25,50,-1),
-                c(10,25,50, "All")
+                c(show_n ,25, 50, -1),
+                c(show_n ,25, 50, "All")
             )
         ),
         rownames = F,
@@ -254,11 +266,11 @@ section_definition_table = tribble(
     "checkm2",           1, Sys.glob(paste0(results_directory, "/checkm2/quality_report.tsv")),
     "kraken2",           N, Sys.glob(paste0(results_directory, "/samples/*/kraken2/*kraken2_report.tsv")),
     "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
-    "mlst",              1, Sys.glob(paste0(results_directory, "mlst/mlst.tsv")),
+    "mlst",              1, Sys.glob(paste0(results_directory, "/mlst/mlst.tsv")),
     "abricate",          1, Sys.glob(paste0(results_directory, "abricate/card_detailed.tsv")),
     "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
     "roary",             1, Sys.glob(paste0(results_directory, "/roary/gene_presence_absence.Rtab")), # This also counts for the roary summary file.
-    "mashtree",          1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick")),
+    "mashtree",          1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick"))
     ) %>%
     mutate(n_files = lengths(glob))
 
@@ -286,7 +298,8 @@ section_definition_table %>%
         `n / expected` = paste0(n_files, " / ", expectation)
     ) %>%
     select(section, `n / expected`, render) %>%
-    custom_dt("sections", dom = "t", ordering = F, width = 500)
+    custom_dt("sections", dom = "t", ordering = F, width = 500, show_n = nrow(section_definition_table))
+    #custom_dt("sections", ordering = F, width = 500)
 
 # Define a variable that can be used to query whether each section of the report should be rendered
 
@@ -320,6 +333,9 @@ section_definition_table %>%
 ```
 
 ```{r child = paste0(report_scripts, "section_gtdbtk.rmd"), eval = render$gtdbtk}
+```
+
+```{r child = paste0(report_scripts, "section_mlst.rmd"), eval = render$mlst}
 ```
 
 ```{r child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}

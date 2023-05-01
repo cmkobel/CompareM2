@@ -594,16 +594,17 @@ rule busco_individual:
 
         >&2 echo "Busco individual"
         # https://busco.ezlab.org/busco_userguide.html#offline
-        busco \
-            --cpu {threads} \
-            --in {input.fasta} \
-            --out {params.out_dir} \
-            --mode geno \
-            --auto-lineage-prok \
-            --force \
-            --tar \
-            --download_path {params.base_variable}/databases/busco \
-            --offline || (>&2 echo "ac2: busco failed internally")
+        timeout 3600 \
+            busco \
+                --cpu {threads} \
+                --in {input.fasta} \
+                --out {params.out_dir} \
+                --mode geno \
+                --auto-lineage-prok \
+                --force \
+                --tar \
+                --download_path {params.base_variable}/databases/busco \
+                --offline || (>&2 echo "ac2: busco failed internally")
 
 
         >&2 echo "debug1"
@@ -927,11 +928,15 @@ rule mlst:
         mlst_scheme_interpreted = mlst_scheme_interpreted,
         list_ = "{results_directory}/mlst/mlst_schemes.txt", 
     container: "docker://staphb/mlst"
+    threads: 4
     conda: "conda_definitions/mlst.yaml"
     benchmark: "{results_directory}/benchmarks/mlst.tsv"
     shell: """
 
-        mlst {params.mlst_scheme_interpreted} {input.fasta} > {output}
+        mlst \
+            --threads {threads} {params.mlst_scheme_interpreted} \
+            {input.fasta} \
+            > {output}
 
         # Dump available mlst databases
         mlst --list > {params.list_}
@@ -969,7 +974,7 @@ rule mashtree:
 #rule mash_screen:
 
 def get_mem_fasttree(wildcards, attempt): 
-    return [8000, 64000][attempt-1]
+    return [16000, 32000, 64000, 0][attempt-1]
 
 
 rule fasttree:
@@ -981,7 +986,7 @@ rule fasttree:
     conda: "conda_definitions/fasttree.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.fasttree.tsv"
     threads: 4
-    #retries: 1
+    retries: 2
     resources:
         mem_mb = get_mem_fasttree,
         runntime = "23:59:59",
