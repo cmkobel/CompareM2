@@ -10,7 +10,7 @@
 # I thought it would work fine by just adding the size in the header of the next chunk. But apparently this is necessary.
 try({
     fig_height = max(4,
-                     N * 0.3)
+                     N * 0.2)
     
     knitr::opts_chunk$set(fig.height = fig_height,
                           fig.width = 10)
@@ -21,7 +21,7 @@ try({
 
 
 
-```{r mashtree, echo=FALSE, message=F, warning=F, error = T, fig_height = max(4, N*0.3), fig_width = 10}
+```{r mashtree, echo=FALSE, message=F, warning=F, error = T, fig_height = max(4, N*0.2), fig_width = 10}
 
 mashtree_file = glob_list$mashtree
 
