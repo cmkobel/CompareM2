@@ -10,7 +10,8 @@ RUN micromamba install -y -n base -f /tmp/env.yaml && \\
     micromamba clean --all --yes
 
 ## Inspired heavily from
-# https://github.com/mamba-org/micromamba-docker#quick-start""" > Dockerfile_$i
+# https://github.com/mamba-org/micromamba-docker#quick-start
+""" > Dockerfile_$i
 
 
     echo 
