@@ -9,9 +9,7 @@
 # This chunk is needed for setting the size of the mashtree plot
 # I thought it would work fine by just adding the size in the header of the next chunk. But apparently this is necessary.
 try({
-    fig_height = max(4,
-                     N * 0.2)
-    
+    fig_height = max(4, N * 0.2)
     knitr::opts_chunk$set(fig.height = fig_height,
                           fig.width = 10)
 })
