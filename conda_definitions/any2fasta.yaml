@@ -1,6 +1,6 @@
 name: any2fasta
 channels:
-  - anaconda
+  - conda-forge
   - bioconda
 dependencies:
   - any2fasta
