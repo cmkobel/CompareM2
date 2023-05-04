@@ -1,7 +1,7 @@
 FROM mambaorg/micromamba:1.4.2
 COPY --chown=$MAMBA_USER:$MAMBA_USER conda_definitions/roary_see-comments-in-this-file.yaml /tmp/env.yaml
 RUN echo "channel_priority: false" >> ~/.condarc
-RUN micromamba config --set channel_priority false && \
+RUN micromamba config set channel_priority false && \
     micromamba install -y -n base -f /tmp/env.yaml && \
     micromamba clean --all --yes
 
