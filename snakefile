@@ -162,8 +162,8 @@ rule copy:
     input: 
         genome = lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0],
     output: "{results_directory}/samples/{sample}/{sample}.fa"
-    container: "docker://pvstodghill/any2fasta"
     conda: "conda_definitions/any2fasta.yaml"
+    container: "docker://cmkobel/any2fasta"
     threads: 1 # Weirdly, or bugly, there must be a thread n definition in the rule. Otherwise, the set-threads option (in the orion profile) will not be taken up. 
     resources:
         mem_mb = 256,
@@ -205,6 +205,7 @@ rule busco_download:
         #database_representative = touch("{base_variable}/databases/busco/file_versions.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
         database_representative = touch("{base_variable}/databases/busco/ac2_busco_database_representative.flag") # Should point to the directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
     conda: "conda_definitions/busco.yaml"
+    container: "docker://cmkobel/busco"
     shell: """
         
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
@@ -255,6 +256,7 @@ rule checkm2_download:
     params:
         download_path = expand("{base_variable}/databases/checkm2", base_variable = base_variable),
     conda: "conda_definitions/checkm2_conda.yaml"
+    container: "docker://cmkobel/checkm2_conda"
     shell: """
 
 
@@ -294,6 +296,7 @@ rule kraken2_download:
     #params: 
         #asscom2_kraken_db = config['asscom2_kraken2_db'],
     conda: "conda_definitions/curl.yaml"
+    container: "docker://cmkobel/curl"
     shell: """
 
 
@@ -355,6 +358,7 @@ rule gtdb_download:
     #params: 
         #asscom2_gtdb_db = config['asscom2_gtdb_db'],
     conda: "conda_definitions/curl.yaml"
+    container: "docker://cmkobel/curl"
     shell: """
 
         # TODO: Make a way to check for internet access instead of just crashing. Same for busco and checkm2
@@ -418,6 +422,7 @@ rule sequence_lengths_individual:
     resources:
         runtime = "01:00:00",
     conda: "conda_definitions/seqkit.yaml"
+    container: "docker://cmkobel/seqkit"
     benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_individual.{sample}.tsv"
     shell: """
 
@@ -438,8 +443,8 @@ rule prokka_individual:
         log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
         gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta",
-    container: "docker://staphb/prokka"
     conda: "conda_definitions/prokka.yaml"
+    container: "docker://cmkobel/prokka"
     benchmark: "{results_directory}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
     resources:
         mem_mb = 8192,
@@ -482,8 +487,8 @@ rule prokka_individual:
 #         #asscom2_kraken2_db = config["asscom2_kraken2_db"],
 #         temporary_concatenation = "{results_directory}/kraken2/temporary_concatenation.fa",
 #         base_variable = base_variable,
-#     container: "docker://staphb/kraken2"
 #     conda: "conda_definitions/kraken2.yaml"
+#     container: "docker://cmkobel/kraken2"
 #     benchmark: "{results_directory}/benchmarks/benchmark.kraken2_all.tsv"
 #     threads: 8
 #     resources:
@@ -538,8 +543,8 @@ rule kraken2_individual:
     params: 
         #asscom2_kraken2_db = config["asscom2_kraken2_db"],
            base_variable = base_variable,
-    container: "docker://staphb/kraken2"
     conda: "conda_definitions/kraken2.yaml"
+    container: "docker://cmkobel/kraken2"
     benchmark: "{results_directory}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
     threads: 2
     resources:
@@ -580,6 +585,7 @@ rule busco_individual:
         #results_directory = results_directory,
         out_dir = "{results_directory}/samples/{sample}/busco",
     conda: "conda_definitions/busco.yaml"
+    container: "docker://cmkobel/busco"
     benchmark: "{results_directory}/benchmarks/benchmark.busco_individual.{sample}.tsv"
     threads: 1 # Because run_sepp hangs for a long time, not doing anything, I'd rather have more processes started on my small CPU.
     resources:
@@ -676,6 +682,7 @@ rule sequence_lengths:
 #     input: "{results_directory}/collected_results/prokka_labelled.tsv"
 #     output: "{results_directory}/collected_results/sample_pathway_enrichment_analysis.tsv"
 #     conda: "conda_definitions/r-clusterProfiler.yaml"
+container: "docker://cmkobel/r"
 #     shell: """
 
 
@@ -699,6 +706,7 @@ rule checkm2:
     output:
         table = touch("{results_directory}/checkm2/quality_report.tsv"),
     conda: "conda_definitions/checkm2_conda.yaml"
+    container: "docker://cmkobel/checkm2_conda"
     benchmark: "{results_directory}/benchmarks/benchmark.checkm2.tsv"
     threads: 8
     resources:
@@ -737,6 +745,7 @@ rule roary:
         blastp_identity = int(config['roary_blastp_identity']), # = 95 # For clustering genes
         core_perc = 99,  # Definition of the core genome
     #conda: "envs/roary.yml"
+    container: "docker://cmkobel/roary"
     benchmark: "{results_directory}/benchmarks/benchmark.roary.tsv"
     threads: 16
     #retries: 2
@@ -744,8 +753,8 @@ rule roary:
         #mem_mb = 32768,
         mem_mb = get_mem_roary,
         runtime = "23:59:59",
-    container: "docker://sangerpathogens/roary"
     conda: "conda_definitions/roary_see-comments-in-this-file.yaml"
+    container: "docker://cmkobel/roary_see"
     shell: """
     
         # Since I reinstalled conda, I've had problems with "Can't locate Bio/Roary/CommandLine/Roary.pm in INC". Below is a hacky fix
@@ -780,8 +789,8 @@ rule snp_dists:
         aln = "{results_directory}/roary/core_gene_alignment.aln",
     output: "{results_directory}/snp-dists/snp-dists.tsv"
     conda: "conda_definitions/snp-dists.yaml"
+    container: "docker://cmkobel/snp-dists"
     benchmark: "{results_directory}/benchmarks/benchmark.snp_dists.tsv"
-    container: "docker://staphb/snp-dists"
     shell: """
 
         snp-dists {input.aln} > {output}
@@ -797,8 +806,8 @@ rule assembly_stats:
         metadata = "{results_directory}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist(),
     output: "{results_directory}/assembly-stats/assembly-stats.tsv"
-    container: "docker://sangerpathogens/assembly-stats"
     conda: "conda_definitions/assembly-stats.yaml"
+    container: "docker://cmkobel/assembly-stats"
     benchmark: "{results_directory}/benchmarks/assembly_stats.tsv"
     shell: """
         
@@ -834,6 +843,7 @@ rule gtdbtk:
         mem_mb = 131072,
         runtime = "2-00:00:00"
     conda: "conda_definitions/gtdbtk.yaml"
+    container: "docker://cmkobel/gtdbtk"
     benchmark: "{results_directory}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
 
@@ -888,8 +898,8 @@ rule abricate:
         vfdb_detailed = "{results_directory}/abricate/vfdb_detailed.tsv",
         vfdb_sum = "{results_directory}/abricate/vfdb_summarized.tsv",
 
-    container: "docker://staphb/abricate"
     conda: "conda_definitions/abricate.yaml"
+    container: "docker://cmkobel/abricate"
     benchmark: "{results_directory}/benchmarks/benchmark.abricate.tsv"
     shell: """
 
@@ -927,9 +937,9 @@ rule mlst:
     params:
         mlst_scheme_interpreted = mlst_scheme_interpreted,
         list_ = "{results_directory}/mlst/mlst_schemes.txt", 
-    container: "docker://staphb/mlst"
     threads: 4
     conda: "conda_definitions/mlst.yaml"
+    container: "docker://cmkobel/mlst"
     benchmark: "{results_directory}/benchmarks/mlst.tsv"
     shell: """
 
@@ -954,8 +964,8 @@ rule mashtree:
     output: 
         tree = "{results_directory}/mashtree/mashtree.newick",
         dist = "{results_directory}/mashtree/mash_dist.tsv",
-    container: "docker://staphb/mashtree"
     conda: "conda_definitions/mashtree.yaml"
+    container: "docker://cmkobel/mashtree"
     benchmark: "{results_directory}/benchmarks/benchmark.mashtree.tsv"
     threads: 4
     resources:
@@ -982,8 +992,8 @@ rule fasttree:
         metadata = "{results_directory}/metadata.tsv",
         fasta = "{results_directory}/roary/core_gene_alignment.aln",
     output: "{results_directory}/fasttree/fasttree.newick"
-    container: "docker://staphb/fasttree"
     conda: "conda_definitions/fasttree.yaml"
+    container: "docker://cmkobel/fasttree"
     benchmark: "{results_directory}/benchmarks/benchmark.fasttree.tsv"
     threads: 4
     retries: 2
@@ -1023,6 +1033,7 @@ rule fasttree:
 rule install_report_environment_aot:
     output: touch(f"{results_directory}/.install_report_environment_aot.flag")
     conda: "report_subpipeline/conda_definitions/r-markdown.yaml"
+    container: "docker://cmkobel/r-markdown"
     shell: """
 
         echo "Report conda environment OK ..."
