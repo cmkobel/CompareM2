@@ -1,0 +1,10 @@
+name: roary2
+channels:
+  - r
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - roary
+
+# This file completely follows the roary-documentation.
