@@ -1,7 +1,7 @@
 ## MLST
 
 
-```{r prokka, echo = F, message = F, warning = F, error = T}
+```{r mlst, echo = F, message = F, warning = F, error = T}
 
 
 

@@ -169,7 +169,7 @@ rule copy:
         mem_mb = 256,
         runtime = "00:10:00",
     shell: """
-    
+
         any2fasta {input.genome:q} > {output}
 
     """  
@@ -255,8 +255,8 @@ rule checkm2_download:
         database_representative = expand("{base_variable}/databases/checkm2/ac2_checkm2_database_representative.flag", base_variable = base_variable), 
     params:
         download_path = expand("{base_variable}/databases/checkm2", base_variable = base_variable),
-    conda: "conda_definitions/checkm2_conda.yaml"
-    container: "docker://cmkobel/checkm2_conda"
+    conda: "conda_definitions/checkm2.yaml"
+    container: "docker://cmkobel/checkm2"
     shell: """
 
 
@@ -682,7 +682,7 @@ rule sequence_lengths:
 #     input: "{results_directory}/collected_results/prokka_labelled.tsv"
 #     output: "{results_directory}/collected_results/sample_pathway_enrichment_analysis.tsv"
 #     conda: "conda_definitions/r-clusterProfiler.yaml"
-container: "docker://cmkobel/r"
+#container: "docker://cmkobel/r"
 #     shell: """
 
 
@@ -705,8 +705,8 @@ rule checkm2:
         fasta = df["input_file_fasta"].tolist()
     output:
         table = touch("{results_directory}/checkm2/quality_report.tsv"),
-    conda: "conda_definitions/checkm2_conda.yaml"
-    container: "docker://cmkobel/checkm2_conda"
+    conda: "conda_definitions/checkm2.yaml"
+    container: "docker://cmkobel/checkm2"
     benchmark: "{results_directory}/benchmarks/benchmark.checkm2.tsv"
     threads: 8
     resources:
@@ -1083,15 +1083,14 @@ rule fast:
 
 
 
-
+# A major todo is to find a way to make the report run as a conda or containerized job dependending on the use-conda/use-singularity setting in the config. The best way might be to have an environment variable that points to the wanted config. 
 
 # Call the report subpipeline
 report_call = f"""
     mkdir -p {results_directory}/logs; \
     snakemake \
         --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
-        --cores 4 \
-        --use-conda \
+        --profile $ASSCOM2_PROFILE \
         --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title}
     """
 

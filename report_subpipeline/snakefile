@@ -27,20 +27,23 @@ rule report:
         flag = "{results_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
         metadata = "{results_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
     conda: "conda_definitions/r-markdown.yaml"
+    container: "docker://cmkobel/r-markdown"
     params: 
         base_variable = base_variable,
         results_directory = results_directory,
         batch_title = batch_title,
         end_script = f"{base_variable}/report_subpipeline/scripts/report_end_script.sh",
-
     output: 
         html = "{results_directory}/report_{batch_title}.html",
     #output: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
+    
     shell: """
 
 
-	# When sharing environments by multiple users: Pandoc creates an intermediary .md file that reside next to the .Rmd file that is used to create the report. Because the directory where this .Rmd file resides may not be writable by the user that is executing the workflow. Thus, as a solution, we'll copy the whole script/ directory where this .Rmd resides to the current working directory.
-        cp -r {base_variable}/report_subpipeline/scripts scripts_temporary
+	    # When sharing environments by multiple users: Pandoc creates an intermediary .md file that reside next to the .Rmd file that is used to create the report. Because the directory where this .Rmd file resides may not be writable by the user that is executing the workflow. Thus, as a solution, we'll copy the whole script/ directory where this .Rmd resides to the current working directory.
+        ls /home/thylakoid/assemblycomparator2/
+        echo elles
+        cp -r {base_variable}/report_subpipeline/scripts scripts_temporary # This one fails when using apptainer. Maybe I just need to bind it.
 
 
         mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.
