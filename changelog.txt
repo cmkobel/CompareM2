@@ -1,3 +1,6 @@
+2.5.0
+  - Apptainer support. New profiles for apptainer or conda use.
+
 
 2.4.1
   - Adjusting the new report and fix minor bugs

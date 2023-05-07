@@ -2,7 +2,7 @@
 
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
 
-__version__ = "v2.4.1" # Three places to bump. Here, in the bottom of the report, in the report snakefile. Remember to add to the changelog.txt file.
+__version__ = "v2.5.0" # Four places to bump. Here, in the bottom of the report, in the report snakefile. And in th changelog.
 __author__ = 'Oliver Kjærlund Hansen & Carl M. Kobel'
 
 
