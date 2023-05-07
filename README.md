@@ -191,9 +191,9 @@ Finally, after defining the ASSCOM2_PROFILE, we can define the alias that you wi
 # Main alias for running assemblycomparator2
 echo "alias assemblycomparator2='conda run --live-stream --name assemblycomparator2 \
     snakemake \
-        --snakefile ${ASSCOM2_BASE}/snakefile \
+        --snakefile \${ASSCOM2_BASE}/snakefile \
         --profile \${ASSCOM2_PROFILE} \
-        --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
+        --configfile \${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
 
 
 # Then source your ~/.bashrc
