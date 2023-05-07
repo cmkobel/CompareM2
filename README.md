@@ -24,7 +24,7 @@ Assemblycomparator2 will then create a sub-directory, named results_ac2/, contai
     
 ##### A bit more advanced controls 
     
-  - Execute all jobs up until (including) a specific job in the job graph:
+  - Execute all jobs until (including) a specific job in the job graph:
     
     `assemblycomparator2 --until mlst`
     
