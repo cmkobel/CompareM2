@@ -137,7 +137,7 @@ Assemblycomparator2 supports both Apptainer (formerly known as Singularity) and 
 
 Assemblycomparator2 supports both running directly on the "local" machine (i.e. workstation), or through a HPC workload manager such as "SLURM", "PBS" or others. 
 
-Your decision is to pick the profile within the profiles/ directory that describes the way that you want to run assemblycomparator2. Below is the file tree that shows the options that are available. Please note that you should give the path to the folder containing the config.yaml file that you want to use.
+Your decision is to pick the profile within the profiles/ directory that describes the way that you want to run assemblycomparator2. Below is the file tree that shows the options that are available. Please note that you should give the path to the folder containing the config.yaml file that you want to use. If there isn't a profile that matches your system you should feel free to create one by using one of the bundled is a template.
 
 ```bash
 #> profiles/
