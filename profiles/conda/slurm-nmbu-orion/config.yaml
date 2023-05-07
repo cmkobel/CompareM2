@@ -1,0 +1,96 @@
+local-cores: 8 # front end / head node cores
+cores: 128 # cluster cores
+jobs: 128 # max parallel jobs
+max-jobs-per-second: 3
+max-status-checks-per-second: 3
+keep-going: true 
+#rerun-incomplete: true
+latency-wait: 120
+keep-incomplete: true
+rerun-triggers: "mtime" # only schedule jobs to rerun if there has been a change in mtime of input/output files. That is: ignore code changes
+
+# This one could be cool to have working 
+show-failed-logs: false
+
+
+# ---- Conda/Mamba ----
+use-conda: true
+conda-frontend: 'mamba'
+conda-prefix: '~/.asscom2/conda'
+
+
+# ---- Specific resources for Orion (Orion is a bit sluggish)
+
+# Orion sometimes has some oversaturated nodes. This means that jobs submitted to this node will never finish. The only escape is by setting a higher core count which will decrease the computing density?
+set-threads:
+  - copy=3
+  - sequence_lengths_individual=2
+
+
+set-resources:
+  - copy:mem_mb="1025"
+  - copy:runtime="01:00:00"
+
+
+
+# ----  Specifics ----
+
+cluster-cancel: "scancel"
+
+cluster:
+  mkdir -p results_ac2/logs/old &&
+  sbatch
+    --parsable
+    --cpus-per-task={threads}
+    --mem={resources.mem_mb}
+    --job-name=ac2_{rule}_{wildcards}
+    --output=results_ac2/logs/%j-{rule}.out.log
+    --error=results_ac2/logs/%j-{rule}.err.log
+    --time={resources.runtime}
+    --partition={resources.partition}
+    
+
+
+
+default-resources:
+  - threads=2
+  - mem_mb=1024
+  - runtime="12:00:00"
+  - tmpdir="/work/users"
+  - partition=smallmem,hugemem
+  
+
+
+
+
+
+
+
+# ---- Old unused stuff ----
+#cluster: "sbatch -A {cluster.account} -t {cluster.time} -p {cluster.partition} --mem {cluster.mem} --error={cluster.error} --output={cluster.output}"
+# drmaa: "
+#     --mem={cluster.mem_mb} 
+#     --cpus-per-task={cluster.cpus-per-task} 
+#     --time={cluster.time} 
+#     --account={cluster.account}
+#     --error={cluster.error} 
+#     --output={cluster.output}
+# "
+#retries: 2
+#cluster: "sbatch --account {cluster.account} --time {cluster.time} --mem {cluster.mem_mb} --error={cluster.error} --output={cluster.output}"
+
+
+#local-cores: 2
+#configfile: "configs/workflow.yaml"
+#configfile: "config.yaml"
+
+
+# While still being possible, cluster configuration has been deprecated by the introduction of Profiles. (https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles)
+#cluster-config: "profiles/slurm/cluster.yaml" 
+
+
+# ---- Singularity ----
+#use-singularity: True
+#singularity-prefix: "/faststorage/home/cmkobel/singularity_images/"
+
+

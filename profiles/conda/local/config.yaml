@@ -1,0 +1,20 @@
+# Resources
+cores: all
+
+# Policies
+keep-going: true 
+rerun-incomplete: true
+show-failed-logs: true
+rerun-triggers: "mtime"
+keep-incomplete: true # true for debugging
+
+
+# Conda
+use-conda: true
+conda-frontend: mamba
+conda-prefix: '~/.asscom2/conda'
+
+
+# Local setup for a typical workstation
+# resources:
+#   - mem_mb=190000

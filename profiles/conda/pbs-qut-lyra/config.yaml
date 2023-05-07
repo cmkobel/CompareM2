@@ -1,0 +1,51 @@
+
+local-cores: 16 # front end / head node cores
+cores: 2048 # cluster cores
+jobs: 1000 # max parallel jobs
+keep-going: true 
+#rerun-incomplete: true
+latency-wait: 120
+keep-incomplete: true # Should be true for debugging rules.
+
+# This one could be cool to have working 
+show-failed-logs: true
+jobname: "ac2_{name}_{jobid}.sh" # Super helpful because it shows the job in qstat
+
+# ---- Conda/Mamba ----
+use-conda: true
+conda-frontend: 'mamba'
+conda-prefix: '~/.asscom2/conda'
+
+
+
+# ---- QUT CMR Lyra specifics ----
+
+cluster-cancel: "qdel"
+
+
+
+cluster:
+  mkdir -p output_asscom2/logs/old/ && 
+  qsub 
+    -V 
+    -A kobel 
+    -q microbiome 
+    -e output_asscom2/logs/%j-{rule}.err.log 
+    -o output_asscom2/logs/%j-{rule}.out.log
+    -l select=1:ncpus={threads}:mem={resources.mem_mb}mb,walltime={resources.runtime} 
+
+ 
+
+    
+
+
+
+default-resources:
+  - mem_mb=1024
+  #- disk_mb=1024 # genomedk doesn't care 
+  - runtime='12:00:00'
+  - tmpdir='$SCRATCH'
+  #- partition=normal # genomedk doesn't care too much about partitions (https://genome.au.dk/docs/interacting-with-the-queue/#why-is-the-partition-i-chose-being-ignored)
+  
+  
+
