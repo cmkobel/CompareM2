@@ -140,30 +140,30 @@ Assemblycomparator supports both running the pipeline on the "local" machine (i.
 
 Your decision is to pick the profile within the profiles/ directory that describes the way that you want to run assemblycomparator2. Below is the file tree that shows the options that are available. Please note that you should give the path to the folder containing the config.yaml file that you want to use.
 
-```
-profiles/
-├── apptainer/
-│   ├── local/
-│   │   └── config.yaml
-│   ├── pbs-qut-lyra/
-│   │   └── config.yaml
-│   ├── slurm-au-genomedk/
-│   │   └── config.yaml
-│   ├── slurm-nmbu-orion/
-│   │   └── config.yaml
-│   └── slurm-sigma2-saga/
-│       └── config.yaml
-└── conda/
-    ├── local/
-    │   └── config.yaml
-    ├── pbs-qut-lyra/
-    │   └── config.yaml
-    ├── slurm-au-genomedk/
-    │   └── config.yaml
-    ├── slurm-nmbu-orion/
-    │   └── config.yaml
-    └── slurm-sigma2-saga/
-        └── config.yaml
+```bash
+#> profiles/
+#> ├── apptainer/
+#> │   ├── local/
+#> │   │   └── config.yaml
+#> │   ├── pbs-qut-lyra/
+#> │   │   └── config.yaml
+#> │   ├── slurm-au-genomedk/
+#> │   │   └── config.yaml
+#> │   ├── slurm-nmbu-orion/
+#> │   │   └── config.yaml
+#> │   └── slurm-sigma2-saga/
+#> │       └── config.yaml
+#> └── conda/
+#>     ├── local/
+#>     │   └── config.yaml
+#>     ├── pbs-qut-lyra/
+#>     │   └── config.yaml
+#>     ├── slurm-au-genomedk/
+#>     │   └── config.yaml
+#>     ├── slurm-nmbu-orion/
+#>     │   └── config.yaml
+#>     └── slurm-sigma2-saga/
+#>         └── config.yaml
 ```
 
 ?? test that pointing to the yaml files directly also works.
@@ -182,7 +182,7 @@ echo "export ASSCOM2_PROFILE=$ASSCOM2_PROFILE" >> ~/.bashrc
 
 Finally, after defining the ASSCOM2_PROFILE, we can define the alias that you will use to run assemblycomparator2.
 
-
+#### 4.2 Setting up assemblycomparator2 to use apptainer on a local workstation.
 ```bash
 # Main alias for running assemblycomparator2
 echo "alias assemblycomparator2='conda run --live-stream --name assemblycomparator2 \
@@ -200,6 +200,7 @@ source ~/.bashrc
 ?? Check if the configfile can be pointed to from somewhere else.
 ?? Check that the backslash correctly dynamically points to a redefinition of the variable in question.
 
+Now, the installation of assemblycomparator2 is complete.
    
 ### Testing the assemblycomparator2 installation (optional)
 
