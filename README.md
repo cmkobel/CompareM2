@@ -117,7 +117,7 @@ The recommended way of installing Snakemake is to make a conda environment that 
 conda config --set channel_priority strict
 
 # It is also recommended that you use mamba to install any package within any conda environment
-conda install -n base -c conda-forge mamba
+conda install -c conda-forge mamba
 
 # Install Snakemake in a environment by using the bundled yaml-file.
 cd $ASSCOM2_BASE && mamba env create -f environment.yaml
