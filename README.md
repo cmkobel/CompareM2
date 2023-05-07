@@ -180,6 +180,8 @@ ASSCOM2_PROFILE=${ASSCOM2_BASE}/profiles/apptainer/local
 echo "export ASSCOM2_PROFILE=$ASSCOM2_PROFILE" >> ~/.bashrc 
 ```
 
+Finally, after defining the ASSCOM2_PROFILE, we can define the alias that you will use to run assemblycomparator2.
+
 
 ```bash
 # Main alias for running assemblycomparator2
@@ -196,11 +198,12 @@ source ~/.bashrc
 ```
 
 ?? Check if the configfile can be pointed to from somewhere else.
+?? Check that the backslash correctly dynamically points to a redefinition of the variable in question.
 
    
 ### Testing the assemblycomparator2 installation (optional)
 
-assemblycomparator2 comes with a few directories with test assemblyes assemblies which can be used to check that everything works as expected. In order to run this test, simply go into the location of these assemblies, and run the `assemblycomparator2`-command
+assemblycomparator2 comes with a few directories with test assemblies which can be used to check that everything works as expected. In order to run this test, simply go into the location of these assemblies, and run the `assemblycomparator2`-command
 ```bash
 cd ${ASSCOM2_BASE}/tests/E._faecium_plasmids
 
