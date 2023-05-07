@@ -134,11 +134,11 @@ cd $ASSCOM2_BASE && mamba env create -f environment.yaml
 If you don't know what a HPC workload manager is, or don't want to use it, skip directly to <a href="https://github.com/cmkobel/assemblycomparator2#41-setting-up-assemblycomparator2-to-use-apptainer-on-a-local-workstation">subheading 4.1</a>.
 </td></tr></table>
 
-Assemblycomparator2 supports both Apptainer (formerly known as Singularity) and Conda. When using Apptainer, the images are automatically downloaded from Dockerhub. When using Conda, the environments are automatically solved and installed in your ~/.asscom2/conda_base/ directory. <u>It is strongly recommended that you use Apptainer</u>, as Conda can be very slow at solving environments on HPCs with congested network drives, even when using mamba.
+Assemblycomparator2 supports both Apptainer (formerly known as Singularity) and Conda. When using Apptainer, the images are automatically downloaded from Dockerhub. When using Conda, the environments are automatically solved and installed into your ~/.asscom2/conda_base/ directory. <u>It is strongly recommended that you use Apptainer</u>, as Conda can be very slow at solving environments on HPCs with congested network drives, even when using mamba.
 
 Assemblycomparator supports both running the pipeline on the "local" machine (i.e. workstation), or through a HPC workload manager such as "SLURM", "PBS" or others. 
 
-Your decision is to pick the profile within the profiles/ directory that describes the way you want to run assemblycomparator2. Below is the file tree that shows the options that are available:
+Your decision is to pick the profile within the profiles/ directory that describes the way that you want to run assemblycomparator2. Below is the file tree that shows the options that are available. Please note that you should give the path to the folder containing the config.yaml file that you want to use.
 
 ```
 profiles/
