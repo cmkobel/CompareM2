@@ -101,7 +101,7 @@ mkdir -p $ASSCOM2_BASE
 echo "export ASSCOM2_BASE=$ASSCOM2_BASE" >> ~/.bashrc  
 ```
 
-### 2. Clone or download assemblycomparator2
+### 2. Download (clone) assemblycomparator2
 Clone the assemblycomparator2 git-repository into that base. If you don't have git, you can also just download the files.
 ```bash
 git clone https://github.com/cmkobel/assemblycomparator2.git $ASSCOM2_BASE
