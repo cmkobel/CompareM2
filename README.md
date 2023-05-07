@@ -1,6 +1,6 @@
 # assemblycomparator2
 
-Assemblycomparator is a genomes-to-report pipeline. It is a bit like nullarbor, but it takes in genomes (assemblies) instead of reads. 
+Assemblycomparator is a genomes-to-report pipeline. It is a bit like nullarbor, but it takes in genomes (assemblies) instead of reads. Assemblies can come from isolates or metagenomes - as long as they're all prokaryotic.
 
 It works by calling an alias that invokes the activation of a conda environment and subsequently calls a snakemake pipeline on the fasta-files in the current working directory of your terminal.
 
