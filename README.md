@@ -124,40 +124,42 @@ Assemblycomparator2 supports both Apptainer (formerly known as Singularity) and 
 
 Assemblycomparator supports both running the pipeline on the "local" machine (i.e. workstation), or through a HPC workload manager such as "SLURM", "PBS" or others. 
 
-Your decision is to pick the profile within the profiles/ directory that describes the way you want to run. Below is the file tree that shown the options that are available
+Your decision is to pick the profile within the profiles/ directory that describes the way you want to run assemblycomparator2. Below is the file tree that shows the options that are available:
+
 ```
 profiles/
-├── apptainer
-│   ├── local
+├── apptainer/
+│   ├── local/
 │   │   └── config.yaml
-│   ├── pbs-qut-lyra
+│   ├── pbs-qut-lyra/
 │   │   └── config.yaml
-│   ├── slurm-au-genomedk
+│   ├── slurm-au-genomedk/
 │   │   └── config.yaml
-│   ├── slurm-nmbu-orion
+│   ├── slurm-nmbu-orion/
 │   │   └── config.yaml
-│   └── slurm-sigma2-saga
+│   └── slurm-sigma2-saga/
 │       └── config.yaml
-└── conda
-    ├── local
+└── conda/
+    ├── local/
     │   └── config.yaml
-    ├── pbs-qut-lyra
+    ├── pbs-qut-lyra/
     │   └── config.yaml
-    ├── slurm-au-genomedk
+    ├── slurm-au-genomedk/
     │   └── config.yaml
-    ├── slurm-nmbu-orion
+    ├── slurm-nmbu-orion/
     │   └── config.yaml
-    └── slurm-sigma2-saga
+    └── slurm-sigma2-saga/
         └── config.yaml
 ```
 
+?? test that pointing to the yaml files directly also works.
 
-Save this decision in the ASSCOM2_PROFILE variable. Below is an example shown of setting assemblycomparator2 up to use apptainer on a local workstation.
+Save this decision in the ASSCOM2_PROFILE variable. Below is an example shown of setting assemblycomparator2 up to use apptainer on a local workstation, which is the recommended option for new users.
 
 #### 4.1 Setting up assemblycomparator2 to use apptainer on a local workstation.
 
 ```bash
-# Define the profile to use
+# Define the Snakemake profile to use
 ASSCOM2_PROFILE=${ASSCOM2_BASE}/profiles/apptainer/local
 
 # Save it into your ~/.bashrc
@@ -165,86 +167,46 @@ echo "export ASSCOM2_PROFILE=$ASSCOM2_PROFILE" >> ~/.bashrc
 ```
 
 
-#### Recommended option: Apptainer
+```bash
+# Main alias for running assemblycomparator2
+echo "alias assemblycomparator2='conda run --live-stream --name assemblycomparator2 \
+    snakemake \
+        --snakefile ${ASSCOM2_BASE}/snakefile \
+        --profile \${ASSCOM2_PROFILE} \
+        --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
 
-In order to use the Apptainer implementation of assemblycomparator2 you 
 
-#### Alternative option: Conda
-
-In order to use assemblycomparator with Conda only, you should 
-
-#### Option A) For <ins>HPCs</ins> with Slurm using <ins>Conda</ins>
-   ```
-   # Main alias for running assemblycomparator2
-   echo "alias assemblycomparator2='conda run --live-stream --name assemblycomparator2 \
-       snakemake --snakefile ${ASSCOM2_BASE}/snakefile \
-           --profile ${ASSCOM2_BASE}/profiles/slurm/ \
-           --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
-
-   # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
-   echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
-   
-   # Then source your ~/.bashrc
-   source ~/.bashrc
-    
-   ```
-   
-   
-#### Option B) For <ins>local</ins> setups using <ins>Conda</ins>
-   ```
-   # Main alias for running assemblycomparator2
-   echo "alias assemblycomparator2='conda run --live-stream --name assemblycomparator2 \
-       snakemake --snakefile ${ASSCOM2_BASE}/snakefile \
-           --profile ${ASSCOM2_BASE}/profiles/local/ \
-           --configfile ${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
-   
-   # Set the SNAKEMAKE_CONDA_PREFIX-variable, so the package installations can be reused between runs.
-   echo "export SNAKEMAKE_CONDA_PREFIX=${ASSCOM2_BASE}/conda_base" >> ~/.bashrc 
-   
-   # Then source your ~/.bashrc
-   source ~/.bashrc
-    
-   ```
-
-   
-### Create conda environments 
-
-Before you start using assemblycomparator2 you might want to install the environments for each of the jobs that assemblycomparator2 will run.
-
+# Then source your ~/.bashrc
+source ~/.bashrc
 
 ```
 
-assemblycomparator2 --conda-create-envs-only
- 
-```
-
-
+?? Check if the configfile can be pointed to from somewhere else.
 
    
-### Testing installation (optional)
+### Testing the assemblycomparator2 installation (optional)
 
-assemblycomparator2 comes with a handful of E. faecium assemblies (illumina/skesa) which can be used to check that everything works as expected. In order to run this test, simply go into the location of these assemblies, and run the `assemblycomparator2`-command
-   ```
-   cd ${ASSCOM2_BASE}/tests/E._faecium_plasmids
-   assemblycomparator2
-    
-   ```
+assemblycomparator2 comes with a few directories with test assemblyes assemblies which can be used to check that everything works as expected. In order to run this test, simply go into the location of these assemblies, and run the `assemblycomparator2`-command
+```bash
+cd ${ASSCOM2_BASE}/tests/E._faecium_plasmids
 
-If you encounter problems installing, testing or using assemblycomparator2, please an issue on the [github issue tracker](https://github.com/cmkobel/assemblycomparator2/issues).
+assemblycomparator2 
+```
+
+If you encounter problems installing, testing or using assemblycomparator2, please an issue on the [github issue tracker](https://github.com/cmkobel/assemblycomparator2/issues). No issues are too small.
 
    
    
 ### Updating an existing installation (optional)
 
 If you should -later down the line- wish to update the installation, run this command and you should be all set:
-```
+```bash
+
+# Pull (download) newest version
 cd $ASSCOM2_BASE && git pull
 
-# You might also want to update snakemake
+# Install matching version of Snakemake
 conda env update --name assemblycomparator2 --file environment.yaml
-
-# Then create possibly new environments.
-assemblycomparator2 --conda-create-envs-only
 
 
 ```
@@ -275,8 +237,7 @@ In the future we might add some of the following pieces of software into assembl
 
 
 
-  
-Development will continue:
+Development is active and will continue.
 
-
+assemblycomparator2 genomes to report pipeline. Copyright (C) 2019-2023 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)
   
