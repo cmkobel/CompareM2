@@ -42,7 +42,7 @@ Assemblycomparator2 will then create a sub-directory, named results_ac2/, contai
 
 **Hint:** Use `assemblycomparator2 --until <rulename> [<rulename2>...]` to run specific analyses only. The `rulename` for each analysis is listed below:
 
-### For each assembly `rulename`
+### For each assembly
   - `copy` [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
   - `sequence_lengths` [seqkit](https://bioinf.shenwei.me/seqkit/usage/) (lengths and GC-content of individual contigs)
   - `prokka` [prokka](https://github.com/tseemann/prokka) (annotation)
@@ -70,7 +70,7 @@ Assemblycomparator2 will then create a sub-directory, named results_ac2/, contai
 
 There are also a few pseudo targets defined. For instance `fast` which runs sequence_lengths, assembly-stats and mashtree. There is also one named `isolate` which runs all the analyses that are relevant for clinical isolates (sequence_lengths, prokka, kraken2, mlst, abricate, assembly-stats, gtdbtk, busco, checkm2, roary, snp-dists, fasttree, mashtree) as well as one named `meta` which runs the analyses that are relevant to metagenomes (aka. MAGs), these are sequence_lengths, prokka, kraken2, gtdbtk, busco, checkm2, mashtree.
 
-**Hint:** You can run one of these pseudorules just like any other rulename with
+**Hint:** You can run one of these pseudorules just like any other rulename with:
 ```bash
 assemblycomparator2 --until meta
 ```
