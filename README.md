@@ -15,6 +15,7 @@ Go into that directory in the terminal, and run the command `assemblycomparator2
 Assemblycomparator2 will then create a sub-directory, named results_ac2/, containing a plethora of analyses. 
 
   - Execute a 'dry run'. That is, to show which jobs will run, without submitting any.
+
     `assemblycomparator2 -n`
     
   - Simply, run assemblycomparator on the genomes in the current directory:
@@ -42,25 +43,25 @@ Assemblycomparator2 will then create a sub-directory, named results_ac2/, contai
 Use `assemblycomparator2 --until <rulename> [<rulename2>...]` to run specific analyses only. The rulenames for each analyses are listed below:
 
 ### For each assembly `rulename`
-  - [any2fasta](https://github.com/tseemann/any2fasta) `copy` (wide input format support)
-  - [prokka](https://github.com/tseemann/prokka) `prokka` (annotation)
-  - [kraken2](https://ccb.jhu.edu/software/kraken2/) `kraken2` (species identification)
-  - [mlst](https://github.com/tseemann/mlst) `mlst` (multi locus sequence typing)
-  - [abricate](https://github.com/tseemann/abricate) `abricate` (virulence/resistance gene identification)
-  - [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) `assembly-stats` (generic assembly statistics)
+  - `copy` [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
+  - `prokka` [prokka](https://github.com/tseemann/prokka) (annotation)
+  - `kraken2` [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
+  - `mlst` [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
+  - `abricate` [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)
+  - `assembly-stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) (generic assembly statistics)
   - \#[clusterProfiler KEGG](https://yulab-smu.top/biomedical-knowledge-mining-book/clusterprofiler-kegg.html) (pathway enrichment analysis)
-  - [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) `gtdbtk` (Species recognition)
-  - [Busco](https://busco.ezlab.org/) `busco` (Estimate assembly completeness and contamination)
-  - [CheckM2](https://github.com/chklovski/CheckM2/) `checkm2` (Estimate assembly completeness and contamination)
+  - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) (Species recognition)
+  - `busco` [Busco](https://busco.ezlab.org/) (Estimate assembly completeness and contamination)
+  - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) (Estimate assembly completeness and contamination)
 
   
 
 
 ### For each group
-  - [roary](https://sanger-pathogens.github.io/Roary/) `roary` (pan and core genome)
-  - [snp-dists](https://github.com/tseemann/snp-dists) `snp-dists` (core genome pairwise snp-distances)
-  - [FastTree](http://www.microbesonline.org/fasttree/) `fasttree` (phylogenetic tree of the core genome)
-  - [Mashtree](https://github.com/lskatz/mashtree) `mashtree` (super fast distance measurement)
+  - `roary` [roary](https://sanger-pathogens.github.io/Roary/) (pan and core genome)
+  - `snp-dists` [snp-dists](https://github.com/tseemann/snp-dists) (core genome pairwise snp-distances)
+  - `fasttree` [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of the core genome)
+  - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement)
   - **A nice report easy to share with your friends ([demo](https://github.com/cmkobel/assemblycomparator2/raw/master/tests/E._faecium/report_E._faecium.html.zip))**
 
 
