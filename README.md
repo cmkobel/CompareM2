@@ -120,7 +120,7 @@ conda config --set channel_priority strict
 conda install -c conda-forge mamba
 
 # Install Snakemake in a environment by using the bundled yaml-file.
-cd $ASSCOM2_BASE && mamba env create -f environment.yaml
+cd $ASSCOM2_BASE && mamba env create -n assemblycomparator2 -f environment.yaml
 
 ```
    
