@@ -123,7 +123,8 @@ conda install -c conda-forge mamba
 cd $ASSCOM2_BASE && mamba env create -n assemblycomparator2 -f environment.yaml
 
 ```
-   
+
+You don't need to do any manual activation of the conda environment, as the pipeline is wrapped whithin conda run.
    
 ### 4. Set up the alias 
 
