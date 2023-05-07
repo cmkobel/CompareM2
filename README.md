@@ -134,9 +134,9 @@ cd $ASSCOM2_BASE && mamba env create -f environment.yaml
 If you don't know what a HPC workload manager is, or don't want to use it, skip directly to <a href="https://github.com/cmkobel/assemblycomparator2#41-setting-up-assemblycomparator2-to-use-apptainer-on-a-local-workstation">subheading 4.1</a>.
 </td></tr></table>
 
-Assemblycomparator2 supports both Apptainer (formerly known as Singularity) and Conda. When using Apptainer, the images are automatically downloaded from Dockerhub. When using Conda, the environments are automatically solved and installed into your ~/.asscom2/conda_base/ directory. <u>It is strongly recommended that you use Apptainer</u>, as Conda can be very slow at solving environments on HPCs with congested network drives, even when using mamba.
+Assemblycomparator2 supports both Apptainer (formerly known as Singularity) and Conda. When using Apptainer, the images are automatically pulled from Dockerhub. When using Conda, the environments are automatically solved and installed into your ~/.asscom2/conda_base/ directory. <u>It is strongly recommended that you use Apptainer</u>, as Conda can be very slow at solving environments on HPCs with congested network drives, even when using mamba.
 
-Assemblycomparator supports both running the pipeline on the "local" machine (i.e. workstation), or through a HPC workload manager such as "SLURM", "PBS" or others. 
+Assemblycomparator2 supports both running directly on the "local" machine (i.e. workstation), or through a HPC workload manager such as "SLURM", "PBS" or others. 
 
 Your decision is to pick the profile within the profiles/ directory that describes the way that you want to run assemblycomparator2. Below is the file tree that shows the options that are available. Please note that you should give the path to the folder containing the config.yaml file that you want to use.
 
@@ -204,7 +204,7 @@ Now, the installation of assemblycomparator2 is complete.
    
 ### Testing the assemblycomparator2 installation (optional)
 
-assemblycomparator2 comes with a few directories with test assemblies which can be used to check that everything works as expected. In order to run this test, simply go into the location of these assemblies, and run the `assemblycomparator2`-command
+Assemblycomparator2 comes with a few directories with test assemblies which can be used to check that everything works as expected. In order to run this test, simply go into the location of these assemblies, and run the `assemblycomparator2`-command
 ```bash
 cd ${ASSCOM2_BASE}/tests/E._faecium_plasmids
 
@@ -258,5 +258,5 @@ In the future we might add some of the following pieces of software into assembl
 
 Development is active and will continue.
 
-assemblycomparator2 genomes to report pipeline. Copyright (C) 2019-2023 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)
+Assemblycomparator2 genomes to report pipeline. Copyright (C) 2019-2023 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)
   
