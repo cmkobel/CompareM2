@@ -14,8 +14,7 @@ Make a directory with the assembly-files you want to investigate with assemblyco
 Go into that directory in the terminal, and run the command `assemblycomparator2`. 
 Assemblycomparator2 will then create a sub-directory, named results_ac2/, containing a plethora of analyses. 
 
-  - Execute a 'dry run'. That is, show the jobs which will run, without triggering the computation:
-    
+  - Execute a 'dry run'. That is, to show which jobs will run, without submitting any.
     `assemblycomparator2 -n`
     
   - Simply, run assemblycomparator on the genomes in the current directory:
