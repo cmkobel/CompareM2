@@ -118,7 +118,7 @@ cd $ASSCOM2_BASE && mamba env create -f environment.yaml
 
 
 #### HPC workload manager or local execution?
-If you don't know what a HPC workload manager is, or don't want to use it, skip directly to [subheading 4.1](https://github.com/cmkobel/assemblycomparator2#4.1-Setting).
+If you don't know what a HPC workload manager is, or don't want to use it, skip directly to [subheading 4.1](https://github.com/cmkobel/assemblycomparator2#41-setting-up-assemblycomparator2-to-use-apptainer-on-a-local-workstation).
 
 Assemblycomparator2 supports both Apptainer (formerly known as Singularity) and Conda. When using Apptainer, the images are automatically downloaded from Dockerhub. When using Conda, the environments are automatically solved and installed in your ~/.asscom2/conda_base/ directory. <u>It is strongly recommended that you use Apptainer</u>, as Conda can be very slow at solving environments on HPCs with congested network drives, even when using mamba.
 
