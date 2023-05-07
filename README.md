@@ -96,7 +96,7 @@ Assemblycomparator2 needs Snakemake to run. By default, assemblycomparator2 uses
 
 ### 1. Set up the assemblycomparator2 base directory
 
-Define the base directory for assemblycomparator2 in $ASSCOM2_BASE. If neccessary, you can change it to anything you'd like.
+Firstly, define the base directory for assemblycomparator2 in $ASSCOM2_BASE. If neccessary, you can change it to anything you'd like.
 
 ```bash
 # Define base path.
