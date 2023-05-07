@@ -40,10 +40,11 @@ Assemblycomparator2 will then create a sub-directory, named results_ac2/, contai
 
 ## What analyses does it do?
 
-Use `assemblycomparator2 --until <rulename> [<rulename2>...]` to run specific analyses only. The rulenames for each analyses are listed below:
+Use `assemblycomparator2 --until <rulename> [<rulename2>...]` to run specific analyses only. The `rulename` for each analysis is listed below:
 
 ### For each assembly `rulename`
   - `copy` [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
+  - `sequence_lengths` [seqkit](https://bioinf.shenwei.me/seqkit/usage/) (lengths and GC-content of individual contigs)
   - `prokka` [prokka](https://github.com/tseemann/prokka) (annotation)
   - `kraken2` [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
   - `mlst` [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
@@ -65,7 +66,18 @@ Use `assemblycomparator2 --until <rulename> [<rulename2>...]` to run specific an
   - **A nice report easy to share with your friends ([demo](https://github.com/cmkobel/assemblycomparator2/raw/master/tests/E._faecium/report_E._faecium.html.zip))**
 
 
-Below is the graph the shows the dependencies of individual analyses:
+#### Pseudo-rules
+
+There are also a few pseudo targets defined. For instance `fast` which runs sequence_lengths, assembly-stats and mashtree. There is also one named `isolate` which runs all the analyses that are relevant for clinical isolates (sequence_lengths, prokka, kraken2, mlst, abricate, assembly-stats, gtdbtk, busco, checkm2, roary, snp-dists, fasttree, mashtree) as well as one named `meta` which runs the analyses that are relevant to metagenomes (aka. MAGs), these are sequence_lengths, prokka, kraken2, gtdbtk, busco, checkm2, mashtree.
+
+##### Hint
+You can run one of these pseudorules just like any other rulename with
+```bash
+assemblycomparator2 --until meta
+```
+
+
+Below is the graph the shows the dependencies of all possible analyses:
 ![dag](https://user-images.githubusercontent.com/5913696/221563240-08804656-0213-4d9a-8431-e37254bb88c4.png)
 
 ??update
