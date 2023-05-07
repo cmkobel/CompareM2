@@ -112,7 +112,7 @@ Clone the assemblycomparator2 git-repository into that base. If you don't have g
 ```bash
 git clone https://github.com/cmkobel/assemblycomparator2.git $ASSCOM2_BASE
 
-# Developers should instead use the git protocol:
+# Developers can preferably use the git protocol:
 # git clone git@github.com:cmkobel/assemblycomparator2.git $ASSCOM2_BASE
 ```
 
