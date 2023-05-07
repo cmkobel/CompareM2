@@ -9,7 +9,7 @@ Assemblycomparator performs a palette of analyses on your genomes, and compares 
 Assemblycomparator2 can either be run on a local workstation (>64GiB RAM), a high performance computing cluster (HPC). Both conda and apptainer/singularity environments are available for everything to run.
 
 
-## Usage
+## Usage by examples
 Make a directory with the assembly-files you want to investigate with assemblycomparator2. 
 Go into that directory in the terminal, and run the command `assemblycomparator2`. 
 Assemblycomparator2 will then create a sub-directory, named results_ac2/, containing a plethora of analyses. 
@@ -65,12 +65,10 @@ Use `assemblycomparator2 --until <rulename> [<rulename2>...]` to run specific an
   - **A nice report easy to share with your friends ([demo](https://github.com/cmkobel/assemblycomparator2/raw/master/tests/E._faecium/report_E._faecium.html.zip))**
 
 
-Below is a snakemake exported directed graph of the rules involved:
+Below is the graph the shows the dependencies of individual analyses:
 ![dag](https://user-images.githubusercontent.com/5913696/221563240-08804656-0213-4d9a-8431-e37254bb88c4.png)
 
-
-
-
+??update
 
 ## Installation
 
@@ -78,55 +76,93 @@ Assemblycomparator2 needs Snakemake to run. By default, assemblycomparator2 uses
 
 ### 1. Set up the assemblycomparator2 base directory
 
-* Define the base directory for assemblycomparator2 in $ASSCOM2_BASE. If neccessary, you can change it to anything you'd like.
-   ```
+Define the base directory for assemblycomparator2 in $ASSCOM2_BASE. If neccessary, you can change it to anything you'd like.
 
-   # Define base path.
-   ASSCOM2_BASE=~/assemblycomparator2
+```bash
+# Define base path.
+ASSCOM2_BASE=~/assemblycomparator2
 
-   # Create base directory.
-   mkdir -p $ASSCOM2_BASE
-   
-   # Save it into your ~/.bashrc
-   echo "export ASSCOM2_BASE=$ASSCOM2_BASE" >> ~/.bashrc 
-       
-   ```
+# Create base directory.
+mkdir -p $ASSCOM2_BASE
+
+# Save it into your ~/.bashrc
+echo "export ASSCOM2_BASE=$ASSCOM2_BASE" >> ~/.bashrc  
+```
 
 ### 2. Clone or download assemblycomparator2
- * Clone the assemblycomparator2 git-repository into that base. If you don't have git, you can also just download the files.
-   ```
-   git clone https://github.com/cmkobel/assemblycomparator2.git $ASSCOM2_BASE
-   
-   # Developers should instead use the git protocol:
-   # git clone git@github.com:cmkobel/assemblycomparator2.git $ASSCOM2_BASE
+Clone the assemblycomparator2 git-repository into that base. If you don't have git, you can also just download the files.
+```bash
+git clone https://github.com/cmkobel/assemblycomparator2.git $ASSCOM2_BASE
 
-   ```
+# Developers should instead use the git protocol:
+# git clone git@github.com:cmkobel/assemblycomparator2.git $ASSCOM2_BASE
+```
 
 ### 3. Installing Snakemake
-* The recommended way of installing Snakemake is to make a conda environment that contains the exact Snakemake version needed. This environment is only used to start the interactive snakemake job scheduler.
-   ```
+The recommended way of installing Snakemake is to make a conda environment that contains the exact Snakemake version needed. This environment is only used to start the interactive snakemake job scheduler.
+```bash
 
-   #  It is recommended to use the strict channel policy in conda. 
-   conda config --set channel_priority strict
-   
-   # It is also recommended that you use mamba to install any package within any conda environment
-   conda install -n base -c conda-forge mamba
+#  It is recommended to use the strict channel policy in conda. 
+conda config --set channel_priority strict
 
-   # Install Snakemake in a environment by using the bundled yaml-file.
-   cd $ASSCOM2_BASE && mamba env create -f environment.yaml
+# It is also recommended that you use mamba to install any package within any conda environment
+conda install -n base -c conda-forge mamba
 
-   ```
+# Install Snakemake in a environment by using the bundled yaml-file.
+cd $ASSCOM2_BASE && mamba env create -f environment.yaml
+
+```
    
    
 ### 4. Set up the alias 
 
 
-#### Workload manager or local execution?
+#### HPC workload manager or local execution?
+If you don't know what a HPC workload manager is, or don't want to use it, skip directly to [subheading 4.1](https://github.com/cmkobel/assemblycomparator2#4.1-Setting).
+
 Assemblycomparator2 supports both Apptainer (formerly known as Singularity) and Conda. When using Apptainer, the images are automatically downloaded from Dockerhub. When using Conda, the environments are automatically solved and installed in your ~/.asscom2/conda_base/ directory. <u>It is strongly recommended that you use Apptainer</u>, as Conda can be very slow at solving environments on HPCs with congested network drives, even when using mamba.
 
 Assemblycomparator supports both running the pipeline on the "local" machine (i.e. workstation), or through a HPC workload manager such as "SLURM", "PBS" or others. 
 
-Your decision is to pick the profile within the profiles/ directory that describes the way you want to run 
+Your decision is to pick the profile within the profiles/ directory that describes the way you want to run. Below is the file tree that shown the options that are available
+```
+profiles/
+├── apptainer
+│   ├── local
+│   │   └── config.yaml
+│   ├── pbs-qut-lyra
+│   │   └── config.yaml
+│   ├── slurm-au-genomedk
+│   │   └── config.yaml
+│   ├── slurm-nmbu-orion
+│   │   └── config.yaml
+│   └── slurm-sigma2-saga
+│       └── config.yaml
+└── conda
+    ├── local
+    │   └── config.yaml
+    ├── pbs-qut-lyra
+    │   └── config.yaml
+    ├── slurm-au-genomedk
+    │   └── config.yaml
+    ├── slurm-nmbu-orion
+    │   └── config.yaml
+    └── slurm-sigma2-saga
+        └── config.yaml
+```
+
+
+Save this decision in the ASSCOM2_PROFILE variable. Below is an example shown of setting assemblycomparator2 up to use apptainer on a local workstation.
+
+#### 4.1 Setting up assemblycomparator2 to use apptainer on a local workstation.
+
+```bash
+# Define the profile to use
+ASSCOM2_PROFILE=${ASSCOM2_BASE}/profiles/apptainer/local
+
+# Save it into your ~/.bashrc
+echo "export ASSCOM2_PROFILE=$ASSCOM2_PROFILE" >> ~/.bashrc 
+```
 
 
 #### Recommended option: Apptainer
