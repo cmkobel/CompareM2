@@ -171,7 +171,6 @@ Your decision is to pick the profile within the profiles/ directory that describ
 #>         └── config.yaml
 ```
 
-?? test that pointing to the yaml files directly also works.
 
 Save this decision in the ASSCOM2_PROFILE variable. Below is an example shown of setting assemblycomparator2 up to use apptainer on a local workstation, which is the recommended option for new users.
 
@@ -201,9 +200,6 @@ echo "alias assemblycomparator2='conda run --live-stream --name assemblycomparat
 source ~/.bashrc
 
 ```
-
-?? Check if the configfile can be pointed to from somewhere else.
-?? Check that the backslash correctly dynamically points to a redefinition of the variable in question.
 
 Now, the installation of assemblycomparator2 is complete.
    
