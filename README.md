@@ -6,7 +6,7 @@ It works by calling an alias that invokes the activation of a conda environment 
 
 Assemblycomparator performs a palette of analyses on your genomes, and compares them. The main results from these analyses are summarized in a html-report that can be easily distributed.
 
-Assemblycomparator2 can either be run on a local workstation (>64GiB RAM), a high performance computing cluster (HPC). Both conda and apptainer/singularity environments are available for everything to run.
+Assemblycomparator2 can either be run on a local workstation (>64GiB RAM), a high performance computing cluster (HPC). Both conda environments and apptainer/singularity/docker images are available for all depending software to run.
 
 
 ## Usage by examples
