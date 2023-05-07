@@ -6,12 +6,14 @@ It works by calling an alias that invokes the activation of a conda environment 
 
 Assemblycomparator performs a palette of analyses on your genomes, and compares them. The main results from these analyses are summarized in a html-report that can be easily distributed.
 
+Assemblycomparator2 can either be run on a local workstation (>64GiB RAM), a high performance computing cluster (HPC). Both conda and apptainer/singularity environments are available for everything to run.
+
+
 ## Usage
 Make a directory with the assembly-files you want to investigate with assemblycomparator2. 
-Go into that directory in the terminal, and run the command `assemblycomparator2_slurm` or `assemblycomparator2_local`. 
-assemblycomparator2 will then create a sub-directory containing a plethora of analyses. 
+Go into that directory in the terminal, and run the command `assemblycomparator2`. 
+Assemblycomparator2 will then create a sub-directory, named results_ac2/, containing a plethora of analyses. 
 
-#### Some useful commands
   - Execute a 'dry run'. That is, show the jobs which will run, without triggering the computation:
     
     `assemblycomparator2 -n`
@@ -20,13 +22,9 @@ assemblycomparator2 will then create a sub-directory containing a plethora of an
 
     `assemblycomparator2`
     
-  - If you're not sure your internet connection to the cluster will last for the full assemblycomparator2 run, put a `&` in the end.
-  
-    `assemblycomparator2 &`
-    
 ##### A bit more advanced controls 
     
-  - Execute all jobs up until (inclusive of) a specific job in the job graph:
+  - Execute all jobs up until (including) a specific job in the job graph:
     
     `assemblycomparator2 --until mlst`
     
@@ -37,34 +35,33 @@ assemblycomparator2 will then create a sub-directory containing a plethora of an
   - Select a specific roary blastp-identity: (defaults to 95)
 
     `assemblycomparator2 --config roary_blastp_identity=90`
-    
-  - Rerun a specific rule, (might be necessary if some parts of the report is missing):
-
-    `assemblycomparator2 -R report`
-    
-    
-
-
-
+      
 
 
 ## What analyses does it do?
 
-### For each assembly
-  - [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
-  - [prokka](https://github.com/tseemann/prokka) (annotation)
-  - [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
-  - [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
-  - [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)
-  - [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) (generic assembly statistics)
-  - [clusterProfiler KEGG](https://yulab-smu.top/biomedical-knowledge-mining-book/clusterprofiler-kegg.html) (pathway enrichment analysis)
+Use `assemblycomparator2 --until <rulename> [<rulename2>...]` to run specific analyses only. The rulenames for each analyses are listed below:
+
+### For each assembly `rulename`
+  - [any2fasta](https://github.com/tseemann/any2fasta) `copy` (wide input format support)
+  - [prokka](https://github.com/tseemann/prokka) `prokka` (annotation)
+  - [kraken2](https://ccb.jhu.edu/software/kraken2/) `kraken2` (species identification)
+  - [mlst](https://github.com/tseemann/mlst) `mlst` (multi locus sequence typing)
+  - [abricate](https://github.com/tseemann/abricate) `abricate` (virulence/resistance gene identification)
+  - [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) `assembly-stats` (generic assembly statistics)
+  - \#[clusterProfiler KEGG](https://yulab-smu.top/biomedical-knowledge-mining-book/clusterprofiler-kegg.html) (pathway enrichment analysis)
+  - [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) `gtdbtk` (Species recognition)
+  - [Busco](https://busco.ezlab.org/) `busco` (Estimate assembly completeness and contamination)
+  - [CheckM2](https://github.com/chklovski/CheckM2/) `checkm2` (Estimate assembly completeness and contamination)
+
+  
 
 
 ### For each group
-  - [roary](https://sanger-pathogens.github.io/Roary/) (pan and core genome)
-  - [snp-dists](https://github.com/tseemann/snp-dists) (core genome pairwise snp-distances)
-  - [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of the core genome)
-  - [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement)
+  - [roary](https://sanger-pathogens.github.io/Roary/) `roary` (pan and core genome)
+  - [snp-dists](https://github.com/tseemann/snp-dists) `snp-dists` (core genome pairwise snp-distances)
+  - [FastTree](http://www.microbesonline.org/fasttree/) `fasttree` (phylogenetic tree of the core genome)
+  - [Mashtree](https://github.com/lskatz/mashtree) `mashtree` (super fast distance measurement)
   - **A nice report easy to share with your friends ([demo](https://github.com/cmkobel/assemblycomparator2/raw/master/tests/E._faecium/report_E._faecium.html.zip))**
 
 
@@ -77,49 +74,68 @@ Below is a snakemake exported directed graph of the rules involved:
 
 ## Installation
 
-Assemblycomparator2 needs Snakemake and the dependencies which can be needed for running on your specific setup. I.e. DRMAA for Slurm-mananged HPC's.
-You can either follow the [official Snakemake instructions](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html) or use our guide below.
+Assemblycomparator2 needs Snakemake to run. By default, assemblycomparator2 uses singularity to run containerized environments that are automatically downloaded from dockerhub. Alternatively, it is also possible to automatically install and use corresponding conda environments, but this is recommended only for developers).
 
+### 1. Set up the assemblycomparator2 base directory
 
-### 1. Preliminary Setup
-
-* We recommend that you use a base environment with mamba to start the pipeline:
-   ```
-   conda install -n base -c conda-forge mamba
+* Define the base directory for assemblycomparator2 in $ASSCOM2_BASE. If neccessary, you can change it to anything you'd like.
    ```
 
-* Set the base directory for assemblycomparator2. If neccessary, you can change it to anything you'd like.
-   ``` 
+   # Define base path.
    ASSCOM2_BASE=~/assemblycomparator2
-   
+
+   # Create base directory.
    mkdir -p $ASSCOM2_BASE
-    
-   # And save it into your .bashrc
+   
+   # Save it into your ~/.bashrc
    echo "export ASSCOM2_BASE=$ASSCOM2_BASE" >> ~/.bashrc 
-    
+       
    ```
- * Clone the assemblycomparator2 GitHub-repository into that base
+
+### 2. Clone or download assemblycomparator2
+ * Clone the assemblycomparator2 git-repository into that base. If you don't have git, you can also just download the files.
    ```
    git clone https://github.com/cmkobel/assemblycomparator2.git $ASSCOM2_BASE
    
-   # Optionally use the git protocol:
+   # Developers should instead use the git protocol:
    # git clone git@github.com:cmkobel/assemblycomparator2.git $ASSCOM2_BASE
-   
-   # Setup a asscom2 base environment which is used to call snakemake
-   cd $ASSCOM2_BASE && mamba env create -f environment.yaml
-   
-   #  It is recommended to use the strict channel policy in conda
+
+   ```
+
+### 3. Installing Snakemake
+* The recommended way of installing Snakemake is to make a conda environment that contains the exact Snakemake version needed. This environment is only used to start the interactive snakemake job scheduler.
+   ```
+
+   #  It is recommended to use the strict channel policy in conda. 
    conda config --set channel_priority strict
    
+   # It is also recommended that you use mamba to install any package within any conda environment
+   conda install -n base -c conda-forge mamba
+
+   # Install Snakemake in a environment by using the bundled yaml-file.
+   cd $ASSCOM2_BASE && mamba env create -f environment.yaml
+
    ```
    
- * Set an alias that makes it easy to run assemblycomparator2 from anywhere in your filesystem
- * You have to decide whether you want to use Singularity (recommended if possible) or Conda for package management.
-
    
-### 2. Install the alias 
+### 4. Set up the alias 
 
-Select A or B depending on whether you want to install on a slurm-enabled HPC or a local system without slurm.
+
+#### Workload manager or local execution?
+Assemblycomparator2 supports both Apptainer (formerly known as Singularity) and Conda. When using Apptainer, the images are automatically downloaded from Dockerhub. When using Conda, the environments are automatically solved and installed in your ~/.asscom2/conda_base/ directory. <u>It is strongly recommended that you use Apptainer</u>, as Conda can be very slow at solving environments on HPCs with congested network drives, even when using mamba.
+
+Assemblycomparator supports both running the pipeline on the "local" machine (i.e. workstation), or through a HPC workload manager such as "SLURM", "PBS" or others. 
+
+Your decision is to pick the profile within the profiles/ directory that describes the way you want to run 
+
+
+#### Recommended option: Apptainer
+
+In order to use the Apptainer implementation of assemblycomparator2 you 
+
+#### Alternative option: Conda
+
+In order to use assemblycomparator with Conda only, you should 
 
 #### Option A) For <ins>HPCs</ins> with Slurm using <ins>Conda</ins>
    ```
