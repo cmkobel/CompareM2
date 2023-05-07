@@ -40,6 +40,15 @@ Assemblycomparator2 will then create a sub-directory, named results_ac2/, contai
 
 ## What analyses does it do?
 
+
+
+Below is the graph the shows the dependencies of all possible analyses in assemblycomparator2:
+
+![dag](https://user-images.githubusercontent.com/5913696/236703042-43e1e22c-4013-4c29-a64d-f63fd5b913d5.png)
+
+
+
+
 **Hint:** Use `assemblycomparator2 --until <rulename> [<rulename2>...]` to run specific analyses only. The `rulename` for each analysis is listed below:
 
 ### For each assembly
@@ -74,11 +83,6 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 ```bash
 assemblycomparator2 --until meta
 ```
-
-
-Below is the graph the shows the dependencies of all possible analyses:
-![dag](https://user-images.githubusercontent.com/5913696/236703042-43e1e22c-4013-4c29-a64d-f63fd5b913d5.png)
-
 
 
 
