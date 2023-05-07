@@ -101,7 +101,9 @@ echo "export ASSCOM2_BASE=$ASSCOM2_BASE" >> ~/.bashrc
 ```
 
 ### 2. Download (clone) assemblycomparator2
+
 Clone the assemblycomparator2 git-repository into that base. If you don't have git, you can also just download the files.
+
 ```bash
 git clone https://github.com/cmkobel/assemblycomparator2.git $ASSCOM2_BASE
 
@@ -110,7 +112,9 @@ git clone https://github.com/cmkobel/assemblycomparator2.git $ASSCOM2_BASE
 ```
 
 ### 3. Installing Snakemake
+
 The recommended way of installing Snakemake is to make a conda environment that contains the exact Snakemake version needed. This environment is only used to start the interactive snakemake job scheduler.
+
 ```bash
 
 #  It is recommended to use the strict channel policy in conda. 
@@ -128,7 +132,6 @@ You don't need to do any manual activation of the conda environment, as the pipe
 Assemblycomparator2 is run with conda run and automatically activates the correct environment.
    
 ### 4. Set up the alias 
-
 
 #### HPC workload manager or local execution?
 <table><tr><td>
