@@ -13,7 +13,7 @@ jobname: "ac2_{name}_{jobid}.sh" # Super helpful because it shows the job in qst
 
 # Apptainer
 use-singularity: true
-singularity-prefix: "~/.ac2/apptainer_base"
+singularity-prefix: '~/.asscom2/apptainer_base'
 singularity-args: "--env PATH=/opt/conda/bin:$PATH --bind $ASSCOM2_BASE:$ASSCOM2_BASE" # Must also bind ASSCOM2_BASE so we can access databases and report scripts etc.
 
 
