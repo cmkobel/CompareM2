@@ -77,7 +77,8 @@ assemblycomparator2 --until meta
 
 
 Below is the graph the shows the dependencies of all possible analyses:
-![dag](https://user-images.githubusercontent.com/5913696/221563240-08804656-0213-4d9a-8431-e37254bb88c4.png)
+![dag](https://user-images.githubusercontent.com/5913696/236703042-43e1e22c-4013-4c29-a64d-f63fd5b913d5.png)
+
 
 ??update
 
