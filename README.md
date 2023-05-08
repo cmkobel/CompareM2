@@ -10,7 +10,7 @@ Assemblycomparator2 can be run either on a local workstation (>64GiB RAM), or a 
 ## Usage by examples
 Make a directory with the assembly-files you want to investigate with assemblycomparator2. 
 Go into that directory in the terminal, and run the command `assemblycomparator2`. 
-Assemblycomparator2 will then create a sub-directory, named results_ac2/, containing a plethora of analyses. 
+Assemblycomparator2 will then create a sub-directory, named results_ac2/ containing a plethora of analysis results. 
 
   - Execute a 'dry run'. That is, to show which jobs will run, without submitting any.
 
