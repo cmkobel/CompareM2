@@ -16,5 +16,5 @@ singularity-args: "--env PATH=/opt/conda/bin:$PATH --bind $ASSCOM2_BASE:$ASSCOM2
 # Comments for the singularity-args parameter. I don't know why the necessary /opt/conda/bin path, which is present when I run the image, is gone when snakemake runs. Also, since the databases are likely in a soft linked directory, you must bind it if you want access
 
 # Local setup for a typical workstation
-# resources:
-#   - mem_mb=190000
+resources:
+  - mem_mb=122000
