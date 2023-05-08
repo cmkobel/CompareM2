@@ -135,8 +135,7 @@ cd $ASSCOM2_BASE && mamba env create -n assemblycomparator2 -f environment.yaml
 
 ```
 
-You don't need to do any manual activation of the conda environment, as the pipeline is wrapped whithin conda run.
-Assemblycomparator2 is run with conda run and automatically activates the correct environment.
+You don't need to do any manual activation of the conda environment. As assemblycomparator2 is wrapped within conda run, it automatically activates the correct environment for each analysis.
    
 ### 4. Set up the alias 
 
