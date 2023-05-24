@@ -4,8 +4,12 @@ Using [Abricate](https://github.com/tseemann/abricate#abricate), the assemblies 
 
 ```{r abricate-ncbi, echo = F, message = F, warning = F, error = T}
 
+#glob_list$abricate
+
 # I know there is a summary, but making sure that everything is parsed as numbers is just easier if I do my own pivot.
-abricate_ncbi = read_tsv("results_ac2/abricate/ncbi_detailed.tsv", na = ".") %>%
+#abricate_ncbi = read_tsv("results_ac2/abricate/ncbi_detailed.tsv", na = ".") %>%
+#abricate_ncbi = read_tsv(glob_list$abricate, na = ".") %>%
+abricate_ncbi = read_tsv(glob_list$abricate[grepl("ncbi_", glob_list$abricate)], na = ".") %>%
     #rename(file_long = `#FILE`) #%>%
     mutate(file = basename(`#FILE`)) %>%
     select(file, GENE, `%COVERAGE`) %>%
@@ -38,7 +42,7 @@ metadata_translate %>%
 ```{r abricate-card, echo = F, message = F, warning = F, error = T}
 
 # I know there is a summary, but making sure that everything is parsed as numbers is just easier if I do my own pivot.
-abricate_card = read_tsv("results_ac2/abricate/card_detailed.tsv", na = ".") %>%
+abricate_card = read_tsv(glob_list$abricate[grepl("card_", glob_list$abricate)], na = ".") %>%
     #rename(file_long = `#FILE`) #%>%
     mutate(file = basename(`#FILE`)) %>%
     select(file, GENE, `%COVERAGE`) %>%
@@ -56,7 +60,7 @@ abricate_card = read_tsv("results_ac2/abricate/card_detailed.tsv", na = ".") %>%
 
 metadata_translate %>% 
     select(sample, file) %>%
-    left_join(abricate_ncbi, by = "file") %>%
+    left_join(abricate_card, by = "file") %>%
     select(-file) %>%
     custom_dt("abricate_card")
 
@@ -69,7 +73,7 @@ metadata_translate %>%
 ```{r abricate-plasmidfinder, echo = F, message = F, warning = F, error = T}
 
 # I know there is a summary, but making sure that everything is parsed as numbers is just easier if I do my own pivot.
-abricate_plasmidfinder = read_tsv("results_ac2/abricate/plasmidfinder_detailed.tsv", na = ".") %>%
+abricate_plasmidfinder = read_tsv(glob_list$abricate[grepl("plasmidfinder_", glob_list$abricate)], na = ".") %>%
     #rename(file_long = `#FILE`) #%>%
     mutate(file = basename(`#FILE`)) %>%
     select(file, GENE, `%COVERAGE`) %>%
@@ -100,7 +104,7 @@ metadata_translate %>%
 ```{r abricate-vfdb, echo = F, message = F, warning = F, error = T}
 
 # I know there is a summary, but making sure that everything is parsed as numbers is just easier if I do my own pivot.
-abricate_vfdb = read_tsv("results_ac2/abricate/vfdb_detailed.tsv", na = ".") %>%
+abricate_vfdb = read_tsv(glob_list$abricate[grepl("vfdb_", glob_list$abricate)], na = ".") %>%
     #rename(file_long = `#FILE`) #%>%
     mutate(file = basename(`#FILE`)) %>%
     select(file, GENE, `%COVERAGE`) %>%

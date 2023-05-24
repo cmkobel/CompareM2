@@ -235,7 +235,7 @@ metadata_df %>%
 
 ### Report sections
 
-Here is an overview of the number of result files that have been found for each analysis. A report section is only rendered if relevant result files are present for that analysis. 
+Here is an overview of the number of result files that have been found for each analysis. A report section is only rendered if relevant result files are present for that analysis. Each section can be triggered to run by calling assemblycomparator2 with a trailing `--until <section>`
 
 ```{r sample-switchboard, echo=FALSE, message=F, warning=F, error = T}
 
@@ -260,7 +260,14 @@ section_definition_table = tribble(
     "kraken2",           N, Sys.glob(paste0(results_directory, "/samples/*/kraken2/*kraken2_report.tsv")),
     "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
     "mlst",              1, Sys.glob(paste0(results_directory, "/mlst/mlst.tsv")),
-    "abricate",          1, Sys.glob(paste0(results_directory, "/abricate/ncbi_detailed.tsv")), # This one acts as a proxy for the other ones. Not sure if this is a good idea?
+    "abricate",          4, Sys.glob(
+        c(
+            paste0(results_directory, "/abricate/ncbi_detailed.tsv"),
+            paste0(results_directory, "/abricate/card_detailed.tsv"),
+            paste0(results_directory, "/abricate/plasmidfinder_detailed.tsv"),
+            paste0(results_directory, "/abricate/vfdb_detailed.tsv")
+        )
+    ),
     "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
     "roary",             1, Sys.glob(paste0(results_directory, "/roary/gene_presence_absence.Rtab")), # This also counts for the roary summary file.
     "mashtree",          1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick"))
@@ -278,7 +285,7 @@ glob_list = section_definition_table %>%
     deframe() # Convert to list
 
 # The render variable is finally used to toggle the rendering of each section in the report.
-render = lapply(glob_list, function(x) {length(x) > 0})
+render = lapply(glob_list, function(x) {length(x) > 0}) # Anything more than one file, will trigger the rendering.
 
 
 section_definition_table %>%
@@ -329,6 +336,9 @@ section_definition_table %>%
 ```
 
 ```{r child = paste0(report_scripts, "section_mlst.rmd"), eval = render$mlst}
+```
+
+```{r child = paste0(report_scripts, "section_abricate.rmd"), eval = render$abricate}
 ```
 
 ```{r child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}
