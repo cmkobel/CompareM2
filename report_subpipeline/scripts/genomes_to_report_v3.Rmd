@@ -118,13 +118,6 @@ report_scripts = paste0(base_variable, "/report_subpipeline/scripts/")
 
 ## Global functions
 
-# Print Quick
-pq = function(logical, input) {
-    if (logical) {
-        paste(input)
-    } 
-}
-
 # A function that returns a new global table enumerator for each call
 tableno_var = 0
 tableno = function() {
@@ -140,36 +133,36 @@ figno = function() {
 }
 
 
-dtable = function(X) {
+# dtable = function(X) {
     
-    datatable(X,
-        extensions = c("Buttons","KeyTable"), 
-        options = list(
-            dom = '<"top"B>frtip',
-            buttons = list('csv', 'excel'),
-            keys = T
-        ),
-        rownames=F
-    )
-}
+#     datatable(X,
+#         extensions = c("Buttons","KeyTable"), 
+#         options = list(
+#             dom = '<"top"B>frtip',
+#             buttons = list('csv', 'excel'),
+#             keys = T
+#         ),
+#         rownames=F
+#     )
+# }
 
-create_dt <- function(x){
-    DT::datatable(x,
-        extensions = 'Buttons',
-        options = list(
-            dom = 'Blfrtip',
-            buttons = c('copy', 'csv', 'excel'),
-            lengthMenu = list(
-                c(10,25,50,-1),
-                c(10,25,50, "All")
-            )
-        )
-    )
-}
+# create_dt <- function(x){
+#     DT::datatable(x,
+#         extensions = 'Buttons',
+#         options = list(
+#             dom = 'Blfrtip',
+#             buttons = c('copy', 'csv', 'excel'),
+#             lengthMenu = list(
+#                 c(10,25,50,-1),
+#                 c(10,25,50, "All")
+#             )
+#         )
+#     )
+# }
 
 custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, width = NULL, show_n = 10) {
     
-    name = paste(batch_title, filename, sep = "_")
+    name = paste(batch_title, filename, sep = "__")
     
     write_tsv(x, paste0(results_directory, "/tables/", name, ".tsv")) # Save a copy on the harddisk for people without browsers.
     
@@ -267,7 +260,7 @@ section_definition_table = tribble(
     "kraken2",           N, Sys.glob(paste0(results_directory, "/samples/*/kraken2/*kraken2_report.tsv")),
     "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
     "mlst",              1, Sys.glob(paste0(results_directory, "/mlst/mlst.tsv")),
-    "abricate",          1, Sys.glob(paste0(results_directory, "abricate/card_detailed.tsv")),
+    "abricate",          1, Sys.glob(paste0(results_directory, "/abricate/ncbi_detailed.tsv")), # This one acts as a proxy for the other ones. Not sure if this is a good idea?
     "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
     "roary",             1, Sys.glob(paste0(results_directory, "/roary/gene_presence_absence.Rtab")), # This also counts for the roary summary file.
     "mashtree",          1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick"))
