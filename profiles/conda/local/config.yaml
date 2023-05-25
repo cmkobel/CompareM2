@@ -16,5 +16,5 @@ conda-prefix: '~/.asscom2/conda'
 
 
 # Local setup for a typical workstation
-# resources:
-#   - mem_mb=190000
+resources:
+  - mem_mb=122000
