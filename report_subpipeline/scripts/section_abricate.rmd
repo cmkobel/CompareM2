@@ -2,6 +2,9 @@
 
 Using [Abricate](https://github.com/tseemann/abricate#abricate), the assemblies are scanned for known resistance genes in the ncbi, card, plasmidfinder and vfdb antimicrobial resistance databases.
 
+
+#### NCBI AMRFinder
+
 ```{r abricate-ncbi, echo = F, message = F, warning = F, error = T}
 
 #glob_list$abricate
@@ -37,7 +40,9 @@ metadata_translate %>%
 
 *Table `r tableno()`: Table of NCBI Resistance gene calls called with [NCBI AMRFinder](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6811410/).*
 
+---
 
+#### CARD
 
 ```{r abricate-card, echo = F, message = F, warning = F, error = T}
 
@@ -67,8 +72,11 @@ metadata_translate %>%
 
 ```
 
-*Table `r tableno()`: Table of [Card](https://card.mcmaster.ca/) (Comprehensive Antibiotic Resistance Database) results*
+*Table `r tableno()`: Table of [CARD](https://card.mcmaster.ca/) (Comprehensive Antibiotic Resistance Database) results*
 
+---
+
+#### PlasmidFinder
 
 ```{r abricate-plasmidfinder, echo = F, message = F, warning = F, error = T}
 
@@ -100,6 +108,9 @@ metadata_translate %>%
 
 *Table `r tableno()`: Table of [PlasmidFinder](https://cge.cbs.dtu.dk/services/PlasmidFinder/) plasmid calls. Note that plasmidfinder uses short substrings for recognizing the plasmids, and not necessarily longer sequences i.e. complete plasmid sequences.*
 
+---
+
+#### VFDB
 
 ```{r abricate-vfdb, echo = F, message = F, warning = F, error = T}
 
