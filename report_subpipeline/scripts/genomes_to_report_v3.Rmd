@@ -15,6 +15,12 @@ editor_options:
 #css: "max-width: 5000px; margin: auto; padding: 1em; line-height: 20px"
 ---
 <style>
+
+.main-container {
+    margin-left: 60px; /* was auto */
+    margin-top: 37px; /* was 0 */
+}
+
 table {
   white-space: nowrap; /* Do not wrap table cell contents. */
 }
@@ -30,6 +36,8 @@ p {
 .shaded {
     color: #929292;
 }
+
+
 
 
 </style>
