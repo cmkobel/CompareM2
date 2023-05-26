@@ -68,6 +68,7 @@ metadata_translate %>%
     select(sample, file) %>%
     left_join(abricate_card, by = "file") %>%
     select(-file) %>%
+    mutate(n = coalesce(n, 0)) %>% # the count will be empty for samples without matches otherwise
     custom_dt("abricate_card")
 
 
@@ -102,6 +103,7 @@ metadata_translate %>%
     select(sample, file) %>%
     left_join(abricate_plasmidfinder, by = "file") %>%
     select(-file) %>%
+    mutate(n = coalesce(n, 0)) %>% # the count will be empty for samples without matches otherwise
     custom_dt("abricate_plasmidfinder")
 
 
@@ -136,6 +138,7 @@ metadata_translate %>%
     select(sample, file) %>%
     left_join(abricate_vfdb, by = "file") %>%
     select(-file) %>%
+    mutate(n = coalesce(n, 0)) %>% # the count will be empty for samples without matches otherwise
     custom_dt("abricate_vfdb")
 
 
