@@ -196,9 +196,7 @@ custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, wid
     )
 }
 
-paste_ = function(x, ...) {
-    paste(x, ..., sep = "_")
-}
+
 
 
 ```
