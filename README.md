@@ -70,7 +70,7 @@ Below is the graph the shows the dependencies of all possible analyses in assemb
   - `snp-dists` [snp-dists](https://github.com/tseemann/snp-dists) (core genome pairwise snp-distances)
   - `fasttree` [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of the core genome)
   - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement)
-  - **A nice report easy to share with your friends ([demo](https://github.com/cmkobel/assemblycomparator2/raw/master/tests/E._faecium/report_E._faecium.html.zip))**
+  - **A nice report easy to share with your friends ([demos](https://github.com/cmkobel/assemblycomparator2/tree/master/demo_reports))**
 
 
 #### Pseudo-rules
