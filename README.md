@@ -191,7 +191,7 @@ echo "export ASSCOM2_PROFILE=$ASSCOM2_PROFILE" >> ~/.bashrc
 
 Finally, after defining the ASSCOM2_PROFILE, we can define the alias that you will use to run assemblycomparator2.
 
-#### 4.2 Setting up assemblycomparator2 to use apptainer on a local workstation.
+#### 4.2 Finalizing install by defining the alias that starts assemblycomparator2
 ```bash
 # Main alias for running assemblycomparator2
 echo "alias assemblycomparator2='conda run --live-stream --name assemblycomparator2 \
