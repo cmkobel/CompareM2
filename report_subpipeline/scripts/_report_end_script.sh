@@ -1,4 +1,4 @@
-#!/bin/bsh
+#!/bin/bash
 
 # Put something in this script that you want to happen when a new report has been rendered
 # Remove the underscore prefix (_) from this file, and the file will be executed.
