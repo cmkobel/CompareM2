@@ -88,7 +88,7 @@ assemblycomparator2 --until meta
 
 Dependencies:
   - Snakemake 
-  - Either Apptainer, or Conda
+  - Either Apptainer or Conda
 
 Assemblycomparator2 needs Snakemake to run. By default, assemblycomparator2 uses singularity to run containerized environments (images) that are automatically pulled from dockerhub. Alternatively, it is also possible to automatically install and use corresponding conda environments, but this is recommended only for developers).
 
