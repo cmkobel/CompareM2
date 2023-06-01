@@ -20,7 +20,8 @@ except:
     pass
 
 
-
+# The report should always run locally no matter the queuing system available.
+localrules: report
 
 rule all:
 	input: expand(\
