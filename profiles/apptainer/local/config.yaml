@@ -12,7 +12,7 @@ keep-incomplete: true # true for debugging
 # Apptainer
 use-singularity: true
 singularity-prefix: '~/.asscom2/apptainer_base'
-singularity-args: "--env PATH=/opt/conda/bin:$PATH --bind $ASSCOM2_BASE:$ASSCOM2_BASE" # Must also bind ASSCOM2_BASE so we can access databases and report scripts etc.
+singularity-args: "--env PATH=/opt/conda/bin:$PATH --bind $ASSCOM2_BASE,$PWD" # Must also bind ASSCOM2_BASE so we can access databases and report scripts etc.
 # Comments for the singularity-args parameter. I don't know why the necessary /opt/conda/bin path, which is present when I run the image, is gone when snakemake runs. Also, since the databases are likely in a soft linked directory, you must bind it if you want access
 
 # Local setup for a typical workstation

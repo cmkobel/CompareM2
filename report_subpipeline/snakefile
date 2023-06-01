@@ -14,6 +14,14 @@ print('report subpipeline: results_directory:', results_directory)
 print('report subpipeline: base_variable:', base_variable)
 
 
+try: 
+    os.mkdir(f"{results_directory}/tables") # When using apptainer, I've had some problems with "mkdir: cannot create directory ‘/home/thylakoid/pnytera’: Read-only file system". I think moving this command out of the shell script may solve the problem?
+except:
+    pass
+
+
+
+
 rule all:
 	input: expand(\
         "{results_directory}/report_{batch_title}.html", \
@@ -42,9 +50,12 @@ rule report:
 
 	    # When sharing environments by multiple users: Pandoc creates an intermediary .md file that reside next to the .Rmd file that is used to create the report. Because the directory where this .Rmd file resides may not be writable by the user that is executing the workflow. Thus, as a solution, we'll copy the whole script/ directory where this .Rmd resides to the current working directory.
         cp -r {base_variable}/report_subpipeline/scripts scripts_temporary # This one fails when using apptainer. Maybe I just need to bind it.
+        
 
+        #mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.
 
-        mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.
+        pwd
+        echo starting Rscript ...
         Rscript -e '
             base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"
             rmarkdown::render(
@@ -53,6 +64,7 @@ rule report:
                 output_file = "{output.html}",
                 knit_root_dir = "{params.results_directory}",
             )'
+        echo Rscript completed ...
 
         # Clean up 
         rm -r scripts_temporary
