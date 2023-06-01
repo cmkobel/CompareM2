@@ -55,7 +55,6 @@ rule report:
 
         #mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.
 
-        pwd
         Rscript -e '
             base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"
             rmarkdown::render(
