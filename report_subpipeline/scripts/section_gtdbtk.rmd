@@ -24,3 +24,5 @@ metadata_translate %>%
 ```
 
 *Table `r tableno()`: Species classification provided by the GTDB-tk classify_wf workflow.*
+
+---
