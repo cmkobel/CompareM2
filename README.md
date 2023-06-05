@@ -56,7 +56,7 @@ Below is the graph the shows the dependencies of all possible analyses in assemb
   - `kraken2` [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
   - `mlst` [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
   - `abricate` [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)
-  - `assembly-stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) (generic assembly statistics)
+  - `assembly_stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) (generic assembly statistics)
   - \#[clusterProfiler KEGG](https://yulab-smu.top/biomedical-knowledge-mining-book/clusterprofiler-kegg.html) (pathway enrichment analysis)
   - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) (Species recognition)
   - `busco` [Busco](https://busco.ezlab.org/) (Estimate assembly completeness and contamination)
@@ -67,7 +67,7 @@ Below is the graph the shows the dependencies of all possible analyses in assemb
 
 ### For each group
   - `roary` [roary](https://sanger-pathogens.github.io/Roary/) (pan and core genome)
-  - `snp-dists` [snp-dists](https://github.com/tseemann/snp-dists) (core genome pairwise snp-distances)
+  - `snp_dists` [snp-dists](https://github.com/tseemann/snp-dists) (core genome pairwise snp-distances)
   - `fasttree` [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of the core genome)
   - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement)
   - **A nice report easy to share with your friends ([demos](https://github.com/cmkobel/assemblycomparator2/tree/master/demo_reports))**
