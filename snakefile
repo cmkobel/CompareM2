@@ -141,6 +141,8 @@ rule all:
         "{results_directory}/abricate/card_detailed.tsv", \
         "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
         "{results_directory}/roary/summary_statistics.txt", \
+        "{results_directory}/fasttree/fasttree.newick", \
+        "{results_directory}/snp-dists/snp-dists.tsv", \
         "{results_directory}/mashtree/mashtree.newick"], \
         results_directory = results_directory, sample = df["sample"]) 
 

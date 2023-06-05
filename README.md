@@ -47,7 +47,7 @@ Below is the graph the shows the dependencies of all possible analyses in assemb
 
 
 
-**Hint:** Use `assemblycomparator2 --until <rulename> [<rulename2>...]` to run specific analyses only. The `rulename` for each analysis is listed below:
+**Hint:** Use `assemblycomparator2 --until <rulename> [<rulename2>...]` to run specific analyses only. The rulename for each analysis is listed below:
 
 ### For each assembly
   - `copy` [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support)
