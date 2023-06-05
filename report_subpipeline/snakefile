@@ -68,7 +68,7 @@ rule report:
         rm -r scripts_temporary
 
                 # End script
-        test -f "{params.end_script}" && . {params.end_script} {batch_title} {results_directory}/report_{batch_title}.html 
+        test -f "{params.end_script}" && echo "running end script" && . {params.end_script} {batch_title} {results_directory}/report_{batch_title}.html 
         
         
         # Create a zip archive of the report
