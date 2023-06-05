@@ -28,3 +28,6 @@ metadata_translate %>%
 #### How to customize the mlst-analysis
 
 Mlst automatically detects the best scheme for typing, one sample at a time. If you don't agree with the automatic detection, you can enforce a single scheme across all samples by (re)running assemblycomparator2 with the added command-line argument: `--config mlst_scheme=hpylori --forcerun mlst`. Replace *hpylori* with the mlst scheme you wish to use. You can find a full list of available schemes in the "results_ac2/mlst/mlst_schemes.txt".
+
+
+---
