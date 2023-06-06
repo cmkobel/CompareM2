@@ -154,30 +154,20 @@ Your decision is to pick the profile within the profiles/ directory that describ
 #> profiles/
 #> ├── apptainer/
 #> │   ├── local/
-#> │   │   └── config.yaml
 #> │   ├── pbs-qut-lyra/
-#> │   │   └── config.yaml
 #> │   ├── slurm-au-genomedk/
-#> │   │   └── config.yaml
 #> │   ├── slurm-nmbu-orion/
-#> │   │   └── config.yaml
 #> │   └── slurm-sigma2-saga/
-#> │       └── config.yaml
 #> └── conda/
 #>     ├── local/
-#>     │   └── config.yaml
 #>     ├── pbs-qut-lyra/
-#>     │   └── config.yaml
 #>     ├── slurm-au-genomedk/
-#>     │   └── config.yaml
 #>     ├── slurm-nmbu-orion/
-#>     │   └── config.yaml
 #>     └── slurm-sigma2-saga/
-#>         └── config.yaml
 ```
 
 
-Save this decision in the ASSCOM2_PROFILE variable. Below is an example shown of setting assemblycomparator2 up to use apptainer on a local workstation, which is the recommended option for new users.
+Save this decision in the ASSCOM2_PROFILE variable. Below is an example shown of setting assemblycomparator2 up to use apptainer on a local workstation, which is the recommended option for new users. 
 
 #### 4.1 Setting up assemblycomparator2 to use apptainer on a local workstation.
 
