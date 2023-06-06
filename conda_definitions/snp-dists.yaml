@@ -3,4 +3,4 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - snp-dists
+  - snp-dists>=0.8

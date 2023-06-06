@@ -793,11 +793,15 @@ rule snp_dists:
     conda: "conda_definitions/snp-dists.yaml"
     container: "docker://cmkobel/snp-dists"
     benchmark: "{results_directory}/benchmarks/benchmark.snp_dists.tsv"
+    threads: 4
     shell: """
 
-        snp-dists {input.aln} > {output}
+        snp-dists \
+            -j {threads} \
+            {input.aln} > {output}
 
         {void_report}
+        
     """
 
 
