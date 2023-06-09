@@ -972,7 +972,7 @@ rule mashtree:
     conda: "conda_definitions/mashtree.yaml"
     container: "docker://cmkobel/mashtree"
     benchmark: "{results_directory}/benchmarks/benchmark.mashtree.tsv"
-    threads: 4
+    threads: 16
     resources:
         mem_mb = 16000,
     shell: """
