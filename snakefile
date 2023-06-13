@@ -124,7 +124,7 @@ void_report = f"date -Iseconds >> {results_directory}/.asscom2_void_report.flag"
 
 
 
-localrules: metadata, checkm2_download, kraken2_download, busco_download, gtdb_download, report, install_report_environment_aot
+localrules: metadata, checkm2_download, kraken2_download, dbcan_download, busco_download, gtdb_download, report, install_report_environment_aot
 
 # --- Collect all targets. ------------------------------------------
 rule all:
@@ -136,6 +136,7 @@ rule all:
         "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
+        "{results_directory}/samples/{sample}/dbcan/overview.txt", \
         "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
         "{results_directory}/mlst/mlst.tsv", \
         "{results_directory}/abricate/card_detailed.tsv", \
@@ -350,6 +351,65 @@ rule kraken2_download:
 
     """
 
+
+
+
+
+rule dbcan_download:
+    output:
+        database_representative = touch("{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag"),
+    conda: "conda_definitions/dbcan.yaml"
+    #container: TODO
+    shell: """
+
+
+        # TODO: Make a way to check for internet access instead of just crashing. Same for the others
+
+        
+        db_destination="{wildcards.base_variable}/databases/dbcan/dbcan_db.tar.gz"
+
+        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        if [ -f "{output}" ]; then    
+
+            >&2 echo "Flag exists already: touch it to update the mtime ..."
+            touch {output}
+            
+        else
+
+            >&2 echo "Checking for internet access using google."
+            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
+
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
+
+            
+
+            cd $(dirname {output.database_representative}) \
+                && wget --continue http://bcb.unl.edu/dbCAN2/download/Databases/fam-substrate-mapping-08252022.tsv \
+                && wget --continue http://bcb.unl.edu/dbCAN2/download/Databases/PUL.faa && makeblastdb -in PUL.faa -dbtype prot \
+                && wget --continue http://bcb.unl.edu/dbCAN2/download/Databases/dbCAN-PUL_07-01-2022.xlsx \
+                && wget --continue http://bcb.unl.edu/dbCAN2/download/Databases/dbCAN-PUL_07-01-2022.txt \
+                && wget --continue http://bcb.unl.edu/dbCAN2/download/Databases/dbCAN-PUL.tar.gz && tar xvf dbCAN-PUL.tar.gz \
+                && wget --continue http://bcb.unl.edu/dbCAN2/download/Databases/dbCAN_sub.hmm && hmmpress dbCAN_sub.hmm \
+                && wget --continue http://bcb.unl.edu/dbCAN2/download/Databases/V11/CAZyDB.08062022.fa && diamond makedb --in CAZyDB.08062022.fa -d CAZy \
+                && wget --continue https://bcb.unl.edu/dbCAN2/download/Databases/V11/dbCAN-HMMdb-V11.txt && mv dbCAN-HMMdb-V11.txt dbCAN.txt && hmmpress dbCAN.txt \
+                && wget --continue https://bcb.unl.edu/dbCAN2/download/Databases/V11/tcdb.fa && diamond makedb --in tcdb.fa -d tcdb \
+                && wget --continue http://bcb.unl.edu/dbCAN2/download/Databases/V11/tf-1.hmm && hmmpress tf-1.hmm \
+                && wget --continue http://bcb.unl.edu/dbCAN2/download/Databases/V11/tf-2.hmm && hmmpress tf-2.hmm \
+                && wget --continue https://bcb.unl.edu/dbCAN2/download/Databases/V11/stp.hmm && hmmpress stp.hmm
+
+            # Comments on using the download code from https://github.com/linnabrown/run_dbcan (june 2023): I deleted the test ecoli files in the bottom, and added --continue, to make sure that not a .1 suffixed file is left over when retrying downloads.
+
+
+
+            >&2 echo "dbcan setup completed"
+            echo "Downloaded dbcan at $(date -Iseconds)" > $(dirname {output.database_representative})/info.txt
+
+            mkdir -p $(dirname {output})
+            touch {output}
+
+        fi
+
+    """
 
 
 
@@ -573,6 +633,34 @@ rule kraken2_individual:
 
     """
 
+rule dbcan_individual:
+    input: 
+        assembly = "{results_directory}/samples/{sample}/{sample}.fa",
+        database_representative = expand("{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag", base_variable = base_variable),
+    output: 
+        overview_table = "{results_directory}/samples/{sample}/dbcan/overview.txt"
+    params: 
+        out_dir = "{results_directory}/samples/{sample}/dbcan"
+    conda: "conda_definitions/dbcan.yaml" # Not sure if it should be called by a version number?
+    # container: TODO
+    benchmark: "{results_directory}/benchmarks/benchmark.dbcan.{sample}.tsv"
+    threads: 4
+    resources: 
+        mem_mb = 8000
+    shell: """
+
+        run_dbcan \
+            --dbcan_thread {threads} \
+            --db_dir $(dirname {input.database_representative}) \
+            --out_dir {params.out_dir} \
+            {input.assembly} \
+            prok 
+
+    """
+    
+
+
+
 rule busco_individual:
     input: 
         metadata = "{results_directory}/metadata.tsv",
@@ -662,6 +750,16 @@ rule kraken2:
     input: 
         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
         reports = expand("{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", results_directory = results_directory, sample = df["sample"]),
+
+
+rule dbcan:
+    input: 
+        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
+        reports = expand("{results_directory}/samples/{sample}/dbcan/overview.txt", results_directory = results_directory, sample = df["sample"]),
+
+
+
+
 
 
 rule sequence_lengths:
