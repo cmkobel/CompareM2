@@ -4,7 +4,7 @@ cores: all
 # Policies
 keep-going: true 
 rerun-incomplete: true
-show-failed-logs: true
+show-failed-logs: false
 rerun-triggers: "mtime"
 keep-incomplete: true # true for debugging
 

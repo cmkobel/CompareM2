@@ -502,6 +502,7 @@ rule prokka_individual:
     input: "{results_directory}/samples/{sample}/{sample}.fa"
     output:
         gff = "{results_directory}/samples/{sample}/prokka/{sample}.gff",
+        faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # Used in dbcan
         log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
         gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta",
@@ -635,7 +636,8 @@ rule kraken2_individual:
 
 rule dbcan_individual:
     input: 
-        assembly = "{results_directory}/samples/{sample}/{sample}.fa",
+        #assembly = "{results_directory}/samples/{sample}/{sample}.fa", # For prok
+        aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
         database_representative = expand("{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag", base_variable = base_variable),
     output: 
         overview_table = "{results_directory}/samples/{sample}/dbcan/overview.txt"
@@ -649,12 +651,18 @@ rule dbcan_individual:
         mem_mb = 8000
     shell: """
 
+        # It seems to be necessary to set all the cpu thread counts manually.
+
         run_dbcan \
             --dbcan_thread {threads} \
+            --dia_cpu {threads} \
+            --hmm_cpu {threads} \
+            --tf_cpu {threads} \
+            --stp_cpu {threads} \
             --db_dir $(dirname {input.database_representative}) \
             --out_dir {params.out_dir} \
-            {input.assembly} \
-            prok 
+            {input.aminoacid} \
+            protein 
 
     """
     
