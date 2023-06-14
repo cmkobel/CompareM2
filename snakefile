@@ -669,7 +669,7 @@ rule dbcan_individual:
 
     """
 
-
+# By default it runs only TIGRFAM, Hamap, Pfam
 rule interproscan:
     input: 
         metadata = "{results_directory}/metadata.tsv",
@@ -693,12 +693,19 @@ rule interproscan:
 
         # https://interproscan-docs.readthedocs.io/en/latest/HowToRun.html#command-line-options
         interproscan.sh \
+            --applications TIGRFAM,Hamap,Pfam \
             --cpu {threads} \
             --output-file-base {params.file_base} \
             --disable-precalc \
             --formats TSV \
+            --goterms \
+            --iprlookup \
+            --pathways \
             --seqtype p \
             --input {input.aminoacid}
+
+            
+            
 
     """
 
