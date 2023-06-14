@@ -137,6 +137,7 @@ rule all:
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/samples/{sample}/dbcan/overview.txt", \
+        "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
         "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
         "{results_directory}/mlst/mlst.tsv", \
         "{results_directory}/abricate/card_detailed.tsv", \
@@ -653,6 +654,8 @@ rule dbcan_individual:
 
         # It seems to be necessary to set all the cpu thread counts manually.
 
+        export HMMER_NCPU={threads}
+
         run_dbcan \
             --dbcan_thread {threads} \
             --dia_cpu {threads} \
@@ -665,7 +668,41 @@ rule dbcan_individual:
             protein 
 
     """
-    
+
+
+rule interproscan:
+    input: 
+        metadata = "{results_directory}/metadata.tsv",
+        aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
+        #database_representative = expand("{base_variable}/databases/interproscan/ac2_interproscan_database_representative.flag", base_variable = base_variable), # I don't understand where the database comes from?
+    output: 
+        #overview_table = "{results_directory}/samples/{sample}/interproscan/overview.txt"
+        #flag = touch("{results_directory}/samples/{sample}/interproscan/done.flag")
+        tsv = "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv",
+    params:
+        file_base = "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan",
+    conda: "conda_definitions/interproscan.yaml" # Not sure if it should be called by a version number?
+    # container: TODO
+    benchmark: "{results_directory}/benchmarks/benchmark.interproscan.{sample}.tsv"
+    threads: 4
+    resources: 
+        mem_mb = 8000
+    shell: """
+
+        # What about --iprlookup ?
+
+        # https://interproscan-docs.readthedocs.io/en/latest/HowToRun.html#command-line-options
+        interproscan.sh \
+            --cpu {threads} \
+            --output-file-base {params.file_base} \
+            --disable-precalc \
+            --formats TSV \
+            --seqtype p \
+            --input {input.aminoacid}
+
+    """
+
+
 
 
 
@@ -764,6 +801,12 @@ rule dbcan:
     input: 
         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
         reports = expand("{results_directory}/samples/{sample}/dbcan/overview.txt", results_directory = results_directory, sample = df["sample"]),
+
+
+# rule interproscan:
+#     input: 
+#         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
+#         reports = expand("{results_directory}/samples/{sample}/interproscan/done.flag", results_directory = results_directory, sample = df["sample"]),
 
 
 

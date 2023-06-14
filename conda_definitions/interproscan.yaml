@@ -1,0 +1,8 @@
+name: interproscan
+channels: 
+  - bioconda
+dependencies:
+  - interproscan
+
+# conda install -c bioconda interproscan 
+
