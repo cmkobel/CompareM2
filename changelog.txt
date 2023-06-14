@@ -1,3 +1,9 @@
+
+2.5.2
+  - dbcan, including download
+  - interproscan
+  - both dbcan and interproscan are yet to be integrated in the report
+
 2.5.0
   - Apptainer support. New profiles for apptainer or conda use.
 
