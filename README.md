@@ -56,7 +56,7 @@ Below is the graph the shows the dependencies of all possible analyses in assemb
   - `busco` [Busco](https://busco.ezlab.org/) (Estimate assembly completeness and contamination)
   - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) (Estimate assembly completeness and contamination)
   - `prokka` [prokka](https://github.com/tseemann/prokka) (genomic annotation)
-  - \#`kofam_scan` [KofamScan](https://github.com/takaram/kofam_scan) (annotation of Kegg Orthologous groups, useful for pathway analysis)
+  - `kofam_scan` [KofamScan](https://github.com/takaram/kofam_scan) (annotation of Kegg Orthologous groups, useful for pathway analysis (lacking in report))
   - `dbcan` [dbCAN4](https://github.com/linnabrown/run_dbcan) (annotation of carbohydrate-active "CAZyme" enzymes (lacking in report))
   - `interproscan` [InterProScan](https://github.com/ebi-pf-team/interproscan) (protein function)
   - `abricate` [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)

@@ -138,6 +138,7 @@ rule all:
         "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/samples/{sample}/dbcan/overview.txt", \
         "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
+        "{results_directory}/samples/{sample}/kofamscan/{sample}_kofamscan.tsv", \
         "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
         "{results_directory}/mlst/mlst.tsv", \
         "{results_directory}/abricate/card_detailed.tsv", \
@@ -407,6 +408,70 @@ rule dbcan_download:
 
             mkdir -p $(dirname {output})
             touch {output}
+
+        fi
+
+    """
+
+
+
+
+rule kofam_download:
+    output:
+        database_representative = base_variable + "/databases/kofam/ac2_kofam_database_representative.flag",
+    conda: "conda_definitions/curl.yaml" # Now it also has git, because why not.
+    container: "docker://cmkobel/curl" # TODO: Must be updated to contain git
+    shell: """
+
+
+        # TODO: Make a way to check for internet access instead of just crashing. Same for the others
+
+
+        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        if [ -f "{output.database_representative}" ]; then    
+
+            >&2 echo "Flag exists already: touch it to update the mtime ..."
+            touch {output.database_representative}
+            
+        else
+
+            >&2 echo "Checking for internet access using google."
+            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
+
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
+
+            # Enter the directory so we don't have to pass a lot of the same paths in this script.
+            cd $(dirname {output.database_representative})
+
+
+            # 1) Clone git repository
+            wget \
+                --continue \
+                https://github.com/takaram/kofam_scan/archive/refs/heads/master.zip 
+
+            unzip master.zip \
+                -d github-takaram-kofamscan
+
+            echo "downloaded at $(date)" > github-takaram-kofamscan/ac2_info.txt
+
+
+    
+            # 2) Download FTP stuff
+
+            wget --continue ftp://ftp.genome.jp/pub/db/kofam/ko_list.gz
+            gunzip ko_list.gz
+
+            wget --continue ftp://ftp.genome.jp/pub/db/kofam/profiles.tar.gz
+            tar -xf profiles.tar.gz
+
+
+
+
+            >&2 echo "kofam setup completed"
+            echo "Downloaded kofam at $(date -Iseconds)" > $(dirname {output.database_representative})/info.txt
+
+            mkdir -p $(dirname {output.database_representative})
+            touch {output.database_representative}
 
         fi
 
@@ -689,8 +754,6 @@ rule interproscan:
         mem_mb = 8000
     shell: """
 
-        # What about --iprlookup ?
-
         # https://interproscan-docs.readthedocs.io/en/latest/HowToRun.html#command-line-options
         interproscan.sh \
             --applications TIGRFAM,Hamap,Pfam \
@@ -704,13 +767,48 @@ rule interproscan:
             --seqtype p \
             --input {input.aminoacid}
 
-            
-            
-
     """
 
 
 
+rule kofam_scan:
+    input: 
+        metadata = "{results_directory}/metadata.tsv", # For the report
+        aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
+        database_representative = base_variable + "/databases/kofam/ac2_kofam_database_representative.flag",
+    output:
+        tsv = "{results_directory}/samples/{sample}/kofamscan/{sample}_kofamscan.tsv",
+    params: 
+        executable = base_variable + "/databases/kofam/github-takaram-kofamscan/kofam_scan-master/exec_annotation",
+        ko_list = base_variable + "/databases/kofam/ko_list",
+        profile = base_variable + "/databases/kofam/profiles"
+    conda: "conda_definitions/kofamscan.yaml"
+    # container: TODO
+    benchmark: "{results_directory}/benchmarks/benchmark.kofamscan.{sample}.tsv"
+    threads: 4
+    shell: """
+
+
+        # Must use unique --tmp-dir because of https://github.com/takaram/kofam_scan/issues/8#issuecomment-619640654
+
+        # https://github.com/takaram/kofam_scan/
+        {params.executable} \
+            --cpu {threads} \
+            --ko-list {params.ko_list} \
+            --profile {params.profile} \
+            --format detail-tsv \
+            --e-value 0.0001 \
+            --tmp-dir $(dirname {output.tsv})/tmp \
+            -o {output.tsv} \
+            {input.aminoacid}
+
+
+        # Clean up temporary directory
+        rm -r $(dirname {output.tsv})/tmp
+
+
+
+    """
 
 
 rule busco_individual:
@@ -1225,6 +1323,8 @@ rule downloads:
             ["{base_variable}/databases/checkm2/ac2_checkm2_database_representative.flag", \ 
             "{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag", \
             "{base_variable}/databases/busco/ac2_busco_database_representative.flag", \
+            "{base_variable}/databases/kofam/ac2_kofam_database_representative.flag",\
+            "{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag", \
             "{base_variable}/databases/gtdb/ac2_gtdb_database_representative.flag"], \
             base_variable = base_variable),
 
