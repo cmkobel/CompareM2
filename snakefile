@@ -542,8 +542,10 @@ rule gtdb_download:
 
 # --- Targets for each sample below: --------------------------------
 
-rule sequence_lengths_individual:
-    input: "{results_directory}/samples/{sample}/{sample}.fa"
+rule sequence_lengths:
+    input:
+        metadata = "{results_directory}/metadata.tsv",
+        assembly = "{results_directory}/samples/{sample}/{sample}.fa", 
     output: "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
     threads: 1
     resources:
@@ -553,7 +555,7 @@ rule sequence_lengths_individual:
     benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_individual.{sample}.tsv"
     shell: """
 
-        seqkit fx2tab {input} -l -g -G -n -H \
+        seqkit fx2tab {input.assembly} -l -g -G -n -H \
         > {output}
 
     """
@@ -563,11 +565,13 @@ rule sequence_lengths_individual:
 
 
 
-rule prokka_individual:
-    input: "{results_directory}/samples/{sample}/{sample}.fa"
+rule prokka:
+    input: 
+        metadata = "{results_directory}/metadata.tsv",
+        assembly = "{results_directory}/samples/{sample}/{sample}.fa"
     output:
         gff = "{results_directory}/samples/{sample}/prokka/{sample}.gff",
-        faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # Used in dbcan
+        faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # Used in dbcan, interproscan kofam_scan
         log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
         gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta",
@@ -587,7 +591,7 @@ rule prokka_individual:
             --force \
             --rfam \
             --outdir {wildcards.results_directory}/samples/{wildcards.sample}/prokka \
-            --prefix {wildcards.sample} {input} \
+            --prefix {wildcards.sample} {input.assembly} \
         | tee {output.log} 
 
         # I don't remember what I'm actually using this output for?
@@ -660,8 +664,9 @@ rule prokka_individual:
 #         {void_report}
 #     """
 
-rule kraken2_individual:
+rule kraken2:
     input: 
+        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
         assembly = "{results_directory}/samples/{sample}/{sample}.fa",
         #database = expand("{base_variable}/databases/kraken2/hash.k2d", base_variable = base_variable),
         database = expand("{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag", base_variable = base_variable),
@@ -699,9 +704,9 @@ rule kraken2_individual:
 
     """
 
-rule dbcan_individual:
+rule dbcan: # I can't decide whether this rule should really be called "run_dbcan", since that is the name of the software.
     input: 
-        #assembly = "{results_directory}/samples/{sample}/{sample}.fa", # For prok
+        metadata = "{results_directory}/metadata.tsv",
         aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
         database_representative = expand("{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag", base_variable = base_variable),
     output: 
@@ -820,7 +825,7 @@ rule kofam_scan:
     """
 
 
-rule busco_individual:
+rule busco:
     input: 
         metadata = "{results_directory}/metadata.tsv",
         #busco_download = expand("{base_variable}/databases/busco/file_versions.tsv", base_variable = base_variable), # This is a bad idea, because it requires a complete reinstall if snakemake somehow removes the file, which is quite likely.
@@ -893,28 +898,28 @@ rule busco_individual:
 
 
 
-rule prokka:
-    input:
-        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-        gff = expand("{results_directory}/samples/{sample}/prokka/{sample}.gff", results_directory = results_directory, sample = df["sample"]),
+# rule prokka:
+#     input:
+#         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
+#         gff = expand("{results_directory}/samples/{sample}/prokka/{sample}.gff", results_directory = results_directory, sample = df["sample"]),
 
 
-rule busco:
-    input: 
-        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-        tables = expand("{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", results_directory = results_directory, sample = df["sample"]),
+# rule busco:
+#     input: 
+#         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
+#         tables = expand("{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", results_directory = results_directory, sample = df["sample"]),
 
 
-rule kraken2:
-    input: 
-        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-        reports = expand("{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", results_directory = results_directory, sample = df["sample"]),
+# rule kraken2:
+#     input: 
+#         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
+#         reports = expand("{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", results_directory = results_directory, sample = df["sample"]),
 
 
-rule dbcan:
-    input: 
-        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-        reports = expand("{results_directory}/samples/{sample}/dbcan/overview.txt", results_directory = results_directory, sample = df["sample"]),
+# rule dbcan:
+#     input: 
+#         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
+#         reports = expand("{results_directory}/samples/{sample}/dbcan/overview.txt", results_directory = results_directory, sample = df["sample"]),
 
 
 # rule interproscan:
@@ -927,10 +932,10 @@ rule dbcan:
 
 
 
-rule sequence_lengths:
-    input: 
-        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-        lengths = expand("{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", results_directory = results_directory, sample = df["sample"]),
+# rule sequence_lengths:
+#     input: 
+#         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
+#         lengths = expand("{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", results_directory = results_directory, sample = df["sample"]),
 
 
 
