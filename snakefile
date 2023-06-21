@@ -66,7 +66,7 @@ results_directory = "results_ac2"
 
 relative_wd = "."
 #extension_whitelist = ["fna", "fa", "fas", "fasta", "seq"] # old 
-extension_whitelist = ["fna", "fa", "fas", "fasta", "seq", "gb", "fq", "gff", "gfa", "clw", "sth", "gz", "bz2"]
+extension_whitelist = ["fna", "fa", "fas", "fasta", "seq", "gb", "fq", "gff", "gfa", "clw", "sth", "gz", "bz2"] # From any2fasta
 
 present_files = [f for f in listdir(relative_wd) if isfile(join(relative_wd,f))]
 
@@ -138,7 +138,7 @@ rule all:
         "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/samples/{sample}/dbcan/overview.txt", \
         "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
-        "{results_directory}/samples/{sample}/kofamscan/{sample}_kofamscan.tsv", \
+        "{results_directory}/samples/{sample}/kofam_scan/{sample}_kofam_scan_significant.tsv", \
         "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
         "{results_directory}/mlst/mlst.tsv", \
         "{results_directory}/abricate/card_detailed.tsv", \
@@ -419,8 +419,8 @@ rule dbcan_download:
 rule kofam_download:
     output:
         database_representative = base_variable + "/databases/kofam/ac2_kofam_database_representative.flag",
-    conda: "conda_definitions/curl.yaml" # Now it also has git, because why not.
-    container: "docker://cmkobel/curl" # TODO: Must be updated to contain git
+    #conda: "conda_definitions/curl.yaml" # Now it also has git, because why not.
+    #container: "docker://cmkobel/curl" # TODO: Must be updated to contain git
     shell: """
 
 
@@ -450,9 +450,9 @@ rule kofam_download:
                 https://github.com/takaram/kofam_scan/archive/refs/heads/master.zip 
 
             unzip master.zip \
-                -d github-takaram-kofamscan
+                -d github-takaram-kofam_scan
 
-            echo "downloaded at $(date)" > github-takaram-kofamscan/ac2_info.txt
+            echo "Downloaded takaram/kofam_scan from github at $(date)" > github-takaram-kofam_scan/ac2_info.txt
 
 
     
@@ -463,7 +463,6 @@ rule kofam_download:
 
             wget --continue ftp://ftp.genome.jp/pub/db/kofam/profiles.tar.gz
             tar -xf profiles.tar.gz
-
 
 
 
@@ -777,14 +776,15 @@ rule kofam_scan:
         aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
         database_representative = base_variable + "/databases/kofam/ac2_kofam_database_representative.flag",
     output:
-        tsv = "{results_directory}/samples/{sample}/kofamscan/{sample}_kofamscan.tsv",
+        full = "{results_directory}/samples/{sample}/kofam_scan/{sample}_kofam_scan_full.tsv",
+        significant = "{results_directory}/samples/{sample}/kofam_scan/{sample}_kofam_scan_significant.tsv",
     params: 
-        executable = base_variable + "/databases/kofam/github-takaram-kofamscan/kofam_scan-master/exec_annotation",
+        executable = base_variable + "/databases/kofam/github-takaram-kofam_scan/kofam_scan-master/exec_annotation",
         ko_list = base_variable + "/databases/kofam/ko_list",
         profile = base_variable + "/databases/kofam/profiles"
-    conda: "conda_definitions/kofamscan.yaml"
+    conda: "conda_definitions/kofam_scan.yaml"
     # container: TODO
-    benchmark: "{results_directory}/benchmarks/benchmark.kofamscan.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.kofam_scan.{sample}.tsv"
     threads: 4
     shell: """
 
@@ -798,13 +798,22 @@ rule kofam_scan:
             --profile {params.profile} \
             --format detail-tsv \
             --e-value 0.0001 \
-            --tmp-dir $(dirname {output.tsv})/tmp \
-            -o {output.tsv} \
+            --tmp-dir $(dirname {output.full})/tmp \
+            -o {output.full} \
             {input.aminoacid}
 
 
+        # kofam_scan outputs way, way too many spurious results, so here I'm making a version that is filtered for "singificant" results only.
+        echo "Making a filtered version with only the asterisk (*) marked alignments."
+        grep \
+            -E "^\*" \
+            {output.full} \
+            > {output.significant}
+        # And then, one could consider deleting the "full" file altogether, and just stick with the significant results.
+
+
         # Clean up temporary directory
-        rm -r $(dirname {output.tsv})/tmp
+        rm -r $(dirname {output.full})/tmp
 
 
 
@@ -1080,6 +1089,9 @@ rule assembly_stats:
 def get_mem_gtdbtk(wildcards, attempt): 
     return [150000, 300000, 400000, 500000][attempt-1]
 
+
+
+# The rule is called by the software, whereas the results are called by the database. Is that confusing?
 rule gtdbtk:
     input: 
         metadata = "{results_directory}/metadata.tsv",
