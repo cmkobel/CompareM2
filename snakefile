@@ -493,8 +493,8 @@ rule gtdb_download:
         # https://ecogenomics.github.io/GTDBTk/installing/index.html
 
         # Pick a source file
-        db_pick="https://data.gtdb.ecogenomic.org/releases/latest/auxillary_files/gtdbtk_v2_data.tar.gz"
-        #db_pick="https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_v2_data.tar.gz" # alternative mirror, maybe faster in europe? Seems a bit unstable at time of writing.
+        db_pick="https://data.gtdb.ecogenomic.org/releases/latest/auxillary_files/gtdbtk_data.tar.gz"
+        #db_pick="https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_data.tar.gz" # alternative mirror, maybe faster in europe? Seems a bit unstable at time of writing.
 
         db_destination="{wildcards.base_variable}/databases/gtdb/gtdb_db.tar.gz" # Should be defined from 
 
@@ -824,6 +824,12 @@ rule kofam_scan:
 
     """
 
+
+# Dummy rule for convenience of not having to remember whether it is called "kofam_scan" or "kofam"
+rule kofam:
+    input: 
+        significant = expand("{results_directory}/samples/{sample}/kofam_scan/{sample}_kofam_scan_significant.tsv",
+        results_directory = results_directory, sample = df["sample"]) 
 
 rule busco:
     input: 
