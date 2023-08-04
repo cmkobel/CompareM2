@@ -1133,7 +1133,9 @@ rule gtdbtk:
         # TODO: Using skip-ani-screen is not optimal, as it possibly speeds up a lot.
         mkdir -p $(dirname {params.mash_db})
 
-        export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release207_v2" # Should be defined from config file, and not be hardwired.
+        # I need to find a neat way of setting these variables. Maybe the user has an older/newer version than what is hardcoded here. 
+        # export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release207_v2" # Should be defined from config file, and not be hardwired.
+        export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release214/" # Should be defined from config file, and not be hardwired.
 
         # Create batchfile
         echo '''{params.batchfile_content}''' > {wildcards.results_directory}/gtdbtk/batchfile.tsv
