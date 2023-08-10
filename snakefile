@@ -23,7 +23,7 @@ from shutil import copyfile
 import subprocess
 import datetime
         
-containerized: "docker://cmkobel/assemblycomparator2"
+containerized: "docker://cmkobel/assemblycomparator2" # I wonder if I can put this in the profile or config instead?
 
 # --- Read important variables -----------------------------------------------
 cwd = os.getcwd()

@@ -1,5 +1,6 @@
 # This subpipeline checks if the void report flag (.asscom2_void_report.flag) file has been modified by a rule in the parent pipeline. If so, the report will be rendered.
 
+containerized: "docker://cmkobel/assemblycomparator2"
 
 __version__ = "v2.5.3" 
 __author__ = 'Carl M. Kobel'
@@ -36,7 +37,7 @@ rule report:
         flag = "{results_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
         metadata = "{results_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
     conda: "conda_definitions/r-markdown.yaml"
-    container: "docker://cmkobel/r-markdown"
+    #container: "docker://cmkobel/r-markdown"
     params: 
         base_variable = base_variable,
         results_directory = results_directory,
