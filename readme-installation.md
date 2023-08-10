@@ -7,7 +7,9 @@ The only requisites for running asscom2 is that you have:
   - git (can be installed with conda by typing `conda install -c anaconda git`)
   - [apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request)
 
-#### 0) First, check that you have the prerequisites available on your system:
+#### 0 Prerequisites
+
+First, check that you have the prerequisites available on your system:
 
 ```bash
 which conda && conda --version
@@ -15,7 +17,10 @@ which git && git --version
 which apptainer && apptainer --version
 ```
 
-#### 1) Then download the asscom2 pipeline binary and set up an alias in your profile (~/.bashrc on most linux distributions)
+#### 1) Download binary
+
+Then download the asscom2 pipeline binary and set up an alias in your profile (~/.bashrc on most linux distributions)
+
 ```bash
 git clone https://github.com/cmkobel/assemblycomparator2.git asscom2
 
@@ -27,7 +32,10 @@ conda env create -n asscom2_launcher -f environment.yaml # Installs snakemake an
 ```
 
 
-#### 2) Finally, define the alias that will be used to launch asscom2 from any directory on your machine.
+#### 2) Alias
+
+Finally, define the alias that will be used to launch asscom2 from any directory on your machine.
+
 ```bash
 echo "alias asscom2='conda run --live-stream --name asscom2_launcher \
     snakemake \
