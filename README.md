@@ -2,9 +2,9 @@
 
 assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It is a bit like nullarbor, but it takes in genomes (assemblies) instead of reads. Assemblies can come from isolates or metagenomes - as long as they're all prokaryotic.
 
-assemblycomparator2 works by calling a Snakemake workflow within a conda environment. It performs a palette of analyses on your genomes, and compares them. The main results from these analyses are summarized in a visual html-report that can be easily distributed.
+assemblycomparator2 works by calling a Snakemake workflow within a conda environment. It performs a palette of 16 analyses on your genomes, and compares them. The main results from these analyses are summarized in a visual portable .html-document report that can be easily shared.
 
-assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both conda environments and apptainer/singularity/docker images are available for all dependent software to run.
+assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  apptainer/singularity/docker images and conda environment definitions are available for all dependent software to run.
 
 
 ## Usage examples
@@ -22,7 +22,6 @@ assemblycomparator2 will then create a sub-directory, named results_ac2/ contain
     `asscom2 -n`
     
 
-    
 ##### A bit more advanced controls 
 
   - Run analyses that are relevant to metagenomes only:
@@ -50,8 +49,7 @@ Below is the graph the shows the dependencies of all possible analyses in assemb
 
 
 
-
-**Hint:** Use `assemblycomparator2 --until <rulename> [<rulename2>...]` to run specific analyses only. The rulename for each analysis is listed below:
+**Hint:** Use `asscom2 --until <rulename> [<rulename2>...]` to run one or several specific analyses only. The rulename for each analysis to pick is listed below:
 
 ### For each assembly
   - `copy` [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support and validation)
@@ -69,7 +67,6 @@ Below is the graph the shows the dependencies of all possible analyses in assemb
   - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) (Species recognition)
   
 
-
 ### For each group
   - `roary` [roary](https://sanger-pathogens.github.io/Roary/) (pan and core genome)
   - `snp_dists` [snp-dists](https://github.com/tseemann/snp-dists) (core genome pairwise snp-distances (lacking in report))
@@ -84,7 +81,9 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 
 **Hint:** You can run one of these pseudorules just like any other rulename with:
 ```bash
-assemblycomparator2 --until meta
+asscom --until meta
+
+asscom2 --until isolate
 ```
 
 
