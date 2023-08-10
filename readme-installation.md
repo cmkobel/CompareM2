@@ -8,7 +8,7 @@ The only requisites for running asscom2 is:
   - [apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request) container-virtualizer
 
 
-#### 0 Prerequisites
+#### 0) Prerequisites
 
 First, check that you have the prerequisites available on your system:
 
@@ -20,9 +20,11 @@ which apptainer && apptainer --version
 
 #### 1) Download binary
 
-Then download the asscom2 pipeline binary and set up an alias in your profile (~/.bashrc on most linux distributions)
+Then download the asscom2 pipeline binary and set up an alias in your profile (~/.bashrc on most linux distributions). Recommended installation directory is your home directory (~).
 
 ```bash
+# cd ~
+
 git clone https://github.com/cmkobel/assemblycomparator2.git asscom2
 
 cd asscom2
