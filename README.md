@@ -1,24 +1,27 @@
 # assemblycomparator2
 
-Assemblycomparator is a genomes-to-report pipeline. It is a bit like nullarbor, but it takes in genomes (assemblies) instead of reads. Assemblies can come from isolates or metagenomes - as long as they're all prokaryotic.
+assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It is a bit like nullarbor, but it takes in genomes (assemblies) instead of reads. Assemblies can come from isolates or metagenomes - as long as they're all prokaryotic.
 
-Assemblycomparator2 works by calling a Snakemake workflow within a conda environment. It performs a palette of analyses on your genomes, and compares them. The main results from these analyses are summarized in a visual html-report that can be easily distributed.
+assemblycomparator2 works by calling a Snakemake workflow within a conda environment. It performs a palette of analyses on your genomes, and compares them. The main results from these analyses are summarized in a visual html-report that can be easily distributed.
 
-Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both conda environments and apptainer/singularity/docker images are available for all dependent software to run.
+assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both conda environments and apptainer/singularity/docker images are available for all dependent software to run.
 
 
-## Usage by examples
+## Usage examples
+
 Make a directory with the assembly-files you want to investigate with assemblycomparator2. 
 Go into that directory in the terminal, and run the command `asscom2`. 
-Assemblycomparator2 will then create a sub-directory, named results_ac2/ containing a plethora of analysis results. 
+assemblycomparator2 will then create a sub-directory, named results_ac2/ containing a plethora of analysis results. 
+
+  - Simply, run assemblycomparator2 on the genomes in the current directory:
+
+    `asscom2`
 
   - Execute a 'dry run'. That is, to show which jobs will run, without submitting any.
 
     `asscom2 -n`
     
-  - Simply, run assemblycomparator on the genomes in the current directory:
 
-    `asscom2`
     
 ##### A bit more advanced controls 
 
@@ -34,7 +37,7 @@ Assemblycomparator2 will then create a sub-directory, named results_ac2/ contain
     
     `asscom2 --config mlst_scheme=hpylori`
     
-  - Select a specific roary blastp-identity: (defaults to 95)
+  - Select a specific roary blastp-identity: (default is 95)
 
     `asscom2 --config roary_blastp_identity=90`
       
@@ -89,11 +92,11 @@ assemblycomparator2 --until meta
 
 
 
-## Installation of assemblycomparator2 (asscom2) on Linux
+## Installation of assemblycomparator2 on Linux
 
-asscom2 can be installed by downloading the code and setting up an alias in your user profile (~/.bashrc) that let's you launch the pipeline from any directory on your machine.
+assemblycomparator2 can be installed by downloading the code and setting up an alias in your user profile (~/.bashrc) that let's you launch the pipeline from any directory on your machine.
 
-The only requisites for running asscom2 is:
+The only requisites for running assemblycomparator2 is:
   - [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) package manager
   - git distributed version control (can be installed with conda by typing `conda install -c anaconda git`)
   - [apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request) container-virtualizer
@@ -111,7 +114,7 @@ which apptainer && apptainer --version
 
 #### 1) Download binary and install launcher environment
 
-Then download the asscom2 pipeline binary and set up an alias in your profile (.bashrc on most linux distributions). Recommended installation directory is in your home directory (\~).
+Then download the assemblycomparator2 pipeline binary and set up an alias in your profile (.bashrc on most linux distributions). Recommended installation directory is in your home directory (\~).
 
 ```bash
 cd ~
