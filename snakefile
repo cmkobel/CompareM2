@@ -472,6 +472,8 @@ rule kofam_download:
             tar -xf profiles.tar.gz
 
 
+            rm profiles.tar.gz || echo "Failed to clean up." 
+
 
             >&2 echo "kofam setup completed"
             echo "Downloaded kofam at $(date -Iseconds)" > $(dirname {output.database_representative})/info.txt

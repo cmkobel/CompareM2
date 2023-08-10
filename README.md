@@ -45,10 +45,7 @@ assemblycomparator2 will then create a sub-directory, named results_ac2/ contain
 
 ## What analyses does it do?
 
-
-
 Below is the graph the shows the dependencies of all possible analyses in assemblycomparator2:
-
 ![dag](https://user-images.githubusercontent.com/5913696/236703042-43e1e22c-4013-4c29-a64d-f63fd5b913d5.png)
 
 
@@ -97,9 +94,9 @@ assemblycomparator2 --until meta
 assemblycomparator2 can be installed by downloading the code and setting up an alias in your user profile (~/.bashrc) that let's you launch the pipeline from any directory on your machine.
 
 The only requisites for running assemblycomparator2 is:
-  - [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) package manager
-  - git distributed version control (can be installed with conda by typing `conda install -c anaconda git`)
-  - [apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request) container-virtualizer
+  - [*conda*](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) package manager
+  - *git* distributed version control (can be installed with conda by typing `conda install -c anaconda git`)
+  - [*apptainer*](https://apptainer.org/docs/user/main/quick_start.html#installation-request) container-virtualizer
 
 
 #### 0) Prerequisites
