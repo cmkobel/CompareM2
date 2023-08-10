@@ -47,7 +47,8 @@ assemblycomparator2 will then create a sub-directory, named results_ac2/ contain
 ## What analyses does it do?
 
 Below is the graph the shows the dependencies of all possible analyses in assemblycomparator2:
-![dag](https://user-images.githubusercontent.com/5913696/236703042-43e1e22c-4013-4c29-a64d-f63fd5b913d5.png)
+
+![dag](https://github.com/cmkobel/assemblycomparator2/assets/5913696/5edc09e0-fe5f-4d7f-aeff-b72acd728ba7)
 
 
 
