@@ -3,9 +3,9 @@
 asscom2 can be installed by downloading the code and setting up an alias in your user profile (~/.bashrc) that let's you launch the pipeline from any directory on your machine.
 
 The only requisites for running asscom2 is:
-  - [**conda**](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) package manager
-  - **git** distributed version control (can be installed with conda by typing `conda install -c anaconda git`)
-  - [**apptainer**](https://apptainer.org/docs/user/main/quick_start.html#installation-request) container-virtualizer
+  - [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) package manager
+  - git distributed version control (can be installed with conda by typing `conda install -c anaconda git`)
+  - [apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request) container-virtualizer
 
 
 #### 0) Prerequisites
@@ -42,7 +42,22 @@ echo "alias asscom2='conda run --live-stream --name asscom2_launcher \
         --snakefile \${ASSCOM2_BASE}/snakefile \
         --profile \${ASSCOM2_BASE}/apptainer/local \
         --configfile \${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
+source ~/.basrc
 
+```
+
+
+## Testing the installation
+
+Now you will be able to run asscom2. You can use the example data in tests/MAGs to check that everything works. The first time you run asscom2 it will take a long time since it will download a +4GB docker image that contains all the conda packages needed for each analysis.
+```bash
+cd ${ASSCOM2_BASE}/tests/MAGs
+asscom2 --until fast
+```
+
+You can also download all the databases to get them ready (~300 GB) with:
+```bash
+asscom2 --until downloads
 ```
 
 
