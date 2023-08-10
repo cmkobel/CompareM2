@@ -1,4 +1,3 @@
-
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
 LABEL io.github.snakemake.conda_env_hash="e9846d752e74b1cea63b4e32f3c56098386941434d66c5d89c42ab40d74d02c1"
