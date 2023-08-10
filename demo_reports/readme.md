@@ -1,6 +1,4 @@
-## Demo reports
-
-
+## Exemplary reports for demonstration
 
 
   - [report_strachan_campylo.html](https://github.com/cmkobel/assemblycomparator2/raw/master/tests/strachan_campylo/report_strachan_campylo.html.zip)
