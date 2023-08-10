@@ -1,5 +1,8 @@
 # assemblycomparator2
 
+![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2)
+
+
 assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It is a bit like nullarbor, but it takes in genomes (assemblies) instead of reads. Assemblies can come from isolates or metagenomes - as long as they're all prokaryotic.
 
 assemblycomparator2 works by calling a Snakemake workflow within a conda environment. It performs a palette of 16 analyses on your genomes, and compares them. The main results from these analyses are summarized in a visual portable .html-document report that can be easily shared.
