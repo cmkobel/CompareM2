@@ -4,7 +4,7 @@ Assemblycomparator is a genomes-to-report pipeline. It is a bit like nullarbor, 
 
 Assemblycomparator2 works by calling a Snakemake workflow within a conda environment. It performs a palette of analyses on your genomes, and compares them. The main results from these analyses are summarized in a visual html-report that can be easily distributed.
 
-Assemblycomparator2 can be run either on a local workstation (>64GiB RAM), or a HPC (high performance computing) cluster. Both conda environments and apptainer/singularity/docker images are available for all dependent software to run.
+Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both conda environments and apptainer/singularity/docker images are available for all dependent software to run.
 
 
 ## Usage by examples

@@ -1,7 +1,8 @@
-name: assemblycomparator2
+name: asscom2_launcher
 channels:
   - conda-forge
   - bioconda
 dependencies:
   - mamba
-  - snakemake=7.18.2 # Sorry, but they changed the runtime parsing, and I haven't had time to go through and update those.
+  #- snakemake=7.18.2 # Sorry, but they changed the runtime parsing, and I haven't had time to go through and update those.
+  - snakemake=7.32.3 # Trying to update
