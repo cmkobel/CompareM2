@@ -40,9 +40,9 @@ echo "export ASSCOM2_BASE=$(pwd)" >> ~/.bashrc
 echo "alias asscom2='conda run --live-stream --name asscom2_launcher \
     snakemake \
         --snakefile \${ASSCOM2_BASE}/snakefile \
-        --profile \${ASSCOM2_BASE}/apptainer/local \
+        --profile \${ASSCOM2_BASE}/profiles/apptainer/local \
         --configfile \${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
-source ~/.basrc
+source ~/.bashrc
 
 ```
 
