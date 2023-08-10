@@ -18,19 +18,15 @@ which git && git --version
 which apptainer && apptainer --version
 ```
 
-#### 1) Download binary
+#### 1) Download binary and install launcher environment
 
 Then download the asscom2 pipeline binary and set up an alias in your profile (~/.bashrc on most linux distributions). Recommended installation directory is your home directory (~).
 
 ```bash
 # cd ~
-
 git clone https://github.com/cmkobel/assemblycomparator2.git asscom2
-
 cd asscom2
-echo "export ASSCOM2_BASE=$(pwd)" >> ~/.bashrc
-
-conda env create -n asscom2_launcher -f environment.yaml # Installs snakemake and mamba in a specific environment
+conda env create --name asscom2_launcher --file environment.yaml # Installs snakemake and mamba in an environment named "asscom2_launcher".
 
 ```
 
@@ -40,12 +36,12 @@ conda env create -n asscom2_launcher -f environment.yaml # Installs snakemake an
 Finally, define the alias that will be used to launch asscom2 from any directory on your machine.
 
 ```bash
+echo "export ASSCOM2_BASE=$(pwd)" >> ~/.bashrc
 echo "alias asscom2='conda run --live-stream --name asscom2_launcher \
     snakemake \
         --snakefile \${ASSCOM2_BASE}/snakefile \
         --profile \${ASSCOM2_BASE}/apptainer/local \
         --configfile \${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
-
 
 ```
 
