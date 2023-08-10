@@ -6,13 +6,13 @@ keep-going: true
 rerun-incomplete: true
 show-failed-logs: true
 rerun-triggers: "mtime" # Only rerun on changes in modification time. Not on code hash changes.
-keep-incomplete: true # true for debugging
+keep-incomplete: false # true only for debugging
 
 
 # Apptainer
-use-conda: true # Omitting this line was the culprit, now the apptainer auto stuff works!
+use-conda: true # Omitting this line was the culprit, now the 'snakemake --containerize' auto stuff works!
 use-singularity: true
-singularity-prefix: '~/.asscom2/apptainer-prefix' # Directory in which singularity images will be stored
+singularity-prefix: '~/.asscom2/apptainer-prefix' # Directory in which singularity images will be stored. Couldn't find a way of using the $ASSCOM_BASE system variable.
 #singularity-args: "--env PATH=/opt/conda/bin:$PATH --bind $ASSCOM2_BASE,$PWD" # Must also bind ASSCOM2_BASE so we can access databases and report scripts etc.
 singularity-args: "--bind $ASSCOM2_BASE,$PWD" # Must also bind ASSCOM2_BASE so we can access databases and report scripts etc.
 # Comments for the singularity-args parameter. I don't know why the necessary /opt/conda/bin path, which is present when I run the image, is gone when snakemake runs. Also, since the databases are likely in a soft linked directory, you must bind it if you want access
