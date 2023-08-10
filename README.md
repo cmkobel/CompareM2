@@ -128,7 +128,7 @@ conda env create --name asscom2_launcher --file environment.yaml # Installs snak
 Finally, define the alias that will be used to launch asscom2 from any directory on your machine.
 
 ```bash
-echo "export ASSCOM2_BASE=$(pwd)" >> ~/.bashrc # Save installation directory.
+echo "export ASSCOM2_BASE=$(pwd -P)" >> ~/.bashrc # Save installation directory.
 echo "export ASSCOM2_PROFILE=${ASSCOM2_BASE}/profiles/apptainer/local" >> ~/.bashrc # Save profile selection.
 echo "alias asscom2='conda run --live-stream --name asscom2_launcher snakemake --snakefile \${ASSCOM2_BASE}/snakefile --profile \${ASSCOM2_PROFILE} --configfile \${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
 source ~/.bashrc
