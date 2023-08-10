@@ -93,7 +93,7 @@ asscom2 --until isolate
 
 ## Installation of assemblycomparator2 on Linux
 
-assemblycomparator2 can be installed by downloading the code and setting up an alias in your user profile (~/.bashrc) that let's you launch the pipeline from any directory on your machine.
+assemblycomparator2 can be installed by downloading the code and setting up an alias in your user profile that let's you launch the pipeline from any directory on your machine.
 
 The only requisites for running assemblycomparator2 is:
   - [*conda*](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) package manager
