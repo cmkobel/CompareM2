@@ -284,6 +284,8 @@ rule checkm2_download:
                 --download \
                 --path {params.download_path}
 
+            rm {params.download_path}/gtdb_db.tar.gz || echo "Failed to clean up."
+
             # Consider running checkm2 testrun. Is time and resource consuming though.
             # checkm2 testrun 
             
@@ -345,12 +347,15 @@ rule kraken2_download:
                 -xvf $db_destination \
                 --directory $(dirname $db_destination)
 
+            rm $db_destination || echo "Failed to clean up."
+
             >&2 echo "kraken2 DB setup completed"
             echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname $db_destination)/info.txt
 
             mkdir -p $(dirname {output})
             touch {output}
 
+            
         fi
 
     """
@@ -522,6 +527,8 @@ rule gtdb_download:
             tar \
                 -xf $db_destination \
                 --directory $(dirname $db_destination)
+
+            rm $db_destination || echo "Failed to clean up." 
 
             >&2 echo "gtdb DB setup completed"
             echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname $db_destination)/info.txt
