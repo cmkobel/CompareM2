@@ -209,7 +209,7 @@ If you use assemblycomparator2, you can support further funding by bumping the c
 
   - Kobel CM. *assemblycomparator2* **GitHub** https://github.com/cmkobel/assemblycomparator2
 
-assemblycomparator2 would not have existed, if it hadn't been because of the integrated software packages and their databases.
+assemblycomparator2 would not have existed, if it hadn't been for the integrated software packages and their databases.
 
   - W Shen, S Le, Y Li*, F Hu*. SeqKit: a cross-platform and ultrafast toolkit for FASTA/Q file manipulation. PLOS ONE. doi:10.1371/journal.pone.0163962. 
   - Richard Challis. (2017). rjchallis/assembly-stats 17.02 (17.02). Zenodo. https://doi.org/10.5281/zenodo.322347
