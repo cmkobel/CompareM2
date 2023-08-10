@@ -426,7 +426,7 @@ rule dbcan_download:
 rule kofam_download:
     output:
         database_representative = base_variable + "/databases/kofam/ac2_kofam_database_representative.flag",
-    #conda: "conda_definitions/curl.yaml" # Now it also has git, because why not.
+    conda: "conda_definitions/curl.yaml" # Now it also has unzip which necessary here.
     #container: "docker://cmkobel/curl" # TODO: Must be updated to contain git # was disabled already
     shell: """
 
