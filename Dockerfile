@@ -6,7 +6,7 @@ LABEL io.github.snakemake.conda_env_hash="b200614bfb9adedd74be58f6f4266a536438fd
 # Step 1: Retrieve conda environments
 
 # Conda environment:
-#   source: ../../conda_definitions/abricate.yaml
+#   source: conda_definitions/abricate.yaml
 #   prefix: /conda-envs/e96caef90ba4287605b7ab60379bb5dc
 #   name: abricate
 #   channels:
@@ -16,10 +16,10 @@ LABEL io.github.snakemake.conda_env_hash="b200614bfb9adedd74be58f6f4266a536438fd
 #   dependencies:
 #     - abricate
 RUN mkdir -p /conda-envs/e96caef90ba4287605b7ab60379bb5dc
-COPY ../../conda_definitions/abricate.yaml /conda-envs/e96caef90ba4287605b7ab60379bb5dc/environment.yaml
+COPY conda_definitions/abricate.yaml /conda-envs/e96caef90ba4287605b7ab60379bb5dc/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/any2fasta.yaml
+#   source: conda_definitions/any2fasta.yaml
 #   prefix: /conda-envs/756e0ce005a36bc03fd1b91447a60f6d
 #   name: any2fasta
 #   channels:
@@ -28,10 +28,10 @@ COPY ../../conda_definitions/abricate.yaml /conda-envs/e96caef90ba4287605b7ab603
 #   dependencies:
 #     - any2fasta
 RUN mkdir -p /conda-envs/756e0ce005a36bc03fd1b91447a60f6d
-COPY ../../conda_definitions/any2fasta.yaml /conda-envs/756e0ce005a36bc03fd1b91447a60f6d/environment.yaml
+COPY conda_definitions/any2fasta.yaml /conda-envs/756e0ce005a36bc03fd1b91447a60f6d/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/assembly-stats.yaml
+#   source: conda_definitions/assembly-stats.yaml
 #   prefix: /conda-envs/21dc339c1bfec2d112230fb9ed4a3121
 #   name: assembly-stats
 #   channels:
@@ -41,10 +41,10 @@ COPY ../../conda_definitions/any2fasta.yaml /conda-envs/756e0ce005a36bc03fd1b914
 #   dependencies:
 #     - assembly-stats
 RUN mkdir -p /conda-envs/21dc339c1bfec2d112230fb9ed4a3121
-COPY ../../conda_definitions/assembly-stats.yaml /conda-envs/21dc339c1bfec2d112230fb9ed4a3121/environment.yaml
+COPY conda_definitions/assembly-stats.yaml /conda-envs/21dc339c1bfec2d112230fb9ed4a3121/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/busco.yaml
+#   source: conda_definitions/busco.yaml
 #   prefix: /conda-envs/ed54eb0e2bd56cbb474809ff03c9d5a3
 #   name: busco
 #   channels:
@@ -53,10 +53,10 @@ COPY ../../conda_definitions/assembly-stats.yaml /conda-envs/21dc339c1bfec2d1122
 #   dependencies:
 #     - busco=5.4.6
 RUN mkdir -p /conda-envs/ed54eb0e2bd56cbb474809ff03c9d5a3
-COPY ../../conda_definitions/busco.yaml /conda-envs/ed54eb0e2bd56cbb474809ff03c9d5a3/environment.yaml
+COPY conda_definitions/busco.yaml /conda-envs/ed54eb0e2bd56cbb474809ff03c9d5a3/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/checkm2.yaml
+#   source: conda_definitions/checkm2.yaml
 #   prefix: /conda-envs/679a46a27a9c8f5ec775838a5d75a05d
 #   name: checkm2_conda
 #   channels:
@@ -65,10 +65,10 @@ COPY ../../conda_definitions/busco.yaml /conda-envs/ed54eb0e2bd56cbb474809ff03c9
 #   dependencies:
 #     - checkm2
 RUN mkdir -p /conda-envs/679a46a27a9c8f5ec775838a5d75a05d
-COPY ../../conda_definitions/checkm2.yaml /conda-envs/679a46a27a9c8f5ec775838a5d75a05d/environment.yaml
+COPY conda_definitions/checkm2.yaml /conda-envs/679a46a27a9c8f5ec775838a5d75a05d/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/curl.yaml
+#   source: conda_definitions/curl.yaml
 #   prefix: /conda-envs/d359d31ec9b82fd0281ea88fecb84ff8
 #   name: curl
 #   channels:
@@ -76,10 +76,10 @@ COPY ../../conda_definitions/checkm2.yaml /conda-envs/679a46a27a9c8f5ec775838a5d
 #   dependencies:
 #     - curl
 RUN mkdir -p /conda-envs/d359d31ec9b82fd0281ea88fecb84ff8
-COPY ../../conda_definitions/curl.yaml /conda-envs/d359d31ec9b82fd0281ea88fecb84ff8/environment.yaml
+COPY conda_definitions/curl.yaml /conda-envs/d359d31ec9b82fd0281ea88fecb84ff8/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/dbcan.yaml
+#   source: conda_definitions/dbcan.yaml
 #   prefix: /conda-envs/5bddf671d68664d662b48c7ab768155e
 #   name: dbcan
 #   channels:
@@ -89,10 +89,10 @@ COPY ../../conda_definitions/curl.yaml /conda-envs/d359d31ec9b82fd0281ea88fecb84
 #     - python=3.8
 #     - dbcan
 RUN mkdir -p /conda-envs/5bddf671d68664d662b48c7ab768155e
-COPY ../../conda_definitions/dbcan.yaml /conda-envs/5bddf671d68664d662b48c7ab768155e/environment.yaml
+COPY conda_definitions/dbcan.yaml /conda-envs/5bddf671d68664d662b48c7ab768155e/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/fasttree.yaml
+#   source: conda_definitions/fasttree.yaml
 #   prefix: /conda-envs/ebff814bce7bc3bc66d9a0b9b4e8126e
 #   name: fasttree
 #   channels:
@@ -100,10 +100,10 @@ COPY ../../conda_definitions/dbcan.yaml /conda-envs/5bddf671d68664d662b48c7ab768
 #   dependencies:
 #     - fasttree
 RUN mkdir -p /conda-envs/ebff814bce7bc3bc66d9a0b9b4e8126e
-COPY ../../conda_definitions/fasttree.yaml /conda-envs/ebff814bce7bc3bc66d9a0b9b4e8126e/environment.yaml
+COPY conda_definitions/fasttree.yaml /conda-envs/ebff814bce7bc3bc66d9a0b9b4e8126e/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/gtdbtk.yaml
+#   source: conda_definitions/gtdbtk.yaml
 #   prefix: /conda-envs/6129deec2bbe1dd5cee82b4bca12b1ae
 #   name: gtdbtk
 #   channels:
@@ -112,10 +112,10 @@ COPY ../../conda_definitions/fasttree.yaml /conda-envs/ebff814bce7bc3bc66d9a0b9b
 #   dependencies:
 #     - gtdbtk
 RUN mkdir -p /conda-envs/6129deec2bbe1dd5cee82b4bca12b1ae
-COPY ../../conda_definitions/gtdbtk.yaml /conda-envs/6129deec2bbe1dd5cee82b4bca12b1ae/environment.yaml
+COPY conda_definitions/gtdbtk.yaml /conda-envs/6129deec2bbe1dd5cee82b4bca12b1ae/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/interproscan.yaml
+#   source: conda_definitions/interproscan.yaml
 #   prefix: /conda-envs/3edd5ee462543ff6e33cf6576cdfcffb
 #   name: interproscan
 #   channels: 
@@ -125,10 +125,10 @@ COPY ../../conda_definitions/gtdbtk.yaml /conda-envs/6129deec2bbe1dd5cee82b4bca1
 #   
 #   # conda install -c bioconda interproscan
 RUN mkdir -p /conda-envs/3edd5ee462543ff6e33cf6576cdfcffb
-COPY ../../conda_definitions/interproscan.yaml /conda-envs/3edd5ee462543ff6e33cf6576cdfcffb/environment.yaml
+COPY conda_definitions/interproscan.yaml /conda-envs/3edd5ee462543ff6e33cf6576cdfcffb/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/kofam_scan.yaml
+#   source: conda_definitions/kofam_scan.yaml
 #   prefix: /conda-envs/ff2334e7afa2113a702bc1feb6bba589
 #   name: kofam_scan
 #   channels:
@@ -139,10 +139,10 @@ COPY ../../conda_definitions/interproscan.yaml /conda-envs/3edd5ee462543ff6e33cf
 #     - hmmer>=3.1
 #     - parallel
 RUN mkdir -p /conda-envs/ff2334e7afa2113a702bc1feb6bba589
-COPY ../../conda_definitions/kofam_scan.yaml /conda-envs/ff2334e7afa2113a702bc1feb6bba589/environment.yaml
+COPY conda_definitions/kofam_scan.yaml /conda-envs/ff2334e7afa2113a702bc1feb6bba589/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/kraken2.yaml
+#   source: conda_definitions/kraken2.yaml
 #   prefix: /conda-envs/7a36c2bda181af2bc7b3e01efd455a2d
 #   name: kraken2
 #   channels:
@@ -152,10 +152,10 @@ COPY ../../conda_definitions/kofam_scan.yaml /conda-envs/ff2334e7afa2113a702bc1f
 #   dependencies:
 #     - kraken2
 RUN mkdir -p /conda-envs/7a36c2bda181af2bc7b3e01efd455a2d
-COPY ../../conda_definitions/kraken2.yaml /conda-envs/7a36c2bda181af2bc7b3e01efd455a2d/environment.yaml
+COPY conda_definitions/kraken2.yaml /conda-envs/7a36c2bda181af2bc7b3e01efd455a2d/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/mashtree.yaml
+#   source: conda_definitions/mashtree.yaml
 #   prefix: /conda-envs/b62c14d70e3e16658965b4ab951392ed
 #   name: mashtree
 #   channels:
@@ -164,10 +164,10 @@ COPY ../../conda_definitions/kraken2.yaml /conda-envs/7a36c2bda181af2bc7b3e01efd
 #   dependencies:
 #     - mashtree
 RUN mkdir -p /conda-envs/b62c14d70e3e16658965b4ab951392ed
-COPY ../../conda_definitions/mashtree.yaml /conda-envs/b62c14d70e3e16658965b4ab951392ed/environment.yaml
+COPY conda_definitions/mashtree.yaml /conda-envs/b62c14d70e3e16658965b4ab951392ed/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/mlst.yaml
+#   source: conda_definitions/mlst.yaml
 #   prefix: /conda-envs/5db696091993795c7c85a68f6df73ceb
 #   name: mlst
 #   channels:
@@ -177,10 +177,10 @@ COPY ../../conda_definitions/mashtree.yaml /conda-envs/b62c14d70e3e16658965b4ab9
 #   dependencies:
 #     - mlst
 RUN mkdir -p /conda-envs/5db696091993795c7c85a68f6df73ceb
-COPY ../../conda_definitions/mlst.yaml /conda-envs/5db696091993795c7c85a68f6df73ceb/environment.yaml
+COPY conda_definitions/mlst.yaml /conda-envs/5db696091993795c7c85a68f6df73ceb/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/prokka.yaml
+#   source: conda_definitions/prokka.yaml
 #   prefix: /conda-envs/88a7fe7451bb32309f7ac6670e364e56
 #   name: prokka
 #   channels:
@@ -191,10 +191,10 @@ COPY ../../conda_definitions/mlst.yaml /conda-envs/5db696091993795c7c85a68f6df73
 #     - prokka 
 #     - openjdk<=17.0.2
 RUN mkdir -p /conda-envs/88a7fe7451bb32309f7ac6670e364e56
-COPY ../../conda_definitions/prokka.yaml /conda-envs/88a7fe7451bb32309f7ac6670e364e56/environment.yaml
+COPY conda_definitions/prokka.yaml /conda-envs/88a7fe7451bb32309f7ac6670e364e56/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/roary_see-comments-in-this-file.yaml
+#   source: conda_definitions/roary_see-comments-in-this-file.yaml
 #   prefix: /conda-envs/c510ddc9269801c6f267bbc20945cb01
 #   name: roary_new
 #   channels:
@@ -215,10 +215,10 @@ COPY ../../conda_definitions/prokka.yaml /conda-envs/88a7fe7451bb32309f7ac6670e3
 #   # Then set it back with
 #   # conda config --set channel_priority strict
 RUN mkdir -p /conda-envs/c510ddc9269801c6f267bbc20945cb01
-COPY ../../conda_definitions/roary_see-comments-in-this-file.yaml /conda-envs/c510ddc9269801c6f267bbc20945cb01/environment.yaml
+COPY conda_definitions/roary_see-comments-in-this-file.yaml /conda-envs/c510ddc9269801c6f267bbc20945cb01/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/seqkit.yaml
+#   source: conda_definitions/seqkit.yaml
 #   prefix: /conda-envs/1e9be5c81cf2e48459587271cf703755
 #   name: seqkit
 #   channels:
@@ -226,10 +226,10 @@ COPY ../../conda_definitions/roary_see-comments-in-this-file.yaml /conda-envs/c5
 #   dependencies:
 #     - seqkit
 RUN mkdir -p /conda-envs/1e9be5c81cf2e48459587271cf703755
-COPY ../../conda_definitions/seqkit.yaml /conda-envs/1e9be5c81cf2e48459587271cf703755/environment.yaml
+COPY conda_definitions/seqkit.yaml /conda-envs/1e9be5c81cf2e48459587271cf703755/environment.yaml
 
 # Conda environment:
-#   source: ../../conda_definitions/snp-dists.yaml
+#   source: conda_definitions/snp-dists.yaml
 #   prefix: /conda-envs/79addc38bfc17b635a3fa2c401ab213e
 #   name: snp-dists
 #   channels:
@@ -238,10 +238,10 @@ COPY ../../conda_definitions/seqkit.yaml /conda-envs/1e9be5c81cf2e48459587271cf7
 #   dependencies:
 #     - snp-dists>=0.8
 RUN mkdir -p /conda-envs/79addc38bfc17b635a3fa2c401ab213e
-COPY ../../conda_definitions/snp-dists.yaml /conda-envs/79addc38bfc17b635a3fa2c401ab213e/environment.yaml
+COPY conda_definitions/snp-dists.yaml /conda-envs/79addc38bfc17b635a3fa2c401ab213e/environment.yaml
 
 # Conda environment:
-#   source: ../../report_subpipeline/conda_definitions/r-markdown.yaml
+#   source: report_subpipeline/conda_definitions/r-markdown.yaml
 #   prefix: /conda-envs/490c9344c6805f820e98aa8dd6b11ef4
 #   name: r-markdown
 #   channels:
@@ -261,7 +261,7 @@ COPY ../../conda_definitions/snp-dists.yaml /conda-envs/79addc38bfc17b635a3fa2c4
 #     - r-gridextra
 #     - zip
 RUN mkdir -p /conda-envs/490c9344c6805f820e98aa8dd6b11ef4
-COPY ../../report_subpipeline/conda_definitions/r-markdown.yaml /conda-envs/490c9344c6805f820e98aa8dd6b11ef4/environment.yaml
+COPY report_subpipeline/conda_definitions/r-markdown.yaml /conda-envs/490c9344c6805f820e98aa8dd6b11ef4/environment.yaml
 
 # Step 2: Generate conda environments
 
