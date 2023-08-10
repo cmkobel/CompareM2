@@ -1,3 +1,5 @@
+2.5.3
+  - Using snakemake's --containerize to automatically generate images which are then synced to dockerhub as cmkobel/assemblycomparator2. Support for hpc queues isn't yet tested.
 
 2.5.2
   - dbcan, including download
@@ -35,4 +37,4 @@
 
 
 REMINDER
-Remember to change both the snakefile version and the genomes_to_report_v2.Rmd version.
+Remember to bump: snakefile, report snakefile, the genomes_to_report_v3.Rmd besides this file.
