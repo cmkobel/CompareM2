@@ -173,7 +173,7 @@ conda env update --name asscom2_launcher --file environment.yaml
 
 ## Future functionality 
 
-In the future we might add some of the following pieces of software into assemblycomparator2.
+In the future we might add some of the following software packages into assemblycomparator2.
 
 **Sample basis**
 
