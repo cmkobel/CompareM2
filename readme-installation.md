@@ -3,9 +3,9 @@
 asscom2 can be installed by downloading the code and setting up an alias in your user profile (~/.bashrc) that let's you launch the pipeline from any directory on your machine.
 
 The only requisites for running asscom2 is:
-  - [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) package manager
-  - git (can be installed with conda by typing `conda install -c anaconda git`) distributed version control
-  - [apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request) container-virtualizer
+  - [**conda**](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) package manager
+  - **git** distributed version control (can be installed with conda by typing `conda install -c anaconda git`)
+  - [**apptainer**](https://apptainer.org/docs/user/main/quick_start.html#installation-request) container-virtualizer
 
 
 #### 0) Prerequisites
