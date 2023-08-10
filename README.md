@@ -142,12 +142,12 @@ source ~/.bashrc
 Now you will be able to run asscom2. You can use the example data in tests/MAGs to check that everything works. The first time you run asscom2 it will take a long time since it will download a +4GB docker image that contains all the conda packages needed for each analysis.
 ```bash
 cd ${ASSCOM2_BASE}/tests/MAGs
-asscom2 --until fast
-```
 
-You can also download all the databases to get them ready (~300 GB) with:
-```bash
-asscom2 --until downloads
+asscom2 --until fast # Should take about a minute to complete
+
+asscom2 --until downloads # Downloads all databases (~ 300 GB)
+
+asscom2 # Run the full pipeline (~ 1 cpu-hour per genome)
 ```
 
 
