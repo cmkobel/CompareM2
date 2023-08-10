@@ -154,7 +154,7 @@ asscom2 # Run the full pipeline (~ 1 cpu-hour per genome).
 
 
 
-### Updating an existing installation (optional)
+### Updating an older installation (optional)
 
 Should you later down the line wish to update the installation, run this command and you should be all set:
 ```bash
