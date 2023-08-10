@@ -23,14 +23,15 @@ from shutil import copyfile
 import subprocess
 import datetime
         
-
+containerized: "docker://cmkobel/assemblycomparator2"
 
 # --- Read important variables -----------------------------------------------
 cwd = os.getcwd()
 batch_title = cwd.split("/")[-1]
 base_variable = os.environ['ASSCOM2_BASE'] # rename to ASSCOM2_BASE
 
-print("/*")
+
+print("/*") # for .dot exports used to generate dag visualizations.
 print()
 print("         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ ")
 print("        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗")
