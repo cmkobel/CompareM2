@@ -9,30 +9,34 @@ Assemblycomparator2 can be run either on a local workstation (recommended >= 64G
 
 ## Usage by examples
 Make a directory with the assembly-files you want to investigate with assemblycomparator2. 
-Go into that directory in the terminal, and run the command `assemblycomparator2`. 
+Go into that directory in the terminal, and run the command `asscom2`. 
 Assemblycomparator2 will then create a sub-directory, named results_ac2/ containing a plethora of analysis results. 
 
   - Execute a 'dry run'. That is, to show which jobs will run, without submitting any.
 
-    `assemblycomparator2 -n`
+    `asscom2 -n`
     
   - Simply, run assemblycomparator on the genomes in the current directory:
 
-    `assemblycomparator2`
+    `asscom2`
     
 ##### A bit more advanced controls 
+
+  - Run analyses that are relevant to metagenomes only:
+
+    `asscom2 --until meta`    
     
   - Execute all jobs until (including) a specific job in the job graph:
     
-    `assemblycomparator2 --until mlst`
+    `asscom2 --until mlst`
     
   - Select a specific MLST-scheme to use on all of the samples: (defaults to automatic)
     
-    `assemblycomparator2 --config mlst_scheme=hpylori`
+    `asscom2 --config mlst_scheme=hpylori`
     
   - Select a specific roary blastp-identity: (defaults to 95)
 
-    `assemblycomparator2 --config roary_blastp_identity=90`
+    `asscom2 --config roary_blastp_identity=90`
       
 
 
@@ -179,7 +183,6 @@ In the future we might add some of the following pieces of software into assembl
   - [RFplasmid](https://github.com/aldertzomer/RFPlasmid) (Identify plasmids using the pentamer-random-forest method)
   - [Kaptive](https://github.com/katholt/Kaptive) (surface polysaccharide loci for Klebsiella and Acinetobacter baumannii) 
   - [mash screen](https://mash.readthedocs.io/en/latest/tutorials.html) (recognition of plasmids-of-interest)
-  - [SingleM](https://wwood.github.io/singlem/)
 
 
 **Batch basis**
