@@ -1,30 +1,4 @@
-/*
 
-         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ 
-        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗
-        ███████║███████╗███████╗██║     ██║   ██║██╔████╔██║ █████╔╝
-        ██╔══██║╚════██║╚════██║██║     ██║   ██║██║╚██╔╝██║██╔═══╝ 
-        ██║  ██║███████║███████║╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗
-        ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
-                       A.K.A. assemblycomparator2                   
-                         Please log issues at:                      
-              github.com/cmkobel/assemblycomparator2/issues         
-                                                                    
-    batch_title:           MAGs
-    roary_blastp_identity: 95 (default 95)
-    mlst_scheme:           automatic (default automatic)   
-    base_variable:         /home/thylakoid/assemblycomparator2                               
-
-                         input_file  ...                                   input_file_fasta
-0  Treatment_MidE.metabat.482.fasta  ...  results_ac2/samples/Treatment_MidE.metabat.482...
-1  Treatment_LowE.metabat.242.fasta  ...  results_ac2/samples/Treatment_LowE.metabat.242...
-2  Treatment_LowE.metabat.618.fasta  ...  results_ac2/samples/Treatment_LowE.metabat.618...
-3  Treatment_LowE.metabat.461.fasta  ...  results_ac2/samples/Treatment_LowE.metabat.461...
-
-[4 rows x 3 columns]
-//
-
-*/
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
 LABEL io.github.snakemake.conda_env_hash="b200614bfb9adedd74be58f6f4266a536438fda1e1875f32578d6a64b77e59f1"
