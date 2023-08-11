@@ -160,7 +160,7 @@ asscom2
 
 ### Updating an older installation (optional)
 
-Should you later down the line wish to update the installation, run this command and you should be all set:
+If you want to make sure that you're running the latest version of assemblycomparator2, you can run these commands to update it:
 ```bash
 
 # Pull (download) newest version
