@@ -139,7 +139,7 @@ source ~/.bashrc
 
 ## Testing the installation (optional)
 
-Now you will be able to run asscom2. You can use the example data in tests/MAGs to check that everything works. The first time you run asscom2 it will take a long time since it will download a +4GB docker image that contains all the conda packages needed for each analysis.
+Now you will be able to run asscom2. You can use the example data in tests/MAGs to check that everything works. The first time you run asscom2 it will show the message "Pulling singularity image docker://cmkobel/assemblycomparator2." This might take some time depending on your network bandwidth as it downloads a +4GB docker image that contains all the conda environments needed for each analysis.
 ```bash
 cd ${ASSCOM2_BASE}/tests/MAGs # First, enter a dir where some genomes reside.
 
