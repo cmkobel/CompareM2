@@ -113,7 +113,7 @@ which apptainer && apptainer --version
 
 #### 1) Download binary and install launcher environment
 
-Then download the assemblycomparator2 pipeline binary and set up an alias in your profile (.bashrc on most linux distributions). Recommended installation directory is in your home directory (\~).
+Then download the assemblycomparator2 pipeline binary and set up an alias in your profile (.bashrc on most linux distributions). Proposed installation directory is in your home directory (\~).
 
 ```bash
 cd ~
