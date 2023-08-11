@@ -145,7 +145,7 @@ cd ${ASSCOM2_BASE}/tests/MAGs # First, enter a dir where some genomes reside.
 
 asscom2 --until fast # Should take about a minute to complete.
 
-asscom2 --until downloads # Downloads all databases (~ 300 GB).
+asscom2 --until downloads # Downloads all databases (~ 160 GB).
 
 asscom2 # Run the full pipeline (~ 1 cpu-hour per genome).
 ```
