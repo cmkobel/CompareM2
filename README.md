@@ -17,30 +17,42 @@ assemblycomparator2 will then create a sub-directory, named results_ac2/ contain
   
   - Execute a 'dry run'. That is, to show what will be run without actually doing it.
 
-    `asscom2 --dry-run`
+    ```bash
+    asscom2 --dry-run
+    ```
 
   - Run assemblycomparator2 on the genomes in the current directory:
 
-    `asscom2`
+    ```bash
+    asscom2
+    ```
     
 
 ##### A bit more advanced controls 
 
   - Run analyses that are relevant to metagenomes only:
 
-    `asscom2 --until meta`    
+    ```bash
+    asscom2 --until meta
+    ```
     
   - Execute all jobs until (including) a specific job in the job graph:
     
-    `asscom2 --until mlst`
+    ```bash
+    asscom2 --until mlst
+    ```
     
   - Select a specific MLST-scheme to use on all of the samples: (defaults to automatic)
     
-    `asscom2 --config mlst_scheme=hpylori`
+    ```bash
+    asscom2 --config mlst_scheme=hpylori
+    ```
     
   - Select a specific roary blastp-identity: (default is 95)
 
-    `asscom2 --config roary_blastp_identity=90`
+    ```bash
+    asscom2 --config roary_blastp_identity=90
+    ```
       
 
 
