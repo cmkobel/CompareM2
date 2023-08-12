@@ -14,14 +14,14 @@ assemblycomparator2 can be run either on a local workstation (recommended >= 64G
 Make a directory with the assembly-files you want to investigate with assemblycomparator2. 
 Go into that directory in the terminal, and run the command `asscom2`. 
 assemblycomparator2 will then create a sub-directory, named results_ac2/ containing a plethora of analysis results. 
-
-  - Simply, run assemblycomparator2 on the genomes in the current directory:
-
-    `asscom2`
-
-  - Execute a 'dry run'. That is, to show which jobs will run, without submitting any.
+  
+  - Execute a 'dry run'. That is, to show which jobs will run without submitting any.
 
     `asscom2 -n`
+
+  - Run assemblycomparator2 on the genomes in the current directory:
+
+    `asscom2`
     
 
 ##### A bit more advanced controls 
