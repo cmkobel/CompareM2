@@ -17,7 +17,7 @@ assemblycomparator2 will then create a sub-directory, named results_ac2/ contain
   
   - Execute a 'dry run'. That is, to show which jobs will run without submitting any.
 
-    `asscom2 -n`
+    `asscom2 --dry-run`
 
   - Run assemblycomparator2 on the genomes in the current directory:
 
