@@ -223,9 +223,6 @@ rule busco_download:
             
         else
 
-            >&2 echo "Checking for internet access using google."
-            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
-
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 
             # Busco is a bit stupid in the way that it requires an input file, but doesn't read it when you just download.
@@ -275,14 +272,14 @@ rule checkm2_download:
             
         else
 
-            >&2 echo "Checking for internet access using google."
-            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
-
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
+
+            # Maybe the container bug "OSError Errno 30 Read-only file system" is helped by setting the path to the db manually.
+            export CHECKM2DB="{params.download_path}"
+
         
             checkm2 database \
-                --download \
-                --path {params.download_path}
+                --download
 
             rm {params.download_path}/gtdb_db.tar.gz || echo "Failed to clean up."
 
@@ -331,9 +328,6 @@ rule kraken2_download:
             touch {output}
             
         else
-
-            >&2 echo "Checking for internet access using google."
-            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
 
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 
@@ -506,9 +500,6 @@ rule gtdb_download:
             touch {output}
             
         else
-
-            >&2 echo "Checking for internet access using google."
-            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
 
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 

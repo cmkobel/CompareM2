@@ -58,7 +58,7 @@ assemblycomparator2 will then create a sub-directory, named results_ac2/ contain
 
 ## What analyses does it do?
 
-Below is the graph the shows the dependencies of all possible analyses in assemblycomparator2:
+Below is the graph the shows the order of execution of all possible analyses in assemblycomparator2:
 
 ![dag](https://github.com/cmkobel/assemblycomparator2/assets/5913696/5edc09e0-fe5f-4d7f-aeff-b72acd728ba7)
 
@@ -123,9 +123,9 @@ which git && git --version
 which apptainer && apptainer --version
 ```
 
-#### 1) Download binary and install launcher environment
+#### 1) Download pipeline and set up the launcher environment
 
-Then download the assemblycomparator2 pipeline binary and set up an alias in your profile (.bashrc on most linux distributions). Proposed installation directory is in your home directory (\~).
+Then download the assemblycomparator2 pipeline and set up an alias in your profile (.bashrc on most linux distributions). Proposed installation directory is in your home directory (\~).
 
 ```bash
 cd ~
@@ -151,7 +151,7 @@ source ~/.bashrc
 
 ## Testing the installation (optional)
 
-Now you will be able to run asscom2. You can use the example data in tests/MAGs to check that everything works. The first time you run asscom2 it will show the message "Pulling singularity image docker://cmkobel/assemblycomparator2." This might take some time depending on your network bandwidth as it downloads a +4GB docker image that contains all the conda environments needed for each analysis.
+Now you will be able to run asscom2. You can use the example data in path "tests/MAGs" to check that everything works. The first time you run asscom2 it will show the message "Pulling singularity image docker://cmkobel/assemblycomparator2." This might take some time depending on your network bandwidth as it downloads a +4GB docker image that contains all the conda environments needed for each analysis.
 ```bash
 # First, enter a dir where some genomes reside.
 cd ${ASSCOM2_BASE}/tests/MAGs
