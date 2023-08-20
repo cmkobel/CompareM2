@@ -385,12 +385,7 @@ rule dbcan_download:
             
         else
 
-            >&2 echo "Checking for internet access using google."
-            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
-
-            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
-
-            
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."            
 
             cd $(dirname {output.database_representative}) \
                 && wget --continue http://bcb.unl.edu/dbCAN2/download/Databases/fam-substrate-mapping-08252022.tsv \
@@ -441,9 +436,6 @@ rule kofam_download:
             touch {output.database_representative}
             
         else
-
-            >&2 echo "Checking for internet access using google."
-            ping -q -c1 google.com &>/dev/null && echo "Online" || echo "Warning: It seems like you don't have internet access? Downloading will probably fail."
 
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 
