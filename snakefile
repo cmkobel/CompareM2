@@ -123,10 +123,8 @@ except:
 # The modification time of this file tells the report subpipeline whether it needs to run. Thus, void_report is called in the end of every successful rule.
 #void_report = f"touch {results_directory}/.asscom2_void_report.flag"
 void_report = f"date -Iseconds >> {results_directory}/.asscom2_void_report.flag"
-#annotate_log = "command | while IFS= read -r line; do printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$line"; done"
+#annotate_log_ = "2>&1 | while IFS= read -r line; do printf '[%s] %s\n' \"$(date '+%Y-%m-%d %H:%M:%S')\" \"$line\"; done"
 
-def annotate_log(title):
-    return f"while IFS= read -r line; do printf '[%s {title}] %s\n' \"$(date '+%Y-%m-%d %H:%M:%S')\" \"$line\"; done"
 
 
 
@@ -1049,7 +1047,7 @@ rule diamond_kegg:
             --subject-cover {params.subject_cover}  \
             --id {params.percent_id}  \
             --evalue {params.evalue} \
-            --block-size {params.blocksize} | {annotate_log}
+            --block-size {params.blocksize}
 
     """
 
