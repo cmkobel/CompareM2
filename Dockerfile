@@ -1,6 +1,28 @@
+/*
+
+         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ 
+        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗
+        ███████║███████╗███████╗██║     ██║   ██║██╔████╔██║ █████╔╝
+        ██╔══██║╚════██║╚════██║██║     ██║   ██║██║╚██╔╝██║██╔═══╝ 
+        ██║  ██║███████║███████║╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗
+        ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
+                       A.K.A. assemblycomparator2                   
+                         Please log issues at:                      
+              github.com/cmkobel/assemblycomparator2/issues         
+                                                                    
+    batch_title:           asscom2
+    roary_blastp_identity: 95 (default 95)
+    mlst_scheme:           automatic (default automatic)   
+    base_variable:         /glittertind/home/carl/asscom2                               
+
+  input_file extension                      input_file_fasta
+0  genome.fa        fa  results_ac2/samples/genome/genome.fa
+//
+
+*/
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="e9846d752e74b1cea63b4e32f3c56098386941434d66c5d89c42ab40d74d02c1"
+LABEL io.github.snakemake.conda_env_hash="2d0b0f4f44d29ee7b129dae77b66d62c37aa69ebb021ec651f60c789fe0fb9d8"
 
 # Step 1: Retrieve conda environments
 
@@ -90,6 +112,18 @@ COPY conda_definitions/curl.yaml /conda-envs/f7c4e0b49f1914099f4cced5dd00117a/en
 #     - dbcan
 RUN mkdir -p /conda-envs/5bddf671d68664d662b48c7ab768155e
 COPY conda_definitions/dbcan.yaml /conda-envs/5bddf671d68664d662b48c7ab768155e/environment.yaml
+
+# Conda environment:
+#   source: conda_definitions/diamond.yaml
+#   prefix: /conda-envs/1f973b92cc12d86729a390f6a8856716
+#   name: diamond
+#   channels:
+#     - conda-forge
+#     - bioconda
+#   dependencies:
+#     - diamond>=2.1.8
+RUN mkdir -p /conda-envs/1f973b92cc12d86729a390f6a8856716
+COPY conda_definitions/diamond.yaml /conda-envs/1f973b92cc12d86729a390f6a8856716/environment.yaml
 
 # Conda environment:
 #   source: conda_definitions/fasttree.yaml
@@ -272,6 +306,7 @@ RUN mamba env create --prefix /conda-envs/e96caef90ba4287605b7ab60379bb5dc --fil
     mamba env create --prefix /conda-envs/679a46a27a9c8f5ec775838a5d75a05d --file /conda-envs/679a46a27a9c8f5ec775838a5d75a05d/environment.yaml && \
     mamba env create --prefix /conda-envs/f7c4e0b49f1914099f4cced5dd00117a --file /conda-envs/f7c4e0b49f1914099f4cced5dd00117a/environment.yaml && \
     mamba env create --prefix /conda-envs/5bddf671d68664d662b48c7ab768155e --file /conda-envs/5bddf671d68664d662b48c7ab768155e/environment.yaml && \
+    mamba env create --prefix /conda-envs/1f973b92cc12d86729a390f6a8856716 --file /conda-envs/1f973b92cc12d86729a390f6a8856716/environment.yaml && \
     mamba env create --prefix /conda-envs/ebff814bce7bc3bc66d9a0b9b4e8126e --file /conda-envs/ebff814bce7bc3bc66d9a0b9b4e8126e/environment.yaml && \
     mamba env create --prefix /conda-envs/6129deec2bbe1dd5cee82b4bca12b1ae --file /conda-envs/6129deec2bbe1dd5cee82b4bca12b1ae/environment.yaml && \
     mamba env create --prefix /conda-envs/3edd5ee462543ff6e33cf6576cdfcffb --file /conda-envs/3edd5ee462543ff6e33cf6576cdfcffb/environment.yaml && \

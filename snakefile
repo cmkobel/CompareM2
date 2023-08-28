@@ -1,6 +1,8 @@
 
-
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
+
+# snakemake --containerize > Dockerfile
+
 
 __version__ = "v2.5.3" # Four places to bump. Here, in the bottom of the report, in the report snakefile. And in th changelog.
 __author__ = 'Carl M. Kobel'
@@ -136,6 +138,7 @@ rule all:
         "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
         "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
         "{results_directory}/checkm2/quality_report.tsv", \
+        "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
         "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/samples/{sample}/dbcan/overview.txt", \
         "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
@@ -1000,6 +1003,53 @@ rule checkm2:
         {void_report}
 
     """
+
+
+
+# Use the same database as checkm2, but run on amino-acid files instead of dna.
+# This will be used for a subsequent pathway enrichment analysis.
+# Idea for speed up: concatenate all genomes together first, like they do in checkm2. Then we only need to load the database once.
+rule diamond_kegg: 
+    input: 
+        metadata = "{results_directory}/metadata.tsv", # For the report
+        aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
+        database_representative = base_variable + "/databases/checkm2/ac2_checkm2_database_representative.flag",
+    output:
+        tsv = "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv",
+    params: 
+        query_cover = 80,
+        subject_cover = 80,
+        percent_id = 30,
+        evalue = "1e-05",
+        blocksize = 2 # A value of 2 corresponds to running checkm2 in non-lowmem mode.
+    conda: "conda_definitions/diamond.yaml" 
+    resources:
+        mem_mb = 20000, # Seems to use around 18G at max.
+        runtime = "1h",
+    # container: TODO # was disabled already
+    benchmark: "{results_directory}/benchmarks/benchmark.kofam_scan.{sample}.tsv"
+    threads: 4
+    shell: """
+
+        # Inspired from https://github.com/chklovski/CheckM2/blob/319dae65f1c7f2fc1c0bb160d90ac3ba64ed9457/checkm2/diamond.py#L79
+    
+        # blastp: Align amino acid query sequences against a protein reference database
+
+        diamond blastp \
+            --outfmt 6 \
+            --max-target-seqs 1 \
+            --query {input.aminoacid}  \
+            --out {output.tsv}  \
+            --threads {threads}  \
+            --db $ASSCOM2_BASE/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd \
+            --query-cover {params.query_cover}  \
+            --subject-cover {params.subject_cover}  \
+            --id {params.percent_id}  \
+            --evalue {params.evalue} \
+            --block-size {params.blocksize}
+
+    """
+
 
 
 
