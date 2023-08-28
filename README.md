@@ -67,19 +67,21 @@ Below is the graph the shows the order of execution of all possible analyses in 
 **Hint:** Use `asscom2 --until <rulename> [<rulename2>...]` to run one or several specific analyses only. The rulename for each analysis to pick is listed below:
 
 ### For each assembly
-  - `copy` [any2fasta](https://github.com/tseemann/any2fasta) (wide input format support and validation)
-  - `sequence_lengths` [seqkit](https://bioinf.shenwei.me/seqkit/usage/) (lengths and GC-content of individual contigs)
-  - `assembly_stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) (generic assembly statistics)
-  - `busco` [Busco](https://busco.ezlab.org/) (Estimate assembly completeness and contamination)
-  - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) (Estimate assembly completeness and contamination)
-  - `prokka` [prokka](https://github.com/tseemann/prokka) (genomic annotation)
-  - `kofam_scan` [KofamScan](https://github.com/takaram/kofam_scan) (annotation of Kegg Orthologous groups, useful for pathway analysis (lacking in report))
-  - `dbcan` [dbCAN4](https://github.com/linnabrown/run_dbcan) (annotation of carbohydrate-active "CAZyme" enzymes (lacking in report))
-  - `interproscan` [InterProScan](https://github.com/ebi-pf-team/interproscan) (protein function)
-  - `abricate` [abricate](https://github.com/tseemann/abricate) (virulence/resistance gene identification)
-  - `mlst` [mlst](https://github.com/tseemann/mlst) (multi locus sequence typing)
-  - `kraken2` [kraken2](https://ccb.jhu.edu/software/kraken2/) (species identification)
-  - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) (Species recognition)
+  - `copy` [any2fasta](https://github.com/tseemann/any2fasta) Wide input format support and validation.
+  - `sequence_lengths` [seqkit](https://bioinf.shenwei.me/seqkit/usage/) Lengths and GC-content of individual contigs.
+  - `assembly_stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) Generic assembly statistics.
+  - `busco` [Busco](https://busco.ezlab.org/) Estimate assembly completeness and contamination.
+  - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) Estimate assembly completeness and contamination.
+  - `diamond_kegg` [Diamond](https://github.com/bbuchfink/diamond) Run amino-acid .faa from prokka trough the checkm2 database (uniref100 with KEGG-KOs)
+  - `prokka` [prokka](https://github.com/tseemann/prokka) Genomic annotation.
+  - `kofam_scan` [KofamScan](https://github.com/takaram/kofam_scan) Annotation of Kegg Orthologous groups, useful for pathway analysis (lacking in report).
+  - `hyper_pe` [hypeR](https://github.com/montilab/hypeR) KEGG KO-based hypergeometric pathway enrichment analysis (underway).
+  - `dbcan` [dbCAN4](https://github.com/linnabrown/run_dbcan) Annotation of carbohydrate-active "CAZyme" enzymes (lacking in report).
+  - `interproscan` [InterProScan](https://github.com/ebi-pf-team/interproscan) Protein function using Tigrfam, Hamap and Pfam.
+  - `abricate` [abricate](https://github.com/tseemann/abricate) Virulence and resistance gene identification.
+  - `mlst` [mlst](https://github.com/tseemann/mlst) Multi locus sequence typing.
+  - `kraken2` [kraken2](https://ccb.jhu.edu/software/kraken2/) Species identification.
+  - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) Species recognition.
   
 
 ### For each group
