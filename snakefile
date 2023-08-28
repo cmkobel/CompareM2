@@ -1,7 +1,7 @@
 
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
 
-# snakemake --containerize > Dockerfile
+# snakemake --containerize > Dockerfile # And remove header-text.
 
 
 __version__ = "v2.5.3" # Four places to bump. Here, in the bottom of the report, in the report snakefile. And in th changelog.
@@ -123,7 +123,10 @@ except:
 # The modification time of this file tells the report subpipeline whether it needs to run. Thus, void_report is called in the end of every successful rule.
 #void_report = f"touch {results_directory}/.asscom2_void_report.flag"
 void_report = f"date -Iseconds >> {results_directory}/.asscom2_void_report.flag"
+#annotate_log = "command | while IFS= read -r line; do printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$line"; done"
 
+def annotate_log(title):
+    return f"while IFS= read -r line; do printf '[%s {title}] %s\n' \"$(date '+%Y-%m-%d %H:%M:%S')\" \"$line\"; done"
 
 
 
@@ -1046,7 +1049,7 @@ rule diamond_kegg:
             --subject-cover {params.subject_cover}  \
             --id {params.percent_id}  \
             --evalue {params.evalue} \
-            --block-size {params.blocksize}
+            --block-size {params.blocksize} | {annotate_log}
 
     """
 

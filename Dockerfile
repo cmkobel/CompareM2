@@ -1,25 +1,3 @@
-/*
-
-         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ 
-        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗
-        ███████║███████╗███████╗██║     ██║   ██║██╔████╔██║ █████╔╝
-        ██╔══██║╚════██║╚════██║██║     ██║   ██║██║╚██╔╝██║██╔═══╝ 
-        ██║  ██║███████║███████║╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗
-        ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
-                       A.K.A. assemblycomparator2                   
-                         Please log issues at:                      
-              github.com/cmkobel/assemblycomparator2/issues         
-                                                                    
-    batch_title:           asscom2
-    roary_blastp_identity: 95 (default 95)
-    mlst_scheme:           automatic (default automatic)   
-    base_variable:         /glittertind/home/carl/asscom2                               
-
-  input_file extension                      input_file_fasta
-0  genome.fa        fa  results_ac2/samples/genome/genome.fa
-//
-
-*/
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
 LABEL io.github.snakemake.conda_env_hash="2d0b0f4f44d29ee7b129dae77b66d62c37aa69ebb021ec651f60c789fe0fb9d8"
