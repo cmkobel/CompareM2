@@ -72,7 +72,7 @@ Below is the graph the shows the order of execution of all possible analyses in 
   - `assembly_stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) Generic assembly statistics.
   - `busco` [Busco](https://busco.ezlab.org/) Estimate assembly completeness and contamination.
   - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) Estimate assembly completeness and contamination.
-  - `diamond_kegg` [Diamond](https://github.com/bbuchfink/diamond) Run amino-acid .faa from prokka trough the checkm2 database (uniref100 with KEGG-KOs)
+  - `diamond_kegg` [Diamond](https://github.com/bbuchfink/diamond) Run prokka-proteins through the checkm2 database (uniref100 with KEGG-KOs)
   - `prokka` [prokka](https://github.com/tseemann/prokka) Genomic annotation.
   - `kofam_scan` [KofamScan](https://github.com/takaram/kofam_scan) Annotation of Kegg Orthologous groups, useful for pathway analysis (lacking in report).
   - `hyper_pe` [hypeR](https://github.com/montilab/hypeR) KEGG KO-based hypergeometric pathway enrichment analysis (underway).
