@@ -1,0 +1,77 @@
+## KEGG Pathway Enrichment Analysis
+
+For each genome the prokka/prodigal called amino-acid sequences are searched in the Uniref100-KO database which is the same that checkm2 uses. Though for this analysis the alignment criteria are stricter (>=85% coverage and >=50% identity). Then clusterProfilers "enricher" function is used to calculate Benjamini-Hochberg adjusted p-values for the pathway enrichment analysis for the called genes. The statistically significant results are presented below.
+
+```{r kegg-pathway, echo = F, message = F, warning = F, error = T}
+
+kegg_pathway_results_raw = read_tsv(glob_list$kegg_pathway)
+
+kegg_pathway_results_raw %>% view()
+
+
+# Clean up table before presenting
+kegg_pathway_results = kegg_pathway_results_raw %>% 
+    mutate(
+        #geneID = str_replace_all(geneID, "/", " "),
+        `-log10(p_adjusted)` = -log10(`p.adjust`),
+        class = a_class %>% str_remove("^[0-9]+") %>% str_trim(), # I'm removing the number codes in front as they're too long and unnecessary.
+        group = b_class %>% str_remove("^[0-9]+") %>% str_trim(),
+        hierarchy = paste(class, group, sep = "; ") 
+    ) %>% 
+    select(sample, class, group, hierarchy, pathway, `-log10(p_adjusted)`, `gene ratio` = GeneRatio, KOs = geneID, count = Count)
+
+N_kegg_groups = kegg_pathway_results$group %>% unique() %>% length()
+
+
+```
+
+
+
+```{r kegg_pathway_figure, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, (N_kegg_groups*0.2)+2), fig.width = max(1.8, (N*0.2)+2)}
+
+
+# A figure, that for each class, shows how many pathway are enriched for.
+#> kegg_pathway_results %>%
+#>     #group_by(class) %>%
+#>     count(class, group, sample) %>%  # Let's see what happens if we have both class and group
+#>     pivot_wider(names_from = sample, values_from = n) %>% 
+#>     identity() %>% 
+#>     arrange(class, group) %>% 
+#>     view()
+#> 
+#> 
+#> kegg_pathway_results %>%
+#>     count(sample, hierarchy) %>% 
+#>     #pivot_wider(names_from = hierarchy, values_from = n)
+#>     pivot_wider(names_from = sample, values_from = n) %>%
+#>     view()
+
+metadata_translate %>% 
+    select(sample) %>%
+    left_join(kegg_pathway_results, by = "sample") %>%
+    #group_by(class) %>%
+    count(class, group, sample)  %>% 
+    ggplot(aes(sample, group, fill = n)) + 
+    scale_fill_viridis_c() +
+    geom_tile() + 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+*Fig. `r figno()`: Figure summarizing the KEGG-ortholog based pathway enrichment analysis results.*
+
+
+```{r kegg-pathway-table, echo = F, message = F, warning = F, error = T}
+metadata_translate %>% 
+    select(sample) %>% 
+    left_join(kegg_pathway_results %>% select(-class, -group, -count), by = "sample") %>% 
+    arrange(sample, hierarchy, pathway) %>% 
+    custom_dt("kegg_pathway")
+
+
+```
+
+*Table `r tableno()`: Results from running clusterProfiler::enricher on the KEGG ortholog pathway hierarchy. The KOs can be entered into [KEGG mapper search](https://www.genome.jp/kegg/mapper/search.html) by setting mode to "Reference".*
+
+
+---
