@@ -74,6 +74,13 @@ library(gridExtra)
 # DEBUG setup for vscode on KTFL running R on ssh to saga
 debug = F
 if (debug) {
+    # strachan_campylo on threadripper
+    base_variable = "~/asscom2"
+    results_directory = "results_ac2"
+    setwd("~/asscom2/tests/strachan_campylo")
+    batch_title = basename(getwd())
+
+
     # E._faecium_30 on thylakoid
     base_variable = "~/assemblycomparator2"
     results_directory = "results_ac2"
@@ -275,6 +282,7 @@ section_definition_table = tribble(
         )
     ),
     "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
+    "kegg_pathway",      1, Sys.glob(paste0(results_directory, "/kegg_pathway/kegg_pathway_enrichment_analysis.tsv")),
     "roary",             1, Sys.glob(paste0(results_directory, "/roary/gene_presence_absence.Rtab")), # This also counts for the roary summary file.
     "mashtree",          1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick"))
     ) %>%
@@ -349,6 +357,10 @@ section_definition_table %>%
 
 ```{r child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}
 ```
+
+```{r child = paste0(report_scripts, "section_kegg_pathway.rmd"), eval = render$kegg_pathway}
+```
+
 
 ```{r child = paste0(report_scripts, "section_roary.rmd"), eval = render$roary}
 ```

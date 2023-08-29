@@ -20,11 +20,19 @@ message("  output_path: ", output_path) # A path where to save analysis results.
 message("  input_diamond (", length(input_diamond), "): ", paste(input_diamond, collapse = ", ")) # Table from diamond containing calls on the uniref100-KO database.
 message("")
 
+# For development
+if (F) {
+    input_kegg_asset = "~/Downloads/ko00001.json"
+    output_path = paste0(getwd(), "/outt")
+    input_diamond = "results_ac2/samples/Treatment_LowE.metabat.242/diamond_kegg/Treatment_LowE.metabat.242_diamond_kegg.tsv"
+    
+}
+
 
 ## Parse KEGG json
 
 kegg_parse_json = function(input_json) {
-
+    
     kegg = jsonlite::fromJSON(input_json, flatten = F)
     
     unnest = kegg$children %>% unnest(children, names_repair = "universal") %>% # AB 57
@@ -89,14 +97,14 @@ kegg_data %>%
 
 
 ## Parse diamond results that link the called prodigal-called proteins to uniref100-KO
-diamond = tibble(File = Sys.glob("results_ac2/samples/*/diamond_kegg/*_diamond_kegg.tsv")) %>% #
+diamond = tibble(File = Sys.glob(input_diamond)) %>% #
     #head() %>%  # For developing
     extract(File, "sample", "/diamond_kegg/(.+)_diamond_kegg\\.tsv", remove = F) %>% 
     mutate(tabulation = lapply(
         File,
         read_tsv,
         col_names = c("locus_tag", "sseqid", "pident", "length", "mismatch", "gapopen", "qstart", "qend", "sstart", "send", "evalue", "bitscore")
-        )
+    )
     ) %>% 
     select(-File)  %>% 
     unnest(tabulation)  %>% 
@@ -174,7 +182,9 @@ for (sample in diamond %>% group_by(sample) %>% group_split()) {
 analyses %>% 
     glimpse()
 
+# Before we write the raw "analyses" table, I want to add info from the database. This is going to make things easier in the report.
 analyses %>% 
+    left_join(kegg_data %>% distinct(a_class, b_class, pathway), by = "pathway") %>% 
     write_tsv(paste0(output_path, "/kegg_pathway_enrichment_analysis.tsv"))
 
 analyses %>% 
@@ -182,10 +192,10 @@ analyses %>%
     left_join(kegg_data %>% distinct(a_class, b_class, pathway), by = "pathway") %>% 
     select(sample, a_class, b_class, pathway, p_adj = `p.adjust`) %>% 
     
-
-
+    
+    
     pivot_wider(names_from = sample, values_from = p_adj) %>% 
-
+    
     arrange(a_class, b_class, pathway) %>% 
-
+    
     write_tsv(paste0(output_path, "/summary.tsv"))

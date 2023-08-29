@@ -1002,6 +1002,7 @@ rule kegg_pathway:
             {params.output_dir} \
             {input.kegg_diamond}  
             
+        {void_report}
 
     """
 
