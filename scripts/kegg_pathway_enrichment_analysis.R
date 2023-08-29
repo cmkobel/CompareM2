@@ -7,17 +7,19 @@ library(jsonlite)
 # Present arguments for debugging
 #options(echo=TRUE) # if you want see commands in output file
 args <- commandArgs(trailingOnly = TRUE)
-message(args)
+
 
 input_kegg_asset = args[1]
 output_path = args[2]
-input_diamond = args[3:(length(args)-2)] # list
+input_diamond = args[3:(length(args))] # list
 
 
-message("input_kegg_asset:", input_kegg_asset) # Path to json downloaded from kegg.jp
-message("output_path:", output_path) # A path where to save analysis results.
-message("input_diamond:", input_diamond) # Table from diamond containing calls on the uniref100-KO database.
-
+#message(paste(args, collapse = "\n"))
+message("Command line arguments: (", length(args), "):")
+message("  input_kegg_asset: ", input_kegg_asset) # Path to json downloaded from kegg.jp
+message("  output_path: ", output_path) # A path where to save analysis results.
+message("  input_diamond (", length(input_diamond), "): ", paste(input_diamond, collapse = ", ")) # Table from diamond containing calls on the uniref100-KO database.
+message("")
 
 
 ## Parse KEGG json
@@ -176,6 +178,15 @@ analyses %>%
 analyses %>% 
     write_tsv(paste0(output_path, "/kegg_pathway_enrichment_analysis.tsv"))
 
+analyses %>% 
+    select(sample, pathway, `p.adjust`) %>% 
+    left_join(kegg_data %>% distinct(a_class, b_class, pathway), by = "pathway") %>% 
+    select(sample, a_class, b_class, pathway, p_adj = `p.adjust`) %>% 
+    
 
 
+    pivot_wider(names_from = sample, values_from = p_adj) %>% 
 
+    arrange(a_class, b_class, pathway) %>% 
+
+    write_tsv(paste0(output_path, "/summary.tsv"))
