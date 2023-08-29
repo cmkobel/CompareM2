@@ -1,6 +1,6 @@
-## KEGG Pathway Enrichment Analysis
+## KEGG pathway enrichment analysis
 
-For each genome the prokka/prodigal called amino-acid sequences are searched in the Uniref100-KO database which is the same that checkm2 uses. Though for this analysis the alignment criteria are stricter (>=85% coverage and >=50% identity). Then clusterProfilers "enricher" function is used to calculate Benjamini-Hochberg adjusted p-values for the pathway enrichment analysis for the called genes. The statistically significant results are presented below.
+For each genome the prokka-prodigal called amino-acid sequences are searched in the Uniref100-KO database. This is the same database that CheckM2 uses. For the results produced for this analysis, the alignment criteria are stricter (>=85% coverage and >=50% identity). Using clusterProfilers "enricher" function, Benjamini-Hochberg adjusted p-values for the pathway enrichment for the called genes is computed.
 
 ```{r kegg-pathway, echo = F, message = F, warning = F, error = T}
 
@@ -27,7 +27,7 @@ N_kegg_groups = kegg_pathway_results$group %>% unique() %>% length()
 
 
 
-```{r kegg_pathway_figure, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, (N_kegg_groups*0.2)+2), fig.width = max(1.8, (N*0.2)+2)}
+```{r kegg_pathway_figure, echo=FALSE, message=F, warning=F, error = T, fig.height = max(2, (N_kegg_groups*0.2)+2), fig.width = max(8, (N*0.2)+3)}
 
 
 # A figure, that for each class, shows how many pathway are enriched for.
@@ -50,15 +50,23 @@ metadata_translate %>%
     select(sample) %>%
     left_join(kegg_pathway_results, by = "sample") %>%
     #group_by(class) %>%
-    count(class, group, sample)  %>% 
-    ggplot(aes(sample, group, fill = n)) + 
+    count(hierarchy, sample)  %>% 
+    ggplot(aes(sample, reorder(hierarchy, desc(hierarchy)), fill = n)) + 
     scale_fill_viridis_c() +
+    theme_classic() + 
+    scale_y_discrete(position = "right") +
     geom_tile() + 
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+    theme(
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        legend.position = "left"
+        ) +
+    labs(
+        y = "KEGG pathway classes"
+    )
 
 ```
 
-*Fig. `r figno()`: Figure summarizing the KEGG-ortholog based pathway enrichment analysis results.*
+*Fig. `r figno()`: Summary of the KEGG-ortholog based pathway enrichment analysis results. The KEGG pathway hierarchy consists of a number of pathway-classes that are listed on the vertical axis. n denotes the number of pathways from that class, that are significally enriched in each sample.*
 
 
 ```{r kegg-pathway-table, echo = F, message = F, warning = F, error = T}
@@ -71,7 +79,7 @@ metadata_translate %>%
 
 ```
 
-*Table `r tableno()`: Results from running clusterProfiler::enricher on the KEGG ortholog pathway hierarchy. The KOs can be entered into [KEGG mapper search](https://www.genome.jp/kegg/mapper/search.html) by setting mode to "Reference".*
+*Table `r tableno()`: Results from the KEGG-ortholog based pathway enrichment analysis produced with clusterProfiler::enricher. Only significant results are shown. The KOs can be entered directly into [KEGG mapper search](https://www.genome.jp/kegg/mapper/search.html) by setting mode to "Reference".*
 
 
 ---
