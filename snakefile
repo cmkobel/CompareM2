@@ -150,7 +150,6 @@ rule all:
         "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/samples/{sample}/dbcan/overview.txt", \
         "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
-        "{results_directory}/samples/{sample}/kofam_scan/{sample}_kofam_scan_significant.tsv", \
         "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
         "{results_directory}/mlst/mlst.tsv", \
         "{results_directory}/abricate/card_detailed.tsv", \
@@ -832,12 +831,6 @@ rule kofam_scan:
     """
 
 
-# Dummy rule for convenience of not having to remember whether it is called "kofam_scan" or "kofam"
-rule kofam:
-    input: 
-        significant = expand("{results_directory}/samples/{sample}/kofam_scan/{sample}_kofam_scan_significant.tsv",
-        results_directory = results_directory, sample = df["sample"]) 
-
 rule busco:
     input: 
         metadata = "{results_directory}/metadata.tsv",
@@ -1357,7 +1350,6 @@ rule downloads:
             ["{base_variable}/databases/checkm2/ac2_checkm2_database_representative.flag", \ 
             "{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag", \
             "{base_variable}/databases/busco/ac2_busco_database_representative.flag", \
-            "{base_variable}/databases/kofam/ac2_kofam_database_representative.flag",\
             "{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag", \
             "{base_variable}/databases/gtdb/ac2_gtdb_database_representative.flag"], \
             base_variable = base_variable),
