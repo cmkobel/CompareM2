@@ -72,10 +72,10 @@ Below is the graph the shows the order of execution of all possible analyses in 
   - `assembly_stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) Generic assembly statistics.
   - `busco` [Busco](https://busco.ezlab.org/) Estimate assembly completeness and contamination.
   - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) Estimate assembly completeness and contamination.
-  - `diamond_kegg` [diamond](https://github.com/bbuchfink/diamond) Run prokka-proteins through the checkm2 database (uniref100 with KEGG-KOs)
   - `prokka` [prokka](https://github.com/tseemann/prokka) Genomic annotation.
   - `kofam_scan` [KofamScan](https://github.com/takaram/kofam_scan) Annotation of Kegg Orthologous groups, useful for pathway analysis (lacking in report).
-  - `hyper_pe` [hypeR](https://github.com/montilab/hypeR) KEGG KO-based hypergeometric pathway enrichment analysis (underway).
+  - `diamond_kegg` [diamond](https://github.com/bbuchfink/diamond) Run prokka-called proteins through the checkm2 database (uniref100 with KEGG-KOs).
+  - `kegg_pathway` [clusterProfiler](https://yulab-smu.top/biomedical-knowledge-mining-book/) KEGG KO-based hypergeometric pathway enrichment analysis.
   - `dbcan` [dbCAN4](https://github.com/linnabrown/run_dbcan) Annotation of carbohydrate-active "CAZyme" enzymes (lacking in report).
   - `interproscan` [InterProScan](https://github.com/ebi-pf-team/interproscan) Protein function using Tigrfam, Hamap and Pfam.
   - `abricate` [abricate](https://github.com/tseemann/abricate) Virulence and resistance gene identification.
