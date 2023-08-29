@@ -577,7 +577,7 @@ rule prokka:
         assembly = "{results_directory}/samples/{sample}/{sample}.fa"
     output:
         gff = "{results_directory}/samples/{sample}/prokka/{sample}.gff",
-        faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # Used in dbcan, interproscan kofam_scan
+        faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg
         log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
         gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta",
