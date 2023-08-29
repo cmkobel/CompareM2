@@ -73,7 +73,6 @@ Below is the graph the shows the order of execution of all possible analyses in 
   - `busco` [Busco](https://busco.ezlab.org/) Estimate assembly completeness and contamination.
   - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) Estimate assembly completeness and contamination.
   - `prokka` [prokka](https://github.com/tseemann/prokka) Genomic annotation.
-  - `kofam_scan` [KofamScan](https://github.com/takaram/kofam_scan) Annotation of Kegg Orthologous groups.
   - `diamond_kegg` [diamond](https://github.com/bbuchfink/diamond) Run prokka-called proteins through the checkm2 database (uniref100 with KEGG-KOs).
   - `kegg_pathway` [clusterProfiler](https://yulab-smu.top/biomedical-knowledge-mining-book/) KEGG ortholog-based hypergeometric pathway enrichment analysis.
   - `dbcan` [dbCAN4](https://github.com/linnabrown/run_dbcan) Annotation of carbohydrate-active "CAZyme" enzymes (lacking in report).
@@ -231,10 +230,10 @@ assemblycomparator2 would not have existed, if it hadn't been for the integrated
   - Manni, M., Berkeley, M. R., Seppey, M., & Zdobnov, E. M. (2021). BUSCO: Assessing genomic data quality and beyond. Current Protocols, 1, e323. doi: 10.1002/cpz1.323
   - Chklovski, A., Parks, D.H., Woodcroft, B.J. et al. CheckM2: a rapid, scalable and accurate tool for assessing microbial genome quality using machine learning. Nat Methods 20, 1203–1212 (2023). https://doi.org/10.1038/s41592-023-01940-w
   - Seemann T., Prokka: rapid prokaryotic genome annotation, Bioinformatics 2014 Jul 15;30(14):2068-9. PMID:24642063
-  - Takuya Aramaki and others, KofamKOALA: KEGG Ortholog assignment based on profile HMM and adaptive score threshold, Bioinformatics, Volume 36, Issue 7, April 2020, Pages 2251–2252, https://doi.org/10.1093/bioinformatics/btz859
   - Yin Y*, Mao X*, Yang JC, Chen X, Mao F and Xu Y, dbCAN: a web resource for automated carbohydrate-active enzyme annotation, Nucleic Acids Res. 2012 Jul;40(Web Server issue):W445-51 
   - P. Jones et al., Bioinformatics (2014), PMID: 24451626
   - Seemann T, Abricate, Github https://github.com/tseemann/abricate
   - Jolley KA, Bray JE, Maiden MCJ. Open-access bacterial population genomics: BIGSdb software, the PubMLST.org website and their applications. Wellcome Open Res. 2018 Sep 24;3:124. doi: 10.12688/wellcomeopenres.14826.1. PMID: 30345391; PMCID: PMC6192448.
   - Wood, D.E., Lu, J. & Langmead, B. Improved metagenomic analysis with Kraken 2. Genome Biol 20, 257 (2019). https://doi.org/10.1186/s13059-019-1891-0
   - Chaumeil PA, Mussig AJ, Hugenholtz P, Parks DH. GTDB-Tk: a toolkit to classify genomes with the Genome Taxonomy Database. Bioinformatics. 2019 Nov 15;36(6):1925–7. doi: 10.1093/bioinformatics/btz848. Epub ahead of print. PMID: 31730192; PMCID: PMC7703759.
+  - Buchfink B, Reuter K, Drost HG, "Sensitive protein alignments at tree-of-life scale using DIAMOND", Nature Methods 18, 366–368 (2021). doi:10.1038/s41592-021-01101-x
