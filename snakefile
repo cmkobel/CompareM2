@@ -146,7 +146,7 @@ rule all:
         "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
-        "{results_directory}/samples/{sample}/kegg_pathway/{sample}_kegg_pathway.tsv", \
+        "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
         "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/samples/{sample}/dbcan/overview.txt", \
         "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
@@ -907,83 +907,11 @@ rule busco:
     """
 
 
-# --- Collect results among all samples -----------------------------
-
-
-
-# rule prokka:
-#     input:
-#         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-#         gff = expand("{results_directory}/samples/{sample}/prokka/{sample}.gff", results_directory = results_directory, sample = df["sample"]),
-
-
-# rule busco:
-#     input: 
-#         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-#         tables = expand("{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", results_directory = results_directory, sample = df["sample"]),
-
-
-# rule kraken2:
-#     input: 
-#         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-#         reports = expand("{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", results_directory = results_directory, sample = df["sample"]),
-
-
-# rule dbcan:
-#     input: 
-#         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-#         reports = expand("{results_directory}/samples/{sample}/dbcan/overview.txt", results_directory = results_directory, sample = df["sample"]),
-
-
-# rule interproscan:
-#     input: 
-#         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-#         reports = expand("{results_directory}/samples/{sample}/interproscan/done.flag", results_directory = results_directory, sample = df["sample"]),
-
-
-
-
-
-
-# rule sequence_lengths:
-#     input: 
-#         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-#         lengths = expand("{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", results_directory = results_directory, sample = df["sample"]),
-
-
-
-
-
-
-
-
-
-
-
-# # This one doesn't seem to work, I don't know what is up? Could be nice to have it fixed.
-# rule sample_pathway_enrichment_analysis:
-#     input: "{results_directory}/collected_results/prokka_labelled.tsv"
-#     output: "{results_directory}/collected_results/sample_pathway_enrichment_analysis.tsv"
-#     conda: "conda_definitions/r-clusterProfiler.yaml"
-#container: "docker://cmkobel/r" # was disabled already
-#     shell: """
-
-
-#         Rscript $ASSCOM2_BASE/scripts/sample_pathway_enrichment_analysis.R $ASSCOM2_BASE/assets/ko {input} \
-#             > {output}
-
-#         {void_report}
-#     """
-
-
-
 # --- Targets for the complete set below: ---------------------------
 
 rule checkm2:
     input:
         metadata = "{results_directory}/metadata.tsv",
-        #checkm2_download = expand("{base_variable}/databases/checkm2/checkm2_download_done.flag", base_variable = base_variable), #expanding this variable shouldn't be necessary, but it is, because the variable is not present in the output.
-        #database = expand("{base_variable}/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd", base_variable = base_variable),
         database = expand("{base_variable}/databases/checkm2/ac2_checkm2_database_representative.flag", base_variable = base_variable),
         fasta = df["input_file_fasta"].tolist()
     output:
@@ -1023,7 +951,7 @@ rule diamond_kegg:
         aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
         database_representative = base_variable + "/databases/checkm2/ac2_checkm2_database_representative.flag",
     output:
-        tsv = "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv",
+        tsv = "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", # Or should it be named uniref-100?
     params: 
         query_cover = 85,
         subject_cover = 85, # 
@@ -1059,23 +987,28 @@ rule diamond_kegg:
     """
 
 
+
+# Runs per batch, should maybe be moved in this document.
 rule kegg_pathway:
     input: 
         kegg_asset = base_variable + "/assets/ko00001.json", # Downloaded from kegg.jp
-        tsv = rules.diamond_kegg.input,
+        #diamond = rules.diamond_kegg.output,
+        kegg_diamond = expand("{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", sample = df["sample"], results_directory = results_directory)
     output: 
-        tsv = "{results_directory}/samples/{sample}/kegg_pathway/{sample}_kegg_pathway.tsv",
+        #"{results_directory}/samples/{sample}/kegg_pathway/{sample}_kegg_pathway.tsv",
+        diamond = "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv"
     params:
-        output_dir = "{results_directory}/samples/{sample}/kegg_pathway",
-        script = base_variable + "/scripts/kegg_pathway.R"
+        output_dir = "{results_directory}/kegg_pathway",
+        script = base_variable + "/scripts/kegg_pathway_enrichment_analysis.R"
     conda: "conda_definitions/r-clusterProfiler.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.kegg_pathway.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.kegg_pathway.tsv"
     shell: """
 
         Rscript {params.script} \
-            {input.tsv}
-            {input} \
-            {params.output_dir}
+            {input.kegg_asset} \
+            {params.output_dir} \
+            {input.kegg_diamond}  
+            
 
     """
 
