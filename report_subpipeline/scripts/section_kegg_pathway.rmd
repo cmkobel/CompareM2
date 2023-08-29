@@ -27,7 +27,7 @@ N_kegg_groups = kegg_pathway_results$group %>% unique() %>% length()
 
 
 
-```{r kegg_pathway_figure, echo=FALSE, message=F, warning=F, error = T, fig.height = max(2, (N_kegg_groups*0.2)+2), fig.width = max(8, (N*0.2)+3)}
+```{r kegg_pathway_figure, echo=FALSE, message=F, warning=F, error = T, fig.width = max(2, (N_kegg_groups*0.2)+2.5), fig.height = max(8, (N*0.2)+3)}
 
 
 # A figure, that for each class, shows how many pathway are enriched for.
@@ -51,17 +51,20 @@ metadata_translate %>%
     left_join(kegg_pathway_results, by = "sample") %>%
     #group_by(class) %>%
     count(hierarchy, sample)  %>% 
-    ggplot(aes(sample, reorder(hierarchy, desc(hierarchy)), fill = n)) + 
+    ggplot(aes(hierarchy, reorder(sample, desc(sample)), fill = n)) + 
     scale_fill_viridis_c() +
     theme_classic() + 
-    scale_y_discrete(position = "right") +
+    #scale_y_discrete(position = "right") +
+    scale_x_discrete(position = "top") +
     geom_tile() + 
     theme(
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-        legend.position = "left"
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=0),
+        legend.position = "bottom"
         ) +
     labs(
-        y = "KEGG pathway classes"
+        x = "KEGG pathway classes",
+        y = "sample",
+        fill = "n significant"
     )
 
 ```
