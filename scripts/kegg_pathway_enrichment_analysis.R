@@ -15,8 +15,8 @@ input_diamond = args[3:(length(args)-2)] # list
 
 
 message("input_kegg_asset:", input_kegg_asset) # Path to json downloaded from kegg.jp
-message("input_diamond:", input_diamond) # Table from diamond containing calls on the uniref100-KO database.
 message("output_path:", output_path) # A path where to save analysis results.
+message("input_diamond:", input_diamond) # Table from diamond containing calls on the uniref100-KO database.
 
 
 
