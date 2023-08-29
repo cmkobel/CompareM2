@@ -4,22 +4,21 @@
 # snakemake --containerize > Dockerfile # And remove header-text.
 
 
-__version__ = "v2.5.3" # Four places to bump. Here, in the bottom of the report, in the report snakefile. And in th changelog.
+__version__ = "v2.5.3" # Four places to bump. Here, in the bottom of the report, in the report snakefile. And in the changelog.
 __author__ = 'Carl M. Kobel'
+
+# May the data passing through this pipeline
+# somehow help to bring just a little more peace 
+# in this troubled world.
 
 
 
 import os
 from os import listdir
 from os.path import isfile, join
-#import yaml
 import pandas as pd
 import numpy as np
 from shutil import copyfile
-#import time
-#import re
-#from shutil import copyfile
-#import re
 
 # For void_report
 import subprocess
@@ -28,9 +27,16 @@ import datetime
 containerized: "docker://cmkobel/assemblycomparator2" # I wonder if I can put this in the profile or config instead?
 
 # --- Read important variables -----------------------------------------------
+
+envvars:
+    "ASSCOM2_BASE",
+    "ASSCOM2_PROFILE",
+    # What about parametrization of databases?
+
 cwd = os.getcwd()
 batch_title = cwd.split("/")[-1]
 base_variable = os.environ['ASSCOM2_BASE'] # rename to ASSCOM2_BASE
+
 
 
 print("/*") # for .dot exports used to generate dag visualizations.
@@ -140,6 +146,7 @@ rule all:
         "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
+        "{results_directory}/samples/{sample}/kegg_pathway/{sample}_kegg_pathway.tsv", \
         "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/samples/{sample}/dbcan/overview.txt", \
         "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
@@ -1018,9 +1025,9 @@ rule diamond_kegg:
     output:
         tsv = "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv",
     params: 
-        query_cover = 80,
-        subject_cover = 80,
-        percent_id = 30,
+        query_cover = 85,
+        subject_cover = 85, # 
+        percent_id = 50, # 30 is probably fine for checkm2, but I feel like I'd rather have censored data than spurious results.
         evalue = "1e-05",
         blocksize = 2 # A value of 2 corresponds to running checkm2 in non-lowmem mode.
     conda: "conda_definitions/diamond.yaml" 
@@ -1028,7 +1035,7 @@ rule diamond_kegg:
         mem_mb = 20000, # Seems to use around 18G at max.
         runtime = "1h",
     # container: TODO # was disabled already
-    benchmark: "{results_directory}/benchmarks/benchmark.kofam_scan.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.diamond_kegg.{sample}.tsv"
     threads: 4
     shell: """
 
@@ -1050,6 +1057,28 @@ rule diamond_kegg:
             --block-size {params.blocksize}
 
     """
+
+
+rule kegg_pathway:
+    input: 
+        kegg_asset = base_variable + "/assets/ko00001.json", # Downloaded from kegg.jp
+        tsv = rules.diamond_kegg.input,
+    output: 
+        tsv = "{results_directory}/samples/{sample}/kegg_pathway/{sample}_kegg_pathway.tsv",
+    params:
+        output_dir = "{results_directory}/samples/{sample}/kegg_pathway",
+        script = base_variable + "/scripts/kegg_pathway.R"
+    conda: "conda_definitions/r-clusterProfiler.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.kegg_pathway.{sample}.tsv"
+    shell: """
+
+        Rscript {params.script} \
+            {input.tsv}
+            {input} \
+            {params.output_dir}
+
+    """
+
 
 
 
