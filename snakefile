@@ -1,7 +1,7 @@
 
 # snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
 
-# snakemake --containerize > Dockerfile # And remove header-text.
+# asscom2 --containerize > Dockerfile # And remove header-text.
 
 
 __version__ = "v2.5.3" # Four places to bump. Here, in the bottom of the report, in the report snakefile. And in the changelog.
