@@ -59,6 +59,13 @@ print(f"    base_variable:         {base_variable}                              
 #print(f"    gtdb:                  {config['gtdbtk_data_path']}                  ")
 
 
+print()
+print("    Available rules:")
+print("      sequence_lengths prokka kraken2 dbcan interproscan kofam_scan")
+print("      busco checkm2 diamond_kegg kegg_pathway roary snp_dists")
+print("      assembly_stats gtdbtk abricate mlst mashtree fasttree")
+print("      report downloads fast")
+
 #results_directory = "output_asscom2"
 
 
@@ -596,6 +603,7 @@ rule prokka:
             --cpus {threads} \
             --force \
             --rfam \
+            --compliant \
             --outdir {wildcards.results_directory}/samples/{wildcards.sample}/prokka \
             --prefix {wildcards.sample} {input.assembly} \
         | tee {output.log} 
