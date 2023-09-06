@@ -23,7 +23,7 @@ abricate_ncbi = read_tsv(glob_list$abricate[grepl("ncbi_", glob_list$abricate)],
     mutate(n = n()) %>%
     ungroup() %>%
 
-    # Finally pivot to summarize
+    # Finally pivot to summarize
     pivot_wider(id_cols = c(file, n), names_from = GENE, values_from = `%COVERAGE`)
 
 
@@ -40,76 +40,6 @@ metadata_translate %>%
 
 
 *Table `r tableno()`: Table of NCBI Resistance gene calls called with [NCBI AMRFinder](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6811410/).*
-
----
-
-#### CARD
-
-```{r abricate-card, echo = F, message = F, warning = F, error = T}
-
-# I know there is a summary, but making sure that everything is parsed as numbers is just easier if I do my own pivot.
-abricate_card = read_tsv(glob_list$abricate[grepl("card_", glob_list$abricate)], na = ".") %>%
-    #rename(file_long = `#FILE`) #%>%
-    mutate(file = basename(`#FILE`)) %>%
-    select(file, GENE, `%COVERAGE`) %>%
-
-
-    # Count number of genes in each sample
-    group_by(file) %>%
-    mutate(n = n()) %>%
-    ungroup() %>%
-
-    # Finally pivot to summarize
-    pivot_wider(id_cols = c(file, n), names_from = GENE, values_from = `%COVERAGE`)
-
-
-
-metadata_translate %>% 
-    select(sample, file) %>%
-    left_join(abricate_card, by = "file") %>%
-    select(-file) %>%
-    mutate(n = coalesce(n, 0)) %>% # the count will be empty for samples without matches otherwise
-    custom_dt("abricate_card")
-
-
-```
-
-*Table `r tableno()`: Table of [CARD](https://card.mcmaster.ca/) (Comprehensive Antibiotic Resistance Database) results*
-
----
-
-#### PlasmidFinder
-
-```{r abricate-plasmidfinder, echo = F, message = F, warning = F, error = T}
-
-# I know there is a summary, but making sure that everything is parsed as numbers is just easier if I do my own pivot.
-abricate_plasmidfinder = read_tsv(glob_list$abricate[grepl("plasmidfinder_", glob_list$abricate)], na = ".") %>%
-    #rename(file_long = `#FILE`) #%>%
-    mutate(file = basename(`#FILE`)) %>%
-    select(file, GENE, `%COVERAGE`) %>%
-
-
-    # Count number of genes in each sample
-    group_by(file) %>%
-    mutate(n = n()) %>%
-    ungroup() %>%
-
-    # Finally pivot to summarize
-    pivot_wider(id_cols = c(file, n), names_from = GENE, values_from = `%COVERAGE`)
-
-
-
-metadata_translate %>% 
-    select(sample, file) %>%
-    left_join(abricate_plasmidfinder, by = "file") %>%
-    select(-file) %>%
-    mutate(n = coalesce(n, 0)) %>% # the count will be empty for samples without matches otherwise
-    custom_dt("abricate_plasmidfinder")
-
-
-```
-
-*Table `r tableno()`: Table of [PlasmidFinder](https://cge.cbs.dtu.dk/services/PlasmidFinder/) plasmid calls. Note that plasmidfinder uses short substrings for recognizing the plasmids, and not necessarily longer sequences i.e. complete plasmid sequences.*
 
 ---
 

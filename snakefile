@@ -4,7 +4,7 @@
 # asscom2 --containerize > Dockerfile # And remove header-text.
 
 
-__version__ = "v2.5.3" # Four places to bump. Here, in the bottom of the report, in the report snakefile. And in the changelog.
+__version__ = "v2.5.4" # Four places to bump. Here, in the bottom of the report, in the report snakefile. And in the changelog.
 __author__ = 'Carl M. Kobel'
 
 # May the data passing through this pipeline

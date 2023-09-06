@@ -9,43 +9,69 @@ The core genome denotes the genes which are conserved between all samples (inter
 
 ```{r roary-table, echo=FALSE, message=F, warning=F, error=T}
 
+#   setwd("~/asscom2/tests/strachan_campylo") # DEBUG
+
 
 roary_summary_file = paste0(results_directory, "/roary/summary_statistics.txt")
 
 
-if (file.exists(roary_summary_file)) {
+
 
 read_tsv(roary_summary_file, col_names = c("partition", "definition", "count")) %>% 
 
     custom_dt("roary", dom = "t", ordering = F, width = 500)
 
-}
+
 
 ```
 
 *Table `r tableno()`: Distribution of genes in different core/pan spectrum partitions.*
 
-
-
 ```{r roary-matrix, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
 
-plot_df = read_tsv(glob_list$roary) %>% 
+#setwd("~/asscom2/tests/strachan_campylo") # DEBUG
+
+roary_long = read_tsv(glob_list$roary) %>% 
     mutate(shared_by = rowSums(across(where(is.numeric)))) %>%
     pivot_longer(c(everything(), -Gene, -shared_by), names_to = "sample", values_to = "present") %>% 
-    filter(present >= 1)  %>%
+    filter(present >= 1) 
 
-    # Two sorting options:
+
+roary_plot_df = metadata_translate %>% 
+    select(index, sample) %>% 
+    left_join(roary_long, by = "sample") %>% 
+    
     arrange(desc(shared_by), desc(sample)) %>% 
-    #arrange(sample, shared_by) %>% 
-
     mutate(gene_order = 1:n()) %>% 
     mutate(gene_num = Gene %>% factor() %>% as.integer()) %>% 
+    
+    # Create exponential bins
+    #mutate(what = 2^(shared_by %>% log2() %>% round())) %>% # Wait, isn't it easier to just color in a logarithmic fashion?
     identity()
 
 
 
-plot_df %>%
-    ggplot(aes(reorder(Gene, gene_order), reorder(sample, desc(sample)), fill = factor(shared_by))) +
+# roary_plot_df = read_tsv(glob_list$roary) %>% 
+#     mutate(shared_by = rowSums(across(where(is.numeric)))) %>%
+#     pivot_longer(c(everything(), -Gene, -shared_by), names_to = "sample", values_to = "present") %>% 
+#     filter(present >= 1)  %>%
+# 
+#     # Two sorting options:
+#     arrange(desc(shared_by), desc(sample)) %>% 
+#     #arrange(sample, shared_by) %>% 
+# 
+#     mutate(gene_order = 1:n()) %>% 
+#     mutate(gene_num = Gene %>% factor() %>% as.integer()) %>% 
+#     identity()
+
+
+
+
+
+roary_plot_df %>%
+    #ggplot(aes(reorder(Gene, gene_order), reorder(sample, desc(index)), fill = factor(shared_by))) +
+    ggplot(aes(reorder(Gene, gene_order), reorder(sample, desc(index)), fill =  shared_by)) +
+    
     geom_tile() +
 
     theme_classic() +
@@ -53,10 +79,18 @@ plot_df %>%
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
     ) +
+    scale_fill_binned(
+        #trans = "log",
+        breaks = 2^(0:11),
+        type = "viridis",
+        #direction = -1
+    ) +
     labs(
         x = "gene",
         y = "sample",
-        fill = "number of\nsamples",
+        #fill = "number of\nsamples", 
+        fill = "shared by\nsamples", 
+        
     )
 
 ```
@@ -65,7 +99,6 @@ plot_df %>%
 
 
 ---
-
 
 
 

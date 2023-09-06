@@ -44,8 +44,6 @@ p {
 
 
 
-
-
 ```{r setup-dependencies, echo=F, message=F, warning=F}
 
 # Dependencies
@@ -74,6 +72,13 @@ library(gridExtra)
 # DEBUG setup for vscode on KTFL running R on ssh to saga
 debug = F
 if (debug) {
+    # strachen_campylo on threadripper through posit workbench
+    # strachan_campylo on threadripper
+    base_variable = "~/asscom2"
+    results_directory = "results_ac2"
+    setwd("~/asscom2/tests/strachan_campylo")
+    batch_title = basename(getwd())
+    
     # strachan_campylo on threadripper
     base_variable = "~/asscom2"
     results_directory = "results_ac2"
@@ -219,31 +224,68 @@ custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, wid
 metadata_file = paste0(results_directory, "/metadata.tsv")
 
 metadata_df = read_tsv(metadata_file) %>%
-    arrange(sample) # Alphabetical
+    arrange(sample)  # Alphabetical
 
-N = metadata_df %>% nrow() # global variable
+N = metadata_df %>% nrow() # Global variable.
 
 # Generate a very simple table which can be used to convert long paths or their basenames to sample names
-metadata_translate = metadata_df %>% 
+metadata_translate_lexicographic = metadata_df %>% 
     select(sample, file_long = input_file_fasta) %>%
     mutate(
-        file = basename(file_long)
-    )
+        file = basename(file_long),
+        index = 1:n() # Using a numerical index is so much easier I think.
+        #index = n():1 # Using a numerical index is so much easier I think. Since the tree is drawn from the bottom we should reverse the direction of the index.
+        
+    ) %>% 
+    relocate(index)
+
+ARRANGEMENT = "lexicographic" # Global variable.
+
+# If mashtree has been run, we might as well order the samples by the order of the tree. This is of course only a luxury, and not a dependency. In case the user has trouble running mashtree -which is unlikely- it is great to have a workaround which is to use the alphabetical order which is already defined above.
+
+mashtree_voluntary_dependency = paste0(results_directory, "/mashtree/mashtree.newick")
+if (file.exists(mashtree_voluntary_dependency)) {
+    
+    # Overwrite metadata_translate in case the newick file from mashtree exists.
+    # But 
+    metadata_translate = read_lines(mashtree_voluntary_dependency) %>% 
+        str_split(",") %>% unlist() %>% 
+        str_remove("^\\(+") %>% # Remove head
+        str_remove("\\:.+$")  %>% # Remove tail
+        enframe(name = "index", value = "sample") %>% 
+        mutate(index = rev(index)) %>%
+        arrange(index) %>% 
+        
+        left_join(metadata_translate_lexicographic %>% select(-index), by = "sample") # add metadata_translate without its lexicographic index.
+    
+    ARRANGEMENT = "phylogenetic"
+        
+} else { # In case mashtree didn't succeed (for instance, if one file is not a genome and thus crashes mashtree), we want to continue with a simple lexicographic ordering of the samples.
+    metadata_translate = metadata_translate_lexicographic
+}
+
+
+
+    
+if(ARRANGEMENT == "lexicographic") {
+    arrangement_text = "Because mashtree has not run (successfully), the samples are arranged alphabetically." # Lexicographically sounds so nerdy.
+} else { # == "phylogenetic"
+    arrangement_text = "Because mashtree has run, the samples are arranged by the order of the mashtree output."
+}
 
 
 # Present the metadata in the report
-metadata_df %>%
-    select(input_file, sample) %>% 
-    #datatable() # This one is not downloadable
+metadata_translate  %>% 
+    select(index, sample, file) %>% 
     custom_dt("samples")
 
+    
 
-    
-    
+
 ### Sections below
 ```
 
-*Table `r tableno()`: Overview of the samples analysed in this batch.*
+*Table `r tableno()`: Overview of the samples analysed in this batch. `r paste(arrangement_text)`*
 
 
 ### Report sections
@@ -284,7 +326,8 @@ section_definition_table = tribble(
     "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
     "kegg_pathway",      1, Sys.glob(paste0(results_directory, "/kegg_pathway/kegg_pathway_enrichment_analysis.tsv")),
     "roary",             1, Sys.glob(paste0(results_directory, "/roary/gene_presence_absence.Rtab")), # This also counts for the roary summary file.
-    "mashtree",          1, Sys.glob(paste0(results_directory, "/mashtree/mashtree.newick"))
+    "mashtree",          1, Sys.glob(mashtree_voluntary_dependency) # Reuse from earlier.
+    
     ) %>%
     mutate(n_files = lengths(glob))
 
@@ -308,7 +351,7 @@ section_definition_table %>%
             n_files > expectation ~ "🟢 yes, extra", # This should only happen if samples are deleted from the input directory. But isn't a problem as we're left joining onto the metadata table.
             n_files == expectation ~ "🟢 yes",
             n_files > 0 ~ "🟡 yes, partially",
-            n_files == 0 ~ "🔴 no"),
+            n_files == 0 ~ "🟠 no"),
         `n / expected` = paste0(n_files, " / ", expectation)
     ) %>%
     select(section, `n / expected`, render) %>%
@@ -383,5 +426,5 @@ section_definition_table %>%
 
 
 
-<p class = "shaded">[assemblycomparator2 v2.5.3](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) genomes to report pipeline. Copyright (C) 2019-2023 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)</p>
+<p class = "shaded">[assemblycomparator2 v2.5.4](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) genomes to report pipeline. Copyright (C) 2019-2023 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)</p>
 

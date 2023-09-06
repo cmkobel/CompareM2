@@ -4,6 +4,8 @@
 
 ```{r sequence_lengths-table, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, (N*0.2)+0.3), fig.width = 10}
 
+# setwd("~/asscom2/tests/strachan_campylo") # DEBUG
+
 
 
 sequence_lengths_df = read_tsv(glob_list$sequence_lengths, id = "file_long", comment = "#", col_names = c("name", "length", "GC", "GC-Skew")) %>%
@@ -41,7 +43,7 @@ sequence_lengths_meta_df %>%
     ) %>%
 
 
-    ggplot(aes(length, reorder(sample_and_GC, desc(sample_and_GC)), fill = GC)) + 
+    ggplot(aes(length, reorder(sample_and_GC, desc(index)), fill = GC)) + 
     geom_bar(stat = "identity", color = "black", linewidth = 0.2) + 
     theme_classic() +
     theme(legend.position = "bottom") +

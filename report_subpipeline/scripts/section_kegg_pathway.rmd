@@ -4,9 +4,11 @@ For each genome the prokka-prodigal called amino-acid sequences are searched in 
 
 ```{r kegg-pathway, echo = F, message = F, warning = F, error = T}
 
+#setwd("~/asscom2/tests/strachan_campylo") # DEBUG
+
 kegg_pathway_results_raw = read_tsv(glob_list$kegg_pathway)
 
-kegg_pathway_results_raw %>% view()
+
 
 
 # Clean up table before presenting
@@ -27,7 +29,7 @@ N_kegg_groups = kegg_pathway_results$group %>% unique() %>% length()
 
 
 
-```{r kegg_pathway_figure, echo=FALSE, message=F, warning=F, error = T, fig.width = max(2, (N_kegg_groups*0.2)+2.5), fig.height = max(8, (N*0.2)+3)}
+```{r kegg_pathway_figure, echo=FALSE, message=F, warning=F, error = T, fig.width = max(2, (N_kegg_groups*0.2)+2.5), fig.height = max(8, (N*0.2)+4)}
 
 
 # A figure, that for each class, shows how many pathway are enriched for.
@@ -47,12 +49,13 @@ N_kegg_groups = kegg_pathway_results$group %>% unique() %>% length()
 #>     view()
 
 metadata_translate %>% 
-    select(sample) %>%
+    select(index, sample) %>%
     left_join(kegg_pathway_results, by = "sample") %>%
     #group_by(class) %>%
-    count(hierarchy, sample)  %>% 
-    ggplot(aes(hierarchy, reorder(sample, desc(sample)), fill = n)) + 
-    scale_fill_viridis_c() +
+    count(index, sample, hierarchy)  %>% 
+    
+    ggplot(aes(hierarchy, reorder(sample, desc(index)), fill = n)) + 
+    scale_fill_viridis_c(breaks = 2^(0:10), trans = "log") +
     theme_classic() + 
     #scale_y_discrete(position = "right") +
     scale_x_discrete(position = "top") +
@@ -62,9 +65,9 @@ metadata_translate %>%
         legend.position = "bottom"
         ) +
     labs(
-        x = "KEGG pathway classes",
+        x = "KEGG pathway groups",
         y = "sample",
-        fill = "n significant"
+        fill = "significant groups"
     )
 
 ```

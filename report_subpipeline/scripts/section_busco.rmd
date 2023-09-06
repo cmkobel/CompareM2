@@ -2,6 +2,9 @@
 
 ```{r busco, echo=FALSE, message=F, warning=F, error = T}
 
+# setwd("~/asscom2/tests/strachan_campylo") # DEBUG
+
+
 busco_raw = read_delim(glob_list$busco, delim = ": ", col_names = c("name", "value"))
 busco_df = busco_raw %>% 
     mutate(id = (name == "in") %>% as.integer() %>% cumsum()) %>% 
@@ -46,10 +49,10 @@ busco_df_meta %>%
 ```{r busco-plot, echo = F, message = F, warning = F, error = T, fig.height = max(1.8, (N*0.2)+0.3), fig.width = 10}
 
 busco_df_meta %>%
-    select(sample, `S` = S, `D` = D, F, M) %>%
-    pivot_longer(-sample) %>%
+    select(index, sample, `S` = S, `D` = D, F, M) %>%
+    pivot_longer(-c(sample, index)) %>%
     mutate(name = factor(name, levels = c("M", "F","D", "S"))) %>%
-    ggplot(aes(value, reorder(sample, desc(sample)), fill = name)) + 
+    ggplot(aes(value, reorder(sample, desc(index)), fill = name)) + 
     geom_bar(position = "stack", stat = "identity") + 
     scale_fill_manual(
         values = c(rgb(235/255, 73/255, 71/255), rgb(241/255, 230/255, 76/255), rgb(67/255, 151/255, 202/255), rgb(98/255, 185/255, 234/255)),
