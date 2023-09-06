@@ -325,6 +325,8 @@ section_definition_table = tribble(
     ),
     "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
     "kegg_pathway",      1, Sys.glob(paste0(results_directory, "/kegg_pathway/kegg_pathway_enrichment_analysis.tsv")),
+    "dbcan",             N, Sys.glob(paste0(results_directory, "/samples/*/dbcan/dbsub.out")),
+    
     "roary",             1, Sys.glob(paste0(results_directory, "/roary/gene_presence_absence.Rtab")), # This also counts for the roary summary file.
     "snp_dists",         1, Sys.glob(paste0(results_directory, "/snp-dists/snp-dists.tsv")),
     "mashtree",          1, Sys.glob(mashtree_voluntary_dependency) # Reuse from earlier.
@@ -404,6 +406,8 @@ section_definition_table %>%
 
 ```{r section_kegg_pathway, child = paste0(report_scripts, "section_kegg_pathway.rmd"), eval = render$kegg_pathway}
 ```
+
+
 
 ```{r section_roary, child = paste0(report_scripts, "section_roary.rmd"), eval = render$roary}
 ```
