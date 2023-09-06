@@ -15,7 +15,7 @@ kegg_pathway_results_raw = read_tsv(glob_list$kegg_pathway)
 kegg_pathway_results = kegg_pathway_results_raw %>% 
     mutate(
         #geneID = str_replace_all(geneID, "/", " "),
-        `-log10(p_adjusted)` = -log10(`p.adjust`),
+        `-log10(p_adjusted)` = -log10(`p.adjust`) %>% signif(5),
         class = a_class %>% str_remove("^[0-9]+") %>% str_trim(), # I'm removing the number codes in front as they're too long and unnecessary.
         group = b_class %>% str_remove("^[0-9]+") %>% str_trim(),
         hierarchy = paste(class, group, sep = "; ") 
