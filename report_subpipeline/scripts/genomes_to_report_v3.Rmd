@@ -51,7 +51,7 @@ p {
 library(tidyverse)
 library(DT)
 library(ape)
-library(gridExtra)
+library(gridExtra) # Not sure if I'm still using this? Think it was only the checkm2 figure.
 
 # I failed trying looking for a package that would robustly midpoint root the tree.
 #library(prettydoc)
@@ -72,7 +72,7 @@ library(gridExtra)
 # DEBUG setup for vscode on KTFL running R on ssh to saga
 debug = F
 if (debug) {
-    # strachen_campylo on threadripper through posit workbench
+    # strachan_campylo on threadripper through posit workbench
     # strachan_campylo on threadripper
     base_variable = "~/asscom2"
     results_directory = "results_ac2"
@@ -326,6 +326,7 @@ section_definition_table = tribble(
     "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
     "kegg_pathway",      1, Sys.glob(paste0(results_directory, "/kegg_pathway/kegg_pathway_enrichment_analysis.tsv")),
     "roary",             1, Sys.glob(paste0(results_directory, "/roary/gene_presence_absence.Rtab")), # This also counts for the roary summary file.
+    "snp_dists",         1, Sys.glob(paste0(results_directory, "/snp-dists/snp-dists.tsv")),
     "mashtree",          1, Sys.glob(mashtree_voluntary_dependency) # Reuse from earlier.
     
     ) %>%
@@ -405,6 +406,9 @@ section_definition_table %>%
 ```
 
 ```{r section_roary, child = paste0(report_scripts, "section_roary.rmd"), eval = render$roary}
+```
+
+```{r section_snp_dists, child = paste0(report_scripts, "section_snp_dists.rmd"), eval = render$snp_dists}
 ```
 
 ```{r section_mashtree, child = paste0(report_scripts, "section_mashtree.rmd"), eval = render$mashtree}

@@ -68,7 +68,7 @@ rule report:
         # Clean up 
         rm -r scripts_temporary
 
-                # End script
+        # End script
         test -f "{params.end_script}" && echo "running end script" && . {params.end_script} {batch_title} {results_directory}/report_{batch_title}.html 
         
         

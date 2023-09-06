@@ -1,0 +1,98 @@
+## SNP distances
+
+`rule snp_dists` Counts the number of differences between any pair of samples on the core genome produced by roary. SNP distances do not approximate the evolutionary distance as they are not adjusted for different probabilities for transitions and transversions etc. Rather, they give a ballpark indication of the difference between the samples. Note that the number of SNP distances is highly sensitive to the core/pan genome size ratio.
+
+
+```{r snp_dists-table, echo = F, message = F, warning = F, error = T}
+#setwd("~/asscom2/tests/strachan_campylo") # DEBUG
+snp_dists_raw = read_tsv(glob_list$snp_dists) %>% 
+    rename(sample = 1)
+
+# pivot_wider returns the column in the order they appear. So you can arrange the data in the order you want before using pivot_wider. 
+snp_dists_raw %>% 
+    pivot_longer(-sample) %>%
+    
+    # Add indexes for from (sample) and to (name) so we can arrange and pivot out to the correct column order.
+    left_join(
+        metadata_translate %>% 
+            select(sample_index = index, sample),
+        by = "sample"
+    ) %>% 
+    left_join(
+        metadata_translate %>% 
+            select(name_index = index, name = sample),
+        by = "name"
+    ) %>% 
+    arrange(sample_index, name_index) %>% select(-ends_with("index")) %>% # After arranging, we're done with the indexes.
+    pivot_wider(sample) %>% 
+    
+    custom_dt("hat")
+    
+
+```
+*Table `r tableno()`: Pairwise SNP distances between all samples.*
+
+
+
+
+```{r snp_dists-figure, echo = F, message = F, warning = F, error = T, fig.height = 4, fig.width = 10}
+
+# If the arrangement is phylogenetic, we should color by order gradient to highlight the clusters.
+snp_dists_matrix = snp_dists_raw %>% 
+    column_to_rownames("sample") %>% 
+    as.matrix()
+snp_dists_matrix[lower.tri(snp_dists_matrix, diag = T)] = NA
+snp_dists_plot_df = snp_dists_matrix %>%
+    as_tibble(rownames = "sample")  %>% 
+    pivot_longer(-sample) %>%
+    drop_na() %>% 
+    
+    left_join(metadata_translate %>% select(sample_index = index, sample)) %>% 
+    left_join(metadata_translate %>% select(name_index = index, name = sample)) %>% 
+    mutate(delta = sample_index - name_index) %>% 
+    mutate(delta = abs(sample_index - name_index)) %>% 
+    mutate(group = cut_number(delta, 10)) 
+    
+    
+    # ggplot(aes(delta %>% log())) + 
+    # geom_histogram() 
+
+if (ARRANGEMENT == "phylogenetic") {
+snp_dists_plot = 
+    snp_dists_plot_df %>% 
+    #ggplot(aes(value, fill = delta %>% factor())) +
+    ggplot(aes(value, fill = delta, group = delta)) +
+    scale_fill_continuous(type = "viridis", direction = -1,
+        #trans = "log", breaks = 2^(0:10)
+    ) +
+    geom_histogram() + 
+    theme_bw() + 
+    labs(
+        x = "pairwise SNP distance", 
+        fill = "horizontal distance\nin tree"
+    )
+    snp_dists_additional_text = "The color indicates the relative distance for the pair when considering the index positions of a phylogenetic tree resembling the samples which is produced with mashtree. The index positions in a phylogenetic tree can be haphazard, but will always correlate with kinship."
+
+} else { # ARRANGEMENT == "lexicographic" # no fill coloring
+snp_dists_plot = 
+    snp_dists_plot_df %>% 
+    #ggplot(aes(value, fill = delta %>% factor())) +
+    ggplot(aes(value)) +
+    geom_histogram(alpha = 0.95) + 
+    theme_bw() + 
+    labs(
+        x = "pairwise SNP distance", 
+    ) 
+    snp_dists_additional_text = ""
+}
+
+snp_dists_plot
+
+
+```
+*Fig. `r figno()`: Pairwise SNP distances between all samples. `r paste(snp_dists_additional_text)`*
+
+
+
+
+---

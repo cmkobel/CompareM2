@@ -1,5 +1,7 @@
 ## BUSCO
 
+`rule busco`
+
 ```{r busco, echo=FALSE, message=F, warning=F, error = T}
 
 # setwd("~/asscom2/tests/strachan_campylo") # DEBUG

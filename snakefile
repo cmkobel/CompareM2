@@ -103,6 +103,7 @@ df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extra
 df['input_file_fasta'] = results_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fa" # This is where the input file is copied to in the first snakemake rule.
 
 df = df[df['extension'].isin(extension_whitelist)] # Remove files with unsupported formats.
+df['1-index'] = [i+1 for i in range(len(df))]
 
 # Check that the directory is not empty, again.
 if df.shape[0] == 0:
@@ -117,7 +118,8 @@ if df.shape[0] == 0:
 print() # Padding
 df = df.reset_index(drop = True)
 #print(df[['input_file', 'sample', 'extension']])
-print(df[['input_file', 'extension', 'input_file_fasta']])
+#print(df[['input_file', 'extension', 'input_file_fasta']])
+print(df[['1-index', 'sample', 'extension']].to_string(index = False))
 print("//")
 print()
 

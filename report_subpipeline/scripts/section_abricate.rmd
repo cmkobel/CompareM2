@@ -1,6 +1,6 @@
 ## Antimicrobial Resistance
 
-Using [Abricate](https://github.com/tseemann/abricate#abricate), the assemblies are scanned for known resistance genes in the ncbi, card, plasmidfinder and vfdb antimicrobial resistance databases.
+`rule abricate` Using [Abricate](https://github.com/tseemann/abricate#abricate), the assemblies are scanned for known resistance genes in the ncbi, card, plasmidfinder and vfdb antimicrobial resistance databases.
 
 
 #### NCBI AMRFinder

@@ -1,6 +1,6 @@
 ## Mashtree phylogeny
 
-[Mashtree](https://github.com/lskatz/mashtree) computes an approximation of ANI using the minhash distance measure. On these distances, a phylogenetic tree is then created using the neighbor-joining algorithm. The plotted tree is not rooted.
+`rule mashtree` [Mashtree](https://github.com/lskatz/mashtree) computes an approximation of ANI using the minhash distance measure. On these distances, a phylogenetic tree is then created using the neighbor-joining algorithm. The plotted tree is not rooted.
 
 
 

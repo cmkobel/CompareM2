@@ -1,5 +1,7 @@
 ## Kraken2
 
+`rule kraken2`
+
 ```{r kraken2, echo = F, message = F, warning = F, error = T}
 
 

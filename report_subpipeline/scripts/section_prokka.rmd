@@ -1,5 +1,7 @@
 ## Genomic annotation
 
+`rule prokka`
+
 ```{r prokka, echo = F, message = F, warning = F, error = T}
 
 

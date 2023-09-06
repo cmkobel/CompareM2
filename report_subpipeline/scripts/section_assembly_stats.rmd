@@ -1,6 +1,7 @@
 
 ## Assembly statistics
 
+`rule assembly_stats`
 
 
 ```{r assembly_stats, echo = F, message = F, warning = F, error = T}

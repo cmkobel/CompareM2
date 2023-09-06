@@ -1,5 +1,6 @@
 ## MLST
 
+`rule mlst`
 
 ```{r mlst, echo = F, message = F, warning = F, error = T}
 
