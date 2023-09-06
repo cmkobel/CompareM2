@@ -730,7 +730,7 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
     conda: "conda_definitions/dbcan.yaml" # Not sure if it should be called by a version number?
     # container: TODO # was disabled already
     benchmark: "{results_directory}/benchmarks/benchmark.dbcan.{sample}.tsv"
-    threads: 4
+    threads: 8
     resources: 
         mem_mb = 8000
     shell: """
@@ -767,7 +767,7 @@ rule interproscan:
     conda: "conda_definitions/interproscan.yaml" # Not sure if it should be called by a version number?
     # container: TODO # was disabled already
     benchmark: "{results_directory}/benchmarks/benchmark.interproscan.{sample}.tsv"
-    threads: 4
+    threads: 8
     resources: 
         mem_mb = 8000
     shell: """
@@ -946,7 +946,7 @@ rule checkm2:
 # Use the same database as checkm2, but run on amino-acid files instead of dna.
 # This will be used for a subsequent pathway enrichment analysis.
 # Idea for speed up: concatenate all genomes together first, like they do in checkm2. Then we only need to load the database once.
-rule diamond_kegg: 
+rule diamond_kegg: # or uniref_ko?
     input: 
         metadata = "{results_directory}/metadata.tsv", # For the report
         aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
@@ -965,7 +965,7 @@ rule diamond_kegg:
         runtime = "1h",
     # container: TODO # was disabled already
     benchmark: "{results_directory}/benchmarks/benchmark.diamond_kegg.{sample}.tsv"
-    threads: 4
+    threads: 8
     shell: """
 
         # Inspired from https://github.com/chklovski/CheckM2/blob/319dae65f1c7f2fc1c0bb160d90ac3ba64ed9457/checkm2/diamond.py#L79
