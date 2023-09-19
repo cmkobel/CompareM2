@@ -39,7 +39,7 @@ assemblycomparator2 will then create a sub-directory, named results_ac2/ contain
   - Execute all jobs until (including) a specific job in the job graph:
     
     ```bash
-    asscom2 --until mlst
+    asscom2 --until roary abricate
     ```
     
   - Select a specific MLST-scheme to use on all of the samples: (defaults to automatic)
