@@ -129,7 +129,7 @@ which apptainer && apptainer --version
 Then download the assemblycomparator2 pipeline and set up an alias in your profile (.bashrc on most linux distributions). Proposed installation directory is in your home directory (\~).
 
 ```bash
-cd ~
+cd ~ # Enter the directory where you want to install assemblycomparator2.
 git clone https://github.com/cmkobel/assemblycomparator2.git asscom2
 cd asscom2
 conda env create --name asscom2_launcher --file environment.yaml # Installs snakemake and mamba in an environment named "asscom2_launcher".
