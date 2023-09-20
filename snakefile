@@ -26,16 +26,17 @@ import datetime
         
 containerized: "docker://cmkobel/assemblycomparator2" # I wonder if I can put this in the profile or config instead?
 
-# --- Read important variables -----------------------------------------------
-
+# When executing, Snakemake will fail with a reasonable error message if the variables below are undefined.
 envvars:
     "ASSCOM2_BASE",
     "ASSCOM2_PROFILE",
+    "ASSCOM2_DATABASES"
     # What about parametrization of databases?
 
 cwd = os.getcwd()
 batch_title = cwd.split("/")[-1]
 base_variable = os.environ['ASSCOM2_BASE'] # rename to ASSCOM2_BASE
+DATABASES = os.environ['ASSCOM2_DATABASES'] # Defines where the databases are stored. One for all. when snakemake issue 262 is solved I'll make this more flexible for each rule.
 
 
 
@@ -52,19 +53,20 @@ print("                         Please log issues at:                      ")
 print("              github.com/cmkobel/assemblycomparator2/issues         ")
 print("                                                                    ")
 print(f"    batch_title:           {batch_title}")
+print(f"    base_variable:         {base_variable}                               ")
 print(f"    roary_blastp_identity: {config['roary_blastp_identity']} (default 95)")
 print(f"    mlst_scheme:           {config['mlst_scheme']} (default automatic)   ")
-print(f"    base_variable:         {base_variable}                               ")
 #print(f"    kraken2 database:      {config['asscom2_kraken2_db']}                ")
 #print(f"    gtdb:                  {config['gtdbtk_data_path']}                  ")
+print(f"    databases:             {DATABASES}                             ")
 
 
 print()
 print("    Available rules:")
-print("      sequence_lengths prokka kraken2 dbcan interproscan kofam_scan")
-print("      busco checkm2 diamond_kegg kegg_pathway roary snp_dists")
-print("      assembly_stats gtdbtk abricate mlst mashtree fasttree")
-print("      report downloads fast")
+print("    sequence_lengths prokka kraken2 dbcan interproscan kofam_scan")
+print("    busco checkm2 diamond_kegg kegg_pathway roary snp_dists")
+print("    assembly_stats gtdbtk abricate mlst mashtree fasttree")
+print("    report downloads fast")
 
 #results_directory = "output_asscom2"
 
@@ -229,11 +231,11 @@ rule busco_download:
     output:
         #touch("{base_variable}/databases/busco/busco_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
         #database_representative = touch("{base_variable}/databases/busco/file_versions.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        database_representative = touch("{base_variable}/databases/busco/ac2_busco_database_representative.flag") # Should point to the directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
+        database_representative = touch(DATABASES + "/busco/ac2_busco_database_representative.flag") # Should point to the directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
     conda: "conda_definitions/busco.yaml"
     #c container: "docker://cmkobel/busco"
     shell: """
-        
+
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
         if [ -f "{output}" ]; then    
 
@@ -254,12 +256,10 @@ rule busco_download:
                 --mode geno \
                 --auto-lineage-prok \
                 --force \
-                --download_path {wildcards.base_variable}/databases/busco \
+                --download_path $(dirname {output}) \
                 --download prokaryota
-
-            # Info: You can also swap "--download prokaryota" with "--download virus" if you're feeling adventurous ...
             
-            mkdir -p $(dirname {output})
+            
             touch {output}
 
             # Clean up 
@@ -273,13 +273,10 @@ rule busco_download:
 
 rule checkm2_download:
     output:
-        #flag = touch("{base_variable}/databases/checkm2/checkm2_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        #database_representative = expand("{base_variable}/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd", base_variable = base_variable),
-        database_representative = expand("{base_variable}/databases/checkm2/ac2_checkm2_database_representative.flag", base_variable = base_variable), 
+        database_representative = DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
     params:
-        download_path = expand("{base_variable}/databases/checkm2", base_variable = base_variable),
+        destination = DATABASES + "/checkm2"
     conda: "conda_definitions/checkm2.yaml"
-    #c container: "docker://cmkobel/checkm2"
     shell: """
 
 
@@ -294,18 +291,22 @@ rule checkm2_download:
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 
             # Maybe the container bug "OSError Errno 30 Read-only file system" is helped by setting the path to the db manually.
-            export CHECKM2DB="{params.download_path}"
+            export CHECKM2DB="{params.destination}"
 
-        
             checkm2 database \
-                --download
+                --download \
+                --path {params.destination}
 
-            rm {params.download_path}/gtdb_db.tar.gz || echo "Failed to clean up."
+            rm {params.destination}/gtdb_db.tar.gz || echo "Failed to clean up."
 
-            # Consider running checkm2 testrun. Is time and resource consuming though.
+            # Consider running checkm2 testrun. Is resource intensive though and this is a localrule.
             # checkm2 testrun 
+
+            # If you have problems installing this, then:
+            # Set keep-incomplete: true in profile
+            # $ asscom2 --until checkm2_download
+            # $ asscom2 --until checkm2_download --touch
             
-            mkdir -p $(dirname {output})
             touch {output}
         
         fi
@@ -314,31 +315,28 @@ rule checkm2_download:
 
 
 
+
+
+
+
+
 rule kraken2_download:
     output:
-        #database_representative = touch("{base_variable}/databases/kraken2/hash.k2d"), # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        database_representative = touch("{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag"),
-    #params: 
-        #asscom2_kraken_db = config['asscom2_kraken2_db'],
+        #database_representative = touch("{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag"),
+        database_representative = touch(DATABASES + "/kraken2/ac2_kraken2_database_representative.flag"),
+    params:
+        db_destination_smk = DATABASES + "/kraken2/kraken2_db.tar.gz"
     conda: "conda_definitions/curl.yaml"
-    #c container: "docker://cmkobel/curl"
     shell: """
-
-
-        # TODO: Make a way to check for internet access instead of just crashing. Same for busco and checkm2
 
         ## Pick a db from this list
         # https://benlangmead.github.io/aws-indexes/k2
 
-        
         ## Shortcuts. Select no bigger than the size of your RAM
-    
-        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # Standard 49GB
-        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_08gb_20230314.tar.gz" # Standard  8GB
+        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # Standard 49GB
+        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_08gb_20230314.tar.gz" # Standard  8GB
         #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_16gb_20230314.tar.gz" # Standard 16GB
-        
-
-        db_destination="{wildcards.base_variable}/databases/kraken2/kraken2_db.tar.gz"
+                
 
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
         if [ -f "{output}" ]; then    
@@ -350,24 +348,23 @@ rule kraken2_download:
 
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 
-            >&2 echo "Downlading $db_pick to $db_destination"
-            mkdir -p $(dirname "$db_destination")
+            >&2 echo "Downlading $db_pick to {params.db_destination_smk}"
+            #mkdir -p $(dirname "$db_destination")
             curl "$db_pick" \
-                --output "$db_destination"
+                --output {params.db_destination_smk}
 
             >&2 echo "Decompressing ..."
             tar \
-                -xvf $db_destination \
-                --directory $(dirname $db_destination)
+                -xvf {params.db_destination_smk} \
+                --directory $(dirname {params.db_destination_smk})
 
-            rm $db_destination || echo "Failed to clean up."
+            rm {params.db_destination_smk} || echo "Failed to clean up."
 
             >&2 echo "kraken2 DB setup completed"
-            echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname $db_destination)/info.txt
+            echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname {params.db_destination_smk})/info.txt
 
             mkdir -p $(dirname {output})
             touch {output}
-
             
         fi
 
@@ -379,17 +376,11 @@ rule kraken2_download:
 
 rule dbcan_download:
     output:
-        database_representative = touch("{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag"),
+        #database_representative = touch("{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag"),
+        database_representative = DATABASES + "/dbcan/ac2_dbcan_database_representative.flag",
     conda: "conda_definitions/dbcan.yaml"
-    #container: TODO # was disabled already
     shell: """
-
-
-        # TODO: Make a way to check for internet access instead of just crashing. Same for the others
-
         
-        db_destination="{wildcards.base_variable}/databases/dbcan/dbcan_db.tar.gz"
-
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
         if [ -f "{output}" ]; then    
 
@@ -495,11 +486,9 @@ rule kofam_download:
 rule gtdb_download:
     output:
         #database_representative = touch("{base_variable}/databases/gtdb/gtdb_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        database_representative = touch("{base_variable}/databases/gtdb/ac2_gtdb_database_representative.flag")
-    #params: 
-        #asscom2_gtdb_db = config['asscom2_gtdb_db'],
+        #database_representative = touch("{base_variable}/databases/gtdb/ac2_gtdb_database_representative.flag")
+        database_representative = DATABASES + "/gtdb/ac2_gtdb_database_representative.flag"
     conda: "conda_definitions/curl.yaml"
-    #c container: "docker://cmkobel/curl"
     shell: """
 
         # TODO: Make a way to check for internet access instead of just crashing. Same for busco and checkm2
@@ -512,7 +501,10 @@ rule gtdb_download:
         #db_pick="https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_data.tar.gz" # Official alternative mirror
 
 
-        db_destination="{wildcards.base_variable}/databases/gtdb/gtdb_db.tar.gz" # Should be defined from 
+        #db_destination="{wildcards.base_variable}/databases/gtdb/gtdb_db.tar.gz" # Should be defined from 
+
+        #db_destination="{wildcards.base_variable}/databases/gtdb/gtdb_db.tar.gz" # Should be defined from 
+        db_destination=$(dirname {output.database_representative})/gtdb_db.tar.gz
 
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
         if [ -f "{output}" ]; then    
@@ -685,30 +677,25 @@ rule kraken2:
         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
         assembly = "{results_directory}/samples/{sample}/{sample}.fa",
         #database = expand("{base_variable}/databases/kraken2/hash.k2d", base_variable = base_variable),
-        database = expand("{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag", base_variable = base_variable),
+        #database = expand("{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag", base_variable = base_variable),
+        database_representative = DATABASES + "/kraken2/ac2_kraken2_database_representative.flag"
     output: 
         report = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv",
         full = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_full.tsv",
-    params: 
-        #asscom2_kraken2_db = config["asscom2_kraken2_db"],
-           base_variable = base_variable,
     conda: "conda_definitions/kraken2.yaml"
-    #c container: "docker://cmkobel/kraken2"
     benchmark: "{results_directory}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
     threads: 2
     resources:
         mem_mb = 75000,
     shell: """
 
-        db_path="{params.base_variable}/databases/kraken2"
-        echo using kraken2 database $db_path
-
+        echo using kraken2 database $(dirname {input.database_representative})
 
         # Run kraken2
         # https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown
         kraken2 \
             --threads {threads} \
-            --db $db_path \
+            --db $(dirname {input.database_representative}) \
             --confidence 0.1 \
             --report {output.report} \
             --report-minimizer-data \
@@ -716,7 +703,6 @@ rule kraken2:
             > {output.full}
 
         # Argument on confidence parameter https://www.biostars.org/p/402619/
-
 
     """
 
@@ -790,7 +776,7 @@ rule interproscan:
     """
 
 
-
+# Disabled because I think the diamond_kegg based results are much better, at least faster.
 rule kofam_scan:
     input: 
         metadata = "{results_directory}/metadata.tsv", # For the report
@@ -808,7 +794,6 @@ rule kofam_scan:
     benchmark: "{results_directory}/benchmarks/benchmark.kofam_scan.{sample}.tsv"
     threads: 4
     shell: """
-
 
         # Must use unique --tmp-dir because of https://github.com/takaram/kofam_scan/issues/8#issuecomment-619640654
 
@@ -845,7 +830,7 @@ rule busco:
     input: 
         metadata = "{results_directory}/metadata.tsv",
         #busco_download = expand("{base_variable}/databases/busco/file_versions.tsv", base_variable = base_variable), # This is a bad idea, because it requires a complete reinstall if snakemake somehow removes the file, which is quite likely.
-        database_representative = expand("{base_variable}/databases/busco/ac2_busco_database_representative.flag", base_variable = base_variable),
+        database_representative = DATABASES + "/busco/ac2_busco_database_representative.flag", # Should point to the directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
         fasta = "{results_directory}/samples/{sample}/{sample}.fa",
     output: 
         flag = touch("{results_directory}/samples/{sample}/busco/busco_done.flag"),
@@ -915,7 +900,7 @@ rule busco:
 rule checkm2:
     input:
         metadata = "{results_directory}/metadata.tsv",
-        database = expand("{base_variable}/databases/checkm2/ac2_checkm2_database_representative.flag", base_variable = base_variable),
+        database_representative = DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
         fasta = df["input_file_fasta"].tolist()
     output:
         table = touch("{results_directory}/checkm2/quality_report.tsv"),
@@ -936,7 +921,7 @@ rule checkm2:
             --input {input.fasta} \
             --output-directory {params.rule_dir} \
             --extension .fa \
-            --database_path $ASSCOM2_BASE/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd \
+            --database_path $(dirname {input.database_representative})/CheckM2_database/uniref100.KO.1.dmnd \
             --force
 
         {void_report}
@@ -1119,17 +1104,16 @@ def get_mem_gtdbtk(wildcards, attempt):
 rule gtdbtk:
     input: 
         metadata = "{results_directory}/metadata.tsv",
-        #db_flag = expand("{base_variable}/databases/gtdb/release207_v2/taxonomy/gtdb_taxonomy.tsv", base_variable = base_variable),
-        #database_representative = expand("{base_variable}/databases/gtdb/gtdb_download_done.flag", base_variable = base_variable),
-        #database_representative = expand("{base_variable}/databases/gtdb/gtdb_download_done.flag", base_variable = base_variable),
-        database_representative = expand("{base_variable}/databases/gtdb/ac2_gtdb_database_representative.flag", base_variable = base_variable),
+        #database_representative = expand("{base_variable}/databases/gtdb/ac2_gtdb_database_representative.flag", base_variable = base_variable),
+        database_representative = DATABASES + "/gtdb/ac2_gtdb_database_representative.flag",
+        
         fasta = df["input_file_fasta"].tolist(),
     output: "{results_directory}/gtdbtk/gtdbtk.summary.tsv"
     params:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{results_directory}/gtdbtk/",
         base_variable = base_variable,
-        mash_db = f"{base_variable}/databases/gtdb_sketch/mash_db.msh",
+        mash_db = f"{DATABASES}/gtdb_sketch/mash_db.msh",
         #gtdbtk_data_path = config["gtdbtk_data_path"],
     threads: 8
     #retries: 3
@@ -1148,7 +1132,9 @@ rule gtdbtk:
 
         # I need to find a neat way of setting these variables. Maybe the user has an older/newer version than what is hardcoded here. 
         # export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release207_v2" # Should be defined from config file, and not be hardwired.
-        export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release214/" # Should be defined from config file, and not be hardwired.
+        #export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release214/" # Should be defined from config file, and not be hardwired.
+        export GTDBTK_DATA_PATH="$(dirname {input.database_representative})/release214/" # Should be defined from config file, and not be hardwired.
+        
 
         # Create batchfile
         echo '''{params.batchfile_content}''' > {wildcards.results_directory}/gtdbtk/batchfile.tsv
