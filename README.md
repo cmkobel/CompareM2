@@ -116,7 +116,7 @@ The only requisites for running assemblycomparator2 is:
 
 #### 0) Prerequisites
 
-First, check that you have the prerequisites available on your system:
+First, check that you have the prerequisites available on your system. Open a terminal and paste these commands. 
 
 ```bash
 which conda && conda --version
