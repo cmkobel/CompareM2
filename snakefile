@@ -776,6 +776,7 @@ rule interproscan:
     """
 
 
+
 # Disabled because I think the diamond_kegg based results are much better, at least faster.
 rule kofam_scan:
     input: 
