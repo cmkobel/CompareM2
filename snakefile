@@ -41,7 +41,7 @@ DATABASES = os.environ['ASSCOM2_DATABASES'] # Defines where the databases are st
 
 
 print("/*") # for .dot exports used to generate dag visualizations.
-print()
+print(f"                                                                   {__version__}")
 print("         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ ")
 print("        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗")
 print("        ███████║███████╗███████╗██║     ██║   ██║██╔████╔██║ █████╔╝")
@@ -54,11 +54,12 @@ print("              github.com/cmkobel/assemblycomparator2/issues         ")
 print("                                                                    ")
 print(f"    batch_title:           {batch_title}")
 print(f"    base_variable:         {base_variable}                               ")
+print(f"    databases:             {DATABASES}                             ")
 print(f"    roary_blastp_identity: {config['roary_blastp_identity']} (default 95)")
 print(f"    mlst_scheme:           {config['mlst_scheme']} (default automatic)   ")
 #print(f"    kraken2 database:      {config['asscom2_kraken2_db']}                ")
 #print(f"    gtdb:                  {config['gtdbtk_data_path']}                  ")
-print(f"    databases:             {DATABASES}                             ")
+
 
 
 print()
@@ -430,7 +431,7 @@ rule dbcan_download:
 
 rule kofam_download:
     output:
-        database_representative = base_variable + "/databases/kofam/ac2_kofam_database_representative.flag",
+        database_representative = DATABASES + "/kofam/ac2_kofam_database_representative.flag",
     conda: "conda_definitions/curl.yaml" # Now it also has unzip which necessary here.
     #container: "docker://cmkobel/curl" # TODO: Must be updated to contain git # was disabled already
     shell: """
@@ -1138,8 +1139,6 @@ rule gtdbtk:
         mkdir -p $(dirname {params.mash_db})
 
         # I need to find a neat way of setting these variables. Maybe the user has an older/newer version than what is hardcoded here. 
-        # export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release207_v2" # Should be defined from config file, and not be hardwired.
-        #export GTDBTK_DATA_PATH="{params.base_variable}/databases/gtdb/release214/" # Should be defined from config file, and not be hardwired.
         export GTDBTK_DATA_PATH="$(dirname {input.database_representative})/release214/" # Should be defined from config file, and not be hardwired.
         
 
@@ -1348,13 +1347,11 @@ rule report:
 # Makes it easy to check that all databases are installed properly. Eventually for touching the database representatives in case of using prior installations.
 rule downloads:
     input:
-        expand(\
-            ["{base_variable}/databases/checkm2/ac2_checkm2_database_representative.flag", \ 
-            "{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag", \
-            "{base_variable}/databases/busco/ac2_busco_database_representative.flag", \
-            "{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag", \
-            "{base_variable}/databases/gtdb/ac2_gtdb_database_representative.flag"], \
-            base_variable = base_variable),
+        DATABASES + "/checkm2/ac2_checkm2_database_representative.flag", 
+        DATABASES + "/kraken2/ac2_kraken2_database_representative.flag",
+        DATABASES + "/busco/ac2_busco_database_representative.flag", 
+        DATABASES + "/dbcan/ac2_dbcan_database_representative.flag", 
+        DATABASES + "/gtdb/ac2_gtdb_database_representative.flag"
 
 
 # Blink-of-an-eye analysis
