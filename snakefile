@@ -429,7 +429,7 @@ rule dbcan_download:
 
 
 
-
+# This rule is currently not in use since kegg_diamond is both better and faster.
 rule kofam_download:
     output:
         database_representative = DATABASES + "/kofam/ac2_kofam_database_representative.flag",
