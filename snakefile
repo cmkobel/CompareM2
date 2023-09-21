@@ -954,7 +954,7 @@ rule diamond_kegg: # or uniref_ko?
         subject_cover = 85, # 
         percent_id = 50, # 30 is probably fine for checkm2, but I feel like I'd rather have censored data than spurious results.
         evalue = "1e-05",
-        blocksize = 2 # A value of 2 corresponds to running checkm2 in non-lowmem mode.
+        blocksize = 2, # A value of 2 corresponds to running checkm2 in non-lowmem mode.
         database_path = DATABASES + "/checkm2/CheckM2_database/uniref100.KO.1.dmnd"
     conda: "conda_definitions/diamond.yaml" 
     resources:
