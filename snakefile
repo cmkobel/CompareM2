@@ -746,20 +746,17 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
 
     """
 
-# By default it runs only TIGRFAM, Hamap, Pfam
+# By default it runs TIGRFAM, Hamap, Pfam
 rule interproscan:
     input: 
         metadata = "{results_directory}/metadata.tsv",
         aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
-        #database_representative = expand("{base_variable}/databases/interproscan/ac2_interproscan_database_representative.flag", base_variable = base_variable), # I don't understand where the database comes from?
-    output: 
-        #overview_table = "{results_directory}/samples/{sample}/interproscan/overview.txt"
-        #flag = touch("{results_directory}/samples/{sample}/interproscan/done.flag")
+        # database_representative # No external database is needed.
+    output:
         tsv = "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv",
     params:
         file_base = "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan",
     conda: "conda_definitions/interproscan.yaml" # Not sure if it should be called by a version number?
-    # container: TODO # was disabled already
     benchmark: "{results_directory}/benchmarks/benchmark.interproscan.{sample}.tsv"
     threads: 8
     resources: 
@@ -777,6 +774,7 @@ rule interproscan:
             --iprlookup \
             --pathways \
             --seqtype p \
+            --tempdir {resources.tmpdir} \
             --input {input.aminoacid}
 
     """
@@ -1412,8 +1410,6 @@ rule isolate:
         results_directory = results_directory, sample = df["sample"])
 
 
-        
-
 
 
 # A major todo is to find a way to make the report run as a conda or containerized job dependending on the use-conda/use-singularity setting in the config. The best way might be to have an environment variable that points to the wanted config. 
@@ -1422,6 +1418,8 @@ rule isolate:
 # I wonder if adding the ampersands means that the report creation will be ^c cancellable? Not tested yet..
 report_call = f"""
     mkdir -p {results_directory}/logs \
+    && test -f {results_directory}/.asscom2_void_report.flag \
+    && test -f {results_directory}/metadata.tsv \
     && snakemake \
         --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
         --profile $ASSCOM2_PROFILE \

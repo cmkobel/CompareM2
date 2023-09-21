@@ -77,6 +77,8 @@ if (debug) {
     base_variable = "~/asscom2"
     results_directory = "results_ac2"
     setwd("~/asscom2/tests/strachan_campylo")
+    setwd("~/asscom2/tests/MAGs/")
+    
     batch_title = basename(getwd())
     
     # strachan_campylo on threadripper

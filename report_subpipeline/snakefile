@@ -37,7 +37,6 @@ rule report:
         flag = "{results_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
         metadata = "{results_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
     conda: "conda_definitions/r-markdown.yaml"
-    #container: "docker://cmkobel/r-markdown"
     params: 
         base_variable = base_variable,
         results_directory = results_directory,
