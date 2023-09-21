@@ -311,6 +311,7 @@ rule checkm2_download:
             # Set keep-incomplete: true in profile
             # $ asscom2 --until checkm2_download
             # $ asscom2 --until checkm2_download --touch
+            # $ touch \$ASSCOM2_DATABASES/checkm2/ac2_checkm2_database_representative.flag
             
             touch {output}
         
