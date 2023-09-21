@@ -1334,6 +1334,7 @@ rule install_report_environment_aot:
 # assemblycomparator2 --until report
 # It isn't enough to just touch the file. The report_subpipeline will not be triggered if the file is empty. Thus we add the date, and we have a nice debug log for seeing when the report was triggered.
 # Will only but run if asked to. No need to use --forcerun, since snakemake states this in the output: "reason: Rules with neither input nor output files are always executed."
+# Rule report does not depend on metadata, as the metadata is not interesting in itself.
 rule report:
     shell: """
         
@@ -1417,13 +1418,20 @@ rule isolate:
 # Call the report subpipeline
 # I wonder if adding the ampersands means that the report creation will be ^c cancellable? Not tested yet..
 report_call = f"""
-    mkdir -p {results_directory}/logs \
-    && test -f {results_directory}/.asscom2_void_report.flag \
-    && test -f {results_directory}/metadata.tsv \
-    && snakemake \
-        --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
-        --profile $ASSCOM2_PROFILE \
-        --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title}
+    
+    mkdir -p {results_directory}/logs 
+
+    # If the flag or the metadata is missing, there is no point in calling the report subpipeline.
+    if [ ! -f "{results_directory}/.asscom2_void_report.flag" ] || [ ! -f "{results_directory}/metadata.tsv" ]; then
+        echo "Not calling report_subpipeline as either the flag or metadata is missing. Run a rule that mandates a report section to generate the report."
+        exit 0
+    else
+        snakemake \
+            --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
+            --profile $ASSCOM2_PROFILE \
+            --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title}
+    fi
+
     """
 
 onsuccess:
