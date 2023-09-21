@@ -24,7 +24,7 @@ from shutil import copyfile
 import subprocess
 import datetime
         
-containerized: "docker://cmkobel/assemblycomparator2:v2.5.5" # I wonder if I can put this in the profile or config instead? 
+containerized: "docker://cmkobel/assemblycomparator2:v2.5.5" # I wonder if I can put this in the profile or config instead?
 
 # When executing, Snakemake will fail with a reasonable error message if the variables below are undefined.
 envvars:
