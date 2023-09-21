@@ -298,7 +298,8 @@ rule checkm2_download:
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 
             # Maybe the container bug "OSError Errno 30 Read-only file system" is helped by setting the path to the db manually.
-            export CHECKM2DB="{params.destination}"
+            # export CHECKM2DB="{params.destination}"
+            # No, don't think so.
 
             checkm2 database \
                 --download \
