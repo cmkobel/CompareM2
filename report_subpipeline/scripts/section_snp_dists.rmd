@@ -51,13 +51,13 @@ snp_dists_plot_df = snp_dists_matrix %>%
     left_join(metadata_translate %>% select(name_index = index, name = sample)) %>% 
     mutate(delta = sample_index - name_index) %>% 
     mutate(delta = abs(sample_index - name_index)) %>% 
-    mutate(group = cut_number(delta, 10)) 
-    
+    #mutate(group = cut_number(delta, min(N, 10))) # DISABLED
+    identity()
     
     # ggplot(aes(delta %>% log())) + 
     # geom_histogram() 
 
-if (ARRANGEMENT == "phylogenetic") {
+if (ARRANGEMENT == "phylogeneticDISABLED") {
 snp_dists_plot = 
     snp_dists_plot_df %>% 
     #ggplot(aes(value, fill = delta %>% factor())) +
