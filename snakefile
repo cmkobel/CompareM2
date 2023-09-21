@@ -955,6 +955,7 @@ rule diamond_kegg: # or uniref_ko?
         percent_id = 50, # 30 is probably fine for checkm2, but I feel like I'd rather have censored data than spurious results.
         evalue = "1e-05",
         blocksize = 2 # A value of 2 corresponds to running checkm2 in non-lowmem mode.
+        database_path = DATABASES + "/checkm2/CheckM2_database/uniref100.KO.1.dmnd"
     conda: "conda_definitions/diamond.yaml" 
     resources:
         mem_mb = 20000, # Seems to use around 18G at max.
@@ -974,7 +975,7 @@ rule diamond_kegg: # or uniref_ko?
             --query {input.aminoacid}  \
             --out {output.tsv}  \
             --threads {threads}  \
-            --db $ASSCOM2_BASE/databases/checkm2/CheckM2_database/uniref100.KO.1.dmnd \
+            --db {params.database_path} \
             --query-cover {params.query_cover}  \
             --subject-cover {params.subject_cover}  \
             --id {params.percent_id}  \
