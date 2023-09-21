@@ -501,9 +501,6 @@ rule gtdb_download:
         #db_pick="https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_data.tar.gz" # Official alternative mirror
 
 
-        #db_destination="{wildcards.base_variable}/databases/gtdb/gtdb_db.tar.gz" # Should be defined from 
-
-        #db_destination="{wildcards.base_variable}/databases/gtdb/gtdb_db.tar.gz" # Should be defined from 
         db_destination=$(dirname {output.database_representative})/gtdb_db.tar.gz
 
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
@@ -1337,8 +1334,6 @@ rule report:
 
 
 
-
-
 ## Pseudo targets:
 
 # Makes it easy to check that all databases are installed properly. Eventually for touching the database representatives in case of using prior installations.
@@ -1362,9 +1357,53 @@ rule fast:
             "{results_directory}/mashtree/mashtree.newick"], \
             results_directory = results_directory, \
             sample = df["sample"]) # TODO: define the expansion in each rule instead.
-            
 
 
+# Rules designed for bins of metagenomic origin
+rule meta: 
+    input:
+        expand(\
+            ["{results_directory}/metadata.tsv", \
+            "{results_directory}/.install_report_environment_aot.flag", \
+            "{results_directory}/assembly-stats/assembly-stats.tsv", \
+            "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
+            "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
+            "{results_directory}/checkm2/quality_report.tsv", \
+            "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
+            "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
+            "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
+            "{results_directory}/samples/{sample}/dbcan/overview.txt", \
+            "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
+            "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
+            "{results_directory}/mlst/mlst.tsv", \
+            "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
+            "{results_directory}/mashtree/mashtree.newick"], \
+            results_directory = results_directory, \
+            sample = df["sample"])
+
+
+# Rules designed for cultured isolates
+rule isolate:
+    input: expand(\
+        ["{results_directory}/metadata.tsv", \
+        "{results_directory}/.install_report_environment_aot.flag", \
+        "{results_directory}/assembly-stats/assembly-stats.tsv", \
+        "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
+        "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
+        "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
+        "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
+        "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
+        "{results_directory}/mlst/mlst.tsv", \
+        "{results_directory}/abricate/card_detailed.tsv", \
+        "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
+        "{results_directory}/roary/summary_statistics.txt", \
+        "{results_directory}/fasttree/fasttree.newick", \
+        "{results_directory}/snp-dists/snp-dists.tsv", \
+        "{results_directory}/mashtree/mashtree.newick"], \
+        results_directory = results_directory, sample = df["sample"])
+
+
+        
 
 
 
