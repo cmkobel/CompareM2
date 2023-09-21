@@ -1,3 +1,7 @@
+2.5.5
+  - Use $ASSCOM_DATABASES to define where the databases are placed. 
+  - Docker images have a versioning system so an incompatible image can't be used.
+
 2.5.4
   - Using the mashtree order in plots in the report. Using alphabetical order redundantly in case mashtree hasn't run (sucessfully). Minor adjustments to other plots. TODO: midpoint root tree somehow and order all tables in the report as well.
 

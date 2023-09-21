@@ -4,7 +4,7 @@
 # asscom2 --containerize > Dockerfile # And remove header-text.
 
 
-__version__ = "v2.5.4" # Four places to bump. Here, in the bottom of the report, in the report snakefile. And in the changelog.
+__version__ = "v2.5.5" # Five places to bump. Here, in the bottom of the report, in the report snakefile, in the changelog and the Dockerfile.
 __author__ = 'Carl M. Kobel'
 
 # May the data passing through this pipeline
@@ -126,6 +126,12 @@ print("//")
 print()
 
 
+
+
+# The DATABASES directory must exist, otherwise apptainer gets confused and throws:
+# WARNING: skipping mount of /home/thylakoid/assemblycomparator2/adatabaseas: stat /home/thylakoid/assemblycomparator2/adatabaseas: no such file or directory
+if not os.path.isdir(DATABASES):
+    os.mkdir(DATABASES)
 
 
 # --- Make sure the output directory exists. ----------------------------------
@@ -252,7 +258,7 @@ rule busco_download:
             # https://busco.ezlab.org/busco_userguide.html#download-and-automated-update
             busco \
                 --in dummy.fasta \
-                --out shouldnotbenecessarytosettheoutdirwhenjustdownloading \
+                --out dummy \
                 --mode geno \
                 --auto-lineage-prok \
                 --force \
@@ -707,7 +713,8 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
     input: 
         metadata = "{results_directory}/metadata.tsv",
         aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
-        database_representative = expand("{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag", base_variable = base_variable),
+        #database_representative = expand("{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag", base_variable = base_variable),
+        database_representative = DATABASES + "/dbcan/ac2_dbcan_database_representative.flag"
     output: 
         overview_table = "{results_directory}/samples/{sample}/dbcan/overview.txt"
     params: 
@@ -935,7 +942,9 @@ rule diamond_kegg: # or uniref_ko?
     input: 
         metadata = "{results_directory}/metadata.tsv", # For the report
         aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
-        database_representative = base_variable + "/databases/checkm2/ac2_checkm2_database_representative.flag",
+        #database_representative = base_variable + "/databases/checkm2/ac2_checkm2_database_representative.flag",
+        database_representative = DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
+        
     output:
         tsv = "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", # Or should it be named uniref-100?
     params: 

@@ -144,7 +144,7 @@ Finally, define the alias that will be used to launch asscom2 from any directory
 ```bash
 echo "export ASSCOM2_BASE=$(pwd -P)" >> ~/.bashrc # Save installation directory. 
 echo "export ASSCOM2_PROFILE=\${ASSCOM2_BASE}/profiles/apptainer/local" >> ~/.bashrc # Define profile selection.
-echo "export ASSCOM2_DATABASES=${ASSCOM2_BASE}/databases" >> ~/.bashrc # Define database base directory.
+echo "export ASSCOM2_DATABASES=\${ASSCOM2_BASE}/databases" >> ~/.bashrc # Define database base directory.
 
 echo "alias asscom2='conda run --live-stream --name asscom2_launcher snakemake --snakefile \${ASSCOM2_BASE}/snakefile --profile \${ASSCOM2_PROFILE} --configfile \${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
 source ~/.bashrc
