@@ -845,7 +845,7 @@ rule busco:
     params:
         base_variable = base_variable,
         #results_directory = results_directory,
-        database_path = DATABASES + "/busco"
+        database_path = DATABASES + "/busco", # Was {params.base_variable}/databases/busco
         out_dir = "{results_directory}/samples/{sample}/busco",
     conda: "conda_definitions/busco.yaml"
     #c container: "docker://cmkobel/busco"
