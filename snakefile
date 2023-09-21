@@ -129,19 +129,16 @@ print()
 
 
 
-# The DATABASES directory must exist, otherwise apptainer gets confused and throws:
+# The DATABASES directory must exist, otherwise apptainer gets confused and throws the following:
 # WARNING: skipping mount of /home/thylakoid/assemblycomparator2/adatabaseas: stat /home/thylakoid/assemblycomparator2/adatabaseas: no such file or directory
 if not os.path.isdir(DATABASES):
     os.mkdir(DATABASES)
 
 
 # --- Make sure the output directory exists. ----------------------------------
+if not os.path.isdir(results_directory):
+    os.mkdir(results_directory) # If running with local profile, the directory won't be created. This is necessary in the edge case that the user _only_ runs "--until report".
 
-""" try: 
-    os.mkdir(f"{results_directory}") # If running with local profile, the directory won't be created. I'm not sure if it needs to though?
-except:
-    pass
- """
 
 
 # The modification time of this file tells the report subpipeline whether it needs to run. Thus, void_report is called in the end of every successful rule.
@@ -1423,7 +1420,7 @@ report_call = f"""
 
     # If the flag or the metadata is missing, there is no point in calling the report subpipeline.
     if [ ! -f "{results_directory}/.asscom2_void_report.flag" ] || [ ! -f "{results_directory}/metadata.tsv" ]; then
-        echo "Not calling report_subpipeline as either the flag or metadata is missing. Run a rule that mandates a report section to generate the report."
+        echo "Info: Not calling the report_subpipeline as either the flag or metadata is missing. Run a rule that mandates a report section to generate the report."
         exit 0
     else
         snakemake \
