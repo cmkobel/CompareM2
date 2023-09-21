@@ -1419,9 +1419,10 @@ rule isolate:
 # A major todo is to find a way to make the report run as a conda or containerized job dependending on the use-conda/use-singularity setting in the config. The best way might be to have an environment variable that points to the wanted config. 
 
 # Call the report subpipeline
+# I wonder if adding the ampersands means that the report creation will be ^c cancellable? Not tested yet..
 report_call = f"""
-    mkdir -p {results_directory}/logs; \
-    snakemake \
+    mkdir -p {results_directory}/logs \
+    && snakemake \
         --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
         --profile $ASSCOM2_PROFILE \
         --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title}
