@@ -1417,18 +1417,17 @@ rule isolate:
 # I wonder if adding the ampersands means that the report creation will be ^c cancellable? Not tested yet..
 report_call = f"""
     
-    mkdir -p {results_directory}/logs 
-
-    # If the flag or the metadata is missing, there is no point in calling the report subpipeline.
-    if [ ! -f "{results_directory}/.asscom2_void_report.flag" ] || [ ! -f "{results_directory}/metadata.tsv" ]; then
-        echo "Info: Not calling the report_subpipeline as either the flag or metadata is missing. Run a rule that mandates a report section to generate the report."
-        exit 0
-    else
-        snakemake \
+    # Had to chain these tests/if-statements in order to be able to cancel the running interactively.
+    (
+        test -f "{results_directory}/.asscom2_void_report.flag" \
+        && test -f "{results_directory}/metadata.tsv" \
+        && mkdir -p {results_directory}/logs \
+        && snakemake \
             --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
             --profile $ASSCOM2_PROFILE \
             --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title}
-    fi
+    ) \
+    || echo "Info: Not calling the report_subpipeline as either the flag or metadata is missing. Run a rule that mandates a report section to generate the report."
 
     """
 
