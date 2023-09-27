@@ -74,10 +74,10 @@ debug = F
 if (debug) {
     # strachan_campylo on threadripper through posit workbench
     # strachan_campylo on threadripper
-    base_variable = "~/asscom2"
+    base_variable = "~/evo/asscom2"
     results_directory = "results_ac2"
     setwd("~/asscom2/tests/strachan_campylo")
-    setwd("~/asscom2/tests/MAGs/")
+    setwd("~/evo/asscom2/tests/MAGs/")
     
     batch_title = basename(getwd())
     
@@ -153,34 +153,6 @@ figno = function() {
     figno_var <<- figno_var + 1
     figno_var
 }
-
-
-# dtable = function(X) {
-    
-#     datatable(X,
-#         extensions = c("Buttons","KeyTable"), 
-#         options = list(
-#             dom = '<"top"B>frtip',
-#             buttons = list('csv', 'excel'),
-#             keys = T
-#         ),
-#         rownames=F
-#     )
-# }
-
-# create_dt <- function(x){
-#     DT::datatable(x,
-#         extensions = 'Buttons',
-#         options = list(
-#             dom = 'Blfrtip',
-#             buttons = c('copy', 'csv', 'excel'),
-#             lengthMenu = list(
-#                 c(10,25,50,-1),
-#                 c(10,25,50, "All")
-#             )
-#         )
-#     )
-# }
 
 custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, width = NULL, show_n = 10) {
     
@@ -408,8 +380,6 @@ section_definition_table %>%
 
 ```{r section_kegg_pathway, child = paste0(report_scripts, "section_kegg_pathway.rmd"), eval = render$kegg_pathway}
 ```
-
-
 
 ```{r section_roary, child = paste0(report_scripts, "section_roary.rmd"), eval = render$roary}
 ```

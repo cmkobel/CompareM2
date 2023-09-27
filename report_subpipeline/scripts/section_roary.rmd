@@ -10,8 +10,11 @@ The core genome denotes the genes which are conserved between all samples (inter
 ```{r roary-table, echo=FALSE, message=F, warning=F, error=T}
 
 #   setwd("~/asscom2/tests/strachan_campylo") # DEBUG
+#setwd("~/evo/asscom2/tests/MAGs") #DEBUG
 
 
+
+# Should exist in the case that the glob_list$roary = ...gene_presence_absence.Rtab file exists.
 roary_summary_file = paste0(results_directory, "/roary/summary_statistics.txt")
 
 
@@ -29,7 +32,7 @@ read_tsv(roary_summary_file, col_names = c("partition", "definition", "count")) 
 
 ```{r roary-matrix, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
 
-#setwd("~/asscom2/tests/strachan_campylo") # DEBUG
+#setwd("~/evo/asscom2/tests/MAGs") # DEBUG
 
 roary_long = read_tsv(glob_list$roary) %>% 
     mutate(shared_by = rowSums(across(where(is.numeric)))) %>%
@@ -41,7 +44,7 @@ roary_plot_df = metadata_translate %>%
     select(index, sample) %>% 
     left_join(roary_long, by = "sample") %>% 
     
-    arrange(desc(shared_by), desc(sample)) %>% 
+    arrange(desc(shared_by), desc(index)) %>% 
     mutate(gene_order = 1:n()) %>% 
     mutate(gene_num = Gene %>% factor() %>% as.integer()) %>% 
     
@@ -70,7 +73,9 @@ roary_plot_df = metadata_translate %>%
 
 roary_plot_df %>%
     #ggplot(aes(reorder(Gene, gene_order), reorder(sample, desc(index)), fill = factor(shared_by))) +
-    ggplot(aes(reorder(Gene, gene_order), reorder(sample, desc(index)), fill =  shared_by)) +
+    ggplot(aes(reorder(Gene, gene_order), reorder(sample, desc(index)), 
+        fill =  shared_by
+    )) +
     
     geom_tile() +
 
@@ -81,7 +86,7 @@ roary_plot_df %>%
     ) +
     scale_fill_binned(
         #trans = "log",
-        breaks = 2^(0:11),
+        #breaks = 2^(0:11), # Getting error: (## Error in check.length("fill"): 'gpar' element 'fill' must not be length 0) when there is no shared genes and using this breaks difinition. Must disable it.
         type = "viridis",
         #direction = -1
     ) +

@@ -5,7 +5,7 @@
 
 ```{r snp_dists-table, echo = F, message = F, warning = F, error = T}
 #setwd("~/asscom2/tests/strachan_campylo") # DEBUG
-setwd("~/asscom2/tests/MAGs") # DEBUG
+#setwd("~/asscom2/tests/MAGs") # DEBUG
 snp_dists_raw = read_tsv(glob_list$snp_dists) %>% 
     rename(sample = 1)
 
