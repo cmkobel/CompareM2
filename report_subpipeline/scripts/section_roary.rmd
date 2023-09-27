@@ -85,7 +85,7 @@ roary_plot_df %>%
         axis.ticks.x = element_blank(),
     ) +
     scale_fill_binned(
-        #trans = "log",
+        trans = "log",
         #breaks = 2^(0:11), # Getting error: (## Error in check.length("fill"): 'gpar' element 'fill' must not be length 0) when there is no shared genes and using this breaks difinition. Must disable it.
         type = "viridis",
         #direction = -1
