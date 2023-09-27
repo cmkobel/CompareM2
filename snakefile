@@ -201,8 +201,7 @@ rule copy:
         runtime = "10m",
     shell: """
 
-        echo $PATH
-        any2fasta {input.genome:q} > {output}
+        any2fasta {input.genome:q} > {output:q}
 
     """  
 
