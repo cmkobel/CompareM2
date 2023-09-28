@@ -88,7 +88,7 @@ Below is the graph the shows the order of execution of all possible analyses in 
   - `snp_dists` [snp-dists](https://github.com/tseemann/snp-dists) (core genome pairwise snp-distances)
   - `fasttree` [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of the core genome)
   - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement)
-  - **A nice report easy to share with your friends ([demos](https://github.com/cmkobel/assemblycomparator2/blob/master/readme-demos.md))**
+  - **A nice report easy to share with your friends ([demos](readme-demos.md))**
 
 
 #### Pseudo-rules
