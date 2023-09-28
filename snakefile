@@ -189,6 +189,7 @@ rule all:
 
 # Copy the input file to its new home
 # Homogenizes the file extension as well (.fa)
+# Should I rename this to "rule any2fasta" just to make it more transparent?
 rule copy:
     input: 
         genome = lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0],
@@ -338,8 +339,8 @@ rule kraken2_download:
         # https://benlangmead.github.io/aws-indexes/k2
 
         ## Shortcuts. Select no bigger than the size of your RAM
-        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # Standard 49GB
-        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_08gb_20230314.tar.gz" # Standard  8GB
+        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # Standard 49GB
+        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_08gb_20230314.tar.gz" # Standard  8GB
         #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_16gb_20230314.tar.gz" # Standard 16GB
                 
 
