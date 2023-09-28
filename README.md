@@ -95,12 +95,7 @@ Below is the graph the shows the order of execution of all possible analyses in 
 
 There are also a few pseudo targets defined. For instance `fast` which runs sequence_lengths, assembly-stats and mashtree. There is also one named `isolate` which runs all the analyses that are relevant for clinical isolates (sequence_lengths, prokka, kraken2, mlst, abricate, assembly-stats, gtdbtk, busco, checkm2, roary, snp-dists, fasttree, mashtree) as well as one named `meta` which runs the analyses that are relevant to metagenomes (aka. MAGs), these are sequence_lengths, prokka, kraken2, gtdbtk, busco, checkm2, mashtree.
 
-**Hint:** You can run one of these pseudorules just like any other rulename with:
-```bash
-asscom --until meta
-
-asscom2 --until isolate
-```
+**Hint:** You can run one of these pseudorules just like any other rulename with `asscom --until meta` or `asscom2 --until isolate`
 
 
 
