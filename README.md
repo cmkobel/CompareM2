@@ -106,7 +106,7 @@ asscom2 --until isolate
 
 ## Installation of assemblycomparator2 on Linux
 
-(If you want to develop new rules in the assemblycomparator2 pipeline, you should consider following the [readme-development.md](development version installation instructions). The development version is purely conda-based so you can effect the next version apptainer-compatible docker image. )
+(If you want to develop new rules in the assemblycomparator2 pipeline, you should consider following the [https://github.com/cmkobel/assemblycomparator2/blob/master/readme-development.md](development version installation instructions). The development version is purely conda-based so you can effect the next version apptainer-compatible docker image. )
 
 assemblycomparator2 can be installed by downloading the code and setting up an alias in your user profile that let's you launch the pipeline from any directory on your machine.
 
