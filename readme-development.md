@@ -1,6 +1,6 @@
 # Development information
 
-This file describes how to install assemblycomparator2 for development purposes. Since you will be defining and configuring a conda environment to add to the apptainer-compatible dockerfile, you must run everything through conda. Once you make a pull request and it is accepted, your conda environment will be added to the official docker image which is then published with a new version number.
+This file describes how to install assemblycomparator2 for development purposes. Since you will be defining and configuring a conda environment that will eventually be added to the apptainer-compatible dockerfile, you must run everything through conda. Once you make a pull request and it is accepted, your conda environment will be added to the official docker image which is then published with the next version number.
 
 The installation process is more or less the same as with the normal installation, but you must make sure to use the conda configuration. 
 
