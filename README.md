@@ -172,7 +172,7 @@ asscom2
 
 <table><tr><td>
 
-If you want to develop new rules in the assemblycomparator2 pipeline, you should consider following the [https://github.com/cmkobel/assemblycomparator2/blob/master/readme-development.md](development version installation instructions). The development version is purely conda-based so you can effect the next version apptainer-compatible docker image. 
+If you want to develop new rules in the assemblycomparator2 pipeline, you should consider following the [development version installation instructions](readme-development.md). The development version is purely conda-based so you can effect the next version apptainer-compatible docker image. 
 
 </td></tr></table>
 
