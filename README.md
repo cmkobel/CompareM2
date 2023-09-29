@@ -1,6 +1,7 @@
 # assemblycomparator2
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2?label=docker%20pulls%202023)](#installation-of-assemblycomparator2-on-linux)
+[![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2?label=docker%20pulls%202023)](#installation-of-assemblycomparator2-on-linux) [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cmkobel/assemblycomparator2)](https://hub.docker.com/r/cmkobel/assemblycomparator2)
+
 
 assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It is a bit like nullarbor, but it takes in genomes (assemblies) instead of reads. Assemblies can come from isolates or metagenomes - as long as they're all prokaryotic.
 
