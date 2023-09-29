@@ -210,8 +210,6 @@ In the future we might add some of the following software packages into assembly
   - [GenAPI](https://github.com/MigleSur/GenAPI) (alternative to roary)
 
 
----
-
 
 ## Citation
 
