@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+__author__ = 'Carl M. Kobel'
+
+
 """
 This script checks that the necessary environment variables has been set. If not, it uses reasonable defaults and calls the snakemake pipeline using the command line arguments passed to this here script.
 """
