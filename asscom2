@@ -30,7 +30,7 @@ try:
     ASSCOM2_BASE = os.environ['ASSCOM2_BASE']
     logger.debug(f"ASSCOM2_BASE was already set to \"{ASSCOM2_BASE}\".")
 except KeyError as e:
-    ASSCOM2_BASE = os.path.dirname(os.path.realpath(__file__))
+    ASSCOM2_BASE = os.path.dirname(os.path.realpath(__file__)) # This seems to work even for symlinks (it gets the physical path.)
     os.environ["ASSCOM2_BASE"] = ASSCOM2_BASE
     logger.debug(f"ASSCOM2_BASE was not set and has been defaulted to \"{ASSCOM2_BASE}\".")
 
