@@ -1,11 +1,70 @@
-#!/bin/bash
+#!/usr/bin/env python
 
-shopt -s expand_aliases
+"""
+This script checks that the necessary environment variables has been set. If not, it uses reasonable defaults and calls the snakemake pipeline using the command line arguments passed to this here script.
+"""
 
-# I hope these variables are accessible when the user activates the environment that runs ac2.
-ASSCOM2_BASE=$(realpath .)
-ASSCOM2_PROFILE=${ASSCOM2_BASE}/profiles/apptainer/local
-ASSCOM2_DATABASES=${ASSCOM2_BASE}/databases # The user should override this in their .bashrc if they want to use a different dir.
 
-# I think it is better to use backslash-sentinel, because then the user can change the variables after having activated the PREFIX environment, and the changes will have effect
-alias asscom2='snakemake --snakefile \${ASSCOM2_BASE}/snakefile --profile \${ASSCOM2_PROFILE} --configfile \${ASSCOM2_BASE}/config.yaml'
+import logging
+import os 
+import sys
+import subprocess
+
+# Create logger that prints to the terminal.
+logger = logging.getLogger('asscom2_launcher')
+logger.setLevel(logging.INFO)
+console_handler = logging.StreamHandler()
+#console_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
+
+
+
+
+
+# Read system variables and use defaults if necessary.
+
+# Sets the ASSCOM2_BASE to the directory of this python script file which (script file) should be neighboring the correct snakefile.
+try:
+    ASSCOM2_BASE = os.environ['ASSCOM2_BASE']
+    logger.debug(f"ASSCOM2_BASE was already set to \"{ASSCOM2_BASE}\".")
+except KeyError as e:
+    ASSCOM2_BASE = os.path.dirname(os.path.realpath(__file__))
+    os.environ["ASSCOM2_BASE"] = ASSCOM2_BASE
+    logger.debug(f"ASSCOM2_BASE was not set and has been defaulted to \"{ASSCOM2_BASE}\".")
+
+# Defines the ASSCOM2_PROFILE relative to the ASSCOM2_BASE if not set already.
+try:
+    ASSCOM2_PROFILE = os.environ['ASSCOM2_PROFILE']
+    logger.debug(f"ASSCOM2_PROFILE was already set to \"{ASSCOM2_PROFILE}\".")
+except KeyError as e:
+    ASSCOM2_PROFILE = f"{ASSCOM2_BASE}/profiles/apptainer/local"
+    os.environ["ASSCOM2_PROFILE"] = ASSCOM2_PROFILE
+    logger.debug(f"ASSCOM2_PROFILE was not set and has been defaulted to \"{ASSCOM2_PROFILE}\".")
+
+# Defines the ASSCOM2_DATABASES relative to the ASSCOM2_BASE if not set already.
+try:
+    ASSCOM2_DATABASES = os.environ['ASSCOM2_DATABASES']
+    logger.debug(f"ASSCOM2_DATABASES was already set to \"{ASSCOM2_DATABASES}\".")
+except KeyError as e:
+    ASSCOM2_DATABASES = f"{ASSCOM2_BASE}/databases"
+    os.environ["ASSCOM2_DATABASES"] = ASSCOM2_DATABASES
+    logger.debug(f"ASSCOM2_DATABASES was not set and has been defaulted to \"{ASSCOM2_DATABASES}\".")
+
+
+
+# Then call the pipeline (alias) using the variables that have just been set, including the command line parameters that have been passed to this script. As we have already saved the new environment variables with os.environ(), we can just call as is.
+
+# I will have to check whether this will work for both conda and apptainer based installations? It should. In the test on bioconda I should use conda (not apptainer).
+
+# Concatenate the trailing command line arguments to add to the 
+trailing_arguments = " ".join(sys.argv[1:])
+logger.debug(f"The concatenated trailing arguments are {trailing_arguments}")
+
+command = f"snakemake --snakefile {ASSCOM2_BASE}/snakefile --profile {ASSCOM2_PROFILE} --configfile {ASSCOM2_BASE}/config.yaml  " + trailing_arguments
+logger.debug(f"Command to run is\n{command}")
+
+# Finally, run the pipeline.
+subprocess.run(command, shell = True)
+
