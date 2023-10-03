@@ -4,7 +4,16 @@ __author__ = 'Carl M. Kobel'
 
 
 """
-This script checks that the necessary environment variables has been set. If not, it uses reasonable defaults and calls the snakemake pipeline using the command line arguments passed to this here script.
+This is the launcher script for assemblycomparator2.
+
+It has two functions.
+1) It checks that the necessary environment variables has been set. If not, it uses reasonable defaults.
+2) Then it calls the snakemake pipeline using the command line arguments passed to this here script.
+
+Because any command line arguments are passed directly to the subprocess.run()-snakemake call in the bottom of this script, you can use any snakemake-compatible command line argument to this script. E.g: `asscom2 --dry-run`.
+
+This "binary" file works instead of the alias that has been previously used.
+
 """
 
 
