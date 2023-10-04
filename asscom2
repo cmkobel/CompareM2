@@ -21,6 +21,7 @@ import logging
 import os 
 import sys
 import subprocess
+import shutil
 
 # Create logger that prints to the terminal.
 logger = logging.getLogger('asscom2_launcher')
@@ -47,11 +48,19 @@ except KeyError as e:
     logger.debug(f"ASSCOM2_BASE was not set and has been defaulted to \"{ASSCOM2_BASE}\".")
 
 # Defines the ASSCOM2_PROFILE relative to the ASSCOM2_BASE if not set already.
+# Detects and prioritizes to use apptainer if it exists.
 try:
     ASSCOM2_PROFILE = os.environ['ASSCOM2_PROFILE']
     logger.debug(f"ASSCOM2_PROFILE was already set to \"{ASSCOM2_PROFILE}\".")
-except KeyError as e:
-    ASSCOM2_PROFILE = f"{ASSCOM2_BASE}/profiles/apptainer/local"
+except KeyError as e: # The profile has not been set.
+    # We might check whether apptainer is present. If it is we will use it, if not, we'll use conda.
+    if shutil.which("apptainer") is not None: # Apptainer exists, use it.
+        ASSCOM2_PROFILE = f"{ASSCOM2_BASE}/profiles/apptainer/local":
+        logger.debug(f"Using apptainer.")
+    else: 
+        ASSCOM2_PROFILE = f"{ASSCOM2_BASE}/profiles/conda/local"
+        logger.debug(f"Using conda.")
+    
     os.environ["ASSCOM2_PROFILE"] = ASSCOM2_PROFILE
     logger.debug(f"ASSCOM2_PROFILE was not set and has been defaulted to \"{ASSCOM2_PROFILE}\".")
 
@@ -63,6 +72,9 @@ except KeyError as e:
     ASSCOM2_DATABASES = f"{ASSCOM2_BASE}/databases"
     os.environ["ASSCOM2_DATABASES"] = ASSCOM2_DATABASES
     logger.debug(f"ASSCOM2_DATABASES was not set and has been defaulted to \"{ASSCOM2_DATABASES}\".")
+
+
+
 
 
 
