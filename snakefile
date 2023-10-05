@@ -4,7 +4,7 @@
 # asscom2 --containerize > Dockerfile # And remove header-text.
 
 
-__version__ = "v2.5.5" # Six places to bump. Here, in the bottom of the report, in the report snakefile, in the changelog, the Dockerfile and the containerized version.
+__version__ = "v2.5.6" # Six places to bump. Here, in the bottom of the report, in the report snakefile, in the changelog, the Dockerfile and the containerized version.
 __author__ = 'Carl M. Kobel'
 
 # May the data passing through this pipeline
@@ -24,6 +24,7 @@ from shutil import copyfile
 import subprocess
 import datetime
         
+# asscom2 v2.5.6 still uses the docker image v2.5.5
 containerized: "docker://cmkobel/assemblycomparator2:v2.5.5" # I wonder if I can put this in the profile or config instead?
 
 # When executing, Snakemake will fail with a reasonable error message if the variables below are undefined.

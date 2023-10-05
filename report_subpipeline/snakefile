@@ -2,7 +2,7 @@
 
 containerized: "docker://cmkobel/assemblycomparator2"
 
-__version__ = "v2.5.5" 
+__version__ = "v2.5.6" 
 __author__ = 'Carl M. Kobel'
 
 

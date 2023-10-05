@@ -1,3 +1,6 @@
+2.5.6
+  - New ./asscom2 "binary" to replace the old alias. This "binary" comes with default environment variables.
+
 2.5.5
   - Use $ASSCOM_DATABASES to define where the databases are placed. 
   - Docker images have a versioning system so an incompatible image can't be used.
