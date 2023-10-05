@@ -94,8 +94,9 @@ df = pd.DataFrame(data = {'input_file': present_files})
 
 # Check that the directory is not empty.
 if df.shape[0] == 0:
-    print("Error: No fasta files in the current directory. Quitting ...")
-    raise Exception("Zero genomic files present.")
+    raise Exception("Error: No fasta files in the current directory. Quitting ...")
+    #raise Exception("Zero genomic files present.")
+    sys.exit(1)
 
 
 
@@ -110,8 +111,9 @@ df['1-index'] = [i+1 for i in range(len(df))]
 
 # Check that the directory is not empty, again.
 if df.shape[0] == 0:
-    print("Error: No fasta files in the current directory. Quitting ...(2)")
-    raise Exception("Zero genomic files present.")
+    raise Exception("Error: No fasta files in the current directory. Quitting ...(2)")
+    #raise Exception("Zero genomic files present.")
+    sys.exit(1)
 
 
 #df_mini = df_mini.apply(np.vectorize(lambda x: str(x).strip().replace(" ", ""))) # strip whitespace and replace spaces with underscores.
