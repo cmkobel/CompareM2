@@ -61,7 +61,8 @@ assemblycomparator2 will then create a sub-directory, named results_ac2/ contain
 
 Below is the graph the shows the order of execution of all possible analyses in assemblycomparator2:
 
-![dag](https://github.com/cmkobel/assemblycomparator2/assets/5913696/5edc09e0-fe5f-4d7f-aeff-b72acd728ba7)
+
+![dag](https://github.com/cmkobel/assemblycomparator2/assets/5913696/3164f060-3b36-4d51-8cf7-29a50d87ec84)
 
 
 
