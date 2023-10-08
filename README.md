@@ -98,54 +98,28 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 
 **Hint:** You can run one of these pseudorules just like any other rulename with `asscom --until meta` or `asscom2 --until isolate`
 
+## Installation
 
+Assemblycomparator2 has a conda recipe that is [published on bioconda](https://anaconda.org/bioconda/assemblycomparator2). 
 
-## Installation of assemblycomparator2 on Linux
+Recommended installation instruction is to create a fresh conda environment and install. 
 
-assemblycomparator2 can be installed by downloading the code and setting up an alias in your user profile that let's you launch the pipeline from any directory on your machine.
+It is recommended that you have [apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request) installed on your system. If not, Assemblycomparator2 will instead use Mamba to install environments for individual snakemake workflow rules which is relatively time consuming.
 
-The only requisites for running assemblycomparator2 is:
-  - [*miniconda*](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) package manager
-  - *git* distributed version control (can be installed with conda by typing `conda install -c anaconda git`)
-  - [*apptainer*](https://apptainer.org/docs/user/main/quick_start.html#installation-request) container-virtualizer
-
-
-#### 0) Prerequisites
-
-First, check that you have the prerequisites available on your system. Open a terminal and paste these commands. 
+If you have mamba
 
 ```bash
-which conda && conda --version
-which git && git --version
-which apptainer && apptainer --version
-```
 
-#### 1) Download pipeline and set up the launcher environment
+# Create and activate a fresh conda environment.
+conda create --yes --name asscom2
+conda activate asscom2
 
-Then download the assemblycomparator2 pipeline and set up an alias in your profile (.bashrc on most linux distributions). Proposed installation directory is in your home directory (\~).
-
-```bash
-cd ~ # Enter the directory where you want to install assemblycomparator2.
-git clone https://github.com/cmkobel/assemblycomparator2.git asscom2
-cd asscom2
-conda env create --name asscom2_launcher --file environment.yaml # Installs snakemake and mamba in an environment named "asscom2_launcher".
+# Install Assemblycomparator2
+conda install -c conda-forge -c bioconda assemblycomparator2
 
 ```
 
-
-#### 2) Alias
-
-Finally, define the alias that will be used to launch asscom2 from any directory on your machine.
-
-```bash
-echo "export ASSCOM2_BASE=$(pwd -P)" >> ~/.bashrc # Save installation directory. 
-echo "export ASSCOM2_PROFILE=\${ASSCOM2_BASE}/profiles/apptainer/local" >> ~/.bashrc # Define profile selection.
-echo "export ASSCOM2_DATABASES=\${ASSCOM2_BASE}/databases" >> ~/.bashrc # Define database base directory.
-
-echo "alias asscom2='conda run --live-stream --name asscom2_launcher snakemake --snakefile \${ASSCOM2_BASE}/snakefile --profile \${ASSCOM2_PROFILE} --configfile \${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
-source ~/.bashrc
-
-```
+ 
 
 
 ## Optionally: Testing the installation

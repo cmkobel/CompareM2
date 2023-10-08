@@ -1,8 +1,8 @@
-
-# snakemake --snakefile ~/assemblycomparator2/snakefile --profile ~/assemblycomparator2/configs/slurm/ --cluster-config ~/assemblycomparator2/configs/cluster.yaml 
-
+# Update Dockerfile with this command
 # asscom2 --containerize > Dockerfile # And remove header-text.
 
+# Update dag picture in documentation with this command (with anaconda/graphviz)
+# asscom2 --forceall --rulegraph | dot -Tpdf > dag.pdf
 
 __version__ = "v2.5.6" # Six places to bump. Here, in the bottom of the report, in the report snakefile, in the changelog, the Dockerfile and the containerized version.
 __author__ = 'Carl M. Kobel'
