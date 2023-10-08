@@ -142,14 +142,9 @@ conda install -n base -c conda-forge mamba
 
 Assemblycomparator2 can be installed into its own isolated environment by first creating the environment and then installing.
 
-.. code-block:: console
-
-    $ conda activate base
-    $ mamba create -c conda-forge -c bioconda -n snakemake snakemake
-
 ```bash
 
-conda create --yes --name asscom2
+conda create -y -n asscom2
 conda activate asscom2
 mamba install -c conda-forge -c bioconda assemblycomparator2
 
@@ -164,10 +159,13 @@ Installing into isolated environments is best practice in order to avoid side ef
 
 Now you will be able to run asscom2. You can use the example data in path "tests/MAGs" to check that everything works. The first time you run asscom2 it will show the message "Pulling singularity image docker://cmkobel/assemblycomparator2." This might take some time depending on your network bandwidth as it downloads a +4GB docker image that contains all the conda environments needed for each analysis.
 ```bash
-# First, enter a dir where some genomes reside.
-cd ${ASSCOM2_BASE}/tests/MAGs
+# First, copy some test metagenomic assemblies from the test directory.
+cp ${ASSCOM2_BASE}/tests/MAGs/*.fasta .
 
-# Should take about a minute to complete.
+# Check that Assemblycomparator2 is able to initialize a "dry run"
+asscom2 --dry-run
+
+# Should take about a minute to complete the "fast" pseudo-rule.
 asscom2 --until fast
 
 # Downloads all databases (~ 200 GB).
