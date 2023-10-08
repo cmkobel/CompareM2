@@ -10,7 +10,7 @@ Assemblycomparator2 integrates several analyses that yield scientific results ab
 
 Assemblycomparator2 works by calling a Snakemake workflow that can be easily modified to use different parameters for the  underlying tools.
 
-All results are dynamically integrated in a compact portable report .html-document that emphasizes the central results. This report document can be easily shared This report is generated even if a few jobs in the pipeline fail.
+All results are dynamically integrated in a compact portable report .html-document that emphasizes the central results and can be easily shared. This report is generated even if a few jobs in the pipeline fail.
 
 Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  apptainer/singularity/docker images and conda environment definitions are available for all dependent software to run.
 
