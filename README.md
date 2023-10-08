@@ -137,7 +137,12 @@ Installing into isolated environments is best practice in order to avoid side ef
 
 Now you will be able to run asscom2. You can use the example data in path "tests/MAGs" to check that everything works. The first time you run asscom2 it will show the message "Pulling singularity image docker://cmkobel/assemblycomparator2." This might take some time depending on your network bandwidth as it downloads a +4GB docker image that contains all the conda environments needed for each analysis.
 ```bash
-# First, copy some test metagenomic assemblies from the test directory.
+
+# First, create an empty directory and enter.
+mkdir test_ac2_install
+cd test_ac2_install
+
+# Copy some test metagenomic assemblies from the test directory.
 cp ${ASSCOM2_BASE}/tests/MAGs/*.fasta .
 
 # Check that Assemblycomparator2 is able to initialize a "dry run"
