@@ -98,29 +98,7 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 
 **Hint:** You can run one of these pseudorules just like any other rulename with `asscom --until meta` or `asscom2 --until isolate`
 
-## Installation
 
-Assemblycomparator2 has a conda recipe that is [published on bioconda](https://anaconda.org/bioconda/assemblycomparator2). 
-
-Recommended installation instruction is to create a fresh conda environment and install. 
-
-It is recommended that you have [apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request) installed on your system. If not, Assemblycomparator2 will instead use Mamba to install environments for individual snakemake workflow rules which is relatively time consuming.
-
-If you have Mamba, it is recommended 
-
-```bash
-
-# Create and activate a fresh conda environment.
-conda create --yes --name asscom2
-conda activate asscom2
-
-# Install Assemblycomparator2
-conda install -c conda-forge -c bioconda assemblycomparator2
-
-```
-
-
----
 
 # Installation via Conda/Mamba
 
