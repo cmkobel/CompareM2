@@ -124,7 +124,7 @@ conda install -c conda-forge -c bioconda assemblycomparator2
 
 # Installation via Conda/Mamba
 
-This is the **recommended** way to install Assemblycomparator2.
+This is the **recommended** way to install Assemblycomparator2. Please note that is is highly recommended that you have apptainer on your system as it makes Assemblycomparator2 able to use a compressed image that speeds up installation significantly. If you are not able to [install apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request), Assemblycomparator2 will instead use Mamba.
 
 First, you need to install a Conda-based Python3 distribution.
 The recommended choice is Mambaforge which not only provides the required Python and Conda commands, 
