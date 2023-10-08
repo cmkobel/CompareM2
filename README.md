@@ -151,6 +151,9 @@ asscom2 --dry-run
 # Should take about a minute to complete the "fast" pseudo-rule.
 asscom2 --until fast
 
+# You can then investigate the report document that has been generated.
+# open results_ac2/report_test_ac2_install.html
+
 # Downloads all databases (~ 200 GB).
 asscom2 --until downloads
 
