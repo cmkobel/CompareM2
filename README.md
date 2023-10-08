@@ -16,7 +16,7 @@ Assemblycomparator2 can be run either on a local workstation (recommended >= 64G
 
 Make a directory with the assembly-files you want to investigate with assemblycomparator2. 
 Go into that directory in the terminal, and run the command `asscom2`. 
-assemblycomparator2 will then create a sub-directory, named results_ac2/ containing a plethora of analysis results. 
+assemblycomparator2 will then create a sub-directory, named "results_ac2/" containing a plethora of analysis results. 
   
   - Execute a 'dry run'. That is, to show what will be run without actually doing it.
 
@@ -146,7 +146,7 @@ mkdir test_ac2_install
 cd test_ac2_install
 
 # Copy some test metagenomic assemblies from the test directory.
-cp ${ASSCOM2_BASE}/tests/MAGs/*.fasta .
+cp $CONDA_PREFIX/assemblycomparator2/tests/MAGs/*.fasta .
 
 # Check that Assemblycomparator2 is able to initialize a "dry run"
 asscom2 --dry-run
