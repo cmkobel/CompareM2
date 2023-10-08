@@ -4,7 +4,7 @@
 
 Assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It accepts prokaryotic genomic assemblies and compares them in many different ways. Designed to analyze both isolates and metagenomes.
 
-![ezgif-2-a9620e839d](https://github.com/cmkobel/assemblycomparator2/assets/5913696/4cc9e58a-8a67-4905-90c1-ed2e56871586)
+[![ezgif-2-a9620e839d](https://github.com/cmkobel/assemblycomparator2/assets/5913696/4cc9e58a-8a67-4905-90c1-ed2e56871586)](https://github.com/cmkobel/assemblycomparator2/blob/master/readme-demos.md)
 
 
 Assemblycomparator2 works by calling a Snakemake workflow within a conda environment. It performs a palette of 16 analyses on your genomes, and compares them. The main results from these analyses are summarized in a visual portable .html-document report that can be easily shared. This report is generated even if a few jobs in the pipeline fail.
