@@ -2,11 +2,11 @@
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2?label=docker%20pulls%202023)](#installation-of-assemblycomparator2-on-linux) [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cmkobel/assemblycomparator2)](https://hub.docker.com/r/cmkobel/assemblycomparator2) [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/assemblycomparator2?label=Bioconda%20downloads&color=%2300CC00)](https://anaconda.org/bioconda/assemblycomparator2) [![conda build](https://img.shields.io/conda/v/bioconda/assemblycomparator2)](https://anaconda.org/bioconda/assemblycomparator2)
 
-assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It accepts prokaryotic genomic assemblies and compares them in many different ways. Designed to analyze both isolates and metagenomes.
+Assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It accepts prokaryotic genomic assemblies and compares them in many different ways. Designed to analyze both isolates and metagenomes.
 
-assemblycomparator2 works by calling a Snakemake workflow within a conda environment. It performs a palette of 16 analyses on your genomes, and compares them. The main results from these analyses are summarized in a visual portable .html-document report that can be easily shared. This report is generated even if a few jobs in the pipeline fail.
+Assemblycomparator2 works by calling a Snakemake workflow within a conda environment. It performs a palette of 16 analyses on your genomes, and compares them. The main results from these analyses are summarized in a visual portable .html-document report that can be easily shared. This report is generated even if a few jobs in the pipeline fail.
 
-assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  apptainer/singularity/docker images and conda environment definitions are available for all dependent software to run.
+Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  apptainer/singularity/docker images and conda environment definitions are available for all dependent software to run.
 
 
 ## Usage examples
