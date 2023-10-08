@@ -106,7 +106,7 @@ Recommended installation instruction is to create a fresh conda environment and 
 
 It is recommended that you have [apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request) installed on your system. If not, Assemblycomparator2 will instead use Mamba to install environments for individual snakemake workflow rules which is relatively time consuming.
 
-
+If you have Mamba, it is recommended 
 
 ```bash
 
@@ -118,6 +118,44 @@ conda activate asscom2
 conda install -c conda-forge -c bioconda assemblycomparator2
 
 ```
+
+
+---
+
+# Installation via Conda/Mamba
+
+This is the **recommended** way to install Assemblycomparator2.
+
+First, you need to install a Conda-based Python3 distribution.
+The recommended choice is Mambaforge which not only provides the required Python and Conda commands, 
+but also includes Mamba an extremely fast and robust replacement for the Conda package manager which is highly recommended.
+The default conda solver is a bit slow and sometimes has issues with `selecting the latest package releases <https://github.com/conda/conda/issues/9905>`. 
+Therefore, we recommend to in any case use Mamba.
+
+In case you don't use Mambaforge you can always install Mamba into any other Conda-based Python distribution with
+
+```bash
+
+conda install -n base -c conda-forge mamba
+
+```
+
+Assemblycomparator2 can be installed into its own isolated environment by first creating the environment and then installing.
+
+.. code-block:: console
+
+    $ conda activate base
+    $ mamba create -c conda-forge -c bioconda -n snakemake snakemake
+
+```bash
+
+conda create --yes --name asscom2
+conda activate asscom2
+mamba install -c conda-forge -c bioconda assemblycomparator2
+
+```
+
+Installing into isolated environments is best practice in order to avoid side effects with other packages.
 
  
 
