@@ -106,7 +106,7 @@ Recommended installation instruction is to create a fresh conda environment and 
 
 It is recommended that you have [apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request) installed on your system. If not, Assemblycomparator2 will instead use Mamba to install environments for individual snakemake workflow rules which is relatively time consuming.
 
-If you have mamba
+
 
 ```bash
 
