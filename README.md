@@ -108,7 +108,7 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 
 # Installation via Conda/Mamba
 
-This is the **recommended** way to install Assemblycomparator2. Please note that is is highly recommended that you have apptainer on your system as it makes Assemblycomparator2 able to use a compressed docker-image that speeds up installation significantly. If you are not able to [install apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request), Assemblycomparator2 will default to use Mamba to install all snakemake workflow rule environments separately.
+This is the recommended way to install Assemblycomparator2. Please note that it is highly recommended that you have apptainer on your system as it makes Assemblycomparator2 able to use a compressed docker-image that speeds up installation significantly. If you are not able to [install apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request), Assemblycomparator2 will default to use Mamba to install all snakemake workflow rule environments separately.
 
 First, you need to install a Conda-based Python3 distribution.
 The recommended choice is Mambaforge which not only provides the required Python and Conda commands, 
