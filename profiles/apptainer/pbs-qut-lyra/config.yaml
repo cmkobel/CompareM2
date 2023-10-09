@@ -13,8 +13,9 @@ jobname: "ac2_{name}_{jobid}.sh" # Super helpful because it shows the job in qst
 
 # Apptainer
 use-singularity: true
-singularity-prefix: '~/.asscom2/apptainer_base'
-singularity-args: "--env PATH=/opt/conda/bin:$PATH --bind $ASSCOM2_BASE:$ASSCOM2_BASE" # Must also bind ASSCOM2_BASE so we can access databases and report scripts etc.
+
+singularity-prefix: "~/.asscom2/singularity-prefix" # Directory in which singularity images will be stored. Couldn't find a way of using the $ASSCOM_BASE system variable, so users should manually change this here if they want to use something else.
+singularity-args: "--bind $ASSCOM2_BASE,$ASSCOM2_DATABASES" # Must also bind ASSCOM2_BASE so we can access databases and report scripts etc. When this issue is solved I'll add individual arguments to rules and make it more flexible https://github.com/snakemake/snakemake/issues/262
 
 
 # ---- QUT CMR Lyra specifics ----
@@ -33,18 +34,11 @@ cluster:
     -o output_asscom2/logs/%j-{rule}.out.log
     -l select=1:ncpus={threads}:mem={resources.mem_mb}mb,walltime={resources.runtime} 
 
- 
-
-    
-
 
 
 default-resources:
   - mem_mb=1024
-  #- disk_mb=1024 # genomedk doesn't care 
-  - runtime='12:00:00'
-  - tmpdir='$SCRATCH'
-  #- partition=normal # genomedk doesn't care too much about partitions (https://genome.au.dk/docs/interacting-with-the-queue/#why-is-the-partition-i-chose-being-ignored)
+  - runtime='12h'
   
   
 

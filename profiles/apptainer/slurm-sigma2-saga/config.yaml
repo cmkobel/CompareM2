@@ -14,8 +14,9 @@ show-failed-logs: true
 
 # Apptainer
 use-singularity: true
-singularity-prefix: '~/.asscom2/apptainer_base'
-singularity-args: "--env PATH=/opt/conda/bin:$PATH --bind $ASSCOM2_BASE:$ASSCOM2_BASE" # Must also bind ASSCOM2_BASE so we can access databases and report scripts etc.
+
+singularity-prefix: "~/.asscom2/singularity-prefix" # Directory in which singularity images will be stored. Couldn't find a way of using the $ASSCOM_BASE system variable, so users should manually change this here if they want to use something else.
+singularity-args: "--bind $ASSCOM2_BASE,$ASSCOM2_DATABASES" # Must also bind ASSCOM2_BASE so we can access databases and report scripts etc. When this issue is solved I'll add individual arguments to rules and make it more flexible https://github.com/snakemake/snakemake/issues/262
 
 
 
@@ -33,51 +34,14 @@ cluster:
     --output=results_ac2/logs/%j-{rule}.out.log
     --error=results_ac2/logs/%j-{rule}.err.log
     --time={resources.runtime}
-    --account=nn9864k
     --partition={resources.partition}
+    --account=PUTYOURACCOUNTNAMEHERE
     
-
-
 
 default-resources:
   - mem_mb=1024
-  #- disk_mb=1024 # saga doesn't care
-  - runtime='12:00:00'
+  - runtime='12h'
   - tmpdir='\$SCRATCH'
   - partition=normal
   
   
-
-
-
-
-
-# ---- Old unused stuff ----
-#cluster: "sbatch -A {cluster.account} -t {cluster.time} -p {cluster.partition} --mem {cluster.mem} --error={cluster.error} --output={cluster.output}"
-# drmaa: "
-#     --mem={cluster.mem_mb} 
-#     --cpus-per-task={cluster.cpus-per-task} 
-#     --time={cluster.time} 
-#     --account={cluster.account}
-#     --error={cluster.error} 
-#     --output={cluster.output}
-# "
-#retries: 2
-#cluster: "sbatch --account {cluster.account} --time {cluster.time} --mem {cluster.mem_mb} --error={cluster.error} --output={cluster.output}"
-
-# [--local-cores N] 
-#local-cores: 2
-#configfile: "configs/workflow.yaml"
-#configfile: "config.yaml"
-# [--snakefile FILE] 
-
-# While still being possible, cluster configuration has been deprecated by the introduction of Profiles. (https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles)
-#cluster-config: "profiles/slurm/cluster.yaml" 
-
-
-# ---- Singularity ----
-#use-singularity: True
-#singularity-prefix: "/faststorage/home/cmkobel/singularity_images/"
-
-
-
