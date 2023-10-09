@@ -2,22 +2,31 @@
 local-cores: 8 # front end / head node cores
 cores: 2048 # cluster cores
 jobs: 1000 # max parallel jobs
+
+
 keep-going: true 
 #rerun-incomplete: true
 latency-wait: 120
 keep-incomplete: true # Should be true for debugging rules.
+rerun-triggers: "mtime" # only schedule jobs to rerun if there has been a change in mtime of input/output files. That is: ignore code changes
+
+
+
 
 
 # ---- Conda/Mamba ----
 use-conda: true
 
+
 conda-frontend: 'mamba'
 conda-prefix: '~/.asscom2/conda'
+
 
 
 # ---- Sigma2 Saga SLURM specifics ----
 
 cluster-cancel: "scancel"
+
 
 cluster:
   mkdir -p results_ac2/logs/old/ &&
@@ -33,8 +42,6 @@ cluster:
 
  
     
-
-
 
 default-resources:
   - mem_mb=1024

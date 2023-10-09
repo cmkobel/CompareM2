@@ -1,3 +1,4 @@
+
 local-cores: 8 # front end / head node cores
 cores: 128 # cluster cores
 jobs: 128 # max parallel jobs
@@ -6,37 +7,26 @@ max-status-checks-per-second: 3
 keep-going: true 
 #rerun-incomplete: true
 latency-wait: 120
-keep-incomplete: true
+keep-incomplete: true # Should be true for debugging rules.
 rerun-triggers: "mtime" # only schedule jobs to rerun if there has been a change in mtime of input/output files. That is: ignore code changes
 
-# This one could be cool to have working 
-show-failed-logs: false
+
+
 
 
 # ---- Conda/Mamba ----
 use-conda: true
 
+
 conda-frontend: 'mamba'
 conda-prefix: '~/.asscom2/conda'
-
-
-# ---- Specific resources for Orion (Orion is a bit sluggish)
-
-# Orion sometimes has some oversaturated nodes. This means that jobs submitted to this node will never finish. The only escape is by setting a higher core count which will decrease the computing density?
-set-threads:
-  - copy=3
-  - sequence_lengths_individual=2
-
-
-set-resources:
-  - copy:mem_mb="1025"
-  - copy:runtime="1h"
 
 
 
 # ----  Specifics ----
 
 cluster-cancel: "scancel"
+
 
 cluster:
   mkdir -p results_ac2/logs/old &&
@@ -53,8 +43,6 @@ cluster:
 # Apparently, the account is not necessary on Orion.
 # --account=YOURACCOUNTNAMEHERE
 
-
-
 default-resources:
   - threads=2
   - mem_mb=1024
@@ -63,4 +51,14 @@ default-resources:
   - partition=smallmem,hugemem
   
 
+# ---- Specific resources for Orion (Orion is a bit sluggish)
 
+# Orion sometimes has some oversaturated nodes. This means that jobs submitted to this node will never finish. The only escape is by setting a higher core count which will decrease the computing density?
+set-threads:
+  - copy=3
+  - sequence_lengths_individual=2
+
+
+set-resources:
+  - copy:mem_mb="1025"
+  - copy:runtime="1h"

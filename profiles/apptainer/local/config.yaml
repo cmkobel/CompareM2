@@ -1,18 +1,22 @@
 # Resources
+
 cores: all
+
 
 # Policies
 keep-going: true 
-rerun-incomplete: true
-show-failed-logs: true
-rerun-triggers: "mtime" # Only rerun on changes in modification time. Not on code hash changes.
+
+
 keep-incomplete: true # true for debugging
+rerun-triggers: "mtime" # Only rerun on changes in modification time. Not on code hash changes.
+
+
+
 
 
 # Apptainer
 use-conda: true # Omitting this line was the culprit, now the 'snakemake --containerize' auto stuff works!
 use-singularity: true
-
 # If you don't define a common singularity-prefix, the image will be pulled every single time
 singularity-prefix: "~/.asscom2/singularity-prefix" # Directory in which singularity images will be stored. Couldn't find a way of using the $ASSCOM_BASE system variable, so users should manually change this here if they want to use something else.
 singularity-args: "--bind $ASSCOM2_BASE,$ASSCOM2_DATABASES" # Must also bind ASSCOM2_BASE so we can access databases and report scripts etc. When this issue is solved I'll add individual arguments to rules and make it more flexible https://github.com/snakemake/snakemake/issues/262

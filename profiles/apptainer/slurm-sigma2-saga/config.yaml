@@ -2,10 +2,12 @@
 local-cores: 8 # front end / head node cores
 cores: 2048 # cluster cores
 jobs: 1000 # max parallel jobs
+
+
 keep-going: true 
 #rerun-incomplete: true
 latency-wait: 120
-keep-incomplete: true
+keep-incomplete: true # Should be true for debugging rules.
 rerun-triggers: "mtime" # only schedule jobs to rerun if there has been a change in mtime of input/output files. That is: ignore code changes
 
 # This one could be cool to have working 
@@ -13,6 +15,7 @@ show-failed-logs: true
 
 
 # Apptainer
+use-conda: true # This one is necessary to activate the environment inside the apptainer image.
 use-singularity: true
 
 singularity-prefix: "~/.asscom2/singularity-prefix" # Directory in which singularity images will be stored. Couldn't find a way of using the $ASSCOM_BASE system variable, so users should manually change this here if they want to use something else.
@@ -23,6 +26,7 @@ singularity-args: "--bind $ASSCOM2_BASE,$ASSCOM2_DATABASES" # Must also bind ASS
 # ---- Sigma2 Saga SLURM specifics ----
 
 cluster-cancel: "scancel"
+
 
 cluster:
   mkdir -p results_ac2/logs/old &&
@@ -37,8 +41,8 @@ cluster:
     --partition={resources.partition}
     --account=YOURACCOUNTNAMEHERE
     
-    
 
+    
 default-resources:
   - mem_mb=1024
   - runtime='12h'
