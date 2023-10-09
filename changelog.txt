@@ -1,3 +1,6 @@
+2.5.7 
+  - Fixed an error where a conda environment would not be activated when using the apptainer profile for slurm.
+
 2.5.6
   - New ./asscom2 "binary" to replace the old alias. This "binary" comes with default environment variables.
 
