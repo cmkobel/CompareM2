@@ -30,7 +30,7 @@ set-threads:
 
 set-resources:
   - copy:mem_mb="1025"
-  - copy:runtime="01h"
+  - copy:runtime="1h"
 
 
 
@@ -49,6 +49,10 @@ cluster:
     --error=results_ac2/logs/%j-{rule}.err.log
     --time={resources.runtime}
     --partition={resources.partition}
+
+# Apparently, the account is not necessary on Orion.
+# --account=YOURACCOUNTNAMEHERE
+
     
 
 default-resources:

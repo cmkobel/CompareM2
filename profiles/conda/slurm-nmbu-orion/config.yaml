@@ -15,6 +15,7 @@ show-failed-logs: false
 
 # ---- Conda/Mamba ----
 use-conda: true
+
 conda-frontend: 'mamba'
 conda-prefix: '~/.asscom2/conda'
 
@@ -29,7 +30,7 @@ set-threads:
 
 set-resources:
   - copy:mem_mb="1025"
-  - copy:runtime="01:00:00"
+  - copy:runtime="1h"
 
 
 
@@ -48,49 +49,18 @@ cluster:
     --error=results_ac2/logs/%j-{rule}.err.log
     --time={resources.runtime}
     --partition={resources.partition}
-    
+
+# Apparently, the account is not necessary on Orion.
+# --account=YOURACCOUNTNAMEHERE
 
 
 
 default-resources:
   - threads=2
   - mem_mb=1024
-  - runtime="12:00:00"
+  - runtime="12h"
   - tmpdir="/work/users"
   - partition=smallmem,hugemem
   
-
-
-
-
-
-
-
-# ---- Old unused stuff ----
-#cluster: "sbatch -A {cluster.account} -t {cluster.time} -p {cluster.partition} --mem {cluster.mem} --error={cluster.error} --output={cluster.output}"
-# drmaa: "
-#     --mem={cluster.mem_mb} 
-#     --cpus-per-task={cluster.cpus-per-task} 
-#     --time={cluster.time} 
-#     --account={cluster.account}
-#     --error={cluster.error} 
-#     --output={cluster.output}
-# "
-#retries: 2
-#cluster: "sbatch --account {cluster.account} --time {cluster.time} --mem {cluster.mem_mb} --error={cluster.error} --output={cluster.output}"
-
-
-#local-cores: 2
-#configfile: "configs/workflow.yaml"
-#configfile: "config.yaml"
-
-
-# While still being possible, cluster configuration has been deprecated by the introduction of Profiles. (https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles)
-#cluster-config: "profiles/slurm/cluster.yaml" 
-
-
-# ---- Singularity ----
-#use-singularity: True
-#singularity-prefix: "/faststorage/home/cmkobel/singularity_images/"
 
 

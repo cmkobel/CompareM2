@@ -28,24 +28,17 @@ cluster:
   mkdir -p output_asscom2/logs/old/ && 
   qsub 
     -V 
-    -A kobel 
-    -q microbiome 
+    -A $USER 
+    -q YOURACCOUNTNAMEHERE 
     -e output_asscom2/logs/%j-{rule}.err.log 
     -o output_asscom2/logs/%j-{rule}.out.log
     -l select=1:ncpus={threads}:mem={resources.mem_mb}mb,walltime={resources.runtime} 
 
  
 
-    
-
-
-
 default-resources:
   - mem_mb=1024
-  #- disk_mb=1024 # genomedk doesn't care 
-  - runtime='12:00:00'
-  - tmpdir='$SCRATCH'
-  #- partition=normal # genomedk doesn't care too much about partitions (https://genome.au.dk/docs/interacting-with-the-queue/#why-is-the-partition-i-chose-being-ignored)
+  - runtime='12h'
   
   
 

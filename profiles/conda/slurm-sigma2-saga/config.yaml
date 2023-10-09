@@ -14,10 +14,9 @@ show-failed-logs: true
 
 # ---- Conda/Mamba ----
 use-conda: true
+
 conda-frontend: 'mamba'
 conda-prefix: '~/.asscom2/conda'
-
-
 
 
 
@@ -35,51 +34,14 @@ cluster:
     --output=results_ac2/logs/%j-{rule}.out.log
     --error=results_ac2/logs/%j-{rule}.err.log
     --time={resources.runtime}
-    --account=nn9864k
     --partition={resources.partition}
+    --account=YOURACCOUNTNAMEHERE
     
-
 
 
 default-resources:
   - mem_mb=1024
-  #- disk_mb=1024 # saga doesn't care
-  - runtime='12:00:00'
-  - tmpdir='\$SCRATCH'
+  - runtime='12h'
   - partition=normal
   
   
-
-
-
-
-
-# ---- Old unused stuff ----
-#cluster: "sbatch -A {cluster.account} -t {cluster.time} -p {cluster.partition} --mem {cluster.mem} --error={cluster.error} --output={cluster.output}"
-# drmaa: "
-#     --mem={cluster.mem_mb} 
-#     --cpus-per-task={cluster.cpus-per-task} 
-#     --time={cluster.time} 
-#     --account={cluster.account}
-#     --error={cluster.error} 
-#     --output={cluster.output}
-# "
-#retries: 2
-#cluster: "sbatch --account {cluster.account} --time {cluster.time} --mem {cluster.mem_mb} --error={cluster.error} --output={cluster.output}"
-
-# [--local-cores N] 
-#local-cores: 2
-#configfile: "configs/workflow.yaml"
-#configfile: "config.yaml"
-# [--snakefile FILE] 
-
-# While still being possible, cluster configuration has been deprecated by the introduction of Profiles. (https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles)
-#cluster-config: "profiles/slurm/cluster.yaml" 
-
-
-# ---- Singularity ----
-#use-singularity: True
-#singularity-prefix: "/faststorage/home/cmkobel/singularity_images/"
-
-
-

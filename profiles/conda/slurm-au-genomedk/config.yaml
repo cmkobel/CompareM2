@@ -7,15 +7,12 @@ keep-going: true
 latency-wait: 120
 keep-incomplete: true # Should be true for debugging rules.
 
-# This one could be cool to have working 
-show-failed-logs: true
-
 
 # ---- Conda/Mamba ----
 use-conda: true
+
 conda-frontend: 'mamba'
 conda-prefix: '~/.asscom2/conda'
-
 
 
 # ---- Sigma2 Saga SLURM specifics ----
@@ -32,57 +29,15 @@ cluster:
     --output=results_ac2/logs/%j-{rule}.out.log
     --error=results_ac2/logs/%j-{rule}.err.log
     --time={resources.runtime}
-    --account=ClinicalMicrobio # ClinicalMicrobio or supacow
+    --account=YOURACCOUNTNAMEHERE
 
  
-#--partition={resources.partition}
     
 
 
 
 default-resources:
   - mem_mb=1024
-  #- disk_mb=1024 # genomedk doesn't care 
-  - runtime='12:00:00'
-  #- tmpdir='$SCRATCH'
-  #- partition=normal # genomedk doesn't care too much about partitions (https://genome.au.dk/docs/interacting-with-the-queue/#why-is-the-partition-i-chose-being-ignored)
+  - runtime='12h'
   
   
-# TODO: check if this info can be put in the main config file instead?
-#set-resources:
-#  - kraken2: mem_mb = 65536
-#  - roary: mem_mb = 32768
-#  - roary: runtime = "24:00:00"
-
-# Honestly, wouldn't it be better to set these resources directly in the snakefile instead?
-
-
-# ---- Old unused stuff ----
-#cluster: "sbatch -A {cluster.account} -t {cluster.time} -p {cluster.partition} --mem {cluster.mem} --error={cluster.error} --output={cluster.output}"
-# drmaa: "
-#     --mem={cluster.mem_mb} 
-#     --cpus-per-task={cluster.cpus-per-task} 
-#     --time={cluster.time} 
-#     --account={cluster.account}
-#     --error={cluster.error} 
-#     --output={cluster.output}
-# "
-#retries: 2
-#cluster: "sbatch --account {cluster.account} --time {cluster.time} --mem {cluster.mem_mb} --error={cluster.error} --output={cluster.output}"
-
-# [--local-cores N] 
-#local-cores: 2
-#configfile: "configs/workflow.yaml"
-#configfile: "config.yaml"
-# [--snakefile FILE] 
-
-# While still being possible, cluster configuration has been deprecated by the introduction of Profiles. (https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles)
-#cluster-config: "profiles/slurm/cluster.yaml" 
-
-
-# ---- Singularity ----
-#use-singularity: True
-#singularity-prefix: "/faststorage/home/cmkobel/singularity_images/"
-
-
-

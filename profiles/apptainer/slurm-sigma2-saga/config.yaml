@@ -35,13 +35,13 @@ cluster:
     --error=results_ac2/logs/%j-{rule}.err.log
     --time={resources.runtime}
     --partition={resources.partition}
-    --account=PUTYOURACCOUNTNAMEHERE
+    --account=YOURACCOUNTNAMEHERE
+    
     
 
 default-resources:
   - mem_mb=1024
   - runtime='12h'
-  - tmpdir='\$SCRATCH'
   - partition=normal
   
   

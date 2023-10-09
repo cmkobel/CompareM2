@@ -29,7 +29,7 @@ cluster:
     --output=results_ac2/logs/%j-{rule}.out.log
     --error=results_ac2/logs/%j-{rule}.err.log
     --time={resources.runtime}
-    --account=PUTYOURACCOUNTNAMEHERE 
+    --account=YOURACCOUNTNAMEHERE 
 
 
     
@@ -39,5 +39,4 @@ cluster:
 default-resources:
   - mem_mb=1024
   - runtime='12h'
-
 

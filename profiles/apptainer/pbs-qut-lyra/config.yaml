@@ -28,8 +28,8 @@ cluster:
   mkdir -p output_asscom2/logs/old/ && 
   qsub 
     -V 
-    -A kobel 
-    -q microbiome 
+    -A $USER 
+    -q YOURACCOUNTNAMEHERE 
     -e output_asscom2/logs/%j-{rule}.err.log 
     -o output_asscom2/logs/%j-{rule}.out.log
     -l select=1:ncpus={threads}:mem={resources.mem_mb}mb,walltime={resources.runtime} 
