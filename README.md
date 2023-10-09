@@ -14,6 +14,7 @@ All results are dynamically integrated in a compact portable report .html-docume
 
 Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  apptainer/singularity/docker images and conda environment definitions are available for all dependent software to run.
 
+Assemblycomparator2 will soon be renamed to "Proknome".
 
 ## Usage examples
 
