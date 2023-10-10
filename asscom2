@@ -82,7 +82,7 @@ except KeyError as e:
 
 # I will have to check whether this will work for both conda and apptainer based installations? It should. In the test on bioconda I should use conda (not apptainer).
 
-# Concatenate the trailing command line arguments to add to the 
+# Concatenate the trailing command line arguments to add to the snakemake command.
 trailing_arguments = " ".join(sys.argv[1:])
 logger.debug(f"The concatenated trailing arguments are {trailing_arguments}")
 
