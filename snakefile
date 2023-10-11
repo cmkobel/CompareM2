@@ -25,7 +25,7 @@ import subprocess
 import datetime
         
 # asscom2 v2.5.6 still uses the docker image v2.5.5
-containerized: "docker://cmkobel/assemblycomparator2:v2.5.5" # I wonder if I can put this in the profile or config instead?
+containerized: "docker://cmkobel/assemblycomparator2:v2.5.5" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
 
 # When executing, Snakemake will fail with a reasonable error message if the variables below are undefined.
 envvars:
