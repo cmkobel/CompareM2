@@ -43,7 +43,7 @@ assemblycomparator2 will then create a sub-directory, named "results_ac2/" conta
     asscom2 --until meta
     ```
     
-  - Execute all jobs until (including) a specific job in the job graph:
+  - Execute all jobs until one or more specific rules: (until implies including)
     
     ```bash
     asscom2 --until roary abricate
