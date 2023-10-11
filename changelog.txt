@@ -1,3 +1,6 @@
+2.5.8
+  - Fixed an error where a different version of the docker image would be pulled for the report subpipeline
+  
 2.5.7 
   - Fixed an error where a conda environment would not be activated when using the apptainer profile for slurm.
 

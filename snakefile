@@ -4,7 +4,7 @@
 # Update dag picture in documentation with this command (with anaconda/graphviz)
 # asscom2 --forceall --rulegraph | dot -Tpdf > dag.pdf
 
-__version__ = "v2.5.7" # Six places to bump. Here, in the bottom of the report, in the changelog, the Dockerfile and the containerized version.
+__version__ = "v2.5.8" # Six places to bump. Here, in the bottom of the report, in the changelog, the Dockerfile and the containerized version and containerized report_subpipeline/snakefile.
 __author__ = 'Carl M. Kobel'
 
 # May the data passing through this pipeline
@@ -25,7 +25,7 @@ import subprocess
 import datetime
         
 # Newer version of asscom2 still uses the docker image v2.5.5
-containerized: "docker://cmkobel/assemblycomparator2:v2.5.5" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
+containerized: "docker://cmkobel/assemblycomparator2:v2.5.8" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
 
 # When executing, Snakemake will fail with a reasonable error message if the variables below are undefined.
 envvars:
