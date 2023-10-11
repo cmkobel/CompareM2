@@ -129,9 +129,7 @@ Assemblycomparator2 can be installed into its own isolated environment by first 
 
 ```bash
 
-conda create -y -n asscom2
-conda activate asscom2
-mamba install -c conda-forge -c bioconda assemblycomparator2
+mamba create -c conda-forge -c bioconda -n asscom2 assemblycomparator2
 
 ```
 
