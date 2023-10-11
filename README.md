@@ -165,6 +165,23 @@ asscom2
 ```
 
 
+
+
+<table><tr><td>
+
+#### Shared database
+
+If you are working on a shared computational resource like a laboratory workstation or a HPC you might want to share a database directory so that each user will not have to redundantly download each database. To set this up, the first user must decide on a directory and set reading and writing permissions for the group of users that should be able to use the database. Writing permissions are necessary for the "database representative" flags that snakemake uses to keep track of the presence of the databases. Setting this custom path is a matter of defining the "ASSCOM2_DATABASES" environment variable. You can put this into your ~/.bashrc or execute the command before using asscom2.
+
+```bash
+export ASSCOM2_DATABASES="/drive/shared_databases/asscom2_v2.5.8+"
+```
+
+
+</td></tr></table>
+
+
+
 <table><tr><td>
 
 If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#snakefiles-and-rules) in the assemblycomparator2 pipeline, you should consider following the [development version installation instructions](readme-development.md). The development version is purely conda-based so you can effect the next version apptainer-compatible docker image. 

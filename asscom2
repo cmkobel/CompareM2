@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-__author__ = 'Carl M. Kobel'
-
+__author__ = "Carl M. Kobel"
+__version__ = "2.5.8"
 
 """
 This is the launcher script for assemblycomparator2.
@@ -89,6 +89,14 @@ logger.debug(f"The concatenated trailing arguments are {trailing_arguments}")
 command = f"snakemake --snakefile {ASSCOM2_BASE}/snakefile --profile {ASSCOM2_PROFILE} --configfile {ASSCOM2_BASE}/config.yaml  " + trailing_arguments
 logger.debug(f"Command to run is\n{command}")
 
+
+
 # Finally, run the pipeline.
-subprocess.run(command, shell = True)
+
+# If the "--version" flag has been set, show the versions instead.
+if " --version " in command:
+    version_command =  f"echo -n \"snakemake v\"; snakemake --version; echo \"assemblycomparator2 {__version__}\""
+    subprocess.run(version_command)
+else:
+    subprocess.run(command, shell = True)
 
