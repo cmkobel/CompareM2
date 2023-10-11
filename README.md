@@ -184,6 +184,8 @@ export ASSCOM2_DATABASES="/drive/shared_databases/asscom2_v2.5.8+"
 
 <table><tr><td>
 
+#### Rule development
+
 If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#snakefiles-and-rules) in the assemblycomparator2 pipeline, you should consider following the [development version installation instructions](readme-development.md). The development version is purely conda-based so you can effect the next version apptainer-compatible docker image. 
 
 </td></tr></table>
