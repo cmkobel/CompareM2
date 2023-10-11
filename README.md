@@ -191,19 +191,6 @@ If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/sn
 </td></tr></table>
 
 
-### Updating an older installation (optional)
-
-If you want to make sure that you're running the latest version of assemblycomparator2, you can run these commands to update it:
-```bash
-
-# Pull (download) newest version
-cd $ASSCOM2_BASE && git pull
-
-# Install matching version of Snakemake
-conda env update --name asscom2_launcher --file environment.yaml
-
-
-```
 
 
 
