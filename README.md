@@ -151,9 +151,6 @@ cd test_ac2_install
 # Copy some test metagenomic assemblies from the test directory.
 cp $CONDA_PREFIX/assemblycomparator2/tests/MAGs/*.fasta .
 
-# Check that Assemblycomparator2 is able to initialize a "dry run"
-asscom2 --dry-run
-
 # Should take about a minute to complete the "fast" pseudo-rule.
 asscom2 --until fast
 
