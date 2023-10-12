@@ -214,6 +214,7 @@ In the future we might add some of the following software packages into assembly
   - [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
   - GC3-profiling ("fingerprinting" of the distribution of GC-content)
   - Identification of horizontally transferred genes?
+  - Recombination in core genome using the Bruen's PHI statistic
   - [GenAPI](https://github.com/MigleSur/GenAPI) (alternative to roary)
 
 
