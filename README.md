@@ -4,7 +4,8 @@
 
 Assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It accepts prokaryotic genomic assemblies and compares them in many different ways. Designed to analyze both isolates and metagenomes.
 
-![ezgif-3-7157417f91](https://github.com/cmkobel/assemblycomparator2/assets/5913696/1a236b86-b548-4141-9ede-24b5eb261099)
+![2ezgif-3-6b2c1d8231](https://github.com/cmkobel/assemblycomparator2/assets/5913696/623f6b42-2de6-457c-8f0d-3b3e5d646967)
+
 
 
 Assemblycomparator2 integrates several analyses that yield scientific results about genomic assemblies on several levels: Quality control, annotation, function and species calling as well as comparative analyses like computation of core/pan genomes and phylogenetics. 
