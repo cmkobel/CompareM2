@@ -201,7 +201,7 @@ If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/sn
 In the future we might add some of the following software packages into assemblycomparator2.
 
 **Sample basis**
-
+  - [Bakta](https://github.com/oschwengers/bakta/) (Rapid & standardized annotation of bacterial genomes, MAGs & plasmids)
   - [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) (Identify possible replication origins, and thereby help identify chromids)
   - [RFplasmid](https://github.com/aldertzomer/RFPlasmid) (Identify plasmids using the pentamer-random-forest method)
   - [Kaptive](https://github.com/katholt/Kaptive) (surface polysaccharide loci for Klebsiella and Acinetobacter baumannii) 
