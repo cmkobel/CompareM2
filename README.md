@@ -14,7 +14,7 @@ Assemblycomparator2 works by calling a Snakemake workflow that can be easily mod
 
 All results are dynamically integrated in a compact portable report .html-document that emphasizes the central results and can be easily shared. This report is generated even if a few jobs in the pipeline fail.
 
-Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  apptainer/singularity/docker images and conda environment definitions are available for all dependent software to run.
+Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  Apptainer/singularity/docker images and conda environment definitions are available for all dependent software to run.
 
 Assemblycomparator2 will soon be renamed to "Proknome".
 
@@ -111,7 +111,7 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 
 # Installation via Conda/Mamba
 
-This is the recommended way to install Assemblycomparator2. Please note that it is highly recommended that you have apptainer on your system as it makes Assemblycomparator2 able to use a compressed docker-image that speeds up installation significantly. If you are not able to [install Apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request), Assemblycomparator2 will default to use Mamba to install all snakemake workflow rule environments separately.
+This is the recommended way to install Assemblycomparator2. Please note that it is highly recommended that you have Apptainer on your system as it makes Assemblycomparator2 able to use a compressed docker-image that speeds up installation significantly. If you are not able to [install Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request), Assemblycomparator2 will default to use Mamba to install all snakemake workflow rule environments separately.
 
 First, you need to install a Conda-based Python3 distribution.
 The recommended choice is [Miniforge](https://github.com/conda-forge/miniforge#install) which not only provides the required Python and Conda commands, 
@@ -188,7 +188,7 @@ export ASSCOM2_DATABASES="/absolute/path/to/shared_databases/asscom2_v2.5.8+"
 
 #### Rule development
 
-If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#snakefiles-and-rules) in the assemblycomparator2 pipeline, you should consider following the [development version installation instructions](readme-development.md). The development version is purely conda-based so you can effect the next version apptainer-compatible docker image. 
+If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#snakefiles-and-rules) in the assemblycomparator2 pipeline, you should consider following the [development version installation instructions](readme-development.md). The development version is purely conda-based so you can effect the next version Apptainer-compatible docker image. 
 
 </td></tr></table>
 
