@@ -105,13 +105,13 @@ Below is the graph the shows the order of execution of all possible analyses in 
 
 There are also a few pseudo targets defined. For instance `fast` which runs sequence_lengths, assembly-stats and mashtree. There is also one named `isolate` which runs all the analyses that are relevant for clinical isolates (sequence_lengths, prokka, kraken2, mlst, abricate, assembly-stats, gtdbtk, busco, checkm2, roary, snp-dists, fasttree, mashtree) as well as one named `meta` which runs the analyses that are relevant to metagenomes (aka. MAGs), these are sequence_lengths, prokka, kraken2, gtdbtk, busco, checkm2, mashtree.
 
-**Hint:** You can run one of these pseudorules just like any other rulename with `asscom --until meta` or `asscom2 --until isolate`
+**Hint:** You can run one of these pseudorules just like any other rulename with `asscom2 --until meta` or `asscom2 --until isolate`
 
 
 
 # Installation via Conda/Mamba
 
-This is the recommended way to install Assemblycomparator2. Please note that it is highly recommended that you have apptainer on your system as it makes Assemblycomparator2 able to use a compressed docker-image that speeds up installation significantly. If you are not able to [install apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request), Assemblycomparator2 will default to use Mamba to install all snakemake workflow rule environments separately.
+This is the recommended way to install Assemblycomparator2. Please note that it is highly recommended that you have apptainer on your system as it makes Assemblycomparator2 able to use a compressed docker-image that speeds up installation significantly. If you are not able to [install Apptainer](https://apptainer.org/docs/user/main/quick_start.html#installation-request), Assemblycomparator2 will default to use Mamba to install all snakemake workflow rule environments separately.
 
 First, you need to install a Conda-based Python3 distribution.
 The recommended choice is [Miniforge](https://github.com/conda-forge/miniforge#install) which not only provides the required Python and Conda commands, 
