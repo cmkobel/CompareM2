@@ -109,7 +109,7 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 
 
 
-# Installation via Conda/Mamba
+# Installation
 
 This is the recommended way to install Assemblycomparator2. Please note that it is highly recommended that you have [Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request) on your system as it makes Assemblycomparator2 able to use a compressed Docker-image that speeds up installation significantly. 
 
