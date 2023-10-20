@@ -116,7 +116,7 @@ This is the recommended way to install Assemblycomparator2. Please note that it 
 
 <table><tr><td>
   
-If you are not able to install Apptainer, Assemblycomparator2 will default to use Mamba to install all snakemake workflow rule environments separately. In this case, you should set the conda channel priority to "flexible" with `conda config --set channel_priority flexible`.
+If you don't have Apptainer, Assemblycomparator2 will default to use Mamba to install all snakemake workflow rule environments separately. In this case, you should set the conda channel priority to "flexible" with `conda config --set channel_priority flexible`
 
 </td></tr></table>
 
