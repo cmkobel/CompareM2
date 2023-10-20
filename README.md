@@ -111,7 +111,7 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 
 # Installation
 
-This is the recommended way to install Assemblycomparator2. Please note that it is highly recommended that you have [Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request) on your system as it makes Assemblycomparator2 able to use a compressed Docker-image that speeds up installation significantly. 
+It is highly recommended that you have [Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request) on your system as it makes Assemblycomparator2 able to use a compressed Docker-image that speeds up installation significantly. 
 
 
 <table><tr><td>
@@ -132,7 +132,7 @@ conda install -n base -c conda-forge mamba
 
 ```
 
-Assemblycomparator2 can be installed into its own environment with the correct channels like so:
+Finally, Assemblycomparator2 can be installed into its own environment with the correct channels like so:
 
 ```bash
 
