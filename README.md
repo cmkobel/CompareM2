@@ -124,7 +124,7 @@ First, you need to install a Conda-based Python3 distribution.
 The recommended choice is [Miniforge](https://github.com/conda-forge/miniforge#install) which not only provides the required Python and Conda commands, 
 but also includes Mamba - an extremely fast and robust replacement for the Conda package manager which is highly recommended.
 
-In case you don't use Mambaforge you can always install Mamba into any other Conda-based Python distribution with
+In case you don't use Mambaforge you can always install Mamba into any other Conda-based Python distribution with:
 
 ```bash
 
