@@ -116,13 +116,13 @@ It is highly recommended that you have [Apptainer](https://Apptainer.org/docs/us
 
 <table><tr><td>
   
-If you don't have Apptainer, Assemblycomparator2 will default to use Mamba to install all snakemake workflow rule environments separately. In this case, you should set the conda channel priority to "flexible" with `conda config --set channel_priority flexible`
+If you don't have Apptainer, Assemblycomparator2 will default to use Conda/Mamba to install all Snakemake workflow rule environments separately. In this case, you should set the conda channel priority to "flexible" with `conda config --set channel_priority flexible`
 
 </td></tr></table>
 
 First, you need to install a Conda-based Python3 distribution.
 The recommended choice is [Miniforge](https://github.com/conda-forge/miniforge#install) which not only provides the required Python and Conda commands, 
-but also includes Mamba an extremely fast and robust replacement for the Conda package manager which is highly recommended.
+but also includes Mamba - an extremely fast and robust replacement for the Conda package manager which is highly recommended.
 
 In case you don't use Mambaforge you can always install Mamba into any other Conda-based Python distribution with
 
