@@ -115,14 +115,14 @@ This is the recommended way to install Assemblycomparator2. Please note that it 
 
 
 <table><tr><td>
+  
 If you are not able to install Apptainer, Assemblycomparator2 will default to use Mamba to install all snakemake workflow rule environments separately. In this case, you should set the conda channel priority to "flexible" with `conda config --set channel_priority flexible`.
+
 </td></tr></table>
 
 First, you need to install a Conda-based Python3 distribution.
 The recommended choice is [Miniforge](https://github.com/conda-forge/miniforge#install) which not only provides the required Python and Conda commands, 
 but also includes Mamba an extremely fast and robust replacement for the Conda package manager which is highly recommended.
-The default conda solver is a bit slow and sometimes has issues with [selecting the latest package releases](https://github.com/conda/conda/issues/9905). 
-Therefore, we recommend to in any case use Mamba.
 
 In case you don't use Mambaforge you can always install Mamba into any other Conda-based Python distribution with
 
@@ -132,7 +132,7 @@ conda install -n base -c conda-forge mamba
 
 ```
 
-Assemblycomparator2 can be installed into its own isolated environment by first creating the environment and then installing.
+Assemblycomparator2 can be installed into its own environment with the correct channels like so:
 
 ```bash
 
