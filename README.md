@@ -111,7 +111,7 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 
 # Installation
 
-<img width="150" align="right" alt="Screenshot 2023-10-30 at 09 51 44" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/5b06b511-75c4-48cb-8ab8-f29b212ef6df">
+<img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/5b06b511-75c4-48cb-8ab8-f29b212ef6df">
 
 
 
@@ -125,6 +125,10 @@ It is highly recommended that you have [Apptainer](https://Apptainer.org/docs/us
 If you don't have Apptainer, Assemblycomparator2 will default to use Conda/Mamba to install all Snakemake workflow rule environments separately. In this case, you should set the conda channel priority to "flexible" with `conda config --set channel_priority flexible`
 
 </td></tr></table>
+
+<img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/c9d15678-b4a7-42be-b0de-b649479f6d74">
+
+
 
 
 
