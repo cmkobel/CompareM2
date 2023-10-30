@@ -10,6 +10,9 @@ Assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It accepts prokar
 
 Assemblycomparator2 integrates several analyses that yield scientific results about genomic assemblies on several levels: Quality control, annotation, function and species calling as well as comparative analyses like computation of core/pan genomes and phylogenetics. 
 
+<img width="150" alt="snakemake logo" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/7188e748-9d37-43ae-a5d5-100e9560df1f">
+
+
 Assemblycomparator2 works by calling a Snakemake workflow that can be easily modified to use different parameters for the  underlying tools.
 
 All results are dynamically integrated in a compact portable report .html-document that emphasizes the central results and can be easily shared. This report is generated even if a few jobs in the pipeline fail.
