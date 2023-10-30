@@ -111,7 +111,9 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 
 # Installation
 
-It is highly recommended that you have [Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request) on your system as it makes Assemblycomparator2 able to use a compressed Docker-image that speeds up installation significantly. 
+<img width="150" align="right" alt="Screenshot 2023-10-30 at 09 51 44" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/5b06b511-75c4-48cb-8ab8-f29b212ef6df">It is highly recommended that you have [Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request) on your system as it makes Assemblycomparator2 able to use a compressed Docker-image that speeds up installation significantly.
+
+
 
 
 <table><tr><td>
@@ -120,9 +122,16 @@ If you don't have Apptainer, Assemblycomparator2 will default to use Conda/Mamba
 
 </td></tr></table>
 
+<img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/bd020076-abbd-49a5-8fd2-a099a68f9cdf">
+
+
 First, you need to install a Conda-based Python3 distribution.
 The recommended choice is [Miniforge](https://github.com/conda-forge/miniforge#install) which not only provides the required Python and Conda commands, 
 but also includes Mamba - an extremely fast and robust replacement for the Conda package manager which is highly recommended.
+
+
+<img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/e31c453e-5533-4247-ab52-a761ec15850b">
+
 
 In case you don't use Miniforge you can always install Mamba into any other Conda-based Python distribution with:
 
