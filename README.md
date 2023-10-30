@@ -122,7 +122,7 @@ If you don't have Apptainer, Assemblycomparator2 will default to use Conda/Mamba
 
 </td></tr></table>
 
-<img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/bd020076-abbd-49a5-8fd2-a099a68f9cdf">
+<img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/6bc39697-7e90-49a0-a44e-64820f2c1024">
 
 
 First, you need to install a Conda-based Python3 distribution.
@@ -130,7 +130,7 @@ The recommended choice is [Miniforge](https://github.com/conda-forge/miniforge#i
 but also includes Mamba - an extremely fast and robust replacement for the Conda package manager which is highly recommended.
 
 
-<img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/e31c453e-5533-4247-ab52-a761ec15850b">
+
 
 
 In case you don't use Miniforge you can always install Mamba into any other Conda-based Python distribution with:
