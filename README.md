@@ -111,7 +111,11 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 
 # Installation
 
-<img width="150" align="right" alt="Screenshot 2023-10-30 at 09 51 44" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/5b06b511-75c4-48cb-8ab8-f29b212ef6df">It is highly recommended that you have [Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request) on your system as it makes Assemblycomparator2 able to use a compressed Docker-image that speeds up installation significantly.
+<img width="150" align="right" alt="Screenshot 2023-10-30 at 09 51 44" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/5b06b511-75c4-48cb-8ab8-f29b212ef6df">
+
+
+
+It is highly recommended that you have [Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request) on your system as it makes Assemblycomparator2 able to use a compressed Docker-image that speeds up installation significantly.
 
 
 
@@ -122,7 +126,6 @@ If you don't have Apptainer, Assemblycomparator2 will default to use Conda/Mamba
 
 </td></tr></table>
 
-<img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/6bc39697-7e90-49a0-a44e-64820f2c1024">
 
 
 First, you need to install a Conda-based Python3 distribution.
@@ -140,6 +143,8 @@ In case you don't use Miniforge you can always install Mamba into any other Cond
 conda install -n base -c conda-forge mamba
 
 ```
+
+<img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/6bc39697-7e90-49a0-a44e-64820f2c1024">
 
 Finally, Assemblycomparator2 can be installed into its own environment with the correct channels like so:
 
