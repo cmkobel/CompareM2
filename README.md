@@ -219,7 +219,7 @@ export ASSCOM2_PROFILE=${ASSCOM2_BASE}/profiles/conda/local
 ```
 #### Rule development
 
-If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#snakefiles-and-rules) in the assemblycomparator2 pipeline, you should consider following the [development version installation instructions](readme-development.md). The development version is purely conda-based so you can effect the next version Apptainer-compatible Docker image. 
+If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#snakefiles-and-rules) in the assemblycomparator2 pipeline, you should consider following the [development version installation instructions](readme-development.md). The development version is purely conda-based so you can affect the next version of the Apptainer-compatible Docker image. 
 
 
 
