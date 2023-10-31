@@ -2,17 +2,17 @@
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2?label=docker%20pulls%202023)](#installation) [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cmkobel/assemblycomparator2)](#installation) [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/assemblycomparator2?label=Bioconda%20downloads&color=%2300CC00)](#installation) [![conda build](https://img.shields.io/conda/v/bioconda/assemblycomparator2)](#installation)
 
-Assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It accepts prokaryotic genomic assemblies and compares them in many different ways. 
+🧬🪠 Assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It accepts prokaryotic genomic assemblies and compares them in many different ways. 
 
-Being designed to analyze both isolates and metagenomes, is useful for anyone working with genomic analysis of prokaryotes for fundamental research as well as clinical applications.
+🧫🦠 Being designed to analyze both isolates and metagenomes, is useful for anyone working with genomic analysis of prokaryotes for fundamental research as well as clinical applications.
 
-By installing Assemblycomparator2 you get access to a list of popular state-of-the-art tools in analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
+💾 By installing Assemblycomparator2 you get access to a list of popular state-of-the-art tools in analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
 
 <img alt="asscom2 animation" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/623f6b42-2de6-457c-8f0d-3b3e5d646967">
 
 
 
-Assemblycomparator2 integrates several analyses that yield scientific results about genomic assemblies on several levels: Quality control, annotation, function and species calling as well as comparative analyses like computation of core/pan genomes and phylogenetics. 
+👩‍🔬 Assemblycomparator2 integrates several analyses that yield scientific results about genomic assemblies on several levels: Quality control, annotation, function and species calling as well as comparative analyses like computation of core/pan genomes and phylogenetics. 
 
 <img width="150" alt="snakemake logo" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/7188e748-9d37-43ae-a5d5-100e9560df1f">
 Assemblycomparator2 works by calling a Snakemake workflow that can be easily modified to use different parameters for the  underlying tools.
@@ -20,9 +20,9 @@ Assemblycomparator2 works by calling a Snakemake workflow that can be easily mod
 
 <a href="https://github.com/cmkobel/assemblycomparator2/blob/master/readme-demos.md"><img height="192" alt="report document logo" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/e5f9b72c-2137-4850-8779-a5528d8ccbaf"></a>
 
-All results are dynamically integrated in a compact portable report .html-document that emphasizes the central results. It can be browsed by users with no command line experience and can be easily shared as a single file. This report is generated even if a few jobs in the pipeline fail.
+📙 All results are dynamically integrated in a compact portable report .html-document that emphasizes the central results. It can be browsed by users with no command line experience and can be easily shared as a single file. This report is generated even if a few jobs in the pipeline fail.
 
-Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  Apptainer/Singularity/Docker images and conda environment definitions are available for all dependent software to run.
+🖥🧑‍💻 Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  Apptainer/Singularity/Docker images and conda environment definitions are available for all dependent software to run.
 
 Assemblycomparator2 will be -depending on circumstances- renamed to "Proknome".
 
