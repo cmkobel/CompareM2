@@ -144,7 +144,7 @@ but also includes [Mamba](https://github.com/mamba-org/mamba) - an extremely fas
 
 
 
-
+<table><tr><td>
 In case you don't use Miniforge you can always install Mamba into any other Conda-based Python distribution with:
 
 ```bash
@@ -154,6 +154,8 @@ conda install -n base -c conda-forge mamba
 ```
 
 <img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/6bc39697-7e90-49a0-a44e-64820f2c1024">
+
+</td></tr></table>
 
 Finally, Assemblycomparator2 can be installed into its own environment with the correct channels like so:
 
