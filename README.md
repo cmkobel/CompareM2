@@ -2,7 +2,9 @@
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2?label=docker%20pulls%202023)](#installation) [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cmkobel/assemblycomparator2)](#installation) [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/assemblycomparator2?label=Bioconda%20downloads&color=%2300CC00)](#installation) [![conda build](https://img.shields.io/conda/v/bioconda/assemblycomparator2)](#installation)
 
-Assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It accepts prokaryotic genomic assemblies and compares them in many different ways. Designed to analyze both isolates and metagenomes.
+Assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It accepts prokaryotic genomic assemblies and compares them in many different ways. 
+
+Being designed to analyze both isolates and metagenomes - Assemblycomparator2 is useful for anyone working with genomic analysis of prokaryotes for fundamental research as well as clinical applications.
 
 <img alt="asscom2 animation" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/623f6b42-2de6-457c-8f0d-3b3e5d646967">
 
