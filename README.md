@@ -6,7 +6,7 @@ Assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It accepts prokar
 
 Being designed to analyze both isolates and metagenomes, is useful for anyone working with genomic analysis of prokaryotes for fundamental research as well as clinical applications.
 
-By installing Assemblycomparator2 you get access to a list of popular state-of-the-art tools in analysis of prokaryotic genomes which will accelerate your research.
+By installing Assemblycomparator2 you get access to a list of popular state-of-the-art tools in analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
 
 <img alt="asscom2 animation" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/623f6b42-2de6-457c-8f0d-3b3e5d646967">
 
