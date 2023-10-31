@@ -257,8 +257,9 @@ If you use assemblycomparator2, you can support further funding by bumping the c
 
   - Kobel CM. *assemblycomparator2* **GitHub** https://github.com/cmkobel/assemblycomparator2
 
-assemblycomparator2 would not have existed, if it hadn't been for the integrated software packages and their databases.
+assemblycomparator2 would not have existed, if it hadn't been for the integrated software packages and their databases. And please reach out to carl.mathias.kobel near nmbu.no if you think something is missing.
 
+  - Seemann T, Goncalves da Silva A, Bulach DM, Schultz MB, Kwong JC, Howden BP. Nullarbor Github https://github.com/tseemann/nullarbor
   - W Shen, S Le, Y Li*, F Hu*. SeqKit: a cross-platform and ultrafast toolkit for FASTA/Q file manipulation. PLOS ONE. doi:10.1371/journal.pone.0163962. 
   - Richard Challis. (2017). rjchallis/assembly-stats 17.02 (17.02). Zenodo. https://doi.org/10.5281/zenodo.322347
   - Manni, M., Berkeley, M. R., Seppey, M., & Zdobnov, E. M. (2021). BUSCO: Assessing genomic data quality and beyond. Current Protocols, 1, e323. doi: 10.1002/cpz1.323
