@@ -215,7 +215,7 @@ export ASSCOM2_DATABASES="/absolute/path/to/shared_databases/asscom2_v2.5.8+"
  If you have experience with snakemake and are working on a high performance computing cluster (HPC), you can modify and use the cluster configuration profiles in the "profiles/" directory. You can define the use of one of these profiles by setting the "ASSCOM2_PROFILE" environment variable. You can put this into your ~/.bashrc or execute the command before using asscom2. You can read more about snakemake profiles [here](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles) or browse more default profiles [here](https://github.com/snakemake-profiles).
 
 ```bash
-export ASSCOM2_PROFILE=${ASSCOM2_BASE}/profiles/conda/local
+export ASSCOM2_PROFILE=${ASSCOM2_BASE}/profiles/apptainer/slurm-sigma2-saga
 ```
 #### Rule development
 
