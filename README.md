@@ -76,7 +76,7 @@ Assemblycomparator2 will then create a sub-directory, named "results_ac2/" conta
 
 ## What analyses does it do?
 
-Below is the graph the shows the order of execution of all possible analyses in Assemblycomparator2:
+Below is the graph the shows the order of execution of all possible analyses "rules" in Assemblycomparator2:
 
 
 ![dag](https://github.com/cmkobel/assemblycomparator2/assets/5913696/3164f060-3b36-4d51-8cf7-29a50d87ec84)
