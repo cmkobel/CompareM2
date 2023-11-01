@@ -1,12 +1,12 @@
-# assemblycomparator2
+# Assemblycomparator2
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2?label=docker%20pulls%202023)](#installation) [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cmkobel/assemblycomparator2)](#installation) [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/assemblycomparator2?label=Bioconda%20downloads&color=%2300CC00)](#installation) [![conda build](https://img.shields.io/conda/v/bioconda/assemblycomparator2)](#installation)
 
-🧬🪠 Assemblycomparator2 (asscom2) is a genomes-to-report pipeline. It accepts prokaryotic genomic assemblies and compares them in many different ways. 
+🧬 Assemblycomparator2 "asscom2" is a genomes-to-report pipeline. It accepts prokaryotic genomic assemblies and compares them in many different ways. 
 
-🧫🦠 Being designed to analyze both isolates and metagenomes, is useful for anyone working with genomic analysis of prokaryotes for fundamental research as well as clinical applications.
+🦠 Being designed to analyze both isolates and metagenomes it is useful for anyone working with genomic analysis of prokaryotes for fundamental research and clinically.
 
-💾 By installing Assemblycomparator2 you get access to a list of popular state-of-the-art tools in analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
+💾 Installing Assemblycomparator2 on your system gives you access to 15 popular state-of-the-art tools in analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
 
 <img alt="asscom2 animation" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/623f6b42-2de6-457c-8f0d-3b3e5d646967">
 
@@ -23,15 +23,15 @@
 
 📙 All results are dynamically integrated in a compact portable report .html-document that emphasizes the central results. It can be browsed by users with no command line experience and can be easily shared as a single file. This report is generated even if a few jobs in the pipeline fail.
 
-🖥🧑‍💻 Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  Apptainer/Singularity/Docker images and conda environment definitions are available for all dependent software to run.
+🧑‍💻 Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  Apptainer/Singularity/Docker images and conda environment definitions are available for all dependent software to run.
 
-Assemblycomparator2 will be -depending on circumstances- renamed to "Proknome".
+Assemblycomparator2 will -depending on circumstances- be renamed to "Proknome".
 
 ## Usage examples
 
-Make a directory with the assembly-files you want to investigate with assemblycomparator2. 
+Make a directory with the assembly-files you want to investigate with Assemblycomparator2. 
 Go into that directory in the terminal, and run the command `asscom2`. 
-assemblycomparator2 will then create a sub-directory, named "results_ac2/" containing a plethora of analysis results. 
+Assemblycomparator2 will then create a sub-directory, named "results_ac2/" containing a plethora of analysis results. 
   
   - Execute a 'dry run'. That is, to show what will be run without actually doing it.
 
@@ -39,7 +39,7 @@ assemblycomparator2 will then create a sub-directory, named "results_ac2/" conta
     asscom2 --dry-run
     ```
 
-  - Run assemblycomparator2 on the genomes in the current directory:
+  - Run Assemblycomparator2 on the genomes in the current directory:
 
     ```bash
     asscom2
@@ -76,7 +76,7 @@ assemblycomparator2 will then create a sub-directory, named "results_ac2/" conta
 
 ## What analyses does it do?
 
-Below is the graph the shows the order of execution of all possible analyses in assemblycomparator2:
+Below is the graph the shows the order of execution of all possible analyses in Assemblycomparator2:
 
 
 ![dag](https://github.com/cmkobel/assemblycomparator2/assets/5913696/3164f060-3b36-4d51-8cf7-29a50d87ec84)
@@ -219,7 +219,7 @@ export ASSCOM2_PROFILE=${ASSCOM2_BASE}/profiles/apptainer/slurm-sigma2-saga
 ```
 #### Rule development
 
-If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#snakefiles-and-rules) in the assemblycomparator2 pipeline, you should consider following the [development version installation instructions](readme-development.md). The development version is purely conda-based so you can affect the next version of the Apptainer-compatible Docker image. 
+If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#snakefiles-and-rules) in the Assemblycomparator2 pipeline, you should consider following the [development version installation instructions](readme-development.md). The development version is purely conda-based so you can affect the next version of the Apptainer-compatible Docker image. 
 
 
 
@@ -229,7 +229,7 @@ If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/sn
 
 ## Future functionality 
 
-In the future we might add some of the following software packages into assemblycomparator2.
+In the future we might add some of the following software packages into Assemblycomparator2.
 
 **Sample basis**
   - [Bakta](https://github.com/oschwengers/bakta/) (Rapid & standardized annotation of bacterial genomes, MAGs & plasmids)
@@ -252,11 +252,11 @@ In the future we might add some of the following software packages into assembly
 
 ## Citation
 
-If you use assemblycomparator2, you can support further funding by bumping the citation count on this one:
+If you use Assemblycomparator2, you can support further funding by bumping the citation count on this one:
 
-  - Kobel CM. *assemblycomparator2* **GitHub** https://github.com/cmkobel/assemblycomparator2
+  - Kobel CM. *Assemblycomparator2* **GitHub** https://github.com/cmkobel/assemblycomparator2
 
-assemblycomparator2 would not have existed, if it hadn't been for the integrated software packages and their databases. And please reach out to carl.mathias.kobel near nmbu.no if you think something is missing.
+Assemblycomparator2 would not have existed, if it hadn't been for the integrated software packages and their databases. And please reach out to carl.mathias.kobel near nmbu.no if you think something is missing.
 
   - Mölder F, Jablonski KP, Letcher B, Hall MB, Tomkins-Tinch CH, Sochat V, Forster J, Lee S, Twardziok SO, Kanitz A, Wilm A, Holtgrewe M, Rahmann S, Nahnsen S, Köster J. Sustainable data analysis with Snakemake. F1000Res. 2021 Apr 19;10:33. doi: 10.12688/f1000research.29032.2. PMCID: PMC8114187.
   - Seemann T, Goncalves da Silva A, Bulach DM, Schultz MB, Kwong JC, Howden BP. Nullarbor Github https://github.com/tseemann/nullarbor
