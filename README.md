@@ -33,7 +33,7 @@ Make a directory with the assembly-files you want to investigate with Assemblyco
 Go into that directory in the terminal, and run the command `asscom2`. 
 Assemblycomparator2 will then create a sub-directory, named "results_ac2/" containing a plethora of analysis results. 
   
-  - Execute a 'dry run'. That is, to show what will be run without actually doing it.
+  - Execute a "dry run". That is, to show what will be run without actually doing it.
 
     ```bash
     asscom2 --dry-run
