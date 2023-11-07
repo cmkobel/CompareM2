@@ -4,7 +4,7 @@
 # Update dag picture in documentation with this command (with anaconda/graphviz)
 # asscom2 --forceall --rulegraph | dot -Tpdf > dag.pdf
 
-__version__ = "v2.5.8" # Six places to bump. Here, in the bottom of the report, in the changelog, the Dockerfile and the containerized version and containerized report_subpipeline/snakefile.
+__version__ = "v2.5.9" # Six places to bump. Here, in the bottom of the report, in the changelog, the Dockerfile and the containerized version and containerized report_subpipeline/snakefile.
 __author__ = 'Carl M. Kobel'
 
 # May the data passing through this pipeline
@@ -276,12 +276,13 @@ rule busco_download:
 
 
 
+# Updated according to chklovski's idea in https://github.com/chklovski/CheckM2/issues/73#issuecomment-1744207103
 rule checkm2_download:
     output:
         database_representative = DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
     params:
         destination = DATABASES + "/checkm2"
-    conda: "conda_definitions/checkm2.yaml"
+    conda: "conda_definitions/curl.yaml"
     shell: """
 
 
@@ -295,24 +296,19 @@ rule checkm2_download:
 
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 
-            # Maybe the container bug "OSError Errno 30 Read-only file system" is helped by setting the path to the db manually.
-            # export CHECKM2DB="{params.destination}"
-            # No, don't think so.
+            url="https://zenodo.org/records/5571251/files/checkm2_database.tar.gz"
 
-            checkm2 database \
-                --download \
-                --path {params.destination}
+            
+            curl \
+                $url \
+                --output "{params.destination}/checkm2_database.tar.gz"
+                
 
-            rm {params.destination}/gtdb_db.tar.gz || echo "Failed to clean up."
+            tar \
+                -xvf "{params.destination}/checkm2_database.tar.gz" \
+                --directory "{params.destination}"
 
-            # Consider running checkm2 testrun. Is resource intensive though and this is a localrule.
-            # checkm2 testrun 
-
-            # If you have problems installing this, then:
-            # Set keep-incomplete: true in profile
-            # $ asscom2 --until checkm2_download
-            # $ asscom2 --until checkm2_download --touch
-            # $ touch \$ASSCOM2_DATABASES/checkm2/ac2_checkm2_database_representative.flag
+            rm "{params.destination}/checkm2_database.tar.gz" || echo "failed to clean up"
             
             touch {output}
         
