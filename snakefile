@@ -1,16 +1,25 @@
-# Update Dockerfile with this command
-# asscom2 --containerize > Dockerfile # And remove header-text.
-
-# Update dag picture in documentation with this command (with anaconda/graphviz)
-# asscom2 --forceall --rulegraph | dot -Tpdf > dag.pdf
-
-__version__ = "v2.5.9" # Six places to bump. Here, in the bottom of the report, in the changelog, the Dockerfile and the containerized version and containerized report_subpipeline/snakefile.
 __author__ = 'Carl M. Kobel'
+
+__version__ = "v2.5.9" 
+# Six places to bump besides here.
+#  - changelog
+#  - ./asscom2 binary
+#  - report markdown bottom
+#
+#  And if the dockerfile is updated
+#  - Dockerfile 
+#  - report snakefile image pull
+
 
 # May the data passing through this pipeline
 # somehow help to bring just a little more peace 
 # in this troubled world.
 
+# Update Dockerfile with this command
+# asscom2 --containerize > Dockerfile # And remove header-text.
+
+# Update dag picture in documentation with this command (with anaconda/graphviz)
+# asscom2 --forceall --rulegraph | dot -Tpdf > dag.pdf
 
 
 import os
