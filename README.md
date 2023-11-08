@@ -234,22 +234,22 @@ If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/sn
 In the future we might add some of the following software packages into Assemblycomparator2.
 
 **Sample basis**
-  - [Bakta](https://github.com/oschwengers/bakta/) (Rapid & standardized annotation of bacterial genomes, MAGs & plasmids)
-  - MCF (Module Completion Factor as an extension to the KEGG-based pathway enrichment analysis that helps interpretation)
-  - [Eggnogg-mapper](https://github.com/eggnogdb/eggnog-mapper) (functional annotation of novel sequences)
-  - [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) (Identify possible replication origins, and thereby help identify chromids)
-  - [RFplasmid](https://github.com/aldertzomer/RFPlasmid) (Identify plasmids using the pentamer-random-forest method)
-  - [Kaptive](https://github.com/katholt/Kaptive) (surface polysaccharide loci for Klebsiella and Acinetobacter baumannii) 
-  - [mash screen](https://mash.readthedocs.io/en/latest/tutorials.html) (recognition of plasmids-of-interest)
+  - [Bakta](https://github.com/oschwengers/bakta/): Rapid & standardized annotation of bacterial genomes, MAGs & plasmids
+  - MCF Module Completion Factor as an extension to the KEGG-based pathway enrichment analysis that helps interpretation
+  - [Eggnogg-mapper](https://github.com/eggnogdb/eggnog-mapper): functional annotation of novel sequences
+  - [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html): Identify possible replication origins, and thereby help identify chromids
+  - [RFplasmid](https://github.com/aldertzomer/RFPlasmid): Identify plasmids using the pentamer-random-forest method
+  - [Kaptive](https://github.com/katholt/Kaptive): surface polysaccharide loci for Klebsiella and Acinetobacter baumannii
+  - [mash screen](https://mash.readthedocs.io/en/latest/tutorials.html): recognition of plasmids-of-interest
 
 
 **Batch basis**
 
-  - [IQ-tree](http://www.iqtree.org/) (phylogenetic tree of core genome with bootstrapping)
-  - GC3-profiling ("fingerprinting" of the distribution of GC-content)
+  - [IQ-tree](http://www.iqtree.org/): phylogenetic tree of core genome with bootstrapping
+  - GC3-profiling "fingerprinting" of the distribution of GC-content
   - Identification of horizontally transferred genes?
   - Recombination in core genome using the Bruen's PHI statistic
-  - [GenAPI](https://github.com/MigleSur/GenAPI) (alternative to roary)
+  - [GenAPI](https://github.com/MigleSur/GenAPI): alternative to roary
 
 
 
