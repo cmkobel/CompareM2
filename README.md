@@ -235,7 +235,8 @@ In the future we might add some of the following software packages into Assembly
 
 **Sample basis**
   - [Bakta](https://github.com/oschwengers/bakta/) (Rapid & standardized annotation of bacterial genomes, MAGs & plasmids)
-  - MCF (Module Completion Factor as an extension to the KEGG-based pathway enrichment analysis that helps interpretation) 
+  - MCF (Module Completion Factor as an extension to the KEGG-based pathway enrichment analysis that helps interpretation)
+  - [Eggnogg-mapper](https://github.com/eggnogdb/eggnog-mapper) (functional annotation of novel sequences)
   - [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) (Identify possible replication origins, and thereby help identify chromids)
   - [RFplasmid](https://github.com/aldertzomer/RFPlasmid) (Identify plasmids using the pentamer-random-forest method)
   - [Kaptive](https://github.com/katholt/Kaptive) (surface polysaccharide loci for Klebsiella and Acinetobacter baumannii) 
