@@ -83,10 +83,11 @@ except KeyError as e:
 # I will have to check whether this will work for both conda and apptainer based installations? It should. In the test on bioconda I should use conda (not apptainer).
 
 # Concatenate the trailing command line arguments to add to the snakemake command.
-trailing_arguments = " ".join(sys.argv[1:])
-logger.debug(f"The concatenated trailing arguments are {trailing_arguments}")
+trailing_arguments = sys.argv[1:]
+trailing_arguments_concatenated = " ".join(trailing_arguments)
+logger.debug(f"The concatenated trailing arguments are {trailing_arguments_concatenated}")
 
-command = f"snakemake --snakefile {ASSCOM2_BASE}/snakefile --profile {ASSCOM2_PROFILE} --configfile {ASSCOM2_BASE}/config.yaml  " + trailing_arguments
+command = f"snakemake --snakefile {ASSCOM2_BASE}/snakefile --profile {ASSCOM2_PROFILE} --configfile {ASSCOM2_BASE}/config.yaml  " + trailing_arguments_concatenated
 logger.debug(f"Command to run is\n{command}")
 
 
@@ -94,7 +95,7 @@ logger.debug(f"Command to run is\n{command}")
 # Finally, run the pipeline.
 
 # If the "--version" flag has been set, show the versions instead.
-if " --version" in command:
+if "--version" in trailing_arguments:
     print(f"assemblycomparator2 v{__version__}")
 else:
     subprocess.run(command, shell = True)
