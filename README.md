@@ -233,9 +233,10 @@ If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/sn
 
 In the future we might add some of the following software packages into Assemblycomparator2.
 
-**Sample basis**
+**Assembly basis (within samples)**
   - [Bakta](https://github.com/oschwengers/bakta/) Rapid & standardized annotation of bacterial genomes, MAGs & plasmids.
   - MCF Module Completion Fraction as an extension to the KEGG-based pathway enrichment analysis that helps interpretation.
+  - [AlphaFold](https://github.com/google-deepmind/alphafold) Neural network protein folding prediction genome annotation.
   - Integration of the [DRAM](https://github.com/WrightonLabCSU/DRAM) databases for easier metabolic interpretation.
   - [Eggnogg-mapper](https://github.com/eggnogdb/eggnog-mapper) Functional annotation of novel sequences.
   - [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) Identification of possible replication origins of chromids.
@@ -244,7 +245,7 @@ In the future we might add some of the following software packages into Assembly
   - [Kaptive](https://github.com/katholt/Kaptive) Identification of surface polysaccharide loci for Klebsiella and Acinetobacter baumannii.
 
 
-**Batch basis**
+**Batch basis (between samples)**
 
   - [IQ-tree](http://www.iqtree.org/) Phylogenetic tree of core genome with bootstrapping.
   - GC3-profiling "fingerprinting" of the distribution of GC-content.
