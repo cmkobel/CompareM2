@@ -1,6 +1,6 @@
 # Assemblycomparator2
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2?label=docker%20pulls%202023)](#installation) [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cmkobel/assemblycomparator2)](#installation) [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/assemblycomparator2?label=Bioconda%20downloads&color=%2300CC00)](#installation) [![conda build](https://img.shields.io/conda/v/bioconda/assemblycomparator2)](#installation)
+[![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2?label=docker%20pulls)](#installation) [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cmkobel/assemblycomparator2)](#installation) [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/assemblycomparator2?label=Bioconda%20downloads&color=%2300CC00)](#installation) [![conda build](https://img.shields.io/conda/v/bioconda/assemblycomparator2)](#installation)
 
 🧬 Assemblycomparator2 "asscom2" is a genomes-to-report pipeline. It accepts prokaryotic genomic assemblies and compares them in many different ways. 
 
