@@ -103,10 +103,11 @@ Below is the graph the shows the order of execution of all possible analyses "ru
   
 
 ### For each group
-  - `roary` [roary](https://sanger-pathogens.github.io/Roary/) (pan and core genome)
-  - `snp_dists` [snp-dists](https://github.com/tseemann/snp-dists) (core genome pairwise snp-distances)
-  - `fasttree` [FastTree](http://www.microbesonline.org/fasttree/) (phylogenetic tree of the core genome)
-  - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) (super fast distance measurement)
+  - `roary` [roary](https://sanger-pathogens.github.io/Roary/) Pan and core genome.
+  - `snp_dists` [snp-dists](https://github.com/tseemann/snp-dists) Core genome pairwise snp-distances.
+  - `fasttree` [FastTree](http://www.microbesonline.org/fasttree/) Phylogenetic tree of the core genome.
+  - `iqtree` [IQ-tree](http://www.iqtree.org/) Phylogenetic Tree of core genome with bootstrapping (lacking in report).
+  - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) Super fast distance measurement
   - **A nice report easy to share with your friends ([demos](readme-demos.md))**
 
 
@@ -248,7 +249,6 @@ In the future we might add some of the following software packages into Assembly
 **Batch basis (between samples)**
 
   - [mOTUlizer](https://github.com/moritzbuck/mOTUlizer) Analyze pan genome gene clusters.
-  - [IQ-tree](http://www.iqtree.org/) Phylogenetic tree of core genome with bootstrapping.
   - GC3-profiling "fingerprinting" of the distribution of GC-content.
   - Recombination in core genome using the Bruen's PHI statistic.
   - Identification of horizontally transferred genes?
@@ -279,6 +279,7 @@ Assemblycomparator2 would not have existed, if it hadn't been for the integrated
   - Wood, D.E., Lu, J. & Langmead, B. Improved metagenomic analysis with Kraken 2. Genome Biol 20, 257 (2019). https://doi.org/10.1186/s13059-019-1891-0
   - Chaumeil PA, Mussig AJ, Hugenholtz P, Parks DH. GTDB-Tk: a toolkit to classify genomes with the Genome Taxonomy Database. Bioinformatics. 2019 Nov 15;36(6):1925–7. doi: 10.1093/bioinformatics/btz848. Epub ahead of print. PMID: 31730192; PMCID: PMC7703759.
   - Buchfink B, Reuter K, Drost HG, "Sensitive protein alignments at tree-of-life scale using DIAMOND", Nature Methods 18, 366–368 (2021). doi:10.1038/s41592-021-01101-x
+  - B.Q. Minh, H.A. Schmidt, O. Chernomor, D. Schrempf, M.D. Woodhams, A. von Haeseler, R. Lanfear (2020) IQ-TREE 2: New models and efficient methods for phylogenetic inference in the genomic era. Mol. Biol. Evol., 37:1530-1534. https://doi.org/10.1093/molbev/msaa015
 
 ---
 

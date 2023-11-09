@@ -183,6 +183,7 @@ rule all:
         "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
         "{results_directory}/roary/summary_statistics.txt", \
         "{results_directory}/fasttree/fasttree.newick", \
+        "{results_directory}/iqtree/core_genome_iqtree.treefile", \
         "{results_directory}/snp-dists/snp-dists.tsv", \
         "{results_directory}/mashtree/mashtree.newick"], \
         results_directory = results_directory, sample = df["sample"]) 
@@ -1062,6 +1063,9 @@ rule roary:
     """
 
 
+
+
+
 rule snp_dists:
     input: 
         metadata = "{results_directory}/metadata.tsv",
@@ -1278,7 +1282,7 @@ rule fasttree:
     retries: 2
     resources:
         mem_mb = get_mem_fasttree,
-        runntime = "23:59:59",
+        runtime = "24h",
     shell: """
 
         OMP_NUM_THREADS={threads}
@@ -1290,6 +1294,42 @@ rule fasttree:
         2> {output}.log 
 
         {void_report}
+
+    """
+
+
+
+def get_mem_iqtree(wildcards, attempt): 
+    return [16000, 32000, 64000, 128000][attempt-1]
+
+rule iqtree:
+    input:
+        metadata = "{results_directory}/metadata.tsv",
+        fasta = "{results_directory}/roary/core_gene_alignment.aln",
+    output: 
+        newick = "{results_directory}/iqtree/core_genome_iqtree.treefile"
+    params:
+        version_file = "{results_directory}/iqtree/iqtree_ac2_version.txt"
+    conda: "conda_definitions/iqtree.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.iqtree.tsv"
+    threads: 16
+    retries: 3
+    resources:
+        mem_mb = get_mem_iqtree,
+        runtime = "24h",
+    shell: """
+
+        iqtree --version > {params.version_file}
+
+        iqtree \
+            -s {input.fasta} \
+            -m GTR \
+            --boot 2 \
+            --prefix $(dirname {output.newick})/core_genome_iqtree \
+            -redo
+
+        # {void_report} Not in the report yet.
+
 
     """
 

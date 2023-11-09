@@ -1,0 +1,6 @@
+name: iqtree
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - iqtree>=2
