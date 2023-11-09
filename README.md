@@ -247,6 +247,7 @@ In the future we might add some of the following software packages into Assembly
 
 **Batch basis (between samples)**
 
+  - [mOTUlizer](https://github.com/moritzbuck/mOTUlizer) Analyze pan genome gene clusters.
   - [IQ-tree](http://www.iqtree.org/) Phylogenetic tree of core genome with bootstrapping.
   - GC3-profiling "fingerprinting" of the distribution of GC-content.
   - Recombination in core genome using the Bruen's PHI statistic.
