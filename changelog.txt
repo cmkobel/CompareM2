@@ -1,3 +1,6 @@
+2.5.10
+  - assemblycomparator2 now supports iqtree with bootstrapping. Runs on the core genome produced by roary. Yet to be included in the report.
+
 2.5.9
   - Fixed an error where checkm2 would fail setting the download location internally when running asscom2 using the apptainer/docker container. https://github.com/chklovski/CheckM2/issues/73
 
