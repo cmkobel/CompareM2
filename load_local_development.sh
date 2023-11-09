@@ -1,6 +1,7 @@
 # This file is used for developing new features into asscom2.
 # Use this file by executing this script in the current shell.
 # $ . load_local_development.sh 
+# Then you can change the snakefile, the conda-yamls, the report and finally update the Dockerfile before committing the new feature.
 
 # Add cwd to the path to we can run this asscom2 from any dir.
 export PATH=$(realpath .):$PATH
