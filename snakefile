@@ -1,6 +1,6 @@
 __author__ = 'Carl M. Kobel'
 
-__version__ = "v2.5.10" 
+__version__ = "v2.5.11" 
 # Places to bump besides here.
 #  - changelog
 #  - ./asscom2 binary
@@ -34,7 +34,7 @@ import subprocess
 import datetime
         
 # Newer version of asscom2 still uses the docker image v2.5.5
-containerized: "docker://cmkobel/assemblycomparator2:v2.5.10" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
+containerized: "docker://cmkobel/assemblycomparator2:v2.5.11" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
 
 # When executing, Snakemake will fail with a reasonable error message if the variables below are undefined.
 envvars:
@@ -185,6 +185,8 @@ rule all:
         "{results_directory}/fasttree/fasttree.newick", \
         "{results_directory}/iqtree/core_genome_iqtree.treefile", \
         "{results_directory}/snp-dists/snp-dists.tsv", \
+        "{results_directory}/motulizer/motulizer_results.tsv", \
+        "{results_directory}/motulizer/motupan_results.tsv", \
         "{results_directory}/mashtree/mashtree.newick"], \
         results_directory = results_directory, sample = df["sample"]) 
 
@@ -586,7 +588,7 @@ rule prokka:
         assembly = "{results_directory}/samples/{sample}/{sample}.fa"
     output:
         gff = "{results_directory}/samples/{sample}/prokka/{sample}.gff",
-        faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg
+        faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg, motupan
         log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
         gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta",
@@ -1084,6 +1086,42 @@ rule snp_dists:
         
     """
 
+
+rule motulizer:
+    input:
+        fnas = df["input_file_fasta"].tolist(),
+    output: 
+        tsv = "{results_directory}/motulizer/motulizer_results.tsv"
+    params:
+        version_file = "{results_directory}/motulizer/motulizer_ac2_version.txt"
+    conda: "conda_definitions/motulizer.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.motulizer.tsv"
+    threads: 1
+    shell: """
+        
+        mOTUlize.py --version > {params.version_file} || echo "Catched exit code 1 when asking for the motulize version."
+
+        mOTUlize.py --fnas {input.fnas} -o {output.tsv} 
+
+    """
+
+# motulizer and motupan could run together in the same rule, but I like how the first job can start right away and the other can run trailing prokka. Also (todo), in the future I might want to run motupan separately for each motulizer-mOTU.
+
+rule motupan: 
+    input: 
+        faas =  expand("{results_directory}/samples/{sample}/prokka/{sample}.faa", results_directory = results_directory, sample = df["sample"]) # From prokka
+    output: 
+        tsv = "{results_directory}/motulizer/motupan_results.tsv"
+    conda: "conda_definitions/motulizer.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.motupan.tsv"
+    threads: 1
+    shell: """
+    
+        # Same version as motulizer, so no need to save the version again.
+
+        mOTUpan.py --faas {input.faas} -o {output.tsv} 
+
+    """
 
 
 
