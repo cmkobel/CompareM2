@@ -1,3 +1,4 @@
+# This file is used for developing new features into asscom2.
 # Use this file by executing this script in the current shell.
 # $ . load_local_development.sh 
 
