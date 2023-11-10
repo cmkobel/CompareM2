@@ -1,3 +1,6 @@
+2.5.12
+  - motulizer.yaml was missing.
+
 2.5.11
   - Added support for motulizer and motupan. Yet lacking in report and awaits further integration.
 
@@ -59,7 +62,3 @@
 
 2.0.0
 - Completely new system based on snakemake using both slurm and singularity
-
-
-REMINDER
-Remember to bump: snakefile, report snakefile, the genomes_to_report_v3.Rmd besides this file.
