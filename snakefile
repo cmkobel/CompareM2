@@ -1362,7 +1362,7 @@ rule iqtree:
         iqtree \
             -s {input.fasta} \
             -m GTR \
-            --boot 2 \
+            --boot 100 \
             --prefix $(dirname {output.newick})/core_genome_iqtree \
             -redo
 
