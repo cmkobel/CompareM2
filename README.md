@@ -6,7 +6,7 @@
 
 🦠 Being designed to analyze both isolates and metagenomes it is useful for anyone working with genomic analysis of prokaryotes for fundamental research and clinically.
 
-💾 [Installing Assemblycomparator2](#installation) on your system gives you access to 15 popular state-of-the-art tools for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
+💾 [Installing](#installation) Assemblycomparator2 on your system gives you access to 15 popular state-of-the-art [tools](https://github.com/cmkobel/assemblycomparator2#what-analyses-does-it-do) for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
 
 <img alt="asscom2 animation" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/623f6b42-2de6-457c-8f0d-3b3e5d646967">
 
