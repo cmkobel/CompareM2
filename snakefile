@@ -1,7 +1,8 @@
 __author__ = 'Carl M. Kobel'
 
-__version__ = "v2.5.12" 
-# Places to bump besides here.
+__version__ = "v2.5.13" 
+# Places to bump
+#  - here
 #  - changelog
 #  - ./asscom2 binary
 #  - report markdown bottom
@@ -32,8 +33,7 @@ from shutil import copyfile
 # For void_report
 import subprocess
 import datetime
-        
-# Newer version of asscom2 still uses the docker image v2.5.5
+
 containerized: "docker://cmkobel/assemblycomparator2:v2.5.12" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
 
 # When executing, Snakemake will fail with a reasonable error message if the variables below are undefined.

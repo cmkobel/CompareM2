@@ -1,3 +1,6 @@
+2.5.13
+  - Bugfix: Wrong number of bootstraps for quicktree
+
 2.5.12
   - motulizer.yaml was missing.
 
