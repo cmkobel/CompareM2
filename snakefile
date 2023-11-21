@@ -18,6 +18,8 @@ __version__ = "v2.5.13"
 
 # Update Dockerfile with this command
 # asscom2 --containerize > Dockerfile # And remove header-text.
+# export ASSCOM2_BASE=$(pwd -P); export ASSCOM2_PROFILE=profiles/apptainer/local/; snakemake --snakefile snakefile --configfile ${ASSCOM2_BASE}/config.yaml --containerize
+
 
 # Update dag picture in documentation with this command (with anaconda/graphviz)
 # asscom2 --forceall --rulegraph | dot -Tpdf > dag.pdf
