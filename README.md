@@ -287,6 +287,6 @@ Assemblycomparator2 would not have existed, if it hadn't been for the integrated
 
 Development is active and will continue.
 
-Assemblycomparator2 genomes to report pipeline. Copyright (C) 2019-2023 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)
+Assemblycomparator2 genomes to report pipeline. Copyright (C) 2023 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)
   
   
