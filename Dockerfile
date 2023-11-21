@@ -1,32 +1,3 @@
-/*
-                                                                   v2.5.13
-         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ 
-        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗
-        ███████║███████╗███████╗██║     ██║   ██║██╔████╔██║ █████╔╝
-        ██╔══██║╚════██║╚════██║██║     ██║   ██║██║╚██╔╝██║██╔═══╝ 
-        ██║  ██║███████║███████║╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗
-        ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
-                       A.K.A. assemblycomparator2                   
-                         Please log issues at:                      
-              github.com/cmkobel/assemblycomparator2/issues         
-                                                                    
-    batch_title:           asscom2
-    base_variable:         /glittertind/home/carl/asscom2                               
-    databases:             AC2TESTDB                             
-    roary_blastp_identity: 95 (default 95)
-    mlst_scheme:           automatic (default automatic)   
-
-    Available rules:
-    sequence_lengths prokka kraken2 dbcan interproscan kofam_scan
-    busco checkm2 diamond_kegg kegg_pathway roary snp_dists
-    assembly_stats gtdbtk abricate mlst mashtree fasttree
-    report downloads fast
-
- 1-index sample extension
-       1  dummy        fa
-//
-
-*/
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
 LABEL io.github.snakemake.conda_env_hash="949b634475dab2d164f5134b6e460ead56c9c13862248cd1971190f817f6ce3b"

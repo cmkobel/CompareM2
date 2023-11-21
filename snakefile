@@ -1,13 +1,11 @@
 __author__ = 'Carl M. Kobel'
 
-__version__ = "v2.5.13" 
+__version__ = "v2.5.14" 
 # Places to bump
 #  - here
 #  - changelog
 #  - ./asscom2 binary
 #  - report markdown bottom
-#
-#  And if the dockerfile is updated
 #  - snakefile Dockerfile image pull
 #  - report snakefile Dockerfile image pull so it reuses the same already downloaded image.
 
@@ -36,7 +34,7 @@ from shutil import copyfile
 import subprocess
 import datetime
 
-containerized: "docker://cmkobel/assemblycomparator2:v2.5.12" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
+containerized: "docker://cmkobel/assemblycomparator2:v2.5.14" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
 
 # When executing, Snakemake will fail with a reasonable error message if the variables below are undefined.
 envvars:
