@@ -85,7 +85,7 @@ Below is the graph the shows the order of execution of all possible analyses "ru
 
 **Hint:** Use `asscom2 --until <rulename> [<rulename2>...]` to run one or several specific analyses only. The rulename for each analysis to pick is listed below:
 
-### Within samples
+### For each assembly
   - `copy` [any2fasta](https://github.com/tseemann/any2fasta) Wide input format support and validation.
   - `sequence_lengths` [seqkit](https://bioinf.shenwei.me/seqkit/usage/) Lengths and GC-content of individual contigs.
   - `assembly_stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) Generic assembly statistics.
@@ -102,7 +102,7 @@ Below is the graph the shows the order of execution of all possible analyses "ru
   - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) Species recognition.
   
 
-### Between samples
+### For each group
   - `roary` [roary](https://sanger-pathogens.github.io/Roary/) Pan and core genome.
   - `motulizer` and `motupan` [mOTUlizer](https://github.com/moritzbuck/mOTUlizer) Analyze core-pan spectrum genome and gene clusters (lacking in report).
   - `snp_dists` [snp-dists](https://github.com/tseemann/snp-dists) Core genome pairwise snp-distances.
@@ -206,7 +206,7 @@ asscom2
 
 ### Advanced configuration
 
-#### Shared/custom path database
+#### Shared database
 
 If you are working on a shared computational resource like a laboratory workstation or a HPC you might want to share a database directory so that each user will not have to redundantly download each database. To set this up, the first user must decide on a directory and set reading and writing permissions for the group of users that should be able to use the database. Writing permissions are necessary for the "database representative" flags that snakemake uses to keep track of the presence of the databases. Setting this custom path is a matter of defining the "ASSCOM2_DATABASES" environment variable. You can put this into your ~/.bashrc or execute the command before using asscom2.
 
