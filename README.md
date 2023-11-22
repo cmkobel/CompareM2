@@ -85,7 +85,7 @@ Below is the graph the shows the order of execution of all possible analyses "ru
 
 **Hint:** Use `asscom2 --until <rulename> [<rulename2>...]` to run one or several specific analyses only. The rulename for each analysis to pick is listed below:
 
-### For each assembly
+### Within samples
   - `copy` [any2fasta](https://github.com/tseemann/any2fasta) Wide input format support and validation.
   - `sequence_lengths` [seqkit](https://bioinf.shenwei.me/seqkit/usage/) Lengths and GC-content of individual contigs.
   - `assembly_stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) Generic assembly statistics.
@@ -102,7 +102,7 @@ Below is the graph the shows the order of execution of all possible analyses "ru
   - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) Species recognition.
   
 
-### For each group
+### Between samples
   - `roary` [roary](https://sanger-pathogens.github.io/Roary/) Pan and core genome.
   - `motulizer` and `motupan` [mOTUlizer](https://github.com/moritzbuck/mOTUlizer) Analyze core-pan spectrum genome and gene clusters (lacking in report).
   - `snp_dists` [snp-dists](https://github.com/tseemann/snp-dists) Core genome pairwise snp-distances.
