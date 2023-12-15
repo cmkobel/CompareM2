@@ -74,7 +74,7 @@ print(f"    mlst_scheme:           {config['mlst_scheme']} (default automatic)  
 
 print()
 print("    Available rules:")
-print("    sequence_lengths prokka kraken2 dbcan interproscan kofam_scan")
+print("    sequence_lengths prokka kraken2 dbcan interproscan")
 print("    busco checkm2 diamond_kegg kegg_pathway roary snp_dists")
 print("    assembly_stats gtdbtk abricate mlst mashtree fasttree")
 print("    report downloads fast")
