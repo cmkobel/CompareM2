@@ -124,12 +124,7 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 
 <img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/5b06b511-75c4-48cb-8ab8-f29b212ef6df">
 
-
-
 It is highly recommended that you have [Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request) on your system as it makes Assemblycomparator2 able to use a compressed Docker-image that speeds up installation significantly.
-
-
-
 
 <table><tr><td>
   
@@ -139,16 +134,9 @@ If you don't have Apptainer, Assemblycomparator2 will default to use Conda/Mamba
 
 <img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/c9d15678-b4a7-42be-b0de-b649479f6d74">
 
-
-
-
-
-First, you need to install a Conda-based Python3 distribution.
+First, you need to install a Conda or Mamba package manager.
 The recommended choice is [Miniforge](https://github.com/conda-forge/miniforge#install) which not only provides the required Python and Conda commands, 
 but also includes Mamba - an extremely fast and robust replacement for the Conda package manager which is highly recommended.
-
-
-
 
 <table><tr><td>
 In case you don't use Miniforge you can always install Mamba into any other Conda-based Python distribution with:
@@ -180,7 +168,7 @@ Now you will be able to run asscom2. You can use the example data in path "tests
 ```bash
 
 # Activate the newly created conda environment containing the asscom2 launcher.
-conda activate asscom2
+mamba activate asscom2
 
 # First, create an empty directory and enter.
 mkdir test_ac2_install
