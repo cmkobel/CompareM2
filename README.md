@@ -80,7 +80,7 @@ Below is the graph the shows the order of execution of all possible analyses "ru
 
 ![dag](https://github.com/cmkobel/assemblycomparator2/assets/5913696/3164f060-3b36-4d51-8cf7-29a50d87ec84)
 
-
+This figure does not show the pseudo rules such as `meta`, `isolate`, `fast`, etc.
 
 **Hint:** Use `asscom2 --until <rulename> [<rulename2>...]` to run one or several specific analyses only. The rulename for each analysis to pick is listed below:
 
