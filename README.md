@@ -4,9 +4,9 @@
 
 🧬 Assemblycomparator2 "asscom2" is a genomes-to-report pipeline. It accepts prokaryotic genomic assemblies and compares them in many different ways. 
 
-🦠 Being designed to analyze both isolates and metagenomes it is useful for anyone working with genomic analysis of prokaryotes for fundamental research and clinically.
+🦠 Being designed to analyze assemblies of both isolates and metagenomes (MAGs), it is useful for anyone working with microbial genomics.
 
-💾 [Installing](#installation) Assemblycomparator2 on your system gives you access to 15 popular state-of-the-art [tools](https://github.com/cmkobel/assemblycomparator2#what-analyses-does-it-do) for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
+💾 [Installing](#installation) Assemblycomparator2 on your system gives you access to [15](https://github.com/cmkobel/assemblycomparator2#what-analyses-does-it-do) powerful state-of-the-art tools for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
 
 <img alt="asscom2 animation" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/623f6b42-2de6-457c-8f0d-3b3e5d646967">
 
@@ -18,10 +18,9 @@
 
 🐍 Assemblycomparator2 works by calling a Snakemake workflow that can be easily modified to use different parameters for the  underlying tools.
 
-
 <a href="https://github.com/cmkobel/assemblycomparator2/blob/master/readme-demos.md"><img height="192" alt="report document logo" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/e5f9b72c-2137-4850-8779-a5528d8ccbaf"></a>
 
-📙 All results are dynamically integrated in a compact portable report .html-document that emphasizes the central results. It can be browsed by users with no command line experience and can be easily shared as a single file. This report is generated even if a few jobs in the pipeline fail. See [examples](readme-demos.md).
+📙 All results are dynamically integrated in a compact portable report .html-document that emphasizes the central results. It can be browsed in any web browser and can be easily shared as a single file. This report is generated even if some jobs in the pipeline fail. See [examples](readme-demos.md).
 
 🧑‍💻 Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  Apptainer/Singularity/Docker images and conda environment definitions are available for all dependent software to run.
 
@@ -29,7 +28,7 @@ Assemblycomparator2 will -depending on circumstances- be renamed to "Proknome" o
 
 ## Usage examples
 
-Make a directory with the assembly-files you want to investigate with Assemblycomparator2. 
+Make a directory with the prokaryotic genomic assembly-files -or metagenomic bins- you want to investigate with Assemblycomparator2. 
 Go into that directory in the terminal, and run the command `asscom2`. 
 Assemblycomparator2 will then create a sub-directory, named "results_ac2/" containing a plethora of analysis results. 
   
@@ -48,7 +47,7 @@ Assemblycomparator2 will then create a sub-directory, named "results_ac2/" conta
 
 ##### A bit more advanced controls 
 
-  - Run analyses that are relevant to metagenomes only:
+  - Run analyses that are relevant to metagenomic assemblies only (as opposed to isolates):
 
     ```bash
     asscom2 --until meta
@@ -85,7 +84,7 @@ Below is the graph the shows the order of execution of all possible analyses "ru
 
 **Hint:** Use `asscom2 --until <rulename> [<rulename2>...]` to run one or several specific analyses only. The rulename for each analysis to pick is listed below:
 
-### For each assembly
+### For each sample (input genomic assembly file)
   - `copy` [any2fasta](https://github.com/tseemann/any2fasta) Wide input format support and validation.
   - `sequence_lengths` [seqkit](https://bioinf.shenwei.me/seqkit/usage/) Lengths and GC-content of individual contigs.
   - `assembly_stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) Generic assembly statistics.
@@ -102,7 +101,7 @@ Below is the graph the shows the order of execution of all possible analyses "ru
   - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) Species recognition.
   
 
-### For each group
+### Across samples
   - `roary` [roary](https://sanger-pathogens.github.io/Roary/) Pan and core genome.
   - `motulizer` and `motupan` [mOTUlizer](https://github.com/moritzbuck/mOTUlizer) Analyze core-pan spectrum genome and gene clusters (lacking in report).
   - `snp_dists` [snp-dists](https://github.com/tseemann/snp-dists) Core genome pairwise snp-distances.
