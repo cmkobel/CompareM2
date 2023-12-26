@@ -84,7 +84,10 @@ This figure does not show the pseudo rules such as `meta`, `isolate`, `fast`, et
 
 **Hint:** Use `asscom2 --until <rulename> [<rulename2>...]` to run one or several specific analyses only. The rulename for each analysis to pick is listed below:
 
-### For each sample (input genomic assembly file)
+### For each sample
+
+First, independent analyses are run on each of the input genomic assembly files.
+
   - `copy` [any2fasta](https://github.com/tseemann/any2fasta) Wide input format support and validation.
   - `sequence_lengths` [seqkit](https://bioinf.shenwei.me/seqkit/usage/) Lengths and GC-content of individual contigs.
   - `assembly_stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) Generic assembly statistics.
@@ -102,6 +105,9 @@ This figure does not show the pseudo rules such as `meta`, `isolate`, `fast`, et
   
 
 ### Across samples
+
+Then on the basis of the analysis of each input genomic assembly, these analyses are run across all samples.
+
   - `roary` [roary](https://sanger-pathogens.github.io/Roary/) Pan and core genome.
   - `motulizer` and `motupan` [mOTUlizer](https://github.com/moritzbuck/mOTUlizer) Analyze core-pan spectrum genome and gene clusters (lacking in report).
   - `snp_dists` [snp-dists](https://github.com/tseemann/snp-dists) Core genome pairwise snp-distances.
