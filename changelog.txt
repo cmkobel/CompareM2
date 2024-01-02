@@ -1,3 +1,6 @@
+2.5.15
+  - Limited snakemake version because of breaking dependency changes herein.
+
 2.5.14
   - problems with dockerfile fixed
 
