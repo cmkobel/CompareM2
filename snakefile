@@ -1,6 +1,6 @@
 __author__ = 'Carl M. Kobel'
 
-__version__ = "v2.5.14" 
+__version__ = "v2.5.15" 
 # Places to bump
 #  - here
 #  - changelog
