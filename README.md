@@ -228,7 +228,7 @@ If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/sn
 
 In the future we might add some of the following software packages into Assemblycomparator2.
 
-**Assembly basis (within samples)**
+**Assembly basis (within each sample)**
   - [Bakta](https://github.com/oschwengers/bakta/) Rapid & standardized annotation of bacterial genomes, MAGs & plasmids.
   - MCF Module Completion Fraction as an extension to the KEGG-based pathway enrichment analysis that helps interpretation.
   - [AlphaFold](https://github.com/google-deepmind/alphafold) Neural network protein folding prediction genome annotation.
@@ -240,7 +240,7 @@ In the future we might add some of the following software packages into Assembly
   - [Kaptive](https://github.com/katholt/Kaptive) Identification of surface polysaccharide loci for Klebsiella and Acinetobacter baumannii.
 
 
-**Batch basis (between samples)**
+**Batch basis (across all samples)**
 
   - GC3-profiling "fingerprinting" of the distribution of GC-content.
   - Recombination in core genome using the Bruen's PHI statistic.
