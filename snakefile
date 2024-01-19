@@ -52,18 +52,6 @@ base_variable = os.environ['ASSCOM2_BASE'] # rename to ASSCOM2_BASE
 DATABASES = os.environ['ASSCOM2_DATABASES'] # Defines where the databases are stored. One for all. when snakemake issue 262 is solved I'll make this more flexible for each rule.
 
 
-
-
-
-
-
-
-
-                                                                       
-
-                                                                         
-
-
 print("/*") # for .dot exports used to generate dag visualizations.
 print(f"                                                                   v{__version__}")
 print("         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ ")
