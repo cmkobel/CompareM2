@@ -34,7 +34,7 @@ from shutil import copyfile
 import subprocess
 import datetime
 
-containerized: "docker://cmkobel/assemblycomparator2:v2.5.15" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
+containerized: f"docker://cmkobel/assemblycomparator2:{__version__}" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
 
 # When executing, Snakemake will fail with a reasonable error message if the variables below are undefined.
 envvars:
@@ -63,13 +63,10 @@ print("                         Please log issues at:                      ")
 print("              github.com/cmkobel/assemblycomparator2/issues         ")
 print("                                                                    ")
 print(f"    batch_title:           {batch_title}")
-print(f"    base_variable:         {base_variable}                               ")
-print(f"    databases:             {DATABASES}                             ")
+print(f"    base_variable:         {base_variable}")
+print(f"    databases:             {DATABASES}")
 print(f"    roary_blastp_identity: {config['roary_blastp_identity']} (default 95)")
-print(f"    mlst_scheme:           {config['mlst_scheme']} (default automatic)   ")
-#print(f"    kraken2 database:      {config['asscom2_kraken2_db']}                ")
-#print(f"    gtdb:                  {config['gtdbtk_data_path']}                  ")
-
+print(f"    mlst_scheme:           {config['mlst_scheme']} (default automatic)")
 
 
 print()
@@ -82,13 +79,10 @@ print("    report downloads fast")
 #results_directory = "output_asscom2"
 
 
-
 results_directory = "results_ac2"
 
 
-
 #reference = config["reference"]
-
 
 
 # --- Read in relevant files in the current working directory ----------------
@@ -436,71 +430,9 @@ rule dbcan_download:
 
 
 
-# This rule is currently not in use since kegg_diamond is both better and faster.
-rule kofam_download:
-    output:
-        database_representative = DATABASES + "/kofam/ac2_kofam_database_representative.flag",
-    conda: "conda_definitions/curl.yaml" # Now it also has unzip which necessary here.
-    shell: """
-
-
-        # TODO: Make a way to check for internet access instead of just crashing. Same for the others
-
-
-        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
-        if [ -f "{output.database_representative}" ]; then    
-
-            >&2 echo "Flag exists already: touch it to update the mtime ..."
-            touch {output.database_representative}
-            
-        else
-
-            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
-
-            # Enter the directory so we don't have to pass a lot of the same paths in this script.
-            cd $(dirname {output.database_representative})
-
-
-            # 1) Clone git repository
-            wget \
-                --continue \
-                https://github.com/takaram/kofam_scan/archive/refs/heads/master.zip 
-
-            unzip master.zip \
-                -d github-takaram-kofam_scan
-
-            echo "Downloaded takaram/kofam_scan from github at $(date)" > github-takaram-kofam_scan/ac2_info.txt
-
-
-    
-            # 2) Download FTP stuff
-
-            wget --continue ftp://ftp.genome.jp/pub/db/kofam/ko_list.gz
-            gunzip ko_list.gz
-
-            wget --continue ftp://ftp.genome.jp/pub/db/kofam/profiles.tar.gz
-            tar -xf profiles.tar.gz
-
-
-            rm profiles.tar.gz || echo "Failed to clean up." 
-
-
-            >&2 echo "kofam setup completed"
-            echo "Downloaded kofam at $(date -Iseconds)" > $(dirname {output.database_representative})/info.txt
-
-            mkdir -p $(dirname {output.database_representative})
-            touch {output.database_representative}
-
-        fi
-
-    """
-
-
 
 rule gtdb_download:
     output:
-        #database_representative = touch("{base_variable}/databases/gtdb/gtdb_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        #database_representative = touch("{base_variable}/databases/gtdb/ac2_gtdb_database_representative.flag")
         database_representative = DATABASES + "/gtdb/ac2_gtdb_database_representative.flag"
     conda: "conda_definitions/curl.yaml"
     shell: """
@@ -580,8 +512,6 @@ rule sequence_lengths:
 
 
 
-
-
 rule prokka:
     input: 
         metadata = "{results_directory}/metadata.tsv",
@@ -598,9 +528,6 @@ rule prokka:
         mem_mb = 8192,
     threads: 4
     shell: """
-      
-        # For debugging of minced
-        minced --version 
         
         prokka \
             --cpus {threads} \
@@ -623,70 +550,10 @@ rule prokka:
 
 
 
-# I see that much time is spent just reading the database from disk. It is much more efficient to just read the database once, and then iterate through each sample. This can be accomplished be catting all files together, keeping track of the sample names.
-# rule kraken2:
-#     input: 
-#         metadata = "{results_directory}/metadata.tsv",
-#         fasta = df["input_file_fasta"].tolist(),
-#         database = expand("{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag", base_variable = base_variable),
-#     output: 
-#         report = "{results_directory}/kraken2/kraken2_report.tsv",
-#         full = "{results_directory}/kraken2/kraken2_full.tsv",
-#     params: 
-#         #asscom2_kraken2_db = config["asscom2_kraken2_db"],
-#         temporary_concatenation = "{results_directory}/kraken2/temporary_concatenation.fa",
-#         base_variable = base_variable,
-#     conda: "conda_definitions/kraken2.yaml"
-#     container: "docker://cmkobel/kraken2" # was disabled already
-#     benchmark: "{results_directory}/benchmarks/benchmark.kraken2_all.tsv"
-#     threads: 8
-#     resources:
-#         mem_mb = 64000,
-#     shell: """
-
-#         db_path="{params.base_variable}/databases/kraken2"
-#         echo using kraken2 database $db_path
-
-#         # Purge old concatenation file
-#         test -f {params.temporary_concatenation} && rm {params.temporary_concatenation}
-
-#         # Concatenate assemblies with an &&&& separator in the header
-#         for fasta in {input.fasta:q}; do
-#             bn=$(basename $fasta)
-#             echo "Catting ${{bn}} ..."
-
-#             sed "s/>.*/&\&\&\&\&\"$bn\"/" $fasta \
-#             >> {params.temporary_concatenation}
-
-#         done
-
-
-#         # Run kraken2
-#         # https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown
-#         kraken2 \
-#             --threads {threads} \
-#             --db $db_path \
-#             --report {output.report} \
-#             --use-mpa-style \
-#             --use-names \
-#             {params.temporary_concatenation} \
-#             > {output.full}
-
-#         # Argument on confidence parameter https://www.biostars.org/p/402619/ --confidence 0.1 \
-
-
-#         # Clean up
-#         rm {params.temporary_concatenation}
-
-#         {void_report}
-#     """
-
 rule kraken2:
     input: 
         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
         assembly = "{results_directory}/samples/{sample}/{sample}.fa",
-        #database = expand("{base_variable}/databases/kraken2/hash.k2d", base_variable = base_variable),
-        #database = expand("{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag", base_variable = base_variable),
         database_representative = DATABASES + "/kraken2/ac2_kraken2_database_representative.flag"
     output: 
         report = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv",
@@ -719,7 +586,6 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
     input: 
         metadata = "{results_directory}/metadata.tsv",
         aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
-        #database_representative = expand("{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag", base_variable = base_variable),
         database_representative = DATABASES + "/dbcan/ac2_dbcan_database_representative.flag"
     output: 
         overview_table = "{results_directory}/samples/{sample}/dbcan/overview.txt"
@@ -755,7 +621,7 @@ rule interproscan:
     input: 
         metadata = "{results_directory}/metadata.tsv",
         aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
-        # database_representative # No external database is needed.
+        # No external database is needed.
     output:
         tsv = "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv",
     params:
@@ -784,55 +650,6 @@ rule interproscan:
     """
 
 
-
-# Disabled because I think the diamond_kegg based results are much better, at least faster.
-rule kofam_scan:
-    input: 
-        metadata = "{results_directory}/metadata.tsv", # For the report
-        aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
-        database_representative = base_variable + "/databases/kofam/ac2_kofam_database_representative.flag",
-    output:
-        full = "{results_directory}/samples/{sample}/kofam_scan/{sample}_kofam_scan_full.tsv",
-        significant = "{results_directory}/samples/{sample}/kofam_scan/{sample}_kofam_scan_significant.tsv",
-    params: 
-        executable = base_variable + "/databases/kofam/github-takaram-kofam_scan/kofam_scan-master/exec_annotation",
-        ko_list = base_variable + "/databases/kofam/ko_list",
-        profile = base_variable + "/databases/kofam/profiles"
-    conda: "conda_definitions/kofam_scan.yaml"
-    # container: TODO # was disabled already
-    benchmark: "{results_directory}/benchmarks/benchmark.kofam_scan.{sample}.tsv"
-    threads: 4
-    shell: """
-
-        # Must use unique --tmp-dir because of https://github.com/takaram/kofam_scan/issues/8#issuecomment-619640654
-
-        # https://github.com/takaram/kofam_scan/
-        {params.executable} \
-            --cpu {threads} \
-            --ko-list {params.ko_list} \
-            --profile {params.profile} \
-            --format detail-tsv \
-            --e-value 0.0001 \
-            --tmp-dir $(dirname {output.full})/tmp \
-            -o {output.full} \
-            {input.aminoacid}
-
-
-        # kofam_scan outputs way, way too many spurious results, so here I'm making a version that is filtered for "singificant" results only.
-        echo "Making a filtered version with only the asterisk (*) marked alignments."
-        grep \
-            -E "^\*" \
-            {output.full} \
-            > {output.significant}
-        # And then, one could consider deleting the "full" file altogether, and just stick with the significant results.
-
-
-        # Clean up temporary directory
-        rm -r $(dirname {output.full})/tmp
-
-
-
-    """
 
 
 rule busco:
@@ -1106,7 +923,6 @@ rule motulizer:
     """
 
 # motulizer and motupan could run together in the same rule, but I like how the first job can start right away and the other can run trailing prokka. Also (todo), in the future I might want to run motupan separately for each motulizer-mOTU.
-
 rule motupan: 
     input: 
         faas =  expand("{results_directory}/samples/{sample}/prokka/{sample}.faa", results_directory = results_directory, sample = df["sample"]) # From prokka
@@ -1149,9 +965,7 @@ def get_mem_gtdbtk(wildcards, attempt):
 rule gtdbtk:
     input: 
         metadata = "{results_directory}/metadata.tsv",
-        #database_representative = expand("{base_variable}/databases/gtdb/ac2_gtdb_database_representative.flag", base_variable = base_variable),
         database_representative = DATABASES + "/gtdb/ac2_gtdb_database_representative.flag",
-        
         fasta = df["input_file_fasta"].tolist(),
     output: "{results_directory}/gtdbtk/gtdbtk.summary.tsv"
     params:
@@ -1159,11 +973,9 @@ rule gtdbtk:
         out_dir = "{results_directory}/gtdbtk/",
         base_variable = base_variable,
         mash_db = f"{DATABASES}/gtdb_sketch/mash_db.msh",
-        #gtdbtk_data_path = config["gtdbtk_data_path"],
     threads: 8
     #retries: 3
     resources:
-        #mem_mb = 150000, # Last time I remember, it used 130000
         # mem_mb = get_mem_gtdbtk, # works great, but I want to use a limited amount to test a potential hardware upgrade
         mem_mb = 131072,
         runtime = "48h"
@@ -1499,6 +1311,7 @@ report_call = f"""
 
     """
 
+
 onsuccess:
     print("On success: calling report subpipeline ...")
     shell(report_call)
@@ -1509,10 +1322,6 @@ onerror:
 
 
 
-
-
 print("*/")
-
-
 
 
