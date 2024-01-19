@@ -1,6 +1,6 @@
 ---
 title: "`r batch_title`"
-subtitle: "assemblycomparator2 Report"
+subtitle: "Assemblycomparator2 Report"
 date: "`r Sys.time()`"
 output:
   html_document:
@@ -406,5 +406,5 @@ section_definition_table %>%
 
 
 
-<p class = "shaded">[assemblycomparator2 v2.5.16](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) genomes to report pipeline. Copyright (C) 2019-2023 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)</p>
+<p class = "shaded">[assemblycomparator2 v`r version_string`](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) genomes to report pipeline. Copyright (C) 2019-2023 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)</p>
 

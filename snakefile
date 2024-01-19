@@ -22,6 +22,9 @@ __version__ = "2.5.16"
 # Update dag picture in documentation with this command (with anaconda/graphviz)
 # asscom2 --forceall --rulegraph | dot -Tpdf > dag.pdf
 
+# For testing without using the apptainer image you can enter the repository directory and run:
+# export ASSCOM2_BASE=$(pwd -P); export ASSCOM2_PROFILE=profiles/conda/local/; snakemake --snakefile snakefile --profile $ASSCOM2_PROFILE --configfile ${ASSCOM2_BASE}/config.yaml --until fast
+
 
 import os
 from os import listdir
@@ -1305,7 +1308,7 @@ report_call = f"""
         && snakemake \
             --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
             --profile $ASSCOM2_PROFILE \
-            --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title} image_version={__version__}
+            --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title} version_string={__version__}
     ) \
     || echo "Info: Not calling the report_subpipeline as either the flag or metadata is missing. Run a rule that mandates a report section to generate the report."
 

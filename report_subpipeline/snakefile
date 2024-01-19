@@ -8,9 +8,9 @@ __author__ = 'Carl M. Kobel'
 results_directory = config['results_directory'] # results_ac2
 base_variable = config['base_variable'] # path/to/gitrepo/assemblycomparator2
 batch_title = config['batch_title'] # E.g. E._faecium 
-image_version = config['image_version']
+version_string = config['version_string']
 
-containerized: f"docker://cmkobel/assemblycomparator2:v{image_version}" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
+containerized: f"docker://cmkobel/assemblycomparator2:v{version_string}" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
 
 print('report subpipeline: results_directory:', results_directory)
 print('report subpipeline: base_variable:', base_variable)
@@ -57,7 +57,11 @@ rule report:
         #mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.
 
         Rscript -e '
-            base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"
+
+            # Set parameters
+            base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"; version_string = "{version_string}"
+
+            # Render report
             rmarkdown::render(
                 input = "scripts_temporary/genomes_to_report_v3.Rmd",
                 output_format = "html_document",
