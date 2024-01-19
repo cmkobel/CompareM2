@@ -1,6 +1,6 @@
 __author__ = 'Carl M. Kobel'
 
-__version__ = "v2.5.15" 
+__version__ = "2.5.15" 
 # Places to bump
 #  - here, including dockerfile pull version
 #  - changelog
@@ -34,7 +34,7 @@ from shutil import copyfile
 import subprocess
 import datetime
 
-containerized: f"docker://cmkobel/assemblycomparator2:{__version__}" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
+containerized: f"docker://cmkobel/assemblycomparator2:v{__version__}" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
 
 # When executing, Snakemake will fail with a reasonable error message if the variables below are undefined.
 envvars:
@@ -51,7 +51,7 @@ DATABASES = os.environ['ASSCOM2_DATABASES'] # Defines where the databases are st
 
 
 print("/*") # for .dot exports used to generate dag visualizations.
-print(f"                                                                   {__version__}")
+print(f"                                                                   v{__version__}")
 print("         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ ")
 print("        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗")
 print("        ███████║███████╗███████╗██║     ██║   ██║██╔████╔██║ █████╔╝")
@@ -1305,7 +1305,7 @@ report_call = f"""
         && snakemake \
             --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
             --profile $ASSCOM2_PROFILE \
-            --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title}
+            --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title} image_version={__version__}
     ) \
     || echo "Info: Not calling the report_subpipeline as either the flag or metadata is missing. Run a rule that mandates a report section to generate the report."
 
