@@ -1,8 +1,12 @@
+# May the data passing through this pipeline
+# somehow help to bring just a little more peace 
+# in this troubled world.
+
 __author__ = 'Carl M. Kobel'
 
-__version__ = "2.5.15" 
+__version__ = "2.5.16"
 # Places to bump
-#  - here, including dockerfile pull version
+#  - here
 #  - changelog
 #  - ./asscom2 binary
 #  - report markdown bottom
@@ -10,13 +14,9 @@ __version__ = "2.5.15"
 #  - report snakefile Dockerfile image pull so it reuses the same already downloaded image.
 
 
-# May the data passing through this pipeline
-# somehow help to bring just a little more peace 
-# in this troubled world.
-
 # Update Dockerfile with this command
-# asscom2 --containerize > Dockerfile # And remove header-text.
-# export ASSCOM2_BASE=$(pwd -P); export ASSCOM2_PROFILE=profiles/apptainer/local/; snakemake --snakefile snakefile --configfile ${ASSCOM2_BASE}/config.yaml --containerize
+# export ASSCOM2_BASE=$(pwd -P); export ASSCOM2_PROFILE=profiles/apptainer/local/; snakemake --snakefile snakefile --configfile ${ASSCOM2_BASE}/config.yaml --containerize > Dockerfile 
+# And then remove the header text (asscom2 logo).
 
 
 # Update dag picture in documentation with this command (with anaconda/graphviz)
