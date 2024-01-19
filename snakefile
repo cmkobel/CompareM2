@@ -6,12 +6,12 @@ __author__ = 'Carl M. Kobel'
 
 __version__ = "2.5.16"
 # Places to bump
-#  - here
+#  - here, because the snakefile can possibly be run without the ./asscom2 binary. It is unrealistic to run the report subpipeline standalone, so that one get's the string from here (see bottom).
 #  - changelog
 #  - ./asscom2 binary
-#  - report markdown bottom
-#  - snakefile Dockerfile image pull
-#  - report snakefile Dockerfile image pull so it reuses the same already downloaded image.
+#  - report markdown bottom?
+#  - snakefile Dockerfile image pull?
+#  - report snakefile Dockerfile image pull so it reuses the same already downloaded image.?
 
 
 # Update Dockerfile with this command
@@ -1324,6 +1324,6 @@ onerror:
 
 
 
-print("*/")
+print("*/") # Makes it easy to export to .dot and to remove header from the generated Dockerfile.
 
 

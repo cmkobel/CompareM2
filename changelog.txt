@@ -1,5 +1,6 @@
 2.5.16
-  - Indirect bug because of an uncaught docker error.
+  - Indirect bug because of an uncaught docker error. Forced recompilation of the image should fix that.
+  - Propagation of version string to easy version bumping.
 
 2.5.15
   - Limited snakemake version because of breaking dependency changes herein.
