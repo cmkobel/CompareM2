@@ -53,6 +53,17 @@ DATABASES = os.environ['ASSCOM2_DATABASES'] # Defines where the databases are st
 
 
 
+
+
+
+
+
+
+                                                                       
+
+                                                                         
+
+
 print("/*") # for .dot exports used to generate dag visualizations.
 print(f"                                                                   v{__version__}")
 print("         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ ")
