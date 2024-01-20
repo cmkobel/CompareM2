@@ -1,6 +1,6 @@
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="949b634475dab2d164f5134b6e460ead56c9c13862248cd1971190f817f6ce3b"
+LABEL io.github.snakemake.conda_env_hash="13d4d57892931227d575873e39663143c71b432b3c1343c47a823783491f2226"
 
 # Step 1: Retrieve conda environments
 
@@ -230,30 +230,6 @@ RUN mkdir -p /conda-envs/891e586b9f3c2e255e7a3c8e1d01b14d
 COPY conda_definitions/r-clusterProfiler.yaml /conda-envs/891e586b9f3c2e255e7a3c8e1d01b14d/environment.yaml
 
 # Conda environment:
-#   source: conda_definitions/roary_see-comments-in-this-file.yaml
-#   prefix: /conda-envs/c510ddc9269801c6f267bbc20945cb01
-#   name: roary_new
-#   channels:
-#     - conda-forge
-#     - bioconda
-#     - r
-#     - defaults
-#   dependencies:
-#     - roary
-#   
-#   
-#   
-#   # Warning: This only works if you set the channel priority to flexible. Not strict.
-#   # conda config --set channel_priority false
-#   # 
-#   # Install roary
-#   #
-#   # Then set it back with
-#   # conda config --set channel_priority strict
-RUN mkdir -p /conda-envs/c510ddc9269801c6f267bbc20945cb01
-COPY conda_definitions/roary_see-comments-in-this-file.yaml /conda-envs/c510ddc9269801c6f267bbc20945cb01/environment.yaml
-
-# Conda environment:
 #   source: conda_definitions/seqkit.yaml
 #   prefix: /conda-envs/1e9be5c81cf2e48459587271cf703755
 #   name: seqkit
@@ -319,7 +295,6 @@ RUN mamba env create --prefix /conda-envs/e96caef90ba4287605b7ab60379bb5dc --fil
     mamba env create --prefix /conda-envs/e0b1329bcca3902e264fa723669e7f96 --file /conda-envs/e0b1329bcca3902e264fa723669e7f96/environment.yaml && \
     mamba env create --prefix /conda-envs/88a7fe7451bb32309f7ac6670e364e56 --file /conda-envs/88a7fe7451bb32309f7ac6670e364e56/environment.yaml && \
     mamba env create --prefix /conda-envs/891e586b9f3c2e255e7a3c8e1d01b14d --file /conda-envs/891e586b9f3c2e255e7a3c8e1d01b14d/environment.yaml && \
-    mamba env create --prefix /conda-envs/c510ddc9269801c6f267bbc20945cb01 --file /conda-envs/c510ddc9269801c6f267bbc20945cb01/environment.yaml && \
     mamba env create --prefix /conda-envs/1e9be5c81cf2e48459587271cf703755 --file /conda-envs/1e9be5c81cf2e48459587271cf703755/environment.yaml && \
     mamba env create --prefix /conda-envs/79addc38bfc17b635a3fa2c401ab213e --file /conda-envs/79addc38bfc17b635a3fa2c401ab213e/environment.yaml && \
     mamba env create --prefix /conda-envs/490c9344c6805f820e98aa8dd6b11ef4 --file /conda-envs/490c9344c6805f820e98aa8dd6b11ef4/environment.yaml && \
