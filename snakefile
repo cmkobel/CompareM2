@@ -855,7 +855,7 @@ rule roary:
         #mem_mb = 32768,
         mem_mb = get_mem_roary,
         runtime = "24h",
-    conda: "conda_definitions/roary_see-comments-in-this-file.yaml"
+    # conda: "conda_definitions/roary_see-comments-in-this-file.yaml" # deactivated 
     shell: """
     
         # Since I reinstalled conda, I've had problems with "Can't locate Bio/Roary/CommandLine/Roary.pm in INC". Below is a hacky fix
