@@ -22,7 +22,7 @@ __version__ = "2.5.16"
 # Update dag picture in documentation with this command (with anaconda/graphviz)
 # asscom2 --forceall --rulegraph | dot -Tpdf > dag.pdf
 
-# For developing and testing (using conda) prior to publication of next version apptainer image, you can rune the following from the repository directory:
+# For developing and testing (using conda) prior to publication of next version apptainer image, you can run the following from the repository directory:
 # export ASSCOM2_BASE=$(pwd -P); export ASSCOM2_PROFILE=profiles/conda/local/; snakemake --snakefile snakefile --profile $ASSCOM2_PROFILE --configfile ${ASSCOM2_BASE}/config.yaml --until fast
 
 
