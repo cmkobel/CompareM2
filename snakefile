@@ -12,6 +12,7 @@ __version__ = "2.5.16"
 #  - report markdown bottom?
 #  - snakefile Dockerfile image pull?
 #  - report snakefile Dockerfile image pull so it reuses the same already downloaded image.?
+# Also, paste changelog into the github release. Use pre-release and publish it after it has been tested.
 
 
 # Update Dockerfile with this command
