@@ -15,16 +15,16 @@ __version__ = "2.5.16"
 # Also, paste changelog into the github release. Use pre-release and publish it after it has been tested.
 
 
-# Update Dockerfile with this command
+# Update Dockerfile:
 # export ASSCOM2_BASE=$(pwd -P); export ASSCOM2_PROFILE=profiles/apptainer/local/; snakemake --snakefile snakefile --configfile ${ASSCOM2_BASE}/config.yaml --containerize > Dockerfile 
 # And then remove the header text (asscom2 logo).
 
+# Run with conda:
+# For developing and testing (using conda) prior to publication of next version apptainer image, you can run the following from the repository directory:
+# export ASSCOM2_BASE=$(pwd -P); export ASSCOM2_PROFILE=profiles/conda/local/; snakemake --snakefile snakefile --profile $ASSCOM2_PROFILE --configfile ${ASSCOM2_BASE}/config.yaml --until fast
 
 # Update dag picture in documentation with this command (with anaconda/graphviz)
 # asscom2 --forceall --rulegraph | dot -Tpdf > dag.pdf
-
-# For developing and testing (using conda) prior to publication of next version apptainer image, you can run the following from the repository directory:
-# export ASSCOM2_BASE=$(pwd -P); export ASSCOM2_PROFILE=profiles/conda/local/; snakemake --snakefile snakefile --profile $ASSCOM2_PROFILE --configfile ${ASSCOM2_BASE}/config.yaml --until fast
 
 
 import os
