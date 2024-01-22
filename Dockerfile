@@ -1,6 +1,6 @@
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="13d4d57892931227d575873e39663143c71b432b3c1343c47a823783491f2226"
+LABEL io.github.snakemake.conda_env_hash="94b535d9ddfc1435166a6892e5f3fa72bc172f768e4d38d2d92f1833f210bca0"
 
 # Step 1: Retrieve conda environments
 
@@ -230,6 +230,30 @@ RUN mkdir -p /conda-envs/891e586b9f3c2e255e7a3c8e1d01b14d
 COPY conda_definitions/r-clusterProfiler.yaml /conda-envs/891e586b9f3c2e255e7a3c8e1d01b14d/environment.yaml
 
 # Conda environment:
+#   source: conda_definitions/roary_see-comments-in-this-file.yaml
+#   prefix: /conda-envs/c510ddc9269801c6f267bbc20945cb01
+#   name: roary_new
+#   channels:
+#     - conda-forge
+#     - bioconda
+#     - r
+#     - defaults
+#   dependencies:
+#     - roary
+#   
+#   
+#   
+#   # Warning: This only works if you set the channel priority to flexible. Not strict.
+#   # conda config --set channel_priority false
+#   # 
+#   # Install roary
+#   #
+#   # Then set it back with
+#   # conda config --set channel_priority strict
+RUN mkdir -p /conda-envs/c510ddc9269801c6f267bbc20945cb01
+COPY conda_definitions/roary_see-comments-in-this-file.yaml /conda-envs/c510ddc9269801c6f267bbc20945cb01/environment.yaml
+
+# Conda environment:
 #   source: conda_definitions/seqkit.yaml
 #   prefix: /conda-envs/1e9be5c81cf2e48459587271cf703755
 #   name: seqkit
@@ -254,7 +278,7 @@ COPY conda_definitions/snp-dists.yaml /conda-envs/79addc38bfc17b635a3fa2c401ab21
 
 # Conda environment:
 #   source: report_subpipeline/conda_definitions/r-markdown.yaml
-#   prefix: /conda-envs/490c9344c6805f820e98aa8dd6b11ef4
+#   prefix: /conda-envs/7ec487d44d72b8b93e28e12e17ef59c0
 #   name: r-markdown
 #   channels:
 #     - conda-forge
@@ -263,21 +287,19 @@ COPY conda_definitions/snp-dists.yaml /conda-envs/79addc38bfc17b635a3fa2c401ab21
 #     - r
 #   dependencies:
 #     - r-base=4.2.2
-#     - r-essentials
-#     - r-tidyverse
-#     - r-dt
-#     - r-prettydoc
-#     - r-rmarkdown
-#     - r-phytools
-#     - r-ape
-#     - r-gridextra
-#     - zip
-RUN mkdir -p /conda-envs/490c9344c6805f820e98aa8dd6b11ef4
-COPY report_subpipeline/conda_definitions/r-markdown.yaml /conda-envs/490c9344c6805f820e98aa8dd6b11ef4/environment.yaml
+#     - r-essentials=4.2
+#     - r-tidyverse=2.0.0
+#     - r-dt=0.28 # 0.31 in the one that fails
+#     - r-prettydoc=0.4.1
+#     - r-rmarkdown=2.25
+#     - r-phytools=2.0_3 # 2.1_1 i nyeste conda
+#     - r-ape=5.7_1
+#     - r-gridextra=2.3
+#     - zip=3.0
+RUN mkdir -p /conda-envs/7ec487d44d72b8b93e28e12e17ef59c0
+COPY report_subpipeline/conda_definitions/r-markdown.yaml /conda-envs/7ec487d44d72b8b93e28e12e17ef59c0/environment.yaml
 
 # Step 2: Generate conda environments
-
-RUN conda config --set channel_priority strict
 
 RUN mamba env create --prefix /conda-envs/e96caef90ba4287605b7ab60379bb5dc --file /conda-envs/e96caef90ba4287605b7ab60379bb5dc/environment.yaml && \
     mamba env create --prefix /conda-envs/756e0ce005a36bc03fd1b91447a60f6d --file /conda-envs/756e0ce005a36bc03fd1b91447a60f6d/environment.yaml && \
@@ -297,7 +319,8 @@ RUN mamba env create --prefix /conda-envs/e96caef90ba4287605b7ab60379bb5dc --fil
     mamba env create --prefix /conda-envs/e0b1329bcca3902e264fa723669e7f96 --file /conda-envs/e0b1329bcca3902e264fa723669e7f96/environment.yaml && \
     mamba env create --prefix /conda-envs/88a7fe7451bb32309f7ac6670e364e56 --file /conda-envs/88a7fe7451bb32309f7ac6670e364e56/environment.yaml && \
     mamba env create --prefix /conda-envs/891e586b9f3c2e255e7a3c8e1d01b14d --file /conda-envs/891e586b9f3c2e255e7a3c8e1d01b14d/environment.yaml && \
+    mamba env create --prefix /conda-envs/c510ddc9269801c6f267bbc20945cb01 --file /conda-envs/c510ddc9269801c6f267bbc20945cb01/environment.yaml && \
     mamba env create --prefix /conda-envs/1e9be5c81cf2e48459587271cf703755 --file /conda-envs/1e9be5c81cf2e48459587271cf703755/environment.yaml && \
     mamba env create --prefix /conda-envs/79addc38bfc17b635a3fa2c401ab213e --file /conda-envs/79addc38bfc17b635a3fa2c401ab213e/environment.yaml && \
-    mamba env create --prefix /conda-envs/490c9344c6805f820e98aa8dd6b11ef4 --file /conda-envs/490c9344c6805f820e98aa8dd6b11ef4/environment.yaml && \
+    mamba env create --prefix /conda-envs/7ec487d44d72b8b93e28e12e17ef59c0 --file /conda-envs/7ec487d44d72b8b93e28e12e17ef59c0/environment.yaml && \
     mamba clean --all -y

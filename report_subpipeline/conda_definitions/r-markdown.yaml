@@ -7,14 +7,12 @@ channels:
 dependencies:
   - r-base=4.2.2
   - r-essentials=4.2
-  - r-tidyverse
-  - r-dt=0.31
-  - r-prettydoc
-  - r-rmarkdown
-  - r-phytools=2.0_3
-  - r-ape
-  - r-gridextra
-  - zip
-
-#flex
+  - r-tidyverse=2.0.0
+  - r-dt=0.28 # 0.31 in the one that fails
+  - r-prettydoc=0.4.1
+  - r-rmarkdown=2.25
+  - r-phytools=2.0_3 # 2.1_1 i nyeste conda
+  - r-ape=5.7_1
+  - r-gridextra=2.3
+  - zip=3.0
   
