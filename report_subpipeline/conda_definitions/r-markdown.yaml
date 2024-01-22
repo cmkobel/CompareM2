@@ -6,13 +6,15 @@ channels:
   - r
 dependencies:
   - r-base=4.2.2
-  - r-essentials
+  - r-essentials=4.2
   - r-tidyverse
-  - r-dt
+  - r-dt=0.31
   - r-prettydoc
   - r-rmarkdown
-  - r-phytools
+  - r-phytools=2.0_3
   - r-ape
   - r-gridextra
   - zip
+
+#flex
   
