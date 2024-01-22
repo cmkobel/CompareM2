@@ -1,6 +1,6 @@
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="a955fcaa30c288313c9d7102e5fe2b4b9323f3ee78a87e79e89eaafb89a69fb7"
+LABEL io.github.snakemake.conda_env_hash="993cdeb78a8dc0f53103bc37562eb61b8affa4cb60bb228a0f1d419278ffc6d8"
 
 # Step 1: Retrieve conda environments
 
@@ -278,7 +278,7 @@ COPY conda_definitions/snp-dists.yaml /conda-envs/79addc38bfc17b635a3fa2c401ab21
 
 # Conda environment:
 #   source: report_subpipeline/conda_definitions/r-markdown.yaml
-#   prefix: /conda-envs/7ec487d44d72b8b93e28e12e17ef59c0
+#   prefix: /conda-envs/3d290c6be138238b63d6c8ec3d9e2a0b
 #   name: r-markdown
 #   channels:
 #     - conda-forge
@@ -286,18 +286,32 @@ COPY conda_definitions/snp-dists.yaml /conda-envs/79addc38bfc17b635a3fa2c401ab21
 #     - defaults
 #     - r
 #   dependencies:
-#     - r-base=4.2.2
-#     - r-essentials=4.2
-#     - r-tidyverse=2.0.0
-#     - r-dt=0.28 # 0.31 in the one that fails
-#     - r-prettydoc=0.4.1
-#     - r-rmarkdown=2.25
-#     - r-phytools=2.0_3 # 2.1_1 i nyeste conda
-#     - r-ape=5.7_1
-#     - r-gridextra=2.3
-#     - zip=3.0
-RUN mkdir -p /conda-envs/7ec487d44d72b8b93e28e12e17ef59c0
-COPY report_subpipeline/conda_definitions/r-markdown.yaml /conda-envs/7ec487d44d72b8b93e28e12e17ef59c0/environment.yaml
+#     - r-base=4.1
+#     - r-essentials
+#     - r-tidyverse
+#     - r-dt
+#     - r-prettydoc
+#     - r-rmarkdown
+#     - r-phytools
+#     - r-ape
+#     - r-gridextra
+#     - zip
+#   
+#     
+#   # dependencies:
+#   #   - r-base=4.2.2
+#   #   - r-essentials=4.2
+#   #   - r-tidyverse=2.0.0
+#   #   - r-dt=0.28 # 0.31 in the one that fails
+#   #   - r-prettydoc=0.4.1
+#   #   - r-rmarkdown=2.25
+#   #   - r-phytools=2.0_3 # 2.1_1 i nyeste conda
+#   #   - r-ape=5.7_1
+#   #   - r-gridextra=2.3
+#   #   - zip=3.0
+#   #
+RUN mkdir -p /conda-envs/3d290c6be138238b63d6c8ec3d9e2a0b
+COPY report_subpipeline/conda_definitions/r-markdown.yaml /conda-envs/3d290c6be138238b63d6c8ec3d9e2a0b/environment.yaml
 
 # Step 2: Generate conda environments
 
@@ -322,5 +336,5 @@ RUN mamba env create --prefix /conda-envs/e96caef90ba4287605b7ab60379bb5dc --fil
     mamba env create --prefix /conda-envs/c510ddc9269801c6f267bbc20945cb01 --file /conda-envs/c510ddc9269801c6f267bbc20945cb01/environment.yaml && \
     mamba env create --prefix /conda-envs/1e9be5c81cf2e48459587271cf703755 --file /conda-envs/1e9be5c81cf2e48459587271cf703755/environment.yaml && \
     mamba env create --prefix /conda-envs/79addc38bfc17b635a3fa2c401ab213e --file /conda-envs/79addc38bfc17b635a3fa2c401ab213e/environment.yaml && \
-    mamba env create --prefix /conda-envs/7ec487d44d72b8b93e28e12e17ef59c0 --file /conda-envs/7ec487d44d72b8b93e28e12e17ef59c0/environment.yaml && \
+    mamba env create --prefix /conda-envs/3d290c6be138238b63d6c8ec3d9e2a0b --file /conda-envs/3d290c6be138238b63d6c8ec3d9e2a0b/environment.yaml && \
     mamba clean --all -y
