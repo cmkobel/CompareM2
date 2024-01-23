@@ -1,6 +1,38 @@
+/*
+                                                                   v2.5.16
+         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ 
+        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗
+        ███████║███████╗███████╗██║     ██║   ██║██╔████╔██║ █████╔╝
+        ██╔══██║╚════██║╚════██║██║     ██║   ██║██║╚██╔╝██║██╔═══╝ 
+        ██║  ██║███████║███████║╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗
+        ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
+                       A.K.A. assemblycomparator2                   
+                         Please log issues at:                      
+              github.com/cmkobel/assemblycomparator2/issues         
+                                                                    
+    batch_title:           asscom2
+    base_variable:         /glittertind/home/carl/asscom2
+    databases:             /spaceface/shared_databases/asscom2_v2.5.5+
+    roary_blastp_identity: 95 (default 95)
+    mlst_scheme:           automatic (default automatic)
+
+    Available rules:
+    sequence_lengths prokka kraken2 dbcan interproscan
+    busco checkm2 diamond_kegg kegg_pathway roary snp_dists
+    assembly_stats gtdbtk abricate mlst mashtree fasttree
+    report downloads fast
+
+ 1-index                     sample extension
+       1 Treatment_LowE.metabat.618     fasta
+       2 Treatment_LowE.metabat.242     fasta
+       3 Treatment_LowE.metabat.461     fasta
+       4 Treatment_MidE.metabat.482     fasta
+//
+
+*/
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="993cdeb78a8dc0f53103bc37562eb61b8affa4cb60bb228a0f1d419278ffc6d8"
+LABEL io.github.snakemake.conda_env_hash="949b634475dab2d164f5134b6e460ead56c9c13862248cd1971190f817f6ce3b"
 
 # Step 1: Retrieve conda environments
 
@@ -19,15 +51,15 @@ COPY conda_definitions/abricate.yaml /conda-envs/e96caef90ba4287605b7ab60379bb5d
 
 # Conda environment:
 #   source: conda_definitions/any2fasta.yaml
-#   prefix: /conda-envs/b839298ca15d80e708907c93568dc38a
+#   prefix: /conda-envs/756e0ce005a36bc03fd1b91447a60f6d
 #   name: any2fasta
 #   channels:
 #     - conda-forge
 #     - bioconda
 #   dependencies:
-#     - any2fasta=0.4
-RUN mkdir -p /conda-envs/b839298ca15d80e708907c93568dc38a
-COPY conda_definitions/any2fasta.yaml /conda-envs/b839298ca15d80e708907c93568dc38a/environment.yaml
+#     - any2fasta
+RUN mkdir -p /conda-envs/756e0ce005a36bc03fd1b91447a60f6d
+COPY conda_definitions/any2fasta.yaml /conda-envs/756e0ce005a36bc03fd1b91447a60f6d/environment.yaml
 
 # Conda environment:
 #   source: conda_definitions/assembly-stats.yaml
@@ -278,7 +310,7 @@ COPY conda_definitions/snp-dists.yaml /conda-envs/79addc38bfc17b635a3fa2c401ab21
 
 # Conda environment:
 #   source: report_subpipeline/conda_definitions/r-markdown.yaml
-#   prefix: /conda-envs/3d290c6be138238b63d6c8ec3d9e2a0b
+#   prefix: /conda-envs/490c9344c6805f820e98aa8dd6b11ef4
 #   name: r-markdown
 #   channels:
 #     - conda-forge
@@ -286,7 +318,7 @@ COPY conda_definitions/snp-dists.yaml /conda-envs/79addc38bfc17b635a3fa2c401ab21
 #     - defaults
 #     - r
 #   dependencies:
-#     - r-base=4.1
+#     - r-base=4.2.2
 #     - r-essentials
 #     - r-tidyverse
 #     - r-dt
@@ -296,27 +328,13 @@ COPY conda_definitions/snp-dists.yaml /conda-envs/79addc38bfc17b635a3fa2c401ab21
 #     - r-ape
 #     - r-gridextra
 #     - zip
-#   
-#     
-#   # dependencies:
-#   #   - r-base=4.2.2
-#   #   - r-essentials=4.2
-#   #   - r-tidyverse=2.0.0
-#   #   - r-dt=0.28 # 0.31 in the one that fails
-#   #   - r-prettydoc=0.4.1
-#   #   - r-rmarkdown=2.25
-#   #   - r-phytools=2.0_3 # 2.1_1 i nyeste conda
-#   #   - r-ape=5.7_1
-#   #   - r-gridextra=2.3
-#   #   - zip=3.0
-#   #
-RUN mkdir -p /conda-envs/3d290c6be138238b63d6c8ec3d9e2a0b
-COPY report_subpipeline/conda_definitions/r-markdown.yaml /conda-envs/3d290c6be138238b63d6c8ec3d9e2a0b/environment.yaml
+RUN mkdir -p /conda-envs/490c9344c6805f820e98aa8dd6b11ef4
+COPY report_subpipeline/conda_definitions/r-markdown.yaml /conda-envs/490c9344c6805f820e98aa8dd6b11ef4/environment.yaml
 
 # Step 2: Generate conda environments
 
 RUN mamba env create --prefix /conda-envs/e96caef90ba4287605b7ab60379bb5dc --file /conda-envs/e96caef90ba4287605b7ab60379bb5dc/environment.yaml && \
-    mamba env create --prefix /conda-envs/b839298ca15d80e708907c93568dc38a --file /conda-envs/b839298ca15d80e708907c93568dc38a/environment.yaml && \
+    mamba env create --prefix /conda-envs/756e0ce005a36bc03fd1b91447a60f6d --file /conda-envs/756e0ce005a36bc03fd1b91447a60f6d/environment.yaml && \
     mamba env create --prefix /conda-envs/21dc339c1bfec2d112230fb9ed4a3121 --file /conda-envs/21dc339c1bfec2d112230fb9ed4a3121/environment.yaml && \
     mamba env create --prefix /conda-envs/ed54eb0e2bd56cbb474809ff03c9d5a3 --file /conda-envs/ed54eb0e2bd56cbb474809ff03c9d5a3/environment.yaml && \
     mamba env create --prefix /conda-envs/679a46a27a9c8f5ec775838a5d75a05d --file /conda-envs/679a46a27a9c8f5ec775838a5d75a05d/environment.yaml && \
@@ -336,5 +354,5 @@ RUN mamba env create --prefix /conda-envs/e96caef90ba4287605b7ab60379bb5dc --fil
     mamba env create --prefix /conda-envs/c510ddc9269801c6f267bbc20945cb01 --file /conda-envs/c510ddc9269801c6f267bbc20945cb01/environment.yaml && \
     mamba env create --prefix /conda-envs/1e9be5c81cf2e48459587271cf703755 --file /conda-envs/1e9be5c81cf2e48459587271cf703755/environment.yaml && \
     mamba env create --prefix /conda-envs/79addc38bfc17b635a3fa2c401ab213e --file /conda-envs/79addc38bfc17b635a3fa2c401ab213e/environment.yaml && \
-    mamba env create --prefix /conda-envs/3d290c6be138238b63d6c8ec3d9e2a0b --file /conda-envs/3d290c6be138238b63d6c8ec3d9e2a0b/environment.yaml && \
+    mamba env create --prefix /conda-envs/490c9344c6805f820e98aa8dd6b11ef4 --file /conda-envs/490c9344c6805f820e98aa8dd6b11ef4/environment.yaml && \
     mamba clean --all -y
