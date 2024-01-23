@@ -1,3 +1,6 @@
+2.5.17
+  - Forced recompilation of docker image did not fix issue #74. This patch has equivalent .yaml-files to version 2.5.14, which means that the old (working) docker image will be compatible.
+
 2.5.16
   - Indirect bug because of an uncaught docker error. Forced recompilation of the image should fix that.
   - Propagation of version string to easy version bumping.

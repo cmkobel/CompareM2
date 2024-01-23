@@ -4,14 +4,11 @@
 
 __author__ = 'Carl M. Kobel'
 
-__version__ = "2.5.16"
+__version__ = "2.5.17"
 # Places to bump
 #  - here, because the snakefile can possibly be run without the ./asscom2 binary. It is unrealistic to run the report subpipeline standalone, so that one get's the string from here (see bottom).
 #  - changelog
 #  - ./asscom2 binary
-#  - report markdown bottom?
-#  - snakefile Dockerfile image pull?
-#  - report snakefile Dockerfile image pull so it reuses the same already downloaded image.?
 # Also, paste changelog into the github release. Use pre-release and publish it after it has been tested.
 
 # Run with conda:
@@ -37,7 +34,8 @@ from shutil import copyfile
 import subprocess
 import datetime
 
-containerized: f"docker://cmkobel/assemblycomparator2:v{__version__}" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
+#containerized: f"docker://cmkobel/assemblycomparator2:v{__version__}"
+containerized: f"docker://cmkobel/assemblycomparator2:v2.5.14" # I have found myself in a predicament. I can't publish a new version of the docker image because there is an error that I can't fix. Thus I'm stick on 2.5.14 for now. When I fix the issue, I will use the correct version again.
 
 # When executing, Snakemake will fail with a reasonable error message if the variables below are undefined.
 envvars:
