@@ -95,7 +95,7 @@ logger.debug(f"Command to run is\n{command}")
 # Finally, run the pipeline.
 
 # If the "--version" flag has been set, show the versions instead.
-if "--version" in trailing_arguments:
+if "--version" in trailing_arguments or "-v" in trailing_arguments:
     print(f"assemblycomparator2 v{__version__}")
 else:
     subprocess.run(command, shell = True)

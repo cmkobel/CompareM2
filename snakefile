@@ -13,10 +13,10 @@ __version__ = "2.5.17"
 
 # Run with conda:
 # For developing and testing (using conda) prior to publication of next version apptainer image, you can run the following from the repository directory:
-# export ASSCOM2_BASE=$(pwd -P); export ASSCOM2_PROFILE=profiles/conda/local/; snakemake --snakefile snakefile --profile $ASSCOM2_PROFILE --configfile ${ASSCOM2_BASE}/config.yaml --until fast
+# export ASSCOM2_BASE=$(pwd -P); export ASSCOM2_PROFILE=profiles/conda/local; snakemake --snakefile snakefile --profile $ASSCOM2_PROFILE --configfile ${ASSCOM2_BASE}/config.yaml --until fast
 
 # Update Dockerfile:
-# export ASSCOM2_BASE=$(pwd -P); export ASSCOM2_PROFILE=profiles/apptainer/local/; snakemake --snakefile snakefile --configfile ${ASSCOM2_BASE}/config.yaml --containerize > Dockerfile 
+# export ASSCOM2_BASE=$(pwd -P); export ASSCOM2_PROFILE=profiles/apptainer/local; snakemake --snakefile snakefile --configfile ${ASSCOM2_BASE}/config.yaml --containerize > Dockerfile 
 # And then remove the header text (asscom2 logo).
 
 # Update dag picture in documentation with this command (with anaconda/graphviz)
