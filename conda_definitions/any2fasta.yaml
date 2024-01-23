@@ -3,5 +3,5 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - any2fasta=0.4
+  - any2fasta
   
