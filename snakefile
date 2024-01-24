@@ -434,7 +434,7 @@ rule dbcan_download:
 rule gtdb_download:
     output:
         database_representative = DATABASES + "/gtdb/ac2_gtdb_database_representative.flag"
-    conda: "conda_definitions/curl.yaml"
+    conda: "conda_definitions/curl.yaml" # Technically we don't need curl anymore but I don't want to change the dockerfile right now. Would be better to use anaconda::wget .
     shell: """
 
         # TODO: Make a way to check for internet access instead of just crashing. Same for busco and checkm2
@@ -461,8 +461,8 @@ rule gtdb_download:
 
             >&2 echo "Downlading $db_pick to $db_destination"
             mkdir -p $(dirname "$db_destination")
-            curl "$db_pick" \
-                --output "$db_destination"
+
+            wget --continue "$db_pick" -O "$db_destination"
 
             >&2 echo "Decompressing ..."
             tar \
