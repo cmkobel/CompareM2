@@ -37,11 +37,11 @@ p {
     color: #929292;
 }
 
-
-
-
 </style>
 
+```{r setu3p-dependencies, echo=F, message=F, warning=F}
+varbi=32
+```
 
 
 ```{r setup-dependencies, echo=F, message=F, warning=F}

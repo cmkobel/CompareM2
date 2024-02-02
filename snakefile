@@ -13,10 +13,13 @@ __version__ = "2.5.17"
 
 # Run with conda:
 # For developing and testing (using conda) prior to publication of next version apptainer image, you can run the following from the repository directory:
-# export ASSCOM2_BASE=$(pwd -P); export ASSCOM2_PROFILE=profiles/conda/local; snakemake --snakefile snakefile --profile $ASSCOM2_PROFILE --configfile ${ASSCOM2_BASE}/config.yaml --until fast
+# conda
+# export ASSCOM2_BASE="$(pwd -P)"; export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profiles/conda/local"; snakemake --snakefile "${ASSCOM2_BASE}/snakefile" --profile "$ASSCOM2_PROFILE" --configfile "${ASSCOM2_BASE}/config.yaml" --until fast
+# apptainer
+# export ASSCOM2_BASE="$(pwd -P)"; export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profiles/apptainer/local"; snakemake --snakefile "${ASSCOM2_BASE}/snakefile" --profile "$ASSCOM2_PROFILE" --configfile "${ASSCOM2_BASE}/config.yaml" --until fast
 
 # Update Dockerfile:
-# export ASSCOM2_BASE=$(pwd -P); export ASSCOM2_PROFILE=profiles/apptainer/local; snakemake --snakefile snakefile --configfile ${ASSCOM2_BASE}/config.yaml --containerize > Dockerfile 
+# export ASSCOM2_BASE="$(pwd -P)"; export ASSCOM2_PROFILE="profiles/apptainer/local"; snakemake --snakefile "${ASSCOM2_BASE}/snakefile" --configfile "${ASSCOM2_BASE}/config.yaml" --containerize > Dockerfile 
 # And then remove the header text (asscom2 logo).
 
 # Update dag picture in documentation with this command (with anaconda/graphviz)
@@ -29,6 +32,7 @@ from os.path import isfile, join
 import pandas as pd
 import numpy as np
 from shutil import copyfile
+import csv # for quoting 
 
 # For void_report
 import subprocess
@@ -44,7 +48,7 @@ envvars:
     "ASSCOM2_DATABASES"
     # What about parametrization of databases?
 
-cwd = os.getcwd()
+cwd = os.getcwd() # Could I fix #56 by making sure that the physical path of the cwd is obtained here? Update: Nope.
 batch_title = cwd.split("/")[-1]
 base_variable = os.environ['ASSCOM2_BASE'] # rename to ASSCOM2_BASE
 DATABASES = os.environ['ASSCOM2_DATABASES'] # Defines where the databases are stored. One for all. when snakemake issue 262 is solved I'll make this more flexible for each rule.
@@ -76,13 +80,8 @@ print("    busco checkm2 diamond_kegg kegg_pathway roary snp_dists")
 print("    assembly_stats gtdbtk abricate mlst mashtree fasttree")
 print("    report downloads fast")
 
-#results_directory = "output_asscom2"
-
 
 results_directory = "results_ac2"
-
-
-#reference = config["reference"]
 
 
 # --- Read in relevant files in the current working directory ----------------
@@ -106,9 +105,12 @@ if df.shape[0] == 0:
 
 df = df[~df["input_file"].str.startswith(".", na = False)] # Remove hidden files
 df['sample_raw'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()] # Extract everything before the extension dot.
+
+
+# Since mashtree doesn't like spaces in filenames, we must convert those.
 df['sample'] = df['sample_raw'].str.replace(' ','_').str.replace(',','_').str.replace('"','_').str.replace('\'','_') # Convert punctuation marks to underscores: Makes everything easier.
 df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extract extension
-df['input_file_fasta'] = results_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fa" # This is where the input file is copied to in the first snakemake rule.
+df['input_file_fasta'] = results_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fna" # This is where the input file is copied to in the first snakemake rule.
 
 df = df[df['extension'].isin(extension_whitelist)] # Remove files with unsupported formats.
 df['1-index'] = [i+1 for i in range(len(df))]
@@ -131,6 +133,10 @@ df = df.reset_index(drop = True)
 print(df[['1-index', 'sample', 'extension']].to_string(index = False))
 print("//")
 print()
+
+# Warn the user if there exists spaces in file names.
+if any([" " in i for i in df['sample_raw'].tolist()]):
+    print("Warning: One or more file names contain space(s). These have been replaced to underscores \" \" -> \"_\"")
 
 
 
@@ -198,11 +204,11 @@ rule all:
 
 # Copy the input file to its new home
 # Homogenizes the file extension as well (.fa)
-# Should I rename this to "rule any2fasta" just to make it more transparent?
+# Should I rename this to "rule any2fasta" just to make it more transparent? 
 rule copy:
     input: 
         genome = lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0],
-    output: "{results_directory}/samples/{sample}/{sample}.fa"
+    output: "{results_directory}/samples/{sample}/{sample}.fna"
     conda: "conda_definitions/any2fasta.yaml"
     threads: 1 # Weirdly, or bugly, there must be a thread n definition in the rule. Otherwise, the set-threads option (in the orion profile) will not be taken up. 
     resources:
@@ -218,9 +224,10 @@ rule copy:
 # Write the df table to the directory for later reference.
 # Why isn't this a run: instead of a shell: ?
 rule metadata:
-    input: expand("{results_directory}/samples/{sample}/{sample}.fa", results_directory = results_directory, sample = df["sample"]) # From rule copy
+    # input: expand("{results_directory}/samples/{sample}/{sample}.fna", results_directory = results_directory, sample = df["sample"]) # From rule copy
+    input: df['input_file_fasta']
     output: "{results_directory}/metadata.tsv"
-    params: dataframe = df.to_csv(None, index_label = "index", sep = "\t")
+    params: dataframe = df.to_csv(None, index_label = "index", sep = "\t", quoting = csv.QUOTE_NONE)
     resources:
         runtime = "1h"
     #run:
@@ -228,7 +235,7 @@ rule metadata:
         #os.system(f"cp ${{ASSCOM2_BASE}}/scripts/{report_template_file_basename} {results_directory}")
     shell: """
 
-        echo '''{params.dataframe}''' > {output}
+        echo '''{params.dataframe}''' > "{output:q}"
 
         {void_report}
     """
@@ -251,7 +258,7 @@ rule busco_download:
         if [ -f "{output}" ]; then    
 
             >&2 echo "Flag exists already: touch it to update the mtime ..."
-            touch {output}
+            touch {output:q}
             
         else
 
@@ -267,11 +274,11 @@ rule busco_download:
                 --mode geno \
                 --auto-lineage-prok \
                 --force \
-                --download_path $(dirname {output}) \
+                --download_path $(dirname {output:q}) \
                 --download prokaryota
             
             
-            touch {output}
+            touch {output:q}
 
             # Clean up 
             rm dummy.fasta
@@ -296,7 +303,7 @@ rule checkm2_download:
         if [ -f "{output}" ]; then
 
             >&2 echo "Flag exists already: touch it to update the mtime ..."
-            touch {output}
+            touch {output:q}
             
         else
 
@@ -305,9 +312,12 @@ rule checkm2_download:
             url="https://zenodo.org/records/5571251/files/checkm2_database.tar.gz"
 
             
-            curl \
-                $url \
-                --output "{params.destination}/checkm2_database.tar.gz"
+            #curl \
+            #    $url \
+            #    --output "{params.destination}/checkm2_database.tar.gz"
+
+            wget "$url" -O "{params.destination}/checkm2_database.tar.gz"
+
                 
 
             tar \
@@ -316,7 +326,7 @@ rule checkm2_download:
 
             rm "{params.destination}/checkm2_database.tar.gz" || echo "failed to clean up"
             
-            touch {output}
+            touch {output:q}
         
         fi
 
@@ -351,7 +361,7 @@ rule kraken2_download:
         if [ -f "{output}" ]; then    
 
             >&2 echo "Flag exists already: touch it to update the mtime ..."
-            touch {output}
+            touch {output:q}
             
         else
 
@@ -359,8 +369,10 @@ rule kraken2_download:
 
             >&2 echo "Downlading $db_pick to {params.db_destination_smk}"
             #mkdir -p $(dirname "$db_destination")
-            curl "$db_pick" \
-                --output {params.db_destination_smk}
+            #curl "$db_pick" \
+            #    --output {params.db_destination_smk}
+
+            wget "$db_pick" -O "{params.db_destination_smk}"
 
             >&2 echo "Decompressing ..."
             tar \
@@ -372,8 +384,8 @@ rule kraken2_download:
             >&2 echo "kraken2 DB setup completed"
             echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname {params.db_destination_smk})/info.txt
 
-            mkdir -p $(dirname {output})
-            touch {output}
+            mkdir -p $(dirname {output:q})
+            touch {output:q}
             
         fi
 
@@ -394,7 +406,7 @@ rule dbcan_download:
         if [ -f "{output}" ]; then    
 
             >&2 echo "Flag exists already: touch it to update the mtime ..."
-            touch {output}
+            touch {output:q}
             
         else
 
@@ -421,8 +433,8 @@ rule dbcan_download:
             >&2 echo "dbcan setup completed"
             echo "Downloaded dbcan at $(date -Iseconds)" > $(dirname {output.database_representative})/info.txt
 
-            mkdir -p $(dirname {output})
-            touch {output}
+            mkdir -p $(dirname {output:q})
+            touch {output:q}
 
         fi
 
@@ -436,8 +448,6 @@ rule gtdb_download:
         database_representative = DATABASES + "/gtdb/ac2_gtdb_database_representative.flag"
     conda: "conda_definitions/curl.yaml" # Technically we don't need curl anymore but I don't want to change the dockerfile right now. Would be better to use anaconda::wget .
     shell: """
-
-        # TODO: Make a way to check for internet access instead of just crashing. Same for busco and checkm2
 
         # https://ecogenomics.github.io/GTDBTk/installing/index.html
 
@@ -453,7 +463,7 @@ rule gtdb_download:
         if [ -f "{output}" ]; then    
 
             >&2 echo "Flag exists already: touch it to update the mtime ..."
-            touch {output}
+            touch {output:q}
             
         else
 
@@ -462,7 +472,7 @@ rule gtdb_download:
             >&2 echo "Downlading $db_pick to $db_destination"
             mkdir -p $(dirname "$db_destination")
 
-            wget --continue "$db_pick" -O "$db_destination"
+            wget "$db_pick" -O "$db_destination"
 
             >&2 echo "Decompressing ..."
             tar \
@@ -474,8 +484,8 @@ rule gtdb_download:
             >&2 echo "gtdb DB setup completed"
             echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname $db_destination)/info.txt
 
-            mkdir -p $(dirname {output})
-            touch {output}
+            mkdir -p $(dirname {output:q})
+            touch {output:q}
 
         fi
 
@@ -495,7 +505,7 @@ rule gtdb_download:
 rule sequence_lengths:
     input:
         metadata = "{results_directory}/metadata.tsv",
-        assembly = "{results_directory}/samples/{sample}/{sample}.fa", 
+        assembly = "{results_directory}/samples/{sample}/{sample}.fna", 
     output: "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
     threads: 1
     resources:
@@ -504,8 +514,8 @@ rule sequence_lengths:
     benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_individual.{sample}.tsv"
     shell: """
 
-        seqkit fx2tab {input.assembly} -l -g -G -n -H \
-        > {output}
+        seqkit fx2tab {input.assembly:q} -l -g -G -n -H \
+        > {output:q}
 
     """
 
@@ -515,7 +525,7 @@ rule sequence_lengths:
 rule prokka:
     input: 
         metadata = "{results_directory}/metadata.tsv",
-        assembly = "{results_directory}/samples/{sample}/{sample}.fa"
+        assembly = "{results_directory}/samples/{sample}/{sample}.fna"
     output:
         gff = "{results_directory}/samples/{sample}/prokka/{sample}.gff",
         faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg, motupan
@@ -535,14 +545,14 @@ rule prokka:
             --rfam \
             --compliant \
             --outdir {wildcards.results_directory}/samples/{wildcards.sample}/prokka \
-            --prefix {wildcards.sample} {input.assembly} \
-        | tee {output.log} 
+            --prefix {wildcards.sample} {input.assembly:q} \
+        | tee {output.log:q} 
 
         # I don't remember what I'm actually using this output for?
         # Remove fasta from gff and add sample label
-        gff_fasta_start=$(grep --line-number --extended-regexp "^##FASTA" {output.gff} | cut -f1 -d:)
-        head --lines $(($gff_fasta_start-1)) {output.gff} \
-        > {output.gff_nofasta}
+        gff_fasta_start=$(grep --line-number --extended-regexp "^##FASTA" {output.gff:q} | cut -f1 -d:)
+        head --lines $(($gff_fasta_start-1)) {output.gff:q} \
+        > {output.gff_nofasta:q}
 
         {void_report}
 
@@ -553,7 +563,7 @@ rule prokka:
 rule kraken2:
     input: 
         metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-        assembly = "{results_directory}/samples/{sample}/{sample}.fa",
+        assembly = "{results_directory}/samples/{sample}/{sample}.fna",
         database_representative = DATABASES + "/kraken2/ac2_kraken2_database_representative.flag"
     output: 
         report = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv",
@@ -565,18 +575,18 @@ rule kraken2:
         mem_mb = 75000,
     shell: """
 
-        echo using kraken2 database $(dirname {input.database_representative})
+        echo using kraken2 database $(dirname {input.database_representative:q})
 
         # Run kraken2
         # https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown
         kraken2 \
             --threads {threads} \
-            --db $(dirname {input.database_representative}) \
+            --db $(dirname {input.database_representative:q}) \
             --confidence 0.1 \
-            --report {output.report} \
+            --report {output.report:q} \
             --report-minimizer-data \
-            {input.assembly} \
-            > {output.full}
+            {input.assembly:q} \
+            > {output.full:q}
 
         # Argument on confidence parameter https://www.biostars.org/p/402619/
 
@@ -592,7 +602,6 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
     params: 
         out_dir = "{results_directory}/samples/{sample}/dbcan"
     conda: "conda_definitions/dbcan.yaml" # Not sure if it should be called by a version number?
-    # container: TODO # was disabled already
     benchmark: "{results_directory}/benchmarks/benchmark.dbcan.{sample}.tsv"
     threads: 8
     resources: 
@@ -609,9 +618,9 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
             --hmm_cpu {threads} \
             --tf_cpu {threads} \
             --stp_cpu {threads} \
-            --db_dir $(dirname {input.database_representative}) \
-            --out_dir {params.out_dir} \
-            {input.aminoacid} \
+            --db_dir $(dirname {input.database_representative:q}) \
+            --out_dir {params.out_dir:q} \
+            {input.aminoacid:q} \
             protein 
 
     """
@@ -637,7 +646,7 @@ rule interproscan:
         interproscan.sh \
             --applications TIGRFAM,Hamap,Pfam \
             --cpu {threads} \
-            --output-file-base {params.file_base} \
+            --output-file-base {params.file_base:q} \
             --disable-precalc \
             --formats TSV \
             --goterms \
@@ -645,7 +654,7 @@ rule interproscan:
             --pathways \
             --seqtype p \
             --tempdir {resources.tmpdir} \
-            --input {input.aminoacid}
+            --input {input.aminoacid:q}
 
     """
 
@@ -657,7 +666,7 @@ rule busco:
         metadata = "{results_directory}/metadata.tsv",
         #busco_download = expand("{base_variable}/databases/busco/file_versions.tsv", base_variable = base_variable), # This is a bad idea, because it requires a complete reinstall if snakemake somehow removes the file, which is quite likely.
         database_representative = DATABASES + "/busco/ac2_busco_database_representative.flag", # Should point to the directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
-        fasta = "{results_directory}/samples/{sample}/{sample}.fa",
+        fasta = "{results_directory}/samples/{sample}/{sample}.fna",
     output: 
         flag = touch("{results_directory}/samples/{sample}/busco/busco_done.flag"),
         table_extract = "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv"
@@ -684,7 +693,7 @@ rule busco:
         timeout 3600 \
             busco \
                 --cpu {threads} \
-                --in {input.fasta} \
+                --in {input.fasta:q} \
                 --out {params.out_dir} \
                 --mode geno \
                 --auto-lineage-prok \
@@ -701,18 +710,18 @@ rule busco:
         # Cat all auto lineage results together or create empty file
         # The following cat command will fail if the glob doesn't resolve any files: This is the wanted behaviour.
         cat {wildcards.results_directory}/samples/{wildcards.sample}/busco/auto_lineage/*/short_summary.json \
-        > {output.table_extract}_temp         
+        > {output.table_extract:q}_temp         
         
         >&2 echo "Results clearly must exist ... "
         
         # Extract relevant features
-        cat {output.table_extract}_temp \
+        cat {output.table_extract:q}_temp \
         | grep -oE "(\\"in\\"|\\"name\\"|\\"one_line_summary\\").+" \
-        > {output.table_extract}
+        > {output.table_extract:q}
 
         >&2 echo "debug3"
         # Clean up
-        rm {output.table_extract}_temp
+        rm {output.table_extract:q}_temp
 
         >&2 echo "debug4"
 
@@ -743,10 +752,10 @@ rule checkm2:
 
         checkm2 predict \
             --threads {threads} \
-            --input {input.fasta} \
-            --output-directory {params.rule_dir} \
+            --input {input.fasta:q} \
+            --output-directory {params.rule_dir:q} \
             --extension .fa \
-            --database_path $(dirname {input.database_representative})/CheckM2_database/uniref100.KO.1.dmnd \
+            --database_path $(dirname {input.database_representative:q})/CheckM2_database/uniref100.KO.1.dmnd \
             --force
 
         {void_report}
@@ -778,7 +787,6 @@ rule diamond_kegg: # or uniref_ko?
     resources:
         mem_mb = 20000, # Seems to use around 18G at max.
         runtime = "1h",
-    # container: TODO # was disabled already
     benchmark: "{results_directory}/benchmarks/benchmark.diamond_kegg.{sample}.tsv"
     threads: 8
     shell: """
@@ -790,10 +798,10 @@ rule diamond_kegg: # or uniref_ko?
         diamond blastp \
             --outfmt 6 \
             --max-target-seqs 1 \
-            --query {input.aminoacid}  \
-            --out {output.tsv}  \
+            --query {input.aminoacid:q}  \
+            --out {output.tsv:q}  \
             --threads {threads}  \
-            --db {params.database_path} \
+            --db {params.database_path:q} \
             --query-cover {params.query_cover}  \
             --subject-cover {params.subject_cover}  \
             --id {params.percent_id}  \
@@ -820,10 +828,10 @@ rule kegg_pathway:
     benchmark: "{results_directory}/benchmarks/benchmark.kegg_pathway.tsv"
     shell: """
 
-        Rscript {params.script} \
-            {input.kegg_asset} \
-            {params.output_dir} \
-            {input.kegg_diamond}  
+        Rscript {params.script:q} \
+            {input.kegg_asset:q} \
+            {params.output_dir:q} \
+            {input.kegg_diamond:q}  
             
         {void_report}
 
@@ -873,7 +881,7 @@ rule roary:
             -cd {params.core_perc} \
             -f {wildcards.results_directory}/roary \
             --group_limit 100000 \
-            {input.gff}
+            {input.gff:q}
 
         # Default group limit is 50000
             
@@ -897,7 +905,7 @@ rule snp_dists:
 
         snp-dists \
             -j {threads} \
-            {input.aln} > {output}
+            {input.aln:q} > {output:q}
 
         {void_report}
         
@@ -918,7 +926,7 @@ rule motulizer:
         
         mOTUlize.py --version > {params.version_file} || echo "Catched exit code 1 when asking for the motulize version."
 
-        mOTUlize.py --fnas {input.fnas} -o {output.tsv} 
+        mOTUlize.py --fnas {input.fnas:q} -o {output.tsv:q} 
 
     """
 
@@ -935,7 +943,7 @@ rule motupan:
     
         # Same version as motulizer, so no need to save the version again.
 
-        mOTUpan.py --faas {input.faas} -o {output.tsv} 
+        mOTUpan.py --faas {input.faas:q} -o {output.tsv:q} 
 
     """
 
@@ -950,9 +958,10 @@ rule assembly_stats:
     benchmark: "{results_directory}/benchmarks/assembly_stats.tsv"
     shell: """
         
-        assembly-stats -t {input.fasta} > {output}
+        assembly-stats -t {input.fasta:q} > {output:q}
 
         {void_report}
+
     """
 
 
@@ -971,7 +980,7 @@ rule gtdbtk:
     params:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{results_directory}/gtdbtk/",
-        base_variable = base_variable,
+        base_variable = base_variable, # not used?
         mash_db = f"{DATABASES}/gtdb_sketch/mash_db.msh",
     threads: 8
     #retries: 3
@@ -984,34 +993,34 @@ rule gtdbtk:
     shell: """
 
         # TODO: Using skip-ani-screen is not optimal, as it possibly speeds up a lot.
-        mkdir -p $(dirname {params.mash_db})
+        mkdir -p $(dirname {params.mash_db:q})
 
         # I need to find a neat way of setting these variables. Maybe the user has an older/newer version than what is hardcoded here. 
-        export GTDBTK_DATA_PATH="$(dirname {input.database_representative})/release214/" # Should be defined from config file, and not be hardwired.
+        export GTDBTK_DATA_PATH="$(dirname {input.database_representative:q})/release214/" # Should be defined from config file, and not be hardwired.
         
 
         # Create batchfile
         echo '''{params.batchfile_content}''' > {wildcards.results_directory}/gtdbtk/batchfile.tsv
         
         gtdbtk classify_wf \
-            --mash_db {params.mash_db} \
+            --mash_db {params.mash_db:q} \
             --batchfile {wildcards.results_directory}/gtdbtk/batchfile.tsv \
-            --out_dir {params.out_dir} \
+            --out_dir {params.out_dir:q} \
             --cpus {threads} \
             --keep_intermediates \
             --force
 
         # Homogenize database version number
-        #cp {wildcards.results_directory}/gtdbtk/gtdbtk.bac120.summary.tsv {output}
+        #cp {wildcards.results_directory}/gtdbtk/gtdbtk.bac120.summary.tsv {output:q}
         # New better version below that also incorporates archaea
-        #cat {wildcards.results_directory}/gtdbtk/gtdbtk.*.summary.tsv {output}
+        #cat {wildcards.results_directory}/gtdbtk/gtdbtk.*.summary.tsv {output:q}
         
 
         # Even better: Should be tested on originals
         echo -e "user_genome\tclassification\tfastani_reference\tfastani_reference_radius\tfastani_taxonomy\tfastani_ani\tfastani_af\tclosest_placement_reference\tclosest_placement_radius\tclosest_placement_taxonomy\tclosest_placement_ani\tclosest_placement_af\tpplacer_taxonomy\tclassification_method\tnote\tother_related_references(genome_id,species_name,radius,ANI,AF)\tmsa_percent\ttranslation_table\tred_value\twarnings" \
-        > {output}
+        > {output:q}
         tail --quiet -n +2 {wildcards.results_directory}/gtdbtk/gtdbtk.*.summary.tsv \
-        >> {output}
+        >> {output:q}
         
 
 
@@ -1041,17 +1050,17 @@ rule abricate:
 
         # TODO: update these databases
 
-        abricate --db ncbi {input.fasta} > {output.ncbi_detailed}
-        abricate --summary {output.ncbi_detailed} > {output.ncbi_sum}
+        abricate --db ncbi {input.fasta:q} > {output.ncbi_detailed:q}
+        abricate --summary {output.ncbi_detailed:q} > {output.ncbi_sum:q}
 
-        abricate --db card {input.fasta} > {output.card_detailed}
-        abricate --summary {output.card_detailed} > {output.card_sum}
+        abricate --db card {input.fasta:q} > {output.card_detailed:q}
+        abricate --summary {output.card_detailed:q} > {output.card_sum:q}
         
-        abricate --db plasmidfinder {input.fasta} > {output.plasmidfinder_detailed}
-        abricate --summary {output.plasmidfinder_detailed} > {output.plasmidfinder_sum}
+        abricate --db plasmidfinder {input.fasta:q} > {output.plasmidfinder_detailed:q}
+        abricate --summary {output.plasmidfinder_detailed:q} > {output.plasmidfinder_sum:q}
 
-        abricate --db vfdb {input.fasta} > {output.vfdb_detailed}
-        abricate --summary {output.vfdb_detailed} > {output.vfdb_sum}
+        abricate --db vfdb {input.fasta:q} > {output.vfdb_detailed:q}
+        abricate --summary {output.vfdb_detailed:q} > {output.vfdb_sum:q}
 
         {void_report}
     """
@@ -1080,8 +1089,8 @@ rule mlst:
 
         mlst \
             --threads {threads} {params.mlst_scheme_interpreted} \
-            {input.fasta} \
-            > {output}
+            {input.fasta:q} \
+            > {output:q}
 
         # Dump available mlst databases
         mlst --list > {params.list_}
@@ -1105,16 +1114,16 @@ rule mashtree:
     resources:
         mem_mb = 16000,
     shell: """
-
+    
         mashtree \
             --numcpus {threads} \
-            --outmatrix {output.dist} \
-            {input.fasta} > {output.tree}
+            --outmatrix {output.dist:q} \
+            {input.fasta:q} > {output.tree:q}
 
         {void_report}
     """ 
 
-# TODO:
+# TODO: ?
 #rule mash_screen:
 
 def get_mem_fasttree(wildcards, attempt): 
@@ -1139,9 +1148,9 @@ rule fasttree:
 
         FastTree \
             -nt \
-            -gtr {input.fasta} \
-        > {output} \
-        2> {output}.log 
+            -gtr {input.fasta:q} \
+        > {output:q} \
+        2> {output:q}.log 
 
         {void_report}
 
@@ -1172,27 +1181,16 @@ rule iqtree:
         iqtree --version > {params.version_file}
 
         iqtree \
-            -s {input.fasta} \
+            -s {input.fasta:q} \
             -m GTR \
             --boot 100 \
-            --prefix $(dirname {output.newick})/core_genome_iqtree \
+            --prefix $(dirname {output.newick:q})/core_genome_iqtree \
             -redo
 
         # {void_report} Not in the report yet.
 
 
     """
-
-
-# rule fetch_report_template:
-#     output: "{results_directory}/rmarkdown_template.rmd"
-#     shell: """
-
-#         cp $ASSCOM2_BASE/scripts/genomes_to_report_v2.Rmd {output}
-
-#         {void_report}
-#     """
-
 
 
 # This rule might seem silly, but it makes sure that the report environment is ready to rock when the report subpipeline eventually is run: This has two pros:
@@ -1291,7 +1289,6 @@ rule isolate:
 
 
 
-# A major todo is to find a way to make the report run as a conda or containerized job dependending on the use-conda/use-singularity setting in the config. The best way might be to have an environment variable that points to the wanted config. 
 
 # Call the report subpipeline
 # I wonder if adding the ampersands means that the report creation will be ^c cancellable? Not tested yet..
@@ -1303,9 +1300,9 @@ report_call = f"""
         && test -f "{results_directory}/metadata.tsv" \
         && mkdir -p {results_directory}/logs \
         && snakemake \
-            --snakefile $ASSCOM2_BASE/report_subpipeline/snakefile \
-            --profile $ASSCOM2_PROFILE \
-            --config results_directory=$(pwd)/{results_directory} base_variable={base_variable} batch_title={batch_title} version_string={__version__}
+            --snakefile "$ASSCOM2_BASE/report_subpipeline/snakefile" \
+            --profile "$ASSCOM2_PROFILE" \
+            --config results_directory="$(pwd -P)/{results_directory}" base_variable="{base_variable}" batch_title="{batch_title}" version_string="{__version__}"
     ) \
     || echo "Info: Not calling the report_subpipeline as either the flag or metadata is missing. Run a rule that mandates a report section to generate the report."
 

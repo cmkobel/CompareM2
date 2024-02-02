@@ -43,7 +43,7 @@ try:
     ASSCOM2_BASE = os.environ['ASSCOM2_BASE']
     logger.debug(f"ASSCOM2_BASE was already set to \"{ASSCOM2_BASE}\".")
 except KeyError as e:
-    ASSCOM2_BASE = os.path.dirname(os.path.realpath(__file__)) # This seems to work even for symlinks (it gets the physical path.)
+    ASSCOM2_BASE = os.path.dirname(os.path.realpath(__file__)) # This seems to work even for symlinks (it gets the physical path.). Update: Maybe that is why the apptainer environment can't find the cwd?
     os.environ["ASSCOM2_BASE"] = ASSCOM2_BASE
     logger.debug(f"ASSCOM2_BASE was not set and has been defaulted to \"{ASSCOM2_BASE}\".")
 
@@ -87,7 +87,7 @@ trailing_arguments = sys.argv[1:]
 trailing_arguments_concatenated = " ".join(trailing_arguments)
 logger.debug(f"The concatenated trailing arguments are {trailing_arguments_concatenated}")
 
-command = f"snakemake --snakefile {ASSCOM2_BASE}/snakefile --profile {ASSCOM2_PROFILE} --configfile {ASSCOM2_BASE}/config.yaml  " + trailing_arguments_concatenated
+command = f"snakemake --snakefile \"{ASSCOM2_BASE}\"/snakefile --profile \"{ASSCOM2_PROFILE}\" --configfile \"{ASSCOM2_BASE}\"/config.yaml  " + trailing_arguments_concatenated
 logger.debug(f"Command to run is\n{command}")
 
 
