@@ -6,7 +6,7 @@ keep-going: true
 rerun-incomplete: true
 show-failed-logs: false
 rerun-triggers: "mtime" # Only rerun on changes in modification time. Not on code hash changes.
-keep-incomplete: false # true for debugging
+keep-incomplete: false # true for debugging. Must be false for production, otherwise the user might get confusing --rerun-incomplete queries.
 
 
 # Conda

@@ -7,7 +7,7 @@ max-status-checks-per-second: 3
 keep-going: true 
 #rerun-incomplete: true
 latency-wait: 120
-keep-incomplete: true # Should be true for debugging rules.
+keep-incomplete: false # true for debugging. Must be false for production, otherwise the user might get confusing --rerun-incomplete queries.
 rerun-triggers: "mtime" # only schedule jobs to rerun if there has been a change in mtime of input/output files. That is: ignore code changes
 
 
@@ -31,14 +31,13 @@ cluster-cancel: "scancel"
 
 
 cluster:
-  mkdir -p results_ac2/logs/old &&
   sbatch
     --parsable
     --cpus-per-task={threads}
     --mem={resources.mem_mb}
     --job-name=ac2_{rule}_{wildcards}
-    --output=results_ac2/logs/%j-{rule}.out.log
-    --error=results_ac2/logs/%j-{rule}.err.log
+    --output=.snakemake/log/%j-{rule}.out.log
+    --error=.snakemake/log/%j-{rule}.err.log
     --time={resources.runtime}
     --partition={resources.partition}
 

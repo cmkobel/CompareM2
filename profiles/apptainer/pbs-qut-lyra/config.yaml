@@ -7,7 +7,7 @@ jobs: 1000 # max parallel jobs
 keep-going: true 
 #rerun-incomplete: true
 latency-wait: 120
-keep-incomplete: true # Should be true for debugging rules.
+keep-incomplete: false # true for debugging. Must be false for production, otherwise the user might get confusing --rerun-incomplete queries.
 rerun-triggers: "mtime" # only schedule jobs to rerun if there has been a change in mtime of input/output files. That is: ignore code changes
 
 # This one could be cool to have working 
@@ -31,13 +31,12 @@ cluster-cancel: "qdel"
 
 
 cluster:
-  mkdir -p output_asscom2/logs/old/ && 
   qsub 
     -V 
     -A $USER 
     -q YOURACCOUNTNAMEHERE 
-    -e output_asscom2/logs/%j-{rule}.err.log 
-    -o output_asscom2/logs/%j-{rule}.out.log
+    -e .snakemake/log/%j-{rule}.err.log 
+    -o .snakemake/log/%j-{rule}.out.log
     -l select=1:ncpus={threads}:mem={resources.mem_mb}mb,walltime={resources.runtime} 
 
 
