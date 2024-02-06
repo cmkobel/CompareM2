@@ -84,16 +84,42 @@ print("    report downloads fast")
 results_directory = "results_ac2"
 
 
-# --- Read in relevant files in the current working directory ----------------
+# # --- Read in relevant files in the current working directory ----------------
 
-relative_wd = "."
-#extension_whitelist = ["fna", "fa", "fas", "fasta", "seq"] # old 
-extension_whitelist = ["fna", "fa", "fas", "fasta", "seq", "gb", "fq", "gff", "gfa", "clw", "sth", "gz", "bz2"] # From any2fasta
+# relative_wd = "."
+# #extension_whitelist = ["fna", "fa", "fas", "fasta", "seq"] # old 
+# extension_whitelist = ["fna", "fa", "fas", "fasta", "seq", "gb", "fq", "gff", "gfa", "clw", "sth", "gz", "bz2"] # From any2fasta
 
-present_files = [f for f in listdir(relative_wd) if isfile(join(relative_wd,f))]
+# present_files = [f for f in listdir(relative_wd) if isfile(join(relative_wd,f))]
 
 
-df = pd.DataFrame(data = {'input_file': present_files})
+# --- New system for reading in files where the user can also specify on the command line
+
+def get_input_genomes(pattern):
+    """Runs ls on the pattern and parses what is returned. Uses module subprocess.
+    """
+
+    # Construct full command.
+    command = "ls -1 " + pattern
+
+    # Run ls as a subprocess.
+    ls = subprocess.run(command, shell = True, capture_output = True) # Apparently, shell = True is necessary when using advanced globbing symbols.
+
+    # Parse and return
+    decoded = ls.stdout.decode('utf-8').split("\n")
+    decoded_nonempty = [i for i in decoded if i != ''] # If there are no matches, we must remove the empty result. Also, there is always an empty result in the end because ls returns a final newline.
+    return decoded_nonempty
+
+# Uses snakemakes built in config system to set default and custom parameters. 
+input_genomes_parsed = get_input_genomes(config['input_genomes']) # Run with 'asscom2 --config input_genomes="my_files*.fna' to customize.
+
+if len(input_genomes_parsed) < 1:
+    raise Exception(f"Could not find {config['input_genomes']}. Quitting ...")
+
+
+# --- Construct table ---------------------------------------------------------
+
+df = pd.DataFrame(data = {'input_file': input_genomes_parsed})
 
 # Check that the directory is not empty.
 if df.shape[0] == 0:
@@ -101,18 +127,15 @@ if df.shape[0] == 0:
     #raise Exception("Zero genomic files present.")
     sys.exit(1)
 
-
-
-df = df[~df["input_file"].str.startswith(".", na = False)] # Remove hidden files
-df['sample_raw'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()] # Extract everything before the extension dot.
-
+#df['sample_raw'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()] # Extract everything before the extension dot.
+df['basename'] = [os.path.basename(i) for i in df['input_file'].tolist()]
 
 # Since mashtree doesn't like spaces in filenames, we must convert those.
-df['sample'] = df['sample_raw'].str.replace(' ','_').str.replace(',','_').str.replace('"','_').str.replace('\'','_') # Convert punctuation marks to underscores: Makes everything easier.
+df['basename_clean'] = df['basename'].str.replace(' ','_').str.replace(',','_').str.replace('"','_').str.replace('\'','_') # Convert punctuation marks to underscores: Makes everything easier.
+df['sample'] = [".".join((i.split(".")[:-1])) for i in df['basename_clean']] # Remove extension by splitting, removing last, and joining.
 df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extract extension
 df['input_file_fasta'] = results_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fna" # This is where the input file is copied to in the first snakemake rule.
 
-df = df[df['extension'].isin(extension_whitelist)] # Remove files with unsupported formats.
 df['1-index'] = [i+1 for i in range(len(df))]
 
 # Check that the directory is not empty, again.
@@ -130,15 +153,20 @@ print() # Padding
 df = df.reset_index(drop = True)
 #print(df[['input_file', 'sample', 'extension']])
 #print(df[['input_file', 'extension', 'input_file_fasta']])
-print(df[['1-index', 'sample', 'extension']].to_string(index = False))
+#print(df[['1-index', 'sample', 'extension']].to_string(index = False))
+print(df[['1-index', 'input_file', 'basename', 'sample', 'extension', 'input_file_fasta']].to_string(index = False))
 print("//")
 print()
 
 # Warn the user if there exists spaces in file names.
-if any([" " in i for i in df['sample_raw'].tolist()]):
+if any([" " in i for i in df['input_file'].tolist()]): # TODO test if it still works after new globbing system.
     print("Warning: One or more file names contain space(s). These have been replaced to underscores \" \" -> \"_\"")
 
-
+# Check if the sample names are unique
+duplicates = df[df.duplicated(['sample'])]
+n_duplicates = duplicates.shape[0]
+if n_duplicates > 0:
+    raise Exception(f"Error: Sample names are not unique. The following ({n_duplicates}) input genome(s) are duplicated:\n{duplicates.to_string(index = False)}")
 
 
 # The DATABASES directory must exist, otherwise apptainer gets confused and throws the following:
@@ -227,7 +255,7 @@ rule metadata:
     # input: expand("{results_directory}/samples/{sample}/{sample}.fna", results_directory = results_directory, sample = df["sample"]) # From rule copy
     input: df['input_file_fasta']
     output: "{results_directory}/metadata.tsv"
-    params: dataframe = df.to_csv(None, index_label = "index", sep = "\t", quoting = csv.QUOTE_NONE)
+    params: dataframe = df.to_csv(None, index_label = "index", sep = "\t") #, quoting = csv.QUOTE_NONE)
     resources:
         runtime = "1h"
     #run:
@@ -1294,11 +1322,10 @@ rule isolate:
 # I wonder if adding the ampersands means that the report creation will be ^c cancellable? Not tested yet..
 report_call = f"""
     
-    # Had to chain these tests/if-statements in order to be able to cancel the running interactively.
+    # Had to chain these tests/if-statements in order to be able to cancel running as interactive.
     (
         test -f "{results_directory}/.asscom2_void_report.flag" \
         && test -f "{results_directory}/metadata.tsv" \
-        && mkdir -p {results_directory}/logs \
         && snakemake \
             --snakefile "$ASSCOM2_BASE/report_subpipeline/snakefile" \
             --profile "$ASSCOM2_PROFILE" \

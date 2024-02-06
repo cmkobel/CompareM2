@@ -1,5 +1,7 @@
 roary_blastp_identity: 95
 mlst_scheme: automatic
+input_genomes: "*.fna *.fa *.fasta *.fas" # Default value. Does not support advanced brace expansion. If you give multiple files or a single file has spaces or weird characters, it should be within parantheses.
+
 
 
 
