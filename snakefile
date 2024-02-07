@@ -84,16 +84,8 @@ print("    report downloads fast")
 results_directory = "results_ac2"
 
 
-# # --- Read in relevant files in the current working directory ----------------
 
-# relative_wd = "."
-# #extension_whitelist = ["fna", "fa", "fas", "fasta", "seq"] # old 
-# extension_whitelist = ["fna", "fa", "fas", "fasta", "seq", "gb", "fq", "gff", "gfa", "clw", "sth", "gz", "bz2"] # From any2fasta
-
-# present_files = [f for f in listdir(relative_wd) if isfile(join(relative_wd,f))]
-
-
-# --- New system for reading in files where the user can also specify on the command line
+# --- Parse input files -------------------------------------------------------
 
 def get_input_genomes(pattern):
     """Runs ls on the pattern and parses what is returned. Uses module subprocess.
@@ -191,7 +183,7 @@ void_report = f"date -Iseconds >> {results_directory}/.asscom2_void_report.flag"
 
 localrules: metadata, checkm2_download, kraken2_download, dbcan_download, busco_download, gtdb_download, report, install_report_environment_aot
 
-# --- Collect all targets. ------------------------------------------
+# --- Collect all targets. ----------------------------------------------------
 rule all:
     input: expand([\
         "{results_directory}/metadata.tsv", \
@@ -270,7 +262,7 @@ rule metadata:
 
 
 
-# --- Downloads -----------------------------------------------------
+# --- Downloads -----------------------------------------------------------------
 
 # This rule runs once, downloading the busco dataset that is needed for rule busco_individual.
 # Make sure that this job is run on a node that has internet access.
@@ -520,7 +512,7 @@ rule gtdb_download:
     """
 
 
-# ---- Other -------------------------------------------------------------------
+# --- Other ---------------------------------------------------------------------
 
 
 
@@ -528,7 +520,7 @@ rule gtdb_download:
 
 
 
-# --- Targets for each sample below: --------------------------------
+# --- Targets for each sample below: ------------------------------------------
 
 rule sequence_lengths:
     input:
@@ -758,7 +750,7 @@ rule busco:
     """
 
 
-# --- Targets for the complete set below: ---------------------------
+# --- Targets for the complete set below: -------------------------------------
 
 rule checkm2:
     input:
@@ -1124,6 +1116,7 @@ rule mlst:
         mlst --list > {params.list_}
 
         {void_report}
+
     """
 
 
@@ -1186,8 +1179,6 @@ rule fasttree:
 
 
 
-def get_mem_iqtree(wildcards, attempt): 
-    return [16000, 32000, 64000, 128000][attempt-1]
 
 rule iqtree:
     input:
@@ -1202,7 +1193,7 @@ rule iqtree:
     threads: 16
     retries: 3
     resources:
-        mem_mb = get_mem_iqtree,
+        mem_mb = 32000,
         runtime = "24h",
     shell: """
 
