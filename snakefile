@@ -729,20 +729,17 @@ rule busco:
         # Cat all auto lineage results together or create empty file
         # The following cat command will fail if the glob doesn't resolve any files: This is the wanted behaviour.
         cat {wildcards.results_directory}/samples/{wildcards.sample}/busco/auto_lineage/*/short_summary.json \
-        > {output.table_extract}_temp         
+        > "{output.table_extract}_temp"
         
         >&2 echo "Results clearly must exist ... "
         
         # Extract relevant features
-        cat {output.table_extract}_temp \
+        cat "{output.table_extract}_temp" \
         | grep -oE "(\\"in\\"|\\"name\\"|\\"one_line_summary\\").+" \
         > {output.table_extract:q}
 
-        >&2 echo "debug3"
         # Clean up
-        rm {output.table_extract}_temp
-
-        >&2 echo "debug4"
+        rm "{output.table_extract}_temp"
 
         {void_report}
 
