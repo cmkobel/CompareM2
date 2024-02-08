@@ -4,7 +4,7 @@
 
 __author__ = 'Carl M. Kobel'
 
-__version__ = "2.5.17"
+__version__ = "2.5.18"
 # Places to bump
 #  - here, because the snakefile can possibly be run without the ./asscom2 binary. It is unrealistic to run the report subpipeline standalone, so that one get's the string from here (see bottom).
 #  - changelog
@@ -13,9 +13,9 @@ __version__ = "2.5.17"
 
 # Run with conda:
 # For developing and testing (using conda) prior to publication of next version apptainer image, you can run the following from the repository directory:
-# conda
+# Conda
 # export ASSCOM2_BASE="$(pwd -P)"; export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profiles/conda/local"; snakemake --snakefile "${ASSCOM2_BASE}/snakefile" --profile "$ASSCOM2_PROFILE" --configfile "${ASSCOM2_BASE}/config.yaml" --until fast
-# apptainer
+# Apptainer
 # export ASSCOM2_BASE="$(pwd -P)"; export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profiles/apptainer/local"; snakemake --snakefile "${ASSCOM2_BASE}/snakefile" --profile "$ASSCOM2_PROFILE" --configfile "${ASSCOM2_BASE}/config.yaml" --until fast
 
 # Update Dockerfile:
@@ -264,7 +264,7 @@ rule metadata:
 
 # --- Downloads -----------------------------------------------------------------
 
-# This rule runs once, downloading the busco dataset that is needed for rule busco_individual.
+# This rule runs once, downloading the busco dataset that is needed for rule busco.
 # Make sure that this job is run on a node that has internet access.
 rule busco_download:
     output:
@@ -709,7 +709,7 @@ rule busco:
 
         >&2 echo "Busco individual"
         # https://busco.ezlab.org/busco_userguide.html#offline
-        timeout 3600 \
+        timeout 1800 \
             busco \
                 --cpu {threads} \
                 --in {input.fasta:q} \
@@ -739,7 +739,7 @@ rule busco:
         > {output.table_extract:q}
 
         # Clean up
-        rm "{output.table_extract}_temp"
+        rm "{output.table_extract}_temp" || echo no file
 
         {void_report}
 

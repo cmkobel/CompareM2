@@ -1,3 +1,10 @@
+2.5.18
+  - Support for weird characters in input files. #31
+  - Support for adding input files from other directories. #58
+  - Minor bugfixes. #77
+  - Test battery is being developed. (https://github.com/cmkobel/ac2-test-battery)
+
+
 2.5.17
   - Forced recompilation of docker image did not fix issue #74. This patch has equivalent .yaml-files to version 2.5.14, which means that the old (working) docker image will be compatible.
 
