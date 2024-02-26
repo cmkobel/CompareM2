@@ -14,5 +14,5 @@ dependencies:
   - r-phytools
   - r-ape
   - r-gridextra
-  - zip
+#  - zip
   
