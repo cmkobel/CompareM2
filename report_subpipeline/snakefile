@@ -11,7 +11,8 @@ batch_title = config['batch_title'] # E.g. E._faecium
 version_string = config['version_string']
 
 #containerized: f"docker://cmkobel/assemblycomparator2:v{version_string}" # Remember to copy the same version to the report_subpipeline/snakefile. I wonder if I can put this in the profile or config instead? 
-containerized: f"docker://cmkobel/assemblycomparator2:v2.5.14" # I have found myself in a predicament. I can't publish a new version of the docker image because there is an error that I can't fix. Thus I'm stick on 2.5.14 for now. When I fix the issue, I will use the correct version again.
+#containerized: f"docker://cmkobel/assemblycomparator2:v2.5.14" # I have found myself in a predicament. I can't publish a new version of the docker image because there is an error that I can't fix. Thus I'm stick on 2.5.14 for now. When I fix the issue, I will use the correct version again.
+containerized: f"docker://cmkobel/assemblycomparator2:latest"
 
 print('report subpipeline: results_directory:', results_directory)
 print('report subpipeline: base_variable:', base_variable)
@@ -53,6 +54,14 @@ rule report:
 
 	    # When sharing environments by multiple users: Pandoc creates an intermediary .md file that reside next to the .Rmd file that is used to create the report. Because the directory where this .Rmd file resides may not be writable by the user that is executing the workflow. Thus, as a solution, we'll copy the whole script/ directory where this .Rmd resides to the current working directory.
         cp -r {base_variable}/report_subpipeline/scripts scripts_temporary # This one fails when using apptainer. Maybe I just need to bind it.
+
+        echo trying 1
+        # Trying to use a file instead to see if it fixes #74
+        Rscript scripts_temporary/render_report.R {params.base_variable} {params.results_directory} {params.batch_title} {version_string} {output.html} {params.results_directory}
+
+        echo trying 2
+        exit 0
+
         
 
         #mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.

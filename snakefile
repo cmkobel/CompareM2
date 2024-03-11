@@ -938,6 +938,8 @@ rule motulizer:
     conda: "conda_definitions/motulizer.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.motulizer.tsv"
     threads: 1
+    resources:
+        mem_mb = 8192,
     shell: """
         
         mOTUlize.py --version > {params.version_file} || echo "Catched exit code 1 when asking for the motulize version."
@@ -955,6 +957,8 @@ rule motupan:
     conda: "conda_definitions/motulizer.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.motupan.tsv"
     threads: 1
+    resources:
+        mem_mb = 32768,
     shell: """
     
         # Same version as motulizer, so no need to save the version again.
