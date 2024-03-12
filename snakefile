@@ -54,7 +54,7 @@ base_variable = os.environ['ASSCOM2_BASE'] # rename to ASSCOM2_BASE
 DATABASES = os.environ['ASSCOM2_DATABASES'] # Defines where the databases are stored. One for all. when snakemake issue 262 is solved I'll make this more flexible for each rule.
 
 
-print("/*") # for .dot exports used to generate dag visualizations.
+print("/*") # Makes it easy to export to .dot and to remove header from the generated Dockerfile.
 print(f"                                                                   v{__version__}")
 print("         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ ")
 print("        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗")
@@ -152,7 +152,7 @@ print()
 
 # Warn the user if there exists spaces in file names.
 if any([" " in i for i in df['input_file'].tolist()]): # TODO test if it still works after new globbing system.
-    print("Warning: One or more file names contain space(s). These have been replaced to underscores \" \" -> \"_\"")
+    print("Warning: One or more file names contain space(s). These have been replaced with underscores \" \" -> \"_\"")
 
 # Check if the sample names are unique
 duplicates = df[df.duplicated(['sample'])]
@@ -1316,7 +1316,6 @@ report_call = f"""
         test -f "{results_directory}/.asscom2_void_report.flag" \
         && test -f "{results_directory}/metadata.tsv" \
         && snakemake \
-            -p \
             --snakefile "$ASSCOM2_BASE/report_subpipeline/snakefile" \
             --profile "$ASSCOM2_PROFILE" \
             --config results_directory="$(pwd -P)/{results_directory}" base_variable="{base_variable}" batch_title="{batch_title}" version_string="{__version__}"

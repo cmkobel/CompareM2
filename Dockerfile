@@ -1,6 +1,6 @@
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="949b634475dab2d164f5134b6e460ead56c9c13862248cd1971190f817f6ce3b"
+LABEL io.github.snakemake.conda_env_hash="a57b126dd7a70a25c137278b480f6811d0d68fbaf0db67e9925793f27765b0de"
 
 # Step 1: Retrieve conda environments
 
@@ -278,26 +278,27 @@ COPY conda_definitions/snp-dists.yaml /conda-envs/79addc38bfc17b635a3fa2c401ab21
 
 # Conda environment:
 #   source: report_subpipeline/conda_definitions/r-markdown.yaml
-#   prefix: /conda-envs/490c9344c6805f820e98aa8dd6b11ef4
+#   prefix: /conda-envs/2e8da1d04478713e88851b1dbb6cce04
 #   name: r-markdown
 #   channels:
 #     - conda-forge
 #     - bioconda
-#     - defaults
 #     - r
 #   dependencies:
-#     - r-base=4.2.2
+#     - r-base=4.2 #=4.2.2
 #     - r-essentials
 #     - r-tidyverse
 #     - r-dt
-#     - r-prettydoc
-#     - r-rmarkdown
-#     - r-phytools
-#     - r-ape
-#     - r-gridextra
-#     - zip
-RUN mkdir -p /conda-envs/490c9344c6805f820e98aa8dd6b11ef4
-COPY report_subpipeline/conda_definitions/r-markdown.yaml /conda-envs/490c9344c6805f820e98aa8dd6b11ef4/environment.yaml
+#     - r-ape # For phylogenetic tree plotting. Maybe I should switch to ggtree?
+#     
+#     #- r-prettydoc
+#     #- r-rmarkdown
+#     #- r-phytools
+#     #- r-gridextra
+#   
+#   # Removing most of these dependencies fixes the #74 issue. So the plan now is to purge as many of them as possible and then build a new master docker image and see if it fixes the problem. KISS, no bloat, is the philosophy.
+RUN mkdir -p /conda-envs/2e8da1d04478713e88851b1dbb6cce04
+COPY report_subpipeline/conda_definitions/r-markdown.yaml /conda-envs/2e8da1d04478713e88851b1dbb6cce04/environment.yaml
 
 # Step 2: Generate conda environments
 
@@ -322,5 +323,5 @@ RUN mamba env create --prefix /conda-envs/e96caef90ba4287605b7ab60379bb5dc --fil
     mamba env create --prefix /conda-envs/c510ddc9269801c6f267bbc20945cb01 --file /conda-envs/c510ddc9269801c6f267bbc20945cb01/environment.yaml && \
     mamba env create --prefix /conda-envs/1e9be5c81cf2e48459587271cf703755 --file /conda-envs/1e9be5c81cf2e48459587271cf703755/environment.yaml && \
     mamba env create --prefix /conda-envs/79addc38bfc17b635a3fa2c401ab213e --file /conda-envs/79addc38bfc17b635a3fa2c401ab213e/environment.yaml && \
-    mamba env create --prefix /conda-envs/490c9344c6805f820e98aa8dd6b11ef4 --file /conda-envs/490c9344c6805f820e98aa8dd6b11ef4/environment.yaml && \
+    mamba env create --prefix /conda-envs/2e8da1d04478713e88851b1dbb6cce04 --file /conda-envs/2e8da1d04478713e88851b1dbb6cce04/environment.yaml && \
     mamba clean --all -y
