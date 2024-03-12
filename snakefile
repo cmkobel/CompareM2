@@ -39,7 +39,8 @@ import subprocess
 import datetime
 
 #containerized: f"docker://cmkobel/assemblycomparator2:v{__version__}"
-containerized: f"docker://cmkobel/assemblycomparator2:v2.5.14" # I have found myself in a predicament. I can't publish a new version of the docker image because there is an error that I can't fix. Thus I'm stick on 2.5.14 for now. When I fix the issue, I will use the correct version again.
+#containerized: f"docker://cmkobel/assemblycomparator2:v2.5.14" # I have found myself in a predicament. I can't publish a new version of the docker image because there is an error that I can't fix. Thus I'm stick on 2.5.14 for now. When I fix the issue, I will use the correct version again.
+containerized: f"docker://cmkobel/assemblycomparator2:latest"
 
 # When executing, Snakemake will fail with a reasonable error message if the variables below are undefined.
 envvars:
