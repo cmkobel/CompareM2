@@ -1,6 +1,6 @@
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="a57b126dd7a70a25c137278b480f6811d0d68fbaf0db67e9925793f27765b0de"
+LABEL io.github.snakemake.conda_env_hash="5b5991c8ef0af565f55418f453212a1146eb86229db5a0ed8f52b29c28d3f2e2"
 
 # Step 1: Retrieve conda environments
 
@@ -67,20 +67,8 @@ RUN mkdir -p /conda-envs/679a46a27a9c8f5ec775838a5d75a05d
 COPY conda_definitions/checkm2.yaml /conda-envs/679a46a27a9c8f5ec775838a5d75a05d/environment.yaml
 
 # Conda environment:
-#   source: conda_definitions/curl.yaml
-#   prefix: /conda-envs/f7c4e0b49f1914099f4cced5dd00117a
-#   name: curl
-#   channels:
-#     - conda-forge
-#   dependencies:
-#     - curl
-#     - unzip
-RUN mkdir -p /conda-envs/f7c4e0b49f1914099f4cced5dd00117a
-COPY conda_definitions/curl.yaml /conda-envs/f7c4e0b49f1914099f4cced5dd00117a/environment.yaml
-
-# Conda environment:
 #   source: conda_definitions/dbcan.yaml
-#   prefix: /conda-envs/5bddf671d68664d662b48c7ab768155e
+#   prefix: /conda-envs/8cd1cad56d7906e01beac32580c9104f
 #   name: dbcan
 #   channels:
 #     - conda-forge
@@ -88,8 +76,9 @@ COPY conda_definitions/curl.yaml /conda-envs/f7c4e0b49f1914099f4cced5dd00117a/en
 #   dependencies:
 #     - python=3.8
 #     - dbcan
-RUN mkdir -p /conda-envs/5bddf671d68664d662b48c7ab768155e
-COPY conda_definitions/dbcan.yaml /conda-envs/5bddf671d68664d662b48c7ab768155e/environment.yaml
+#     - anaconda::wget # Not sure if I should also add anaconda as a channel?
+RUN mkdir -p /conda-envs/8cd1cad56d7906e01beac32580c9104f
+COPY conda_definitions/dbcan.yaml /conda-envs/8cd1cad56d7906e01beac32580c9104f/environment.yaml
 
 # Conda environment:
 #   source: conda_definitions/diamond.yaml
@@ -150,19 +139,6 @@ COPY conda_definitions/interproscan.yaml /conda-envs/3edd5ee462543ff6e33cf6576cd
 #     - iqtree>=2
 RUN mkdir -p /conda-envs/108c93bf8519b05838cdca347b9bf6fa
 COPY conda_definitions/iqtree.yaml /conda-envs/108c93bf8519b05838cdca347b9bf6fa/environment.yaml
-
-# Conda environment:
-#   source: conda_definitions/kraken2.yaml
-#   prefix: /conda-envs/7a36c2bda181af2bc7b3e01efd455a2d
-#   name: kraken2
-#   channels:
-#     - conda-forge
-#     - bioconda
-#     - defaults
-#   dependencies:
-#     - kraken2
-RUN mkdir -p /conda-envs/7a36c2bda181af2bc7b3e01efd455a2d
-COPY conda_definitions/kraken2.yaml /conda-envs/7a36c2bda181af2bc7b3e01efd455a2d/environment.yaml
 
 # Conda environment:
 #   source: conda_definitions/mashtree.yaml
@@ -277,6 +253,17 @@ RUN mkdir -p /conda-envs/79addc38bfc17b635a3fa2c401ab213e
 COPY conda_definitions/snp-dists.yaml /conda-envs/79addc38bfc17b635a3fa2c401ab213e/environment.yaml
 
 # Conda environment:
+#   source: conda_definitions/wget.yaml
+#   prefix: /conda-envs/c8a52f1972dc7fd6d190a850925a90be
+#   name: wget
+#   channels:
+#     - anaconda
+#   dependencies:
+#     - wget
+RUN mkdir -p /conda-envs/c8a52f1972dc7fd6d190a850925a90be
+COPY conda_definitions/wget.yaml /conda-envs/c8a52f1972dc7fd6d190a850925a90be/environment.yaml
+
+# Conda environment:
 #   source: report_subpipeline/conda_definitions/r-markdown.yaml
 #   prefix: /conda-envs/2e8da1d04478713e88851b1dbb6cce04
 #   name: r-markdown
@@ -307,14 +294,12 @@ RUN mamba env create --prefix /conda-envs/e96caef90ba4287605b7ab60379bb5dc --fil
     mamba env create --prefix /conda-envs/21dc339c1bfec2d112230fb9ed4a3121 --file /conda-envs/21dc339c1bfec2d112230fb9ed4a3121/environment.yaml && \
     mamba env create --prefix /conda-envs/ed54eb0e2bd56cbb474809ff03c9d5a3 --file /conda-envs/ed54eb0e2bd56cbb474809ff03c9d5a3/environment.yaml && \
     mamba env create --prefix /conda-envs/679a46a27a9c8f5ec775838a5d75a05d --file /conda-envs/679a46a27a9c8f5ec775838a5d75a05d/environment.yaml && \
-    mamba env create --prefix /conda-envs/f7c4e0b49f1914099f4cced5dd00117a --file /conda-envs/f7c4e0b49f1914099f4cced5dd00117a/environment.yaml && \
-    mamba env create --prefix /conda-envs/5bddf671d68664d662b48c7ab768155e --file /conda-envs/5bddf671d68664d662b48c7ab768155e/environment.yaml && \
+    mamba env create --prefix /conda-envs/8cd1cad56d7906e01beac32580c9104f --file /conda-envs/8cd1cad56d7906e01beac32580c9104f/environment.yaml && \
     mamba env create --prefix /conda-envs/1f973b92cc12d86729a390f6a8856716 --file /conda-envs/1f973b92cc12d86729a390f6a8856716/environment.yaml && \
     mamba env create --prefix /conda-envs/ebff814bce7bc3bc66d9a0b9b4e8126e --file /conda-envs/ebff814bce7bc3bc66d9a0b9b4e8126e/environment.yaml && \
     mamba env create --prefix /conda-envs/6129deec2bbe1dd5cee82b4bca12b1ae --file /conda-envs/6129deec2bbe1dd5cee82b4bca12b1ae/environment.yaml && \
     mamba env create --prefix /conda-envs/3edd5ee462543ff6e33cf6576cdfcffb --file /conda-envs/3edd5ee462543ff6e33cf6576cdfcffb/environment.yaml && \
     mamba env create --prefix /conda-envs/108c93bf8519b05838cdca347b9bf6fa --file /conda-envs/108c93bf8519b05838cdca347b9bf6fa/environment.yaml && \
-    mamba env create --prefix /conda-envs/7a36c2bda181af2bc7b3e01efd455a2d --file /conda-envs/7a36c2bda181af2bc7b3e01efd455a2d/environment.yaml && \
     mamba env create --prefix /conda-envs/b62c14d70e3e16658965b4ab951392ed --file /conda-envs/b62c14d70e3e16658965b4ab951392ed/environment.yaml && \
     mamba env create --prefix /conda-envs/5db696091993795c7c85a68f6df73ceb --file /conda-envs/5db696091993795c7c85a68f6df73ceb/environment.yaml && \
     mamba env create --prefix /conda-envs/e0b1329bcca3902e264fa723669e7f96 --file /conda-envs/e0b1329bcca3902e264fa723669e7f96/environment.yaml && \
@@ -323,5 +308,6 @@ RUN mamba env create --prefix /conda-envs/e96caef90ba4287605b7ab60379bb5dc --fil
     mamba env create --prefix /conda-envs/c510ddc9269801c6f267bbc20945cb01 --file /conda-envs/c510ddc9269801c6f267bbc20945cb01/environment.yaml && \
     mamba env create --prefix /conda-envs/1e9be5c81cf2e48459587271cf703755 --file /conda-envs/1e9be5c81cf2e48459587271cf703755/environment.yaml && \
     mamba env create --prefix /conda-envs/79addc38bfc17b635a3fa2c401ab213e --file /conda-envs/79addc38bfc17b635a3fa2c401ab213e/environment.yaml && \
+    mamba env create --prefix /conda-envs/c8a52f1972dc7fd6d190a850925a90be --file /conda-envs/c8a52f1972dc7fd6d190a850925a90be/environment.yaml && \
     mamba env create --prefix /conda-envs/2e8da1d04478713e88851b1dbb6cce04 --file /conda-envs/2e8da1d04478713e88851b1dbb6cce04/environment.yaml && \
     mamba clean --all -y
