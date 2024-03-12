@@ -5,5 +5,5 @@ channels:
 dependencies:
   - python=3.8
   - dbcan
-  - anaconda::wget # Not sure if I should also add anaconda as a channel?
+#  - anaconda::wget # Not sure if I should also add anaconda as a channel?
 
