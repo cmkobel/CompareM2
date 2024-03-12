@@ -357,7 +357,7 @@ rule checkm2_download:
 
 
 
-
+# I'm considering to remove kraken. How are the results in any way interesting? Isn't it more of a reads tool? If I still have a strong feeling next time I see this command, I'll do it. Busco is next on the list, but I think I'll wait until after the course or at least try the newest version, to see if it fixes the runtime issues.
 rule kraken2_download:
     output:
         #database_representative = touch("{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag"),
@@ -550,7 +550,7 @@ rule prokka:
         faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg, motupan
         log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
-        gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta",
+        gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta", # Not sure where I'm using this.
     conda: "conda_definitions/prokka.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
     resources:
@@ -1144,8 +1144,6 @@ rule mashtree:
         {void_report}
     """ 
 
-# TODO: ?
-#rule mash_screen:
 
 def get_mem_fasttree(wildcards, attempt): 
     return [16000, 32000, 64000, 0][attempt-1]
@@ -1318,6 +1316,7 @@ report_call = f"""
         test -f "{results_directory}/.asscom2_void_report.flag" \
         && test -f "{results_directory}/metadata.tsv" \
         && snakemake \
+            -p \
             --snakefile "$ASSCOM2_BASE/report_subpipeline/snakefile" \
             --profile "$ASSCOM2_PROFILE" \
             --config results_directory="$(pwd -P)/{results_directory}" base_variable="{base_variable}" batch_title="{batch_title}" version_string="{__version__}"

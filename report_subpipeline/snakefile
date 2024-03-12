@@ -53,15 +53,10 @@ rule report:
 
 
 	    # When sharing environments by multiple users: Pandoc creates an intermediary .md file that reside next to the .Rmd file that is used to create the report. Because the directory where this .Rmd file resides may not be writable by the user that is executing the workflow. Thus, as a solution, we'll copy the whole script/ directory where this .Rmd resides to the current working directory.
+        
+        # First remove possible old directory
+        test -d scripts_temporary/ && rm -r scripts_temporary/
         cp -r {base_variable}/report_subpipeline/scripts scripts_temporary # This one fails when using apptainer. Maybe I just need to bind it.
-
-        echo trying 1
-        # Trying to use a file instead to see if it fixes #74
-        Rscript scripts_temporary/render_report.R {params.base_variable} {params.results_directory} {params.batch_title} {version_string} {output.html} {params.results_directory}
-
-        echo trying 2
-        exit 0
-
         
 
         #mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.
@@ -77,16 +72,11 @@ rule report:
         )'
 
         # Clean up 
-        rm -r scripts_temporary
+        rm -r scripts_temporary # Problem is that this file is only removed if 
 
         # End script
         test -f "{params.end_script}" && echo "running end script" && . {params.end_script} {batch_title} {results_directory}/report_{batch_title}.html 
         
-        
-        # Create a zip archive of the report
-        cd "{results_directory}" 
-        zip -j "{output.html}.zip" "{output.html}" || echo failed to zip
-        # todo: remove zip.
 
         echo "report subpipeline: report written to {output.html}"
         echo "    ______________________________  "
