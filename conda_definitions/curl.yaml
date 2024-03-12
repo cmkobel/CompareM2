@@ -1,6 +1,0 @@
-name: curl
-channels:
-  - conda-forge
-dependencies:
-  - curl
-  - unzip

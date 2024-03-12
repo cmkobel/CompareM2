@@ -75,8 +75,8 @@ print(f"    mlst_scheme:           {config['mlst_scheme']} (default automatic)")
 
 print()
 print("    Available rules:")
-print("    sequence_lengths prokka kraken2 dbcan interproscan")
-print("    busco checkm2 diamond_kegg kegg_pathway roary snp_dists")
+print("    sequence_lengths prokka dbcan interproscan busco")
+print("    checkm2 diamond_kegg kegg_pathway roary snp_dists")
 print("    assembly_stats gtdbtk abricate mlst mashtree fasttree")
 print("    report downloads fast")
 
@@ -181,7 +181,7 @@ void_report = f"date -Iseconds >> {results_directory}/.asscom2_void_report.flag"
 
 
 
-localrules: metadata, checkm2_download, kraken2_download, dbcan_download, busco_download, gtdb_download, report, install_report_environment_aot
+localrules: metadata, checkm2_download, dbcan_download, busco_download, gtdb_download, report, install_report_environment_aot
 
 # --- Collect all targets. ----------------------------------------------------
 rule all:
@@ -194,7 +194,6 @@ rule all:
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
         "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
-        "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/samples/{sample}/dbcan/overview.txt", \
         "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
         "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
@@ -315,7 +314,7 @@ rule checkm2_download:
         database_representative = DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
     params:
         destination = DATABASES + "/checkm2"
-    conda: "conda_definitions/curl.yaml"
+    conda: "conda_definitions/wget.yaml"
     shell: """
 
 
@@ -356,59 +355,6 @@ rule checkm2_download:
 
 
 
-
-# I'm considering to remove kraken. How are the results in any way interesting? Isn't it more of a reads tool? If I still have a strong feeling next time I see this command, I'll do it. Busco is next on the list, but I think I'll wait until after the course or at least try the newest version, to see if it fixes the runtime issues.
-rule kraken2_download:
-    output:
-        #database_representative = touch("{base_variable}/databases/kraken2/ac2_kraken2_database_representative.flag"),
-        database_representative = touch(DATABASES + "/kraken2/ac2_kraken2_database_representative.flag"),
-    params:
-        db_destination_smk = DATABASES + "/kraken2/kraken2_db.tar.gz"
-    conda: "conda_definitions/curl.yaml"
-    shell: """
-
-        ## Pick a db from this list
-        # https://benlangmead.github.io/aws-indexes/k2
-
-        ## Shortcuts. Select no bigger than the size of your RAM
-        db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20230314.tar.gz"      # Standard 49GB
-        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_08gb_20230314.tar.gz" # Standard  8GB
-        #db_pick="https://genome-idx.s3.amazonaws.com/kraken/k2_standard_16gb_20230314.tar.gz" # Standard 16GB
-                
-
-        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
-        if [ -f "{output}" ]; then    
-
-            >&2 echo "Flag exists already: touch it to update the mtime ..."
-            touch {output:q}
-            
-        else
-
-            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
-
-            >&2 echo "Downlading $db_pick to {params.db_destination_smk}"
-            #mkdir -p $(dirname "$db_destination")
-            #curl "$db_pick" \
-            #    --output {params.db_destination_smk}
-
-            wget "$db_pick" -O "{params.db_destination_smk}"
-
-            >&2 echo "Decompressing ..."
-            tar \
-                -xvf {params.db_destination_smk} \
-                --directory $(dirname {params.db_destination_smk})
-
-            rm {params.db_destination_smk} || echo "Failed to clean up."
-
-            >&2 echo "kraken2 DB setup completed"
-            echo "Downloaded $db_pick at $(date -Iseconds)" > $(dirname {params.db_destination_smk})/info.txt
-
-            mkdir -p $(dirname {output:q})
-            touch {output:q}
-            
-        fi
-
-    """
 
 
 
@@ -465,7 +411,7 @@ rule dbcan_download:
 rule gtdb_download:
     output:
         database_representative = DATABASES + "/gtdb/ac2_gtdb_database_representative.flag"
-    conda: "conda_definitions/curl.yaml" # Technically we don't need curl anymore but I don't want to change the dockerfile right now. Would be better to use anaconda::wget .
+    conda: "conda_definitions/wget.yaml"
     shell: """
 
         # https://ecogenomics.github.io/GTDBTk/installing/index.html
@@ -578,38 +524,6 @@ rule prokka:
     """
 
 
-
-rule kraken2:
-    input: 
-        metadata = expand("{results_directory}/metadata.tsv", results_directory = results_directory),
-        assembly = "{results_directory}/samples/{sample}/{sample}.fna",
-        database_representative = DATABASES + "/kraken2/ac2_kraken2_database_representative.flag"
-    output: 
-        report = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv",
-        full = "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_full.tsv",
-    conda: "conda_definitions/kraken2.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.kraken2_individual.{sample}.tsv"
-    threads: 2
-    resources:
-        mem_mb = 75000,
-    shell: """
-
-        echo using kraken2 database $(dirname {input.database_representative:q})
-
-        # Run kraken2
-        # https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown
-        kraken2 \
-            --threads {threads} \
-            --db $(dirname {input.database_representative:q}) \
-            --confidence 0.1 \
-            --report {output.report:q} \
-            --report-minimizer-data \
-            {input.assembly:q} \
-            > {output.full:q}
-
-        # Argument on confidence parameter https://www.biostars.org/p/402619/
-
-    """
 
 rule dbcan: # I can't decide whether this rule should really be called "run_dbcan", since that is the name of the software.
     input: 
@@ -1242,10 +1156,9 @@ rule report:
 # Makes it easy to check that all databases are installed properly. Eventually for touching the database representatives in case of using prior installations.
 rule downloads:
     input:
-        DATABASES + "/checkm2/ac2_checkm2_database_representative.flag", 
-        DATABASES + "/kraken2/ac2_kraken2_database_representative.flag",
-        DATABASES + "/busco/ac2_busco_database_representative.flag", 
-        DATABASES + "/dbcan/ac2_dbcan_database_representative.flag", 
+        DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
+        DATABASES + "/busco/ac2_busco_database_representative.flag",
+        DATABASES + "/dbcan/ac2_dbcan_database_representative.flag",
         DATABASES + "/gtdb/ac2_gtdb_database_representative.flag"
 
 
@@ -1272,7 +1185,6 @@ rule meta:
             "{results_directory}/checkm2/quality_report.tsv", \
             "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
             "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
-            "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
             "{results_directory}/samples/{sample}/dbcan/overview.txt", \
             "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
             "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
@@ -1292,7 +1204,6 @@ rule isolate:
         "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
         "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
         "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
-        "{results_directory}/samples/{sample}/kraken2/{sample}_kraken2_report.tsv", \
         "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
         "{results_directory}/mlst/mlst.tsv", \
         "{results_directory}/abricate/card_detailed.tsv", \
