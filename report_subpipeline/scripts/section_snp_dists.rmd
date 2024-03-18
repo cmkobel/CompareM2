@@ -27,7 +27,7 @@ snp_dists_raw %>%
     arrange(sample_index, name_index) %>% select(-ends_with("index")) %>% # After arranging, we're done with the indexes.
     pivot_wider(sample) %>% 
     
-    custom_dt("hat")
+    custom_dt("snp_dists")
     
 
 ```
