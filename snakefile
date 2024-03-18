@@ -776,7 +776,7 @@ def get_mem_roary(wildcards, attempt):
     return [32000, 64000, 128000][attempt-1]
 
 
-rule roary:
+checkpoint roary: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-dists should only run if the core genome is non-empty.
     input: 
         metadata = "{results_directory}/metadata.tsv",
         gff = expand("{results_directory}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], results_directory = results_directory),
@@ -823,53 +823,45 @@ rule roary:
     """
 
 
-checkpoint core_genome: # If the core genome is non-empty, this rule copies it. Otherwise it fails.
-    input:
-        alignment = "{results_directory}/roary/core_gene_alignment.aln",
-    output: 
-        alignment = "{results_directory}/roary/non-empty_core_genome/core_gene_alignment.aln",
-    run:
-        
-        print("Pipeline: Checking if Roary core genome exists ...")
-        
-        
-        try:   
-            with summary_file.open() as f:
-            #with open(file) as f: 
-
-                for line in f:
-                    line = line.strip()
-                    #print(f"line: {line}")
-                    
-                    # Find the line that states the size of the core genome.
-                    if "Core genes" in line:
-                        print(f"Pipeline: \"{line}\"")
-                        splitted = line.split("\t")
-                        # print(splitted)
-                        core_genome_size = int(splitted[-1])
-                        
-                        print(f"Pipeline: parsed core genome size is: {repr(core_genome_size)}")
-                        break
-                    
-                # Return true when there is a core genome.
-                if core_genome_size > 0:
-                    print("Pipeline: Core genome exists.")
-                    
-                    # copy file
-                    
-
-                    shutil.copyfile(input, output)
-
-                    
-                else:
-                    print("Pipeline: Core genome is empty.")
-
-        
-        # In case the file cannot be parsed, we're assuming that there is no core genome. Hence false.
-        except: 
-            print("Pipeline: Core genome size not known?")
-
     
+def core_genome_if_exists(wildcards): 
+    
+    summary_file = checkpoints.roary.get(**wildcards).output["summary"]
+    alignment_file = checkpoints.roary.get(**wildcards).output["alignment"]
+    
+    try:   
+        with summary_file.open() as f:
+        #with open(file) as f: 
+
+            for line in f:
+                line = line.strip()
+                #print(f"line: {line}")
+                
+                # Find the line that states the size of the core genome.
+                if "Core genes" in line:
+                    #print(f"Pipeline: Parsing Roary core genome from line \"{line}\"")
+                    splitted = line.split("\t")
+                    #print(splitted)
+                    core_genome_size = int(splitted[-1])
+                    
+                    #print(f"Pipeline: Parsed core genome size is: {repr(core_genome_size)}")
+                    break
+                
+            # Return true when there is a core genome.
+            if core_genome_size > 0:
+                print(f"Pipeline: Core genome exists ({core_genome_size} genes).")
+                return [alignment_file]
+                
+            else:
+                print(f"Pipeline: Core genome is empty ({core_genome_size} genes).")
+                return list() # Empty list
+                
+                
+    # In case the file cannot be parsed, we're assuming that there is no core genome. Hence false.
+    except Exception as e: 
+        print(f"Pipeline Error: {e}") # Show errors in parsing the roary summary, but don't fail.
+        print("Pipeline: Core genome size not known?")
+        return list() # Empty list
 
 
 
@@ -882,9 +874,8 @@ checkpoint core_genome: # If the core genome is non-empty, this rule copies it. 
 rule snp_dists:
     input: 
         metadata = "{results_directory}/metadata.tsv",
-        #alignment = "{results_directory}/roary/core_gene_alignment.aln",
-        alignment = "{results_directory}/roary/non-empty_core_genome/core_gene_alignment.aln",
-
+        #aln = "{results_directory}/roary/core_gene_alignment.aln",
+        aln = core_genome_if_exists,
     output: "{results_directory}/snp-dists/snp-dists.tsv"
     conda: "conda_definitions/snp-dists.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.snp_dists.tsv"
@@ -893,7 +884,7 @@ rule snp_dists:
 
         snp-dists \
             -j {threads} \
-            {input.alignment:q} > {output:q}
+            {input.aln:q} > {output:q}
 
         {void_report}
         
@@ -1133,7 +1124,7 @@ def get_mem_fasttree(wildcards, attempt):
 rule fasttree:
     input:
         metadata = "{results_directory}/metadata.tsv",
-        fasta = "{results_directory}/roary/core_gene_alignment.aln",
+        fasta = core_genome_if_exists,
     output: "{results_directory}/fasttree/fasttree.newick"
     conda: "conda_definitions/fasttree.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.fasttree.tsv"
@@ -1162,7 +1153,7 @@ rule fasttree:
 rule iqtree:
     input:
         metadata = "{results_directory}/metadata.tsv",
-        fasta = "{results_directory}/roary/core_gene_alignment.aln",
+        fasta = core_genome_if_exists,
     output: 
         newick = "{results_directory}/iqtree/core_genome_iqtree.treefile"
     params:
