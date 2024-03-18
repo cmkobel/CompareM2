@@ -1,9 +1,0 @@
-name: kofam_scan
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - ruby>=2.4
-  - hmmer>=3.1
-  - parallel
-

@@ -781,10 +781,14 @@ rule roary:
         metadata = "{results_directory}/metadata.tsv",
         gff = expand("{results_directory}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], results_directory = results_directory),
     output:
-        analyses = ["{results_directory}/roary/summary_statistics.txt", "{results_directory}/roary/core_gene_alignment.aln", "{results_directory}/roary/gene_presence_absence.csv"]
+        summary = "{results_directory}/roary/summary_statistics.txt",
+        presence = "{results_directory}/roary/gene_presence_absence.csv",
+        alignment = "{results_directory}/roary/core_gene_alignment.aln",
+        #analyses = ["{results_directory}/roary/summary_statistics.txt", "{results_directory}/roary/core_gene_alignment.aln", "{results_directory}/roary/gene_presence_absence.csv"]
     params:
         blastp_identity = int(config['roary_blastp_identity']), # = 95 # For clustering genes
         core_perc = 99,  # Definition of the core genome
+        group_limit = 100000, # Default group limit is 50000 # TODO put this and any other program argument into the config file like blastp_identity
     benchmark: "{results_directory}/benchmarks/benchmark.roary.tsv"
     threads: 16
     #retries: 2
@@ -798,9 +802,8 @@ rule roary:
         # Since I reinstalled conda, I've had problems with "Can't locate Bio/Roary/CommandLine/Roary.pm in INC". Below is a hacky fix
         export PERL5LIB=$CONDA_PREFIX/lib/perl5/site_perl/5.22.0
         
-
-        # Silence parallel's citation pester:
-        echo "will cite" | parallel --citation > /dev/null 2> /dev/null
+        # Silence
+        echo "will cite" | parallel --citation > /dev/null 2> /dev/null; echo "Please cite GNU Parallel, Ole Tange and Free Software Foundation."
 
         # Roary is confused by the way snakemake creates directories ahead of time.
         rm -r {wildcards.results_directory}/roary
@@ -811,23 +814,77 @@ rule roary:
             -i {params.blastp_identity} \
             -cd {params.core_perc} \
             -f {wildcards.results_directory}/roary \
-            --group_limit 100000 \
+            --group_limit {params.group_limit} \
             {input.gff:q}
 
-        # Default group limit is 50000
             
         {void_report}
 
     """
 
 
+checkpoint core_genome: # If the core genome is non-empty, this rule copies it. Otherwise it fails.
+    input:
+        alignment = "{results_directory}/roary/core_gene_alignment.aln",
+    output: 
+        alignment = "{results_directory}/roary/non-empty_core_genome/core_gene_alignment.aln",
+    run:
+        
+        print("Pipeline: Checking if Roary core genome exists ...")
+        
+        
+        try:   
+            with summary_file.open() as f:
+            #with open(file) as f: 
 
+                for line in f:
+                    line = line.strip()
+                    #print(f"line: {line}")
+                    
+                    # Find the line that states the size of the core genome.
+                    if "Core genes" in line:
+                        print(f"Pipeline: \"{line}\"")
+                        splitted = line.split("\t")
+                        # print(splitted)
+                        core_genome_size = int(splitted[-1])
+                        
+                        print(f"Pipeline: parsed core genome size is: {repr(core_genome_size)}")
+                        break
+                    
+                # Return true when there is a core genome.
+                if core_genome_size > 0:
+                    print("Pipeline: Core genome exists.")
+                    
+                    # copy file
+                    
+
+                    shutil.copyfile(input, output)
+
+                    
+                else:
+                    print("Pipeline: Core genome is empty.")
+
+        
+        # In case the file cannot be parsed, we're assuming that there is no core genome. Hence false.
+        except: 
+            print("Pipeline: Core genome size not known?")
+
+    
+
+
+
+
+
+        
+    
 
 
 rule snp_dists:
     input: 
         metadata = "{results_directory}/metadata.tsv",
-        aln = "{results_directory}/roary/core_gene_alignment.aln",
+        #alignment = "{results_directory}/roary/core_gene_alignment.aln",
+        alignment = "{results_directory}/roary/non-empty_core_genome/core_gene_alignment.aln",
+
     output: "{results_directory}/snp-dists/snp-dists.tsv"
     conda: "conda_definitions/snp-dists.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.snp_dists.tsv"
@@ -836,7 +893,7 @@ rule snp_dists:
 
         snp-dists \
             -j {threads} \
-            {input.aln:q} > {output:q}
+            {input.alignment:q} > {output:q}
 
         {void_report}
         
@@ -1062,6 +1119,15 @@ rule mashtree:
 
 def get_mem_fasttree(wildcards, attempt): 
     return [16000, 32000, 64000, 0][attempt-1]
+
+
+#ft_core_fasta = lambda wildcards: return "{results_directory}/roary/core_gene_alignment.aln" if core_genome_exists()
+
+# def ft_core_fasta(wildcards):
+#     if core_genome_exists(**wildcards):
+#         return "{results_directory}/roary/core_gene_alignment.aln"
+#     else:
+#         return ""
 
 
 rule fasttree:
