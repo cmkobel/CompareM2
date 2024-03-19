@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 __author__ = "Carl M. Kobel"
-__version__ = "2.5.18"
+__version__ = "2.6.1"
 
 """
 This is the launcher script for assemblycomparator2.
@@ -22,6 +22,7 @@ import os
 import sys
 import subprocess
 import shutil
+
 
 # Create logger that prints to the terminal.
 logger = logging.getLogger('asscom2_launcher')

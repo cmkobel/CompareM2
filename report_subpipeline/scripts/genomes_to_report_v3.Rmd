@@ -286,7 +286,6 @@ section_definition_table = tribble(
     "sequence_lengths",  N, Sys.glob(paste0(results_directory, "/samples/*/sequence_lengths/*.tsv")),
     "busco",             N, Sys.glob(paste0(results_directory, "/samples/*/busco/short_summary_extract.tsv")),
     "checkm2",           1, Sys.glob(paste0(results_directory, "/checkm2/quality_report.tsv")),
-    "kraken2",           N, Sys.glob(paste0(results_directory, "/samples/*/kraken2/*kraken2_report.tsv")),
     "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
     "mlst",              1, Sys.glob(paste0(results_directory, "/mlst/mlst.tsv")),
     "abricate",          4, Sys.glob(
@@ -361,9 +360,6 @@ section_definition_table %>%
 ```
 
 ```{r section_checkm2, child = paste0(report_scripts, "section_checkm2.rmd"), eval = render$checkm2}
-```
-
-```{r section_kraken2, child = paste0(report_scripts, "section_kraken2.rmd"), eval = render$kraken2}
 ```
 
 ```{r section_gtdbtk, child = paste0(report_scripts, "section_gtdbtk.rmd"), eval = render$gtdbtk}
