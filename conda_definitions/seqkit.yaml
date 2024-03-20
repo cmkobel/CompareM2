@@ -2,4 +2,4 @@ name: seqkit
 channels:
   - bioconda
 dependencies:
-  - seqkit
+  - seqkit=2

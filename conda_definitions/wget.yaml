@@ -2,4 +2,4 @@ name: wget
 channels:
   - anaconda
 dependencies:
-  - wget
+  - wget=1

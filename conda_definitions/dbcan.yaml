@@ -1,9 +1,10 @@
 name: dbcan
 channels:
+  - anaconda
   - conda-forge
   - bioconda
 dependencies:
   - python=3.8
-  - dbcan
-#  - anaconda::wget # Not sure if I should also add anaconda as a channel?
+  - dbcan=4
+  - anaconda::wget # Not sure if I should also add anaconda as a channel?
 

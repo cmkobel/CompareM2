@@ -544,6 +544,8 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
         # It seems to be necessary to set all the cpu thread counts manually.
 
         export HMMER_NCPU={threads}
+        
+        run_dbcan -h > $(dirname {output:q})/run_dbcan_version.txt
 
         run_dbcan \
             --dbcan_thread {threads} \
@@ -745,7 +747,7 @@ rule diamond_kegg: # or uniref_ko?
 # Runs per batch, should maybe be moved in this document.
 rule kegg_pathway:
     input: 
-        kegg_asset = base_variable + "/assets/ko00001.json", # Downloaded from kegg.jp
+        kegg_asset = base_variable + "/assets/ko00001.json", # Downloaded from kegg.jp # Is this the culprit for the warning?
         #diamond = rules.diamond_kegg.output,
         kegg_diamond = expand("{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", sample = df["sample"], results_directory = results_directory)
     output: 

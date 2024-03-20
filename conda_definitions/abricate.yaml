@@ -4,4 +4,4 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - abricate
+  - abricate=1

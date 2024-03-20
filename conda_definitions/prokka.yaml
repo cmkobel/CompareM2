@@ -4,7 +4,7 @@ channels:
   - bioconda
   - defaults # not sure about whether this one should be present
 dependencies:
-  - prokka 
+  - prokka=1
   - openjdk<=17.0.2
   
 

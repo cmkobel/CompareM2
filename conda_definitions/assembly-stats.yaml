@@ -4,4 +4,4 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - assembly-stats
+  - assembly-stats=1

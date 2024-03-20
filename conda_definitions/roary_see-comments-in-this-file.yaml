@@ -5,7 +5,7 @@ channels:
   - r
   - defaults
 dependencies:
-  - roary
+  - roary=3
 
 
 

@@ -2,7 +2,7 @@ name: interproscan
 channels: 
   - bioconda
 dependencies:
-  - interproscan
+  - interproscan=5
 
 # conda install -c bioconda interproscan 
 
