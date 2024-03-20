@@ -747,7 +747,7 @@ rule diamond_kegg: # or uniref_ko?
 # Runs per batch, should maybe be moved in this document.
 rule kegg_pathway:
     input: 
-        kegg_asset = base_variable + "/assets/ko00001.json", # Downloaded from kegg.jp # Is this the culprit for the warning?
+        kegg_asset = base_variable + "/assets/ko00001.json", # Downloaded from kegg.jp
         #diamond = rules.diamond_kegg.output,
         kegg_diamond = expand("{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", sample = df["sample"], results_directory = results_directory)
     output: 
