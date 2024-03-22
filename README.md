@@ -130,17 +130,18 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 
 It is highly recommended that you have [Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request) on your system as it makes Assemblycomparator2 able to use a compressed Docker-image that speeds up installation significantly.
 
-<table><tr><td>
-  
-If you don't have Apptainer, Assemblycomparator2 will default to use Conda/Mamba to install all Snakemake workflow rule environments separately. In this case, you should set the conda channel priority to "flexible" with `conda config --set channel_priority flexible`
 
-</td></tr></table>
 
 <img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/c9d15678-b4a7-42be-b0de-b649479f6d74">
 
 First, you need to install a Conda or Mamba package manager.
 The recommended choice is [Miniforge](https://github.com/conda-forge/miniforge#install) which not only provides the required Python and Conda commands, 
 but also includes Mamba - an extremely fast and robust replacement for the Conda package manager which is highly recommended.
+<table><tr><td>
+  
+If you don't have Apptainer, Assemblycomparator2 will default to use Conda/Mamba to install all Snakemake workflow rule environments separately. In this case, you should set the conda channel priority to "flexible" with `conda config --set channel_priority flexible`
+
+</td></tr></table>
 
 <table><tr><td>
 In case you don't use Miniforge you can always install Mamba into any other Conda-based Python distribution with:
