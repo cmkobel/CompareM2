@@ -11,6 +11,7 @@ batch_title = config['batch_title'] # E.g. E._faecium
 version_string = config['version_string']
 
 containerized: f"docker://cmkobel/assemblycomparator2:v{version_string}"
+#containerized: f"docker://cmkobel/assemblycomparator2:latest" # DEBUG
 
 print('report subpipeline: results_directory:', results_directory)
 print('report subpipeline: base_variable:', base_variable)

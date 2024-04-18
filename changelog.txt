@@ -1,3 +1,7 @@
+2.6.2
+  - Fix wrong path for dbcan results (not yet implemented in report)
+  - Downgrade diamond 2.1.8 due to segfault in newest version (2.1.9) https://github.com/bbuchfink/diamond/issues/785
+
 2.6.1
   - Remove Kraken2, hence new minor version. Kraken2 really only makes sense on reads. 
   - Roary as a checkpoint, to only continue with iqtree, fasttree and snp-dists if the core genome is non-empty.
