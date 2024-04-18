@@ -36,49 +36,64 @@ df_dbcan %>%
 
 *Table `r tableno()`: Overview of dbcan cazyme results. Called using [run_dbcan](https://github.com/linnabrown/run_dbcan).*
 
+
 ```{r dbcan-plot-data, echo=FALSE, message=F, warning=F, error = T}
-# Heatmap of substrates
 
 
-# I think a better way, would be to count how many have coverage above 90, and then show those counts.
+# Now let's make a parsed version that collapeses per subfamily (without underscore id) and collapses redundant substrates. This table can be summarized and counted per sample with coverage above a threshold (i.e. 90%).
 
 
 df_dbcan_plot_data = df_dbcan %>% 
 
     select(index, sample, substrate = Substrate, coverage = Coverage, dbcan_subfam = `dbCAN subfam`) %>% 
-    drop_na(substrate) %>% 
+    #drop_na(substrate) %>% # Will I get too many then?
     
     # Some cazymes have substrate "xylan, xylan" and "xylan, xylan, xylan" which doesn't make any sense. Let's collapse unique substrates per cazyme.
     
     rowwise() %>% 
     mutate(
         substrate_split = str_split(substrate, ", "), 
-        substrate_unique = substrate_split %>% unique() %>% list(),
+        substrate_unique = substrate_split %>% unique() %>% sort() %>%  list(),
         substrate_unique_paste = paste(substrate_unique, collapse = ", ")
-    ) %>% 
+    ) %>%
+    
+    mutate(dbcan_subfam_short = str_extract(dbcan_subfam, "^[^_]+")) %>% 
+    
+    # Put unique substrates and subfam together
+    mutate(
+        pretty = paste0(substrate_unique_paste, " (", dbcan_subfam_short, ")") 
+    ) 
     
 
+
+df_dbcan_plot_data_summarized = df_dbcan_plot_data %>% 
+
     
-    group_by(index, sample, substrate_unique_paste) %>% 
+    group_by(index, sample, pretty) %>% 
     filter(coverage >= .9) %>% 
     summarize(count = n())
 
 N_dbcan = df_dbcan_plot_data$sample %>% unique() %>% length()
+
 ```
+
+
 
 
 ```{r dbcan-plot-show, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, (N_dbcan*0.2)+1.3), fig.width = 10}
 
-df_dbcan_plot_data %>% 
-    ggplot(aes(substrate_unique_paste, reorder(sample, desc(index)), fill = count)) + 
+df_dbcan_plot_data_summarized %>% 
+    ggplot(aes(pretty, reorder(sample, desc(index)), fill = count)) + 
     geom_tile() +
     scale_fill_viridis_c() + 
     theme_classic() + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) + 
     labs(
-        x = "substrate", 
+        x = "substrate (dbCAN subfamily)", 
         y = "sample"
     )
+
+# ggsave("dbcan.png", height = 10, width = 16) # DEBUG
 
 ```
 
