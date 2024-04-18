@@ -64,7 +64,7 @@ df_dbcan %>%
     summarize(count = n()) %>% 
     
     
-    ggplot(aes(substrate_unique_paste, reorder(sample, index), fill = count)) + 
+    ggplot(aes(substrate_unique_paste, reorder(sample, desc(index)), fill = count)) + 
     geom_tile() +
     scale_fill_viridis_c() + 
     theme_classic() + 
