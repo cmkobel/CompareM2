@@ -6,7 +6,7 @@
 # Show data table and make a heatmap for substrates to highlight interpretation
 
 
-setwd("~/assemblycomparator2/tests/student"); 
+#setwd("~/assemblycomparator2/tests/student");  # DEBUG
 df_dbcan_raw = read_tsv(glob_list$dbcan, id = "file", na = "-") %>% #, comment = "#", col_names = c("name", "value")) %>%
     
     # Extract sample name
@@ -33,6 +33,8 @@ df_dbcan %>%
 
 ```
 
+
+*Table `r tableno()`: Overview of dbcan cazyme results. Called using [run_dbcan](https://github.com/linnabrown/run_dbcan).*
 
 ```{r dbcan-plot, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, (N*0.2)+1.3), fig.width = 10}
 # Heatmap of substrates
@@ -74,6 +76,6 @@ df_dbcan %>%
 
 ```
 
-*Table `r tableno()`: Overview of carbohydrate active enzymes (Cazymes). The count (color) signifies the number of cazymes in each sample, that can degrade each of the listed substrates. Called using [run_dbcan](https://github.com/linnabrown/run_dbcan).*
+*Fig. `r figno()`: Overview of carbohydrate active enzymes (Cazymes). The count (color) signifies the number of cazymes in each sample, that can degrade each of the listed substrates. *
 
 ---
