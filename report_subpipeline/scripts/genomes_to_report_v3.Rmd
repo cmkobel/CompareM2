@@ -119,6 +119,17 @@ if (debug) {
     setwd("~/assemblycomparator2/tests/synth_rumen")
     batch_title = basename(getwd())
     
+    # strachans on macbook
+    base_variable = "~/assemblycomparator2"
+    results_directory = "results_ac2"
+    setwd("~/assemblycomparator2/tests/strachan_campylo")
+    batch_title = basename(getwd())
+    
+    # student bins on macbook
+    base_variable = "~/assemblycomparator2"
+    results_directory = "results_ac2"
+    setwd("~/assemblycomparator2/tests/student")
+    batch_title = basename(getwd())
     
 }
 
@@ -374,6 +385,9 @@ section_definition_table %>%
 ```
 
 ```{r section_kegg_pathway, child = paste0(report_scripts, "section_kegg_pathway.rmd"), eval = render$kegg_pathway}
+```
+
+```{r section_dbcan, child = paste0(report_scripts, "section_dbcan.rmd"), eval = render$dbcan}
 ```
 
 ```{r section_roary, child = paste0(report_scripts, "section_roary.rmd"), eval = render$roary}
