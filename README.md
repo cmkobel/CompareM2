@@ -238,6 +238,7 @@ In the future we might add some of the following software packages into Assembly
   - [RFplasmid](https://github.com/aldertzomer/RFPlasmid) Identification of plasmids using the pentamer-random-forest method.
   - [mash screen](https://mash.readthedocs.io/en/latest/tutorials.html) Recognition of plasmids-of-interest.
   - [Kaptive](https://github.com/katholt/Kaptive) Identification of surface polysaccharide loci for Klebsiella and Acinetobacter baumannii.
+  - [AMRFinderPlus](https://github.com/ncbi/amr/) Identification of AMR genes and their point mutations.
 
 
 **Batch basis (across all samples)**
