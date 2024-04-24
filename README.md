@@ -278,15 +278,13 @@ Assemblycomparator2 would not have existed, if it hadn't been for the integrated
 
 ---
 
-
-<p align="center">
-  <img src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/a3cb0c86-cba8-494a-a6cd-07535a362588" alt="Equus africanus asinus: 'A donkey at Clovelly, North Devon, England.' by Adrian Pingstone. Public domain." width = 300px />
-</p>
-
-
 Development is active and will continue. We're actively looking for collaborators to join and synergize this project.
 
 Assemblycomparator2 genomes to report pipeline. Copyright (C) 2024 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)
   
   
+
+<p align="center">
+  <img src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/a3cb0c86-cba8-494a-a6cd-07535a362588" alt="Equus africanus asinus: 'A donkey at Clovelly, North Devon, England.' by Adrian Pingstone. Public domain." width = 300px />
+</p>
 
