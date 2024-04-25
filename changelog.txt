@@ -1,3 +1,10 @@
+2.7.1
+  - Breaking change: File hierarchy now mirrors what is recommended in the snakemake documentation. Rules are now in individual files.
+  - Breaking change: profiles/ moved to profile/ (sorry)
+  - Busco runs in protein mode, reusing .faa from prokka. Should result in speedup.
+  - Added Panaroo, removed Roary.
+  - For dbcan, only the substrates are shown in the dynamic report.
+
 2.6.2
   - Fix wrong path for dbcan results (not yet implemented in report)
   - Downgrade diamond 2.1.8 due to segfault in newest version (2.1.9) https://github.com/bbuchfink/diamond/issues/785

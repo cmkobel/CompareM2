@@ -43,7 +43,7 @@ rule report:
         base_variable = base_variable,
         results_directory = results_directory,
         batch_title = batch_title,
-        end_script = f"{base_variable}/report_subpipeline/workflow/scripts/report_end_script.sh",
+        end_script = f"{base_variable}/dynamic_report/workflow/scripts/report_end_script.sh",
     output: 
         html = "{results_directory}/report_{batch_title}.html",
     #output: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
@@ -55,7 +55,7 @@ rule report:
         
         # First remove possible old directory
         test -d scripts_temporary/ && rm -r scripts_temporary/
-        cp -r {base_variable}/report_subpipeline/workflow/scripts scripts_temporary # This one fails when using apptainer. Maybe I just need to bind it.
+        cp -r {base_variable}/dynamic_report/workflow/scripts scripts_temporary # This one fails when using apptainer. Maybe I just need to bind it.
         
 
         #mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.

@@ -3,26 +3,26 @@
 
 ## Pan and Core genome
 
-`rule roary` [Roary](https://sanger-pathogens.github.io/Roary/) the pan genome pipeline computes the number of orthologous genes in a number of core/pan spectrum partitions.
+`rule panaroo` [Panaroo](https://gtonkinhill.github.io/panaroo/#/) the pan genome pipeline computes the number of orthologous genes in a number of core/pan spectrum partitions.
 
 The core genome denotes the genes which are conserved between all samples (intersection), whereas the pan genome is the union of all genes across all samples.
 
-```{r roary-table, echo=FALSE, message=F, warning=F, error=T}
+```{r panaroo-table, echo=FALSE, message=F, warning=F, error=T}
 
 #   setwd("~/asscom2/tests/strachan_campylo") # DEBUG
 #setwd("~/evo/asscom2/tests/MAGs") #DEBUG
 
 
 
-# Should exist in the case that the glob_list$roary = ...gene_presence_absence.Rtab file exists.
-roary_summary_file = paste0(results_directory, "/roary/summary_statistics.txt")
+# Should exist in the case that the glob_list$panaroo = ...gene_presence_absence.Rtab file exists.
+panaroo_summary_file = paste0(results_directory, "/panaroo/summary_statistics.txt")
 
 
 
 
-read_tsv(roary_summary_file, col_names = c("partition", "definition", "count")) %>% 
+read_tsv(panaroo_summary_file, col_names = c("partition", "definition", "count")) %>% 
 
-    custom_dt("roary", dom = "t", ordering = F, width = 500)
+    custom_dt("panaroo", dom = "t", ordering = F, width = 500)
 
 
 
@@ -30,19 +30,19 @@ read_tsv(roary_summary_file, col_names = c("partition", "definition", "count")) 
 
 *Table `r tableno()`: Distribution of genes in different core/pan spectrum partitions.*
 
-```{r roary-matrix, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
+```{r panaroo-matrix, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
 
 #setwd("~/evo/asscom2/tests/MAGs") # DEBUG
 
-roary_long = read_tsv(glob_list$roary) %>% 
+panaroo_long = read_tsv(glob_list$panaroo) %>% 
     mutate(shared_by = rowSums(across(where(is.numeric)))) %>%
     pivot_longer(c(everything(), -Gene, -shared_by), names_to = "sample", values_to = "present") %>% 
     filter(present >= 1) 
 
 
-roary_plot_df = metadata_translate %>% 
+panaroo_plot_df = metadata_translate %>% 
     select(index, sample) %>% 
-    left_join(roary_long, by = "sample") %>% 
+    left_join(panaroo_long, by = "sample") %>% 
     
     arrange(desc(shared_by), desc(index)) %>% 
     mutate(gene_order = 1:n()) %>% 
@@ -54,7 +54,7 @@ roary_plot_df = metadata_translate %>%
 
 
 
-# roary_plot_df = read_tsv(glob_list$roary) %>% 
+# panaroo_plot_df = read_tsv(glob_list$panaroo) %>% 
 #     mutate(shared_by = rowSums(across(where(is.numeric)))) %>%
 #     pivot_longer(c(everything(), -Gene, -shared_by), names_to = "sample", values_to = "present") %>% 
 #     filter(present >= 1)  %>%
@@ -71,7 +71,7 @@ roary_plot_df = metadata_translate %>%
 
 
 
-roary_plot_df %>%
+panaroo_plot_df %>%
     #ggplot(aes(reorder(Gene, gene_order), reorder(sample, desc(index)), fill = factor(shared_by))) +
     ggplot(aes(reorder(Gene, gene_order), reorder(sample, desc(index)), 
         fill =  shared_by

@@ -6,7 +6,7 @@
 # Show data table and make a heatmap for substrates to highlight interpretation
 
 
-#setwd("~/assemblycomparator2/tests/student");  # DEBUG
+setwd("~/assemblycomparator2/tests/student");  # DEBUG
 df_dbcan_raw = read_tsv(glob_list$dbcan, id = "file", na = "-") %>% #, comment = "#", col_names = c("name", "value")) %>%
     
     # Extract sample name
@@ -38,68 +38,51 @@ df_dbcan %>%
 
 
 ```{r dbcan-plot-data, echo=FALSE, message=F, warning=F, error = T}
+# Let's just focus on the substrates. Adding all those GT and GHs to the table doesn't help easy interpretation.
 
-
-# Now let's make a parsed version that collapeses per subfamily (without underscore id) and collapses redundant substrates. This table can be summarized and counted per sample with coverage above a threshold (i.e. 90%).
-
-
-df_dbcan_plot_data = df_dbcan %>% 
-
-    select(index, sample, substrate = Substrate, coverage = Coverage, dbcan_subfam = `dbCAN subfam`) %>% 
-    #drop_na(substrate) %>% # Will I get too many then?
+df_dbcan_plot_data = df_dbcan  %>%
     
-    # Some cazymes have substrate "xylan, xylan" and "xylan, xylan, xylan" which doesn't make any sense. Let's collapse unique substrates per cazyme.
+    
+    
+    select(index, sample, `Subfam Composition`, `Subfam EC`, Substrate, Coverage) %>% 
+    filter(Coverage >= 0.90)  %>% 
+    filter(!is.na(Substrate)) %>% 
     
     rowwise() %>% 
     mutate(
-        substrate_split = str_split(substrate, ", "), 
+        substrate_split = str_split(Substrate, ", "), 
         substrate_unique = substrate_split %>% unique() %>% sort() %>%  list(),
-        substrate_unique_paste = paste(substrate_unique, collapse = ", ")
-    ) %>%
+    ) %>%     #view()
     
-    mutate(dbcan_subfam_short = str_extract(dbcan_subfam, "^[^_]+")) %>% 
+    ungroup() %>% 
+    unnest(substrate_unique) %>% 
     
-    # Put unique substrates and subfam together
-    mutate(
-        pretty = paste0(substrate_unique_paste, " (", dbcan_subfam_short, ")") 
-    ) 
+    mutate(substrate_final = str_remove(substrate_unique, "and ")) %>% # Some issues with fancy ", and" in the dbcan output.
     
-
-
-df_dbcan_plot_data_summarized = df_dbcan_plot_data %>% 
-
+    count(index, sample, substrate_final) 
     
-    group_by(index, sample, pretty) %>% 
-    filter(coverage >= .9) %>% 
-    summarize(count = n())
-
+    
 n_dbcan_samples = df_dbcan_plot_data$sample %>% unique() %>% length()
-n_dbcan_substrates = df_dbcan_plot_data$pretty %>% unique() %>% length()
-
-
-
+n_dbcan_substrates = df_dbcan_plot_data$substrate_final %>% unique() %>% length()
 
 ```
 
 
-
-
-```{r dbcan-plot-show, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, (n_dbcan_samples*0.2)+1.3), fig.width = max(1.8, (n_dbcan_substrates*0.2)+2.3)}
-
-df_dbcan_plot_data_summarized %>% 
-    ggplot(aes(pretty, reorder(sample, desc(index)), fill = count)) + 
+```{r dbcan-plot-show, echo=FALSE, message=F, warning=F, error = T, fig.height = max(2.9, (n_dbcan_samples*0.2)+2.3), fig.width = max(1.8, (n_dbcan_substrates*0.2)+2.3)}
+df_dbcan_plot_data %>% 
+    ggplot(aes(substrate_final, reorder(sample, desc(index)), fill = n)) + 
     geom_tile() +
     scale_fill_viridis_c() + 
     theme_classic() + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) + 
     labs(
-        x = "substrate (dbCAN subfamily)", 
+        x = "substrate", 
         y = "sample"
     )
 
-# ggsave("dbcan.png", height = 10, width = 16) # DEBUG
-
 ```
+
+
 
 *Fig. `r figno()`: Overview of carbohydrate active enzymes (Cazymes). The count (color) signifies the number of cazymes in each sample, that can degrade each of the listed substrates. *
 
