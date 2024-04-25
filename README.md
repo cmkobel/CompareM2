@@ -239,8 +239,7 @@ In the future we might add some of the following software packages into Assembly
   - [mash screen](https://mash.readthedocs.io/en/latest/tutorials.html) Recognition of plasmids-of-interest.
   - [Kaptive](https://github.com/katholt/Kaptive) Identification of surface polysaccharide loci for Klebsiella and Acinetobacter baumannii.
   - [AMRFinderPlus](https://github.com/ncbi/amr/) Identification of AMR genes and their point mutations.
-  - [Gapseq](https://github.com/jotech/gapseq/tree/master) GEMs, pathway completeness and much more.
-  - [panaroo](https://github.com/gtonkinhill/panaroo) A Bacterial Pangenome Analysis Pipeline.
+  - [gapseq](https://github.com/jotech/gapseq/tree/master) GEMs, pathway completeness and much more.
 
 
 **Batch basis (across all samples)**
@@ -249,6 +248,8 @@ In the future we might add some of the following software packages into Assembly
   - Recombination in core genome using the Bruen's PHI statistic.
   - Identification of horizontally transferred genes?
   - [GenAPI](https://github.com/MigleSur/GenAPI) Roary alternative.
+  - [panaroo](https://github.com/gtonkinhill/panaroo) A Bacterial Pangenome Analysis Pipeline.
+
 
 
 
