@@ -82,7 +82,7 @@ Below is the graph the shows the order of execution of all possible analyses "ru
 
 This figure does not show the pseudo rules such as `meta`, `isolate`, `fast`, etc.
 
-**Hint:** Use `asscom2 --until <rulename> [<rulename2>...]` to run one or several specific analyses only. The rulename for each analysis to pick is listed below:
+**Hint:** Use `asscom2 --until <rule> [<another rule>...]` to run one or several specific analyses only. The rule names for each analysis to pick is listed below:
 
 ### For each sample
 
