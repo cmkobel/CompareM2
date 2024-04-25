@@ -220,30 +220,12 @@ rule all:
 
 
 
-
-# Copy the input file to its new home
-# Homogenizes the file extension as well (.fa)
-# Should I rename this to "rule any2fasta" just to make it more transparent? 
-rule copy:
-    input: 
-        genome = lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0],
-    output: "{results_directory}/samples/{sample}/{sample}.fna"
-    conda: "conda_definitions/any2fasta.yaml"
-    threads: 1 # Weirdly, or bugly, there must be a thread n definition in the rule. Otherwise, the set-threads option (in the orion profile) will not be taken up. 
-    resources:
-        mem_mb = 256,
-        runtime = "10m",
-    shell: """
-
-
-        
-        any2fasta {input.genome:q} > {output:q}
-
-    """  
+include: "rules/sample_copy.smk"
 
 
 # Write the df table to the directory for later reference.
 # Why isn't this a run: instead of a shell: ?
+# This one will stay here regardless of 
 rule metadata:
     # input: expand("{results_directory}/samples/{sample}/{sample}.fna", results_directory = results_directory, sample = df["sample"]) # From rule copy
     input: df['input_file_fasta']
@@ -272,7 +254,7 @@ rule busco_download:
         #touch("{base_variable}/databases/busco/busco_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
         #database_representative = touch("{base_variable}/databases/busco/file_versions.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
         database_representative = touch(DATABASES + "/busco/ac2_busco_database_representative.flag") # Should point to the directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
-    conda: "conda_definitions/busco.yaml"
+    conda: "envs/busco.yaml"
     shell: """
 
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
@@ -316,7 +298,7 @@ rule checkm2_download:
         database_representative = DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
     params:
         destination = DATABASES + "/checkm2"
-    conda: "conda_definitions/wget.yaml"
+    conda: "envs/wget.yaml"
     shell: """
 
 
@@ -366,7 +348,7 @@ rule dbcan_download:
     output:
         #database_representative = touch("{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag"),
         database_representative = DATABASES + "/dbcan/ac2_dbcan_database_representative.flag",
-    conda: "conda_definitions/dbcan.yaml"
+    conda: "envs/dbcan.yaml"
     shell: """
         
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
@@ -413,7 +395,7 @@ rule dbcan_download:
 rule gtdb_download:
     output:
         database_representative = DATABASES + "/gtdb/ac2_gtdb_database_representative.flag"
-    conda: "conda_definitions/wget.yaml"
+    conda: "envs/wget.yaml"
     shell: """
 
         # https://ecogenomics.github.io/GTDBTk/installing/index.html
@@ -469,23 +451,7 @@ rule gtdb_download:
 
 # --- Targets for each sample below: ------------------------------------------
 
-rule sequence_lengths:
-    input:
-        metadata = "{results_directory}/metadata.tsv",
-        assembly = "{results_directory}/samples/{sample}/{sample}.fna", 
-    output: "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
-    threads: 1
-    resources:
-        runtime = "60m",
-    conda: "conda_definitions/seqkit.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_individual.{sample}.tsv"
-    shell: """
-
-        seqkit fx2tab {input.assembly:q} -l -g -G -n -H \
-        > {output:q}
-
-    """
-
+include: "rules/sample_sequence_lengths.smk"
 
 
 
@@ -499,7 +465,7 @@ rule prokka:
         log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
         gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta", # Not sure where I'm using this.
-    conda: "conda_definitions/prokka.yaml"
+    conda: "envs/prokka.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
     resources:
         mem_mb = 8192,
@@ -536,7 +502,7 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
         overview_table = "{results_directory}/samples/{sample}/dbcan/overview.txt"
     params: 
         out_dir = "{results_directory}/samples/{sample}/dbcan"
-    conda: "conda_definitions/dbcan.yaml" # Not sure if it should be called by a version number?
+    conda: "envs/dbcan.yaml" # Not sure if it should be called by a version number?
     benchmark: "{results_directory}/benchmarks/benchmark.dbcan.{sample}.tsv"
     threads: 8
     resources: 
@@ -572,7 +538,7 @@ rule interproscan:
         tsv = "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv",
     params:
         file_base = "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan",
-    conda: "conda_definitions/interproscan.yaml" # Not sure if it should be called by a version number?
+    conda: "envs/interproscan.yaml" # Not sure if it should be called by a version number?
     benchmark: "{results_directory}/benchmarks/benchmark.interproscan.{sample}.tsv"
     threads: 8
     resources: 
@@ -612,7 +578,7 @@ rule busco:
         #results_directory = results_directory,
         database_path = DATABASES + "/busco", # Was {params.base_variable}/databases/busco
         out_dir = "{results_directory}/samples/{sample}/busco",
-    conda: "conda_definitions/busco.yaml"
+    conda: "envs/busco.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.busco_individual.{sample}.tsv"
     threads: 1 # Because run_sepp hangs for a long time, not doing anything, I'd rather have more processes started on my small CPU.
     resources:
@@ -673,7 +639,7 @@ rule checkm2:
         fasta = df["input_file_fasta"].tolist()
     output:
         table = touch("{results_directory}/checkm2/quality_report.tsv"),
-    conda: "conda_definitions/checkm2.yaml"
+    conda: "envs/checkm2.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.checkm2.tsv"
     threads: 8
     resources:
@@ -717,7 +683,7 @@ rule diamond_kegg: # or uniref_ko?
         evalue = "1e-05",
         blocksize = 2, # A value of 2 corresponds to running checkm2 in non-lowmem mode.
         database_path = DATABASES + "/checkm2/CheckM2_database/uniref100.KO.1.dmnd"
-    conda: "conda_definitions/diamond.yaml" 
+    conda: "envs/diamond.yaml" 
     resources:
         mem_mb = 20000, # Seems to use around 18G at max.
         runtime = "1h",
@@ -749,7 +715,7 @@ rule diamond_kegg: # or uniref_ko?
 # Runs per batch, should maybe be moved in this document.
 rule kegg_pathway:
     input: 
-        kegg_asset = base_variable + "/assets/ko00001.json", # Downloaded from kegg.jp
+        kegg_asset = base_variable + "/resources/ko00001.json", # Downloaded from kegg.jp
         #diamond = rules.diamond_kegg.output,
         kegg_diamond = expand("{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", sample = df["sample"], results_directory = results_directory)
     output: 
@@ -758,7 +724,7 @@ rule kegg_pathway:
     params:
         output_dir = "{results_directory}/kegg_pathway",
         script = base_variable + "/scripts/kegg_pathway_enrichment_analysis.R"
-    conda: "conda_definitions/r-clusterProfiler.yaml"
+    conda: "envs/r-clusterProfiler.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.kegg_pathway.tsv"
     shell: """
 
@@ -799,7 +765,7 @@ checkpoint roary: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-di
         #mem_mb = 32768,
         mem_mb = get_mem_roary,
         runtime = "24h",
-    conda: "conda_definitions/roary_see-comments-in-this-file.yaml" # deactivated 
+    conda: "envs/roary_see-comments-in-this-file.yaml" # deactivated 
     shell: """
     
         # Since I reinstalled conda, I've had problems with "Can't locate Bio/Roary/CommandLine/Roary.pm in INC". Below is a hacky fix
@@ -880,7 +846,7 @@ rule snp_dists:
         #aln = "{results_directory}/roary/core_gene_alignment.aln",
         aln = core_genome_if_exists,
     output: "{results_directory}/snp-dists/snp-dists.tsv"
-    conda: "conda_definitions/snp-dists.yaml"
+    conda: "envs/snp-dists.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.snp_dists.tsv"
     threads: 4
     shell: """
@@ -901,7 +867,7 @@ rule motulizer:
         tsv = "{results_directory}/motulizer/motulizer_results.tsv"
     params:
         version_file = "{results_directory}/motulizer/motulizer_ac2_version.txt"
-    conda: "conda_definitions/motulizer.yaml"
+    conda: "envs/motulizer.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.motulizer.tsv"
     threads: 1
     resources:
@@ -920,7 +886,7 @@ rule motupan:
         faas =  expand("{results_directory}/samples/{sample}/prokka/{sample}.faa", results_directory = results_directory, sample = df["sample"]) # From prokka
     output: 
         tsv = "{results_directory}/motulizer/motupan_results.tsv"
-    conda: "conda_definitions/motulizer.yaml"
+    conda: "envs/motulizer.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.motupan.tsv"
     threads: 1
     resources:
@@ -934,22 +900,7 @@ rule motupan:
     """
 
 
-
-rule assembly_stats:
-    input: 
-        metadata = "{results_directory}/metadata.tsv",
-        fasta = df["input_file_fasta"].tolist(),
-    output: "{results_directory}/assembly-stats/assembly-stats.tsv"
-    conda: "conda_definitions/assembly-stats.yaml"
-    benchmark: "{results_directory}/benchmarks/assembly_stats.tsv"
-    shell: """
-        
-        assembly-stats -t {input.fasta:q} > {output:q}
-
-        {void_report}
-
-    """
-
+include: "rules/sample_assembly_stats.smk"
 
 def get_mem_gtdbtk(wildcards, attempt): 
     return [150000, 300000, 400000, 500000][attempt-1]
@@ -974,7 +925,7 @@ rule gtdbtk:
         # mem_mb = get_mem_gtdbtk, # works great, but I want to use a limited amount to test a potential hardware upgrade
         mem_mb = 131072,
         runtime = "48h"
-    conda: "conda_definitions/gtdbtk.yaml"
+    conda: "envs/gtdbtk.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
 
@@ -1030,7 +981,7 @@ rule abricate:
         plasmidfinder_sum = "{results_directory}/abricate/plasmidfinder_summarized.tsv",
         vfdb_detailed = "{results_directory}/abricate/vfdb_detailed.tsv",
         vfdb_sum = "{results_directory}/abricate/vfdb_summarized.tsv",
-    conda: "conda_definitions/abricate.yaml"
+    conda: "envs/abricate.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.abricate.tsv"
     shell: """
 
@@ -1069,7 +1020,7 @@ rule mlst:
         mlst_scheme_interpreted = mlst_scheme_interpreted,
         list_ = "{results_directory}/mlst/mlst_schemes.txt", 
     threads: 4
-    conda: "conda_definitions/mlst.yaml"
+    conda: "envs/mlst.yaml"
     benchmark: "{results_directory}/benchmarks/mlst.tsv"
     shell: """
 
@@ -1086,30 +1037,7 @@ rule mlst:
     """
 
 
-
-
-rule mashtree:
-    input: 
-        metadata = "{results_directory}/metadata.tsv",
-        fasta = df["input_file_fasta"].tolist(),
-    output: 
-        tree = "{results_directory}/mashtree/mashtree.newick",
-        dist = "{results_directory}/mashtree/mash_dist.tsv",
-    conda: "conda_definitions/mashtree.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.mashtree.tsv"
-    threads: 16
-    resources:
-        mem_mb = 16000,
-    shell: """
-    
-        mashtree \
-            --numcpus {threads} \
-            --outmatrix {output.dist:q} \
-            {input.fasta:q} > {output.tree:q}
-
-        {void_report}
-    """ 
-
+include: "rules/batch_mashtree.smk"
 
 def get_mem_fasttree(wildcards, attempt): 
     return [16000, 32000, 64000, 0][attempt-1]
@@ -1129,7 +1057,7 @@ rule fasttree:
         metadata = "{results_directory}/metadata.tsv",
         fasta = core_genome_if_exists,
     output: "{results_directory}/fasttree/fasttree.newick"
-    conda: "conda_definitions/fasttree.yaml"
+    conda: "envs/fasttree.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.fasttree.tsv"
     threads: 4
     retries: 2
@@ -1161,7 +1089,7 @@ rule iqtree:
         newick = "{results_directory}/iqtree/core_genome_iqtree.treefile"
     params:
         version_file = "{results_directory}/iqtree/iqtree_ac2_version.txt"
-    conda: "conda_definitions/iqtree.yaml"
+    conda: "envs/iqtree.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.iqtree.tsv"
     threads: 16
     retries: 3
@@ -1191,7 +1119,7 @@ rule iqtree:
 # Since all snakemake conda environments are installed in $SNAKEMAKE_CONDA_PREFIX set to ${ASSCOM2_BASE}/conda_base, reuse is guaranteed.
 rule install_report_environment_aot:
     output: touch(f"{results_directory}/.install_report_environment_aot.flag")
-    conda: "report_subpipeline/conda_definitions/r-markdown.yaml"
+    conda: "../report_subpipeline/workflow/envs/r-markdown.yaml"
     shell: """
 
         echo "Report conda environment OK ..."
@@ -1288,7 +1216,7 @@ report_call = f"""
         test -f "{results_directory}/.asscom2_void_report.flag" \
         && test -f "{results_directory}/metadata.tsv" \
         && snakemake \
-            --snakefile "$ASSCOM2_BASE/report_subpipeline/snakefile" \
+            --snakefile "$ASSCOM2_BASE/report_subpipeline/workflow/Snakefile" \
             --profile "$ASSCOM2_PROFILE" \
             --config results_directory="$(pwd -P)/{results_directory}" base_variable="{base_variable}" batch_title="{batch_title}" version_string="{__version__}"
     ) \

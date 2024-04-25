@@ -38,12 +38,12 @@ rule report:
     input:
         flag = "{results_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
         metadata = "{results_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
-    conda: "conda_definitions/r-markdown.yaml"
+    conda: "envs/r-markdown.yaml"
     params: 
         base_variable = base_variable,
         results_directory = results_directory,
         batch_title = batch_title,
-        end_script = f"{base_variable}/report_subpipeline/scripts/report_end_script.sh",
+        end_script = f"{base_variable}/report_subpipeline/workflow/scripts/report_end_script.sh",
     output: 
         html = "{results_directory}/report_{batch_title}.html",
     #output: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
@@ -55,7 +55,7 @@ rule report:
         
         # First remove possible old directory
         test -d scripts_temporary/ && rm -r scripts_temporary/
-        cp -r {base_variable}/report_subpipeline/scripts scripts_temporary # This one fails when using apptainer. Maybe I just need to bind it.
+        cp -r {base_variable}/report_subpipeline/workflow/scripts scripts_temporary # This one fails when using apptainer. Maybe I just need to bind it.
         
 
         #mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.
@@ -67,7 +67,7 @@ rule report:
 
             # Render report
             rmarkdown::render(
-                input = "scripts_temporary/genomes_to_report_v3.Rmd", output_format = "html_document", output_file = "{output.html}", knit_root_dir = "{params.results_directory}"
+                input = "scripts_temporary/report_template.rmd", output_format = "html_document", output_file = "{output.html}", knit_root_dir = "{params.results_directory}"
         )'
 
         # Clean up 

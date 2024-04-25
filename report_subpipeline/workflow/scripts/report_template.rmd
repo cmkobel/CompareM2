@@ -144,7 +144,7 @@ if (debug) {
 
 ## Global variables
 #base_variable = "~/assemblycomparator2/" # I need to find a way of pulling this out of thin air. Maybe there's a way of passing commands through the render call, or I can
-report_scripts = paste0(base_variable, "/report_subpipeline/scripts/")
+report_scripts = paste0(base_variable, "/report_subpipeline/workflow/scripts/")
 
 
 
