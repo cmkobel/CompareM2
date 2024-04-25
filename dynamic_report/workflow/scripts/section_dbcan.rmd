@@ -6,7 +6,7 @@
 # Show data table and make a heatmap for substrates to highlight interpretation
 
 
-setwd("~/assemblycomparator2/tests/student");  # DEBUG
+# setwd("~/assemblycomparator2/tests/student");  # DEBUG
 df_dbcan_raw = read_tsv(glob_list$dbcan, id = "file", na = "-") %>% #, comment = "#", col_names = c("name", "value")) %>%
     
     # Extract sample name
