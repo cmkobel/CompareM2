@@ -1,0 +1,11 @@
+name: panaroo
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.9
+  - panaroo>=1.3
+  
+# https://gtonkinhill.github.io/panaroo/#/gettingstarted/installation
+

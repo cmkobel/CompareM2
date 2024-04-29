@@ -1,9 +1,13 @@
 2.7.1
-  - Breaking change: File hierarchy now mirrors what is recommended in the snakemake documentation. Rules are now in individual files.
+  - Breaking change: File hierarchy now follows what is recommended in the snakemake documentation. Rules are now in individual files.
   - Breaking change: profiles/ moved to profile/ (sorry)
   - Busco runs in protein mode, reusing .faa from prokka. Should result in speedup.
   - Added Panaroo, removed Roary.
   - For dbcan, only the substrates are shown in the dynamic report.
+  - Gtdb updated to release 220.0
+  - Add bakta. No differential running policy yet.
+  - (Add eggnogg)
+  - (Add gapseq)
 
 2.6.2
   - Fix wrong path for dbcan results (not yet implemented in report)

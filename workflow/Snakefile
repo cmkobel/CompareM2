@@ -189,20 +189,22 @@ rule all:
         "{results_directory}/assembly-stats/assembly-stats.tsv", \
         "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
         "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
-        "{results_directory}/checkm2/quality_report.tsv", \
-        "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
-        "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
+        "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
+        "{results_directory}/samples/{sample}/bakta/{sample}.gff3", \
+        "{results_directory}/samples/{sample}/eggnog/{sample}.gff", \
         "{results_directory}/samples/{sample}/dbcan/overview.txt", \
         "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
+        "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
+        "{results_directory}/checkm2/quality_report.tsv", \
+        "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
         "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
-        "{results_directory}/mlst/mlst.tsv", \
         "{results_directory}/abricate/card_detailed.tsv", \
-        "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
+        "{results_directory}/mlst/mlst.tsv", \
         "{results_directory}/panaroo/summary_statistics.txt", \
-        "{results_directory}/fasttree/fasttree.newick", \
-        "{results_directory}/iqtree/core_genome_iqtree.treefile", \
         "{results_directory}/snp-dists/snp-dists.tsv", \
-        "{results_directory}/mashtree/mashtree.newick"], \
+        "{results_directory}/mashtree/mashtree.newick", \
+        "{results_directory}/fasttree/fasttree.newick", \
+        "{results_directory}/iqtree/core_genome_iqtree.treefile"], \
         results_directory = results_directory, sample = df["sample"]) 
 
 
@@ -231,48 +233,49 @@ rule metadata:
 include: "rules/downloads.smk"
 
 
-
 # --- Rules run per sample ------------------------------------------
 
+# QC
 include: "rules/sample_copy.smk"
-
 include: "rules/sample_assembly_stats.smk"
-
 include: "rules/sample_sequence_lengths.smk"
-
-include: "rules/sample_prokka.smk"
-
-include: "rules/sample_dbcan.smk"
-
-include: "rules/sample_interproscan.smk"
-
 include: "rules/sample_busco.smk"
 
+# Annotation
+include: "rules/sample_prokka.smk"
+include: "rules/sample_bakta.smk"
+include: "rules/sample_eggnog.smk"
+
+# Advanced annotation
+include: "rules/sample_dbcan.smk"
+include: "rules/sample_interproscan.smk"
 include: "rules/sample_diamond_kegg.smk"
 
 
 # --- Rules run per batch -------------------------------------------
 
+# QC
 include: "rules/batch_checkm2.smk"
 
+# Advanced annotation
 include: "rules/batch_kegg_pathway.smk"
-
-include: "rules/batch_panaroo.smk"
-
-include: "rules/batch_snp_dists.smk"
-
 include: "rules/batch_gtdbtk.smk"
 
+# Clinical relevance
 include: "rules/batch_abricate.smk"
-
 include: "rules/batch_mlst.smk"
 
+# Core/pan 
+include: "rules/batch_panaroo.smk"
+include: "rules/batch_snp_dists.smk"
+
+# Phylogeny
 include: "rules/batch_mashtree.smk"
-
 include: "rules/batch_fasttree.smk"
-
 include: "rules/batch_iqtree.smk"
 
+
+# --- Pro forma rules -----------------------------------------------
 
 # This rule might seem silly, but it makes sure that the report environment is ready to rock when the report subpipeline eventually is run: This has two pros:
 #    1) The vastly faster mamba configuration in the asscom2 pipeline is used
@@ -309,7 +312,10 @@ rule downloads:
         DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
         DATABASES + "/busco/ac2_busco_database_representative.flag",
         DATABASES + "/dbcan/ac2_dbcan_database_representative.flag",
-        DATABASES + "/gtdb/ac2_gtdb_database_representative.flag"
+        DATABASES + "/gtdb/ac2_gtdb_database_representative.flag",
+        DATABASES + "/bakta/ac2_bakta_database_representative.flag",
+        DATABASES + "/eggnog/ac2_eggnog_database_representative.flag",
+        
 
 
 # Blink-of-an-eye analysis
@@ -367,7 +373,7 @@ rule isolate:
 
 
 
-# --- Report --------------------------------------------------------
+# --- Dynamic report ------------------------------------------------
 # Call the report subpipeline
 # I wonder if adding the ampersands means that the report creation will be ^c cancellable? Must be tested.
 report_call = f"""
@@ -396,6 +402,5 @@ onerror:
 
 
 
+
 print("*/") # Makes it easy to export to .dot and to remove header from the generated Dockerfile.
-
-
