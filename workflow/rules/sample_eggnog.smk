@@ -8,24 +8,28 @@ rule eggnog:
     output:
         gff = "{results_directory}/samples/{sample}/eggnog/{sample}.gff",
         faa = "{results_directory}/samples/{sample}/eggnog/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg, motupan
-        
+    #params:
+            
     conda: "../envs/eggnog.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.eggnog_individual.{sample}.tsv"
     resources:
         mem_mb = 8192,
-    threads: 4
+    threads: 8
     shell: """
         
         # https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2.1.5-to-v2.1.12#basic-usage
         
-        
         emapper.py \
             -m diamond \
-            --itype CDS \
-            -i {input.assembly} \
-            -o $(dirname {output.gff})
+            --data_dir $(dirname {input.database_representative}) \
+            --itype genome \
+            --override \
+            --cpu {threads} \
+            --output_dir "$(dirname {output.gff})/" \
+            -o "{wildcards.sample}" \
+            -i {input.assembly:q} 
             
-        touch {output} # DEBUG
+        #touch {output} # DEBUG
 
         {void_report}
 

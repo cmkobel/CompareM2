@@ -307,6 +307,7 @@ rule report:
 # --- Pseudo targets ------------------------------------------------
 
 # Makes it easy to check that all databases are installed properly. Eventually for touching the database representatives in case of using prior installations.
+# Max 6 databases. Can't take adding any more.
 rule downloads:
     input:
         DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
