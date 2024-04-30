@@ -180,6 +180,7 @@ if not os.path.isdir(results_directory):
 
 
 localrules: metadata, checkm2_download, dbcan_download, busco_download, gtdb_download, report, install_report_environment_aot
+#ruleorder: prokka > bakta > eggnog
 
 # --- Collect all targets -------------------------------------------
 rule all:

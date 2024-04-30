@@ -6,8 +6,9 @@ rule eggnog:
         database_representative = DATABASES + "/eggnog/ac2_eggnog_database_representative.flag",
         assembly = "{results_directory}/samples/{sample}/{sample}.fna"
     output:
-        gff = "{results_directory}/samples/{sample}/eggnog/{sample}.gff",
-        faa = "{results_directory}/samples/{sample}/eggnog/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg, motupan
+        gff = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.gff",
+        ffn = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.fasta", # Used in dbcan, interproscan, diamond_kegg, motupan
+        tsv = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.annotations",
     #params:
             
     conda: "../envs/eggnog.yaml"
