@@ -1,0 +1,150 @@
+
+# By default it runs TIGRFAM, Hamap, Pfam
+rule interproscan:
+    input: 
+        metadata = "{results_directory}/metadata.tsv",
+        aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
+        # No external database is needed.
+    output:
+        tsv = "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv",
+    params:
+        file_base = "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan",
+    conda: "../envs/interproscan.yaml" # Not sure if it should be called by a version number?
+    benchmark: "{results_directory}/benchmarks/benchmark.interproscan.{sample}.tsv"
+    threads: 8
+    resources: 
+        mem_mb = 8000
+    shell: """
+
+        # https://interproscan-docs.readthedocs.io/en/latest/HowToRun.html#command-line-options
+        interproscan.sh \
+            --applications TIGRFAM,Hamap,Pfam \
+            --cpu {threads} \
+            --output-file-base {params.file_base:q} \
+            --disable-precalc \
+            --formats TSV \
+            --goterms \
+            --iprlookup \
+            --pathways \
+            --seqtype p \
+            --tempdir {resources.tmpdir} \
+            --input {input.aminoacid:q}
+
+    """
+
+
+
+# Use the same database as checkm2, but run on amino-acid files instead of dna.
+# This will be used for a subsequent pathway enrichment analysis.
+# Idea for speed up: concatenate all genomes together first, like they do in checkm2. Then we only need to load the database once.
+rule diamond_kegg: # or uniref_ko?
+    input: 
+        metadata = "{results_directory}/metadata.tsv", # For the report
+        aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
+        #database_representative = base_variable + "/databases/checkm2/ac2_checkm2_database_representative.flag",
+        database_representative = DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
+        
+    output: # 
+        tsv = "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", # Or should it be named uniref-100?
+    params: 
+        query_cover = 85,
+        subject_cover = 85, # 
+        percent_id = 50, # 30 is probably fine for checkm2, but I feel like I'd rather have censored data than spurious results.
+        evalue = "1e-05",
+        blocksize = 2, # A value of 2 corresponds to running checkm2 in non-lowmem mode.
+        database_path = DATABASES + "/checkm2/CheckM2_database/uniref100.KO.1.dmnd"
+    conda: "../envs/diamond.yaml" 
+    resources:
+        mem_mb = 20000, # Seems to use around 18G at max.
+        runtime = "1h",
+    benchmark: "{results_directory}/benchmarks/benchmark.diamond_kegg.{sample}.tsv"
+    threads: 8
+    shell: """
+
+        # Inspired from https://github.com/chklovski/CheckM2/blob/319dae65f1c7f2fc1c0bb160d90ac3ba64ed9457/checkm2/diamond.py#L79
+    
+        # blastp: Align amino acid query sequences against a protein reference database
+
+        diamond blastp \
+            --outfmt 6 \
+            --max-target-seqs 1 \
+            --query {input.aminoacid:q}  \
+            --out {output.tsv:q}  \
+            --threads {threads}  \
+            --db {params.database_path:q} \
+            --query-cover {params.query_cover}  \
+            --subject-cover {params.subject_cover}  \
+            --id {params.percent_id}  \
+            --evalue {params.evalue} \
+            --block-size {params.blocksize}
+
+    """
+
+
+
+
+rule gapseq:
+    input: 
+        metadata = "{results_directory}/metadata.tsv",
+        assembly = "{results_directory}/samples/{sample}/{sample}.fna"
+    output:
+        pathways = "{results_directory}/samples/{sample}/gapseq/{sample}_pathways.tsv",
+    conda: "../envs/gapseq.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.gapseq_individual.{sample}.tsv"
+    resources:
+        mem_mb = 8192,
+    threads: 4
+    shell: """
+        
+
+
+        
+        gapseq \
+            doall \
+            {input.assembly:q} \
+            -K {threads}
+        
+        
+        touch {output} # DEBUG
+
+        {void_report}
+
+    """
+    
+    
+
+rule dbcan: # I can't decide whether this rule should really be called "run_dbcan", since that is the name of the software.
+    input: 
+        metadata = "{results_directory}/metadata.tsv",
+        aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
+        database_representative = DATABASES + "/dbcan/ac2_dbcan_database_representative.flag"
+    output: 
+        overview_table = "{results_directory}/samples/{sample}/dbcan/overview.txt",
+        diamond_table = "{results_directory}/samples/{sample}/dbcan/diamond.out"
+    params: 
+        out_dir = "{results_directory}/samples/{sample}/dbcan"
+    conda: "../envs/dbcan.yaml" # Not sure if it should be called by a version number?
+    benchmark: "{results_directory}/benchmarks/benchmark.dbcan.{sample}.tsv"
+    threads: 8
+    resources: 
+        mem_mb = 8000
+    shell: """
+
+        # It seems to be necessary to set all the cpu thread counts manually.
+
+        export HMMER_NCPU={threads}
+        
+        run_dbcan -h > $(dirname {output.overview_table:q})/run_dbcan_version.txt
+
+        run_dbcan \
+            --dbcan_thread {threads} \
+            --dia_cpu {threads} \
+            --hmm_cpu {threads} \
+            --tf_cpu {threads} \
+            --stp_cpu {threads} \
+            --db_dir $(dirname {input.database_representative:q}) \
+            --out_dir {params.out_dir:q} \
+            {input.aminoacid:q} \
+            protein 
+
+    """
