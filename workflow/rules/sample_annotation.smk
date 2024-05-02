@@ -24,13 +24,22 @@ def get_annotation_results(wildcards):
     print(f"Pipeline: Using the {annotator} annotator for sample \"{wildcards.sample}\"{extra_message}.")
     
     # Return should only contain one item, as I can't name them and I need to refer to a single one in rule annotate where I'm accessing its dirname().
-    return f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.gff"
+    return [
+        f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.gff",
+        f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.faa",
+        f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.log",
+        f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.ffn",
+        f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.tsv",
+    ]
+        
     
 
 # There is a non-critical bug. When this rule is run after changing the annotator, the inputs from the old annotator are deleted? How does that work? Does snakemake keep track of changes in the job dag and remove old inputs?
+# When the annotator choice is changed, the old files are deleted. they shouldn't though, so what I'm thinking is that these files should be linked as individual files instead of as a whole directory. Then the individual links can be deleted and new ones can be laid out. Problem solved, let's get cracking. Update: The problem with this solution is that it doesn't rerun the annotation step when the annotator is changed, but I guess that makes fine sense. Another update: Nu har jeg prøvet at skifte fra prokka til bakta, det ser ud til at den ikke laver nye links? Sandsynligvis fordi annotate slet ikke bliver kørt når man skriver --until bakta. Ja hvis man bare skriver --until annotate. After testing, I can confirm that it works well, but you will have to write --forcerun bakta if you want it to update. Conclusion: Now I've tried both approaches - both having a linked dir and individually linked files. I think a linked dir is cleaner, but the code is not because you need a lot of dirname commands, and you need to remove the (potential old) links in the end of bakta and prokka. The solution I have now, with individually linked files is simpler, so I think I'll stick with it.
 rule annotate:
     input: get_annotation_results
     output:
+        dir = directory("{results_directory}/samples/{sample}/.annotation/"),
         gff = "{results_directory}/samples/{sample}/.annotation/{sample}.gff",
         faa = "{results_directory}/samples/{sample}/.annotation/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg
         log = "{results_directory}/samples/{sample}/.annotation/{sample}.log",
@@ -41,12 +50,16 @@ rule annotate:
         annotator = config['annotator']
     shell: """
         
-        # Clean up / make ready.
-        test -d $(dirname {output.gff}) && rm -rv $(dirname {output.gff}) # Remove potential snakemake created dir.
-        test -h $(dirname {output.gff}) && rm -v $(dirname {output.gff}) # Remove potential old link.
+        # I feel like the old files are removed automatically, let's put a print statement to check.
+        
+        echo before
+        ls -la {output.dir}
 
         # Using a softlink means that the choice of annotator can be changed without loss of information. This is especially important when the locustags are "volatile".
-        ln -sr $(dirname {input}) $(dirname {output.gff})
+        ln -sr {input} {output.dir}
+        
+        echo after
+        ls -la {output.dir}
     
     """
     
