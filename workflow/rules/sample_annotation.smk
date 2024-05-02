@@ -27,7 +27,7 @@ def get_annotation_results(wildcards):
     return f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.gff"
     
 
-
+# There is a non-critical bug. When this rule is run after changing the annotator, the inputs from the old annotator are deleted? How does that work? Does snakemake keep track of changes in the job dag and remove old inputs?
 rule annotate:
     input: get_annotation_results
     output:
@@ -40,16 +40,14 @@ rule annotate:
     params:
         annotator = config['annotator']
     shell: """
-    
-        
         
         # Clean up / make ready.
-        test -d $(dirname {output.gff}) && rm -r $(dirname {output.gff}) # Remove potential snakemake created dir.
-        test -h $(dirname {output.gff}) && rm $(dirname {output.gff}) # Remove potential old link.
-        
+        test -d $(dirname {output.gff}) && rm -rv $(dirname {output.gff}) # Remove potential snakemake created dir.
+        test -h $(dirname {output.gff}) && rm -v $(dirname {output.gff}) # Remove potential old link.
+
         # Using a softlink means that the choice of annotator can be changed without loss of information. This is especially important when the locustags are "volatile".
         ln -sr $(dirname {input}) $(dirname {output.gff})
-        
+    
     """
     
 
