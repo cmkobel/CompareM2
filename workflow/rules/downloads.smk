@@ -149,14 +149,15 @@ rule gtdb_download:
 
         # Pick a source file
         # Release 214
-        db_pick="https://ns9864k.web.sigma2.no/TheMEMOgroup/cmkobel/asscom2-assets/gtdb/release214/gtdbtk_data.tar.gz" # NMBU/MEMO mirror in norway
+        # db_pick="https://ns9864k.web.sigma2.no/TheMEMOgroup/cmkobel/asscom2-assets/gtdb/release214/gtdbtk_data.tar.gz" # NMBU/MEMO mirror in norway
         #db_pick="https://data.gtdb.ecogenomic.org/releases/latest/auxillary_files/gtdbtk_data.tar.gz" # Official location
         #db_pick="https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_data.tar.gz" # Official alternative mirror
         
         # Release 220
-        db_pick="https://data.gtdb.ecogenomic.org/releases/release220/220.0/auxillary_files/gtdbtk_package/full_package/gtdbtk_r220_data.tar.gz"
+        db_pick="https://ns9864k.web.sigma2.no/TheMEMOgroup/cmkobel/asscom2-assets/gtdb/release220/gtdbtk_r220_data.tar.gz" # NMBU/MEMO mirror in norway
+        #db_pick="https://data.gtdb.ecogenomic.org/releases/release220/220.0/auxillary_files/gtdbtk_package/full_package/gtdbtk_r220_data.tar.gz"
         #db_pick="https://data.ace.uq.edu.au/public/gtdb/data/releases/release220/220.0/auxillary_files/gtdbtk_package/full_package/gtdbtk_r220_data.tar.gz"
-        #
+
 
 
         db_destination=$(dirname {output.database_representative})/gtdb_db.tar.gz

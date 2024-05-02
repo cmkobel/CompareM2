@@ -5,10 +5,10 @@ rule prokka:
         assembly = "{results_directory}/samples/{sample}/{sample}.fna"
     output:
         gff = "{results_directory}/samples/{sample}/prokka/{sample}.gff",
-        faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg, motupan
+        faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa",
         log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
-        gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta", # Not sure where I'm using this.
+        gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta", # Might come in handy.
     conda: "../envs/prokka.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
     resources:

@@ -179,8 +179,9 @@ if not os.path.isdir(results_directory):
     os.mkdir(results_directory) # If running with local profile, the directory won't be created. This is necessary in the edge case that the user _only_ runs "--until report".
 
 
-localrules: metadata, checkm2_download, dbcan_download, busco_download, gtdb_download, report, install_report_environment_aot
+localrules: metadata, annotate, checkm2_download, dbcan_download, busco_download, gtdb_download, report, install_report_environment_aot
 #ruleorder: prokka > bakta > eggnog
+#ruleorder: gapseq_find > gapseq
 
 # --- Collect all targets -------------------------------------------
 rule all:
@@ -191,8 +192,9 @@ rule all:
         "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
         "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
         "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
-        "{results_directory}/samples/{sample}/bakta/{sample}.gff3", \
-        "{results_directory}/samples/{sample}/eggnog/{sample}.gff", \
+        "{results_directory}/samples/{sample}/bakta/{sample}.gff", \
+        "{results_directory}/samples/{sample}/.annotation/{sample}.gff", \
+        "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.gff", \
         "{results_directory}/samples/{sample}/dbcan/overview.txt", \
         "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
         "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
@@ -237,43 +239,33 @@ include: "rules/downloads.smk"
 # --- Rules run per sample ------------------------------------------
 
 # QC
-include: "rules/sample_copy.smk"
-include: "rules/sample_assembly_stats.smk"
-include: "rules/sample_sequence_lengths.smk"
-include: "rules/sample_busco.smk"
+include: "rules/sample_quality_control.smk"
 
 # Annotation
-include: "rules/sample_prokka.smk"
-include: "rules/sample_bakta.smk"
-include: "rules/sample_eggnog.smk"
+include: "rules/sample_annotation.smk"
 
 # Advanced annotation
-include: "rules/sample_dbcan.smk"
-include: "rules/sample_interproscan.smk"
-include: "rules/sample_diamond_kegg.smk"
+include: "rules/sample_advanced_annotation.smk"
+
 
 
 # --- Rules run per batch -------------------------------------------
 
 # QC
-include: "rules/batch_checkm2.smk"
+include: "rules/batch_quality_control.smk"
 
 # Advanced annotation
-include: "rules/batch_kegg_pathway.smk"
-include: "rules/batch_gtdbtk.smk"
+include: "rules/batch_advanced_annotation.smk"
 
 # Clinical relevance
-include: "rules/batch_abricate.smk"
-include: "rules/batch_mlst.smk"
+include: "rules/batch_clinical.smk"
 
 # Core/pan 
-include: "rules/batch_panaroo.smk"
-include: "rules/batch_snp_dists.smk"
+include: "rules/batch_core_pan.smk"
 
 # Phylogeny
-include: "rules/batch_mashtree.smk"
-include: "rules/batch_fasttree.smk"
-include: "rules/batch_iqtree.smk"
+include: "rules/batch_phylogeny.smk"
+
 
 
 # --- Pro forma rules -----------------------------------------------

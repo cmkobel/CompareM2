@@ -1,6 +1,6 @@
 mlst_scheme: "automatic"
 input_genomes: "*.fna *.fa *.fasta *.fas" # Default value. Does not support advanced glob brace expansion. If you give multiple files or a single file has spaces or weird characters, it should be quoted within apostrophes.
-
+annotator: "prokka" # prokka|bakta 
 
 
 

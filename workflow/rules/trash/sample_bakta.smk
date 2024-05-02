@@ -5,8 +5,8 @@ rule bakta:
         database_representative = DATABASES + "/bakta/ac2_bakta_database_representative.flag",
         assembly = "{results_directory}/samples/{sample}/{sample}.fna"
     output:
-        gff = "{results_directory}/samples/{sample}/bakta/{sample}.gff3",
-        faa = "{results_directory}/samples/{sample}/bakta/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg, motupan
+        gff = "{results_directory}/samples/{sample}/bakta/{sample}.gff",
+        faa = "{results_directory}/samples/{sample}/bakta/{sample}.faa",
         
         #gff_generic = "{results_directory}/samples/{sample}/annotation/{sample}.gff3",
     params:
@@ -24,6 +24,9 @@ rule bakta:
             --threads {threads} \
             --force \
             {input.assembly}
+            
+        # Optimize compatibility between prokka and bakta to make fluent use of either result easy.
+        cp {output.gff}3 {output.gff}
         
         {void_report}
 

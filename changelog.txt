@@ -6,7 +6,7 @@
   - For dbcan, only the substrates are shown in the dynamic report.
   - Gtdb updated to release 220.0
   - Add bakta. No differential running policy yet.
-  - (Add eggnogg)
+  - Add eggnogg
   - (Add gapseq)
 
 2.6.2
