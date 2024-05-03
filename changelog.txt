@@ -10,6 +10,7 @@
   - Add eggnogg
   - (Add gapseq. Added but not activated yet, as we're still waiting for conda-forge::r-chnosz and bioconda::gapseq to be published.)
 
+
 2.6.2
   - Fix wrong path for dbcan results (not yet implemented in report)
   - Downgrade diamond 2.1.8 due to segfault in newest version (2.1.9) https://github.com/bbuchfink/diamond/issues/785
