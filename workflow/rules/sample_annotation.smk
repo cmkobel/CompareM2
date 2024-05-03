@@ -38,7 +38,7 @@ def get_annotation_results(wildcards):
 # When the annotator choice is changed, the old files are deleted. they shouldn't though, so what I'm thinking is that these files should be linked as individual files instead of as a whole directory. Then the individual links can be deleted and new ones can be laid out. Problem solved, let's get cracking. Update: The problem with this solution is that it doesn't rerun the annotation step when the annotator is changed, but I guess that makes fine sense. Another update: Nu har jeg prøvet at skifte fra prokka til bakta, det ser ud til at den ikke laver nye links? Sandsynligvis fordi annotate slet ikke bliver kørt når man skriver --until bakta. Ja hvis man bare skriver --until annotate. After testing, I can confirm that it works well, but you will have to write --forcerun bakta if you want it to update. Conclusion: Now I've tried both approaches - both having a linked dir and individually linked files. I think a linked dir is cleaner, but the code is not because you need a lot of dirname commands, and you need to remove the (potential old) links in the end of bakta and prokka. The solution I have now, with individually linked files is simpler, so I think I'll stick with it.
 rule annotate:
     input: get_annotation_results
-    output:
+    output: # These are mostly the outputs that are used downstream.
         dir = directory("{results_directory}/samples/{sample}/.annotation/"),
         gff = "{results_directory}/samples/{sample}/.annotation/{sample}.gff",
         faa = "{results_directory}/samples/{sample}/.annotation/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg
@@ -71,7 +71,7 @@ rule prokka:
     output:
         gff = "{results_directory}/samples/{sample}/prokka/{sample}.gff",
         faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa",
-        #ffn = "{results_directory}/samples/{sample}/prokka/{sample}.ffn",
+        ffn = "{results_directory}/samples/{sample}/prokka/{sample}.ffn",
         log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
         gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta", # Might come in handy.
@@ -110,6 +110,8 @@ rule bakta:
         gff = "{results_directory}/samples/{sample}/bakta/{sample}.gff",
         faa = "{results_directory}/samples/{sample}/bakta/{sample}.faa",
         tsv = "{results_directory}/samples/{sample}/bakta/{sample}.tsv",
+        log = "{results_directory}/samples/{sample}/bakta/{sample}.log",
+        ffn = "{results_directory}/samples/{sample}/bakta/{sample}.ffn",
         
         #gff_generic = "{results_directory}/samples/{sample}/annotation/{sample}.gff3",
     params:

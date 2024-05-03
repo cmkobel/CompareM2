@@ -3,7 +3,7 @@
 rule interproscan:
     input: 
         metadata = "{results_directory}/metadata.tsv",
-        aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
+        aminoacid = "{results_directory}/samples/{sample}/.annotation/{sample}.faa",
         # No external database is needed.
     output:
         tsv = "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv",
@@ -40,7 +40,7 @@ rule interproscan:
 rule diamond_kegg: # or uniref_ko?
     input: 
         metadata = "{results_directory}/metadata.tsv", # For the report
-        aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
+        aminoacid = "{results_directory}/samples/{sample}/.annotation/{sample}.faa", 
         #database_representative = base_variable + "/databases/checkm2/ac2_checkm2_database_representative.flag",
         database_representative = DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
         
@@ -116,7 +116,7 @@ rule gapseq:
 rule dbcan: # I can't decide whether this rule should really be called "run_dbcan", since that is the name of the software.
     input: 
         metadata = "{results_directory}/metadata.tsv",
-        aminoacid = "{results_directory}/samples/{sample}/prokka/{sample}.faa", # From prokka
+        aminoacid = "{results_directory}/samples/{sample}/.annotation/{sample}.faa",
         database_representative = DATABASES + "/dbcan/ac2_dbcan_database_representative.flag"
     output: 
         overview_table = "{results_directory}/samples/{sample}/dbcan/overview.txt",
