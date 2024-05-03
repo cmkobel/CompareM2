@@ -52,3 +52,16 @@ jobs:
         run: |
           asscom2 --config input_genomes="tests/E._faecium/*.fna" --until copy 
 
+
+      - name: fast
+        run: |
+          asscom2 --config input_genomes="tests/E._faecium/*.fna" --until fast
+
+      - name: meta
+        run: |
+          asscom2 --config input_genomes="tests/E._faecium/*.fna" --until meta
+      
+      - name: full 
+        run: |
+          asscom2 --config input_genomes="tests/E._faecium/*.fna" 
+
