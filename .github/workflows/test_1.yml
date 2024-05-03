@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'environment.yaml'
+      - '*'
 
 
 jobs:
