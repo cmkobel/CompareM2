@@ -4,6 +4,7 @@ on:
     paths:
       - 'environment.yaml'
 
+
 jobs:
   create-env:
     name: ${{ matrix.os }} 
