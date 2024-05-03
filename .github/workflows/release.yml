@@ -30,7 +30,7 @@ jobs:
           channels: conda-forge,bioconda,defaults
           auto-activate-base: false
           activate-environment: asscom2
-          environment-file: .github/workflows/env.yaml
+          environment-file: bioconda.yaml
       
       - name: check solution
         run: |
@@ -42,6 +42,6 @@ jobs:
           asscom2 --version
           asscom2 --help
       
-      - name fast dry run
+      - name: fast dry run
         run: |
           asscom2 --config input_genomes="tests/E._faecium/*.fna" --until fast --dry-run
