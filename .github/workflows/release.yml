@@ -39,4 +39,9 @@ jobs:
       - name: test installation
         run: |
           which asscom2
+          asscom2 --version
           asscom2 --help
+      
+      - name fast dry run
+        run: |
+          asscom2 --config input_genomes="tests/E._faecium/*.fna" --until fast --dry-run
