@@ -4,6 +4,8 @@ on:
     paths:
       - '*'
 
+env:
+  ASSCOM2_PROFILE: "profile/conda/local"
 
 
 jobs:
@@ -41,7 +43,12 @@ jobs:
           which asscom2
           asscom2 --version
           asscom2 --help
-      
-      - name: fast dry run
+
+      - name: dry run
         run: |
-          asscom2 --config input_genomes="tests/E._faecium/*.fna" --until fast --dry-run
+          asscom2 --config input_genomes="tests/E._faecium/*.fna" --dry-run
+
+      - name: setup conda envs and copy
+        run: |
+          asscom2 --config input_genomes="tests/E._faecium/*.fna" --until copy 
+
