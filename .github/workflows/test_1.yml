@@ -2,7 +2,6 @@ name: test_1
 on:
   push:
     paths:
-      - 'environment.yaml'
       - '*'
 
 
@@ -31,7 +30,7 @@ jobs:
           channels: conda-forge,bioconda,defaults
           auto-activate-base: false
           activate-environment: asscom2_launcher
-          environment-file: environment.yaml
+          environment-file: .github/workflows/env.yaml
       
       - name: check solution
         run: |
