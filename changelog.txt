@@ -5,9 +5,10 @@
   - Added Panaroo, removed Roary.
   - For dbcan, only the substrates are shown in the dynamic report.
   - Gtdb updated to release 220.0
-  - Add bakta. No differential running policy yet.
+  - Add bakta.
+  - User can specify whether to use prokka or bakta to create annotation that is used for dbcan, interproscan and diamond_kegg. This can be set using `--config annotator=bakta` or by changing the parameter in the config/config.yaml.
   - Add eggnogg
-  - (Add gapseq)
+  - (Add gapseq. Added but not activated yet, as we're still waiting for conda-forge::r-chnosz and bioconda::gapseq to be published.)
 
 2.6.2
   - Fix wrong path for dbcan results (not yet implemented in report)

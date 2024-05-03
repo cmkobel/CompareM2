@@ -45,22 +45,13 @@ rule annotate:
         log = "{results_directory}/samples/{sample}/.annotation/{sample}.log",
         ffn = "{results_directory}/samples/{sample}/.annotation/{sample}.ffn",
         tsv = "{results_directory}/samples/{sample}/.annotation/{sample}.tsv",
-        
-    params:
-        annotator = config['annotator']
     shell: """
-        
-        # I feel like the old files are removed automatically, let's put a print statement to check.
-        
-        echo before
-        ls -la {output.dir}
 
         # Using a softlink means that the choice of annotator can be changed without loss of information. This is especially important when the locustags are "volatile".
+        # Though using this solution means that the user can mix up results, so that if the user switches between annotators while running the downstream tools, a mix of annotators can be used. This is very powerful in the sense that the user can use different annotators for different downstream tools, but it is also dangerous in the sense that it can create confusion around which tool is being used. Maybe there should be a log somewhere, or I should go back to having the directory being linked so that the "old" annotation results are removed everytime the annotator is switched.
+        
         ln -sr {input} {output.dir}
         
-        echo after
-        ls -la {output.dir}
-    
     """
     
 

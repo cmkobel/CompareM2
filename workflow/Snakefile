@@ -180,8 +180,8 @@ if not os.path.isdir(results_directory):
 
 
 localrules: metadata, annotate, checkm2_download, dbcan_download, busco_download, gtdb_download, report, install_report_environment_aot
-#ruleorder: prokka > bakta > eggnog
-#ruleorder: gapseq_find > gapseq
+#ruleorder: prokka > bakta > eggnog # I solved this by having an external output called ".annotation" that requests the appropriate annotator based on the config parameter "annotator".
+#ruleorder: gapseq_find > gapseq # Most of the time, we just want the pathways completion fractions. Drafting and gapfilling a complete GEM is a bit overkill, but should of course be possible if the user wants it.
 
 # --- Collect all targets -------------------------------------------
 rule all:
@@ -211,6 +211,7 @@ rule all:
         results_directory = results_directory, sample = df["sample"]) 
 
 
+        #"{results_directory}/samples/{sample}/gapseq/gapseq_done.flag", \
 
 # Write the sample table for later reference.
 # Why isn't this a run: instead of a shell: ?

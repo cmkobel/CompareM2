@@ -80,38 +80,7 @@ rule diamond_kegg: # or uniref_ko?
 
     """
 
-
-
-
-rule gapseq:
-    input: 
-        metadata = "{results_directory}/metadata.tsv",
-        assembly = "{results_directory}/samples/{sample}/{sample}.fna"
-    output:
-        pathways = "{results_directory}/samples/{sample}/gapseq/{sample}_pathways.tsv",
-    conda: "../envs/gapseq.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.gapseq_individual.{sample}.tsv"
-    resources:
-        mem_mb = 8192,
-    threads: 4
-    shell: """
-        
-
-
-        
-        gapseq \
-            doall \
-            {input.assembly:q} \
-            -K {threads}
-        
-        
-        touch {output} # DEBUG
-
-        {void_report}
-
-    """
-    
-    
+   
 
 rule dbcan: # I can't decide whether this rule should really be called "run_dbcan", since that is the name of the software.
     input: 
@@ -148,3 +117,106 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
             protein 
 
     """
+
+
+
+
+
+
+rule gapseq_find:
+    input: 
+        metadata = "{results_directory}/metadata.tsv",
+        faa = "{results_directory}/samples/{sample}/.annotation/{sample}.faa"
+    output:
+        dir = directory("{results_directory}/samples/{sample}/gapseq"),
+        pathways = "{results_directory}/samples/{sample}/gapseq/{sample}-Pathways.tbl",
+        reactions = "{results_directory}/samples/{sample}/gapseq/{sample}-Reactions.tbl",
+        transporter = "{results_directory}/samples/{sample}/gapseq/{sample}-Transporter.tbl",
+        flag = "{results_directory}/samples/{sample}/gapseq/gapseq_done.flag",
+    conda: "../envs/gapseq.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.gapseq_find_individual.{sample}.tsv"
+    resources:
+        mem_mb = 8192,
+    threads: 4
+    shell: """
+        
+        # -K is only for multiple sequence alignments
+        # -O is "offline mode"
+        
+        # Produces *-Pathways.tbl, *-Reactions.tbl
+        gapseq find \
+            -M prot \
+            -f {output.dir} \
+            -K {threads} \
+            -O \
+            -p all \
+            {input.faa:q} 
+            
+        # Produces *-Transporter.tbl
+        gapseq find-transport \
+            -M prot \
+            -f {output.dir} \
+            -K {threads} \
+            {input.faa:q}
+            
+            
+        touch {output.flag} # To have a common output with rule gapseq for the ruleorder
+            
+        touch {output} # DEBUG
+    
+
+        {void_report}
+
+    """
+    
+    
+rule gapseq: # Continuation on gapseq_find results.
+    input: 
+        metadata = "{results_directory}/metadata.tsv",
+        assembly = "{results_directory}/samples/{sample}/{sample}.fna",
+        pathways = "{results_directory}/samples/{sample}/gapseq/{sample}_pathways.tsv",
+    output:
+        rxnWeights = "{results_directory}/samples/{sample}/gapseq/{sample}-rxnWeights.tbl",
+        rxnXgenes = "{results_directory}/samples/{sample}/gapseq/{sample}-rxnXgenes.tbl",
+        draft = "{results_directory}/samples/{sample}/gapseq/{sample}-draft.tbl",
+        draft_xml = "{results_directory}/samples/{sample}/gapseq/{sample}-draft_xml.xml",
+
+        filled = "{results_directory}/samples/{sample}/gapseq/{sample}.tbl",
+        filled_xml = "{results_directory}/samples/{sample}/gapseq/{sample}.xml",
+        
+        flag = "{results_directory}/samples/{sample}/gapseq/gapseq_done.flag",
+    params:
+        dir = "{results_directory}/samples/{sample}/gapseq",
+
+    conda: "../envs/gapseq.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.gapseq_find_individual.{sample}.tsv"
+    resources:
+        mem_mb = 8192,
+    threads: 4
+    shell: """
+
+        # Produces *-rxnWeights.RDS, *-rxnXgenes.RDS, *-draft.RDS, *-draft.xml
+        gapseq draft \
+            -r toy/myb71-all-Reactions.tbl \
+            -t toy/myb71-Transporter.tbl \
+            -p toy/myb71-all-Pathways.tbl \
+            -c {input:assembly:q}
+        
+        # Produces *.RDS and *.xml
+        gapseq fill \
+            -m toy/myb71-draft.RDS \
+            -c toy/myb71-rxnWeights.RDS \
+            -g toy/myb71-rxnXgenes.RDS \
+            -n dat/media/TSBmed.csv
+            
+            
+            
+        touch {output.flag} # To have a common output with rule gapseq for the ruleorder
+        
+        touch {output} # DEBUG
+
+        {void_report}
+
+    """
+    
+    
