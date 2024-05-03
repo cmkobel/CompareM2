@@ -36,7 +36,7 @@ jobs:
         run: |
           mamba env export
       
-      - name: test samtools
+      - name: test installation
         run: |
           which asscom2
           asscom2 --help
