@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 __author__ = "Carl M. Kobel"
-__version__ = "2.6.2"
+__version__ = "2.7.1"
 
 """
 This is the launcher script for assemblycomparator2.
@@ -161,7 +161,7 @@ trailing_arguments = sys.argv[1:]
 trailing_arguments_concatenated = " ".join(trailing_arguments)
 logger.debug(f"The concatenated trailing arguments are {trailing_arguments_concatenated}")
 
-command = f"snakemake --snakefile \"{ASSCOM2_BASE}\"/snakefile --profile \"{ASSCOM2_PROFILE}\" --configfile \"{ASSCOM2_BASE}\"/config.yaml  " + trailing_arguments_concatenated
+command = f"snakemake --snakefile \"{ASSCOM2_BASE}\"/workflow/snakefile --profile \"{ASSCOM2_PROFILE}\" --configfile \"{ASSCOM2_BASE}\"/config.yaml  " + trailing_arguments_concatenated
 logger.debug(f"Command to run is\n{command}")
 
 
