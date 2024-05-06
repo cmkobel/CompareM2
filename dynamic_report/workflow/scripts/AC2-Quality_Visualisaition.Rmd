@@ -1,0 +1,221 @@
+---
+title: "Quality visualisation"
+author: "Wanxin_Lai"
+date: "2024-05-03"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse)
+library(ggtree)
+library(phytools)
+library(scales)
+library(ggnewscale)
+library(ggh4x)
+library(gridExtra)
+library(ggtreeExtra)
+library(DT)
+library(pheatmap)
+
+```
+
+```{r message = FALSE, warning=FALSE}
+# Import read raw input
+checkm2_raw <- read_tsv(glob_list$checkm2, col_names = T) %>% 
+  mutate(mag_size=round(Genome_Size/1000000, 2))
+
+# Import Taxa info
+gtdbtk_df = read_tsv(glob_list$gtdbtk) %>% 
+    select(sample = user_genome, classification) %>%
+    identity()
+
+#Import tree info
+mashtree_file <- read.tree(glob_list$mashtree)
+
+```
+
+```{r message=FALSE}
+# GTDBTK taxa
+SampleTax <- gtdbtk_df %>% 
+  column_to_rownames("sample") %>% 
+  separate(col = 1, into = c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species"), sep = ";") %>% 
+  rownames_to_column("sample") %>%
+  mutate_at(.vars=vars(Species),
+            .funs = ~
+              str_remove(.,
+                         pattern="NA")) %>%
+  mutate_at(.vars=vars(Species),
+            .funs = ~
+              str_remove(.,
+                         pattern = ".*[[:space:]]")) %>%
+  mutate_at(.vars=vars(Species),
+            .funs = ~
+              str_remove(.,
+                         pattern = "(?<=sp)\\d.*")) %>%
+  mutate_at(.vars = vars(Domain),
+            .funs = ~
+              str_remove_all(.,
+                             pattern = ".*d__")) %>%
+  mutate_at(.vars = vars(Phylum),
+            .funs = ~
+              str_remove_all(.,
+                             pattern = ".*p__")) %>%
+  mutate_at(.vars = vars(Phylum),
+            .funs = ~
+              str_remove_all(.,
+                             pattern = "_..*")) %>% 
+  mutate_at(.vars = vars(Class),
+            .funs = ~
+              str_remove_all(.,
+                             pattern = ".*c__")) %>%
+  mutate_at(.vars = vars(Order),
+            .funs = ~
+              str_remove_all(.,
+                             pattern = ".*o__")) %>%
+  mutate_at(.vars = vars(Family),
+            .funs = ~
+              str_remove_all(.,
+                             pattern = ".*f__")) %>%
+  mutate_at(.vars = vars(Genus),
+            .funs = ~
+              str_remove_all(.,
+                             pattern = ".*g__")) %>%
+  mutate_at(.vars = vars(Genus),
+            .funs = ~
+              str_remove_all(.,
+                             pattern = "_..*")) %>%
+  mutate_at(.vars = vars(Species),
+            .funs = ~
+              str_remove_all(.,
+                             pattern = ".*s__")) %>% 
+  mutate(Family = if_else(Family == "NA", Order, Family)) %>% 
+  mutate(Genus = if_else(Genus == "NA", Family, Genus))
+
+#convert empty string to sp
+SampleTax$Species <- replace(SampleTax$Species, SampleTax$Species == "", "sp")
+```
+
+
+```{r message = FALSE}
+# Assign colour to each phylum
+phylum_colour <- data.frame(Phylum = sort(unique(SampleTax$Phylum)), color = hue_pal()(12))
+
+mags_phylum_colour <- SampleTax %>%
+  left_join(phylum_colour, by = join_by(Phylum == Phylum))
+
+# Generate phylum color heatmap
+heatmap <- mags_phylum_colour %>% arrange(match(sample, mashtree_file$tip.label)) %>%
+  select(sample,Phylum) %>%
+    mutate(Phylum = factor(Phylum, levels = unique(Phylum))) %>%
+    column_to_rownames(var = "sample")
+```
+
+```{r, warning=FALSE}
+# baseline tree
+circular_tree <- force.ultrametric(mashtree_file, method="extend") %>% # extend to ultrametric for visualisation
+    ggtree(., layout="circular", size=0.1, open.angle = 45)
+
+# Add phylum ring
+circular_tree <- gheatmap(circular_tree, heatmap, offset=0.60, width=0.1, colnames=FALSE) +
+        geom_tiplab2(size=0.8, hjust=-0.1) +
+        theme(legend.position = "right", legend.title = element_text("Phylum"), plot.margin = margin(0, 0, 0, 0), panel.margin = margin(0, 0, 0, 0))
+
+
+# flush old color scheme in the ring
+circular_tree <- circular_tree + new_scale_fill()
+
+# Add completeness ring
+circular_tree <- circular_tree +
+        new_scale_fill() +
+        scale_fill_gradient(low = "#d1f4ba", high = "#f4baba") +
+        geom_fruit(
+                data=checkm2_raw,
+                geom=geom_bar,
+                mapping = aes(x=Completeness, y=Name, fill=Contamination),
+                offset = 0.8,
+                orientation="y",
+              stat="identity")
+
+# Add genome-size ring
+circular_tree <-  circular_tree +
+        new_scale_fill() +
+        scale_fill_manual(values = "#cccccc") +
+        geom_fruit(
+             data=checkm2_raw,
+             geom=geom_bar,
+             mapping = aes(x=mag_size, y=Name),
+                 offset = 0.05,
+                 orientation="y",
+         stat="identity")
+
+# Add text
+circle_tree <- circular_tree +
+        annotate('text', x=1.7, y=0.0, label='             Phylum', size=3) +
+        annotate('text', x=1.9, y=0.0, label='                         Genome quality', size=3) +
+        annotate('text', x=2.1, y=0.0, label='                       Genome size', size=3) 
+
+circle_tree %>% 
+   open_tree(20) %>% rotate_tree(90)
+```
+
+
+```{r warning=FALSE, message=FALSE}
+
+# Add text# First create a biplot chart
+ mags_details <- checkm2_raw %>%
+  left_join(SampleTax, by=join_by(Name == sample)) %>% 
+  left_join(phylum_colour, by = join_by(Phylum == Phylum))
+  
+mag_stats_biplot <- mags_details %>% 
+  ggplot(aes(x=Completeness,y=Contamination,size=Genome_Size,color=Phylum)) +
+              geom_point(alpha=0.7) +
+                    ylim(c(10,0)) +
+                labs(y= "Contamination", x = "Completeness") +
+                    theme_classic() +
+                  theme(legend.position = "bottom")
+
+# X and Y axis boxplots to complement the plot and MAG quality statistics.
+mag_stats_cont <- mags_details %>%
+            ggplot(aes(y=Contamination)) +
+                    ylim(c(10,0)) +
+                    geom_boxplot(colour = "#999999", fill="#cccccc") +
+                    theme_void() +
+                    theme(legend.position = "none",
+                        axis.title.x = element_blank(),
+                        axis.title.y = element_blank(),
+                        axis.text.y=element_blank(),
+                  axis.ticks.y=element_blank(),
+                        axis.text.x=element_blank(),
+                  axis.ticks.x=element_blank(),
+                        plot.margin = unit(c(0, 0, 0.40, 0),"inches")) #add bottom-margin (top, right, bottom, left)
+
+mag_stats_comp <-mags_details %>%
+        ggplot(aes(x=Completeness)) +
+                xlim(c(50,100)) +
+                geom_boxplot(colour = "#999999", fill="#cccccc") +
+                theme_void() +
+                theme(legend.position = "none",
+                    axis.title.x = element_blank(),
+                    axis.title.y = element_blank(),
+                    axis.text.y=element_blank(),
+              axis.ticks.y=element_blank(),
+                    axis.text.x=element_blank(),
+              axis.ticks.x=element_blank(),
+                    plot.margin = unit(c(0, 0, 0, 0.50),"inches")) #add left-margin (top, right, bottom, left)
+
+
+grid.arrange(grobs = list(mag_stats_comp,mag_stats_biplot,mag_stats_cont),
+        layout_matrix = rbind(c(1,1,1,1,1,1,1,1,1,1,1,4),
+                                                    c(2,2,2,2,2,2,2,2,2,2,2,3),
+                                                    c(2,2,2,2,2,2,2,2,2,2,2,3),
+                                                    c(2,2,2,2,2,2,2,2,2,2,2,3),
+                                                    c(2,2,2,2,2,2,2,2,2,2,2,3),
+                                                    c(2,2,2,2,2,2,2,2,2,2,2,3),
+                                                    c(2,2,2,2,2,2,2,2,2,2,2,3),
+                                                    c(2,2,2,2,2,2,2,2,2,2,2,3),
+                                                    c(2,2,2,2,2,2,2,2,2,2,2,3),
+                                                    c(2,2,2,2,2,2,2,2,2,2,2,3),
+                                                    c(2,2,2,2,2,2,2,2,2,2,2,3),
+                                                    c(2,2,2,2,2,2,2,2,2,2,2,3)))
+```
+
