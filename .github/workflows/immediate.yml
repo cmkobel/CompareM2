@@ -37,8 +37,11 @@ jobs:
       
       - name: test installation
         run: |
+          python --version
+          snakemake --version
           ./asscom2 --version
           ./asscom2 --help
+
 
       - name: dry run
         run: |

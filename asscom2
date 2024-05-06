@@ -42,8 +42,8 @@ NAME
 
 SYNOPSIS
     asscom2 [ --config KEY=VALUE [KEY2=VALUE]... ] [ --until RULE [RULE2]... ]
-    [ --dry-run ]
-    [ --version ] [ --help ]
+        [ --dry-run ]
+        [ --version ] [ --help ]
     
 DESCRIPTION
     Analyses bacterial and archaeal genomes. 
