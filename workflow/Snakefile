@@ -50,7 +50,7 @@ containerized: f"docker://cmkobel/assemblycomparator2:v{__version__}"
 envvars:
     "ASSCOM2_BASE",
     "ASSCOM2_PROFILE",
-    "ASSCOM2_DATABASES"
+    "ASSCOM2_DATABASES",
 
 
 # --- Functions -----------------------------------------------------
@@ -188,7 +188,8 @@ localrules: metadata, annotate, checkm2_download, dbcan_download, busco_download
 #ruleorder: gapseq_find > gapseq # Most of the time, we just want the pathways completion fractions. Drafting and gapfilling a complete GEM is a bit overkill, but should of course be possible if the user wants it.
 
 # --- Collect all targets -------------------------------------------
-rule all: input: expand([\
+rule all:
+    input: expand([\
         "{results_directory}/metadata.tsv", \
         "{results_directory}/.install_report_environment_aot.flag", \
         "{results_directory}/assembly-stats/assembly-stats.tsv", \
@@ -218,7 +219,8 @@ rule all: input: expand([\
 
 # Write the sample table for later reference.
 # Why isn't this a run: instead of a shell: ?
-rule metadata: input: df['input_file_fasta']
+rule metadata:
+    input: df['input_file_fasta']
     output: "{results_directory}/metadata.tsv"
     params: dataframe = df.to_csv(None, index_label = "index", sep = "\t") #, quoting = csv.QUOTE_NONE)
     resources:
@@ -277,7 +279,8 @@ include: "rules/batch_phylogeny.smk"
 #    1) The vastly faster mamba configuration in the asscom2 pipeline is used
 #    2) The conda/mamba debugging is taken care of, without having to wait for jobs to finish on fresh installations.
 # Since all snakemake conda environments are installed in $SNAKEMAKE_CONDA_PREFIX set to ${ASSCOM2_BASE}/conda_base, reuse is guaranteed.
-rule install_report_environment_aot: output: touch(f"{results_directory}/.install_report_environment_aot.flag")
+rule install_report_environment_aot:
+    output: touch(f"{results_directory}/.install_report_environment_aot.flag")
     conda: "../dynamic_report/workflow/envs/r-markdown.yaml"
     shell: """
 
@@ -290,7 +293,8 @@ rule install_report_environment_aot: output: touch(f"{results_directory}/.instal
 # It isn't enough to just touch the file. The dynamic_report will not be triggered if the file is empty. Thus we add the date, and we have a nice debug log for seeing when the report was triggered.
 # Will only but run if asked to. No need to use --forcerun, since snakemake states this in the output: "reason: Rules with neither input nor output files are always executed."
 # Rule report does not depend on metadata, as the metadata is not interesting in itself.
-rule report: shell: """
+rule report:
+    shell: """
         
         {void_report}
 
@@ -302,7 +306,8 @@ rule report: shell: """
 
 # Makes it easy to check that all databases are installed properly. Eventually for touching the database representatives in case of using prior installations.
 # Max 6 databases. Can't take adding any more.
-rule downloads: input:
+rule downloads:
+    input:
         DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
         DATABASES + "/busco/ac2_busco_database_representative.flag",
         DATABASES + "/dbcan/ac2_dbcan_database_representative.flag",
@@ -313,7 +318,8 @@ rule downloads: input:
 
 
 # Blink-of-an-eye analysis
-rule fast: input:
+rule fast:
+    input:
         expand(\
             ["{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
             "{results_directory}/assembly-stats/assembly-stats.tsv", \
@@ -323,7 +329,8 @@ rule fast: input:
 
 
 # Rules designed for bins of metagenomic origin
-rule meta: input:
+rule meta:
+    input:
         expand(\
             ["{results_directory}/metadata.tsv", \
             "{results_directory}/.install_report_environment_aot.flag", \
@@ -344,7 +351,8 @@ rule meta: input:
 
 
 # Rules designed for cultured isolates
-rule isolate: input: expand(\
+rule isolate:
+    input: expand(\
         ["{results_directory}/metadata.tsv", \
         "{results_directory}/.install_report_environment_aot.flag", \
         "{results_directory}/assembly-stats/assembly-stats.tsv", \
@@ -377,11 +385,9 @@ report_call = f"""
             --snakefile "$ASSCOM2_BASE/dynamic_report/workflow/Snakefile" \
             --profile "$ASSCOM2_PROFILE" \
             --config results_directory="$(pwd -P)/{results_directory}" base_variable="{base_variable}" batch_title="{batch_title}" version_string="{__version__}"
-    ) \
-    || \
-    (
+    ) || ( 
         echo "Info: Not calling the dynamic_report as either the flag or metadata is missing. Run a rule that mandates a report section to generate the report.";
-        exit 1
+        exit 1;
     )
     """
 
