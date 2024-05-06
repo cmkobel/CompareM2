@@ -373,6 +373,9 @@ section_definition_table %>%
 ```{r section_gtdbtk, child = paste0(report_scripts, "section_gtdbtk.rmd"), eval = render$gtdbtk}
 ```
 
+```{r AC2-Quality_Visualisaition, child = paste0(report_scripts, "AC2-Quality_Visualisaition.rmd"), eval = render$qualityvisualisation}
+```
+
 ```{r section_mlst, child = paste0(report_scripts, "section_mlst.rmd"), eval = render$mlst}
 ```
 
