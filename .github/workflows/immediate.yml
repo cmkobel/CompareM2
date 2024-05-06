@@ -1,4 +1,4 @@
-name: current
+name: immediate_1
 on: workflow_dispatch
 
 env:
