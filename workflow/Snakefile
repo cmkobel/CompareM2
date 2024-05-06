@@ -382,18 +382,21 @@ report_call = f"""
             --profile "$ASSCOM2_PROFILE" \
             --config results_directory="$(pwd -P)/{results_directory}" base_variable="{base_variable}" batch_title="{batch_title}" version_string="{__version__}"
     ) \
-    || echo "Info: Not calling the dynamic_report as either the flag or metadata is missing. Run a rule that mandates a report section to generate the report."
-
+    || \
+    ( 
+        echo "Info: Not calling the dynamic_report as either the flag or metadata is missing. Run a rule that mandates a report section to generate the report."; 
+        exit 1
+    )
     """
 
 
 onsuccess:
     print("On success: calling report subpipeline ...")
-    shell(report_call)
+    shell(report_call + "\n exit 0")
 
 onerror:
     print("On error: calling report subpipeline ...")
-    shell(report_call)
+    shell(report_call + "\n exit 1")
 
 
 
