@@ -76,7 +76,7 @@ OPTIONS
         Run a "dry run": Shows what will run without doing it.
     
     --version, -v 
-        Show current version: v{__version__}.
+        Show current version: "v{__version__}"
         
     --help, -h
         Show this help and exit.
@@ -92,7 +92,7 @@ OUTPUT
     Creates a directory named "results_ac2/" that contains all of the analysis results that are computed.
         
 EXAMPLES
-    # Specify input genomes.
+    # Run all analyses with specified input genomes.
     asscom2 --config input_genomes="path/to/genomes_*.fna"
     
     # Run a "dry run".
@@ -175,5 +175,6 @@ elif "--help" in trailing_arguments or "-h" in trailing_arguments:
     #subprocess.run(command + " --configure show_help=yes", shell = True)
     print(help_message)
 else:
-    subprocess.run(command, shell = True)
-
+    proc = subprocess.run(command, shell = True)
+    rc = proc.returncode
+    sys.exit(rc)
