@@ -383,11 +383,11 @@ report_call = f"""
 
 onsuccess:
     print("On success: calling report subpipeline ...")
-    shell(report_call)
+    shell(report_call + " exit 0")
 
 onerror:
     print("On error: calling report subpipeline ...")
-    shell(report_call)
+    shell(report_call + " exit 1")
 
 
 
