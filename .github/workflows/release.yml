@@ -31,7 +31,7 @@ jobs:
           channels: conda-forge,bioconda,defaults
           auto-activate-base: false
           activate-environment: asscom2
-          environment-file: bioconda.yaml
+          environment-file: environment.yaml
       
       - name: check solution
         run: |
