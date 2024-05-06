@@ -2,14 +2,15 @@ name: r-markdown
 channels:
   - conda-forge
   - bioconda
-  - r
+  - defaults
 dependencies:
-  - r-base=4.2 #=4.2.2
+  - r-base=4.1 #=4.2.2
   - r-essentials
-  - r-tidyverse
+  - conda-forge::r-tidyverse
   - r-rmarkdown
   - r-dt
   - r-ape # For phylogenetic tree plotting. Maybe I should switch to ggtree?
+  
   
   #- r-prettydoc
   #- r-rmarkdown

@@ -48,8 +48,9 @@ library(tidyverse)
 library(DT)
 library(ape)
 library(rmarkdown)
-#library(gridExtra) # Not sure if I'm still using this? Think it was only the checkm2 figure.
 
+
+#library(gridExtra) # Not sure if I'm still using this? Think it was only the checkm2 figure.
 # I failed trying looking for a package that would robustly midpoint root the tree.
 #library(prettydoc) # Rmarkdown themes?
 #library(phytools)
