@@ -1,4 +1,4 @@
-name: release_test1
+name: current
 on: workflow_dispatch
 
 env:
