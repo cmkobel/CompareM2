@@ -50,7 +50,7 @@ jobs:
 
       - name: setup conda envs and copy
         run: |
-          asscom2 --config input_genomes="tests/E._faecium/*.fna" --until copy 
+          asscom2 --config input_genomes="tests/E._faecium/*.fna" --until copy && mamba clean --all -y
 
 
       - name: fast
