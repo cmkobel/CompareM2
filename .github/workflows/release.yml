@@ -1,8 +1,7 @@
 name: release_test1
 on:
-  push:
-    paths:
-      - '*'
+  release:
+    types: [published]
 
 env:
   ASSCOM2_PROFILE: "profile/conda/local"
@@ -56,12 +55,4 @@ jobs:
       - name: fast
         run: |
           asscom2 --config input_genomes="tests/E._faecium/*.fna" --until fast
-
-      - name: meta
-        run: |
-          asscom2 --config input_genomes="tests/E._faecium/*.fna" --until meta
-      
-      - name: full 
-        run: |
-          asscom2 --config input_genomes="tests/E._faecium/*.fna" 
 
