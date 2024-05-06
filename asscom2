@@ -70,7 +70,7 @@ OPTIONS
           - fast        (Only rules that complete within a few seconds. Useful for testing.)
           - isolate     (Only rules that are relevant for genomes of isolate origin.)
           - meta        (Only rules that are relevant for genomes "MAGs" of metagenomic origin.)
-          - report      (Re-renders the report)
+          - report      (Re-renders the report.)
         
     --dry-run
         Run a "dry run": Shows what will run without doing it.
@@ -161,7 +161,7 @@ trailing_arguments = sys.argv[1:]
 trailing_arguments_concatenated = " ".join(trailing_arguments)
 logger.debug(f"The concatenated trailing arguments are {trailing_arguments_concatenated}")
 
-command = f"snakemake --snakefile \"{ASSCOM2_BASE}\"/workflow/snakefile --profile \"{ASSCOM2_PROFILE}\" --configfile \"{ASSCOM2_BASE}\"/config.yaml  " + trailing_arguments_concatenated
+command = f"snakemake --snakefile \"{ASSCOM2_BASE}\"/workflow/Snakefile --profile \"{ASSCOM2_PROFILE}\" --configfile \"{ASSCOM2_BASE}\"/config/config.yaml  " + trailing_arguments_concatenated
 logger.debug(f"Command to run is\n{command}")
 
 
