@@ -1,7 +1,5 @@
 name: release_test1
-on:
-  release:
-    types: [published]
+on: workflow_dispatch
 
 env:
   ASSCOM2_PROFILE: "profile/conda/local"
