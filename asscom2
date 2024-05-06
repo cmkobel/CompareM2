@@ -36,6 +36,81 @@ logger.addHandler(console_handler)
 
 
 
+help_message = f"""
+NAME
+    asscom2 - genomes to report pipeline
+
+SYNOPSIS
+    asscom2 [ --config KEY=VALUE [KEY2=VALUE]... ] [ --until RULE [RULE2]... ]
+    [ --dry-run ]
+    [ --version ] [ --help ]
+    
+DESCRIPTION
+    Analyses bacterial and archaeal genomes. 
+    Based on snakemake, so you can use the same command line arguments.
+    Please check github.com/cmkobel/assemblycomparator2 for updates, help and to track issues.
+    
+OPTIONS
+
+    --config KEY=VALUE [KEY2=VALUE]...
+        Pass a parameter to the snakemake pipeline, where the following keys are available, defaults are stated as standard. (Longer explanation in paranthesis.)
+            
+            - input_genomes="*.fna *.fa *.fasta *.fas" (Path to input genomes.)
+            
+            - annotator="prokka" (Choice of annotation tool. Alternatively "bakta".)
+            
+            - mlst_scheme="automatic" (Choice of mlst scheme. See tseemann/mlst documentation for options.)
+            
+    --until RULE [RULE2]
+        Select to run up until and including a specific rule in the rule graph. Available rules:
+        abricate annotate assembly_stats bakta bakta_download busco busco_download checkm2 checkm2_download copy dbcan dbcan_download diamond_kegg eggnog eggnog_download fasttree gapseq gapseq_find gtdb_download gtdbtk interproscan iqtree kegg_pathway mashtree mlst prokka sequence_lengths snp_dists
+        
+        There are also a number of pseudo rules, effectively "shortcuts" to a list of rules.
+          - downloads   (Run rules that download and setup up necessary databases.)
+          - fast        (Only rules that complete within a few seconds. Useful for testing.)
+          - isolate     (Only rules that are relevant for genomes of isolate origin.)
+          - meta        (Only rules that are relevant for genomes "MAGs" of metagenomic origin.)
+          - report      (Re-renders the report)
+        
+    --dry-run
+        Run a "dry run": Shows what will run without doing it.
+    
+    --version, -v 
+        Show current version: v{__version__}.
+        
+    --help, -h
+        Show this help and exit.
+        
+ENVIRONMENT VARIABLES
+    No environment variables are strictly necessary to set, but the following might be useful:
+        
+        ASSCOM2_PROFILE (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running Assemblycomparator2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/assemblycomparator2/profile/*).
+        
+        ASSCOM2_DATABASES (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
+  
+OUTPUT
+    Creates a directory named "results_ac2/" that contains all of the analysis results that are computed.
+        
+EXAMPLES
+    # Specify input genomes.
+    asscom2 --config input_genomes="path/to/genomes_*.fna"
+    
+    # Run a "dry run".
+    asscom2 --config input_genomes="path/to/genomes_*.fna" --dry-run
+    
+    # Specify annotator.
+    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="prokka"
+    
+    # Run only the "fast" rules.
+    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="prokka" --until fast
+    
+    # Run panaroo as well.
+    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="prokka" --until fast panaroo
+    
+LICENSE:
+     assemblycomparator2 "asscom2" v2.6.2 genomes to report pipeline. Copyright (C) 2019-2024 Carl M. Kobel and contributors GNU GPL v3 
+"""
+
 
 # Read system variables and use defaults if necessary.
 
@@ -77,8 +152,6 @@ except KeyError as e:
 
 
 
-
-
 # Then call the pipeline (alias) using the variables that have just been set, including the command line parameters that have been passed to this script. As we have already saved the new environment variables with os.environ(), we can just call as is.
 
 # I will have to check whether this will work for both conda and apptainer based installations? It should. In the test on bioconda I should use conda (not apptainer).
@@ -98,6 +171,9 @@ logger.debug(f"Command to run is\n{command}")
 # If the "--version" flag has been set, show the versions instead.
 if "--version" in trailing_arguments or "-v" in trailing_arguments:
     print(f"assemblycomparator2 v{__version__}")
+elif "--help" in trailing_arguments or "-h" in trailing_arguments:
+    #subprocess.run(command + " --configure show_help=yes", shell = True)
+    print(help_message)
 else:
     subprocess.run(command, shell = True)
 
