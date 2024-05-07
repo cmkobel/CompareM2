@@ -9,6 +9,10 @@
   - User can specify whether to use prokka or bakta to create annotation that is used for dbcan, interproscan and diamond_kegg. This can be set using `--config annotator=bakta` or by changing the parameter in the config/config.yaml.
   - Add eggnogg
   - (Add gapseq. Added but not activated yet, as we're still waiting for conda-forge::r-chnosz and bioconda::gapseq to be published.)
+  - rename benchmark files from individual->Sample
+  - Add antismash
+  - report_subpipeline renamed to dynamic_report
+  - (dynamic report is now run by the ./asscom2 binary instead of using onsuccess/onerror.)
 
 
 2.6.2

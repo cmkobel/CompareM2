@@ -4,13 +4,13 @@
 
 __author__ = 'Carl M. Kobel'
 
-
-results_directory = config['results_directory'] # results_ac2
-base_variable = config['base_variable'] # path/to/gitrepo/assemblycomparator2
+# These could be written to the config file when running the main pipeline.
+results_directory = config['results_directory'] # E.g. results_ac2
+base_variable = config['base_variable'] # E.g. path/to/installation/of/assemblycomparator2
 batch_title = config['batch_title'] # E.g. E._faecium 
-version_string = config['version_string']
+__version__ = config['__version__']
 
-containerized: f"docker://cmkobel/assemblycomparator2:v{version_string}"
+containerized: f"docker://cmkobel/assemblycomparator2:v{__version__}"
 #containerized: f"docker://cmkobel/assemblycomparator2:latest" # DEBUG
 
 print('report subpipeline: results_directory:', results_directory)
@@ -59,17 +59,29 @@ rule report:
         
 
         #mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.
-
+        
+        echo starting rscripts
+        pwd 
+        ls -lh
         Rscript -e '
-
+            
+            # Debug
+            getwd()
+            dir()
+            
             # Set parameters
-            base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"; version_string = "{version_string}"
+            base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"; version_string = "{__version__}"
 
+            paste("hat")
+            getwd()
             # Render report
             rmarkdown::render(
                 input = "scripts_temporary/report_template.rmd", output_format = "html_document", output_file = "{output.html}", knit_root_dir = "{params.results_directory}"
-        )'
+            )
+            paste("other side")"
+            '
 
+        echo clean
         # Clean up 
         rm -r scripts_temporary # Problem is that this file is only removed if 
 

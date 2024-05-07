@@ -161,8 +161,12 @@ trailing_arguments = sys.argv[1:]
 trailing_arguments_concatenated = " ".join(trailing_arguments)
 logger.debug(f"The concatenated trailing arguments are {trailing_arguments_concatenated}")
 
-command = f"snakemake --snakefile \"{ASSCOM2_BASE}\"/workflow/Snakefile --profile \"{ASSCOM2_PROFILE}\" --configfile \"{ASSCOM2_BASE}\"/config/config.yaml  " + trailing_arguments_concatenated
-logger.debug(f"Command to run is\n{command}")
+command_main = f"snakemake --snakefile \"{ASSCOM2_BASE}\"/workflow/Snakefile --profile \"{ASSCOM2_PROFILE}\" --configfile \"{ASSCOM2_BASE}\"/config/config.yaml  " + trailing_arguments_concatenated
+logger.debug(f"Command to run is\n{command_main}")
+
+# Is it a bit sketchy to use $(pwd). Should I gather the path from python instead? Or just get it relatively?
+command_report = f"""snakemake --snakefile "$ASSCOM2_BASE/dynamic_report/workflow/Snakefile" --profile "$ASSCOM2_PROFILE" --configfile=.report_config.yaml"""
+
 
 
 
@@ -172,9 +176,21 @@ logger.debug(f"Command to run is\n{command}")
 if "--version" in trailing_arguments or "-v" in trailing_arguments:
     print(f"assemblycomparator2 v{__version__}")
 elif "--help" in trailing_arguments or "-h" in trailing_arguments:
-    #subprocess.run(command + " --configure show_help=yes", shell = True)
+    #subprocess.run(command_main + " --configure show_help=yes", shell = True)
     print(help_message)
 else:
-    proc = subprocess.run(command, shell = True)
-    rc = proc.returncode
-    sys.exit(rc)
+    # Run assemblycomparator2 main pipeline
+    process_main = subprocess.run(command_main, shell = True)
+    returncode_main = process_main.returncode
+    
+    
+    # Run dynamic report pipeline
+    print("Running dynamic report subpipeline ...")
+    # Test presence of 
+    # "{results_directory}/.asscom2_void_report.flag" \
+    # "{results_directory}/metadata.tsv" \
+    process_report = subprocess.run(command_report, shell = True)
+    returncode_report = process_report.returncode
+    
+    sys.exit(returncode_main)
+    

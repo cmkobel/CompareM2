@@ -41,7 +41,7 @@ p {
 
 
 ```{r setup-dependencies, echo=F, message=F, warning=F}
-
+paste("loll")
 # Dependencies
 
 library(tidyverse)
@@ -64,7 +64,8 @@ library(rmarkdown)
 
 
 ```{r setup-debug, echo=F, message=F, warning=F, error = F}
-
+paste("lol")
+getwd()
 
 
 # DEBUG setup for vscode on KTFL running R on ssh to saga
