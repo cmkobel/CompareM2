@@ -175,20 +175,18 @@ command_report = f"""snakemake --snakefile "$ASSCOM2_BASE/dynamic_report/workflo
 # If the "--version" flag has been set, show the versions instead.
 if "--version" in trailing_arguments or "-v" in trailing_arguments:
     print(f"assemblycomparator2 v{__version__}")
+    
 elif "--help" in trailing_arguments or "-h" in trailing_arguments:
-    #subprocess.run(command_main + " --configure show_help=yes", shell = True)
     print(help_message)
+    
 else:
     # Run assemblycomparator2 main pipeline
     process_main = subprocess.run(command_main, shell = True)
     returncode_main = process_main.returncode
     
-    
     # Run dynamic report pipeline
-    print("Running dynamic report subpipeline ...")
-    # Test presence of 
-    # "{results_directory}/.asscom2_void_report.flag" \
-    # "{results_directory}/metadata.tsv" \
+    # Only run report if there is metadata and something is worth rendering.
+    # if os.path.isfile("{results_directory}/metadata.tsv") and os.path.isfile("{results_directory}/.asscom2_void_report.flag"):  # Should be moved to the report pipeline itself.
     process_report = subprocess.run(command_report, shell = True)
     returncode_report = process_report.returncode
     

@@ -23,19 +23,28 @@ except:
     pass
 
 
+def should_run(wildcards):
+    if os.path.isfile(f"{results_directory}/metadata.tsv") and os.path.isfile(f"{results_directory}/.asscom2_void_report.flag"):
+        print("returning content")
+        #return {"flag": f"{results_directory}/.asscom2_void_report.flag", "metadata": f"{results_directory}/metadata.tsv"}
+        return [f"{results_directory}/report_{batch_title}.html"]
+    else:
+        print("returning empty")
+        return [] # empty list, no running requirement.
+
+
 # The report should always run locally no matter the queuing system available.
-localrules: report
+localrules: dynamic_report
 
 rule all:
-	input: expand(\
-        "{results_directory}/report_{batch_title}.html", \
-        results_directory = results_directory, batch_title = batch_title)
-
+    input: 
+        should_run
 
 # Runs on the front end because it is quick anyway.
 # This rule needs to be inside its own snakefile, as it is the only way I can run it on onerror/onsuccess
-rule report:
+rule dynamic_report:
     input:
+        #unpack(should_run)
         flag = "{results_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
         metadata = "{results_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
     conda: "envs/r-markdown.yaml"
@@ -45,7 +54,7 @@ rule report:
         batch_title = batch_title,
         end_script = f"{base_variable}/dynamic_report/workflow/scripts/report_end_script.sh",
     output: 
-        html = "{results_directory}/report_{batch_title}.html",
+        html = f"{results_directory}/report_{batch_title}.html",
     #output: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
     
     shell: """	    
