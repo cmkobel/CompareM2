@@ -25,11 +25,9 @@ except:
 
 def should_run(wildcards):
     if os.path.isfile(f"{results_directory}/metadata.tsv") and os.path.isfile(f"{results_directory}/.asscom2_void_report.flag"):
-        print("returning content")
         #return {"flag": f"{results_directory}/.asscom2_void_report.flag", "metadata": f"{results_directory}/metadata.tsv"}
         return [f"{results_directory}/report_{batch_title}.html"]
     else:
-        print("returning empty")
         return [] # empty list, no running requirement.
 
 
@@ -45,8 +43,8 @@ rule all:
 rule dynamic_report:
     input:
         #unpack(should_run)
-        flag = "{results_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
-        metadata = "{results_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
+        flag = f"{results_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
+        metadata = f"{results_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
     conda: "envs/r-markdown.yaml"
     params: 
         base_variable = base_variable,
