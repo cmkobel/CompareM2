@@ -30,6 +30,8 @@ def get_annotation_results(wildcards):
         f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.log",
         f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.ffn",
         f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.tsv",
+        f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.gbk",
+        
     ]
         
     
@@ -45,6 +47,7 @@ rule annotate:
         log = "{results_directory}/samples/{sample}/.annotation/{sample}.log",
         ffn = "{results_directory}/samples/{sample}/.annotation/{sample}.ffn",
         tsv = "{results_directory}/samples/{sample}/.annotation/{sample}.tsv",
+        gbk = "{results_directory}/samples/{sample}/.annotation/{sample}.gbk",
     shell: """
 
         # Using a softlink means that the choice of annotator can be changed without loss of information. This is especially important when the locustags are "volatile".
@@ -65,9 +68,10 @@ rule prokka:
         ffn = "{results_directory}/samples/{sample}/prokka/{sample}.ffn",
         log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
+        gbk = "{results_directory}/samples/{sample}/prokka/{sample}.gbk",
         gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta", # Might come in handy.
     conda: "../envs/prokka.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.prokka_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 4
@@ -103,12 +107,12 @@ rule bakta:
         tsv = "{results_directory}/samples/{sample}/bakta/{sample}.tsv",
         log = "{results_directory}/samples/{sample}/bakta/{sample}.log",
         ffn = "{results_directory}/samples/{sample}/bakta/{sample}.ffn",
-        
+        gbk = "{results_directory}/samples/{sample}/bakta/{sample}.gbk",
         #gff_generic = "{results_directory}/samples/{sample}/annotation/{sample}.gff3",
     params:
         DATABASES = DATABASES
     conda: "../envs/bakta.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.bakta_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.bakta_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 4
@@ -143,7 +147,7 @@ rule eggnog:
     #params:
             
     conda: "../envs/eggnog.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.eggnog_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.eggnog_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 8

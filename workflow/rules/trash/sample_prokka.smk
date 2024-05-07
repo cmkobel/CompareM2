@@ -10,7 +10,7 @@ rule prokka:
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
         gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta", # Might come in handy.
     conda: "../envs/prokka.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.prokka_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.prokka_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 4

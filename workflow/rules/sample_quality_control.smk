@@ -46,7 +46,7 @@ rule sequence_lengths:
     resources:
         runtime = "60m",
     conda: "../envs/seqkit.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_sample.{sample}.tsv"
     shell: """
 
         seqkit fx2tab {input.assembly:q} -l -g -G -n -H \
@@ -75,7 +75,7 @@ rule busco:
         database_path = DATABASES + "/busco", # Was {params.base_variable}/databases/busco
         out_dir = "{results_directory}/samples/{sample}/busco",
     conda: "../envs/busco.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.busco_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.busco_sample.{sample}.tsv"
     threads: 1 # Because run_sepp hangs for a long time, not doing anything, I'd rather have more processes started on any CPU.
     resources:
         mem_mb = 8192,

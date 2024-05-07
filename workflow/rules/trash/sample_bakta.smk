@@ -12,7 +12,7 @@ rule bakta:
     params:
         DATABASES = DATABASES
     conda: "../envs/bakta.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.bakta_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.bakta_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 4

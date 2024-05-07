@@ -7,7 +7,7 @@ rule gapseq:
     output:
         pathways = "{results_directory}/samples/{sample}/gapseq/{sample}_pathways.tsv",
     conda: "../envs/gapseq.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.gapseq_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.gapseq_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 4

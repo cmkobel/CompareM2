@@ -1,0 +1,12 @@
+name: antismash
+channels: 
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - antismash=7
+
+# conda create -n antismash antismash
+# conda activate antismash
+# download-antismash-databases
+# conda deactivate
