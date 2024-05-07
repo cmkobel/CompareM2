@@ -12,7 +12,7 @@
   - rename benchmark files from individual->Sample
   - Add antismash
   - report_subpipeline renamed to dynamic_report
-  - (dynamic report is now run by the ./asscom2 binary instead of using onsuccess/onerror.)
+  - dynamic report is now run by the ./asscom2 binary instead of using onsuccess/onerror.
 
 
 2.6.2

@@ -57,11 +57,11 @@ rule dynamic_report:
     
     shell: """	    
         
-        # Rmarkdown render() insists on writing the output relative to the path of the template. Thus we must copy the template to the local system (writable_template_copy). In some cases, the user won't have write access to the code base path.
+        # Rmarkdown render() insists on writing the output relative to the path of the template. Thus we must copy the template to the local system (.writable_template_copy). In some cases, the user won't have write access to the code base path.
         
         # First remove possible old directory
-        test -d writable_template_copy/ && rm -r writable_template_copy/
-        cp -r {base_variable}/dynamic_report/workflow/scripts writable_template_copy # This one fails when using apptainer. Maybe I just need to bind it.
+        test -d .writable_template_copy/ && rm -r .writable_template_copy/
+        cp -r {base_variable}/dynamic_report/workflow/scripts .writable_template_copy # This one fails when using apptainer. Maybe I just need to bind it.
         
         # Is this still used?
         # mkdir -p {params.results_directory}/tables # Directory for the rmarkdown to write its compiled tables to.
@@ -75,7 +75,7 @@ rule dynamic_report:
             
             # Render report
             rmarkdown::render(
-                input = "writable_template_copy/report_template.rmd", 
+                input = ".writable_template_copy/report_template.rmd", 
                 output_format = "html_document",
                 output_file = paste0(current_dir, "/{params.results_directory}/report_{batch_title}.html"),
                 knit_root_dir = current_dir
@@ -83,7 +83,7 @@ rule dynamic_report:
 
         echo clean
         # Clean up 
-        rm -r writable_template_copy # Problem is that this file is only removed if pipeline finishes. # Debug inactivev
+        rm -r .writable_template_copy # Problem is that this file is only removed if pipeline finishes. # Debug inactivev
 
 
         # End script
