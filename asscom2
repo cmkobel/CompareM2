@@ -184,7 +184,7 @@ else:
     process_main = subprocess.run(command_main, shell = True)
     returncode_main = process_main.returncode
     
-    # Run dynamic report pipeline
+    # Run dynamic report pipeline   
     # Only run report if there is metadata and something is worth rendering.
     # if os.path.isfile("{results_directory}/metadata.tsv") and os.path.isfile("{results_directory}/.asscom2_void_report.flag"):  # Should be moved to the report pipeline itself.
     process_report = subprocess.run(command_report, shell = True)
