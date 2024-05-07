@@ -48,42 +48,36 @@ rule report:
         html = "{results_directory}/report_{batch_title}.html",
     #output: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
     
-    shell: """
-
-
-	    # When sharing environments by multiple users: Pandoc creates an intermediary .md file that reside next to the .Rmd file that is used to create the report. Because the directory where this .Rmd file resides may not be writable by the user that is executing the workflow. Thus, as a solution, we'll copy the whole script/ directory where this .Rmd resides to the current working directory.
+    shell: """	    
+        
+        # Rmarkdown render() insists on writing the output relative to the path of the template. Thus we must copy the template to the local system (writable_template_copy). In some cases, the user won't have write access to the code base path.
         
         # First remove possible old directory
-        test -d scripts_temporary/ && rm -r scripts_temporary/
-        cp -r {base_variable}/dynamic_report/workflow/scripts scripts_temporary # This one fails when using apptainer. Maybe I just need to bind it.
+        test -d writable_template_copy/ && rm -r writable_template_copy/
+        cp -r {base_variable}/dynamic_report/workflow/scripts writable_template_copy # This one fails when using apptainer. Maybe I just need to bind it.
         
-
-        #mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.
-        
-        echo starting rscripts
-        pwd 
-        ls -lh
+        # Is this still used?
+        # mkdir -p {params.results_directory}/tables # Directory for the rmarkdown to write its compiled tables to.
+    
         Rscript -e '
-            
-            # Debug
-            getwd()
-            dir()
-            
+                        
             # Set parameters
             base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"; version_string = "{__version__}"
-
-            paste("hat")
-            getwd()
+            
+            current_dir = getwd()
+            
             # Render report
             rmarkdown::render(
-                input = "scripts_temporary/report_template.rmd", output_format = "html_document", output_file = "{output.html}", knit_root_dir = "{params.results_directory}"
-            )
-            paste("other side")"
-            '
+                input = "writable_template_copy/report_template.rmd", 
+                output_format = "html_document",
+                output_file = paste0(current_dir, "/{params.results_directory}/report_{batch_title}.html"),
+                knit_root_dir = current_dir
+            )'
 
         echo clean
         # Clean up 
-        rm -r scripts_temporary # Problem is that this file is only removed if 
+        rm -r writable_template_copy # Problem is that this file is only removed if pipeline finishes. # Debug inactivev
+
 
         # End script
         test -f "{params.end_script}" && echo "running end script" && . {params.end_script} {batch_title} {results_directory}/report_{batch_title}.html 
