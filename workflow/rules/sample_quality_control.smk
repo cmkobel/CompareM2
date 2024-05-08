@@ -12,6 +12,7 @@ rule copy:
         runtime = "10m",
     shell: """
 
+        # Collect version number.
         any2fasta -v > "$(dirname {output})/.software_version.txt"
         
         any2fasta {input.genome:q} > {output:q}
@@ -29,6 +30,7 @@ rule assembly_stats:
     benchmark: "{results_directory}/benchmarks/assembly_stats.tsv"
     shell: """
     
+        # Collect version number.
         echo "assembly-stats $(assembly-stats -v)" > "$(dirname {output})/.software_version.txt"
         
         assembly-stats -t {input.fasta:q} > {output:q}
@@ -50,7 +52,8 @@ rule sequence_lengths:
     conda: "../envs/seqkit.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_sample.{sample}.tsv"
     shell: """
-
+    
+        # Collect version number.
         echo "seqkit $(seqkit -h | grep 'Version:')" > "$(dirname {output})/.software_version.txt"
         
         seqkit fx2tab {input.assembly:q} -l -g -G -n -H \
@@ -90,6 +93,7 @@ rule busco:
         # But, this means that we need a hacky workaround to let this job exit gracefully (exit code 0) on the basis of whether any completeness results have been written to disk.
         # Hence, the actual exit code of busco, we will ignore.
         
+        # Collect version number.
         busco -v > "$(dirname {output})/.software_version.txt"
 
         # https://busco.ezlab.org/busco_userguide.html#offline

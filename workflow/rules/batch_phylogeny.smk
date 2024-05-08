@@ -12,6 +12,7 @@ rule mashtree:
         mem_mb = 16000,
     shell: """
     
+        # Collect version number.
         mashtree -v > "$(dirname {output})/.software_version.txt"
         
         mashtree \
@@ -20,6 +21,7 @@ rule mashtree:
             {input.fasta:q} > {output.tree:q}
 
         {void_report}
+        
     """ 
 
 
@@ -40,12 +42,12 @@ rule fasttree:
         runtime = "24h",
     shell: """
     
-        # Get version. Is hard for fasttree
-        fasttree -expert 2&> .temp_fasttree_version.txt; grep 'Detailed usage' .temp_fasttree_version.txt > "$(dirname {output})/.software_version.txt"; rm .temp_fasttree_version.txt
+        # Collect version number. (Is quite hard for fasttree)
+        fasttree -expert 2&> .temp_fasttree_version.txt; grep 'Detailed usage' .temp_fasttree_version.txt > "$(dirname {output})/.software_version.txt"; rm .temp_fasttree_version.txt || echo "error deleting .temp_fasttree_version.txt"
 
         OMP_NUM_THREADS={threads}
 
-        FastTree \
+        fasttree \
             -nt \
             -gtr {input.fasta:q} \
         > {output:q} \
@@ -72,6 +74,7 @@ rule iqtree:
         runtime = "24h",
     shell: """
 
+        # Collect version number.
         iqtree --version > "$(dirname {output})/.software_version.txt"
 
         iqtree \

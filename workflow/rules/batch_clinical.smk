@@ -16,6 +16,7 @@ rule abricate:
     benchmark: "{results_directory}/benchmarks/benchmark.abricate.tsv"
     shell: """
 
+        # Collect version number.
         abricate -v > "$(dirname output.ncbi_detailed)/.software_version.txt"
 
         abricate --db ncbi {input.fasta:q} > {output.ncbi_detailed:q}
@@ -55,6 +56,7 @@ rule mlst:
     benchmark: "{results_directory}/benchmarks/mlst.tsv"
     shell: """
     
+        # Collect version number.
         mlst -v > "$(dirname output.ncbi_detailed)/.software_version.txt"
 
         mlst \

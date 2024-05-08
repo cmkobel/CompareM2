@@ -12,7 +12,7 @@ rule kegg_pathway:
     benchmark: "{results_directory}/benchmarks/benchmark.kegg_pathway.tsv"
     shell: """
     
-        # Get version
+        # Collect version number.
         R -s -q -e "library(clusterProfiler); sessionInfo()"  | grep -P "R version|clusterProfiler" > "$(dirname {output.diamond}).software_version.txt"
 
 
@@ -55,6 +55,7 @@ rule gtdbtk:
     benchmark: "{results_directory}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
     
+        # Collect version number.
         gtdbtk -v > "$(dirname {output.tsv}).software_version.txt"
 
         # TODO: Using skip-ani-screen is not optimal, as it possibly speeds up a lot.
