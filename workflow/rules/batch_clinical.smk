@@ -16,7 +16,7 @@ rule abricate:
     benchmark: "{results_directory}/benchmarks/benchmark.abricate.tsv"
     shell: """
 
-        # TODO: update these databases
+        abricate -v > "$(dirname output.ncbi_detailed)/.software_version.txt"
 
         abricate --db ncbi {input.fasta:q} > {output.ncbi_detailed:q}
         abricate --summary {output.ncbi_detailed:q} > {output.ncbi_sum:q}
@@ -34,7 +34,7 @@ rule abricate:
     """
 
 
-
+# TODO extract function
 # Parse the mlst scheme for bash
 if config["mlst_scheme"] == "automatic":
     mlst_scheme_interpreted = "",
@@ -54,6 +54,8 @@ rule mlst:
     conda: "../envs/mlst.yaml"
     benchmark: "{results_directory}/benchmarks/mlst.tsv"
     shell: """
+    
+        mlst -v > "$(dirname output.ncbi_detailed)/.software_version.txt"
 
         mlst \
             --threads {threads} {params.mlst_scheme_interpreted} \

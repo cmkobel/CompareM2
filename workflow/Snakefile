@@ -388,6 +388,16 @@ onstart:
         echo __version__: \"{__version__}\" >> .report_config.yaml
         
     """)
+    
+    
+# TODO: A speedup could be to list the possible locations, and skipping the missing ones.
+command_collect_version = f"""find results_ac2/ -name ".software_version.txt" | xargs cat | sort | uniq > {results_directory}/version_info.txt"""
+onsuccess:
+    shell(command_collect_version)
+onerror:
+    shell(command_collect_version)
+
 
 
 print("*/") # Makes it easy to export to .dot and to remove header from the generated Dockerfile.
+
