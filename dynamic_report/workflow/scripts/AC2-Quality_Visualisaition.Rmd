@@ -98,7 +98,7 @@ SampleTax$Species <- replace(SampleTax$Species, SampleTax$Species == "", "sp")
 
 ```{r message = FALSE}
 # Assign colour to each phylum
-phylum_colour <- data.frame(Phylum = sort(unique(SampleTax$Phylum)), color = hue_pal()(12))
+phylum_colour <- data.frame(Phylum = sort(unique(SampleTax$Phylum)), color = hue_pal()(length(unique(SampleTax$Phylum))))
 
 mags_phylum_colour <- SampleTax %>%
   left_join(phylum_colour, by = join_by(Phylum == Phylum))
