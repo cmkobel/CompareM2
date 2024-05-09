@@ -270,3 +270,36 @@ rule eggnog_download:
 
 
 
+
+rule antismash_download:
+    output:
+        database_representative = DATABASES + "/antismash/ac2_antismash_database_representative.flag"
+    conda: "../envs/antismash.yaml"
+    shell: """
+
+        # https://docs.antismash.secondarymetabolites.org/install/
+
+        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        if [ -f "{output}" ]; then    
+
+            >&2 echo "Flag exists already: touch it to update the mtime ..."
+            touch {output:q}
+            
+        else
+
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
+            download-antismash-databases \
+                --database-dir $(dirname {output.database_representative:q})
+            
+            >&2 echo "antismash DB setup completed"
+            echo "Downloaded at $(date -Iseconds)" > $(dirname {output.database_representative})/info.txt
+
+            touch {output:q}
+
+        fi
+
+    """
+
+
+
+

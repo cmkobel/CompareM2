@@ -3,6 +3,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
+  - mamba
   - snakemake=7.32.4 # Last version before they completely changed the structure.
 
 # TODO: Make a bioconda package instead of having users manually create an env from this file when installing.

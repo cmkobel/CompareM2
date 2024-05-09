@@ -12,7 +12,8 @@ rule copy:
         runtime = "10m",
     shell: """
 
-
+        # Collect version number.
+        any2fasta -v > "$(dirname {output})/.software_version.txt"
         
         any2fasta {input.genome:q} > {output:q}
 
@@ -28,6 +29,9 @@ rule assembly_stats:
     conda: "../envs/assembly-stats.yaml"
     benchmark: "{results_directory}/benchmarks/assembly_stats.tsv"
     shell: """
+    
+        # Collect version number.
+        echo "assembly-stats $(assembly-stats -v)" > "$(dirname {output})/.software_version.txt"
         
         assembly-stats -t {input.fasta:q} > {output:q}
 
@@ -46,9 +50,12 @@ rule sequence_lengths:
     resources:
         runtime = "60m",
     conda: "../envs/seqkit.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_sample.{sample}.tsv"
     shell: """
-
+    
+        # Collect version number.
+        echo "seqkit $(seqkit -h | grep 'Version:')" > "$(dirname {output})/.software_version.txt"
+        
         seqkit fx2tab {input.assembly:q} -l -g -G -n -H \
         > {output:q}
 
@@ -75,7 +82,7 @@ rule busco:
         database_path = DATABASES + "/busco", # Was {params.base_variable}/databases/busco
         out_dir = "{results_directory}/samples/{sample}/busco",
     conda: "../envs/busco.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.busco_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.busco_sample.{sample}.tsv"
     threads: 1 # Because run_sepp hangs for a long time, not doing anything, I'd rather have more processes started on any CPU.
     resources:
         mem_mb = 8192,
@@ -85,6 +92,9 @@ rule busco:
         # Busco fails because of a problem with the sepp package. This doesn't really matter as we just want the completeness results.
         # But, this means that we need a hacky workaround to let this job exit gracefully (exit code 0) on the basis of whether any completeness results have been written to disk.
         # Hence, the actual exit code of busco, we will ignore.
+        
+        # Collect version number.
+        busco -v > "$(dirname {output})/.software_version.txt"
 
         # https://busco.ezlab.org/busco_userguide.html#offline
         # Is the timeout bug fixed? Update: nope.

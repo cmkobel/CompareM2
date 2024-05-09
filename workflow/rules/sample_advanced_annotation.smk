@@ -134,7 +134,7 @@ rule gapseq_find:
         transporter = "{results_directory}/samples/{sample}/gapseq/{sample}-Transporter.tbl",
         flag = "{results_directory}/samples/{sample}/gapseq/gapseq_done.flag",
     conda: "../envs/gapseq.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.gapseq_find_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.gapseq_find_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 4
@@ -189,7 +189,7 @@ rule gapseq: # Continuation on gapseq_find results.
         dir = "{results_directory}/samples/{sample}/gapseq",
 
     conda: "../envs/gapseq.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.gapseq_find_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.gapseq_find_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 4
@@ -219,4 +219,34 @@ rule gapseq: # Continuation on gapseq_find results.
 
     """
     
+    
+
+rule antismash:
+    input: 
+        metadata = "{results_directory}/metadata.tsv",
+        database_representative = DATABASES + "/antismash/ac2_antismash_database_representative.flag",
+        gbk = "{results_directory}/samples/{sample}/.annotation/{sample}.gbk",
+    output:
+        json = "{results_directory}/samples/{sample}/antismash/{sample}.json",
+    params:
+        DATABASES = DATABASES,
+        dir = "{results_directory}/samples/{sample}/antismash",
+    conda: "../envs/antismash.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.antismash_sample.{sample}.tsv"
+    resources:
+        mem_mb = 8192,
+    threads: 8
+    shell: """
+    
+        antismash \
+            -t bacteria \
+            -c {threads} \
+            --output-dir {params.dir:q} \
+            --output-basename {wildcards.sample:q} \
+            --databases "{params.DATABASES}/antismash" \
+            {input.gbk:q}
+
+        {void_report}
+
+    """
     

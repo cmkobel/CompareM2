@@ -12,7 +12,7 @@ rule eggnog:
     #params:
             
     conda: "../envs/eggnog.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.eggnog_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.eggnog_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 8

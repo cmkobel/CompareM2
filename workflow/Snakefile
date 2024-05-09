@@ -202,6 +202,7 @@ rule all:
         "{results_directory}/samples/{sample}/dbcan/overview.txt", \
         "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
         "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
+        "{results_directory}/samples/{sample}/antismash/{sample}.json", \
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
         "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
@@ -373,31 +374,30 @@ rule isolate:
 
 
 # --- Dynamic report ------------------------------------------------
-# Call the report subpipeline
-# I wonder if adding the ampersands means that the report creation will be ^c cancellable? Must be tested.
-report_call = f"""
+# For calling the report subpipeline we need some variables. The easiest way to communicate these from the main pipeline to the report pipeline, is to write a config.yaml.
+
+
+onstart:
+    print("Writing config for dynamic report pipeline")
+    shell(f"""
     
-    # Had to chain these tests/if-statements in order to be able to cancel running as interactive.
-    (
-        test -f "{results_directory}/.asscom2_void_report.flag" \
-        && test -f "{results_directory}/metadata.tsv" \
-        && snakemake \
-            --snakefile "$ASSCOM2_BASE/dynamic_report/workflow/Snakefile" \
-            --profile "$ASSCOM2_PROFILE" \
-            --config results_directory="$(pwd -P)/{results_directory}" base_variable="{base_variable}" batch_title="{batch_title}" version_string="{__version__}" 
-    )
-    """
-
-
+        echo "# config for dynamic report pipeline" > .report_config.yaml
+        echo batch_title: \"{batch_title}\" >> .report_config.yaml
+        echo results_directory: \"{results_directory}\" >> .report_config.yaml
+        echo base_variable: \"{base_variable}\" >> .report_config.yaml
+        echo __version__: \"{__version__}\" >> .report_config.yaml
+        
+    """)
+    
+    
+# TODO: A speedup could be to list the possible locations, and skipping the missing ones.
+command_collect_version = f"""find results_ac2/ -name ".software_version.txt" | xargs cat | sort | uniq > {results_directory}/version_info.txt"""
 onsuccess:
-    print("On success: calling report subpipeline ...")
-    shell(report_call + " exit 0")
-
+    shell(command_collect_version)
 onerror:
-    print("On error: calling report subpipeline ...")
-    shell(report_call + " exit 1")
-
+    shell(command_collect_version)
 
 
 
 print("*/") # Makes it easy to export to .dot and to remove header from the generated Dockerfile.
+

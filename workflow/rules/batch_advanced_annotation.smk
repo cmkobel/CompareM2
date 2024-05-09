@@ -11,6 +11,10 @@ rule kegg_pathway:
     conda: "../envs/r-clusterProfiler.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.kegg_pathway.tsv"
     shell: """
+    
+        # Collect version number.
+        R -s -q -e "library(clusterProfiler); sessionInfo()"  | grep -P "R version|clusterProfiler" > "$(dirname {output.diamond}).software_version.txt"
+
 
         Rscript {params.script:q} \
             {input.kegg_asset:q} \
@@ -34,7 +38,8 @@ rule gtdbtk:
         metadata = "{results_directory}/metadata.tsv",
         database_representative = DATABASES + "/gtdb/ac2_gtdb_database_representative.flag",
         fasta = df["input_file_fasta"].tolist(),
-    output: "{results_directory}/gtdbtk/gtdbtk.summary.tsv"
+    output: 
+        tsv = "{results_directory}/gtdbtk/gtdbtk.summary.tsv"
     params:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{results_directory}/gtdbtk/",
@@ -49,6 +54,9 @@ rule gtdbtk:
     conda: "../envs/gtdbtk.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
+    
+        # Collect version number.
+        gtdbtk -v > "$(dirname {output.tsv}).software_version.txt"
 
         # TODO: Using skip-ani-screen is not optimal, as it possibly speeds up a lot.
         mkdir -p $(dirname {params.mash_db:q})
@@ -56,7 +64,6 @@ rule gtdbtk:
         # I need to find a neat way of setting these variables. Maybe the user has an older/newer version than what is hardcoded here. 
         export GTDBTK_DATA_PATH="$(dirname {input.database_representative:q})/release214/" # Should be defined from config file, and not be hardwired.
         
-
         # Create batchfile
         echo '''{params.batchfile_content}''' > {wildcards.results_directory}/gtdbtk/batchfile.tsv
         

@@ -7,7 +7,7 @@ rule sequence_lengths:
     resources:
         runtime = "60m",
     conda: "../envs/seqkit.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_individual.{sample}.tsv"
+    benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_sample.{sample}.tsv"
     shell: """
 
         seqkit fx2tab {input.assembly:q} -l -g -G -n -H \

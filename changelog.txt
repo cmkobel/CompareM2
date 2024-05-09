@@ -9,7 +9,10 @@
   - User can specify whether to use prokka or bakta to create annotation that is used for dbcan, interproscan and diamond_kegg. This can be set using `--config annotator=bakta` or by changing the parameter in the config/config.yaml.
   - Add eggnogg
   - (Add gapseq. Added but not activated yet, as we're still waiting for conda-forge::r-chnosz and bioconda::gapseq to be published.)
-
+  - rename benchmark files from individual->Sample
+  - Add antismash
+  - report_subpipeline renamed to dynamic_report
+  - Dynamic report is now run by the ./asscom2 binary instead of using onsuccess/onerror.
 
 2.6.2
   - Fix wrong path for dbcan results (not yet implemented in report)
@@ -81,7 +84,6 @@
 2.5.0
   - Apptainer support. New profiles for apptainer or conda use.
 
-
 2.4.1
   - Adjusting the new report and fix minor bugs
 
@@ -99,7 +101,6 @@
 
 2.1.1
 - Simple GC statistics added to output and report 
-
 
 2.1.0
 - Bug and stability issues fixed

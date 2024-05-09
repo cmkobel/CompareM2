@@ -76,7 +76,7 @@ OPTIONS
         Run a "dry run": Shows what will run without doing it.
     
     --version, -v 
-        Show current version: v{__version__}.
+        Show current version: "v{__version__}"
         
     --help, -h
         Show this help and exit.
@@ -92,7 +92,7 @@ OUTPUT
     Creates a directory named "results_ac2/" that contains all of the analysis results that are computed.
         
 EXAMPLES
-    # Specify input genomes.
+    # Run all analyses with specified input genomes.
     asscom2 --config input_genomes="path/to/genomes_*.fna"
     
     # Run a "dry run".
@@ -161,8 +161,12 @@ trailing_arguments = sys.argv[1:]
 trailing_arguments_concatenated = " ".join(trailing_arguments)
 logger.debug(f"The concatenated trailing arguments are {trailing_arguments_concatenated}")
 
-command = f"snakemake --snakefile \"{ASSCOM2_BASE}\"/workflow/Snakefile --profile \"{ASSCOM2_PROFILE}\" --configfile \"{ASSCOM2_BASE}\"/config/config.yaml  " + trailing_arguments_concatenated
-logger.debug(f"Command to run is\n{command}")
+command_main = f"snakemake --snakefile \"{ASSCOM2_BASE}\"/workflow/Snakefile --profile \"{ASSCOM2_PROFILE}\" --configfile \"{ASSCOM2_BASE}\"/config/config.yaml  " + trailing_arguments_concatenated
+logger.debug(f"Command to run is\n{command_main}")
+
+# Is it a bit sketchy to use $(pwd). Should I gather the path from python instead? Or just get it relatively?
+command_report = f"""snakemake --snakefile "$ASSCOM2_BASE/dynamic_report/workflow/Snakefile" --profile "$ASSCOM2_PROFILE" --configfile=.report_config.yaml"""
+
 
 
 
@@ -171,9 +175,20 @@ logger.debug(f"Command to run is\n{command}")
 # If the "--version" flag has been set, show the versions instead.
 if "--version" in trailing_arguments or "-v" in trailing_arguments:
     print(f"assemblycomparator2 v{__version__}")
+    
 elif "--help" in trailing_arguments or "-h" in trailing_arguments:
-    #subprocess.run(command + " --configure show_help=yes", shell = True)
     print(help_message)
+    
 else:
-    subprocess.run(command, shell = True)
-
+    # Run assemblycomparator2 main pipeline
+    process_main = subprocess.run(command_main, shell = True)
+    returncode_main = process_main.returncode
+    
+    # Run dynamic report pipeline   
+    # Only run report if there is metadata and something is worth rendering.
+    # if os.path.isfile("{results_directory}/metadata.tsv") and os.path.isfile("{results_directory}/.asscom2_void_report.flag"):  # Should be moved to the report pipeline itself.
+    process_report = subprocess.run(command_report, shell = True)
+    returncode_report = process_report.returncode
+    
+    sys.exit(returncode_main)
+    

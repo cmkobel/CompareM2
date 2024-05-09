@@ -12,12 +12,16 @@ rule mashtree:
         mem_mb = 16000,
     shell: """
     
+        # Collect version number.
+        mashtree -v > "$(dirname {output})/.software_version.txt"
+        
         mashtree \
             --numcpus {threads} \
             --outmatrix {output.dist:q} \
             {input.fasta:q} > {output.tree:q}
 
         {void_report}
+        
     """ 
 
 
@@ -37,10 +41,13 @@ rule fasttree:
         mem_mb = get_mem_fasttree,
         runtime = "24h",
     shell: """
+    
+        # Collect version number. (Is quite hard for fasttree)
+        fasttree -expert 2&> .temp_fasttree_version.txt; grep 'Detailed usage' .temp_fasttree_version.txt > "$(dirname {output})/.software_version.txt"; rm .temp_fasttree_version.txt || echo "error deleting .temp_fasttree_version.txt"
 
         OMP_NUM_THREADS={threads}
 
-        FastTree \
+        fasttree \
             -nt \
             -gtr {input.fasta:q} \
         > {output:q} \
@@ -58,8 +65,6 @@ rule iqtree:
         fasta = core_genome_if_exists,
     output: 
         newick = "{results_directory}/iqtree/core_genome_iqtree.treefile"
-    params:
-        version_file = "{results_directory}/iqtree/iqtree_ac2_version.txt"
     conda: "../envs/iqtree.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.iqtree.tsv"
     threads: 16
@@ -69,7 +74,8 @@ rule iqtree:
         runtime = "24h",
     shell: """
 
-        iqtree --version > {params.version_file}
+        # Collect version number.
+        iqtree --version > "$(dirname {output})/.software_version.txt"
 
         iqtree \
             -s {input.fasta:q} \

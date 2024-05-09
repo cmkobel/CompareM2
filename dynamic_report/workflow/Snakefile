@@ -4,13 +4,13 @@
 
 __author__ = 'Carl M. Kobel'
 
-
-results_directory = config['results_directory'] # results_ac2
-base_variable = config['base_variable'] # path/to/gitrepo/assemblycomparator2
+# These could be written to the config file when running the main pipeline.
+results_directory = config['results_directory'] # E.g. results_ac2
+base_variable = config['base_variable'] # E.g. path/to/installation/of/assemblycomparator2
 batch_title = config['batch_title'] # E.g. E._faecium 
-version_string = config['version_string']
+__version__ = config['__version__']
 
-containerized: f"docker://cmkobel/assemblycomparator2:v{version_string}"
+containerized: f"docker://cmkobel/assemblycomparator2:v{__version__}"
 #containerized: f"docker://cmkobel/assemblycomparator2:latest" # DEBUG
 
 print('report subpipeline: results_directory:', results_directory)
@@ -23,21 +23,28 @@ except:
     pass
 
 
+def should_run(wildcards):
+    if os.path.isfile(f"{results_directory}/metadata.tsv") and os.path.isfile(f"{results_directory}/.asscom2_void_report.flag"):
+        #return {"flag": f"{results_directory}/.asscom2_void_report.flag", "metadata": f"{results_directory}/metadata.tsv"}
+        return [f"{results_directory}/report_{batch_title}.html"]
+    else:
+        return [] # empty list, no running requirement.
+
+
 # The report should always run locally no matter the queuing system available.
-localrules: report
+localrules: dynamic_report
 
 rule all:
-	input: expand(\
-        "{results_directory}/report_{batch_title}.html", \
-        results_directory = results_directory, batch_title = batch_title)
-
+    input: 
+        should_run
 
 # Runs on the front end because it is quick anyway.
 # This rule needs to be inside its own snakefile, as it is the only way I can run it on onerror/onsuccess
-rule report:
+rule dynamic_report:
     input:
-        flag = "{results_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
-        metadata = "{results_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
+        #unpack(should_run)
+        flag = f"{results_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
+        metadata = f"{results_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
     conda: "envs/r-markdown.yaml"
     params: 
         base_variable = base_variable,
@@ -45,33 +52,39 @@ rule report:
         batch_title = batch_title,
         end_script = f"{base_variable}/dynamic_report/workflow/scripts/report_end_script.sh",
     output: 
-        html = "{results_directory}/report_{batch_title}.html",
+        html = f"{results_directory}/report_{batch_title}.html",
     #output: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
     
-    shell: """
-
-
-	    # When sharing environments by multiple users: Pandoc creates an intermediary .md file that reside next to the .Rmd file that is used to create the report. Because the directory where this .Rmd file resides may not be writable by the user that is executing the workflow. Thus, as a solution, we'll copy the whole script/ directory where this .Rmd resides to the current working directory.
+    shell: """	    
+        
+        # Rmarkdown render() insists on writing the output relative to the path of the template. Thus we must copy the template to the local system (.writable_template_copy). In some cases, the user won't have write access to the code base path.
         
         # First remove possible old directory
-        test -d scripts_temporary/ && rm -r scripts_temporary/
-        cp -r {base_variable}/dynamic_report/workflow/scripts scripts_temporary # This one fails when using apptainer. Maybe I just need to bind it.
+        test -d .writable_template_copy/ && rm -r .writable_template_copy/
+        cp -r {base_variable}/dynamic_report/workflow/scripts .writable_template_copy # This one fails when using apptainer. Maybe I just need to bind it.
         
-
-        #mkdir -p {params.results_directory}/tables  # Directory for the rmarkdown to write its compiled tables to.
-
+        # Is this still used?
+        # mkdir -p {params.results_directory}/tables # Directory for the rmarkdown to write its compiled tables to.
+    
         Rscript -e '
-
+                        
             # Set parameters
-            base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"; version_string = "{version_string}"
-
+            base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"; version_string = "{__version__}"
+            
+            current_dir = getwd()
+            
             # Render report
             rmarkdown::render(
-                input = "scripts_temporary/report_template.rmd", output_format = "html_document", output_file = "{output.html}", knit_root_dir = "{params.results_directory}"
-        )'
+                input = ".writable_template_copy/report_template.rmd", 
+                output_format = "html_document",
+                output_file = paste0(current_dir, "/{params.results_directory}/report_{batch_title}.html"),
+                knit_root_dir = current_dir
+            )'
 
+        echo clean
         # Clean up 
-        rm -r scripts_temporary # Problem is that this file is only removed if 
+        rm -r .writable_template_copy # Problem is that this file is only removed if pipeline finishes. # Debug inactivev
+
 
         # End script
         test -f "{params.end_script}" && echo "running end script" && . {params.end_script} {batch_title} {results_directory}/report_{batch_title}.html 
