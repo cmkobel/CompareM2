@@ -66,6 +66,7 @@ rule prokka:
         ffn = "{results_directory}/samples/{sample}/prokka/{sample}.ffn",
         log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
+        gbk = "{results_directory}/samples/{sample}/prokka/{sample}.gbk",
         gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta", # Might come in handy.
     conda: "../envs/prokka.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.prokka_sample.{sample}.tsv"

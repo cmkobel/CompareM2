@@ -187,8 +187,12 @@ else:
     # Run dynamic report pipeline   
     # Only run report if there is metadata and something is worth rendering.
     # if os.path.isfile("{results_directory}/metadata.tsv") and os.path.isfile("{results_directory}/.asscom2_void_report.flag"):  # Should be moved to the report pipeline itself.
-    process_report = subprocess.run(command_report, shell = True)
-    returncode_report = process_report.returncode
     
+    if os.path.isfile(".report_config.yaml"):
+        process_report = subprocess.run(command_report, shell = True)
+        returncode_report = process_report.returncode
+    else:
+        print("Pipeline: Dynimac report subpipeline was not run as .report_config.yaml is non-existent.")
+        
     sys.exit(returncode_main)
     
