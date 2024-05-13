@@ -44,7 +44,7 @@ rule gtdbtk:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{results_directory}/gtdbtk/",
         base_variable = base_variable, # not used?
-        mash_db = f"{DATABASES}/gtdb_sketch/mash_db.msh",
+        mash_db = f"{DATABASES}/gtdb_sketch_release220/mash_db.msh",
     threads: 8
     #retries: 3
     resources:
@@ -57,6 +57,9 @@ rule gtdbtk:
     
         # Collect version number.
         gtdbtk -v > "$(dirname {output.tsv}).software_version.txt"
+        
+        # Collect database version.
+        echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.tsv})/.database_version.txt"
 
         # TODO: Using skip-ani-screen is not optimal, as it possibly speeds up a lot.
         mkdir -p $(dirname {params.mash_db:q})

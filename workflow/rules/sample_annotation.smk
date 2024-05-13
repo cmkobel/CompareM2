@@ -120,6 +120,9 @@ rule bakta:
         # Collect version number.
         bakta --version > "$(dirname {output.gff})/.software_version.txt"
         
+        # Collect database version.
+        echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.gff})/.database_version.txt"
+        
         bakta \
             --db {params.DATABASES}/bakta/db \
             --output $(dirname {output.gff}) \
@@ -143,8 +146,10 @@ rule eggnog:
         database_representative = DATABASES + "/eggnog/ac2_eggnog_database_representative.flag",
         assembly = "{results_directory}/samples/{sample}/{sample}.fna"
     output:
+        ffn = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.fasta",
         gff = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.gff",
-        ffn = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.fasta", # Used in dbcan, interproscan, diamond_kegg, motupan
+        hits = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.hits",
+        orthologs = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.seed_orthologs",
         tsv = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.annotations",
     #params:
             
@@ -161,11 +166,15 @@ rule eggnog:
         emapper.py \
             --data_dir $(dirname {input.database_representative}) \
             --version > "$(dirname {output.gff})/.software_version.txt"
+            
+        # Collect database version.
+        echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.gff})/.database_version.txt"
         
         emapper.py \
             -m diamond \
             --data_dir $(dirname {input.database_representative}) \
             --itype genome \
+            --genepred prodigal \
             --override \
             --cpu {threads} \
             --output_dir "$(dirname {output.gff})/" \

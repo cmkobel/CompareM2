@@ -67,23 +67,18 @@ rule sequence_lengths:
 rule busco:
     input: 
         metadata = "{results_directory}/metadata.tsv",
-        #busco_download = expand("{base_variable}/databases/busco/file_versions.tsv", base_variable = base_variable), # This is a bad idea, because it requires a complete reinstall if snakemake somehow removes the file, which is quite likely.
-        database_representative = DATABASES + "/busco/ac2_busco_database_representative.flag", # Should point to the directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
-        #fasta = "{results_directory}/samples/{sample}/{sample}.fna",
-        faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa",
-
-        
+        database_representative = DATABASES + "/busco/ac2_busco_database_representative.flag",
+        faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa",        
     output: 
         flag = touch("{results_directory}/samples/{sample}/busco/busco_done.flag"),
         table_extract = "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv"
     params:
         base_variable = base_variable,
-        #results_directory = results_directory,
-        database_path = DATABASES + "/busco", # Was {params.base_variable}/databases/busco
+        database_path = DATABASES + "/busco",
         out_dir = "{results_directory}/samples/{sample}/busco",
     conda: "../envs/busco.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.busco_sample.{sample}.tsv"
-    threads: 1 # Because run_sepp hangs for a long time, not doing anything, I'd rather have more processes started on any CPU.
+    threads: 1 # Because run_sepp hangs for a long time, not doing anything, I'd rather have more processes started on any type CPU.
     resources:
         mem_mb = 8192,
         runtime = "1h",
@@ -94,7 +89,10 @@ rule busco:
         # Hence, the actual exit code of busco, we will ignore.
         
         # Collect version number.
-        busco -v > "$(dirname {output})/.software_version.txt"
+        busco -v > "$(dirname {output.table_extract})/.software_version.txt"
+        
+        # Collect database version.
+        echo -e "$(date -Iseconds)\t{input.database_representative}" > "$(dirname {output.table_extract})/.database_version.txt"
 
         # https://busco.ezlab.org/busco_userguide.html#offline
         # Is the timeout bug fixed? Update: nope.

@@ -17,7 +17,7 @@ rule interproscan:
     shell: """
     
         # Collect version number.
-        interproscan.sh --version > "$(dirname {output.tsv})/.software_version.txt"
+        interproscan.sh --version | grep version > "$(dirname {output.tsv})/.software_version.txt"
 
         # https://interproscan-docs.readthedocs.io/en/latest/HowToRun.html#command-line-options
         interproscan.sh \
@@ -106,13 +106,13 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
     shell: """
     
         # Collect version number.
-        dbcan --version > "$(dirname {output.overview_table})/.software_version.txt"
+        conda list | grep dbcan > "$(dirname {output.overview_table})/.software_version.txt" # Todo, test on docker.
+        
+        # Collect database version.
+        echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.overview_table})/.database_version.txt"
 
         # It seems to be necessary to set all the cpu thread counts manually.
-
         export HMMER_NCPU={threads}
-        
-        run_dbcan -h > $(dirname {output.overview_table:q})/run_dbcan_version.txt
 
         run_dbcan \
             --dbcan_thread {threads} \
@@ -253,6 +253,9 @@ rule antismash:
     
         # Collect version number.
         antismash --version > "$(dirname {output.json})/.software_version.txt"
+        
+        # Collect database version.
+        echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.json})/.database_version.txt"
     
         antismash \
             -t bacteria \

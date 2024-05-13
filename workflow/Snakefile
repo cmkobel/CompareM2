@@ -392,7 +392,7 @@ onstart:
     """)
     
     
-# TODO: A speedup could be to list the possible locations, and skipping the missing ones.
+# TODO: A speedup could be to list the possible locations, and skipping the missing ones. By doing a full run and listing all possible files, these can be easily enlisted.
 command_collect_version = f"""find results_ac2/ -name ".software_version.txt" | xargs cat | sort | uniq > {results_directory}/version_info.txt"""
 onsuccess:
     shell(command_collect_version)

@@ -20,11 +20,13 @@ rule checkm2:
         # Collect version number.
         echo "checkm2 $(checkm2 --version)" > "$(dirname {output})/.software_version.txt"
         
+        # Collect database version.
+        echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.table})/.database_version.txt"
+        
         checkm2 predict \
             --threads {threads} \
             --input {input.fasta:q} \
             --output-directory {params.rule_dir:q} \
-            --extension .fa \
             --database_path $(dirname {input.database_representative:q})/CheckM2_database/uniref100.KO.1.dmnd \
             --force
 

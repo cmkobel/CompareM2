@@ -76,7 +76,7 @@ rule iqtree:
     shell: """
 
         # Collect version number.
-        iqtree --version > "$(dirname {output.newick})/.software_version.txt"
+        iqtree --version | grep version > "$(dirname {output.newick})/.software_version.txt"
 
         iqtree \
             -s {input.fasta:q} \
@@ -86,6 +86,5 @@ rule iqtree:
             -redo
 
         # {void_report} Not in the report yet.
-
 
     """
