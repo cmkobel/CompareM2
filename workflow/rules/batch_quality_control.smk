@@ -17,6 +17,9 @@ rule checkm2:
         base_variable = base_variable,
     shell: """
 
+        # Collect version number.
+        echo "checkm2 $(checkm2 --version)" > "$(dirname {output})/.software_version.txt"
+        
         checkm2 predict \
             --threads {threads} \
             --input {input.fasta:q} \

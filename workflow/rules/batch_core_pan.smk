@@ -68,6 +68,9 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
     shell: """
     
 
+        # Collect version number.
+        panaroo --version > "$(dirname {output.summary}).software_version.txt"
+
         panaroo \
             -i {input.gff:q} \
             -o {wildcards.results_directory}/panaroo \
@@ -97,6 +100,9 @@ rule snp_dists:
     benchmark: "{results_directory}/benchmarks/benchmark.snp_dists.tsv"
     threads: 4
     shell: """
+    
+        # Collect version number.
+        snp-dists -v > "$(dirname {output}).software_version.txt"
 
         snp-dists \
             -j {threads} \

@@ -76,6 +76,9 @@ rule prokka:
         mem_mb = 8192,
     threads: 4
     shell: """
+    
+        # Collect version number.
+        prokka --version > "$(dirname {output.gff})/.software_version.txt"
         
         prokka \
             --cpus {threads} \
@@ -117,7 +120,10 @@ rule bakta:
         mem_mb = 8192,
     threads: 4
     shell: """
-                
+                        
+        # Collect version number.
+        bakta --version > "$(dirname {output.gff})/.software_version.txt"
+        
         bakta \
             --db {params.DATABASES}/bakta/db \
             --output $(dirname {output.gff}) \
@@ -155,6 +161,11 @@ rule eggnog:
         
         # https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2.1.5-to-v2.1.12#basic-usage
         
+        # Collect version number.
+        emapper.py \
+            --data_dir $(dirname {input.database_representative}) \
+            --version > "$(dirname {output.gff})/.software_version.txt"
+        
         emapper.py \
             -m diamond \
             --data_dir $(dirname {input.database_representative}) \
@@ -164,8 +175,6 @@ rule eggnog:
             --output_dir "$(dirname {output.gff})/" \
             -o "{wildcards.sample}" \
             -i {input.assembly:q} 
-            
-        #touch {output} # DEBUG
 
         {void_report}
 

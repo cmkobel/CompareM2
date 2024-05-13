@@ -15,6 +15,9 @@ rule interproscan:
     resources: 
         mem_mb = 8000
     shell: """
+    
+        # Collect version number.
+        interproscan.sh --version > "$(dirname {output.tsv})/.software_version.txt"
 
         # https://interproscan-docs.readthedocs.io/en/latest/HowToRun.html#command-line-options
         interproscan.sh \
@@ -64,6 +67,9 @@ rule diamond_kegg: # or uniref_ko?
         # Inspired from https://github.com/chklovski/CheckM2/blob/319dae65f1c7f2fc1c0bb160d90ac3ba64ed9457/checkm2/diamond.py#L79
     
         # blastp: Align amino acid query sequences against a protein reference database
+        
+        # Collect version number.
+        diamond version > "$(dirname {output.tsv})/.software_version.txt"
 
         diamond blastp \
             --outfmt 6 \
@@ -98,6 +104,9 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
     resources: 
         mem_mb = 8000
     shell: """
+    
+        # Collect version number.
+        dbcan --version > "$(dirname {output.overview_table})/.software_version.txt"
 
         # It seems to be necessary to set all the cpu thread counts manually.
 
@@ -139,6 +148,10 @@ rule gapseq_find:
         mem_mb = 8192,
     threads: 4
     shell: """
+    
+    
+        # Collect version number.
+        # Todo
         
         # -K is only for multiple sequence alignments
         # -O is "offline mode"
@@ -237,6 +250,9 @@ rule antismash:
         mem_mb = 8192,
     threads: 8
     shell: """
+    
+        # Collect version number.
+        antismash --version > "$(dirname {output.json})/.software_version.txt"
     
         antismash \
             -t bacteria \
