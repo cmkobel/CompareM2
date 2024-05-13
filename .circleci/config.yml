@@ -1,0 +1,20 @@
+# Couldn't automatically generate a config from your source code.
+# This is a generic template to serve as a base for your custom config
+# See: https://circleci.com/docs/configuration-reference
+# Stacks detected: cicd:github-actions:.github/workflows
+version: 2.1
+jobs:
+  test:
+    docker:
+      - image: snakemake/snakemake:v7.32.4
+    steps:
+      - checkout
+      # Replace this with a real test runner invocation
+      - run:
+          name: Run tests
+          command: snakemake --help
+  
+workflows:
+  example:
+    jobs:
+      - test
