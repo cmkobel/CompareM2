@@ -238,7 +238,7 @@ rule antismash:
     input: 
         metadata = "{results_directory}/metadata.tsv",
         database_representative = DATABASES + "/antismash/ac2_antismash_database_representative.flag",
-        gbk = "{results_directory}/samples/{sample}/.annotation/{sample}.gbk",
+        fna = "{results_directory}/samples/{sample}/{sample}.fna",
     output:
         json = "{results_directory}/samples/{sample}/antismash/{sample}.json",
     params:
@@ -260,7 +260,7 @@ rule antismash:
             --output-dir {params.dir:q} \
             --output-basename {wildcards.sample:q} \
             --databases "{params.DATABASES}/antismash" \
-            {input.gbk:q}
+            {input.fna:q}
 
         {void_report}
 

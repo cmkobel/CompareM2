@@ -13,7 +13,7 @@ rule mashtree:
     shell: """
     
         # Collect version number.
-        mashtree -v > "$(dirname {output})/.software_version.txt"
+        mashtree -v > "$(dirname {output.tree})/.software_version.txt"
         
         mashtree \
             --numcpus {threads} \
@@ -32,7 +32,8 @@ rule fasttree:
     input:
         metadata = "{results_directory}/metadata.tsv",
         fasta = core_genome_if_exists,
-    output: "{results_directory}/fasttree/fasttree.newick"
+    output: 
+        newick = "{results_directory}/fasttree/fasttree.newick"
     conda: "../envs/fasttree.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.fasttree.tsv"
     threads: 4
@@ -43,15 +44,15 @@ rule fasttree:
     shell: """
     
         # Collect version number. (Is quite hard for fasttree)
-        fasttree -expert 2&> .temp_fasttree_version.txt; grep 'Detailed usage' .temp_fasttree_version.txt > "$(dirname {output})/.software_version.txt"; rm .temp_fasttree_version.txt || echo "error deleting .temp_fasttree_version.txt"
+        fasttree -expert 2&> .temp_fasttree_version.txt; grep 'Detailed usage' .temp_fasttree_version.txt > "$(dirname {output.newick})/.software_version.txt"; rm .temp_fasttree_version.txt || echo "error deleting .temp_fasttree_version.txt"
 
         OMP_NUM_THREADS={threads}
 
         fasttree \
             -nt \
             -gtr {input.fasta:q} \
-        > {output:q} \
-        2> {output:q}.log 
+        > {output.newick:q} \
+        2> {output.newick:q}.log 
 
         {void_report}
 
@@ -75,7 +76,7 @@ rule iqtree:
     shell: """
 
         # Collect version number.
-        iqtree --version > "$(dirname {output})/.software_version.txt"
+        iqtree --version > "$(dirname {output.newick})/.software_version.txt"
 
         iqtree \
             -s {input.fasta:q} \

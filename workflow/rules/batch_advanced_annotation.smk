@@ -62,7 +62,7 @@ rule gtdbtk:
         mkdir -p $(dirname {params.mash_db:q})
 
         # I need to find a neat way of setting these variables. Maybe the user has an older/newer version than what is hardcoded here. 
-        export GTDBTK_DATA_PATH="$(dirname {input.database_representative:q})/release214/" # Should be defined from config file, and not be hardwired.
+        export GTDBTK_DATA_PATH="$(dirname {input.database_representative:q})/release220/" # Should be defined from config file, and not be hardwired.
         
         # Create batchfile
         echo '''{params.batchfile_content}''' > {wildcards.results_directory}/gtdbtk/batchfile.tsv
@@ -88,9 +88,7 @@ rule gtdbtk:
         >> {output:q}
         
 
-
         {void_report}
-
 
     """ 
 

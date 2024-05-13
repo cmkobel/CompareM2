@@ -15,13 +15,15 @@ __version__ = "2.7.1"
 
 
 # --- Development: Testing "nightly" --------------------------------
-# Run with conda:
+
 # For developing and testing (using conda) prior to publication of next version apptainer image, you can run the following from the repository directory:
 # Conda
-# export ASSCOM2_BASE="$(pwd -P)"; export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/conda/local"; snakemake --snakefile "${ASSCOM2_BASE}/workflow/Snakefile" --profile "$ASSCOM2_PROFILE" --configfile "${ASSCOM2_BASE}/config/config.yaml" --until fast
+# export ASSCOM2_BASE="$(realpath ~/asscom2)"; export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/conda/local"; ${ASSCOM2_BASE}/asscom2 --config input_genomes="${ASSCOM2_BASE}/tests/E._faecium/*.fna" --until fast
 
+# If you haven't made any changes to the environment yamls, you can test using the apptainer/docker image.
 # Apptainer
-# export ASSCOM2_BASE="$(pwd -P)"; export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profiles/apptainer/local"; snakemake --snakefile "${ASSCOM2_BASE}/snakefile" --profile "$ASSCOM2_PROFILE" --configfile "${ASSCOM2_BASE}/config.yaml" --until fast
+# export ASSCOM2_BASE="$(realpath ~/asscom2)"; export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/apptainer/local"; ${ASSCOM2_BASE}/asscom2 --config input_genomes="${ASSCOM2_BASE}/tests/E._faecium/*.fna" --until fast
+
 
 # --- Development: Update Dockerfile --------------------------------
 # Update Dockerfile:
