@@ -238,7 +238,7 @@ rule antismash:
     input: 
         metadata = "{results_directory}/metadata.tsv",
         database_representative = DATABASES + "/antismash/ac2_antismash_database_representative.flag",
-        fna = "{results_directory}/samples/{sample}/{sample}.fna",
+        gbk = "{results_directory}/samples/{sample}/prokka/{sample}.gbk",
     output:
         json = "{results_directory}/samples/{sample}/antismash/{sample}.json",
     params:
@@ -258,12 +258,12 @@ rule antismash:
         echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.json})/.database_version.txt"
     
         antismash \
-            -t bacteria \
-            -c {threads} \
+            --taxon bacteria \
+            --cpus {threads} \
             --output-dir {params.dir:q} \
             --output-basename {wildcards.sample:q} \
             --databases "{params.DATABASES}/antismash" \
-            {input.fna:q}
+            {input.gbk:q}
 
         {void_report}
 

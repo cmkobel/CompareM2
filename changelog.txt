@@ -10,7 +10,7 @@
   - Add eggnogg
   - (Add gapseq. Added but not activated yet, as we're still waiting for conda-forge::r-chnosz and bioconda::gapseq to be published.)
   - rename benchmark files from individual->Sample
-  - Add antismash
+  - Add antismash. Uses .gbk from prokka.
   - report_subpipeline renamed to dynamic_report
   - Dynamic report is now run by the ./asscom2 binary instead of using onsuccess/onerror.
   - Minor fixes.
