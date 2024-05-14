@@ -10,11 +10,3 @@ prokka_rfam: true # true (default) or false
 prokka_compliant: true # true (default) or false
 
 iqtree_bootstraps: 100
-
-
-# TODO: Find a way of having {base_variable} or some other word to point to the base directory. This would be great but, there is no way of guaranteeing that apptainer has access, unless you add all these paths to the bind argument. Hmmmmm.
-# This is going to be quite hard if using the base_variable variable is not possible.
-# database_path_busco: "${ASSCOM2_BASE}/databases/busco" # The directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
-# database_path_gtdb: "{base_variable}/databases/gtdb" # The directory where the following files reside: "release207_v2" (or newer versions)
-# database_path_checkm2: "{base_variable}/databases/checkm2" # The directory where the following files reside: "CheckM2_database/"
-# database_path_kraken2: "{base_variable}/databases/kraken2" # The directory where the following files reside: hash.k2d"
