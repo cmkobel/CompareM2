@@ -72,6 +72,10 @@ def get_input_genomes(pattern):
     decoded = ls.stdout.decode('utf-8').split("\n")
     decoded_nonempty = [i for i in decoded if i != ''] # If there are no matches, we must remove the empty result. Also, there is always an empty result in the end because ls returns a final newline.
     return decoded_nonempty
+    
+    
+def interpret_true(text):
+    return str(text).strip().lower() == "true"
 
 # --- Field variables -----------------------------------------------
 

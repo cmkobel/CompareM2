@@ -192,7 +192,7 @@ else:
         process_report = subprocess.run(command_report, shell = True)
         returncode_report = process_report.returncode
     else:
-        print("Pipeline: Dynimac report subpipeline was not run as .report_config.yaml is non-existent.")
+        print("Pipeline: .report_config.yaml has not yet been created.") # This happens when doing a dry-run in a new dir.
         
     sys.exit(returncode_main)
     

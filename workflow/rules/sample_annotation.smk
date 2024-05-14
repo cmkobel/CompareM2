@@ -54,7 +54,7 @@ rule annotate:
         ln -sr {input} {output.dir}
         
     """
-    
+
 
 rule prokka:
     input: 
@@ -68,6 +68,9 @@ rule prokka:
         tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
         gbk = "{results_directory}/samples/{sample}/prokka/{sample}.gbk",
         gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta", # Might come in handy.
+    params: 
+        prokka_rfam = "--rfam" if interpret_true(config['prokka_rfam']) else "", # Set to true (default) or false in config.
+        prokka_compliant = "--compliant" if interpret_true(config['prokka_compliant']) else "" # Set to true (default) or false in config.
     conda: "../envs/prokka.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.prokka_sample.{sample}.tsv"
     resources:
@@ -81,8 +84,8 @@ rule prokka:
         prokka \
             --cpus {threads} \
             --force \
-            --rfam \
-            --compliant \
+            {params.prokka_rfam} \
+            {params.prokka_compliant} \
             --outdir {wildcards.results_directory}/samples/{wildcards.sample}/prokka \
             --prefix {wildcards.sample} {input.assembly:q} \
         | tee {output.log:q} 

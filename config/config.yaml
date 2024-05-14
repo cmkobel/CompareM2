@@ -1,15 +1,18 @@
 
-mlst_scheme: "automatic"
+
 input_genomes: "*.fna *.fa *.fasta *.fas" # Default value. Does not support advanced glob brace expansion. If you give multiple files or a single file has spaces or weird characters, it should be quoted within apostrophes.
 annotator: "prokka" # prokka|bakta # Affects .faa used in dbcan, interproscan, diamond_kegg 
 
+# Settings for individual tools (rules). Add your own and make a pull request!
+mlst_scheme: "automatic"
+
+prokka_rfam: true # true (default) or false
+prokka_compliant: true # true (default) or false
+
+iqtree_bootstraps: 100
 
 
-
-#asscom2_kraken2_db: "/cluster/projects/nn9864k/shared/databases/k2_pluspf_20210127"
-#gtdbtk_data_path: "/cluster/projects/nn9864k/shared/databases/release207_v2"
-
-# TODO: Find a way of having {base_variable} or some other word to point to the base directory.
+# TODO: Find a way of having {base_variable} or some other word to point to the base directory. This would be great but, there is no way of guaranteeing that apptainer has access, unless you add all these paths to the bind argument. Hmmmmm.
 # This is going to be quite hard if using the base_variable variable is not possible.
 # database_path_busco: "${ASSCOM2_BASE}/databases/busco" # The directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
 # database_path_gtdb: "{base_variable}/databases/gtdb" # The directory where the following files reside: "release207_v2" (or newer versions)
