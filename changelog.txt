@@ -15,6 +15,8 @@
   - Dynamic report is now run by the ./asscom2 binary instead of using onsuccess/onerror.
   - Minor fixes.
   - Software versions and database versions are written to hidden files within output directories.
+  - Added dynamic parameters to prokka and iqtree to the config file.
+  - Added support for a "fofn" which is a file of file names. In the tseemann style, it defines which input genomes to process.
 
 2.6.2
   - Fix wrong path for dbcan results (not yet implemented in report)

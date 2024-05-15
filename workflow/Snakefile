@@ -55,10 +55,20 @@ envvars:
     "ASSCOM2_DATABASES",
 
 
-# --- Functions -----------------------------------------------------
+# --- Functions and routines ----------------------------------------
+
+def get_fofn(path):
+    """ Reads a newline separated (like csv, tsv) list of input_genomes to process.
+        Uses the pandas csv reader. Not because that is by any means necessary, but because it is simpler than writing my own parsing for loop.
+    """
+    df = pd.read_csv(path, header = None, delimiter = "\t")
+    as_list = df[0].to_list()
+
+    return as_list
 
 def get_input_genomes(pattern):
-    """Runs ls on the pattern and parses what is returned. Uses module subprocess.
+    """ Runs ls on the pattern and parses what is returned. Uses module subprocess.
+        TODO: I'll have to think about how I can either pipe stuff in or add a fofn. While possibly keeping this functionality.
     """
 
     # Construct full command.
@@ -72,6 +82,9 @@ def get_input_genomes(pattern):
     decoded = ls.stdout.decode('utf-8').split("\n")
     decoded_nonempty = [i for i in decoded if i != ''] # If there are no matches, we must remove the empty result. Also, there is always an empty result in the end because ls returns a final newline.
     return decoded_nonempty
+    
+
+
     
     
 def interpret_true(text):
@@ -120,7 +133,13 @@ print("    report downloads fast") # Todo: update.
 
 
 # Uses snakemakes built in config system to set default and custom parameters. 
-input_genomes_parsed = get_input_genomes(config['input_genomes']) # Run with 'asscom2 --config input_genomes="my_files*.fna' to customize.
+
+if config['fofn'] != "CHANGE_THIS_TO_ACTIVATE": # Read in the fofn, if the default value is changed.
+
+    input_genomes_parsed = get_fofn(config['fofn'])
+    
+else: # Not using, fofn, use input_genomes which has a default value of "*.fna *.fa *.fasta *.fas", but can also be changed.
+    input_genomes_parsed = get_input_genomes(config['input_genomes']) # Run with 'asscom2 --config input_genomes="my_files*.fna' to customize.
 
 if len(input_genomes_parsed) < 1:
     raise Exception(f"Could not find {config['input_genomes']}. Quitting ...")

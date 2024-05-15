@@ -164,7 +164,6 @@ logger.debug(f"The concatenated trailing arguments are {trailing_arguments_conca
 command_main = f"snakemake --snakefile \"{ASSCOM2_BASE}\"/workflow/Snakefile --profile \"{ASSCOM2_PROFILE}\" --configfile \"{ASSCOM2_BASE}\"/config/config.yaml  " + trailing_arguments_concatenated
 logger.debug(f"Command to run is\n{command_main}")
 
-# Is it a bit sketchy to use $(pwd). Should I gather the path from python instead? Or just get it relatively?
 command_report = f"""snakemake --snakefile "$ASSCOM2_BASE/dynamic_report/workflow/Snakefile" --profile "$ASSCOM2_PROFILE" --configfile=.report_config.yaml"""
 
 
@@ -172,12 +171,13 @@ command_report = f"""snakemake --snakefile "$ASSCOM2_BASE/dynamic_report/workflo
 
 # Finally, run the pipeline.
 
-# If the "--version" flag has been set, show the versions instead.
+
 if "--version" in trailing_arguments or "-v" in trailing_arguments:
     print(f"assemblycomparator2 v{__version__}")
     
 elif "--help" in trailing_arguments or "-h" in trailing_arguments:
     print(help_message)
+
     
 else:
     # Run assemblycomparator2 main pipeline
@@ -194,5 +194,6 @@ else:
     else:
         print("Pipeline: .report_config.yaml has not yet been created.") # This happens when doing a dry-run in a new dir.
         
+    # Exit with the return code of the main pipeline.
     sys.exit(returncode_main)
     
