@@ -271,6 +271,12 @@ Assemblycomparator2 would not have existed, if it hadn't been for the integrated
   - B.Q. Minh, H.A. Schmidt, O. Chernomor, D. Schrempf, M.D. Woodhams, A. von Haeseler, R. Lanfear (2020) IQ-TREE 2: New models and efficient methods for phylogenetic inference in the genomic era. Mol. Biol. Evol., 37:1530-1534. https://doi.org/10.1093/molbev/msaa015
   - mOTUpan: a robust Bayesian approach to leverage metagenome assembled genomes for core-genome estimation Moritz Buck, Maliheh Mehrshad, and Stefan Bertilsson bioRxiv 2021.06.25.449606; doi: https://doi.org/10.1101/2021.06.25.449606
 
+
+## Other tools comparable to Assemblycomparator2
+  - [Nullarbor](https://github.com/tseemann/nullarbor)
+  - [Tormes](https://github.com/nmquijada/tormes)
+  - [Veba](https://github.com/jolespin/veba)
+
 ---
 
 Development is active and will continue. We're actively looking for collaborators to join and synergize this project. Pull requests are warmly encouraged.
