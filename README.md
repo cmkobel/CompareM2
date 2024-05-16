@@ -281,7 +281,6 @@ Below we are listing some competing pipelines that partly overlap with the use c
   - [Nullarbor](https://github.com/tseemann/nullarbor) 
   - [Tormes](https://github.com/nmquijada/tormes)
   - [VEBA](https://github.com/jolespin/veba)
-  - [MicrobeAnnotator](https://github.com/cruizperez/MicrobeAnnotator)
   - [DRAM](https://github.com/WrightonLabCSU/DRAM)
   - [Aviary](https://github.com/rhysnewell/aviary)
 
