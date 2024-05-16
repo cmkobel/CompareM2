@@ -65,10 +65,10 @@ def get_fofn(path):
     as_list = df[0].to_list()
 
     return as_list
+    
 
 def get_input_genomes(pattern):
     """ Runs ls on the pattern and parses what is returned. Uses module subprocess.
-        TODO: I'll have to think about how I can either pipe stuff in or add a fofn. While possibly keeping this functionality.
     """
 
     # Construct full command.
@@ -119,7 +119,6 @@ print("                                                                    ")
 print(f"    batch_title:           {batch_title}")
 print(f"    base_variable:         {base_variable}")
 print(f"    databases:             {DATABASES}")
-print(f"    mlst_scheme:           {config['mlst_scheme']} (default automatic)")
 print()
 print("    Available rules:")
 print("    sequence_lengths prokka dbcan interproscan busco")
