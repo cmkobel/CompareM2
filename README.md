@@ -275,7 +275,9 @@ Assemblycomparator2 would not have existed, if it hadn't been for the integrated
 ## Other tools comparable to Assemblycomparator2
   - [Nullarbor](https://github.com/tseemann/nullarbor)
   - [Tormes](https://github.com/nmquijada/tormes)
-  - [Veba](https://github.com/jolespin/veba)
+  - [VEBA](https://github.com/jolespin/veba)
+  - [MicrobeAnnotator](https://github.com/cruizperez/MicrobeAnnotator)
+  - [DRAM](https://github.com/WrightonLabCSU/DRAM)
 
 ---
 
