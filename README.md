@@ -283,6 +283,7 @@ Below we are listing some competing pipelines that partly overlap with the use c
   - [VEBA](https://github.com/jolespin/veba)
   - [DRAM](https://github.com/WrightonLabCSU/DRAM)
   - [Aviary](https://github.com/rhysnewell/aviary)
+  - [Bactopia](https://github.com/bactopia/bactopia)
 
 ---
 
