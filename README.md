@@ -278,12 +278,13 @@ What is unique about Assemblycomparator2 is that it works strictly downstream of
 
 Below we are listing some competing pipelines that partly overlap with the use cases of Assemblycomparator2. These tools might help increasing awareness of microbial diversity.
 
+  - [Aviary](https://github.com/rhysnewell/aviary)
+  - [Bactopia](https://github.com/bactopia/bactopia)
+  - [DRAM](https://github.com/WrightonLabCSU/DRAM)
   - [Nullarbor](https://github.com/tseemann/nullarbor) 
   - [Tormes](https://github.com/nmquijada/tormes)
   - [VEBA](https://github.com/jolespin/veba)
-  - [DRAM](https://github.com/WrightonLabCSU/DRAM)
-  - [Aviary](https://github.com/rhysnewell/aviary)
-  - [Bactopia](https://github.com/bactopia/bactopia)
+
 
 ---
 
