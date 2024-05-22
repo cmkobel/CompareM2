@@ -104,7 +104,11 @@ rule dynamic_report:
 
 
 
-
+final = f"""rm .report_config.yaml"""
+onsuccess:
+    shell(final)
+onerror:
+    shell(final)
 
 
 

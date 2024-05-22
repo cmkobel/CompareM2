@@ -24,5 +24,6 @@ mlst_scheme: "automatic"
 prokka_rfam: true # true (default) or false
 prokka_compliant: true # true (default) or false
 
+treecluster_threshold: 0.045
 iqtree_bootstraps: 100
 

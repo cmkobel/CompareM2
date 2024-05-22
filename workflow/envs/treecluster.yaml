@@ -1,0 +1,6 @@
+name: treecluster
+channels: 
+  - defaults
+dependencies:
+  - pip:
+    - treecluster

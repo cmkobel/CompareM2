@@ -20,7 +20,6 @@ rule copy:
     """  
 
 
-
 rule assembly_stats:
     input: 
         metadata = "{results_directory}/metadata.tsv",
@@ -38,7 +37,6 @@ rule assembly_stats:
         {void_report}
 
     """
-
 
 
 rule sequence_lengths:
@@ -60,8 +58,6 @@ rule sequence_lengths:
         > {output:q}
 
     """
-
-
 
 
 rule busco:

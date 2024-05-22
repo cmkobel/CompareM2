@@ -24,6 +24,42 @@ rule mashtree:
         
     """ 
 
+rule treecluster:
+    input: 
+        metadata = "{results_directory}/metadata.tsv",
+        newick = "{results_directory}/mashtree/mashtree.newick",
+    output: 
+        table_10 = "{results_directory}/treecluster/treecluster_threshold_0.10.tsv",
+    params:
+        treecluster_threshold = float(config['treecluster_threshold']) # Default is "0.045"
+    conda: "../envs/treecluster.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.treecluster.tsv"
+    threads: 8
+    resources:
+        mem_mb = 16000,
+    shell: """
+    
+        # Collect version number.
+        TreeCluster.py --version > "$(dirname {output.table_10})/.software_version.txt"
+        
+        # First compute with standard 10 (=1-0.90 ANI)
+        TreeCluster.py \
+          --input {input.newick} \
+          --output {output.table_10} \
+          --threshold 0.10
+          
+        # Secondly compute with custom (defaults to 0.045 (= 1-0.955 ANI))
+        TreeCluster.py \
+          --input {input.newick} \
+          --output {wildcards.results_directory}/treecluster/treecluster_threshold_{params.treecluster_threshold}.tsv \
+          --method max_clade \
+          --threshold {params.treecluster_threshold}
+              
+        {void_report}
+        
+    """ 
+
+
 
 
 def get_mem_fasttree(wildcards, attempt): 

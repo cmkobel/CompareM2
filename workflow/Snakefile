@@ -239,6 +239,7 @@ rule all:
         "{results_directory}/panaroo/summary_statistics.txt", \
         "{results_directory}/snp-dists/snp-dists.tsv", \
         "{results_directory}/mashtree/mashtree.newick", \
+        "{results_directory}/treecluster/treecluster_threshold_0.10.tsv", \
         "{results_directory}/fasttree/fasttree.newick", \
         "{results_directory}/iqtree/core_genome_iqtree.treefile"], \
         results_directory = results_directory, sample = df["sample"]) 
@@ -411,11 +412,11 @@ onstart:
     
     
 # TODO: A speedup could be to list the possible locations, and skipping the missing ones. By doing a full run and listing all possible files, these can be easily enlisted.
-command_collect_version = f"""find results_ac2/ -name ".software_version.txt" | xargs cat | sort | uniq > {results_directory}/version_info.txt"""
+final = f"""find results_ac2/ -name ".software_version.txt" | xargs cat | sort | uniq > {results_directory}/version_info.txt"""
 onsuccess:
-    shell(command_collect_version)
+    shell(final)
 onerror:
-    shell(command_collect_version)
+    shell(final)
 
 
 

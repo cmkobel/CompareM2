@@ -1,7 +1,0 @@
-name: motulizer
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - motulizer=0
-
