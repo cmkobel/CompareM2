@@ -13,6 +13,19 @@ output_path = args[2]
 input_diamond = args[3:(length(args))] # list
 
 
+
+# For development
+if (F) {
+    
+    # Work macbook
+    input_kegg_asset = "~/assemblycomparator2/resources/ko00001.json"
+    output_path = paste0(getwd(), "/outt")
+    #input_diamond = "results_ac2/samples/Treatment_LowE.metabat.242/diamond_kegg/Treatment_LowE.metabat.242_diamond_kegg.tsv"
+    input_diamond = "samples/116_2/eggnog/116_2.emapper.annotations"
+    
+}
+
+
 #message(paste(args, collapse = "\n"))
 message("Command line arguments: (", length(args), "):")
 message("  input_kegg_asset: ", input_kegg_asset) # Path to json downloaded from kegg.jp
@@ -20,13 +33,6 @@ message("  output_path: ", output_path) # A path where to save analysis results.
 message("  input_diamond (", length(input_diamond), "): ", paste(input_diamond, collapse = ", ")) # Table from diamond containing calls on the uniref100-KO database.
 message("")
 
-# For development
-if (F) {
-    input_kegg_asset = "~/Downloads/ko00001.json"
-    output_path = paste0(getwd(), "/outt")
-    input_diamond = "results_ac2/samples/Treatment_LowE.metabat.242/diamond_kegg/Treatment_LowE.metabat.242_diamond_kegg.tsv"
-    
-}
 
 
 ## Parse KEGG json
@@ -40,8 +46,8 @@ kegg_parse_json = function(input_json) {
         unnest(children, names_repair = "universal") %>% # D 59868
         
         rename(
-            a_class = 1, # E.g. "09100 Metabolism"
-            b_class = 2, # E.g. "09101 Carbohydrate metabolism"
+            a_class = 1, # E.g. "09100 Metabolism"                # aka. class?
+            b_class = 2, # E.g. "09101 Carbohydrate metabolism"   # aka. group?
             pathway = 3, 
             ortholog = 4
         ) %>%
@@ -97,33 +103,37 @@ kegg_data %>%
 
 
 ## Parse diamond results that link the called prodigal-called proteins to uniref100-KO
-diamond = tibble(File = Sys.glob(input_diamond)) %>% #
-    #head() %>%  # For developing
-    extract(File, "sample", "/diamond_kegg/(.+)_diamond_kegg\\.tsv", remove = F) %>% 
-    mutate(tabulation = lapply(
-        File,
-        read_tsv,
-        col_names = c("locus_tag", "sseqid", "pident", "length", "mismatch", "gapopen", "qstart", "qend", "sstart", "send", "evalue", "bitscore")
-    )
+eggnog_raw = tibble(File = Sys.glob(input_diamond)) %>% #
+    extract(File, "sample", "/eggnog/(.+)\\.emapper\\.annotations", remove = F) %>% 
+    mutate(
+        tabulation = lapply(
+            File,
+            read_tsv,
+            col_names = c("query", "seed_ortholog", "evalue", "score", "eggNOG_OGs", "max_annot_lvl", "COG_category", "Description", "Preferred_name", "GOs", "EC", "KEGG_ko", "KEGG_Pathway", "KEGG_Module", "KEGG_Reaction", "KEGG_rclass", "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"),
+            comment = "#", 
+            na = "-"
+        )
     ) %>% 
     select(-File)  %>% 
-    unnest(tabulation)  %>% 
-    mutate(
-        query_length = qend - qstart,
-        subject_length = send - sstart,
-        qcov = query_length / length,
-        scov = subject_length / length
-    ) %>% 
-    
-    select(-query_length, -subject_length) %>% 
-    
-    extract(sseqid, c("source", "unirefid", "koid"), "^(.+)_(.+)~(.+)$")
+    unnest(tabulation) 
 
 
 
-diamond %>% 
+
+
+eggnog_raw %>% 
     count(sample) %>% 
     glimpse()
+
+
+df_ko = eggnog_raw %>% 
+    select(sample, KEGG_ko) %>% 
+    drop_na(KEGG_ko) %>% 
+    mutate(koid = str_split(KEGG_ko, ",")) %>% 
+    unnest(koid) %>% 
+    mutate(koid = str_remove(koid, "^ko:")) %>% 
+    select(sample, koid)
+    
 
 
 
@@ -145,16 +155,13 @@ term2gene = kegg_data %>%
 # Then for each sample
 
 analyses = tibble() # For collecting the results.
-for (sample in diamond %>% group_by(sample) %>% group_split()) {
+for (sample in df_ko %>% group_by(sample) %>% group_split()) {
     
     sample_name = sample %>% pull(sample) %>% unique()
     message("Running clusterProfiler::enricher on ", sample_name)
     
     # gene is the signature
     gene = sample  %>% 
-        select(koid) %>% 
-        mutate(koid = str_split(koid, "&")) %>% # Sometimes there might be more than one.
-        unnest(koid) %>% 
         pull(koid)
     
     # This is where we call the enrichment analysis.
@@ -191,11 +198,9 @@ analyses %>%
     select(sample, pathway, `p.adjust`) %>% 
     left_join(kegg_data %>% distinct(a_class, b_class, pathway), by = "pathway") %>% 
     select(sample, a_class, b_class, pathway, p_adj = `p.adjust`) %>% 
-    
-    
+
     
     pivot_wider(names_from = sample, values_from = p_adj) %>% 
-    
     arrange(a_class, b_class, pathway) %>% 
-    
     write_tsv(paste0(output_path, "/summary.tsv"))
+
