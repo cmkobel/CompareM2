@@ -230,7 +230,6 @@ rule all:
         "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.gff", \
         "{results_directory}/samples/{sample}/dbcan/overview.txt", \
         "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
-        "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
         "{results_directory}/samples/{sample}/antismash/{sample}.json", \
         "{results_directory}/checkm2/quality_report.tsv", \
         "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
