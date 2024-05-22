@@ -40,6 +40,7 @@ rule interproscan:
 # Use the same database as checkm2, but run on amino-acid files instead of dna.
 # This will be used for a subsequent pathway enrichment analysis.
 # Idea for speed up: concatenate all genomes together first, like they do in checkm2. Then we only need to load the database once.
+# This rule will be deleted because the underlying database is outdated (2018, 6 years ago) and there are no signs that it will be updated. From now on we'll use eggnog.
 rule diamond_kegg: # or uniref_ko?
     input: 
         metadata = "{results_directory}/metadata.tsv", # For the report

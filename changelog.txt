@@ -18,7 +18,7 @@
   - Added dynamic parameters to prokka and iqtree to the config file.
   - Added support for a "fofn" which is a file of file names. In the tseemann style, it defines which input genomes to process.
   - (Removed rule diamond_kegg.)
-  - (Use KEGG KO from eggnog in kegg_pathway. If this doesn't work well I'll consider re-implementing kofam_scan which was removed long time back.)
+  - (Use KEGG KO from eggnog in kegg_pathway. If this doesn't work well I'll consider re-implementing kofam_scan which was removed long time back. Now a_class and b_class are "class" and "group".)
   - (Use workdir to have a solution to define the output dir and to make available running several batches from the same dir which is pretty much expected.)
   - (Implemented TreeCluster that on the 5% and 10% basis defines clusters on the mashtree distances so the user can easily get an impression on the relative differences between samples.)
 
