@@ -38,10 +38,11 @@ logger.addHandler(console_handler)
 
 help_message = f"""
 NAME
-    asscom2 - genomes to report pipeline
+    Assemblycomparator2 (a.k.a. "asscom2") - Genomes to report pipeline
 
 SYNOPSIS
     asscom2 [ --config KEY=VALUE [KEY2=VALUE]... ] [ --until RULE [RULE2]... ]
+        [ --forcerun RULE [RULE2]... ]
         [ --dry-run ]
         [ --version ] [ --help ]
     
@@ -61,7 +62,7 @@ OPTIONS
             
             - mlst_scheme="automatic" (Choice of mlst scheme. See tseemann/mlst documentation for options.)
             
-    --until RULE [RULE2]
+    --until RULE [RULE2]...
         Select to run up until and including a specific rule in the rule graph. Available rules:
         abricate annotate assembly_stats bakta bakta_download busco busco_download checkm2 checkm2_download copy dbcan dbcan_download diamond_kegg eggnog eggnog_download fasttree gapseq gapseq_find gtdb_download gtdbtk interproscan iqtree kegg_pathway mashtree mlst prokka sequence_lengths snp_dists
         
@@ -71,6 +72,9 @@ OPTIONS
           - isolate     (Only rules that are relevant for genomes of isolate origin.)
           - meta        (Only rules that are relevant for genomes "MAGs" of metagenomic origin.)
           - report      (Re-renders the report.)
+          
+    --forcerun RULE [RULE2]...
+        Force rerunning of one or more rules that already have been completed. This is generally necessary when changing running parameters in the config (see "--config" above).
         
     --dry-run
         Run a "dry run": Shows what will run without doing it.
@@ -108,7 +112,7 @@ EXAMPLES
     asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="prokka" --until fast panaroo
     
 LICENSE:
-     assemblycomparator2 "asscom2" v2.6.2 genomes to report pipeline. Copyright (C) 2019-2024 Carl M. Kobel and contributors GNU GPL v3 
+     assemblycomparator2 "asscom2" v{__version__} genomes to report pipeline. Copyright (C) 2019-2024 Carl M. Kobel and contributors GNU GPL v3 
 """
 
 

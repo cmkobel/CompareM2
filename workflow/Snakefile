@@ -41,7 +41,7 @@ from os.path import isfile, join
 import pandas as pd
 import numpy as np
 from shutil import copyfile
-import csv # for quoting 
+import csv # for quoting # Can be disabled?
 import subprocess # For void_report
 import datetime # For void_report
 
@@ -116,9 +116,9 @@ print("                       A.K.A. assemblycomparator2                   ")
 print("                         Please log issues at:                      ")
 print("              github.com/cmkobel/assemblycomparator2/issues         ")
 print("                                                                    ")
-print(f"    batch_title:           {batch_title}")
-print(f"    base_variable:         {base_variable}")
-print(f"    databases:             {DATABASES}")
+print(f"    batch_title:       {batch_title}")
+print(f"    base_variable:     {base_variable}")
+print(f"    databases:         {DATABASES}")
 print()
 print("    Available rules:")
 print("    sequence_lengths prokka dbcan interproscan busco")
@@ -133,7 +133,7 @@ print("    report downloads fast") # Todo: update.
 
 # Uses snakemakes built in config system to set default and custom parameters. 
 
-if config['fofn'] != "CHANGE_THIS_TO_ACTIVATE": # Read in the fofn, if the default value is changed.
+if config['fofn'] != "CHANGE_THIS_TO_ACTIVATE": # Read in the fofn, only if the default value is changed (in the config/config.yaml file or command line --config fofn=path/to/fofn.txt)
 
     input_genomes_parsed = get_fofn(config['fofn'])
     
@@ -155,14 +155,13 @@ if df.shape[0] == 0:
     #raise Exception("Zero genomic files present.")
     sys.exit(1)
 
-#df['sample_raw'] = [".".join(i.split(".")[:-1]) for i in df['input_file'].tolist()] # Extract everything before the extension dot.
 df['basename'] = [os.path.basename(i) for i in df['input_file'].tolist()]
 
 # Since mashtree doesn't like spaces in filenames, we must convert those.
 df['basename_clean'] = df['basename'].str.replace(' ','_').str.replace(',','_').str.replace('"','_').str.replace('\'','_') # Convert punctuation marks to underscores: Makes everything easier.
 df['sample'] = [".".join((i.split(".")[:-1])) for i in df['basename_clean']] # Remove extension by splitting, removing last, and joining.
 df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extract extension
-df['input_file_fasta'] = results_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fna" # This is where the input file is copied to in the first snakemake rule.
+df['input_file_fasta'] = results_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fna" # This is where the input file is copied to in the first snakemake rule "copy".
 
 df['1-index'] = [i+1 for i in range(len(df))]
 
@@ -185,7 +184,7 @@ print(df[['1-index', 'input_file', 'basename', 'sample', 'extension', 'input_fil
 print("//")
 print()
 
-# Warn the user if there exists spaces in file names.
+# Warn the user if there exists spaces in the file names.
 if any([" " in i for i in df['input_file'].tolist()]): # TODO test if it still works after new globbing system.
     print("Warning: One or more file names contain space(s). These have been replaced with underscores \" \" -> \"_\"")
 
@@ -197,7 +196,7 @@ if n_duplicates > 0:
 
 
 # The DATABASES directory must exist, otherwise apptainer gets confused and throws the following:
-# WARNING: skipping mount of /home/thylakoid/assemblycomparator2/adatabaseas: stat /home/thylakoid/assemblycomparator2/adatabaseas: no such file or directory
+# WARNING: skipping mount of /home/thylakoid/assemblycomparator2/databaseas: stat /home/thylakoid/assemblycomparator2/databaseas: no such file or directory
 if not os.path.isdir(DATABASES):
     os.mkdir(DATABASES)
 
@@ -207,11 +206,17 @@ if not os.path.isdir(results_directory):
     os.mkdir(results_directory) # If running with local profile, the directory won't be created. This is necessary in the edge case that the user _only_ runs "--until report".
 
 
+# --- Localrules and ruleorders -------------------------------------
+
+# The localrules are routine tasks that take up very little cpu. In some cases there won't be internet access on compute nodes, why it is smart that downloads are run on the local (aka. frontend) node. 
 localrules: metadata, annotate, checkm2_download, dbcan_download, busco_download, gtdb_download, report, install_report_environment_aot
-#ruleorder: prokka > bakta > eggnog # I solved this by having an external output called ".annotation" that requests the appropriate annotator based on the config parameter "annotator".
+
+#ruleorder: prokka > bakta > eggnog # I solved this by having an external output called ".annotation" that requests the appropriate annotator based on the config parameter "annotator". Could have otherwise been a nice solution but would be harder to keep track of which annotation was used for what.
+
 #ruleorder: gapseq_find > gapseq # Most of the time, we just want the pathways completion fractions. Drafting and gapfilling a complete GEM is a bit overkill, but should of course be possible if the user wants it.
 
-# --- Collect all targets -------------------------------------------
+
+# --- Main rule to collect all targets ------------------------------
 rule all:
     input: expand([\
         "{results_directory}/metadata.tsv", \
@@ -240,23 +245,17 @@ rule all:
         results_directory = results_directory, sample = df["sample"]) 
 
 
-        #"{results_directory}/samples/{sample}/gapseq/gapseq_done.flag", \
+        #"{results_directory}/samples/{sample}/gapseq/gapseq_done.flag", \ # Still working on this one.
 
 # Write the sample table for later reference.
-# Why isn't this a run: instead of a shell: ?
 rule metadata:
     input: df['input_file_fasta']
     output: "{results_directory}/metadata.tsv"
-    params: dataframe = df.to_csv(None, index_label = "index", sep = "\t") #, quoting = csv.QUOTE_NONE)
+    params: dataframe = df.to_csv(None, index_label = "index", sep = "\t")
     resources:
         runtime = "1h"
-    #run:
-        #df.to_csv(str(output), index_label = "index", sep = "\t")
-        #os.system(f"cp ${{ASSCOM2_BASE}}/scripts/{report_template_file_basename} {results_directory}")
     shell: """
-
         echo '''{params.dataframe}''' > "{output:q}"
-
         {void_report}
     """
 
@@ -344,35 +343,33 @@ rule downloads:
 
 # Blink-of-an-eye analysis
 rule fast:
-    input:
-        expand(\
-            ["{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
-            "{results_directory}/assembly-stats/assembly-stats.tsv", \
-            "{results_directory}/mashtree/mashtree.newick"], \
-            results_directory = results_directory, \
-            sample = df["sample"]) # TODO: define the expansion in each rule instead.
+    input: expand(\
+        ["{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
+        "{results_directory}/assembly-stats/assembly-stats.tsv", \
+        "{results_directory}/mashtree/mashtree.newick"], \
+        results_directory = results_directory, \
+        sample = df["sample"]) # TODO: define the expansion in each rule instead.
 
 
 # Rules designed for bins of metagenomic origin
 rule meta:
-    input:
-        expand(\
-            ["{results_directory}/metadata.tsv", \
-            "{results_directory}/.install_report_environment_aot.flag", \
-            "{results_directory}/assembly-stats/assembly-stats.tsv", \
-            "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
-            "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
-            "{results_directory}/checkm2/quality_report.tsv", \
-            "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
-            "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
-            "{results_directory}/samples/{sample}/dbcan/overview.txt", \
-            "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
-            "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
-            "{results_directory}/mlst/mlst.tsv", \
-            "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
-            "{results_directory}/mashtree/mashtree.newick"], \
-            results_directory = results_directory, \
-            sample = df["sample"])
+    input: expand(\
+        ["{results_directory}/metadata.tsv", \
+        "{results_directory}/.install_report_environment_aot.flag", \
+        "{results_directory}/assembly-stats/assembly-stats.tsv", \
+        "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
+        "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
+        "{results_directory}/checkm2/quality_report.tsv", \
+        "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
+        "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
+        "{results_directory}/samples/{sample}/dbcan/overview.txt", \
+        "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
+        "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
+        "{results_directory}/mlst/mlst.tsv", \
+        "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
+        "{results_directory}/mashtree/mashtree.newick"], \
+        results_directory = results_directory, \
+        sample = df["sample"])
 
 
 # Rules designed for cultured isolates
