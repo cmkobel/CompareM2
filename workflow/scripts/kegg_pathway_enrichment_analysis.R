@@ -46,8 +46,8 @@ kegg_parse_json = function(input_json) {
         unnest(children, names_repair = "universal") %>% # D 59868
         
         rename(
-            a_class = 1, # E.g. "09100 Metabolism"                # aka. class?
-            b_class = 2, # E.g. "09101 Carbohydrate metabolism"   # aka. group?
+            class = 1, # E.g. "09100 Metabolism"                # aka. class?
+            group = 2, # E.g. "09101 Carbohydrate metabolism"   # aka. group?
             pathway = 3, 
             ortholog = 4
         ) %>%
@@ -191,16 +191,16 @@ analyses %>%
 
 # Before we write the raw "analyses" table, I want to add info from the database. This is going to make things easier in the report.
 analyses %>% 
-    left_join(kegg_data %>% distinct(a_class, b_class, pathway), by = "pathway") %>% 
+    left_join(kegg_data %>% distinct(class, group, pathway), by = "pathway") %>% 
     write_tsv(paste0(output_path, "/kegg_pathway_enrichment_analysis.tsv"))
 
 analyses %>% 
     select(sample, pathway, `p.adjust`) %>% 
-    left_join(kegg_data %>% distinct(a_class, b_class, pathway), by = "pathway") %>% 
-    select(sample, a_class, b_class, pathway, p_adj = `p.adjust`) %>% 
+    left_join(kegg_data %>% distinct(class, group, pathway), by = "pathway") %>% 
+    select(sample, class, group, pathway, p_adj = `p.adjust`) %>% 
 
     
     pivot_wider(names_from = sample, values_from = p_adj) %>% 
-    arrange(a_class, b_class, pathway) %>% 
+    arrange(class, group, pathway) %>% 
     write_tsv(paste0(output_path, "/summary.tsv"))
 
