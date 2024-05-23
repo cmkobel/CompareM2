@@ -118,6 +118,7 @@ rule compute_snp_dists:
         
     """
 
+# This is a dummy rule that forces recomputation of the DAG after the core genome alignment has been produced. It solves a possibly known error in snakemake which I could possibly mitigate by updating snakemake. But since I'm already testing a lot of other features, I cannot take the burden of also changing snakemake version so this is the workaround for now.
 rule snp_dists:
     input: "{results_directory}/snp-dists/snp-dists.tsv"
     output: touch("{results_directory}/snp-dists/.done.flag")
