@@ -9,20 +9,20 @@ def get_mem_panaroo(wildcards, attempt):
 # Maybe it shouldn't be panaroo which is the checkpoint, but rather every rule that uses the core genome, like rule snp_dists? Let me try!
 checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-dists should only run if the core genome is non-empty.
     input: 
-        metadata = "{results_directory}/metadata.tsv",
-        gff = expand("{results_directory}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], results_directory = results_directory),
+        metadata = "{output_directory}/metadata.tsv",
+        gff = expand("{output_directory}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], output_directory = output_directory),
     output:
-        summary = "{results_directory}/panaroo/summary_statistics.txt",
-        presence = "{results_directory}/panaroo/gene_presence_absence.csv",
-        alignment = "{results_directory}/panaroo/core_gene_alignment.aln",
-        #analyses = ["{results_directory}/panaroo/summary_statistics.txt", "{results_directory}/panaroo/core_gene_alignment.aln", "{results_directory}/panaroo/gene_presence_absence.csv"]
+        summary = "{output_directory}/panaroo/summary_statistics.txt",
+        presence = "{output_directory}/panaroo/gene_presence_absence.csv",
+        alignment = "{output_directory}/panaroo/core_gene_alignment.aln",
+        #analyses = ["{output_directory}/panaroo/summary_statistics.txt", "{output_directory}/panaroo/core_gene_alignment.aln", "{output_directory}/panaroo/gene_presence_absence.csv"]
     params: # Possibly make this editable from the CLI.
         sequence_identity_threshold = "0.98", # default
         core_genome_sample_threshold = "0.95", # default
         clean_mode = "sensitive", # default
         protein_family_sequence_identity_threshold = "0.7", # default
         
-    benchmark: "{results_directory}/benchmarks/benchmark.panaroo.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.panaroo.tsv"
     threads: 16
     #retries: 2
     resources:
@@ -38,7 +38,7 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
 
         panaroo \
             -i {input.gff:q} \
-            -o {wildcards.results_directory}/panaroo \
+            -o {wildcards.output_directory}/panaroo \
             -a core \
             --threshold {params.sequence_identity_threshold} \
             --clean-mode {params.clean_mode} \
@@ -99,11 +99,11 @@ def core_genome_if_exists(wildcards):
 
 rule compute_snp_dists:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
+        metadata = "{output_directory}/metadata.tsv",
         aln = core_genome_if_exists,
-    output: "{results_directory}/snp-dists/snp-dists.tsv"
+    output: "{output_directory}/snp-dists/snp-dists.tsv"
     conda: "../envs/snp-dists.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.snp_dists.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.snp_dists.tsv"
     threads: 4
     shell: """
     
@@ -120,8 +120,8 @@ rule compute_snp_dists:
 
 # This is a dummy rule that forces recomputation of the DAG after the core genome alignment has been produced. It solves a possibly known error in snakemake which I could possibly mitigate by updating snakemake. But since I'm already testing a lot of other features, I cannot take the burden of also changing snakemake version so this is the workaround for now.
 rule snp_dists:
-    input: "{results_directory}/snp-dists/snp-dists.tsv"
-    output: touch("{results_directory}/snp-dists/.done.flag")
+    input: "{output_directory}/snp-dists/snp-dists.tsv"
+    output: touch("{output_directory}/snp-dists/.done.flag")
     shell: """
         exit 0
     """

@@ -4,7 +4,7 @@
 rule copy:
     input: 
         genome = lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0],
-    output: "{results_directory}/samples/{sample}/{sample}.fna"
+    output: "{output_directory}/samples/{sample}/{sample}.fna"
     conda: "../envs/any2fasta.yaml"
     threads: 1 # Weirdly, or bugly, there must be a thread n definition in the rule. Otherwise, the set-threads option (in the orion profile) will not be taken up. 
     resources:
@@ -22,11 +22,11 @@ rule copy:
 
 rule assembly_stats:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
+        metadata = "{output_directory}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist(),
-    output: "{results_directory}/assembly-stats/assembly-stats.tsv"
+    output: "{output_directory}/assembly-stats/assembly-stats.tsv"
     conda: "../envs/assembly-stats.yaml"
-    benchmark: "{results_directory}/benchmarks/assembly_stats.tsv"
+    benchmark: "{output_directory}/benchmarks/assembly_stats.tsv"
     shell: """
     
         # Collect version number.
@@ -41,14 +41,14 @@ rule assembly_stats:
 
 rule sequence_lengths:
     input:
-        metadata = "{results_directory}/metadata.tsv",
-        assembly = "{results_directory}/samples/{sample}/{sample}.fna", 
-    output: "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
+        metadata = "{output_directory}/metadata.tsv",
+        assembly = "{output_directory}/samples/{sample}/{sample}.fna", 
+    output: "{output_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
     threads: 1
     resources:
         runtime = "60m",
     conda: "../envs/seqkit.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.sequence_lengths_sample.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.sequence_lengths_sample.{sample}.tsv"
     shell: """
     
         # Collect version number.
@@ -62,18 +62,18 @@ rule sequence_lengths:
 
 rule busco:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
+        metadata = "{output_directory}/metadata.tsv",
         database_representative = DATABASES + "/busco/ac2_busco_database_representative.flag",
-        faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa",        
+        faa = "{output_directory}/samples/{sample}/prokka/{sample}.faa",        
     output: 
-        flag = touch("{results_directory}/samples/{sample}/busco/busco_done.flag"),
-        table_extract = "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv"
+        flag = touch("{output_directory}/samples/{sample}/busco/busco_done.flag"),
+        table_extract = "{output_directory}/samples/{sample}/busco/short_summary_extract.tsv"
     params:
         base_variable = base_variable,
         database_path = DATABASES + "/busco",
-        out_dir = "{results_directory}/samples/{sample}/busco",
+        out_dir = "{output_directory}/samples/{sample}/busco",
     conda: "../envs/busco.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.busco_sample.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.busco_sample.{sample}.tsv"
     threads: 1 # Because run_sepp hangs for a long time, not doing anything, I'd rather have more processes started on any type CPU.
     resources:
         mem_mb = 8192,
@@ -107,7 +107,7 @@ rule busco:
 
         # Cat all auto lineage results together or create empty file
         # The following cat command will fail if the glob doesn't resolve any files: This is the wanted behaviour.
-        cat {wildcards.results_directory}/samples/{wildcards.sample}/busco/auto_lineage/*/short_summary.json \
+        cat {wildcards.output_directory}/samples/{wildcards.sample}/busco/auto_lineage/*/short_summary.json \
         > "{output.table_extract}_temp"
         
         >&2 echo "ac2: Intermediate results have been collected, as they are still useful."

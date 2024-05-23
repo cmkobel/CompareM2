@@ -101,8 +101,8 @@ base_variable = os.environ['ASSCOM2_BASE'] # rename to ASSCOM2_BASE
 DATABASES = os.environ['ASSCOM2_DATABASES'] # Defines where the databases are stored. One for all. when snakemake issue 262 is solved I'll make this more flexible for each rule.
 
 # Other constants.
-results_directory = config["output_directory"] # Should be renamed to "output_directory".
-void_report = f"date -Iseconds >> {results_directory}/.asscom2_void_report.flag" # The modification time of this file tells the report subpipeline whether it needs to run. Thus, void_report is called in the end of every successful rule.
+output_directory = config["output_directory"] # Should be renamed to "output_directory".
+void_report = f"date -Iseconds >> {output_directory}/.asscom2_void_report.flag" # The modification time of this file tells the report subpipeline whether it needs to run. Thus, void_report is called in the end of every successful rule.
 
 
 
@@ -163,7 +163,7 @@ df['basename'] = [os.path.basename(i) for i in df['input_file'].tolist()]
 df['basename_clean'] = df['basename'].str.replace(' ','_').str.replace(',','_').str.replace('"','_').str.replace('\'','_') # Convert punctuation marks to underscores: Makes everything easier.
 df['sample'] = [".".join((i.split(".")[:-1])) for i in df['basename_clean']] # Remove extension by splitting, removing last, and joining.
 df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extract extension
-df['input_file_fasta'] = results_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fna" # This is where the input file is copied to in the first snakemake rule "copy".
+df['input_file_fasta'] = output_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fna" # This is where the input file is copied to in the first snakemake rule "copy".
 
 df['1-index'] = [i+1 for i in range(len(df))]
 
@@ -204,8 +204,8 @@ if not os.path.isdir(DATABASES):
 
 
 # --- Make sure the output directory exists. ------------------------
-if not os.path.isdir(results_directory):
-    os.mkdir(results_directory) # If running with local profile, the directory won't be created. This is necessary in the edge case that the user _only_ runs "--until report".
+if not os.path.isdir(output_directory):
+    os.mkdir(output_directory) # If running with local profile, the directory won't be created. This is necessary in the edge case that the user _only_ runs "--until report".
 
 
 # --- Localrules and ruleorders -------------------------------------
@@ -221,39 +221,39 @@ localrules: metadata, annotate, checkm2_download, dbcan_download, busco_download
 # --- Main rule to collect all targets ------------------------------
 rule all:
     input: expand([\
-        "{results_directory}/metadata.tsv", \
-        "{results_directory}/.install_report_environment_aot.flag", \
-        "{results_directory}/assembly-stats/assembly-stats.tsv", \
-        "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
-        "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
-        "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
-        "{results_directory}/samples/{sample}/bakta/{sample}.gff", \
-        "{results_directory}/samples/{sample}/.annotation/{sample}.gff", \
-        "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.gff", \
-        "{results_directory}/samples/{sample}/dbcan/overview.txt", \
-        "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
-        "{results_directory}/samples/{sample}/antismash/{sample}.json", \
-        "{results_directory}/checkm2/quality_report.tsv", \
-        "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
-        "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
-        "{results_directory}/abricate/card_detailed.tsv", \
-        "{results_directory}/mlst/mlst.tsv", \
-        "{results_directory}/panaroo/summary_statistics.txt", \
-        "{results_directory}/snp-dists/snp-dists.tsv", \
-        "{results_directory}/snp-dists/.done.flag", \
-        "{results_directory}/mashtree/mashtree.newick", \
-        "{results_directory}/treecluster/treecluster_threshold_0.10.tsv", \
-        "{results_directory}/fasttree/fasttree.newick", \
-        "{results_directory}/iqtree/core_genome_iqtree.treefile"], \
-        results_directory = results_directory, sample = df["sample"]) 
+        "{output_directory}/metadata.tsv", \
+        "{output_directory}/.install_report_environment_aot.flag", \
+        "{output_directory}/assembly-stats/assembly-stats.tsv", \
+        "{output_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
+        "{output_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
+        "{output_directory}/samples/{sample}/prokka/{sample}.gff", \
+        "{output_directory}/samples/{sample}/bakta/{sample}.gff", \
+        "{output_directory}/samples/{sample}/.annotation/{sample}.gff", \
+        "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.gff", \
+        "{output_directory}/samples/{sample}/dbcan/overview.txt", \
+        "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
+        "{output_directory}/samples/{sample}/antismash/{sample}.json", \
+        "{output_directory}/checkm2/quality_report.tsv", \
+        "{output_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
+        "{output_directory}/gtdbtk/gtdbtk.summary.tsv", \
+        "{output_directory}/abricate/card_detailed.tsv", \
+        "{output_directory}/mlst/mlst.tsv", \
+        "{output_directory}/panaroo/summary_statistics.txt", \
+        "{output_directory}/snp-dists/snp-dists.tsv", \
+        "{output_directory}/snp-dists/.done.flag", \
+        "{output_directory}/mashtree/mashtree.newick", \
+        "{output_directory}/treecluster/treecluster_threshold_0.10.tsv", \
+        "{output_directory}/fasttree/fasttree.newick", \
+        "{output_directory}/iqtree/core_genome_iqtree.treefile"], \
+        output_directory = output_directory, sample = df["sample"]) 
 
-        # "{results_directory}/snp-dists/done.flag", \
-        #"{results_directory}/samples/{sample}/gapseq/gapseq_done.flag", \ # Still working on this one.
+        # "{output_directory}/snp-dists/done.flag", \
+        #"{output_directory}/samples/{sample}/gapseq/gapseq_done.flag", \ # Still working on this one.
 
 # Write the sample table for later reference.
 rule metadata:
     input: df['input_file_fasta']
-    output: "{results_directory}/metadata.tsv"
+    output: "{output_directory}/metadata.tsv"
     params: dataframe = df.to_csv(None, index_label = "index", sep = "\t")
     resources:
         runtime = "1h"
@@ -307,7 +307,7 @@ include: "rules/batch_phylogeny.smk"
 #    2) The conda/mamba debugging is taken care of, without having to wait for jobs to finish on fresh installations.
 # Since all snakemake conda environments are installed in $SNAKEMAKE_CONDA_PREFIX set to ${ASSCOM2_BASE}/conda_base, reuse is guaranteed.
 rule install_report_environment_aot:
-    output: touch(f"{results_directory}/.install_report_environment_aot.flag")
+    output: touch(f"{output_directory}/.install_report_environment_aot.flag")
     conda: "../dynamic_report/workflow/envs/r-markdown.yaml"
     shell: """
 
@@ -347,52 +347,52 @@ rule downloads:
 # Blink-of-an-eye analysis
 rule fast:
     input: expand(\
-        ["{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
-        "{results_directory}/assembly-stats/assembly-stats.tsv", \
-        "{results_directory}/mashtree/mashtree.newick"], \
-        results_directory = results_directory, \
+        ["{output_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
+        "{output_directory}/assembly-stats/assembly-stats.tsv", \
+        "{output_directory}/mashtree/mashtree.newick"], \
+        output_directory = output_directory, \
         sample = df["sample"]) # TODO: define the expansion in each rule instead.
 
 
 # Rules designed for bins of metagenomic origin
 rule meta:
     input: expand(\
-        ["{results_directory}/metadata.tsv", \
-        "{results_directory}/.install_report_environment_aot.flag", \
-        "{results_directory}/assembly-stats/assembly-stats.tsv", \
-        "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
-        "{results_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
-        "{results_directory}/checkm2/quality_report.tsv", \
-        "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
-        "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
-        "{results_directory}/samples/{sample}/dbcan/overview.txt", \
-        "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
-        "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
-        "{results_directory}/mlst/mlst.tsv", \
-        "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
-        "{results_directory}/mashtree/mashtree.newick"], \
-        results_directory = results_directory, \
+        ["{output_directory}/metadata.tsv", \
+        "{output_directory}/.install_report_environment_aot.flag", \
+        "{output_directory}/assembly-stats/assembly-stats.tsv", \
+        "{output_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
+        "{output_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
+        "{output_directory}/checkm2/quality_report.tsv", \
+        "{output_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
+        "{output_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
+        "{output_directory}/samples/{sample}/dbcan/overview.txt", \
+        "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
+        "{output_directory}/gtdbtk/gtdbtk.summary.tsv", \
+        "{output_directory}/mlst/mlst.tsv", \
+        "{output_directory}/samples/{sample}/prokka/{sample}.gff", \
+        "{output_directory}/mashtree/mashtree.newick"], \
+        output_directory = output_directory, \
         sample = df["sample"])
 
 
 # Rules designed for cultured isolates
 rule isolate:
     input: expand(\
-        ["{results_directory}/metadata.tsv", \
-        "{results_directory}/.install_report_environment_aot.flag", \
-        "{results_directory}/assembly-stats/assembly-stats.tsv", \
-        "{results_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
-        "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
-        "{results_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
-        "{results_directory}/gtdbtk/gtdbtk.summary.tsv", \
-        "{results_directory}/mlst/mlst.tsv", \
-        "{results_directory}/abricate/card_detailed.tsv", \
-        "{results_directory}/samples/{sample}/prokka/{sample}.gff", \
-        "{results_directory}/panaroo/summary_statistics.txt", \
-        "{results_directory}/fasttree/fasttree.newick", \
-        "{results_directory}/snp-dists/snp-dists.tsv", \
-        "{results_directory}/mashtree/mashtree.newick"], \
-        results_directory = results_directory, sample = df["sample"])
+        ["{output_directory}/metadata.tsv", \
+        "{output_directory}/.install_report_environment_aot.flag", \
+        "{output_directory}/assembly-stats/assembly-stats.tsv", \
+        "{output_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
+        "{output_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", \
+        "{output_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
+        "{output_directory}/gtdbtk/gtdbtk.summary.tsv", \
+        "{output_directory}/mlst/mlst.tsv", \
+        "{output_directory}/abricate/card_detailed.tsv", \
+        "{output_directory}/samples/{sample}/prokka/{sample}.gff", \
+        "{output_directory}/panaroo/summary_statistics.txt", \
+        "{output_directory}/fasttree/fasttree.newick", \
+        "{output_directory}/snp-dists/snp-dists.tsv", \
+        "{output_directory}/mashtree/mashtree.newick"], \
+        output_directory = output_directory, sample = df["sample"])
 
 
 
@@ -407,7 +407,7 @@ onstart:
     
         echo "# config for dynamic report pipeline" > .report_config.yaml
         echo batch_title: \"{batch_title}\" >> .report_config.yaml
-        echo results_directory: \"{results_directory}\" >> .report_config.yaml
+        echo output_directory: \"{output_directory}\" >> .report_config.yaml
         echo base_variable: \"{base_variable}\" >> .report_config.yaml
         echo __version__: \"{__version__}\" >> .report_config.yaml
         
@@ -415,7 +415,7 @@ onstart:
     
     
 # TODO: A speedup could be to list the possible locations, and skipping the missing ones. By doing a full run and listing all possible files, these can be easily enlisted.
-final = f"""find {results_directory} -name ".software_version.txt" | xargs cat | sort | uniq > {results_directory}/version_info.txt"""
+final = f"""find {output_directory} -name ".software_version.txt" | xargs cat | sort | uniq > {output_directory}/version_info.txt"""
 onsuccess:
     shell(final)
 onerror:

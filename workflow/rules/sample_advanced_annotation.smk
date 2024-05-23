@@ -2,15 +2,15 @@
 # By default it runs TIGRFAM, Hamap, Pfam
 rule interproscan:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
-        aminoacid = "{results_directory}/samples/{sample}/.annotation/{sample}.faa",
+        metadata = "{output_directory}/metadata.tsv",
+        aminoacid = "{output_directory}/samples/{sample}/.annotation/{sample}.faa",
         # No external database is needed.
     output:
-        tsv = "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv",
+        tsv = "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv",
     params:
-        file_base = "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan",
+        file_base = "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan",
     conda: "../envs/interproscan.yaml" # Not sure if it should be called by a version number?
-    benchmark: "{results_directory}/benchmarks/benchmark.interproscan.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.interproscan.{sample}.tsv"
     threads: 8
     resources: 
         mem_mb = 8000
@@ -38,16 +38,16 @@ rule interproscan:
 
 rule dbcan: # I can't decide whether this rule should really be called "run_dbcan", since that is the name of the software.
     input: 
-        metadata = "{results_directory}/metadata.tsv",
-        aminoacid = "{results_directory}/samples/{sample}/.annotation/{sample}.faa",
+        metadata = "{output_directory}/metadata.tsv",
+        aminoacid = "{output_directory}/samples/{sample}/.annotation/{sample}.faa",
         database_representative = DATABASES + "/dbcan/ac2_dbcan_database_representative.flag"
     output: 
-        overview_table = "{results_directory}/samples/{sample}/dbcan/overview.txt",
-        diamond_table = "{results_directory}/samples/{sample}/dbcan/diamond.out"
+        overview_table = "{output_directory}/samples/{sample}/dbcan/overview.txt",
+        diamond_table = "{output_directory}/samples/{sample}/dbcan/diamond.out"
     params: 
-        out_dir = "{results_directory}/samples/{sample}/dbcan"
+        out_dir = "{output_directory}/samples/{sample}/dbcan"
     conda: "../envs/dbcan.yaml" # Not sure if it should be called by a version number?
-    benchmark: "{results_directory}/benchmarks/benchmark.dbcan.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.dbcan.{sample}.tsv"
     threads: 8
     resources: 
         mem_mb = 8000
@@ -82,16 +82,16 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
 
 rule gapseq_find:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
-        faa = "{results_directory}/samples/{sample}/.annotation/{sample}.faa"
+        metadata = "{output_directory}/metadata.tsv",
+        faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa"
     output:
-        dir = directory("{results_directory}/samples/{sample}/gapseq"),
-        pathways = "{results_directory}/samples/{sample}/gapseq/{sample}-Pathways.tbl",
-        reactions = "{results_directory}/samples/{sample}/gapseq/{sample}-Reactions.tbl",
-        transporter = "{results_directory}/samples/{sample}/gapseq/{sample}-Transporter.tbl",
-        flag = "{results_directory}/samples/{sample}/gapseq/gapseq_done.flag",
+        dir = directory("{output_directory}/samples/{sample}/gapseq"),
+        pathways = "{output_directory}/samples/{sample}/gapseq/{sample}-Pathways.tbl",
+        reactions = "{output_directory}/samples/{sample}/gapseq/{sample}-Reactions.tbl",
+        transporter = "{output_directory}/samples/{sample}/gapseq/{sample}-Transporter.tbl",
+        flag = "{output_directory}/samples/{sample}/gapseq/gapseq_done.flag",
     conda: "../envs/gapseq.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.gapseq_find_sample.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.gapseq_find_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 4
@@ -133,24 +133,24 @@ rule gapseq_find:
     
 rule gapseq: # Continuation on gapseq_find results.
     input: 
-        metadata = "{results_directory}/metadata.tsv",
-        assembly = "{results_directory}/samples/{sample}/{sample}.fna",
-        pathways = "{results_directory}/samples/{sample}/gapseq/{sample}_pathways.tsv",
+        metadata = "{output_directory}/metadata.tsv",
+        assembly = "{output_directory}/samples/{sample}/{sample}.fna",
+        pathways = "{output_directory}/samples/{sample}/gapseq/{sample}_pathways.tsv",
     output:
-        rxnWeights = "{results_directory}/samples/{sample}/gapseq/{sample}-rxnWeights.tbl",
-        rxnXgenes = "{results_directory}/samples/{sample}/gapseq/{sample}-rxnXgenes.tbl",
-        draft = "{results_directory}/samples/{sample}/gapseq/{sample}-draft.tbl",
-        draft_xml = "{results_directory}/samples/{sample}/gapseq/{sample}-draft_xml.xml",
+        rxnWeights = "{output_directory}/samples/{sample}/gapseq/{sample}-rxnWeights.tbl",
+        rxnXgenes = "{output_directory}/samples/{sample}/gapseq/{sample}-rxnXgenes.tbl",
+        draft = "{output_directory}/samples/{sample}/gapseq/{sample}-draft.tbl",
+        draft_xml = "{output_directory}/samples/{sample}/gapseq/{sample}-draft_xml.xml",
 
-        filled = "{results_directory}/samples/{sample}/gapseq/{sample}.tbl",
-        filled_xml = "{results_directory}/samples/{sample}/gapseq/{sample}.xml",
+        filled = "{output_directory}/samples/{sample}/gapseq/{sample}.tbl",
+        filled_xml = "{output_directory}/samples/{sample}/gapseq/{sample}.xml",
         
-        flag = "{results_directory}/samples/{sample}/gapseq/gapseq_done.flag",
+        flag = "{output_directory}/samples/{sample}/gapseq/gapseq_done.flag",
     params:
-        dir = "{results_directory}/samples/{sample}/gapseq",
+        dir = "{output_directory}/samples/{sample}/gapseq",
 
     conda: "../envs/gapseq.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.gapseq_find_sample.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.gapseq_find_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 4
@@ -184,16 +184,16 @@ rule gapseq: # Continuation on gapseq_find results.
 
 rule antismash:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
+        metadata = "{output_directory}/metadata.tsv",
         database_representative = DATABASES + "/antismash/ac2_antismash_database_representative.flag",
-        gbk = "{results_directory}/samples/{sample}/prokka/{sample}.gbk",
+        gbk = "{output_directory}/samples/{sample}/prokka/{sample}.gbk",
     output:
-        json = "{results_directory}/samples/{sample}/antismash/{sample}.json",
+        json = "{output_directory}/samples/{sample}/antismash/{sample}.json",
     params:
         DATABASES = DATABASES,
-        dir = "{results_directory}/samples/{sample}/antismash",
+        dir = "{output_directory}/samples/{sample}/antismash",
     conda: "../envs/antismash.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.antismash_sample.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.antismash_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 8

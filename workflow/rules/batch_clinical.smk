@@ -1,19 +1,19 @@
 
 rule abricate:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
+        metadata = "{output_directory}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist(),
     output:
-        ncbi_detailed = "{results_directory}/abricate/ncbi_detailed.tsv",
-        ncbi_sum = "{results_directory}/abricate/ncbi_summarized.tsv",
-        card_detailed = "{results_directory}/abricate/card_detailed.tsv",
-        card_sum = "{results_directory}/abricate/card_summarized.tsv",
-        plasmidfinder_detailed = "{results_directory}/abricate/plasmidfinder_detailed.tsv",
-        plasmidfinder_sum = "{results_directory}/abricate/plasmidfinder_summarized.tsv",
-        vfdb_detailed = "{results_directory}/abricate/vfdb_detailed.tsv",
-        vfdb_sum = "{results_directory}/abricate/vfdb_summarized.tsv",
+        ncbi_detailed = "{output_directory}/abricate/ncbi_detailed.tsv",
+        ncbi_sum = "{output_directory}/abricate/ncbi_summarized.tsv",
+        card_detailed = "{output_directory}/abricate/card_detailed.tsv",
+        card_sum = "{output_directory}/abricate/card_summarized.tsv",
+        plasmidfinder_detailed = "{output_directory}/abricate/plasmidfinder_detailed.tsv",
+        plasmidfinder_sum = "{output_directory}/abricate/plasmidfinder_summarized.tsv",
+        vfdb_detailed = "{output_directory}/abricate/vfdb_detailed.tsv",
+        vfdb_sum = "{output_directory}/abricate/vfdb_summarized.tsv",
     conda: "../envs/abricate.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.abricate.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.abricate.tsv"
     shell: """
 
         # Collect version number.
@@ -45,15 +45,15 @@ else:
 
 rule mlst:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
+        metadata = "{output_directory}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist(),
-    output: "{results_directory}/mlst/mlst.tsv",
+    output: "{output_directory}/mlst/mlst.tsv",
     params:
         mlst_scheme_interpreted = mlst_scheme_interpreted,
-        list_ = "{results_directory}/mlst/mlst_schemes.txt", 
+        list_ = "{output_directory}/mlst/mlst_schemes.txt", 
     threads: 4
     conda: "../envs/mlst.yaml"
-    benchmark: "{results_directory}/benchmarks/mlst.tsv"
+    benchmark: "{output_directory}/benchmarks/mlst.tsv"
     shell: """
     
         # Collect version number.

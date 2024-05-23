@@ -73,7 +73,7 @@ if (debug) {
     # strachan_campylo on threadripper through posit workbench
     # strachan_campylo on threadripper
     base_variable = "~/evo/asscom2"
-    results_directory = "results_ac2"
+    output_directory = "results_ac2"
     setwd("~/asscom2/tests/strachan_campylo")
     setwd("~/evo/asscom2/tests/MAGs/")
     
@@ -81,51 +81,51 @@ if (debug) {
     
     # strachan_campylo on threadripper
     base_variable = "~/asscom2"
-    results_directory = "results_ac2"
+    output_directory = "results_ac2"
     setwd("~/asscom2/tests/strachan_campylo")
     batch_title = basename(getwd())
 
 
     # E._faecium_30 on thylakoid
     base_variable = "~/assemblycomparator2"
-    results_directory = "results_ac2"
+    output_directory = "results_ac2"
     setwd("~/assemblycomparator2/tests/E._faecium_30")
     batch_title = basename(getwd())
 
     # MAGs on thylakoid
     base_variable = "~/assemblycomparator2"
-    results_directory = "results_ac2"
+    output_directory = "results_ac2"
     setwd("~/assemblycomparator2/tests/MAGs")
     batch_title = basename(getwd())
 
     # MAGs on axodines
     base_variable = "~/axodines/assemblycomparator2"
-    results_directory = "results_ac2"
+    output_directory = "results_ac2"
     setwd("~/axodines/assemblycomparator2/tests/MAGs")
     batch_title = basename(getwd())
 
     # synth rumen on axodines
     base_variable = "~/axodines/assemblycomparator2"
-    results_directory = "results_ac2"
+    output_directory = "results_ac2"
     setwd("~/axodines/assemblycomparator2/tests/synth_rumen")
     batch_title = basename(getwd())
     
     
     # synth rumen copied to local
     base_variable = "~/assemblycomparator2"
-    results_directory = "results_ac2"
+    output_directory = "results_ac2"
     setwd("~/assemblycomparator2/tests/synth_rumen")
     batch_title = basename(getwd())
     
     # strachans on macbook
     base_variable = "~/assemblycomparator2"
-    results_directory = "results_ac2"
+    output_directory = "results_ac2"
     setwd("~/assemblycomparator2/tests/strachan_campylo")
     batch_title = basename(getwd())
     
     # student bins on macbook
     base_variable = "~/assemblycomparator2"
-    results_directory = "results_ac2"
+    output_directory = "results_ac2"
     setwd("~/assemblycomparator2/tests/student")
     batch_title = basename(getwd())
     
@@ -134,7 +134,7 @@ if (debug) {
 ```
 
 
-`r paste0("This report was generated using the results located at ", results_directory, " using the installation at ", base_variable, ".")`
+`r paste0("This report was generated using the results located at ", output_directory, " using the installation at ", base_variable, ".")`
 
 
 ```{r setup-globals, echo=F, message=F, warning=F}
@@ -167,7 +167,7 @@ custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, wid
     
     name = paste(batch_title, filename, sep = "__")
     
-    write_tsv(x, paste0(results_directory, "/tables/", name, ".tsv")) # Save a copy on the harddisk for people without browsers.
+    write_tsv(x, paste0(output_directory, "/tables/", name, ".tsv")) # Save a copy on the harddisk for people without browsers.
     
     DT::datatable(
         x,
@@ -204,7 +204,7 @@ custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, wid
 # Import the metadata table
 # metadata_translate makes it easy for us later to convert the long paths to short and simple sample names, also highlights potential missing sample analyses
 
-metadata_file = paste0(results_directory, "/metadata.tsv")
+metadata_file = paste0(output_directory, "/metadata.tsv")
 
 metadata_df = read_tsv(metadata_file) %>%
     arrange(sample)  # Alphabetical
@@ -226,7 +226,7 @@ ARRANGEMENT = "lexicographic" # Global variable.
 
 # If mashtree has been run, we might as well order the samples by the order of the tree. This is of course only a luxury, and not a dependency. In case the user has trouble running mashtree -which is unlikely- it is great to have a workaround which is to use the alphabetical order which is already defined above.
 
-mashtree_voluntary_dependency = paste0(results_directory, "/mashtree/mashtree.newick")
+mashtree_voluntary_dependency = paste0(output_directory, "/mashtree/mashtree.newick")
 if (file.exists(mashtree_voluntary_dependency)) {
     
     # Overwrite metadata_translate in case the newick file from mashtree exists.
@@ -281,9 +281,9 @@ Here is an overview of the number of result files that have been found for each 
 
 # glob = list()
 
-# glob$assembly_stats = Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv"))
-# glob$prokka = Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt"))
-# glob$busco = Sys.glob(paste0(results_directory, "/samples/*/busco/*_omesnatoehsnatoe_extract.tsv"))
+# glob$assembly_stats = Sys.glob(paste0(output_directory, "/assembly-stats/assembly-stats.tsv"))
+# glob$prokka = Sys.glob(paste0(output_directory, "/samples/*/prokka/*.txt"))
+# glob$busco = Sys.glob(paste0(output_directory, "/samples/*/busco/*_omesnatoehsnatoe_extract.tsv"))
 
 # Each section of this report is rendered on the basis of the presence of relevant result files.
 # In the table below, the globs, and expected number of globs are defined. 
@@ -291,25 +291,25 @@ section_definition_table = tribble(
 
     ~section,            ~expectation,                         ~glob,
 
-    "assembly_stats",    1, Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv")),
-    "sequence_lengths",  N, Sys.glob(paste0(results_directory, "/samples/*/sequence_lengths/*.tsv")),
-    "busco",             N, Sys.glob(paste0(results_directory, "/samples/*/busco/short_summary_extract.tsv")),
-    "checkm2",           1, Sys.glob(paste0(results_directory, "/checkm2/quality_report.tsv")),
-    "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
-    "mlst",              1, Sys.glob(paste0(results_directory, "/mlst/mlst.tsv")),
+    "assembly_stats",    1, Sys.glob(paste0(output_directory, "/assembly-stats/assembly-stats.tsv")),
+    "sequence_lengths",  N, Sys.glob(paste0(output_directory, "/samples/*/sequence_lengths/*.tsv")),
+    "busco",             N, Sys.glob(paste0(output_directory, "/samples/*/busco/short_summary_extract.tsv")),
+    "checkm2",           1, Sys.glob(paste0(output_directory, "/checkm2/quality_report.tsv")),
+    "gtdbtk",            1, Sys.glob(paste0(output_directory, "/gtdbtk/gtdbtk.summary.tsv")),
+    "mlst",              1, Sys.glob(paste0(output_directory, "/mlst/mlst.tsv")),
     "abricate",          4, Sys.glob(
         c(
-            paste0(results_directory, "/abricate/ncbi_detailed.tsv"),
-            paste0(results_directory, "/abricate/card_detailed.tsv"),
-            paste0(results_directory, "/abricate/plasmidfinder_detailed.tsv"),
-            paste0(results_directory, "/abricate/vfdb_detailed.tsv")
+            paste0(output_directory, "/abricate/ncbi_detailed.tsv"),
+            paste0(output_directory, "/abricate/card_detailed.tsv"),
+            paste0(output_directory, "/abricate/plasmidfinder_detailed.tsv"),
+            paste0(output_directory, "/abricate/vfdb_detailed.tsv")
         )
     ),
-    "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
-    "kegg_pathway",      1, Sys.glob(paste0(results_directory, "/kegg_pathway/kegg_pathway_enrichment_analysis.tsv")),
-    "dbcan",             N, Sys.glob(paste0(results_directory, "/samples/*/dbcan/dbcan-sub.hmm.out")),
-    "panaroo",             1, Sys.glob(paste0(results_directory, "/panaroo/gene_presence_absence.Rtab")), # This also counts for the panaroo summary file.
-    "snp_dists",         1, Sys.glob(paste0(results_directory, "/snp-dists/snp-dists.tsv")),
+    "prokka",            N, Sys.glob(paste0(output_directory, "/samples/*/prokka/*.txt")),
+    "kegg_pathway",      1, Sys.glob(paste0(output_directory, "/kegg_pathway/kegg_pathway_enrichment_analysis.tsv")),
+    "dbcan",             N, Sys.glob(paste0(output_directory, "/samples/*/dbcan/dbcan-sub.hmm.out")),
+    "panaroo",             1, Sys.glob(paste0(output_directory, "/panaroo/gene_presence_absence.Rtab")), # This also counts for the panaroo summary file.
+    "snp_dists",         1, Sys.glob(paste0(output_directory, "/snp-dists/snp-dists.tsv")),
     "mashtree",          1, Sys.glob(mashtree_voluntary_dependency) # Reuse from earlier.
     
     ) %>%

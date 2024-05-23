@@ -5,7 +5,7 @@
 __author__ = 'Carl M. Kobel'
 
 # These could be written to the config file when running the main pipeline.
-results_directory = config['results_directory'] # E.g. results_ac2
+output_directory = config['output_directory'] # E.g. results_ac2
 base_variable = config['base_variable'] # E.g. path/to/installation/of/assemblycomparator2
 batch_title = config['batch_title'] # E.g. E._faecium 
 __version__ = config['__version__']
@@ -13,20 +13,20 @@ __version__ = config['__version__']
 containerized: f"docker://cmkobel/assemblycomparator2:v{__version__}"
 #containerized: f"docker://cmkobel/assemblycomparator2:latest" # DEBUG
 
-print('report subpipeline: results_directory:', results_directory)
+print('report subpipeline: output_directory:', output_directory)
 print('report subpipeline: base_variable:', base_variable)
 
 
 try: 
-    os.mkdir(f"{results_directory}/tables") # When using apptainer, I've had some problems with "mkdir: cannot create directory ‘/home/thylakoid/pnytera’: Read-only file system". I think moving this command out of the shell script may solve the problem?
+    os.mkdir(f"{output_directory}/tables") # When using apptainer, I've had some problems with "mkdir: cannot create directory ‘/home/thylakoid/pnytera’: Read-only file system". I think moving this command out of the shell script may solve the problem?
 except:
     pass
 
 
 def should_run(wildcards):
-    if os.path.isfile(f"{results_directory}/metadata.tsv") and os.path.isfile(f"{results_directory}/.asscom2_void_report.flag"):
-        #return {"flag": f"{results_directory}/.asscom2_void_report.flag", "metadata": f"{results_directory}/metadata.tsv"}
-        return [f"{results_directory}/report_{batch_title}.html"]
+    if os.path.isfile(f"{output_directory}/metadata.tsv") and os.path.isfile(f"{output_directory}/.asscom2_void_report.flag"):
+        #return {"flag": f"{output_directory}/.asscom2_void_report.flag", "metadata": f"{output_directory}/metadata.tsv"}
+        return [f"{output_directory}/report_{batch_title}.html"]
     else:
         return [] # empty list, no running requirement.
 
@@ -43,17 +43,17 @@ rule all:
 rule dynamic_report:
     input:
         #unpack(should_run)
-        flag = f"{results_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
-        metadata = f"{results_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
+        flag = f"{output_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
+        metadata = f"{output_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
     conda: "envs/r-markdown.yaml"
     params: 
         base_variable = base_variable,
-        results_directory = results_directory,
+        output_directory = output_directory,
         batch_title = batch_title,
         end_script = f"{base_variable}/dynamic_report/workflow/scripts/report_end_script.sh",
     output: 
-        html = f"{results_directory}/report_{batch_title}.html",
-    #output: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
+        html = f"{output_directory}/report_{batch_title}.html",
+    #output: expand("{output_directory}/report_{batch_title}.html", output_directory = output_directory, batch_title = batch_title)
     
     shell: """	    
         
@@ -64,12 +64,12 @@ rule dynamic_report:
         cp -r {base_variable}/dynamic_report/workflow/scripts .writable_template_copy # This one fails when using apptainer. Maybe I just need to bind it.
         
         # Is this still used?
-        # mkdir -p {params.results_directory}/tables # Directory for the rmarkdown to write its compiled tables to.
+        # mkdir -p {params.output_directory}/tables # Directory for the rmarkdown to write its compiled tables to.
     
         Rscript -e '
                         
             # Set parameters
-            base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"; version_string = "{__version__}"
+            base_variable = "{params.base_variable}"; output_directory = "{params.output_directory}"; batch_title = "{params.batch_title}"; version_string = "{__version__}"
             
             current_dir = getwd()
             
@@ -77,7 +77,7 @@ rule dynamic_report:
             rmarkdown::render(
                 input = ".writable_template_copy/report_template.rmd", 
                 output_format = "html_document",
-                output_file = paste0(current_dir, "/{params.results_directory}/report_{batch_title}.html"),
+                output_file = paste0(current_dir, "/{params.output_directory}/report_{batch_title}.html"),
                 knit_root_dir = current_dir
             )'
 
@@ -87,7 +87,7 @@ rule dynamic_report:
 
 
         # End script
-        test -f "{params.end_script}" && echo "running end script" && . {params.end_script} {batch_title} {results_directory}/report_{batch_title}.html 
+        test -f "{params.end_script}" && echo "running end script" && . {params.end_script} {batch_title} {output_directory}/report_{batch_title}.html 
         
 
         echo "report subpipeline: report written to {output.html}"
