@@ -13,7 +13,7 @@ rule kegg_pathway:
     shell: """
     
         # Collect version number.
-        R -s -q -e "library(clusterProfiler); sessionInfo()"  | grep -P "R version|clusterProfiler" > "$(dirname {output.pathway_enrichment}).software_version.txt"
+        R -s -q -e "library(clusterProfiler); sessionInfo()"  | grep -P "R version|clusterProfiler" > "$(dirname {output.pathway_enrichment})/.software_version.txt"
 
         Rscript {params.script:q} \
             {input.kegg_asset:q} \

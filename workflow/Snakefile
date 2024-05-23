@@ -2,7 +2,7 @@
 # somehow help to bring just a little more peace 
 # in this troubled world.
 
-__author__ = 'Carl M. Kobel'
+__author__ = "Carl M. Kobel"
 
 
 # --- Development: Versioning ---------------------------------------
@@ -82,23 +82,27 @@ def get_input_genomes(pattern):
     decoded = ls.stdout.decode('utf-8').split("\n")
     decoded_nonempty = [i for i in decoded if i != ''] # If there are no matches, we must remove the empty result. Also, there is always an empty result in the end because ls returns a final newline.
     return decoded_nonempty
-    
-
-
-    
+        
     
 def interpret_true(text):
     return str(text).strip().lower() == "true"
+    
 
 # --- Field variables -----------------------------------------------
 
-cwd = os.getcwd() # Could I fix #56 by making sure that the physical path of the cwd is obtained here? Update: Nope.
-batch_title = cwd.split("/")[-1]
+# User can manually set the title from the config.
+if config["title"] != "CHANGE_THIS_TO_ACTIVATE": 
+    batch_title = str(config["title"]).strip()
+else: # Otherwise the default is to use the name of the current directory.
+    batch_title = os.getcwd().split("/")[-1]
+
+# Read environment variables.
 base_variable = os.environ['ASSCOM2_BASE'] # rename to ASSCOM2_BASE
 DATABASES = os.environ['ASSCOM2_DATABASES'] # Defines where the databases are stored. One for all. when snakemake issue 262 is solved I'll make this more flexible for each rule.
-results_directory = "results_ac2"
-void_report = f"date -Iseconds >> {results_directory}/.asscom2_void_report.flag" # The modification time of this file tells the report subpipeline whether it needs to run. Thus, void_report is called in the end of every successful rule.
 
+# Other constants.
+results_directory = config["output_directory"] # Should be renamed to "output_directory".
+void_report = f"date -Iseconds >> {results_directory}/.asscom2_void_report.flag" # The modification time of this file tells the report subpipeline whether it needs to run. Thus, void_report is called in the end of every successful rule.
 
 
 
@@ -134,9 +138,7 @@ print("    report downloads fast") # Todo: update.
 # Uses snakemakes built in config system to set default and custom parameters. 
 
 if config['fofn'] != "CHANGE_THIS_TO_ACTIVATE": # Read in the fofn, only if the default value is changed (in the config/config.yaml file or command line --config fofn=path/to/fofn.txt)
-
     input_genomes_parsed = get_fofn(config['fofn'])
-    
 else: # Not using, fofn, use input_genomes which has a default value of "*.fna *.fa *.fasta *.fas", but can also be changed.
     input_genomes_parsed = get_input_genomes(config['input_genomes']) # Run with 'asscom2 --config input_genomes="my_files*.fna' to customize.
 
@@ -238,13 +240,14 @@ rule all:
         "{results_directory}/mlst/mlst.tsv", \
         "{results_directory}/panaroo/summary_statistics.txt", \
         "{results_directory}/snp-dists/snp-dists.tsv", \
+        "{results_directory}/snp-dists/.done.flag", \
         "{results_directory}/mashtree/mashtree.newick", \
         "{results_directory}/treecluster/treecluster_threshold_0.10.tsv", \
         "{results_directory}/fasttree/fasttree.newick", \
         "{results_directory}/iqtree/core_genome_iqtree.treefile"], \
         results_directory = results_directory, sample = df["sample"]) 
 
-
+        # "{results_directory}/snp-dists/done.flag", \
         #"{results_directory}/samples/{sample}/gapseq/gapseq_done.flag", \ # Still working on this one.
 
 # Write the sample table for later reference.
@@ -412,7 +415,7 @@ onstart:
     
     
 # TODO: A speedup could be to list the possible locations, and skipping the missing ones. By doing a full run and listing all possible files, these can be easily enlisted.
-final = f"""find results_ac2/ -name ".software_version.txt" | xargs cat | sort | uniq > {results_directory}/version_info.txt"""
+final = f"""find {results_directory} -name ".software_version.txt" | xargs cat | sort | uniq > {results_directory}/version_info.txt"""
 onsuccess:
     shell(final)
 onerror:

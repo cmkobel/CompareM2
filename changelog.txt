@@ -21,6 +21,7 @@
   - (Use workdir to have a solution to define the output dir and to make available running several batches from the same dir which is pretty much expected.)
   - Implemented TreeCluster that on the 4.5% and 10% basis defines clusters on the mashtree distances so the user can easily get an impression on the relative differences between samples.
   - (Enable ability to input .faa files for annotation. )
+  - Fix an error that makes snp-dists results not show up in the report. (Thanks to @AstaLaugesen)
 
 2.6.2
   - Fix wrong path for dbcan results (not yet implemented in report)
