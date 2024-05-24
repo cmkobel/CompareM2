@@ -148,7 +148,7 @@ rule eggnog:
     input: 
         metadata = "{output_directory}/metadata.tsv",
         database_representative = DATABASES + "/eggnog/ac2_eggnog_database_representative.flag",
-        assembly = "{output_directory}/samples/{sample}/{sample}.fna"
+        assembly = "{output_directory}/samples/{sample}/{sample}.fna" # Would it be possible to input the .faa from .annotation? That one also uses prodigal.
     output:
         ffn = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.fasta",
         gff = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.gff",
@@ -167,9 +167,7 @@ rule eggnog:
         # https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2.1.5-to-v2.1.12#basic-usage
         
         # Collect version number.
-        emapper.py \
-            --data_dir $(dirname {input.database_representative}) \
-            --version > "$(dirname {output.gff})/.software_version.txt"
+        echo "eggnog $(emapper.py --data_dir $(dirname {input.database_representative}) --version) > "$(dirname {output.gff})/.software_version.txt"
             
         # Collect database version.
         echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.gff})/.database_version.txt"

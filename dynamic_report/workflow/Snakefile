@@ -91,15 +91,24 @@ rule dynamic_report:
         
 
         echo "report subpipeline: report written to {output.html}"
-        echo "    ______________________________  "
-        echo "   < The report has been rendered > "
-        echo "    ------------------------------  "
-        echo "           \\   ^__^                 "
-        echo "            \\  (oo)\\_______         "
-        echo "               (__)\\       )\\/\\     "
-        echo "                   ||----w |        "
-        echo "                   ||     ||        "
-
+        echo "   ______________________________    "
+        echo "   < The report has been rendered >  "
+        echo "    ------------------------------   "
+        echo "            \\                       "
+        echo "             \\             /\\        /\\  "
+        echo "              \\           ( \\\\      // ) "
+        echo "               \\           \\_\\\\||||//_/ "
+        echo "                \\           \\/ _  _ \\  "
+        echo "                 \\         \\/|(O)(O)|   "
+        echo "      ___________________\\/  \\      /   "
+        echo "     //                //     |____|      "
+        echo "    /|                \\|     ( 0  0 )    "
+        echo "   / \\       )         V    / \\____/    "
+        echo "\"\"     \\   /_________(  |_/            "
+        echo "      /  / /  /       \\ ||               "
+        echo "      | |  | |        | ||                "
+        echo "      |_|  |_|        |_||                "
+        echo "       \\_\\  \\_\\        \\_\\\\        "
     """
 
 

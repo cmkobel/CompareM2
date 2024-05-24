@@ -55,7 +55,7 @@ rule gtdbtk:
     shell: """
     
         # Collect version number.
-        gtdbtk -v > "$(dirname {output.tsv}).software_version.txt"
+        gtdbtk -v > "$(dirname {output.tsv})/.software_version.txt"
         
         # Collect database version.
         echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.tsv})/.database_version.txt"
