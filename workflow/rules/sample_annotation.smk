@@ -91,9 +91,7 @@ rule prokka:
         | tee {output.log:q} 
 
         # Remove fasta from gff and add sample label
-        gff_fasta_start=$(grep --line-number --extended-regexp "^##FASTA" {output.gff:q} | cut -f1 -d:)
-        head --lines $(($gff_fasta_start-1)) {output.gff:q} \
-        > {output.gff_nofasta:q}
+        sed '/^##FASTA/Q' {output.gff:q} > {output.gff_nofasta:q}
 
         {void_report}
 

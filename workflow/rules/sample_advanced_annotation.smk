@@ -78,6 +78,52 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
 
 
 
+# aka eggnog-mapper
+rule eggnog:
+    input: 
+        metadata = "{results_directory}/metadata.tsv",
+        database_representative = DATABASES + "/eggnog/ac2_eggnog_database_representative.flag",
+        assembly = "{results_directory}/samples/{sample}/{sample}.fna"
+    output:
+        ffn = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.fasta",
+        gff = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.gff",
+        hits = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.hits",
+        orthologs = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.seed_orthologs",
+        tsv = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.annotations",
+    #params:
+            
+    conda: "../envs/eggnog.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.eggnog_sample.{sample}.tsv"
+    resources:
+        mem_mb = 8192,
+    threads: 4 # Not sure if the underlying tools are capable of doing lots of parallel computation.
+    shell: """
+        
+        # https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2.1.5-to-v2.1.12#basic-usage
+        
+        # Collect version number.
+        emapper.py \
+            --data_dir $(dirname {input.database_representative}) \
+            --version > "$(dirname {output.gff})/.software_version.txt"
+            
+        # Collect database version.
+        echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.gff})/.database_version.txt"
+        
+        emapper.py \
+            -m diamond \
+            --data_dir $(dirname {input.database_representative}) \
+            --itype genome \
+            --genepred prodigal \
+            --override \
+            --cpu {threads} \
+            --output_dir "$(dirname {output.gff})/" \
+            -o "{wildcards.sample}" \
+            -i {input.assembly:q} 
+
+        {void_report}
+
+    """
+    
 
 
 rule gapseq_find:
