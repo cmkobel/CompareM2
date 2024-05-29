@@ -27,7 +27,7 @@ __version__ = "2.7.1"
 
 # --- Development: Update Dockerfile --------------------------------
 # Update Dockerfile:
-# export ASSCOM2_BASE="$(pwd -P)"; export ASSCOM2_PROFILE="profiles/apptainer/local"; snakemake --snakefile "${ASSCOM2_BASE}/snakefile" --configfile "${ASSCOM2_BASE}/config.yaml" --containerize > Dockerfile 
+# export ASSCOM2_BASE="$(pwd -P)"; export ASSCOM2_PROFILE="profiles/apptainer/local"; snakemake --snakefile "${ASSCOM2_BASE}/workflow/Snakefile" --configfile "${ASSCOM2_BASE}/config/config.yaml" --containerize > Dockerfile 
 # And then remove the header text (asscom2 logo).
 
 # --- Development: Update DAG figure for documentation --------------
