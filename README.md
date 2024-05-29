@@ -78,7 +78,8 @@ Assemblycomparator2 will then create a sub-directory, named "results_ac2/" conta
 Below is the graph the shows the order of execution of all possible analyses "rules" in Assemblycomparator2:
 
 
-![dag](https://github.com/cmkobel/assemblycomparator2/assets/5913696/3164f060-3b36-4d51-8cf7-29a50d87ec84)
+![dag](https://github.com/cmkobel/assemblycomparator2/assets/5913696/db6b58ac-cec0-43fe-b06f-18048ef3b642)
+
 
 This figure does not show the pseudo rules such as `meta`, `isolate`, `fast`, etc.
 
