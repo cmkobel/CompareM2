@@ -19,11 +19,7 @@
   - Use KEGG KO from eggnog in kegg_pathway. If this doesn't work well I'll consider re-implementing kofam_scan which was removed long time back. Now a_class and b_class are "class" and "group".
   - Implemented a way to set the output directory which now defaults to the old static "results_ac2".
   - Implemented TreeCluster that on the 4.5% and 10% basis defines clusters on the mashtree distances so the user can easily get an impression on the relative differences between samples.
-<<<<<<< HEAD
-  - (Enable ability to input .faa files for annotation. )
   - Fix an error that makes snp-dists results not show up in the report. (Thanks to @AstaLaugesen)
-=======
->>>>>>> fc658ef (use official prokka fasta removal, changelog)
 
 2.6.2
   - Fix wrong path for dbcan results (not yet implemented in report)
