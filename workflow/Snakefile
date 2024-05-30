@@ -32,8 +32,7 @@ __version__ = "2.7.1"
 
 # --- Development: Update DAG figure for documentation --------------
 # Update dag picture in documentation with this command (with anaconda/graphviz)
-# asscom2 --forceall --rulegraph | dot -Tpdf > dag.pdf
-
+# asscom2 --forceall --rulegraph | dot -Tpng > dag.png
 
 import os
 from os import listdir
@@ -58,8 +57,8 @@ envvars:
 # --- Functions and routines ----------------------------------------
 
 def get_fofn(path):
-    """ Reads a newline separated (like csv, tsv) list of input_genomes to process.
-        Uses the pandas csv reader. Not because that is by any means necessary, but because it is simpler than writing my own parsing for loop.
+    """ Reads a newline separated list of input_genomes files to process.
+        Uses the pandas csv reader and reads only the first value in each row.
     """
     df = pd.read_csv(path, header = None, delimiter = "\t")
     as_list = df[0].to_list()
@@ -156,6 +155,18 @@ if df.shape[0] == 0:
     raise Exception("Error: No fasta files in the current directory. Quitting ...")
     #raise Exception("Zero genomic files present.")
     sys.exit(1)
+    
+
+# Collect a list of files that do not exist.
+missing_files = [file for file in df["input_file"].tolist() if not os.path.isfile(file)]
+if len(missing_files) > 0: # If any files do not exist, inform and exit.
+    print("Pipeline: Fatal, all input files must exist.")
+    raise FileNotFoundError(f"Following files are not found: {missing_files}", )
+
+    
+    
+#---
+
 
 df['basename'] = [os.path.basename(i) for i in df['input_file'].tolist()]
 
