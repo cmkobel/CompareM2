@@ -135,10 +135,10 @@ try:
 except KeyError as e: # The profile has not been set.
     # We might check whether apptainer is present. If it is we will use it, if not, we'll use conda.
     if shutil.which("apptainer") is not None: # Apptainer exists, use it.
-        ASSCOM2_PROFILE = f"{ASSCOM2_BASE}/profile/apptainer/local"
+        ASSCOM2_PROFILE = f"{ASSCOM2_BASE}/profile/apptainer/default"
         logger.debug(f"Using apptainer.")
     else: 
-        ASSCOM2_PROFILE = f"{ASSCOM2_BASE}/profile/conda/local"
+        ASSCOM2_PROFILE = f"{ASSCOM2_BASE}/profile/conda/default"
         logger.debug(f"Using conda.")
     
     os.environ["ASSCOM2_PROFILE"] = ASSCOM2_PROFILE
