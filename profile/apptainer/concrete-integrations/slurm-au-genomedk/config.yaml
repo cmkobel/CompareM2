@@ -1,0 +1,50 @@
+
+local-cores: 8 # front end / head node cores
+cores: 2048 # cluster cores
+jobs: 1000 # max parallel jobs
+
+
+keep-going: true 
+#rerun-incomplete: true
+latency-wait: 120
+keep-incomplete: false # true for debugging. Must be false for production, otherwise the user might get confusing --rerun-incomplete queries.
+rerun-triggers: "mtime" # only schedule jobs to rerun if there has been a change in mtime of input/output files. That is: ignore code changes
+
+
+
+
+
+# Apptainer
+use-conda: true # This one is necessary to activate the environment inside the apptainer image.
+use-singularity: true
+
+singularity-prefix: '~/.asscom2/singularity-prefix' # Directory in which singularity images will be stored. Couldn't find a way of using the $ASSCOM_BASE system variable, so users should manually change this here if they want to use something else.
+# singularity-args: "--bind $ASSCOM2_BASE,$ASSCOM2_DATABASES" # Must also bind ASSCOM2_BASE so we can access databases and report scripts etc. When this issue is solved I'll add individual arguments to rules and make it more flexible https://github.com/snakemake/snakemake/issues/262
+singularity-args: '--bind "$ASSCOM2_BASE","$ASSCOM2_DATABASES","$(pwd)"' # Must also bind ASSCOM2_BASE so we can access databases and report scripts etc. When this issue is solved I'll add individual arguments to rules and make it more flexible https://github.com/snakemake/snakemake/issues/262
+
+
+
+
+# ---- Sigma2 Saga SLURM specifics ----
+
+cluster-cancel: "scancel"
+
+
+cluster:
+  sbatch
+    --parsable
+    --cpus-per-task={threads}
+    --mem={resources.mem_mb}
+    --job-name=ac2_{rule}_{wildcards}
+    --output=.snakemake/log/%j-{rule}.out.log
+    --error=.snakemake/log/%j-{rule}.err.log
+    --time={resources.runtime}
+    --account=YOURACCOUNTNAMEHERE 
+
+
+
+
+default-resources:
+  - mem_mb=1024
+  - runtime='12h'
+
