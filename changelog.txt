@@ -1,6 +1,6 @@
 2.7.1
   - Breaking change: File hierarchy now follows what is recommended in the snakemake documentation. Rules are now in individual files.
-  - Breaking change: profiles/ moved to profile/ (sorry)
+  - Breaking change: profiles/ moved to profile/ (sorry). And local profiles are now named "default".
   - Busco runs in protein mode, reusing .faa from prokka (or bakta - see further down). Should result in speedup.
   - Added Panaroo, removed Roary.
   - For dbcan, only the substrates are shown in the dynamic report.

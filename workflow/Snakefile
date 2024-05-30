@@ -157,15 +157,11 @@ if df.shape[0] == 0:
     sys.exit(1)
     
 
-# Collect a list of files that do not exist.
+# Check if there are missing files.
 missing_files = [file for file in df["input_file"].tolist() if not os.path.isfile(file)]
 if len(missing_files) > 0: # If any files do not exist, inform and exit.
-    print("Pipeline: Fatal, all input files must exist.")
-    raise FileNotFoundError(f"Following files are not found: {missing_files}", )
-
-    
-    
-#---
+    print("Pipeline: Error, all input files must exist.")
+    raise FileNotFoundError(f"The following files are not found: {missing_files}")
 
 
 df['basename'] = [os.path.basename(i) for i in df['input_file'].tolist()]
@@ -175,10 +171,9 @@ df['basename_clean'] = df['basename'].str.replace(' ','_').str.replace(',','_').
 df['sample'] = [".".join((i.split(".")[:-1])) for i in df['basename_clean']] # Remove extension by splitting, removing last, and joining.
 df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extract extension
 df['input_file_fasta'] = output_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fna" # This is where the input file is copied to in the first snakemake rule "copy".
+df['1-index'] = [i+1 for i in range(len(df))] # Python usually uses 0-index, which may not be intuitive for lay person users. To make sure no one is confused, we name the index as a "one"-index.
 
-df['1-index'] = [i+1 for i in range(len(df))]
-
-# Check that the directory is not empty, again.
+# Check that list of input files is non-empty.
 if df.shape[0] == 0:
     raise Exception("Error: No fasta files in the current directory. Quitting ...(2)")
     #raise Exception("Zero genomic files present.")
