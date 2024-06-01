@@ -2,18 +2,35 @@
 
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/cmkobel/assemblycomparator2/dry-run.yaml)](https://github.com/cmkobel/assemblycomparator2/actions/) [![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2?label=docker%20pulls)](#installation)  [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/assemblycomparator2?label=Bioconda%20downloads&color=%2300CC00)](#installation) [![conda build](https://img.shields.io/conda/v/bioconda/assemblycomparator2)](#installation)
 
-Assemblycomparator2 is a genomes to report pipeline. It distributes a large number of software tools to analyze bacterial and archaeal genomes, and can be used to compare both isolates and MAGs (metagenome assembled genomes). It generates a visual report that can be easily shared.
+🧬 Assemblycomparator2 "asscom2" is a genomes-to-report pipeline. It accepts prokaryotic (bacterial and archaeal) genomic assemblies and compares them in many different ways. 
 
-It is based on snakemake. Uses Conda to automatically install the individual tools and also has a Docker image that speeds up installation. It automatically downloads necessary databases.
+🦠 Being designed to analyze assemblies of both isolates and metagenomes (MAGs), it is useful for anyone working with microbial genomics.
+
+💾 [Installing](#installation) Assemblycomparator2 on your system gives you access to [many](https://github.com/cmkobel/assemblycomparator2#what-analyses-does-it-do) powerful state-of-the-art tools for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
+
+<img alt="asscom2 animation" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/623f6b42-2de6-457c-8f0d-3b3e5d646967">
+
+
+👩‍🔬 Assemblycomparator2 integrates several analyses that yield scientific results about genomic assemblies on several levels: Quality control, annotation, function and species calling as well as comparative analyses like computation of core/pan genomes and phylogenetics. 
+
+<img width="150" alt="snakemake logo" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/7188e748-9d37-43ae-a5d5-100e9560df1f">
+
+🐍 Assemblycomparator2 works by calling a Snakemake workflow that can be easily modified to use different parameters for the  underlying tools.
+
+<a href="https://github.com/cmkobel/assemblycomparator2/blob/master/readme-demos.md"><img height="192" alt="report document logo" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/e5f9b72c-2137-4850-8779-a5528d8ccbaf"></a>
+
+📙 Central results are dynamically integrated in a compact portable report .html-document. It can be browsed in any web browser and can be easily shared as a single file. This report is generated even if some jobs in the pipeline fail. See [examples](readme-demos.md).
+
+🧑‍💻 Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  Apptainer/Singularity/Docker images and conda environment definitions are available for all dependent software to run.
+
 
 The comprehensible documentation is available at https://assemblycomparator2.readthedocs.org
 
-Please log any issues you have in the [issues](https://github.com/assemblycomparator2/issues) tab.
+Please log any issues you have in the [issues](https://github.com/cmkobel/assemblycomparator2/issues) tab.
 
-You are very welcome to make a pull request.
+Development is active and will continue. We're actively looking for collaborators to join and synergize this project. Pull requests are warmly encouraged.
 
 ---
-
 
 Assemblycomparator2 genomes to report pipeline. Copyright (C) 2024 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)
 
