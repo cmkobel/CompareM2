@@ -44,7 +44,7 @@ Then on the basis of the analysis of each input genomic assembly, these analyses
   - `iqtree` [IQ-tree](http://www.iqtree.org/) Phylogenetic Tree of core genome with bootstrapping (lacking in report).
   - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) Super fast distance measurement
   - `treecluster` [TreeCluster](https://github.com/niemasd/TreeCluster) Clustering of phylogenetic trees.
-  - **A nice report easy to share with your friends ([demos](readme-demos.md))**
+  - **A nice report easy to share with your friends (See demos below)**
 
 
 ## Pseudo-rules

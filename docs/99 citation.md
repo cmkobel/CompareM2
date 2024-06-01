@@ -1,10 +1,14 @@
 
 
-# Citation
+# Citing
+
+## Citing Assemblycomparator2
 
 If you use Assemblycomparator2, you can support further funding by bumping the citation count on this one:
 
   - Kobel CM. *Assemblycomparator2* **GitHub** https://github.com/cmkobel/assemblycomparator2
+
+## References for the included tools
 
 Assemblycomparator2 would not have existed, if it hadn't been for the integrated software packages and their databases. Please reach out to carl.mathias.kobel near nmbu.no if you think something is missing.
 
