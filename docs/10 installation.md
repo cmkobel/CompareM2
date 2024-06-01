@@ -15,7 +15,6 @@ but also includes Mamba - an extremely fast and robust replacement for the Conda
 
 !!! info
     In case you don't use Miniforge you can always install Mamba into any other Conda-based Python distribution with:
-
     ```
     conda install -n base -c conda-forge mamba
     ```
