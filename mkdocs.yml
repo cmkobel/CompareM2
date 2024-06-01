@@ -1,15 +1,9 @@
-site_name: Basic MkDocs Example Project
+site_name: Assemblycomparator2
 theme:
   name: readthedocs
   highlightjs: true
 plugins:
   - search
-  - mkdocstrings:
-      handlers:
-        # See: https://mkdocstrings.github.io/python/usage/
-        python:
-          options:
-            docstring_style: sphinx
 markdown_extensions:
   - markdown_include.include:
       base_path: .
