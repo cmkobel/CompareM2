@@ -12,7 +12,7 @@ Assemblycomparator2 is built on top of Snakemake. Hence, when customizing the As
     asscom2 --config input_genomes="path/to/genomes_*.fna"
     ```
 
-  - Use a "fofn" - a file of file names. 
+  - Use a *fofn* - a file of file names. 
     
     ```
     asscom2 --config fofn="my_fofn.txt"
@@ -25,7 +25,7 @@ Assemblycomparator2 is built on top of Snakemake. Hence, when customizing the As
     ```
 
 
-  - Run a "dry run".
+  - Run a *dry run*.
     
     ```
     asscom2 --config input_genomes="path/to/genomes_*.fna" --dry-run
@@ -37,7 +37,7 @@ Assemblycomparator2 is built on top of Snakemake. Hence, when customizing the As
     asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta"
     ```
 
-  - Run only the "fast" rules. [(read more about pseudo rules)](https://assemblycomparator2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#pseudo-rules)
+  - Run only the *fast* rules. [(read more about pseudo rules)](https://assemblycomparator2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#pseudo-rules)
     
     ```
     asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast
