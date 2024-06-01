@@ -87,4 +87,4 @@ EXAMPLES
   asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast panaroo
 
 LICENSE:
-  assemblycomparator2 "asscom2" genomes to report pipeline. Copyright (C) 2019-2024 Carl M. Kobel and contributors GNU GPL v3 
+  Assemblycomparator2 "asscom2" genomes to report pipeline. Copyright (C) 2019-2024 Carl M. Kobel and contributors GNU GPL v3 
