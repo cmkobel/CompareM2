@@ -1,4 +1,4 @@
-name: immediate_1
+name: dry-run
 on: workflow_dispatch
 
 env:
