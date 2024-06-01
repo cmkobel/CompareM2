@@ -54,7 +54,7 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 
 
 
-## Demo reports
+## Rendered report
 
 These demo reports are available for inspiration while you wait for your own report to complete.
 
