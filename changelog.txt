@@ -20,6 +20,7 @@
   - Implemented a way to set the output directory which now defaults to the old static "results_ac2".
   - Implemented TreeCluster that on the 4.5% and 10% basis defines clusters on the mashtree distances so the user can easily get an impression on the relative differences between samples.
   - Fix an error that makes snp-dists results not show up in the report. (Thanks to @AstaLaugesen)
+  - Added documentation over at https://assemblycomparator2.readthedocs.io/en/latest/
 
 2.6.2
   - Fix wrong path for dbcan results (not yet implemented in report)
