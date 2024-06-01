@@ -17,11 +17,11 @@ OPTIONS
     --config KEY=VALUE [KEY2=VALUE]...
         Pass a parameter to the snakemake pipeline, where the following keys are available, defaults are stated as standard. (Longer explanation in paranthesis.)
             
-            - input_genomes="*.fna *.fa *.fasta *.fas" (Path to input genomes.)
+            - input_genomes="*.fna *.fa *.fasta *.fas" (Path to input genomes. As the default value indicates, all fasta type files in the present directory will be analyzed.)
             
-            - fofn="fofn.txt" (Instead of defining input_genomes, the user can pass a "file of file names".)
+            - fofn="fofn.txt" (Deactivated by default. When set to a path it overrides key input_genomes.)
             
-            - output_directory="my_results" (default "results_ac2")
+            - output_directory="results_ac2" (All results are written here.)
             
             - annotator="prokka" (Choice of annotation tool. Alternatively "bakta".)
             
