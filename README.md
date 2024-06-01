@@ -5,7 +5,7 @@
 
 🦠 Being designed to analyze assemblies of both isolates and metagenomes (MAGs), it is useful for anyone working with microbial genomics.
 
-💾 [Installing](https://assemblycomparator2.readthedocs.io/en/latest/10%20installation/) Assemblycomparator2 on your system gives you access to [many](https://assemblycomparator2.readthedocs.io/en/latest/what%20analyses%20does%20it%20do/) powerful state-of-the-art tools for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
+💾 [Installing](https://assemblycomparator2.readthedocs.io/en/latest/10%20installation/) Assemblycomparator2 on your system gives you access to [many](https://assemblycomparator2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/) powerful state-of-the-art tools for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
 
 <img alt="asscom2 animation" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/623f6b42-2de6-457c-8f0d-3b3e5d646967">
 
