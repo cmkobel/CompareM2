@@ -19,14 +19,14 @@
 
 <a href="https://github.com/cmkobel/assemblycomparator2/blob/master/readme-demos.md"><img height="192" alt="report document logo" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/e5f9b72c-2137-4850-8779-a5528d8ccbaf"></a>
 
-📙 Central results are dynamically integrated in a compact portable report .html-document. It can be browsed in any web browser and can be easily shared as a single file. This report is generated even if some jobs in the pipeline fail. See [examples](docs/readme-demos.md).
+📙 Central results are dynamically integrated in a compact portable report .html-document. It can be browsed in any web browser and can be easily shared as a single file. This report is generated even if some jobs in the pipeline fail. See [examples](https://assemblycomparator2.readthedocs.io/en/latest/20%20usage/#demo-reports).
 
 🧑‍💻 Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  Apptainer/Singularity/Docker images and conda environment definitions are available for all dependent software to run.
 
 
-The comprehensible documentation is available at [assemblycomparator2.readthedocs.org](https://assemblycomparator2.readthedocs.org).
+**The comprehensible documentation is available at [assemblycomparator2.readthedocs.org](https://assemblycomparator2.readthedocs.org).**
 
-Please log any issues you have in the [issues](https://github.com/cmkobel/assemblycomparator2/issues) tab.
+Please log any issues you have in the [issues tab of the repository](https://github.com/cmkobel/assemblycomparator2/issues).
 
 Development is active and will continue. We're actively looking for collaborators to join and synergize this project. Pull requests are warmly encouraged.
 
