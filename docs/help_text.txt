@@ -19,6 +19,10 @@ OPTIONS
             
             - input_genomes="*.fna *.fa *.fasta *.fas" (Path to input genomes.)
             
+            - fofn="fofn.txt" (Instead of defining input_genomes, the user can pass a "file of file names".)
+            
+            - output_directory="my_results" (default "results_ac2")
+            
             - annotator="prokka" (Choice of annotation tool. Alternatively "bakta".)
             
             - mlst_scheme="automatic" (Choice of mlst scheme. See tseemann/mlst documentation for options.)
