@@ -6,7 +6,7 @@ If you use Assemblycomparator2, you can support further funding by bumping the c
 
   - Kobel CM. *Assemblycomparator2* **GitHub** https://github.com/cmkobel/assemblycomparator2
 
-Assemblycomparator2 would not have existed, if it hadn't been for the integrated software packages and their databases. And please reach out to carl.mathias.kobel near nmbu.no if you think something is missing.
+Assemblycomparator2 would not have existed, if it hadn't been for the integrated software packages and their databases. Please reach out to carl.mathias.kobel near nmbu.no if you think something is missing.
 
   - Mölder F, Jablonski KP, Letcher B, Hall MB, Tomkins-Tinch CH, Sochat V, Forster J, Lee S, Twardziok SO, Kanitz A, Wilm A, Holtgrewe M, Rahmann S, Nahnsen S, Köster J. Sustainable data analysis with Snakemake. F1000Res. 2021 Apr 19;10:33. doi: 10.12688/f1000research.29032.2. PMCID: PMC8114187.
   - Seemann T, Goncalves da Silva A, Bulach DM, Schultz MB, Kwong JC, Howden BP. Nullarbor Github https://github.com/tseemann/nullarbor
@@ -24,3 +24,19 @@ Assemblycomparator2 would not have existed, if it hadn't been for the integrated
   - Buchfink B, Reuter K, Drost HG, "Sensitive protein alignments at tree-of-life scale using DIAMOND", Nature Methods 18, 366–368 (2021). doi:10.1038/s41592-021-01101-x
   - B.Q. Minh, H.A. Schmidt, O. Chernomor, D. Schrempf, M.D. Woodhams, A. von Haeseler, R. Lanfear (2020) IQ-TREE 2: New models and efficient methods for phylogenetic inference in the genomic era. Mol. Biol. Evol., 37:1530-1534. https://doi.org/10.1093/molbev/msaa015
   - mOTUpan: a robust Bayesian approach to leverage metagenome assembled genomes for core-genome estimation Moritz Buck, Maliheh Mehrshad, and Stefan Bertilsson bioRxiv 2021.06.25.449606; doi: https://doi.org/10.1101/2021.06.25.449606
+
+
+## Other tools comparable to Assemblycomparator2
+
+What is unique about Assemblycomparator2 is that it works strictly downstream of assembling and binning. Many other tools also include all the steps necessary to turn raw reads into genome representatives, and then does varying degrees of biological characterization of these freshly created assemblies/bins/genomes. It is a conscious decision to exclude the raw read-dependent tools out of the equation for Assemblycomparator2. This is because read-mapping, assembling or even binning is highly dependent on the sequencing technology used and requires a highly specialized pipeline for each technological use case. Assemblycomparator2 takes a different approach which is to offer a portable and flexible platform where you can easily compare your genomes, no matter where they came from, regardless of the sequencing technology used to create them in the first place. Genome quality is only increasing and in the future we will not have to be worried when comparing pyrosequencing and single-molecule sequencing or hybrid approach based genomes in a single batch of Assemblycomparator2. 
+
+Below we are listing some competing pipelines that partly overlap with the use cases of Assemblycomparator2.
+
+  - [Aviary](https://github.com/rhysnewell/aviary)
+  - [Bactopia](https://github.com/bactopia/bactopia)
+  - [DRAM](https://github.com/WrightonLabCSU/DRAM)
+  - [Nullarbor](https://github.com/tseemann/nullarbor) 
+  - [Tormes](https://github.com/nmquijada/tormes)
+  - [VEBA](https://github.com/jolespin/veba)
+
+

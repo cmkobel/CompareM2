@@ -21,10 +21,12 @@ First, independent analyses are run on each of the input genomic assembly files.
   - `assembly_stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) Generic assembly statistics.
   - `busco` [Busco](https://busco.ezlab.org/) Estimate assembly completeness and contamination.
   - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) Estimate assembly completeness and contamination.
-  - `prokka` [prokka](https://github.com/tseemann/prokka) Genomic annotation.
-  - `diamond_kegg` [diamond](https://github.com/bbuchfink/diamond) Run prokka-called proteins through the checkm2 database (uniref100 with KEGG-KOs).
+  - `prokka` [prokka](https://github.com/tseemann/prokka) Genomic annotation of Archaea and Bacteria. 
+  - `bakta` [bakta](https://github.com/oschwengers/bakta) Genomic annotation of Bacteria.
   - `kegg_pathway` [clusterProfiler](https://yulab-smu.top/biomedical-knowledge-mining-book/) KEGG ortholog-based pathway enrichment analysis.
   - `dbcan` [dbCAN4](https://github.com/linnabrown/run_dbcan) Annotation of carbohydrate-active "CAZyme" enzymes (lacking in report).
+  - `antismash` [antismash](https://docs.antismash.secondarymetabolites.org/) Detection of biosynthesis genes.
+  - `eggnog` [eggnog-mapper](https://github.com/eggnogdb/eggnog-mapper/) Functional annotation.
   - `interproscan` [InterProScan](https://github.com/ebi-pf-team/interproscan) Protein function using Tigrfam, Hamap and Pfam.
   - `abricate` [abricate](https://github.com/tseemann/abricate) Virulence and resistance gene identification.
   - `mlst` [mlst](https://github.com/tseemann/mlst) Multi locus sequence typing.
@@ -41,6 +43,7 @@ Then on the basis of the analysis of each input genomic assembly, these analyses
   - `fasttree` [FastTree](http://www.microbesonline.org/fasttree/) Phylogenetic tree of the core genome.
   - `iqtree` [IQ-tree](http://www.iqtree.org/) Phylogenetic Tree of core genome with bootstrapping (lacking in report).
   - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) Super fast distance measurement
+  - `treecluster` [TreeCluster](https://github.com/niemasd/TreeCluster) Clustering of phylogenetic trees.
   - **A nice report easy to share with your friends ([demos](readme-demos.md))**
 
 
