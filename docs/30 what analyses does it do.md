@@ -37,7 +37,7 @@ First, independent analyses are run on each of the input genomic assembly files.
 
 Then on the basis of the analysis of each input genomic assembly, these analyses are run across all samples.
 
-  - `roary` [roary](https://sanger-pathogens.github.io/Roary/) Pan and core genome.
+  - `panaroo` [roary](https://github.com/gtonkinhill/panaroo) Pan and core genome.
   - `motulizer` and `motupan` [mOTUlizer](https://github.com/moritzbuck/mOTUlizer) Analyze core-pan spectrum genome and gene clusters (lacking in report).
   - `snp_dists` [snp-dists](https://github.com/tseemann/snp-dists) Core genome pairwise snp-distances.
   - `fasttree` [FastTree](http://www.microbesonline.org/fasttree/) Phylogenetic tree of the core genome.

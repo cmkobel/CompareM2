@@ -34,7 +34,7 @@ OPTIONS
             
   --until RULE [RULE2]...
     Select to run up until and including a specific rule in the rule graph. Available rules:
-    abricate annotate antismash assembly_stats bakta busco checkm2 copy dbcan eggnog fasttree gapseq gapseq_find gtdbtk interproscan iqtree kegg_pathway mashtree mlst prokka sequence_lengths snp_dists treecluster antismash_download bakta_download busco_download checkm2_download dbcan_download eggnog_download gtdb_download
+    abricate annotate antismash assembly_stats bakta busco checkm2 copy dbcan eggnog fasttree gapseq gapseq_find gtdbtk interproscan iqtree kegg_pathway mashtree mlst prokka sequence_lengths snp_dists treecluster antismash_download bakta_download busco_download checkm2_download dbcan_download eggnog_download gtdb_download panaroo
         
     There are also a number of pseudo rules, effectively "shortcuts" to a list of rules.
       - downloads   (Run rules that download and setup up necessary databases.)
