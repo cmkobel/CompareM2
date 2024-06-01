@@ -1,12 +1,15 @@
 # Assemblycomparator2
 
-[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/cmkobel/assemblycomparator2/dry-run.yaml)](https://github.com/cmkobel/assemblycomparator2/actions/) [![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2?label=docker%20pulls)](#installation)  [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/assemblycomparator2?label=Bioconda%20downloads&color=%2300CC00)](#installation) [![conda build](https://img.shields.io/conda/v/bioconda/assemblycomparator2)](#installation) [![Documentation Status](https://readthedocs.org/projects/assemblycomparator2/badge/?version=latest)](https://assemblycomparator2.readthedocs.io/en/latest/?badge=latest)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/cmkobel/assemblycomparator2/dry-run.yaml)](https://github.com/cmkobel/assemblycomparator2/actions/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2?label=docker%20pulls)](https://assemblycomparator2.readthedocs.io/en/latest/10%20installation/)  [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/assemblycomparator2?label=Bioconda%20downloads&color=%2300CC00)](https://assemblycomparator2.readthedocs.io/en/latest/10%20installation/)
+[![conda build](https://img.shields.io/conda/v/bioconda/assemblycomparator2)](https://assemblycomparator2.readthedocs.io/en/latest/10%20installation/)
+[![Documentation Status](https://readthedocs.org/projects/assemblycomparator2/badge/?version=latest)](https://assemblycomparator2.readthedocs.io/en/latest/?badge=latest)
 
 🧬 Assemblycomparator2 "asscom2" is a genomes-to-report pipeline. It accepts prokaryotic (bacterial and archaeal) genomic assemblies and compares them in many different ways. 
 
 🦠 Being designed to analyze assemblies of both isolates and metagenomes (MAGs), it is useful for anyone working with microbial genomics.
 
-💾 [Installing](https://assemblycomparator2.readthedocs.io/en/latest/installation/) Assemblycomparator2 on your system gives you access to [many](https://assemblycomparator2.readthedocs.io/en/latest/what%20analyses%20does%20it%20do/) powerful state-of-the-art tools for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
+💾 [Installing](https://assemblycomparator2.readthedocs.io/en/latest/10%20installation/) Assemblycomparator2 on your system gives you access to [many](https://assemblycomparator2.readthedocs.io/en/latest/what%20analyses%20does%20it%20do/) powerful state-of-the-art tools for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
 
 <img alt="asscom2 animation" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/623f6b42-2de6-457c-8f0d-3b3e5d646967">
 
