@@ -59,18 +59,25 @@ OUTPUT
 EXAMPLES
     # Run all analyses with specified input genomes.
     asscom2 --config input_genomes="path/to/genomes_*.fna"
-    
+
+    # Use a "fofn" - a file of file names. 
+    asscom2 --config fofn="my_fofn.txt"
+
+    # Use custom output dir. (default is "results_ac2")
+    asscom2 --config input_genomes="path/to/genomes_*.fna" output_directory="my_analysis"
+
     # Run a "dry run".
     asscom2 --config input_genomes="path/to/genomes_*.fna" --dry-run
-    
-    # Specify annotator.
-    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="prokka"
-    
+
+    # Specify annotator. (default is "prokka")
+    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta"
+
     # Run only the "fast" rules.
-    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="prokka" --until fast
-    
+    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast
+
     # Run panaroo as well.
-    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="prokka" --until fast panaroo
+    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast panaroo
+
     
 LICENSE:
      assemblycomparator2 "asscom2" genomes to report pipeline. Copyright (C) 2019-2024 Carl M. Kobel and contributors GNU GPL v3 

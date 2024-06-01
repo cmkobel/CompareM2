@@ -2,49 +2,53 @@
 
 ## Usage examples
 
-Make a directory with the prokaryotic genomic assembly-files -or metagenomic bins- you want to investigate with Assemblycomparator2. 
-Go into that directory in the terminal, and run the command `asscom2`. 
-Assemblycomparator2 will then create a sub-directory, named "results_ac2/" containing a plethora of analysis results. 
-  
-  - Execute a "dry run". That is, to show what will be run without actually doing it.
+Overall, Assemblycomparator follows standard command line practices.
+Assemblycomparator2 is built on top of Snakemake. Hence, when customizing the Assemblycomparator pipeline you must pass the parameters through the `--config` key. All [Snakemake options](https://snakemake.readthedocs.io/en/stable/executing/cli.html) are freely available for advanced users.
 
-    ```
-    asscom2 --dry-run
-    ```
 
-  - Run Assemblycomparator2 on the genomes in the current directory:
-
-    ```
-    asscom2
-    ```
-    
-
-## A bit more advanced controls 
-
-  - Run analyses that are relevant to metagenomic assemblies only (as opposed to isolates):
-
-    ```
-    asscom2 --until meta
-    ```
-    
-  - Execute all jobs until one or more specific rules: (until implies including)
+  - Run *all* analyses with specified input genomes.
     
     ```
-    asscom2 --until roary abricate
+    asscom2 --config input_genomes="path/to/genomes_*.fna"
     ```
-    
-  - Select a specific MLST-scheme to use on all of the samples: (defaults to automatic)
-    
-    ```
-    asscom2 --config mlst_scheme=hpylori
-    ```
-    
-  - Select a specific roary blastp-identity: (default is 95)
 
+  - Use a "fofn" - a file of file names. 
+    
     ```
-    asscom2 --config roary_blastp_identity=90
+    asscom2 --config fofn="my_fofn.txt"
     ```
-      
+
+  - Use custom output dir. (default is "results_ac2")
+    
+    ```
+    asscom2 --config input_genomes="path/to/genomes_*.fna" output_directory="my_analysis"
+    ```
+
+
+  - Run a "dry run".
+    
+    ```
+    asscom2 --config input_genomes="path/to/genomes_*.fna" --dry-run
+    ```
+
+  - Specify annotator. (default is "prokka")
+    
+    ```
+    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta"
+    ```
+
+  - Run only the "fast" rules. [(read more about pseudo rules)](https://assemblycomparator2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#pseudo-rules)
+    
+    ```
+    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast
+    ```
+
+  - Run panaroo as well.
+    
+    ```
+    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast panaroo
+    ```
+
 
 
 
