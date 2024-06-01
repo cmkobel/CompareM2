@@ -25,7 +25,12 @@ OPTIONS
             
             - annotator="prokka" (Choice of annotation tool. Alternatively "bakta".)
             
-            - mlst_scheme="automatic" (Choice of mlst scheme. See tseemann/mlst documentation for options.)
+            There are also a series of parameters inside specific tools that can be tweaked directly from the command line interface. Please consult the individual documentation of the relevant tool for more info:
+              - mlst_scheme="automatic"
+              - prokka_rfam=true # true (default) or false
+              - prokka_compliant=true # true (default) or false
+              - treecluster_threshold=0.045
+              - iqtree_bootstraps=100
             
     --until RULE [RULE2]...
         Select to run up until and including a specific rule in the rule graph. Available rules:
@@ -53,9 +58,9 @@ OPTIONS
 ENVIRONMENT VARIABLES
     No environment variables are strictly necessary to set, but the following might be useful:
         
-        ASSCOM2_PROFILE (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running Assemblycomparator2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/assemblycomparator2/profile/*).
+      - ASSCOM2_PROFILE (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running Assemblycomparator2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/assemblycomparator2/profile/*).
         
-        ASSCOM2_DATABASES (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
+      - ASSCOM2_DATABASES (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
   
 OUTPUT
     Creates a directory named "results_ac2/" that contains all of the analysis results that are computed.
@@ -82,6 +87,5 @@ EXAMPLES
     # Run panaroo as well.
     asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast panaroo
 
-    
 LICENSE:
      assemblycomparator2 "asscom2" genomes to report pipeline. Copyright (C) 2019-2024 Carl M. Kobel and contributors GNU GPL v3 
