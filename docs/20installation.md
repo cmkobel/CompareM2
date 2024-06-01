@@ -35,9 +35,14 @@ mamba create -c conda-forge -c bioconda -n asscom2 assemblycomparator2
 Installing into isolated environments is best practice in order to avoid side effects with other packages.
 
 
+!!! info
+    If you want to develop new rules in the Assemblycomparator2 pipeline, you should consider following [the development version installation instructions](https://github.com/cmkobel/assemblycomparator2/blob/master/readme-development.md). The development version contains the full git repository and is purely conda-based so you can affect the next version of the Apptainer-compatible Docker image. 
+
+
 ## Optionally: Testing the installation
 
 Now you will be able to run asscom2. You can use the example data in path "tests/MAGs" to check that everything works. The first time you run asscom2 it will show the message "Pulling singularity image docker://cmkobel/assemblycomparator2." This might take some time depending on your network bandwidth as it downloads a +4GB Docker image that contains all the conda environments needed for each analysis.
+
 ```bash
 
 # Activate the newly created conda environment containing the asscom2 launcher.
@@ -65,9 +70,9 @@ asscom2
 
 
 
-### Advanced configuration
+## Advanced configuration
 
-#### Shared database
+### Shared database
 
 If you are working on a shared computational resource like a laboratory workstation or a HPC you might want to share a database directory so that each user will not have to redundantly download each database. To set this up, the first user must decide on a directory and set reading and writing permissions for the group of users that should be able to use the database. Writing permissions are necessary for the "database representative" flags that snakemake uses to keep track of the presence of the databases. Setting this custom path is a matter of defining the "ASSCOM2_DATABASES" environment variable. You can put this into your ~/.bashrc or execute the command before using asscom2.
 
@@ -75,14 +80,14 @@ If you are working on a shared computational resource like a laboratory workstat
 export ASSCOM2_DATABASES="/absolute/path/to/shared_databases/asscom2_v2.5.8+"
 ```
 
-#### HPC profiles for Snakemake
+### HPC profiles for Snakemake
 
  If you have experience with snakemake and are working on a high performance computing cluster (HPC), you can modify and use the cluster configuration profiles in the "profiles/" directory. You can define the use of one of these profiles by setting the "ASSCOM2_PROFILE" environment variable. You can put this into your ~/.bashrc or execute the command before using asscom2. You can read more about snakemake profiles [here](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles) or browse more default profiles [here](https://github.com/snakemake-profiles).
 
 ```bash
 export ASSCOM2_PROFILE=${ASSCOM2_BASE}/profiles/apptainer/slurm-sigma2-saga
 ```
-#### Rule development
+### Rule development
 
 If you want to develop new [rules](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#snakefiles-and-rules) in the Assemblycomparator2 pipeline, you should consider following the [development version installation instructions](readme-development.md). The development version is purely conda-based so you can affect the next version of the Apptainer-compatible Docker image. 
 

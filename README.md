@@ -1,12 +1,12 @@
 # Assemblycomparator2
 
-[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/cmkobel/assemblycomparator2/dry-run.yaml)](https://github.com/cmkobel/assemblycomparator2/actions/) [![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2?label=docker%20pulls)](#installation)  [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/assemblycomparator2?label=Bioconda%20downloads&color=%2300CC00)](#installation) [![conda build](https://img.shields.io/conda/v/bioconda/assemblycomparator2)](#installation)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/cmkobel/assemblycomparator2/dry-run.yaml)](https://github.com/cmkobel/assemblycomparator2/actions/) [![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2?label=docker%20pulls)](#installation)  [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/assemblycomparator2?label=Bioconda%20downloads&color=%2300CC00)](#installation) [![conda build](https://img.shields.io/conda/v/bioconda/assemblycomparator2)](#installation) [![Documentation Status](https://readthedocs.org/projects/assemblycomparator2/badge/?version=latest)](https://assemblycomparator2.readthedocs.io/en/latest/?badge=latest)
 
 🧬 Assemblycomparator2 "asscom2" is a genomes-to-report pipeline. It accepts prokaryotic (bacterial and archaeal) genomic assemblies and compares them in many different ways. 
 
 🦠 Being designed to analyze assemblies of both isolates and metagenomes (MAGs), it is useful for anyone working with microbial genomics.
 
-💾 [Installing](#installation) Assemblycomparator2 on your system gives you access to [many](https://github.com/cmkobel/assemblycomparator2#what-analyses-does-it-do) powerful state-of-the-art tools for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
+💾 [Installing](https://assemblycomparator2.readthedocs.io/en/latest/installation/) Assemblycomparator2 on your system gives you access to [many](https://assemblycomparator2.readthedocs.io/en/latest/what%20analyses%20does%20it%20do/) powerful state-of-the-art tools for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
 
 <img alt="asscom2 animation" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/623f6b42-2de6-457c-8f0d-3b3e5d646967">
 
@@ -19,12 +19,12 @@
 
 <a href="https://github.com/cmkobel/assemblycomparator2/blob/master/readme-demos.md"><img height="192" alt="report document logo" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/e5f9b72c-2137-4850-8779-a5528d8ccbaf"></a>
 
-📙 Central results are dynamically integrated in a compact portable report .html-document. It can be browsed in any web browser and can be easily shared as a single file. This report is generated even if some jobs in the pipeline fail. See [examples](readme-demos.md).
+📙 Central results are dynamically integrated in a compact portable report .html-document. It can be browsed in any web browser and can be easily shared as a single file. This report is generated even if some jobs in the pipeline fail. See [examples](docs/readme-demos.md).
 
 🧑‍💻 Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  Apptainer/Singularity/Docker images and conda environment definitions are available for all dependent software to run.
 
 
-The comprehensible documentation is available at https://assemblycomparator2.readthedocs.org
+The comprehensible documentation is available at [assemblycomparator2.readthedocs.org](https://assemblycomparator2.readthedocs.org).
 
 Please log any issues you have in the [issues](https://github.com/cmkobel/assemblycomparator2/issues) tab.
 
