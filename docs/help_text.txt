@@ -2,10 +2,10 @@ NAME
   Assemblycomparator2 (a.k.a. "asscom2") - Genomes to report pipeline
 
 SYNOPSIS
-  asscom2 [ --config KEY=VALUE [KEY2=VALUE]... ] [ --until RULE [RULE2]... ]
+  asscom2 [ --config KEY=VALUE [KEY2=VALUE]... ]  [ --until RULE [RULE2]... ]
     [ --forcerun RULE [RULE2]... ]
     [ --dry-run ]
-    [ --version ] [ --help ]
+    [ --version ]  [ --help ]
 
 DESCRIPTION
   Analyses bacterial and archaeal genomes.
