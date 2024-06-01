@@ -11,9 +11,9 @@ DESCRIPTION
     Analyses bacterial and archaeal genomes. 
     Based on snakemake, so you can use the same command line arguments.
     Please check github.com/cmkobel/assemblycomparator2 for updates, help and to track issues.
+    Comprehensible documentation is available at assemblycomparator2.readthedocs.io/en/latest/
     
 OPTIONS
-
     --config KEY=VALUE [KEY2=VALUE]...
         Pass a parameter to the snakemake pipeline, where the following keys are available, defaults are stated as standard. (Longer explanation in paranthesis.)
             
@@ -25,16 +25,16 @@ OPTIONS
             
             - annotator="prokka" (Choice of annotation tool. Alternatively "bakta".)
             
-            There are also a series of parameters inside specific tools that can be tweaked directly from the command line interface. Please consult the individual documentation of the relevant tool for more info:
+            There are also a series of parameters inside specific tools that can be tweaked directly from the command line interface. Please consult the individual documentation of the relevant tool for more info. Examples of possible values are given in parenthesis:
               - mlst_scheme="automatic"
-              - prokka_rfam=true # true (default) or false
-              - prokka_compliant=true # true (default) or false
-              - treecluster_threshold=0.045
-              - iqtree_bootstraps=100
+              - prokka_rfam=true (true or false)
+              - prokka_compliant=true (true or false)
+              - treecluster_threshold=0.045 (interpreted as float)
+              - iqtree_bootstraps=100 (interpreted as int)
             
     --until RULE [RULE2]...
         Select to run up until and including a specific rule in the rule graph. Available rules:
-        abricate annotate antismash assembly_stats bakta busco checkm2 compute_snp_dists copy dbcan eggnog fasttree gapseq gapseq_find gtdbtk interproscan iqtree kegg_pathway mashtree mlst prokka sequence_lengths snp_dists treecluster antismash_download bakta_download busco_download checkm2_download dbcan_download eggnog_download gtdb_download
+        abricate annotate antismash assembly_stats bakta busco checkm2 copy dbcan eggnog fasttree gapseq gapseq_find gtdbtk interproscan iqtree kegg_pathway mashtree mlst prokka sequence_lengths snp_dists treecluster antismash_download bakta_download busco_download checkm2_download dbcan_download eggnog_download gtdb_download
         
         There are also a number of pseudo rules, effectively "shortcuts" to a list of rules.
           - downloads   (Run rules that download and setup up necessary databases.)
