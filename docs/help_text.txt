@@ -1,4 +1,3 @@
-
 NAME
     Assemblycomparator2 (a.k.a. "asscom2") - Genomes to report pipeline
 
@@ -42,7 +41,7 @@ OPTIONS
         Run a "dry run": Shows what will run without doing it.
     
     --version, -v 
-        Show current version: "v{__version__}"
+        Show current version
         
     --help, -h
         Show this help and exit.
@@ -74,4 +73,4 @@ EXAMPLES
     asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="prokka" --until fast panaroo
     
 LICENSE:
-     assemblycomparator2 "asscom2" v{__version__} genomes to report pipeline. Copyright (C) 2019-2024 Carl M. Kobel and contributors GNU GPL v3 
+     assemblycomparator2 "asscom2" genomes to report pipeline. Copyright (C) 2019-2024 Carl M. Kobel and contributors GNU GPL v3 
