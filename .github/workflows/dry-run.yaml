@@ -2,7 +2,7 @@ name: latest-dry-run
 on: workflow_dispatch
 
 env:
-  ASSCOM2_PROFILE: "profile/conda/local"
+  ASSCOM2_PROFILE: "profile/conda/default"
 
 
 jobs:
