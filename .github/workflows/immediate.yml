@@ -1,4 +1,4 @@
-name: dry-run
+name: latest-dry-run
 on: workflow_dispatch
 
 env:
