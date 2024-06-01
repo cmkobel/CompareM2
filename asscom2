@@ -6,7 +6,7 @@ __version__ = "2.7.1"
 """
 This is the launcher script for assemblycomparator2.
 
-It has two functions.
+It has two main functions.
 1) It checks that the necessary environment variables has been set. If not, it uses reasonable defaults.
 2) Then it calls the snakemake pipeline using the command line arguments passed to this here script.
 
