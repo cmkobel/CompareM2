@@ -6,11 +6,13 @@
 # Show data table and make a heatmap for substrates to highlight interpretation
 
 
-# setwd("~/assemblycomparator2/tests/student");  # DEBUG
+setwd("~/Desktop/test_dbcan") # DEBUG
 df_dbcan_raw = read_tsv(glob_list$dbcan, id = "file", na = "-") %>% #, comment = "#", col_names = c("name", "value")) %>%
     
+    #identity()
+
     # Extract sample name
-    mutate(sample = str_extract(file, "results_ac2/samples/(.+)/dbcan/dbcan-sub.hmm.out", group = 1)) %>% 
+    mutate(sample = str_extract(file, "/samples/(.+)/dbcan/dbcan-sub.hmm.out", group = 1)) %>% 
     relocate(sample) %>% 
     select(-file) %>% 
     

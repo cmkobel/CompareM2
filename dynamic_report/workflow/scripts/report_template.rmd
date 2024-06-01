@@ -129,6 +129,12 @@ if (debug) {
     setwd("~/assemblycomparator2/tests/student")
     batch_title = basename(getwd())
     
+    # dbcan on macbook
+    base_variable = "~/assemblycomparator2/"
+    output_directory = "res_all"
+    setwd("~/Desktop/test_dbcan")
+    batch_title = basename(getwd())
+    
 }
 
 ```
