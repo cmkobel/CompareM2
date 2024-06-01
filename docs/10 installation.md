@@ -13,16 +13,13 @@ First, you need to install a Conda or Mamba package manager.
 The recommended choice is [Miniforge](https://github.com/conda-forge/miniforge#install) which not only provides the required Python and Conda commands, 
 but also includes Mamba - an extremely fast and robust replacement for the Conda package manager which is highly recommended.
 
-<table><tr><td>
-In case you don't use Miniforge you can always install Mamba into any other Conda-based Python distribution with:
+!!! info
+    In case you don't use Miniforge you can always install Mamba into any other Conda-based Python distribution with:
 
-```bash
+    ```
+    conda install -n base -c conda-forge mamba
+    ```
 
-conda install -n base -c conda-forge mamba
-
-```
-
-</td></tr></table>
 
 <img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/6bc39697-7e90-49a0-a44e-64820f2c1024">
 
@@ -37,7 +34,7 @@ mamba create -c conda-forge -c bioconda -n asscom2 assemblycomparator2
 Installing into isolated environments is best practice in order to avoid side effects with other packages.
 
 
-!!! info
+!!! note
     If you want to develop new rules in the Assemblycomparator2 pipeline, you should consider following [the development version installation instructions](https://github.com/cmkobel/assemblycomparator2/blob/master/readme-development.md). The development version contains the full git repository and is purely conda-based so you can affect the next version of the Apptainer-compatible Docker image. 
 
 
