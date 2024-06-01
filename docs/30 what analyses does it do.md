@@ -22,12 +22,12 @@ First, independent analyses are run on each of the input genomic assembly files.
   - `busco` [Busco](https://busco.ezlab.org/) Estimate assembly completeness and contamination.
   - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) Estimate assembly completeness and contamination.
   - `prokka` [prokka](https://github.com/tseemann/prokka) Genomic annotation of Archaea and Bacteria. 
-  - `bakta` [bakta](https://github.com/oschwengers/bakta) Genomic annotation of Bacteria.
+  - `bakta` [bakta](https://github.com/oschwengers/bakta) Genomic annotation of Bacteria (lacking in report, but used downstream by other tools).
   - `kegg_pathway` [clusterProfiler](https://yulab-smu.top/biomedical-knowledge-mining-book/) KEGG ortholog-based pathway enrichment analysis.
   - `dbcan` [dbCAN4](https://github.com/linnabrown/run_dbcan) Annotation of carbohydrate-active "CAZyme" enzymes (lacking in report).
-  - `antismash` [antismash](https://docs.antismash.secondarymetabolites.org/) Detection of biosynthesis genes.
+  - `antismash` [antismash](https://docs.antismash.secondarymetabolites.org/) Detection of biosynthesis genes (lacking in report).
   - `eggnog` [eggnog-mapper](https://github.com/eggnogdb/eggnog-mapper/) Functional annotation.
-  - `interproscan` [InterProScan](https://github.com/ebi-pf-team/interproscan) Protein function using Tigrfam, Hamap and Pfam.
+  - `interproscan` [InterProScan](https://github.com/ebi-pf-team/interproscan) Protein function using Tigrfam, Hamap and Pfam (lacking in report).
   - `abricate` [abricate](https://github.com/tseemann/abricate) Virulence and resistance gene identification.
   - `mlst` [mlst](https://github.com/tseemann/mlst) Multi locus sequence typing.
   - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) Species recognition.
@@ -37,13 +37,12 @@ First, independent analyses are run on each of the input genomic assembly files.
 
 Then on the basis of the analysis of each input genomic assembly, these analyses are run across all samples.
 
-  - `panaroo` [roary](https://github.com/gtonkinhill/panaroo) Pan and core genome.
-  - `motulizer` and `motupan` [mOTUlizer](https://github.com/moritzbuck/mOTUlizer) Analyze core-pan spectrum genome and gene clusters (lacking in report).
+  - `panaroo` [panaroo](https://github.com/gtonkinhill/panaroo) Pan and core genome.
   - `snp_dists` [snp-dists](https://github.com/tseemann/snp-dists) Core genome pairwise snp-distances.
   - `fasttree` [FastTree](http://www.microbesonline.org/fasttree/) Phylogenetic tree of the core genome.
   - `iqtree` [IQ-tree](http://www.iqtree.org/) Phylogenetic Tree of core genome with bootstrapping (lacking in report).
   - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) Super fast distance measurement
-  - `treecluster` [TreeCluster](https://github.com/niemasd/TreeCluster) Clustering of phylogenetic trees.
+  - `treecluster` [TreeCluster](https://github.com/niemasd/TreeCluster) Clustering of phylogenetic trees (lacking in report).
   - **A nice report easy to share with your friends (See demos below)**
 
 
