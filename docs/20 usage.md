@@ -145,7 +145,7 @@ results_ac2/
 └── version_info.txt
 ```
 
-Results from input genomes are in dir "sample/" and results across all samples are in the root. The report is named after the title of the run which is the same as the name of the current working directory.
+Results from input genomes are in dir "samples/" and results across all samples are in the root. The report is named after the title of the run which is the same as the name of the current working directory.
 
 
 
