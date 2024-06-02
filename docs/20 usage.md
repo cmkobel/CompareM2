@@ -137,7 +137,7 @@ results_ac2/
 ├── metadata.tsv
 ├── mlst/
 ├── panaroo/
-├── report_strachan_campylo.html
+├── report_<title>.html
 ├── samples/
 ├── snp-dists/
 ├── tables/
@@ -147,18 +147,20 @@ results_ac2/
 
 Results from input genomes are in dir "samples/" and results across all samples are in the root. The report is named after the title of the run which is the same as the name of the current working directory.
 
-The samples directory for each sample looks like so:
+The samples/<sample\> directory for each sample looks like so:
 ```txt
-results_ac2/samples/<sample>/
-├── antismash/
-├── bakta/
-├── busco/
-├── dbcan/
-├── eggnog/
-├── <sample>.fna
-├── interproscan/
-├── prokka/
-└── sequence_lengths/
+results_ac2/
+└──samples/
+   └──<sample>/
+      ├── antismash/
+      ├── bakta/
+      ├── busco/
+      ├── dbcan/
+      ├── eggnog/
+      ├── <sample>.fna
+      ├── interproscan/
+      ├── prokka/
+      └── sequence_lengths/
 ```
 
 
