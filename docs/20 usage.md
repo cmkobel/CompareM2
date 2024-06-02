@@ -16,10 +16,24 @@ asscom2 [ --config KEY=VALUE [KEY2=VALUE]... ]
 ## Usage examples
 
 
-  - Run *all* analyses with specified input genomes.
+
+
+  - Run *all* analyses across all fasta files in the current working directory.
     
     ```
-    asscom2 --config input_genomes="path/to/genomes_*.fna"
+    asscom2
+    ```
+
+  - Run only jobs *until* prokka
+    
+    ```
+    asscom2 --until prokka
+    ```
+
+  - Run *all* analyses with specified input and output.
+    
+    ```
+    asscom2 --config input_genomes="path/to/genomes_*.fna" output_directory="my_analysis"
     ```
 
   - Use a *fofn* - a file of file names. 
@@ -27,13 +41,6 @@ asscom2 [ --config KEY=VALUE [KEY2=VALUE]... ]
     ```
     asscom2 --config fofn="my_fofn.txt"
     ```
-
-  - Use custom output dir. (default is "results_ac2")
-    
-    ```
-    asscom2 --config input_genomes="path/to/genomes_*.fna" output_directory="my_analysis"
-    ```
-
 
   - Run a *dry run*.
     
@@ -65,21 +72,21 @@ asscom2 [ --config KEY=VALUE [KEY2=VALUE]... ]
 ###  `--config KEY=VALUE [KEY2=VALUE]...`
 Pass a parameter to the snakemake pipeline, where the following keys are available, defaults are stated as standard. (Longer explanation in paranthesis.)
     
-  - input_genomes="\*.fna \*.fa \*.fasta \*.fas" (Path to input genomes. As the default value indicates, all fasta type files in the present directory will be analyzed.)
+  - `input_genomes="*.fna *.fa *.fasta *.fas"` (Path to input genomes. As the default value indicates, all fasta type files in the present directory will be analyzed).
 
-  - fofn="fofn.txt" (Deactivated by default. When set to a path it overrides key input_genomes.)
+  - `fofn="fofn.txt"` (Deactivated by default. When set to a path it overrides key input_genomes.)
 
-  - output_directory="results_ac2" (All results are written here.)
+  - `output_directory="results_ac2"` (All results are written here.)
 
-  - annotator="prokka" (Choice of annotation tool. Alternatively "bakta".)
+  - `annotator="prokka"` (Choice of annotation tool. Alternatively "bakta".)
     
-There are also a series of parameters inside specific tools that can be tweaked directly from the command line interface. Please consult the individual documentation of the relevant tool for more info. Examples of possible values are given in parenthesis:
+There also is a series of parameters inside specific tools that can be tweaked directly from the command line interface. Please consult the individual documentation of the relevant tool for more info. Examples of possible values are given in parenthesis:
 
-  - mlst_scheme="automatic"
-  - prokka_rfam=true (true or false)
-  - prokka_compliant=true (true or false)
-  - treecluster_threshold=0.045 (interpreted as float)
-  - iqtree_bootstraps=100 (interpreted as int)
+  - `mlst_scheme="automatic"`
+  - `prokka_rfam=true` (true or false)
+  - `prokka_compliant=true` (true or false)
+  - `treecluster_threshold=0.045` (interpreted as float)
+  - `iqtree_bootstraps=100` (interpreted as int)
             
 ### `--until RULE [RULE2]...`
 Select to run up until and including a specific rule in the rule graph. Available rules:
@@ -107,17 +114,17 @@ Show this help and exit.
 ## Environment variables
 No environment variables are strictly necessary to set, but the following might be useful:
 
-  - ASSCOM2_PROFILE (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running Assemblycomparator2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/assemblycomparator2/profile/\*).
+  - `ASSCOM2_PROFILE` (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running Assemblycomparator2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/assemblycomparator2/profile/\*).
   
-  - ASSCOM2_DATABASES (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
+  - `ASSCOM2_DATABASES` (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
   
 ## Output
 Creates a directory named "results_ac2/" (or what the output_directory parameter is set to) that contains all of the analysis results that are computed.
 
-A file tree with depth level 1 looks like so.
+A file tree with depth level 1 looks like so:
 
 ```txt
-results_ac2//
+results_ac2/
 ├── abricate/
 ├── assembly-stats/
 ├── benchmarks/
@@ -138,7 +145,7 @@ results_ac2//
 └── version_info.txt
 ```
 
-Results from input genomes are in dire "sample" and results across all samples are in the root. The report is named after the title of the run which is the same as the name of the current working dircetory.
+Results from input genomes are in dir "sample/" and results across all samples are in the root. The report is named after the title of the run which is the same as the name of the current working directory.
 
 
 
