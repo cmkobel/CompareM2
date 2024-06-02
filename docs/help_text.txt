@@ -50,7 +50,7 @@ OPTIONS
     Run a "dry run": Shows what will run without doing it.
 
   --version, -v 
-    Show current version
+    Show current version.
     
   --help, -h
     Show this help and exit.
@@ -62,7 +62,8 @@ ENVIRONMENT VARIABLES
     - ASSCOM2_DATABASES (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
   
 OUTPUT
-  Creates a directory named "results_ac2/" that contains all of the analysis results that are computed.
+  Creates a directory named "results_ac2/" (or what the output_directory parameter is set to) that contains all of the analysis results that are computed.
+
         
 EXAMPLES
   - Run all analyses with specified input genomes.
