@@ -147,7 +147,7 @@ results_ac2/
 
 Results from input genomes are in dir "samples/" and results across all samples are in the root. The report is named after the title of the run which is the same as the name of the current working directory.
 
-The samples/<sample\> directory for each sample looks like so:
+The samples/<sample\> directory for each sample looks like so: (Again, depth level 1 only.)
 ```txt
 results_ac2/
 └──samples/
