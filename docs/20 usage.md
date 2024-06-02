@@ -114,6 +114,32 @@ No environment variables are strictly necessary to set, but the following might 
 ## Output
 Creates a directory named "results_ac2/" (or what the output_directory parameter is set to) that contains all of the analysis results that are computed.
 
+A file tree with depth level 1 looks like so.
+
+```txt
+results_ac2//
+├── abricate/
+├── assembly-stats/
+├── benchmarks/
+├── checkm2/
+├── fasttree/
+├── gtdbtk/
+├── iqtree/
+├── kegg_pathway/
+├── mashtree/
+├── metadata.tsv
+├── mlst/
+├── panaroo/
+├── report_strachan_campylo.html
+├── samples/
+├── snp-dists/
+├── tables/
+├── treecluster/
+└── version_info.txt
+```
+
+Results from input genomes are in dire "sample" and results across all samples are in the root. The report is named after the title of the run which is the same as the name of the current working dircetory.
+
 
 
 {!resources/footer.md!}
