@@ -44,3 +44,5 @@ Below we are listing some competing pipelines that partly overlap with the use c
   - [VEBA](https://github.com/jolespin/veba)
 
 
+
+{!resources/footer.md!}

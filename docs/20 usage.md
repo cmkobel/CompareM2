@@ -57,3 +57,5 @@ Assemblycomparator2 is built on top of Snakemake. Hence, when customizing the As
 ```txt
 {!docs/help_text.txt!}
 ```
+
+{!resources/footer.md!}

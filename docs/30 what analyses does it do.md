@@ -43,7 +43,7 @@ Then on the basis of the analysis of each input genomic assembly, these analyses
   - `iqtree` [IQ-tree](http://www.iqtree.org/) Phylogenetic Tree of core genome with bootstrapping (lacking in report).
   - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) Super fast distance measurement
   - `treecluster` [TreeCluster](https://github.com/niemasd/TreeCluster) Clustering of phylogenetic trees (lacking in report).
-  - **A nice report easy to share with your friends (See demos [below](https://assemblycomparator2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#demo-reports))**
+  - **A nice report easy to share with your friends (See demos [below](https://assemblycomparator2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report))**
 
 
 ## Pseudo-rules
@@ -66,4 +66,4 @@ These demo reports are available for inspiration while you wait for your own rep
 
 
 
-
+{!resources/footer.md!}

@@ -91,3 +91,4 @@ export ASSCOM2_PROFILE=${ASSCOM2_BASE}/profiles/apptainer/slurm-sigma2-saga
 
 
 
+{!resources/footer.md!}

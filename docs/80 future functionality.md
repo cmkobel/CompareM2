@@ -24,3 +24,4 @@ In the future we might add some of the following software packages into Assembly
 Please [add an issue on the repository](https://github.com/cmkobel/assemblycomparator2/issues) if you have any ideas or requests.
 
 
+{!resources/footer.md!}
