@@ -163,6 +163,8 @@ results_ac2/
       └── sequence_lengths/
 ```
 
+For the file tree of each of the analysis tools you will have to consult the documentation of each tool.
+
 
 
 {!resources/footer.md!}
