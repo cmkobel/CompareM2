@@ -4,35 +4,8 @@
 
 __author__ = "Carl M. Kobel"
 
-
-# --- Development: Versioning ---------------------------------------
 __version__ = "2.7.1"
-# Places to bump
-#  - here, because the snakefile can possibly be run without the ./asscom2 binary. Report gets from here.
-#  - ./asscom2 binary
-#  - changelog
-# Also, paste changelog into the github release. Use pre-release and publish it after it has been tested.
 
-
-# --- Development: Testing "nightly" --------------------------------
-
-# For developing and testing (using conda) prior to publication of next version apptainer image, you can run the following from the repository directory:
-# Conda
-# export ASSCOM2_BASE="$(realpath ~/asscom2)"; export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/conda/default"; ${ASSCOM2_BASE}/asscom2 --config input_genomes="${ASSCOM2_BASE}/tests/E._faecium/*.fna" --until fast
-
-# If you haven't made any changes to the environment yamls, you can test using the apptainer/docker image.
-# Apptainer
-# export ASSCOM2_BASE="$(realpath ~/asscom2)"; export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/apptainer/default"; ${ASSCOM2_BASE}/asscom2 --config input_genomes="${ASSCOM2_BASE}/tests/E._faecium/*.fna" --until fast
-
-
-# --- Development: Update Dockerfile --------------------------------
-# Update Dockerfile:
-# export ASSCOM2_BASE="$(pwd -P)"; export ASSCOM2_PROFILE="profiles/apptainer/default"; snakemake --snakefile "${ASSCOM2_BASE}/workflow/Snakefile" --configfile "${ASSCOM2_BASE}/config/config.yaml" --containerize > Dockerfile 
-# And then remove the header text (asscom2 logo).
-
-# --- Development: Update DAG figure for documentation --------------
-# Update dag picture in documentation with this command (with anaconda/graphviz)
-# asscom2 --forceall --rulegraph | dot -Tpng > dag.png
 
 import os
 from os import listdir
