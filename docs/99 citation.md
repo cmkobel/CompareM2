@@ -1,6 +1,6 @@
 
 
-# Citing and Alternatives
+# Citing and alternatives
 
 ## Citing Assemblycomparator2
 
