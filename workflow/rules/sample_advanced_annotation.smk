@@ -245,6 +245,9 @@ rule antismash:
     threads: 8
     shell: """
     
+        # Clean directory. Antismash will fail if previous files exist.
+        rm $(dirname {output.json:q})/* || echo no files
+        
         # Collect version number.
         antismash --version > "$(dirname {output.json})/.software_version.txt"
         
