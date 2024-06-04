@@ -1,5 +1,6 @@
 2.7.2
   - Compressed test files.
+  
 
 2.7.1
   - Breaking change: File hierarchy now follows what is recommended in the snakemake documentation. Rules are now in individual files.
