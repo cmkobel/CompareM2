@@ -46,6 +46,8 @@ export ASSCOM2_PROFILE="$(realpath profile/conda/default)"
 
 `realpath` makes sure that you get the absolute path. This is helpful, should you later change directory.
 
+You can read more about Assemblycomparator2 environment variables here: https://assemblycomparator2.readthedocs.io/en/latest/10%20installation/#advanced-configuration
+
 #### 3) Activate conda env and run
 
 Finally, you can run the pipeline with the following code:
