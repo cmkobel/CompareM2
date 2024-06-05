@@ -3,8 +3,9 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - mamba
-  - snakemake=7.32.4 # Last version before they completely changed the structure.
-  - python=3.11
+  - snakemake-minimal <8
+  - pulp <2.8
+  - mamba # Necessary for snakemake to install child environments during development.
+  - pandas
 
-# TODO: Make a bioconda package instead of having users manually create an env from this file when installing.
+# Update this with the running requirements in https://github.com/bioconda/bioconda-recipes/blob/master/recipes/assemblycomparator2/meta.yaml
