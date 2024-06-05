@@ -8,7 +8,7 @@ assemblycomparator2 can be installed by downloading the code and setting up an a
 
 The only requisites for running assemblycomparator2 is:
   - conda/[mamba](https://github.com/conda-forge/miniforge#install) package manager
-  - *git* distributed version control (can be installed with conda by typing `conda install -c anaconda git`)
+  - *git* distributed version control
 
 #### 0) Prerequisites
 
