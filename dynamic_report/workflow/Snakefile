@@ -24,23 +24,24 @@ except:
 
 
 def should_run(wildcards):
+    """ Returns the final output file (report .html) in case the metadata and exists and the report is voided. Otherwise it returns an empty list and no jobs are run.
+    """
     if os.path.isfile(f"{output_directory}/metadata.tsv") and os.path.isfile(f"{output_directory}/.asscom2_void_report.flag"):
-        #return {"flag": f"{output_directory}/.asscom2_void_report.flag", "metadata": f"{output_directory}/metadata.tsv"}
         return [f"{output_directory}/report_{batch_title}.html"]
     else:
         return [] # empty list, no running requirement.
 
 
 def text_box(title_text):
-    #setup
+    """ Helper function to build a text box of dynamic length.
+    """
     padding = "   "
     greeting = f" The {title_text} report has been rendered. "
-    greeting_len = len(greeting) # minus 2 is the extra padding.
+    greeting_len = len(greeting) 
     
-    #build
     box = ""
     box += "\n" + padding + " " + greeting_len * "-"
-    box += "\n" + padding + "<" + greeting + ">"
+    box += "\n" + padding + "<" +   greeting   + ">"
     box += "\n" + padding + " " + greeting_len * "-"
     return box
     
@@ -56,7 +57,6 @@ rule all:
 # This rule needs to be inside its own snakefile, as it is the only way I can run it on onerror/onsuccess
 rule dynamic_report:
     input:
-        #unpack(should_run)
         flag = f"{output_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
         metadata = f"{output_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
     conda: "envs/r-markdown.yaml"
@@ -68,8 +68,6 @@ rule dynamic_report:
         text_box = text_box(batch_title)
     output: 
         html = f"{output_directory}/report_{batch_title}.html",
-    #output: expand("{output_directory}/report_{batch_title}.html", output_directory = output_directory, batch_title = batch_title)
-    
     shell: """	    
         
         # Rmarkdown render() insists on writing the output relative to the path of the template. Thus we must copy the template to the local system (.writable_template_copy). In some cases, the user won't have write access to the code base path so having a writable copy (below the current working directory) is a reasonable workaround.
