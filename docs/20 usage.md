@@ -118,7 +118,7 @@ No environment variables are strictly necessary to set, but the following might 
   
   - `ASSCOM2_DATABASES` (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
   
-## Outputs
+## Output
 Creates a directory named "results_ac2/" (or what the output_directory parameter is set to) that contains all of the analysis results that are computed.
 
 A file tree with depth level 1 looks like so:
