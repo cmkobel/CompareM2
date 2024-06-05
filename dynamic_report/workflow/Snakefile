@@ -100,7 +100,6 @@ rule dynamic_report:
         test -f "{params.end_script}" && echo "running end script" && . {params.end_script} {batch_title} {output_directory}/report_{batch_title}.html 
         
         # Print the ass. Thanks to George Taiaroa.
-        #echo "the {batch_title} report has been rendered."
         echo "{params.text_box}"
         cat {base_variable}/resources/ass.txt
     """
