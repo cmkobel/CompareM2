@@ -51,11 +51,11 @@ Finally, you can run the pipeline with the following code:
 ```bash
 conda activate asscom2_dev
 unzip tests/E._faecium/fna.zip # Or gather your own relevant files for testing.
-./asscom2 --config input_genomes="*.fna" --until fast
+./asscom2 --config input_genomes="*.fna" --until fast --dry-run
 
 ```
 
-On the first run you should see Snakemake creating the conda environments.
+Issuing a _dry run_ is a good way to get started, checking that everything is OK.
 
 #### 4) Done
 
