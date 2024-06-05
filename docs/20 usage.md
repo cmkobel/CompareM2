@@ -74,7 +74,7 @@ Pass a parameter to the snakemake pipeline, where the following keys are availab
     
   - `input_genomes="*.fna *.fa *.fasta *.fas"` (Path to input genomes. As the default value indicates, all fasta type files in the present directory will be analyzed).
 
-  - `fofn="fofn.txt"` (Deactivated by default. When set to a path it overrides key input_genomes.)
+  - `fofn="fofn.txt"` (Deactivated by default. When set to a path it overrides key input_genomes. A fofn can be created with `ls *.fna > fofn.txt`)
 
   - `output_directory="results_ac2"` (All results are written here.)
 
