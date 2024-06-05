@@ -2,7 +2,9 @@
 
 This file describes how to install assemblycomparator2 for development purposes. Since you will be defining and configuring a conda environment that will eventually be added to the apptainer-compatible dockerfile, you must run everything through conda. Once you make a pull request and it is accepted, your conda environment will be added to the official docker image which is then published with the next version number.
 
-## Installation of assemblycomparator2 on Linux
+Assemblycomparator2 probably only works on Linux. There is no plan to support any other operating system.
+
+## Installation of assemblycomparator2
 
 assemblycomparator2 can be installed by downloading the code and setting up an alias in your user profile that let's you launch the pipeline from any directory on your machine.
 
