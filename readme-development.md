@@ -51,7 +51,7 @@ Finally, you can run the pipeline with the following code:
 ```bash
 conda activate asscom2_dev
 unzip tests/E._faecium/fna.zip # Or gather your own relevant files for testing.
-${ASSCOM2_BASE}/asscom2 --config input_genomes="*.fna" --until fast
+./asscom2 --config input_genomes="*.fna" --until fast
 
 ```
 
