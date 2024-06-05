@@ -29,7 +29,7 @@ Then download the assemblycomparator2 pipeline and set up an alias in your profi
 cd ~ # Enter the directory where you want to install assemblycomparator2.
 git clone https://github.com/cmkobel/assemblycomparator2.git asscom2
 cd asscom2
-mamba env create -f environment.yaml -n asscom2_dev
+mamba env create -y -f environment.yaml -n asscom2_dev
 
 ```
 
