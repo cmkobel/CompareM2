@@ -33,6 +33,8 @@ mamba env create -y -f environment.yaml -n asscom2_dev
 
 ```
 
+If you are planning to make a pull request, you can also clone your personal fork instead of cloning the official repository.
+
 #### 2) Force using Conda to create and run individual tools.
 
 Using the profile on this path disables the Docker compatible apptainer image.
