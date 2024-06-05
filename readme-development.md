@@ -44,7 +44,7 @@ export ASSCOM2_PROFILE="$(realpath profile/conda/default)"
 
 ```
 
-`realpath` makes sure that you get the absolute path which is helpful, should you later change directory.
+`realpath` makes sure that you get the absolute path. This is helpful, should you later change directory.
 
 #### 3) Activate conda env and run
 
