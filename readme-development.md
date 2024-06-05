@@ -46,7 +46,8 @@ export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/conda/default"
 Finally, you can run the pipeline with the following code:
 ```bash
 conda activate asscom2_dev
-${ASSCOM2_BASE}/asscom2 --config input_genomes="${ASSCOM2_BASE}/tests/E._faecium/*.fna" --until fast
+unzip tests/E._faecium/fna.zip
+${ASSCOM2_BASE}/asscom2 --config input_genomes="*.fna" --until fast
 
 ```
 
