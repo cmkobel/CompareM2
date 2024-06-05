@@ -65,4 +65,4 @@ Issuing a _dry run_ is a good way to get started, checking that everything is OK
 #### 4) Done
 
 Happy hacking!
-If in doubt, please make an issue to check if there is interest in developing a new function.
+
