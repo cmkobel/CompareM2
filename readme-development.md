@@ -41,3 +41,5 @@ export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/conda/default"
 ${ASSCOM2_BASE}/asscom2 --config input_genomes="${ASSCOM2_BASE}/tests/E._faecium/*.fna" --until fast
 
 ```
+
+On the first run you should see Snakemake creating the conda environments.
