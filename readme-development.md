@@ -36,6 +36,7 @@ mamba env create -f environment.yaml -n asscom2_dev
 
 Finally, you can run the pipeline with the following code:
 ```bash
+conda activate asscom2_dev
 export ASSCOM2_BASE="$(realpath ~/asscom2)"
 export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/conda/default"
 ${ASSCOM2_BASE}/asscom2 --config input_genomes="${ASSCOM2_BASE}/tests/E._faecium/*.fna" --until fast
