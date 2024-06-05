@@ -33,20 +33,25 @@ mamba env create -f environment.yaml -n asscom2_dev
 
 ```
 
+#### 2) Set environment variables
+```bash
+export ASSCOM2_BASE="$(realpath .)" # Assuming that you entered "asscom2" in the previous code block.
+export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/conda/default"
 
-#### 2) Alias
+```
+
+
+#### 3) Activate conda env and run
 
 Finally, you can run the pipeline with the following code:
 ```bash
 conda activate asscom2_dev
-export ASSCOM2_BASE="$(realpath ~/asscom2)"
-export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/conda/default"
 ${ASSCOM2_BASE}/asscom2 --config input_genomes="${ASSCOM2_BASE}/tests/E._faecium/*.fna" --until fast
 
 ```
 
 On the first run you should see Snakemake creating the conda environments.
 
-#### 3) Done
+#### 4) Done
 
 Happy hacking!
