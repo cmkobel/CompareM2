@@ -34,6 +34,9 @@ mamba env create -y -f environment.yaml -n asscom2_dev
 ```
 
 #### 2) Force using Conda to create and run individual tools.
+
+Using the profile on this path disables the Docker compatible apptainer image.
+
 ```bash
 export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/conda/default"
 
