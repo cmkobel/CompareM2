@@ -51,7 +51,7 @@ mkdir test_ac2_install
 cd test_ac2_install
 
 # Copy some test metagenomic assemblies from the test directory.
-cp $CONDA_PREFIX/assemblycomparator2/tests/MAGs/*.fasta .
+cp $CONDA_PREFIX/share/assemblycomparator2-*/tests/E._faecium/*.fna .
 
 # Should take about a minute to complete the "fast" pseudo-rule.
 asscom2 --until fast
