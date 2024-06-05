@@ -30,19 +30,18 @@ def should_run(wildcards):
     else:
         return [] # empty list, no running requirement.
 
+
 def text_box(title_text):
-    
     #setup
     padding = "   "
-    base_length = 32
-    dynamic_length = len(title_text)
+    greeting = f" The {title_text} report has been rendered. "
+    greeting_len = len(greeting) # minus 2 is the extra padding.
     
     #build
-    box = "\n"
-    box += padding + " " + base_length * "-" + dynamic_length * "-" + "\n"
-    box += padding + f"< The {title_text} report has been rendered. >" + "\n"
-    box += padding + " " + base_length * "-" + dynamic_length * "-"
-    
+    box = ""
+    box += "\n" + padding + " " + greeting_len * "-"
+    box += "\n" + padding + "<" + greeting + ">"
+    box += "\n" + padding + " " + greeting_len * "-"
     return box
     
 
