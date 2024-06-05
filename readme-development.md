@@ -9,7 +9,7 @@ Assemblycomparator2 only works on Linux. There is no plan to support any other o
 assemblycomparator2 can be installed by downloading the code and setting up an alias in your user profile that let's you launch the pipeline from any directory on your machine.
 
 The only requisites for running assemblycomparator2 is:
-  - conda/[mamba](https://github.com/conda-forge/miniforge#install) package manager
+  - conda compatible package manager (Recommended: [mamba](https://github.com/conda-forge/miniforge#install))
   - *git* distributed version control
 
 #### 0) Prerequisites
