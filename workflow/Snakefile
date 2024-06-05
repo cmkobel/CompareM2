@@ -81,27 +81,27 @@ void_report = f"date -Iseconds >> {output_directory}/.asscom2_void_report.flag" 
 # --- Header --------------------------------------------------------
 
 print("/*") # Makes it easy to export to .dot and to remove header from the generated Dockerfile.
-print(f"                                                                   v{__version__}")
-print("         █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ ")
-print("        ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗")
-print("        ███████║███████╗███████╗██║     ██║   ██║██╔████╔██║ █████╔╝")
-print("        ██╔══██║╚════██║╚════██║██║     ██║   ██║██║╚██╔╝██║██╔═══╝ ")
-print("        ██║  ██║███████║███████║╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗")
-print("        ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝")
-print("                       A.K.A. assemblycomparator2                   ")
-print("                         Please log issues at:                      ")
-print("              github.com/cmkobel/assemblycomparator2/issues         ")
-print("                                                                    ")
-print(f"    batch_title:       {batch_title}")
-print(f"    base_variable:     {base_variable}")
-print(f"    databases:         {DATABASES}")
+print(f"                                                               v{__version__}")
+print("       █████╗ ███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ ")
+print("      ██╔══██╗██╔════╝██╔════╝██╔════╝██╔═══██╗████╗ ████║╚════██╗")
+print("      ███████║███████╗███████╗██║     ██║   ██║██╔████╔██║ █████╔╝")
+print("      ██╔══██║╚════██║╚════██║██║     ██║   ██║██║╚██╔╝██║██╔═══╝ ")
+print("      ██║  ██║███████║███████║╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗")
+print("      ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝")
+print("                      A.K.A. assemblycomparator2                  ")
+print("                         Please log issues at:                    ")
+print("         Issues: github.com/cmkobel/assemblycomparator2/issues    ")
+print("          Documentation: assemblycomparator2.readthedocs.io       ")
+print("                                                                  ")
+print(f"  batch_title:      {batch_title}")
+print(f"  base_variable:    {base_variable}")
+print(f"  databases:        {DATABASES}")
 print()
-print("    Available rules:")
-print("    sequence_lengths prokka dbcan interproscan busco")
-print("    checkm2 diamond_kegg kegg_pathway panaroo snp_dists")
-print("    assembly_stats gtdbtk abricate mlst mashtree fasttree")
-print("    report downloads fast") # Todo: update.
-
+print("  Available rules:")
+print("    abricate annotate antismash assembly_stats bakta busco checkm2") 
+print("    copy dbcan eggnog fasttree gtdbtk interproscan iqtree kegg_pathway")
+print("    mashtree mlst prokka sequence_lengths snp_dists treecluster panaroo")
+print("    meta isolate report downloads fast")
     
 
 # --- Parse input files -------------------------------------------------------

@@ -27,6 +27,9 @@ __version__ = "2.7.1"
 # Update Dockerfile:
 # export ASSCOM2_BASE="$(pwd -P)"; export ASSCOM2_PROFILE="profiles/apptainer/default"; snakemake --snakefile "${ASSCOM2_BASE}/workflow/Snakefile" --configfile "${ASSCOM2_BASE}/config/config.yaml" --containerize > Dockerfile 
 # And then remove the header text (asscom2 logo).
+# In the future I will make my docker images myself:
+# sudo docker build -t cmkobel/assemblycomparator2:v2.7.1 .
+# sudo docker push cmkobel/assemblycomparator2:v2.7.1
 
 # --- Development: Update DAG figure for documentation --------------
 # Update dag picture in documentation with this command (with anaconda/graphviz)

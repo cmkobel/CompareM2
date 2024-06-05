@@ -57,7 +57,7 @@ rule dynamic_report:
     
     shell: """	    
         
-        # Rmarkdown render() insists on writing the output relative to the path of the template. Thus we must copy the template to the local system (.writable_template_copy). In some cases, the user won't have write access to the code base path.
+        # Rmarkdown render() insists on writing the output relative to the path of the template. Thus we must copy the template to the local system (.writable_template_copy). In some cases, the user won't have write access to the code base path so having a writable copy (below the current working directory) is a reasonable workaround.
         
         # First remove possible old directory
         test -d .writable_template_copy/ && rm -r .writable_template_copy/
@@ -67,11 +67,8 @@ rule dynamic_report:
         # mkdir -p {params.output_directory}/tables # Directory for the rmarkdown to write its compiled tables to.
     
         Rscript -e '
-                        
             # Set parameters
-            base_variable = "{params.base_variable}"; output_directory = "{params.output_directory}"; batch_title = "{params.batch_title}"; version_string = "{__version__}"
-            
-            current_dir = getwd()
+            base_variable = "{params.base_variable}"; output_directory = "{params.output_directory}"; batch_title = "{params.batch_title}"; version_string = "{__version__}"; current_dir = getwd()
             
             # Render report
             rmarkdown::render(
@@ -82,22 +79,18 @@ rule dynamic_report:
             )'
 
         # Clean up 
-        rm -r .writable_template_copy # Problem is that this file is only removed if pipeline finishes. # Debug inactivev
-
+        rm -r .writable_template_copy # Problem is that this file is only removed if pipeline finishes.
 
         # End script
         test -f "{params.end_script}" && echo "running end script" && . {params.end_script} {batch_title} {output_directory}/report_{batch_title}.html 
         
-
-        echo "The report has been rendered"
+        # Print the ass. Thanks to George Taiaroa.
+        cat {base_variable}/resources/ass.txt
     """
-
 
 
 onsuccess:
     shell(f"""rm .report_config.yaml""")
-
-
 
 
 # Note: The stderr/out from rule report should not be shown on screen as it problematically wipes possible interesting fail-outputs from the main asscom2 pipeline.

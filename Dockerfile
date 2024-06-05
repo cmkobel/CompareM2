@@ -324,26 +324,27 @@ COPY workflow/envs/wget.yaml /conda-envs/3d07f847725ad902762b77365977b881/enviro
 
 # Step 2: Generate conda environments
 
-RUN mamba env create --prefix /conda-envs/b06d3784eaabfc8abcf62a294f54bad9 --file /conda-envs/b06d3784eaabfc8abcf62a294f54bad9/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/a77979bb28302ba15eb49ca8f93197f7 --file /conda-envs/a77979bb28302ba15eb49ca8f93197f7/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/2ae6d7c5468f4b0e569c09e067b92cfe --file /conda-envs/2ae6d7c5468f4b0e569c09e067b92cfe/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/55f257b7a2d5325550dfe5652bd53c22 --file /conda-envs/55f257b7a2d5325550dfe5652bd53c22/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/5c39a05942fff213bbc045e0d6dc61a3 --file /conda-envs/5c39a05942fff213bbc045e0d6dc61a3/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/349bbcba5bdfd7faab9097a8a3f7f6d2 --file /conda-envs/349bbcba5bdfd7faab9097a8a3f7f6d2/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/29ddfde03b648d05bcbe1b488c9d275e --file /conda-envs/29ddfde03b648d05bcbe1b488c9d275e/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/cc9543e16cbf71e94c901e40623c2b25 --file /conda-envs/cc9543e16cbf71e94c901e40623c2b25/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/8fd5cba1a415e69056b71dd889a203b8 --file /conda-envs/8fd5cba1a415e69056b71dd889a203b8/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/c9417166084cc9d781efd6970419263f --file /conda-envs/c9417166084cc9d781efd6970419263f/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/785d03a6b41f3872cfe5d325544fd5a7 --file /conda-envs/785d03a6b41f3872cfe5d325544fd5a7/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/df2a53a81d11717a831dda8590f53cd5 --file /conda-envs/df2a53a81d11717a831dda8590f53cd5/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/8614b56b87888c570d4ed7d9eda3b5be --file /conda-envs/8614b56b87888c570d4ed7d9eda3b5be/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/31753de779143be0587a030432205123 --file /conda-envs/31753de779143be0587a030432205123/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/19c3e22137382d27c7ff2a7f802d1b99 --file /conda-envs/19c3e22137382d27c7ff2a7f802d1b99/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/9d60f0b222fb3b85a8e15fb48d16d15b --file /conda-envs/9d60f0b222fb3b85a8e15fb48d16d15b/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/75b0e966fbd3cc274cc2d44b43c772ea --file /conda-envs/75b0e966fbd3cc274cc2d44b43c772ea/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/b417c9814002b674416363d8b7b41887 --file /conda-envs/b417c9814002b674416363d8b7b41887/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/c7ea168f1c2f891901d5ae5c900889dd --file /conda-envs/c7ea168f1c2f891901d5ae5c900889dd/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/578271d635a58e711b2c022ba49a040e --file /conda-envs/578271d635a58e711b2c022ba49a040e/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/c003df5f674e91aedca01151ce198f86 --file /conda-envs/c003df5f674e91aedca01151ce198f86/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/460abd4b10197ad284c861f21f94f546 --file /conda-envs/460abd4b10197ad284c861f21f94f546/environment.yaml && mamba clean --all -y && \
-    mamba env create --prefix /conda-envs/3d07f847725ad902762b77365977b881 --file /conda-envs/3d07f847725ad902762b77365977b881/environment.yaml && mamba clean --all -y 
+RUN mamba env create --prefix /conda-envs/b06d3784eaabfc8abcf62a294f54bad9 --file /conda-envs/b06d3784eaabfc8abcf62a294f54bad9/environment.yaml && \
+    mamba env create --prefix /conda-envs/a77979bb28302ba15eb49ca8f93197f7 --file /conda-envs/a77979bb28302ba15eb49ca8f93197f7/environment.yaml && \
+    mamba env create --prefix /conda-envs/2ae6d7c5468f4b0e569c09e067b92cfe --file /conda-envs/2ae6d7c5468f4b0e569c09e067b92cfe/environment.yaml && \
+    mamba env create --prefix /conda-envs/55f257b7a2d5325550dfe5652bd53c22 --file /conda-envs/55f257b7a2d5325550dfe5652bd53c22/environment.yaml && \
+    mamba env create --prefix /conda-envs/5c39a05942fff213bbc045e0d6dc61a3 --file /conda-envs/5c39a05942fff213bbc045e0d6dc61a3/environment.yaml && \
+    mamba env create --prefix /conda-envs/349bbcba5bdfd7faab9097a8a3f7f6d2 --file /conda-envs/349bbcba5bdfd7faab9097a8a3f7f6d2/environment.yaml && \
+    mamba env create --prefix /conda-envs/29ddfde03b648d05bcbe1b488c9d275e --file /conda-envs/29ddfde03b648d05bcbe1b488c9d275e/environment.yaml && \
+    mamba env create --prefix /conda-envs/cc9543e16cbf71e94c901e40623c2b25 --file /conda-envs/cc9543e16cbf71e94c901e40623c2b25/environment.yaml && \
+    mamba env create --prefix /conda-envs/8fd5cba1a415e69056b71dd889a203b8 --file /conda-envs/8fd5cba1a415e69056b71dd889a203b8/environment.yaml && \
+    mamba env create --prefix /conda-envs/c9417166084cc9d781efd6970419263f --file /conda-envs/c9417166084cc9d781efd6970419263f/environment.yaml && \
+    mamba env create --prefix /conda-envs/785d03a6b41f3872cfe5d325544fd5a7 --file /conda-envs/785d03a6b41f3872cfe5d325544fd5a7/environment.yaml && \
+    mamba env create --prefix /conda-envs/df2a53a81d11717a831dda8590f53cd5 --file /conda-envs/df2a53a81d11717a831dda8590f53cd5/environment.yaml && \
+    mamba env create --prefix /conda-envs/8614b56b87888c570d4ed7d9eda3b5be --file /conda-envs/8614b56b87888c570d4ed7d9eda3b5be/environment.yaml && \
+    mamba env create --prefix /conda-envs/31753de779143be0587a030432205123 --file /conda-envs/31753de779143be0587a030432205123/environment.yaml && \
+    mamba env create --prefix /conda-envs/19c3e22137382d27c7ff2a7f802d1b99 --file /conda-envs/19c3e22137382d27c7ff2a7f802d1b99/environment.yaml && \
+    mamba env create --prefix /conda-envs/9d60f0b222fb3b85a8e15fb48d16d15b --file /conda-envs/9d60f0b222fb3b85a8e15fb48d16d15b/environment.yaml && \
+    mamba env create --prefix /conda-envs/75b0e966fbd3cc274cc2d44b43c772ea --file /conda-envs/75b0e966fbd3cc274cc2d44b43c772ea/environment.yaml && \
+    mamba env create --prefix /conda-envs/b417c9814002b674416363d8b7b41887 --file /conda-envs/b417c9814002b674416363d8b7b41887/environment.yaml && \
+    mamba env create --prefix /conda-envs/c7ea168f1c2f891901d5ae5c900889dd --file /conda-envs/c7ea168f1c2f891901d5ae5c900889dd/environment.yaml && \
+    mamba env create --prefix /conda-envs/578271d635a58e711b2c022ba49a040e --file /conda-envs/578271d635a58e711b2c022ba49a040e/environment.yaml && \
+    mamba env create --prefix /conda-envs/c003df5f674e91aedca01151ce198f86 --file /conda-envs/c003df5f674e91aedca01151ce198f86/environment.yaml && \
+    mamba env create --prefix /conda-envs/460abd4b10197ad284c861f21f94f546 --file /conda-envs/460abd4b10197ad284c861f21f94f546/environment.yaml && \
+    mamba env create --prefix /conda-envs/3d07f847725ad902762b77365977b881 --file /conda-envs/3d07f847725ad902762b77365977b881/environment.yaml && \
+    mamba clean --all -y
