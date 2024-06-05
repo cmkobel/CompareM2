@@ -121,8 +121,6 @@ No environment variables are strictly necessary to set, but the following might 
 ## Outputs
 Creates a directory named "results_ac2/" (or what the output_directory parameter is set to) that contains all of the analysis results that are computed.
 
-<sample\> is defined as the basename without extension of each file given as input genome.
-
 A file tree with depth level 1 looks like so:
 
 ```txt
@@ -148,6 +146,8 @@ results_ac2/
 ```
 
 Results from input genomes are in dir "samples/" and results across all samples are in the root. The report is named after the title of the run which is the same as the name of the current working directory.
+
+<sample\> is defined as the basename without extension of each file given as input genome.
 
 The samples/<sample\> directory for each sample looks like so: (Again, depth level 1 only.)
 ```txt
