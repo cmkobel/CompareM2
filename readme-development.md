@@ -46,3 +46,7 @@ ${ASSCOM2_BASE}/asscom2 --config input_genomes="${ASSCOM2_BASE}/tests/E._faecium
 ```
 
 On the first run you should see Snakemake creating the conda environments.
+
+#### 3) Done
+
+Happy hacking!
