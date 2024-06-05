@@ -56,3 +56,4 @@ On the first run you should see Snakemake creating the conda environments.
 #### 4) Done
 
 Happy hacking!
+If in doubt, please make an issue to check if there is interest in developing a new function.
