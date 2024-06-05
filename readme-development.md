@@ -33,9 +33,8 @@ mamba env create -y -f environment.yaml -n asscom2_dev
 
 ```
 
-#### 2) Set environment variables
+#### 2) Force using Conda to create and run individual tools.
 ```bash
-export ASSCOM2_BASE="$(realpath .)" # Assuming that you entered "asscom2" in the previous code block.
 export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/conda/default"
 
 ```
