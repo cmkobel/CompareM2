@@ -40,7 +40,7 @@ Using the profile on this path disables the Docker compatible apptainer image.
 _Skippable_: If you are planning to make changes in Assemblycomparator2 that do not add or modify individual Conda environments, you can skip this step.
 
 ```bash
-export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/conda/default"
+export ASSCOM2_PROFILE="$(realpath profile/conda/default)"
 
 ```
 
