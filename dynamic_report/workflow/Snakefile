@@ -30,6 +30,21 @@ def should_run(wildcards):
     else:
         return [] # empty list, no running requirement.
 
+def text_box(title_text):
+    
+    #setup
+    padding = "   "
+    base_length = 32
+    dynamic_length = len(title_text)
+    
+    #build
+    box = "\n"
+    box += padding + " " + base_length * "-" + dynamic_length * "-" + "\n"
+    box += padding + f"< The {title_text} report has been rendered. >" + "\n"
+    box += padding + " " + base_length * "-" + dynamic_length * "-"
+    
+    return box
+    
 
 # The report should always run locally no matter the queuing system available.
 localrules: dynamic_report
@@ -51,6 +66,7 @@ rule dynamic_report:
         output_directory = output_directory,
         batch_title = batch_title,
         end_script = f"{base_variable}/dynamic_report/workflow/scripts/report_end_script.sh",
+        text_box = text_box(batch_title)
     output: 
         html = f"{output_directory}/report_{batch_title}.html",
     #output: expand("{output_directory}/report_{batch_title}.html", output_directory = output_directory, batch_title = batch_title)
@@ -85,6 +101,8 @@ rule dynamic_report:
         test -f "{params.end_script}" && echo "running end script" && . {params.end_script} {batch_title} {output_directory}/report_{batch_title}.html 
         
         # Print the ass. Thanks to George Taiaroa.
+        #echo "the {batch_title} report has been rendered."
+        echo "{params.text_box}"
         cat {base_variable}/resources/ass.txt
     """
 
