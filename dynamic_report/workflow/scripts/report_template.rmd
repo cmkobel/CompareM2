@@ -291,13 +291,13 @@ section_definition_table = tribble(
 
     ~section,            ~expectation,                         ~glob,
 
-    "assembly_stats",    1, Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv")),
-    "sequence_lengths",  N, Sys.glob(paste0(results_directory, "/samples/*/sequence_lengths/*.tsv")),
-    "busco",             N, Sys.glob(paste0(results_directory, "/samples/*/busco/short_summary_extract.tsv")),
-    "checkm2",           1, Sys.glob(paste0(results_directory, "/checkm2/quality_report.tsv")),
-    "gtdbtk",            1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
-    "mlst",              1, Sys.glob(paste0(results_directory, "/mlst/mlst.tsv")),
-    "abricate",          4, Sys.glob(
+    "assembly_stats",       1, Sys.glob(paste0(results_directory, "/assembly-stats/assembly-stats.tsv")),
+    "sequence_lengths",     N, Sys.glob(paste0(results_directory, "/samples/*/sequence_lengths/*.tsv")),
+    "busco",                N, Sys.glob(paste0(results_directory, "/samples/*/busco/short_summary_extract.tsv")),
+    "checkm2",              1, Sys.glob(paste0(results_directory, "/checkm2/quality_report.tsv")),
+    "gtdbtk",               1, Sys.glob(paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv")),
+    "mlst",                 1, Sys.glob(paste0(results_directory, "/mlst/mlst.tsv")),
+    "abricate",             4, Sys.glob(
         c(
             paste0(results_directory, "/abricate/ncbi_detailed.tsv"),
             paste0(results_directory, "/abricate/card_detailed.tsv"),
@@ -305,13 +305,18 @@ section_definition_table = tribble(
             paste0(results_directory, "/abricate/vfdb_detailed.tsv")
         )
     ),
-    "prokka",            N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
-    "kegg_pathway",      1, Sys.glob(paste0(results_directory, "/kegg_pathway/kegg_pathway_enrichment_analysis.tsv")),
-    "dbcan",             N, Sys.glob(paste0(results_directory, "/samples/*/dbcan/dbcan-sub.hmm.out")),
-    "panaroo",             1, Sys.glob(paste0(results_directory, "/panaroo/gene_presence_absence.Rtab")), # This also counts for the panaroo summary file.
-    "snp_dists",         1, Sys.glob(paste0(results_directory, "/snp-dists/snp-dists.tsv")),
-    "mashtree",          1, Sys.glob(mashtree_voluntary_dependency) # Reuse from earlier.
-    
+    "prokka",               N, Sys.glob(paste0(results_directory, "/samples/*/prokka/*.txt")),
+    "kegg_pathway",         1, Sys.glob(paste0(results_directory, "/kegg_pathway/kegg_pathway_enrichment_analysis.tsv")),
+    "dbcan",                N, Sys.glob(paste0(results_directory, "/samples/*/dbcan/dbcan-sub.hmm.out")),
+    "panaroo",              1, Sys.glob(paste0(results_directory, "/panaroo/gene_presence_absence.Rtab")), # This also counts for the panaroo summary file.
+    "snp_dists",            1, Sys.glob(paste0(results_directory, "/snp-dists/snp-dists.tsv")),
+    "mashtree",             1, Sys.glob(mashtree_voluntary_dependency), # Reuse from earlier.
+    "qualityvisualisation", 3, Sys.glob(
+          c(
+              paste0(results_directory, "/checkm2/quality_report.tsv"),
+              paste0(results_directory, "/gtdbtk/gtdbtk.summary.tsv"),
+              mashtree_voluntary_dependency
+          )
     ) %>%
     mutate(n_files = lengths(glob))
 
