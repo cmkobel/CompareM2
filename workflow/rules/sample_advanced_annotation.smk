@@ -2,19 +2,22 @@
 # By default it runs TIGRFAM, Hamap, Pfam
 rule interproscan:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
-        aminoacid = "{results_directory}/samples/{sample}/.annotation/{sample}.faa",
+        metadata = "{output_directory}/metadata.tsv",
+        aminoacid = "{output_directory}/samples/{sample}/.annotation/{sample}.faa",
         # No external database is needed.
     output:
-        tsv = "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv",
+        tsv = "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv",
     params:
-        file_base = "{results_directory}/samples/{sample}/interproscan/{sample}_interproscan",
+        file_base = "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan",
     conda: "../envs/interproscan.yaml" # Not sure if it should be called by a version number?
-    benchmark: "{results_directory}/benchmarks/benchmark.interproscan.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.interproscan.{sample}.tsv"
     threads: 8
     resources: 
         mem_mb = 8000
     shell: """
+    
+        # Collect version number.
+        interproscan.sh --version | grep version > "$(dirname {output.tsv})/.software_version.txt"
 
         # https://interproscan-docs.readthedocs.io/en/latest/HowToRun.html#command-line-options
         interproscan.sh \
@@ -33,77 +36,31 @@ rule interproscan:
     """
 
 
-
-# Use the same database as checkm2, but run on amino-acid files instead of dna.
-# This will be used for a subsequent pathway enrichment analysis.
-# Idea for speed up: concatenate all genomes together first, like they do in checkm2. Then we only need to load the database once.
-rule diamond_kegg: # or uniref_ko?
-    input: 
-        metadata = "{results_directory}/metadata.tsv", # For the report
-        aminoacid = "{results_directory}/samples/{sample}/.annotation/{sample}.faa", 
-        #database_representative = base_variable + "/databases/checkm2/ac2_checkm2_database_representative.flag",
-        database_representative = DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
-        
-    output: # 
-        tsv = "{results_directory}/samples/{sample}/diamond_kegg/{sample}_diamond_kegg.tsv", # Or should it be named uniref-100?
-    params: 
-        query_cover = 85,
-        subject_cover = 85, # 
-        percent_id = 50, # 30 is probably fine for checkm2, but I feel like I'd rather have censored data than spurious results.
-        evalue = "1e-05",
-        blocksize = 2, # A value of 2 corresponds to running checkm2 in non-lowmem mode.
-        database_path = DATABASES + "/checkm2/CheckM2_database/uniref100.KO.1.dmnd"
-    conda: "../envs/diamond.yaml" 
-    resources:
-        mem_mb = 20000, # Seems to use around 18G at max.
-        runtime = "1h",
-    benchmark: "{results_directory}/benchmarks/benchmark.diamond_kegg.{sample}.tsv"
-    threads: 8
-    shell: """
-
-        # Inspired from https://github.com/chklovski/CheckM2/blob/319dae65f1c7f2fc1c0bb160d90ac3ba64ed9457/checkm2/diamond.py#L79
-    
-        # blastp: Align amino acid query sequences against a protein reference database
-
-        diamond blastp \
-            --outfmt 6 \
-            --max-target-seqs 1 \
-            --query {input.aminoacid:q}  \
-            --out {output.tsv:q}  \
-            --threads {threads}  \
-            --db {params.database_path:q} \
-            --query-cover {params.query_cover}  \
-            --subject-cover {params.subject_cover}  \
-            --id {params.percent_id}  \
-            --evalue {params.evalue} \
-            --block-size {params.blocksize}
-
-    """
-
-   
-
 rule dbcan: # I can't decide whether this rule should really be called "run_dbcan", since that is the name of the software.
     input: 
-        metadata = "{results_directory}/metadata.tsv",
-        aminoacid = "{results_directory}/samples/{sample}/.annotation/{sample}.faa",
+        metadata = "{output_directory}/metadata.tsv",
+        aminoacid = "{output_directory}/samples/{sample}/.annotation/{sample}.faa",
         database_representative = DATABASES + "/dbcan/ac2_dbcan_database_representative.flag"
     output: 
-        overview_table = "{results_directory}/samples/{sample}/dbcan/overview.txt",
-        diamond_table = "{results_directory}/samples/{sample}/dbcan/diamond.out"
+        overview_table = "{output_directory}/samples/{sample}/dbcan/overview.txt",
+        diamond_table = "{output_directory}/samples/{sample}/dbcan/diamond.out"
     params: 
-        out_dir = "{results_directory}/samples/{sample}/dbcan"
+        out_dir = "{output_directory}/samples/{sample}/dbcan"
     conda: "../envs/dbcan.yaml" # Not sure if it should be called by a version number?
-    benchmark: "{results_directory}/benchmarks/benchmark.dbcan.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.dbcan.{sample}.tsv"
     threads: 8
     resources: 
         mem_mb = 8000
     shell: """
+    
+        # Collect version number.
+        conda list | grep dbcan > "$(dirname {output.overview_table})/.software_version.txt" # Todo, test on docker.
+        
+        # Collect database version.
+        echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.overview_table})/.database_version.txt"
 
         # It seems to be necessary to set all the cpu thread counts manually.
-
         export HMMER_NCPU={threads}
-        
-        run_dbcan -h > $(dirname {output.overview_table:q})/run_dbcan_version.txt
 
         run_dbcan \
             --dbcan_thread {threads} \
@@ -121,24 +78,74 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
 
 
 
+# aka eggnog-mapper
+rule eggnog:
+    input: 
+        metadata = "{results_directory}/metadata.tsv",
+        database_representative = DATABASES + "/eggnog/ac2_eggnog_database_representative.flag",
+        assembly = "{results_directory}/samples/{sample}/{sample}.fna"
+    output:
+        ffn = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.fasta",
+        gff = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.gff",
+        hits = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.hits",
+        orthologs = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.seed_orthologs",
+        tsv = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.annotations",
+    #params:
+            
+    conda: "../envs/eggnog.yaml"
+    benchmark: "{results_directory}/benchmarks/benchmark.eggnog_sample.{sample}.tsv"
+    resources:
+        mem_mb = 8192,
+    threads: 4 # Not sure if the underlying tools are capable of doing lots of parallel computation.
+    shell: """
+        
+        # https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2.1.5-to-v2.1.12#basic-usage
+        
+        # Collect version number.
+        emapper.py \
+            --data_dir $(dirname {input.database_representative}) \
+            --version > "$(dirname {output.gff})/.software_version.txt"
+            
+        # Collect database version.
+        echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.gff})/.database_version.txt"
+        
+        emapper.py \
+            -m diamond \
+            --data_dir $(dirname {input.database_representative}) \
+            --itype genome \
+            --genepred prodigal \
+            --override \
+            --cpu {threads} \
+            --output_dir "$(dirname {output.gff})/" \
+            -o "{wildcards.sample}" \
+            -i {input.assembly:q} 
+
+        {void_report}
+
+    """
+    
 
 
 rule gapseq_find:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
-        faa = "{results_directory}/samples/{sample}/.annotation/{sample}.faa"
+        metadata = "{output_directory}/metadata.tsv",
+        faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa"
     output:
-        dir = directory("{results_directory}/samples/{sample}/gapseq"),
-        pathways = "{results_directory}/samples/{sample}/gapseq/{sample}-Pathways.tbl",
-        reactions = "{results_directory}/samples/{sample}/gapseq/{sample}-Reactions.tbl",
-        transporter = "{results_directory}/samples/{sample}/gapseq/{sample}-Transporter.tbl",
-        flag = "{results_directory}/samples/{sample}/gapseq/gapseq_done.flag",
+        dir = directory("{output_directory}/samples/{sample}/gapseq"),
+        pathways = "{output_directory}/samples/{sample}/gapseq/{sample}-Pathways.tbl",
+        reactions = "{output_directory}/samples/{sample}/gapseq/{sample}-Reactions.tbl",
+        transporter = "{output_directory}/samples/{sample}/gapseq/{sample}-Transporter.tbl",
+        flag = "{output_directory}/samples/{sample}/gapseq/gapseq_done.flag",
     conda: "../envs/gapseq.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.gapseq_find_sample.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.gapseq_find_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 4
     shell: """
+    
+    
+        # Collect version number.
+        # Todo
         
         # -K is only for multiple sequence alignments
         # -O is "offline mode"
@@ -172,24 +179,24 @@ rule gapseq_find:
     
 rule gapseq: # Continuation on gapseq_find results.
     input: 
-        metadata = "{results_directory}/metadata.tsv",
-        assembly = "{results_directory}/samples/{sample}/{sample}.fna",
-        pathways = "{results_directory}/samples/{sample}/gapseq/{sample}_pathways.tsv",
+        metadata = "{output_directory}/metadata.tsv",
+        assembly = "{output_directory}/samples/{sample}/{sample}.fna",
+        pathways = "{output_directory}/samples/{sample}/gapseq/{sample}_pathways.tsv",
     output:
-        rxnWeights = "{results_directory}/samples/{sample}/gapseq/{sample}-rxnWeights.tbl",
-        rxnXgenes = "{results_directory}/samples/{sample}/gapseq/{sample}-rxnXgenes.tbl",
-        draft = "{results_directory}/samples/{sample}/gapseq/{sample}-draft.tbl",
-        draft_xml = "{results_directory}/samples/{sample}/gapseq/{sample}-draft_xml.xml",
+        rxnWeights = "{output_directory}/samples/{sample}/gapseq/{sample}-rxnWeights.tbl",
+        rxnXgenes = "{output_directory}/samples/{sample}/gapseq/{sample}-rxnXgenes.tbl",
+        draft = "{output_directory}/samples/{sample}/gapseq/{sample}-draft.tbl",
+        draft_xml = "{output_directory}/samples/{sample}/gapseq/{sample}-draft_xml.xml",
 
-        filled = "{results_directory}/samples/{sample}/gapseq/{sample}.tbl",
-        filled_xml = "{results_directory}/samples/{sample}/gapseq/{sample}.xml",
+        filled = "{output_directory}/samples/{sample}/gapseq/{sample}.tbl",
+        filled_xml = "{output_directory}/samples/{sample}/gapseq/{sample}.xml",
         
-        flag = "{results_directory}/samples/{sample}/gapseq/gapseq_done.flag",
+        flag = "{output_directory}/samples/{sample}/gapseq/gapseq_done.flag",
     params:
-        dir = "{results_directory}/samples/{sample}/gapseq",
+        dir = "{output_directory}/samples/{sample}/gapseq",
 
     conda: "../envs/gapseq.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.gapseq_find_sample.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.gapseq_find_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 4
@@ -223,24 +230,33 @@ rule gapseq: # Continuation on gapseq_find results.
 
 rule antismash:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
+        metadata = "{output_directory}/metadata.tsv",
         database_representative = DATABASES + "/antismash/ac2_antismash_database_representative.flag",
-        gbk = "{results_directory}/samples/{sample}/.annotation/{sample}.gbk",
+        gbk = "{output_directory}/samples/{sample}/prokka/{sample}.gbk",
     output:
-        json = "{results_directory}/samples/{sample}/antismash/{sample}.json",
+        json = "{output_directory}/samples/{sample}/antismash/{sample}.json",
     params:
         DATABASES = DATABASES,
-        dir = "{results_directory}/samples/{sample}/antismash",
+        dir = "{output_directory}/samples/{sample}/antismash",
     conda: "../envs/antismash.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.antismash_sample.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.antismash_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 8
     shell: """
     
+        # Clean directory. Antismash will fail if previous files exist.
+        rm $(dirname {output.json:q})/* || echo no files
+        
+        # Collect version number.
+        antismash --version > "$(dirname {output.json})/.software_version.txt"
+        
+        # Collect database version.
+        echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.json})/.database_version.txt"
+    
         antismash \
-            -t bacteria \
-            -c {threads} \
+            --taxon bacteria \
+            --cpus {threads} \
             --output-dir {params.dir:q} \
             --output-basename {wildcards.sample:q} \
             --databases "{params.DATABASES}/antismash" \

@@ -1,17 +1,36 @@
+# TODO: This config should be saved in the results directory, so the user later knows which settings were used.
+
+# --- Overall parameters affecting input and the whole pipeline -----
+
+
+# File of file names.
+# CHANGE_THIS_TO_ACTIVATE or change this to "path/to/fofn.txt" to activate: fofn.txt is a newline separated (like csv) list of input genomes to process. Takes precedence over parameter 'input_genomes'.
+fofn: "CHANGE_THIS_TO_ACTIVATE"
+
+# Input genomes
+# In case fofn isn't set. Has a default value that means that it will pick up any genome in the terminals current working dir. If you give multiple files or a single file has spaces or weird characters, these characters should be escaped.
+input_genomes: "*.fna *.fa *.fasta *.fas" 
+
+# annotator
+# Decide which annotator to use for downstream tools that use the output of either prokka or bakta.
+annotator: "prokka" # prokka|bakta # Affects .faa used in dbcan, interproscan, diamond_kegg
+
+output_directory: "results_ac2"
+
+# --- Parameters affecting specific tools only ----------------------
+
+# Settings for individual tools (rules). Add your own and make a pull request!
 
 mlst_scheme: "automatic"
-input_genomes: "*.fna *.fa *.fasta *.fas" # Default value. Does not support advanced glob brace expansion. If you give multiple files or a single file has spaces or weird characters, it should be quoted within apostrophes.
-annotator: "prokka" # prokka|bakta # Affects .faa used in dbcan, interproscan, diamond_kegg 
 
+prokka_rfam: true # true (default) or false
+prokka_compliant: true # true (default) or false
 
+treecluster_threshold: 0.045
+iqtree_bootstraps: 100
 
+# --- Parameters affecting the report -------------------------------
 
-#asscom2_kraken2_db: "/cluster/projects/nn9864k/shared/databases/k2_pluspf_20210127"
-#gtdbtk_data_path: "/cluster/projects/nn9864k/shared/databases/release207_v2"
-
-# TODO: Find a way of having {base_variable} or some other word to point to the base directory.
-# This is going to be quite hard if using the base_variable variable is not possible.
-# database_path_busco: "${ASSCOM2_BASE}/databases/busco" # The directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
-# database_path_gtdb: "{base_variable}/databases/gtdb" # The directory where the following files reside: "release207_v2" (or newer versions)
-# database_path_checkm2: "{base_variable}/databases/checkm2" # The directory where the following files reside: "CheckM2_database/"
-# database_path_kraken2: "{base_variable}/databases/kraken2" # The directory where the following files reside: hash.k2d"
+# Title. Used in the report.
+# User can manually set the title. Otherwise the default is to use the name of the current working directory.
+title: "CHANGE_THIS_TO_ACTIVATE" 

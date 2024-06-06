@@ -1,0 +1,50 @@
+
+local-cores: 16 # front end / head node cores
+cores: 2048 # cluster cores
+jobs: 1000 # max parallel jobs
+
+
+keep-going: true 
+#rerun-incomplete: true
+latency-wait: 120
+keep-incomplete: false # true for debugging. Must be false for production, otherwise the user might get confusing --rerun-incomplete queries.
+rerun-triggers: "mtime" # only schedule jobs to rerun if there has been a change in mtime of input/output files. That is: ignore code changes
+
+# This one could be cool to have working 
+show-failed-logs: true
+jobname: "ac2_{name}_{jobid}.sh" # Super helpful because it shows the job in qstat
+
+# ---- Conda/Mamba ----
+use-conda: true
+
+
+conda-frontend: 'mamba'
+conda-prefix: '~/.asscom2/conda'
+
+
+
+# ---- QUT CMR Lyra specifics ----
+
+cluster-cancel: "qdel"
+
+
+cluster:
+  qsub 
+    -V 
+    -A $USER 
+    -q YOURACCOUNTNAMEHERE 
+    -e .snakemake/log/%j-{rule}.err.log 
+    -o .snakemake/log/%j-{rule}.out.log
+    -l select=1:ncpus={threads}:mem={resources.mem_mb}mb,walltime={resources.runtime} 
+
+ 
+
+
+
+
+default-resources:
+  - mem_mb=1024
+  - runtime='12h'
+  
+  
+

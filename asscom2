@@ -1,12 +1,44 @@
 #!/usr/bin/env python
 
 __author__ = "Carl M. Kobel"
+
+
+# --- Development: Versioning ---------------------------------------
 __version__ = "2.7.1"
+# Places to bump
+#  - here
+#  - workflow/Snakefile, because the snakefile can possibly be run without the ./asscom2 binary. Report gets from here.
+#  - changelog
+# Also, paste changelog into the github release. Use pre-release and publish it after it has been tested.
+
+
+# --- Development: Testing "nightly" --------------------------------
+
+# For developing and testing (using conda) prior to publication of next version apptainer image, you can run the following from the repository directory:
+# Conda
+# export ASSCOM2_BASE="$(realpath ~/asscom2)"; export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/conda/default"; ${ASSCOM2_BASE}/asscom2 --config input_genomes="${ASSCOM2_BASE}/tests/E._faecium/*.fna" --until fast
+
+# If you haven't made any changes to the environment yamls, you can test using the apptainer/docker image.
+# Apptainer
+# export ASSCOM2_BASE="$(realpath ~/asscom2)"; export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/apptainer/default"; ${ASSCOM2_BASE}/asscom2 --config input_genomes="${ASSCOM2_BASE}/tests/E._faecium/*.fna" --until fast
+
+
+# --- Development: Update Dockerfile --------------------------------
+# Update Dockerfile:
+# export ASSCOM2_BASE="$(pwd -P)"; export ASSCOM2_PROFILE="profiles/apptainer/default"; snakemake --snakefile "${ASSCOM2_BASE}/workflow/Snakefile" --configfile "${ASSCOM2_BASE}/config/config.yaml" --containerize > Dockerfile 
+# And then remove the header text (asscom2 logo).
+# In the future I will make my docker images myself:
+# sudo docker build -t cmkobel/assemblycomparator2:v2.7.1 .
+# sudo docker push cmkobel/assemblycomparator2:v2.7.1
+
+# --- Development: Update DAG figure for documentation --------------
+# Update dag picture in documentation with this command (with anaconda/graphviz)
+# asscom2 --forceall --rulegraph | dot -Tpng > dag.png
 
 """
 This is the launcher script for assemblycomparator2.
 
-It has two functions.
+It has two main functions.
 1) It checks that the necessary environment variables has been set. If not, it uses reasonable defaults.
 2) Then it calls the snakemake pipeline using the command line arguments passed to this here script.
 
@@ -36,80 +68,6 @@ logger.addHandler(console_handler)
 
 
 
-help_message = f"""
-NAME
-    asscom2 - genomes to report pipeline
-
-SYNOPSIS
-    asscom2 [ --config KEY=VALUE [KEY2=VALUE]... ] [ --until RULE [RULE2]... ]
-        [ --dry-run ]
-        [ --version ] [ --help ]
-    
-DESCRIPTION
-    Analyses bacterial and archaeal genomes. 
-    Based on snakemake, so you can use the same command line arguments.
-    Please check github.com/cmkobel/assemblycomparator2 for updates, help and to track issues.
-    
-OPTIONS
-
-    --config KEY=VALUE [KEY2=VALUE]...
-        Pass a parameter to the snakemake pipeline, where the following keys are available, defaults are stated as standard. (Longer explanation in paranthesis.)
-            
-            - input_genomes="*.fna *.fa *.fasta *.fas" (Path to input genomes.)
-            
-            - annotator="prokka" (Choice of annotation tool. Alternatively "bakta".)
-            
-            - mlst_scheme="automatic" (Choice of mlst scheme. See tseemann/mlst documentation for options.)
-            
-    --until RULE [RULE2]
-        Select to run up until and including a specific rule in the rule graph. Available rules:
-        abricate annotate assembly_stats bakta bakta_download busco busco_download checkm2 checkm2_download copy dbcan dbcan_download diamond_kegg eggnog eggnog_download fasttree gapseq gapseq_find gtdb_download gtdbtk interproscan iqtree kegg_pathway mashtree mlst prokka sequence_lengths snp_dists
-        
-        There are also a number of pseudo rules, effectively "shortcuts" to a list of rules.
-          - downloads   (Run rules that download and setup up necessary databases.)
-          - fast        (Only rules that complete within a few seconds. Useful for testing.)
-          - isolate     (Only rules that are relevant for genomes of isolate origin.)
-          - meta        (Only rules that are relevant for genomes "MAGs" of metagenomic origin.)
-          - report      (Re-renders the report.)
-        
-    --dry-run
-        Run a "dry run": Shows what will run without doing it.
-    
-    --version, -v 
-        Show current version: "v{__version__}"
-        
-    --help, -h
-        Show this help and exit.
-        
-ENVIRONMENT VARIABLES
-    No environment variables are strictly necessary to set, but the following might be useful:
-        
-        ASSCOM2_PROFILE (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running Assemblycomparator2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/assemblycomparator2/profile/*).
-        
-        ASSCOM2_DATABASES (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
-  
-OUTPUT
-    Creates a directory named "results_ac2/" that contains all of the analysis results that are computed.
-        
-EXAMPLES
-    # Run all analyses with specified input genomes.
-    asscom2 --config input_genomes="path/to/genomes_*.fna"
-    
-    # Run a "dry run".
-    asscom2 --config input_genomes="path/to/genomes_*.fna" --dry-run
-    
-    # Specify annotator.
-    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="prokka"
-    
-    # Run only the "fast" rules.
-    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="prokka" --until fast
-    
-    # Run panaroo as well.
-    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="prokka" --until fast panaroo
-    
-LICENSE:
-     assemblycomparator2 "asscom2" v2.6.2 genomes to report pipeline. Copyright (C) 2019-2024 Carl M. Kobel and contributors GNU GPL v3 
-"""
 
 
 # Read system variables and use defaults if necessary.
@@ -131,10 +89,10 @@ try:
 except KeyError as e: # The profile has not been set.
     # We might check whether apptainer is present. If it is we will use it, if not, we'll use conda.
     if shutil.which("apptainer") is not None: # Apptainer exists, use it.
-        ASSCOM2_PROFILE = f"{ASSCOM2_BASE}/profile/apptainer/local"
+        ASSCOM2_PROFILE = f"{ASSCOM2_BASE}/profile/apptainer/default"
         logger.debug(f"Using apptainer.")
     else: 
-        ASSCOM2_PROFILE = f"{ASSCOM2_BASE}/profile/conda/local"
+        ASSCOM2_PROFILE = f"{ASSCOM2_BASE}/profile/conda/default"
         logger.debug(f"Using conda.")
     
     os.environ["ASSCOM2_PROFILE"] = ASSCOM2_PROFILE
@@ -164,7 +122,6 @@ logger.debug(f"The concatenated trailing arguments are {trailing_arguments_conca
 command_main = f"snakemake --snakefile \"{ASSCOM2_BASE}\"/workflow/Snakefile --profile \"{ASSCOM2_PROFILE}\" --configfile \"{ASSCOM2_BASE}\"/config/config.yaml  " + trailing_arguments_concatenated
 logger.debug(f"Command to run is\n{command_main}")
 
-# Is it a bit sketchy to use $(pwd). Should I gather the path from python instead? Or just get it relatively?
 command_report = f"""snakemake --snakefile "$ASSCOM2_BASE/dynamic_report/workflow/Snakefile" --profile "$ASSCOM2_PROFILE" --configfile=.report_config.yaml"""
 
 
@@ -172,12 +129,17 @@ command_report = f"""snakemake --snakefile "$ASSCOM2_BASE/dynamic_report/workflo
 
 # Finally, run the pipeline.
 
-# If the "--version" flag has been set, show the versions instead.
+
 if "--version" in trailing_arguments or "-v" in trailing_arguments:
     print(f"assemblycomparator2 v{__version__}")
     
 elif "--help" in trailing_arguments or "-h" in trailing_arguments:
-    print(help_message)
+    #print(help_message)
+    with open(ASSCOM2_BASE + "/docs/help_text.txt") as file:
+        for line in file:
+            print(line, end = "")
+    print()
+
     
 else:
     # Run assemblycomparator2 main pipeline
@@ -186,9 +148,14 @@ else:
     
     # Run dynamic report pipeline   
     # Only run report if there is metadata and something is worth rendering.
-    # if os.path.isfile("{results_directory}/metadata.tsv") and os.path.isfile("{results_directory}/.asscom2_void_report.flag"):  # Should be moved to the report pipeline itself.
-    process_report = subprocess.run(command_report, shell = True)
-    returncode_report = process_report.returncode
+    # if os.path.isfile("{output_directory}/metadata.tsv") and os.path.isfile("{output_directory}/.asscom2_void_report.flag"):  # Should be moved to the report pipeline itself.
     
+    if os.path.isfile(".report_config.yaml"):
+        process_report = subprocess.run(command_report, shell = True)
+        returncode_report = process_report.returncode
+    else:
+        print("Pipeline: .report_config.yaml has not yet been created.") # This happens when doing a dry-run in a new dir.
+        
+    # Exit with the return code of the main pipeline.
     sys.exit(returncode_main)
     

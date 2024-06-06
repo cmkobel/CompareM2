@@ -15,7 +15,7 @@ The core genome denotes the genes which are conserved between all samples (inter
 
 
 # Should exist in the case that the glob_list$panaroo = ...gene_presence_absence.Rtab file exists.
-panaroo_summary_file = paste0(results_directory, "/panaroo/summary_statistics.txt")
+panaroo_summary_file = paste0(output_directory, "/panaroo/summary_statistics.txt")
 
 
 

@@ -1,0 +1,12 @@
+site_name: Assemblycomparator2
+theme:
+  name: readthedocs
+  highlightjs: true
+plugins:
+  - search
+markdown_extensions:
+  - markdown_include.include:
+      base_path: .
+  - admonition
+repo_url: https://github.com/cmkobel/assemblycomparator2
+

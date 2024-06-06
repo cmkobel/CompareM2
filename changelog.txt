@@ -1,18 +1,31 @@
+2.7.2
+  - Compressed test files.
+  - Updated header text
+  - Add --no-check-certificate to wget downloads.
+
 2.7.1
   - Breaking change: File hierarchy now follows what is recommended in the snakemake documentation. Rules are now in individual files.
-  - Breaking change: profiles/ moved to profile/ (sorry)
-  - Busco runs in protein mode, reusing .faa from prokka. Should result in speedup.
+  - Breaking change: profiles/ moved to profile/ (sorry). And local profiles are now named "default".
+  - Busco runs in protein mode, reusing .faa from prokka (or bakta - see further down). Should result in speedup.
   - Added Panaroo, removed Roary.
   - For dbcan, only the substrates are shown in the dynamic report.
   - Gtdb updated to release 220.0
   - Add bakta.
-  - User can specify whether to use prokka or bakta to create annotation that is used for dbcan, interproscan and diamond_kegg. This can be set using `--config annotator=bakta` or by changing the parameter in the config/config.yaml.
-  - Add eggnogg
-  - (Add gapseq. Added but not activated yet, as we're still waiting for conda-forge::r-chnosz and bioconda::gapseq to be published.)
+  - User can specify whether to use prokka or bakta to create annotation that is used for dbcan, interproscan diamond_kegg, busco. This can be set using `--config annotator=bakta` or by changing the permanent parameter in config/config.yaml.
+  - Add eggnog
   - rename benchmark files from individual->Sample
-  - Add antismash
+  - Add antismash. Uses .gbk from prokka.
   - report_subpipeline renamed to dynamic_report
   - Dynamic report is now run by the ./asscom2 binary instead of using onsuccess/onerror.
+  - Minor fixes.
+  - Software versions and database versions are written to hidden files within output directories.
+  - Added dynamic parameters to prokka and iqtree to the config file.
+  - Added support for a "fofn" which is a file of file names. In the tseemann style, it defines which input genomes to process.
+  - Use KEGG KO from eggnog in kegg_pathway. If this doesn't work well I'll consider re-implementing kofam_scan which was removed long time back. Now a_class and b_class are "class" and "group".
+  - Implemented a way to set the output directory which now defaults to the old static "results_ac2".
+  - Implemented TreeCluster that on the 4.5% and 10% basis defines clusters on the mashtree distances so the user can easily get an impression on the relative differences between samples.
+  - Fix an error that makes snp-dists results not show up in the report. (Thanks to @AstaLaugesen)
+  - Added documentation over at https://assemblycomparator2.readthedocs.io/en/latest/
 
 2.6.2
   - Fix wrong path for dbcan results (not yet implemented in report)

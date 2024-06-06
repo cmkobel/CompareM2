@@ -25,12 +25,11 @@ def get_annotation_results(wildcards):
     
     # Return should only contain one item, as I can't name them and I need to refer to a single one in rule annotate where I'm accessing its dirname().
     return [
-        f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.gff",
-        f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.faa",
-        f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.log",
-        f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.ffn",
-        f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.tsv",
-        f"{wildcards.results_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.gbk",
+        f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.gff",
+        f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.faa",
+        f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.log",
+        f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.ffn",
+        f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.tsv",
         
     ]
         
@@ -41,13 +40,12 @@ def get_annotation_results(wildcards):
 rule annotate:
     input: get_annotation_results
     output: # These are mostly the outputs that are used downstream.
-        dir = directory("{results_directory}/samples/{sample}/.annotation/"),
-        gff = "{results_directory}/samples/{sample}/.annotation/{sample}.gff",
-        faa = "{results_directory}/samples/{sample}/.annotation/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg
-        log = "{results_directory}/samples/{sample}/.annotation/{sample}.log",
-        ffn = "{results_directory}/samples/{sample}/.annotation/{sample}.ffn",
-        tsv = "{results_directory}/samples/{sample}/.annotation/{sample}.tsv",
-        gbk = "{results_directory}/samples/{sample}/.annotation/{sample}.gbk",
+        dir = directory("{output_directory}/samples/{sample}/.annotation/"),
+        gff = "{output_directory}/samples/{sample}/.annotation/{sample}.gff",
+        faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg
+        log = "{output_directory}/samples/{sample}/.annotation/{sample}.log",
+        ffn = "{output_directory}/samples/{sample}/.annotation/{sample}.ffn",
+        tsv = "{output_directory}/samples/{sample}/.annotation/{sample}.tsv",
     shell: """
 
         # Using a softlink means that the choice of annotator can be changed without loss of information. This is especially important when the locustags are "volatile".
@@ -56,40 +54,44 @@ rule annotate:
         ln -sr {input} {output.dir}
         
     """
-    
+
 
 rule prokka:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
-        assembly = "{results_directory}/samples/{sample}/{sample}.fna"
+        metadata = "{output_directory}/metadata.tsv",
+        assembly = "{output_directory}/samples/{sample}/{sample}.fna"
     output:
-        gff = "{results_directory}/samples/{sample}/prokka/{sample}.gff",
-        faa = "{results_directory}/samples/{sample}/prokka/{sample}.faa",
-        ffn = "{results_directory}/samples/{sample}/prokka/{sample}.ffn",
-        log = "{results_directory}/samples/{sample}/prokka/{sample}.log",
-        tsv = "{results_directory}/samples/{sample}/prokka/{sample}.tsv",
-        gbk = "{results_directory}/samples/{sample}/prokka/{sample}.gbk",
-        gff_nofasta = "{results_directory}/samples/{sample}/prokka/{sample}.gff_nofasta", # Might come in handy.
+        gff = "{output_directory}/samples/{sample}/prokka/{sample}.gff",
+        faa = "{output_directory}/samples/{sample}/prokka/{sample}.faa",
+        ffn = "{output_directory}/samples/{sample}/prokka/{sample}.ffn",
+        log = "{output_directory}/samples/{sample}/prokka/{sample}.log",
+        tsv = "{output_directory}/samples/{sample}/prokka/{sample}.tsv",
+        gbk = "{output_directory}/samples/{sample}/prokka/{sample}.gbk",
+        gff_nofasta = "{output_directory}/samples/{sample}/prokka/{sample}.gff_nofasta", # Might come in handy.
+    params: 
+        prokka_rfam = "--rfam" if interpret_true(config['prokka_rfam']) else "", # Set to true (default) or false in config.
+        prokka_compliant = "--compliant" if interpret_true(config['prokka_compliant']) else "" # Set to true (default) or false in config.
     conda: "../envs/prokka.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.prokka_sample.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.prokka_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 4
     shell: """
+    
+        # Collect version number.
+        prokka --version > "$(dirname {output.gff})/.software_version.txt"
         
         prokka \
             --cpus {threads} \
             --force \
-            --rfam \
-            --compliant \
-            --outdir {wildcards.results_directory}/samples/{wildcards.sample}/prokka \
+            {params.prokka_rfam} \
+            {params.prokka_compliant} \
+            --outdir {wildcards.output_directory}/samples/{wildcards.sample}/prokka \
             --prefix {wildcards.sample} {input.assembly:q} \
         | tee {output.log:q} 
 
         # Remove fasta from gff and add sample label
-        gff_fasta_start=$(grep --line-number --extended-regexp "^##FASTA" {output.gff:q} | cut -f1 -d:)
-        head --lines $(($gff_fasta_start-1)) {output.gff:q} \
-        > {output.gff_nofasta:q}
+        sed '/^##FASTA/Q' {output.gff:q} > {output.gff_nofasta:q}
 
         {void_report}
 
@@ -98,26 +100,31 @@ rule prokka:
 
 rule bakta:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
+        metadata = "{output_directory}/metadata.tsv",
         database_representative = DATABASES + "/bakta/ac2_bakta_database_representative.flag",
-        assembly = "{results_directory}/samples/{sample}/{sample}.fna"
+        assembly = "{output_directory}/samples/{sample}/{sample}.fna"
     output:
-        gff = "{results_directory}/samples/{sample}/bakta/{sample}.gff",
-        faa = "{results_directory}/samples/{sample}/bakta/{sample}.faa",
-        tsv = "{results_directory}/samples/{sample}/bakta/{sample}.tsv",
-        log = "{results_directory}/samples/{sample}/bakta/{sample}.log",
-        ffn = "{results_directory}/samples/{sample}/bakta/{sample}.ffn",
-        gbk = "{results_directory}/samples/{sample}/bakta/{sample}.gbk",
-        #gff_generic = "{results_directory}/samples/{sample}/annotation/{sample}.gff3",
+        gff = "{output_directory}/samples/{sample}/bakta/{sample}.gff",
+        faa = "{output_directory}/samples/{sample}/bakta/{sample}.faa",
+        tsv = "{output_directory}/samples/{sample}/bakta/{sample}.tsv",
+        log = "{output_directory}/samples/{sample}/bakta/{sample}.log",
+        ffn = "{output_directory}/samples/{sample}/bakta/{sample}.ffn",
+        #gff_generic = "{output_directory}/samples/{sample}/annotation/{sample}.gff3",
     params:
         DATABASES = DATABASES
     conda: "../envs/bakta.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.bakta_sample.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.bakta_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 4
     shell: """
-                
+                        
+        # Collect version number.
+        bakta --version > "$(dirname {output.gff})/.software_version.txt"
+        
+        # Collect database version.
+        echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.gff})/.database_version.txt"
+        
         bakta \
             --db {params.DATABASES}/bakta/db \
             --output $(dirname {output.gff}) \
@@ -133,41 +140,3 @@ rule bakta:
     """
 
 
-
-# aka eggnog-mapper
-rule eggnog:
-    input: 
-        metadata = "{results_directory}/metadata.tsv",
-        database_representative = DATABASES + "/eggnog/ac2_eggnog_database_representative.flag",
-        assembly = "{results_directory}/samples/{sample}/{sample}.fna"
-    output:
-        gff = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.gff",
-        ffn = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.fasta", # Used in dbcan, interproscan, diamond_kegg, motupan
-        tsv = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.annotations",
-    #params:
-            
-    conda: "../envs/eggnog.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.eggnog_sample.{sample}.tsv"
-    resources:
-        mem_mb = 8192,
-    threads: 8
-    shell: """
-        
-        # https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2.1.5-to-v2.1.12#basic-usage
-        
-        emapper.py \
-            -m diamond \
-            --data_dir $(dirname {input.database_representative}) \
-            --itype genome \
-            --override \
-            --cpu {threads} \
-            --output_dir "$(dirname {output.gff})/" \
-            -o "{wildcards.sample}" \
-            -i {input.assembly:q} 
-            
-        #touch {output} # DEBUG
-
-        {void_report}
-
-    """
-    

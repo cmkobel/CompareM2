@@ -5,7 +5,7 @@
 __author__ = 'Carl M. Kobel'
 
 # These could be written to the config file when running the main pipeline.
-results_directory = config['results_directory'] # E.g. results_ac2
+output_directory = config['output_directory'] # E.g. results_ac2
 base_variable = config['base_variable'] # E.g. path/to/installation/of/assemblycomparator2
 batch_title = config['batch_title'] # E.g. E._faecium 
 __version__ = config['__version__']
@@ -13,23 +13,38 @@ __version__ = config['__version__']
 containerized: f"docker://cmkobel/assemblycomparator2:v{__version__}"
 #containerized: f"docker://cmkobel/assemblycomparator2:latest" # DEBUG
 
-print('report subpipeline: results_directory:', results_directory)
+print('report subpipeline: output_directory:', output_directory)
 print('report subpipeline: base_variable:', base_variable)
 
 
 try: 
-    os.mkdir(f"{results_directory}/tables") # When using apptainer, I've had some problems with "mkdir: cannot create directory ‘/home/thylakoid/pnytera’: Read-only file system". I think moving this command out of the shell script may solve the problem?
+    os.mkdir(f"{output_directory}/tables") # When using apptainer, I've had some problems with "mkdir: cannot create directory ‘/home/thylakoid/pnytera’: Read-only file system". I think moving this command out of the shell script may solve the problem?
 except:
     pass
 
 
 def should_run(wildcards):
-    if os.path.isfile(f"{results_directory}/metadata.tsv") and os.path.isfile(f"{results_directory}/.asscom2_void_report.flag"):
-        #return {"flag": f"{results_directory}/.asscom2_void_report.flag", "metadata": f"{results_directory}/metadata.tsv"}
-        return [f"{results_directory}/report_{batch_title}.html"]
+    """ Returns the final output file (report .html) in case the metadata and exists and the report is voided. Otherwise it returns an empty list and no jobs are run.
+    """
+    if os.path.isfile(f"{output_directory}/metadata.tsv") and os.path.isfile(f"{output_directory}/.asscom2_void_report.flag"):
+        return [f"{output_directory}/report_{batch_title}.html"]
     else:
         return [] # empty list, no running requirement.
 
+
+def text_box(title_text):
+    """ Helper function to build a text box of dynamic length.
+    """
+    padding = "   "
+    greeting = f" The {title_text} report has been rendered. "
+    greeting_len = len(greeting) 
+    
+    box = ""
+    box += "\n" + padding + " " + greeting_len * "-"
+    box += "\n" + padding + "<" +   greeting   + ">"
+    box += "\n" + padding + " " + greeting_len * "-"
+    return box
+    
 
 # The report should always run locally no matter the queuing system available.
 localrules: dynamic_report
@@ -42,72 +57,54 @@ rule all:
 # This rule needs to be inside its own snakefile, as it is the only way I can run it on onerror/onsuccess
 rule dynamic_report:
     input:
-        #unpack(should_run)
-        flag = f"{results_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
-        metadata = f"{results_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
+        flag = f"{output_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
+        metadata = f"{output_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
     conda: "envs/r-markdown.yaml"
     params: 
         base_variable = base_variable,
-        results_directory = results_directory,
+        output_directory = output_directory,
         batch_title = batch_title,
         end_script = f"{base_variable}/dynamic_report/workflow/scripts/report_end_script.sh",
+        text_box = text_box(batch_title)
     output: 
-        html = f"{results_directory}/report_{batch_title}.html",
-    #output: expand("{results_directory}/report_{batch_title}.html", results_directory = results_directory, batch_title = batch_title)
-    
+        html = f"{output_directory}/report_{batch_title}.html",
     shell: """	    
         
-        # Rmarkdown render() insists on writing the output relative to the path of the template. Thus we must copy the template to the local system (.writable_template_copy). In some cases, the user won't have write access to the code base path.
+        # Rmarkdown render() insists on writing the output relative to the path of the template. Thus we must copy the template to the local system (.writable_template_copy). In some cases, the user won't have write access to the code base path so having a writable copy (below the current working directory) is a reasonable workaround.
         
         # First remove possible old directory
         test -d .writable_template_copy/ && rm -r .writable_template_copy/
         cp -r {base_variable}/dynamic_report/workflow/scripts .writable_template_copy # This one fails when using apptainer. Maybe I just need to bind it.
         
         # Is this still used?
-        # mkdir -p {params.results_directory}/tables # Directory for the rmarkdown to write its compiled tables to.
+        # mkdir -p {params.output_directory}/tables # Directory for the rmarkdown to write its compiled tables to.
     
         Rscript -e '
-                        
             # Set parameters
-            base_variable = "{params.base_variable}"; results_directory = "{params.results_directory}"; batch_title = "{params.batch_title}"; version_string = "{__version__}"
-            
-            current_dir = getwd()
+            base_variable = "{params.base_variable}"; output_directory = "{params.output_directory}"; batch_title = "{params.batch_title}"; version_string = "{__version__}"; current_dir = getwd()
             
             # Render report
             rmarkdown::render(
                 input = ".writable_template_copy/report_template.rmd", 
                 output_format = "html_document",
-                output_file = paste0(current_dir, "/{params.results_directory}/report_{batch_title}.html"),
+                output_file = paste0(current_dir, "/{params.output_directory}/report_{batch_title}.html"),
                 knit_root_dir = current_dir
             )'
 
-        echo clean
         # Clean up 
-        rm -r .writable_template_copy # Problem is that this file is only removed if pipeline finishes. # Debug inactivev
-
+        rm -r .writable_template_copy # Problem is that this file is only removed if pipeline finishes.
 
         # End script
-        test -f "{params.end_script}" && echo "running end script" && . {params.end_script} {batch_title} {results_directory}/report_{batch_title}.html 
+        test -f "{params.end_script}" && echo "running end script" && . {params.end_script} {batch_title} {output_directory}/report_{batch_title}.html 
         
-
-        echo "report subpipeline: report written to {output.html}"
-        echo "    ______________________________  "
-        echo "   < The report has been rendered > "
-        echo "    ------------------------------  "
-        echo "           \\   ^__^                 "
-        echo "            \\  (oo)\\_______         "
-        echo "               (__)\\       )\\/\\     "
-        echo "                   ||----w |        "
-        echo "                   ||     ||        "
-
+        # Print the ass. Thanks to George Taiaroa.
+        echo "{params.text_box}"
+        cat {base_variable}/resources/ass.txt
     """
 
 
-
-
-
-
-
+onsuccess:
+    shell(f"""rm .report_config.yaml""")
 
 
 # Note: The stderr/out from rule report should not be shown on screen as it problematically wipes possible interesting fail-outputs from the main asscom2 pipeline.

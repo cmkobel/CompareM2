@@ -1,0 +1,49 @@
+name: latest-dry-run
+on: workflow_dispatch
+
+env:
+  ASSCOM2_PROFILE: "profile/conda/default"
+
+
+jobs:
+  create-env:
+    name: ${{ matrix.os }} 
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -l {0}
+        
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v2
+        
+      - name: create environment with mamba
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          mamba-version: "*"
+          channels: conda-forge,bioconda,defaults
+          auto-activate-base: false
+          activate-environment: asscom2
+          environment-file: environment.yaml
+      
+      - name: check solution
+        run: |
+          mamba env export
+      
+      - name: test installation
+        run: |
+          python --version
+          snakemake --version
+          ./asscom2 --version
+          ./asscom2 --help
+
+
+      - name: dry run
+        run: |
+          unzip tests/E._faecium/fna.zip
+          ./asscom2 --config input_genomes="*.fna" --dry-run

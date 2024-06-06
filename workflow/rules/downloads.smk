@@ -68,14 +68,8 @@ rule checkm2_download:
 
             url="https://zenodo.org/records/5571251/files/checkm2_database.tar.gz"
 
-            
-            #curl \
-            #    $url \
-            #    --output "{params.destination}/checkm2_database.tar.gz"
+            wget --no-check-certificate -O "{params.destination}/checkm2_database.tar.gz" "$url"
 
-            wget "$url" -O "{params.destination}/checkm2_database.tar.gz"
-
-                
             tar \
                 -xvf "{params.destination}/checkm2_database.tar.gz" \
                 --directory "{params.destination}"
@@ -159,7 +153,6 @@ rule gtdb_download:
         #db_pick="https://data.ace.uq.edu.au/public/gtdb/data/releases/release220/220.0/auxillary_files/gtdbtk_package/full_package/gtdbtk_r220_data.tar.gz"
 
 
-
         db_destination=$(dirname {output.database_representative})/gtdb_db.tar.gz
 
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
@@ -175,7 +168,7 @@ rule gtdb_download:
             >&2 echo "Downlading $db_pick to $db_destination"
             mkdir -p $(dirname "$db_destination")
 
-            wget "$db_pick" -O "$db_destination"
+            wget --no-check-certificate -O "$db_destination" "$db_pick"
 
             >&2 echo "Decompressing ..."
             tar \

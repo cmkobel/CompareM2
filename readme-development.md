@@ -2,28 +2,23 @@
 
 This file describes how to install assemblycomparator2 for development purposes. Since you will be defining and configuring a conda environment that will eventually be added to the apptainer-compatible dockerfile, you must run everything through conda. Once you make a pull request and it is accepted, your conda environment will be added to the official docker image which is then published with the next version number.
 
-The installation process is more or less the same as with the normal installation, but you must make sure to use the conda configuration. 
+Assemblycomparator2 only works on Linux.
 
-Below is a copy of the normal installation procedure, but where the changes that have been made for the development version (purely conda based) is annotated.
-
-## Installation of assemblycomparator2 on Linux
+## Installation of assemblycomparator2
 
 assemblycomparator2 can be installed by downloading the code and setting up an alias in your user profile that let's you launch the pipeline from any directory on your machine.
 
 The only requisites for running assemblycomparator2 is:
-  - [*miniconda*](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) package manager
-  - *git* distributed version control (can be installed with conda by typing `conda install -c anaconda git`)
-  - ~~*apptainer* container-virtualizer~~
-
+  - conda compatible package manager (Recommended: [mamba from miniforge](https://github.com/conda-forge/miniforge#install))
+  - *git* distributed version control
 
 #### 0) Prerequisites
 
-First, check that you have the prerequisites available on your system. Open a terminal and paste these commands. 
+First, check that you have the prerequisites available on your system. 
 
 ```bash
-which conda && conda --version
+which mamba && mamba --version
 which git && git --version
-# which apptainer && apptainer --version # Not necessary for the conda-based development version.
 ```
 
 #### 1) Download pipeline and set up the launcher environment
@@ -34,47 +29,40 @@ Then download the assemblycomparator2 pipeline and set up an alias in your profi
 cd ~ # Enter the directory where you want to install assemblycomparator2.
 git clone https://github.com/cmkobel/assemblycomparator2.git asscom2
 cd asscom2
-conda env create --name asscom2_launcher --file environment.yaml # Installs snakemake and mamba in an environment named "asscom2_launcher".
+mamba env create -y -f environment.yaml -n asscom2_dev
 
 ```
 
+If you are planning to make a pull request, you can also clone your personal fork instead of cloning the official repository.
 
-#### 2) Alias
+#### 2) Force using Conda to create and run individual tools.
 
-Finally, define the alias that will be used to launch asscom2 from any directory on your machine.
+Using the profile on this path disables the Docker compatible apptainer image.
+
+_Skippable_: If you are planning to make changes in Assemblycomparator2 that do not add or modify individual Conda environments, you can skip this step.
 
 ```bash
-echo "export ASSCOM2_BASE=$(pwd -P)" >> ~/.bashrc # Save installation directory. 
-echo "export ASSCOM2_PROFILE=\${ASSCOM2_BASE}/profiles/conda/local" >> ~/.bashrc # Define profile selection. # Different in the development version.
-echo "export ASSCOM2_DATABASES=\${ASSCOM2_BASE}/databases" >> ~/.bashrc # Define database base directory.
-
-echo "alias asscom2='conda run --live-stream --name asscom2_launcher snakemake --snakefile \${ASSCOM2_BASE}/snakefile --profile \${ASSCOM2_PROFILE} --configfile \${ASSCOM2_BASE}/config.yaml'" >> ~/.bashrc
-source ~/.bashrc
+export ASSCOM2_PROFILE="$(realpath profile/conda/default)"
 
 ```
 
+`realpath` makes sure that you get the absolute path. This is helpful, should you later change directory.
 
+You can read more about Assemblycomparator2 environment variables here: https://assemblycomparator2.readthedocs.io/en/latest/10%20installation/#advanced-configuration
 
-## Optionally: Testing the installation
+#### 3) Activate conda env and run
 
-Now you will be able to run asscom2. You can use the example data in path "tests/MAGs" to check that everything works. 
-
-~~The first time you run asscom2 it will show the message "Pulling singularity image docker://cmkobel/assemblycomparator2." This might take some time depending on your network bandwidth as it downloads a +4GB docker image that contains all the conda environments needed for each analysis.~~ 
-
-The first time you run asscom2 it will download and install the dependencies of every environment of every rule in the workflow. This might take anywhere from a few minutes to hours. It is generally recommended that you set the channel priority to strict (`conda config --set channel_priority strict`). Unfortunately for one rule "roary" you must disable the channel priority, this is due to Roary not being maintained and some dependencies are not available in the officially specified channels. To disable the channel priority for installing the environment for rule "roary" you can use `conda config --set channel_priority false`. As snakemake installs environments in a random order it is recommended that you first repetitively run `conda config --set channel_priority strict && asscom --until mashtree` until all environments but "roary" is installed - Then you can run `conda config --set channel_priority false && asscom --until mashtree`. Snakemake installs all environments ahead of time (AOT) regardless of whether you're asking it to run with the "--until" argument.
-
-Nonetheless, if you have any problems installing the conda-based development version, please raise an issue in the [issues tab](https://github.com/cmkobel/assemblycomparator2/issues).
-
+Finally, you can run the pipeline with the following code:
 ```bash
-# First, enter a dir where some genomes reside.
-cd ${ASSCOM2_BASE}/tests/MAGs
+conda activate asscom2_dev
+unzip tests/E._faecium/fna.zip # Or gather your own relevant files for testing.
+./asscom2 --config input_genomes="*.fna" --until fast --dry-run
 
-# Should take about a minute to complete.
-asscom2 --until fast
-
-# Downloads all databases (~ 200 GB).
-asscom2 --until downloads
-
-# Run the full pipeline (~ 1 cpu-hour per genome).
-asscom2
 ```
+
+Issuing a _dry run_ is a good way to get started, checking that everything is OK.
+
+#### 4) Done
+
+Happy hacking!
+
