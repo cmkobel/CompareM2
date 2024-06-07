@@ -211,7 +211,6 @@ rule all:
         "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.gff", \
         "{output_directory}/samples/{sample}/dbcan/overview.txt", \
         "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
-        "{output_directory}/samples/{sample}/antismash/{sample}.json", \
         "{output_directory}/checkm2/quality_report.tsv", \
         "{output_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
         "{output_directory}/gtdbtk/gtdbtk.summary.tsv", \
@@ -227,7 +226,8 @@ rule all:
         output_directory = output_directory, sample = df["sample"]) 
 
         # "{output_directory}/snp-dists/done.flag", \
-        #"{output_directory}/samples/{sample}/gapseq/gapseq_done.flag", \ # Still working on this one.
+        # "{output_directory}/samples/{sample}/gapseq/gapseq_done.flag", \ # Still working on this one.
+        # "{output_directory}/samples/{sample}/antismash/{sample}.json", \ # Issue when running with apptainer
 
 # Write the sample table for later reference.
 rule metadata:
