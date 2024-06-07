@@ -86,7 +86,7 @@ rule eggnog:
         assembly = "{results_directory}/samples/{sample}/{sample}.fna"
     output:
         ffn = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.fasta",
-        gff = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.gff",
+        gff = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.gff", # Why is it sometimes called emapper.genepred.gff?
         hits = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.hits",
         orthologs = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.seed_orthologs",
         tsv = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.annotations",
@@ -117,6 +117,7 @@ rule eggnog:
             --override \
             --cpu {threads} \
             --output_dir "$(dirname {output.gff})/" \
+            --temp_dir $TMPDIR \
             -o "{wildcards.sample}" \
             -i {input.assembly:q} 
 

@@ -9,6 +9,7 @@
   - Use dbcan_build to install that database.
   - Disable antismash until issue is resolved.
   - Updated the busco report section so it accepts the .faa file that was added in v2.7.1
+  - Add tmpdir to eggnog.
 
 2.7.1
   - Breaking change: File hierarchy now follows what is recommended in the snakemake documentation. Rules are now in individual files.
