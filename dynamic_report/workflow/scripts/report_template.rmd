@@ -176,7 +176,7 @@ figno = function() {
     figno_var
 }
 
-custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, width = NULL, show_n = 10, save_tsv = True) {
+custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, width = NULL, show_n = 10, save_tsv = TRUE) {
     
     name = paste(batch_title, filename, sep = "__")
     
