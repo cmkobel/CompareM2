@@ -1,6 +1,7 @@
 2.7.2
   - Compressed test files.
   - Updated header text
+  - Bring back the ass.
   - Add --no-check-certificate to wget downloads.
   - Added missing localrules for download rules
   - Decrease latency in profiles
