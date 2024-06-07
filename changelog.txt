@@ -4,7 +4,7 @@
   - Bring back the ass.
   - Add --no-check-certificate to wget downloads.
   - Added missing localrules for download rules
-  - Decrease latency in profiles
+  - In profiles, decrease latency and add rerun-incomplete: true
   - Increase memory requirement for Bakta.
   - Use dbcan_build to install that database.
   - Disable antismash until issue is resolved.

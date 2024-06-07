@@ -381,7 +381,7 @@ rule isolate:
 
 
 onstart:
-    print("Writing config for dynamic report pipeline")
+    print("Writing config for dynamic report pipeline.")
     shell(f"""
     
         echo "# config for dynamic report pipeline" > .report_config.yaml

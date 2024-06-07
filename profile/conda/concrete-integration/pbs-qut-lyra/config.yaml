@@ -9,6 +9,7 @@ keep-going: true
 latency-wait: 30
 keep-incomplete: false # true for debugging. Must be false for production, otherwise the user might get confusing --rerun-incomplete queries.
 rerun-triggers: "mtime" # only schedule jobs to rerun if there has been a change in mtime of input/output files. That is: ignore code changes
+rerun-incomplete: true
 
 # This one could be cool to have working 
 show-failed-logs: true
