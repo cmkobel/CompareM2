@@ -70,7 +70,7 @@ n_dbcan_substrates = df_dbcan_plot_data$substrate_final %>% unique() %>% length(
 ```
 
 
-```{r dbcan-plot-show, echo=FALSE, message=F, warning=F, error = T, fig.height = max(2.9, (n_dbcan_samples*0.2)+2.3), fig.width = max(4, (n_dbcan_substrates*0.2)+2.8)}
+```{r dbcan-plot-show, echo=FALSE, message=F, warning=F, error = T, fig.height = max(2.9, (n_dbcan_samples*0.2)+2.3), fig.width = max(5, (n_dbcan_substrates*0.2)+2.8)}
 df_dbcan_plot_data %>% 
     ggplot(aes(substrate_final, reorder(sample, desc(index)), fill = n)) + 
     geom_tile() +
