@@ -23,7 +23,7 @@
 🧑‍💻 Assemblycomparator2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  Apptainer/Singularity/Docker images and conda environment definitions are available for all dependent software to run.
 
 
-**The comprehensible documentation is available at [assemblycomparator2.readthedocs.org](https://assemblycomparator2.readthedocs.org).**
+**The comprehensive documentation is available at [assemblycomparator2.readthedocs.org](https://assemblycomparator2.readthedocs.org).**
 
 Please log any issues you have in the [issues tab of the repository](https://github.com/cmkobel/assemblycomparator2/issues).
 
