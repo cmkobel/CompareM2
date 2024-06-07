@@ -135,6 +135,13 @@ if (debug) {
     setwd("~/Desktop/test_dbcan")
     batch_title = basename(getwd())
     
+    # busco on mac
+    base_variable = "~/assemblycomparator2/"
+    output_directory = "results_ac2_fixstr_busco"
+    setwd("~/assemblycomparator2/")
+    batch_title = basename(getwd())
+    
+    
 }
 
 ```
@@ -169,11 +176,13 @@ figno = function() {
     figno_var
 }
 
-custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, width = NULL, show_n = 10) {
+custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, width = NULL, show_n = 10, save_tsv = True) {
     
     name = paste(batch_title, filename, sep = "__")
     
-    write_tsv(x, paste0(output_directory, "/tables/", name, ".tsv")) # Save a copy on the harddisk for people without browsers.
+    if (save_tsv) {
+        write_tsv(x, paste0(output_directory, "/tables/", name, ".tsv")) # Save a copy on the harddisk for people without browsers.
+    }
     
     DT::datatable(
         x,

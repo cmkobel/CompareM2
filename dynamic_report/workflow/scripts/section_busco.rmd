@@ -4,7 +4,7 @@
 
 ```{r busco, echo=FALSE, message=F, warning=F, error = T}
 
-# setwd("~/asscom2/tests/strachan_campylo") # DEBUG
+#setwd("~/assemblycomparator2") # DEBUG
 
 
 busco_raw = read_delim(glob_list$busco, delim = ": ", col_names = c("name", "value"))
@@ -15,7 +15,9 @@ busco_df = busco_raw %>%
     pivot_wider(id_cols = id)  %>% 
     select(-id)  %>% 
     rename(file = `in`, lineage = name) %>% 
-    mutate(file = basename(file)) %>% 
+    
+    mutate(file = basename(file) %>% str_remove("\\.faa$")) %>% 
+    
     separate(one_line_summary, c("pre_CS", "D", "F", "M", "n"), sep = ",", extra = "drop") %>% 
     separate(pre_CS, c("C", "S"), "\\[") %>% 
     mutate(D = str_remove(D, "\\]")) %>% 
@@ -35,7 +37,7 @@ busco_df = busco_raw %>%
 
 # Present table
 busco_df_meta = metadata_translate %>%
-    left_join(busco_df %>% filter(rank == 1), by = "file") %>%
+    left_join(busco_df %>% filter(rank == 1), by = c("sample" = "file")) %>%
     select(-file, -file_long, -rank) %>%
     arrange(lineage)
 
