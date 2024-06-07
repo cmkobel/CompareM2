@@ -115,7 +115,7 @@ rule bakta:
     conda: "../envs/bakta.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.bakta_sample.{sample}.tsv"
     resources:
-        mem_mb = 8192,
+        mem_mb = 16384,
     threads: 4
     shell: """
                         

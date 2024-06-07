@@ -90,6 +90,7 @@ rule dbcan_download:
         #database_representative = touch("{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag"),
         database_representative = DATABASES + "/dbcan/ac2_dbcan_database_representative.flag",
     conda: "../envs/dbcan.yaml"
+    threads: 8
     shell: """
         
         # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
@@ -102,19 +103,12 @@ rule dbcan_download:
 
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."            
 
-            cd $(dirname {output.database_representative}) \
-                && wget --no-check-certificate --continue http://bcb.unl.edu/dbCAN2/download/Databases/fam-substrate-mapping-08252022.tsv \
-                && wget --no-check-certificate --continue http://bcb.unl.edu/dbCAN2/download/Databases/PUL.faa && makeblastdb -in PUL.faa -dbtype prot \
-                && wget --no-check-certificate --continue http://bcb.unl.edu/dbCAN2/download/Databases/dbCAN-PUL_07-01-2022.xlsx \
-                && wget --no-check-certificate --continue http://bcb.unl.edu/dbCAN2/download/Databases/dbCAN-PUL_07-01-2022.txt \
-                && wget --no-check-certificate --continue http://bcb.unl.edu/dbCAN2/download/Databases/dbCAN-PUL.tar.gz && tar xvf dbCAN-PUL.tar.gz \
-                && wget --no-check-certificate --continue http://bcb.unl.edu/dbCAN2/download/Databases/dbCAN_sub.hmm && hmmpress dbCAN_sub.hmm \
-                && wget --no-check-certificate --continue http://bcb.unl.edu/dbCAN2/download/Databases/V11/CAZyDB.08062022.fa && diamond makedb --in CAZyDB.08062022.fa -d CAZy \
-                && wget --no-check-certificate --continue https://bcb.unl.edu/dbCAN2/download/Databases/V11/dbCAN-HMMdb-V11.txt && mv dbCAN-HMMdb-V11.txt dbCAN.txt && hmmpress dbCAN.txt \
-                && wget --no-check-certificate --continue https://bcb.unl.edu/dbCAN2/download/Databases/V11/tcdb.fa && diamond makedb --in tcdb.fa -d tcdb \
-                && wget --no-check-certificate --continue http://bcb.unl.edu/dbCAN2/download/Databases/V11/tf-1.hmm && hmmpress tf-1.hmm \
-                && wget --no-check-certificate --continue http://bcb.unl.edu/dbCAN2/download/Databases/V11/tf-2.hmm && hmmpress tf-2.hmm \
-                && wget --no-check-certificate --continue https://bcb.unl.edu/dbCAN2/download/Databases/V11/stp.hmm && hmmpress stp.hmm
+            
+            # Testing the new automatic downloader.
+            dbcan_build \
+                --cpus {threads} \
+                --db-dir "$(dirname {output.database_representative})" \
+                --clean
 
             # Comments on using the download code from https://github.com/linnabrown/run_dbcan (june 2023): I deleted the test ecoli files in the bottom, and added --continue, to make sure that not a .1 suffixed file is left over when retrying downloads.
 

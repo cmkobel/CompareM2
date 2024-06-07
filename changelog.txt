@@ -5,6 +5,8 @@
   - Add --no-check-certificate to wget downloads.
   - Added missing localrules for download rules
   - Decrease latency in profiles
+  - Increase memory requirement for Bakta.
+  - Use dbcan_build to install that database.
 
 2.7.1
   - Breaking change: File hierarchy now follows what is recommended in the snakemake documentation. Rules are now in individual files.
