@@ -4,7 +4,9 @@
 rule copy:
     input: 
         genome = lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0],
-    output: "{output_directory}/samples/{sample}/{sample}.fna"
+    output: 
+        fasta = "{output_directory}/samples/{sample}/{sample}.fna",
+        md5sum = "{output_directory}/samples/{sample}/{sample}.md5.txt",
     conda: "../envs/any2fasta.yaml"
     threads: 1 # Weirdly, or bugly, there must be a thread n definition in the rule. Otherwise, the set-threads option (in the orion profile) will not be taken up. 
     resources:
@@ -13,10 +15,12 @@ rule copy:
     shell: """
 
         # Collect version number.
-        any2fasta -v > "$(dirname {output})/.software_version.txt"
+        any2fasta -v > "$(dirname {output.fasta})/.software_version.txt"
         
-        any2fasta {input.genome:q} > {output:q}
-
+        any2fasta {input.genome:q} > {output.fasta:q}
+        
+        md5sum {input.genome:q} > {output.md5sum:q}
+        
     """  
 
 
@@ -26,7 +30,7 @@ rule assembly_stats:
         fasta = df["input_file_fasta"].tolist(),
     output: "{output_directory}/assembly-stats/assembly-stats.tsv"
     conda: "../envs/assembly-stats.yaml"
-    benchmark: "{output_directory}/benchmarks/assembly_stats.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmarks.assembly_stats.tsv"
     shell: """
     
         # Collect version number.

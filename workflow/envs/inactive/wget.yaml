@@ -1,6 +1,0 @@
-name: wget
-channels:
-  - anaconda
-dependencies:
-  - wget
-  

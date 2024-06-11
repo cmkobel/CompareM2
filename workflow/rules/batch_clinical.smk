@@ -53,7 +53,7 @@ rule mlst:
         list_ = "{output_directory}/mlst/mlst_schemes.txt", 
     threads: 4
     conda: "../envs/mlst.yaml"
-    benchmark: "{output_directory}/benchmarks/mlst.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.mlst.tsv"
     shell: """
     
         # Collect version number.

@@ -59,7 +59,8 @@ rule annotate:
 rule prokka:
     input: 
         metadata = "{output_directory}/metadata.tsv",
-        assembly = "{output_directory}/samples/{sample}/{sample}.fna"
+        assembly = "{output_directory}/samples/{sample}/{sample}.fna",
+        md5sum = "{output_directory}/samples/{sample}/{sample}.md5.txt",
     output:
         gff = "{output_directory}/samples/{sample}/prokka/{sample}.gff",
         faa = "{output_directory}/samples/{sample}/prokka/{sample}.faa",

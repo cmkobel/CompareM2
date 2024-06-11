@@ -1,5 +1,0 @@
-name: r-tidyverse
-channels:
-  - r
-dependencies:
-  - r-tidyverse
