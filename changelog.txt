@@ -1,15 +1,16 @@
 2.7.2
   - Compressed test files.
-  - Updated header text
+  - Updated header text.
   - Bring back the ass.
   - Add --no-check-certificate to wget downloads.
-  - Added missing localrules for download rules
-  - In profiles, decrease latency and add rerun-incomplete: true
+  - Added missing localrules for download rules.
+  - In profiles, decrease latency and add rerun-incomplete: true.
   - Increase memory requirement for Bakta.
   - Use dbcan_build to install that database.
   - Disable antismash until issue is resolved.
-  - Updated the busco report section so it accepts the .faa file that was added in v2.7.1
+  - Updated the busco report section so it accepts the .faa file that was added in v2.7.1.
   - Add tmpdir to eggnog.
+  - Compute md5sum of input genome in rule copy.
 
 2.7.1
   - Breaking change: File hierarchy now follows what is recommended in the snakemake documentation. Rules are now in individual files.

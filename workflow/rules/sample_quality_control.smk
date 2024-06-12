@@ -19,7 +19,7 @@ rule copy:
         
         any2fasta {input.genome:q} > {output.fasta:q}
         
-        md5sum {input.genome:q} > {output.md5sum:q}
+        md5sum {output.fasta:q} > {output.md5sum:q}
         
     """  
 
