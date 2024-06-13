@@ -13,7 +13,7 @@ rerun-incomplete: true
 # Conda
 use-conda: true
 conda-frontend: mamba
-conda-prefix: '~/.asscom2/conda'
+conda-prefix: '~/.comparem2/conda'
 
 
 

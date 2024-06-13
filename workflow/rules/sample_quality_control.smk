@@ -67,7 +67,7 @@ rule sequence_lengths:
 rule busco:
     input: 
         metadata = "{output_directory}/metadata.tsv",
-        database_representative = DATABASES + "/busco/ac2_busco_database_representative.flag",
+        database_representative = DATABASES + "/busco/comparem2_busco_database_representative.flag",
         faa = "{output_directory}/samples/{sample}/prokka/{sample}.faa",        
     output: 
         flag = touch("{output_directory}/samples/{sample}/busco/busco_done.flag"),
@@ -107,14 +107,14 @@ rule busco:
                 --tar \
                 --skip_bbtools \
                 --download_path {params.database_path} \
-                --offline || (>&2 echo "ac2: Busco failed internally.")
+                --offline || (>&2 echo "comparem2: Busco failed internally.")
 
         # Cat all auto lineage results together or create empty file
         # The following cat command will fail if the glob doesn't resolve any files: This is the wanted behaviour.
         cat {wildcards.output_directory}/samples/{wildcards.sample}/busco/auto_lineage/*/short_summary.json \
         > "{output.table_extract}_temp"
         
-        >&2 echo "ac2: Intermediate results have been collected, as they are still useful."
+        >&2 echo "comparem2: Intermediate results have been collected, as they are still useful."
         
         # Extract relevant features
         cat "{output.table_extract}_temp" \

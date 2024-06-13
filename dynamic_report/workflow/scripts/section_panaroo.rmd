@@ -9,8 +9,8 @@ The core genome denotes the genes which are conserved between all samples (inter
 
 ```{r panaroo-table, echo=FALSE, message=F, warning=F, error=T}
 
-#   setwd("~/asscom2/tests/strachan_campylo") # DEBUG
-#setwd("~/evo/asscom2/tests/MAGs") #DEBUG
+#   setwd("~/comparem2/tests/strachan_campylo") # DEBUG
+#setwd("~/evo/comparem2/tests/MAGs") #DEBUG
 
 
 
@@ -32,7 +32,7 @@ read_tsv(panaroo_summary_file, col_names = c("partition", "definition", "count")
 
 ```{r panaroo-matrix, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
 
-#setwd("~/evo/asscom2/tests/MAGs") # DEBUG
+#setwd("~/evo/comparem2/tests/MAGs") # DEBUG
 
 panaroo_long = read_tsv(glob_list$panaroo) %>% 
     mutate(shared_by = rowSums(across(where(is.numeric)))) %>%

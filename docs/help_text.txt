@@ -1,8 +1,8 @@
 NAME
-  Assemblycomparator2 (a.k.a. "asscom2") - Genomes to report pipeline
+  CompareM2 (a.k.a. "comparem2") - Genomes to report pipeline
 
 SYNOPSIS
-  asscom2 [ --config KEY=VALUE [KEY2=VALUE]... ]  [ --until RULE [RULE2]... ]
+  comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]  [ --until RULE [RULE2]... ]
     [ --forcerun RULE [RULE2]... ]
     [ --dry-run ]
     [ --version ]  [ --help ]
@@ -21,7 +21,7 @@ OPTIONS
     
       - fofn="fofn.txt" (Deactivated by default. When set to a path it overrides key input_genomes.)
     
-      - output_directory="results_ac2" (All results are written here.)
+      - output_directory="results_comparem2" (All results are written here.)
     
       - annotator="prokka" (Choice of annotation tool. Alternatively "bakta".)
         
@@ -57,35 +57,35 @@ OPTIONS
         
 ENVIRONMENT VARIABLES
   No environment variables are strictly necessary to set, but the following might be useful:
-    - ASSCOM2_PROFILE (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running Assemblycomparator2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/assemblycomparator2/profile/*).
+    - COMPAREM2_PROFILE (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running CompareM2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/assemblycomparator2/profile/*).
     
-    - ASSCOM2_DATABASES (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
+    - COMPAREM2_DATABASES (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
   
 OUTPUT
-  Creates a directory named "results_ac2/" (or what the output_directory parameter is set to) that contains all of the analysis results that are computed.
+  Creates a directory named "results_comparem2/" (or what the output_directory parameter is set to) that contains all of the analysis results that are computed.
 
         
 EXAMPLES
   - Run all analyses with specified input genomes.
-    asscom2 --config input_genomes="path/to/genomes_*.fna"
+    comparem2 --config input_genomes="path/to/genomes_*.fna"
 
   - Use a "fofn" - a file of file names. 
-    asscom2 --config fofn="my_fofn.txt"
+    comparem2 --config fofn="my_fofn.txt"
 
-  - Use custom output dir. (default is "results_ac2")
-    asscom2 --config input_genomes="path/to/genomes_*.fna" output_directory="my_analysis"
+  - Use custom output dir. (default is "results_comparem2")
+    comparem2 --config input_genomes="path/to/genomes_*.fna" output_directory="my_analysis"
 
   - Run a "dry run".
-    asscom2 --config input_genomes="path/to/genomes_*.fna" --dry-run
+    comparem2 --config input_genomes="path/to/genomes_*.fna" --dry-run
 
   - Specify annotator. (default is "prokka")
-    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta"
+    comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta"
 
   - Run only the "fast" rules.
-    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast
+    comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast
 
   - Run panaroo as well.
-    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast panaroo
+    comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast panaroo
 
 LICENSE:
-  Assemblycomparator2 "asscom2" genomes to report pipeline. Copyright (C) 2019-2024 Carl M. Kobel and contributors GNU GPL v3 
+  CompareM2 "comparem2" genomes to report pipeline. Copyright (C) 2019-2024 Carl M. Kobel and contributors GNU GPL v3 

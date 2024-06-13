@@ -25,13 +25,13 @@
   - rename benchmark files from individual->Sample
   - Add antismash. Uses .gbk from prokka.
   - report_subpipeline renamed to dynamic_report
-  - Dynamic report is now run by the ./asscom2 binary instead of using onsuccess/onerror.
+  - Dynamic report is now run by the ./comparem2 binary instead of using onsuccess/onerror.
   - Minor fixes.
   - Software versions and database versions are written to hidden files within output directories.
   - Added dynamic parameters to prokka and iqtree to the config file.
   - Added support for a "fofn" which is a file of file names. In the tseemann style, it defines which input genomes to process.
   - Use KEGG KO from eggnog in kegg_pathway. If this doesn't work well I'll consider re-implementing kofam_scan which was removed long time back. Now a_class and b_class are "class" and "group".
-  - Implemented a way to set the output directory which now defaults to the old static "results_ac2".
+  - Implemented a way to set the output directory which now defaults to the old static "results_comparem2".
   - Implemented TreeCluster that on the 4.5% and 10% basis defines clusters on the mashtree distances so the user can easily get an impression on the relative differences between samples.
   - Fix an error that makes snp-dists results not show up in the report. (Thanks to @AstaLaugesen)
   - Added documentation over at https://assemblycomparator2.readthedocs.io/en/latest/
@@ -49,7 +49,7 @@
   - Support for weird characters in input files. #31
   - Support for adding input files from other directories. #58
   - Minor bugfixes. #77
-  - Test battery is being developed. (https://github.com/cmkobel/ac2-test-battery)
+  - Test battery is being developed. (https://github.com/cmkobel/comparem2-test-battery)
 
 2.5.17
   - Forced recompilation of docker image did not fix issue #74. This patch has equivalent .yaml-files to version 2.5.14, which means that the old (working) docker image will be compatible.
@@ -77,7 +77,7 @@
   - assemblycomparator2 now supports iqtree with bootstrapping. Runs on the core genome produced by roary. Yet to be included in the report.
 
 2.5.9
-  - Fixed an error where checkm2 would fail setting the download location internally when running asscom2 using the apptainer/docker container. https://github.com/chklovski/CheckM2/issues/73
+  - Fixed an error where checkm2 would fail setting the download location internally when running comparem2 using the apptainer/docker container. https://github.com/chklovski/CheckM2/issues/73
 
 2.5.8
   - Fixed an error where a different version of the docker image would be pulled for the report subpipeline
@@ -86,7 +86,7 @@
   - Fixed an error where a conda environment would not be activated when using the apptainer profile for slurm.
 
 2.5.6
-  - New ./asscom2 "binary" to replace the old alias. This "binary" comes with default environment variables.
+  - New ./comparem2 "binary" to replace the old alias. This "binary" comes with default environment variables.
 
 2.5.5
   - Use $ASSCOM_DATABASES to define where the databases are placed. 

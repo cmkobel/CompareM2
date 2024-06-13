@@ -7,11 +7,11 @@ rule busco_download:
     output:
         #touch("{base_variable}/databases/busco/busco_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
         #database_representative = touch("{base_variable}/databases/busco/file_versions.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        database_representative = touch(DATABASES + "/busco/ac2_busco_database_representative.flag") # Should point to the directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
+        database_representative = touch(DATABASES + "/busco/comparem2_busco_database_representative.flag") # Should point to the directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
     conda: "../envs/busco.yaml"
     shell: """
 
-        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        # If some previous batch of comparem2 has downloaded the database, we'll just reuse it.
         if [ -f "{output}" ]; then    
 
             >&2 echo "Flag exists already: touch it to update the mtime ..."
@@ -49,14 +49,14 @@ rule busco_download:
 # Updated according to chklovski's idea in https://github.com/chklovski/CheckM2/issues/73#issuecomment-1744207103
 rule checkm2_download:
     output:
-        database_representative = DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
+        database_representative = DATABASES + "/checkm2/comparem2_checkm2_database_representative.flag",
     params:
         destination = DATABASES + "/checkm2"
     conda: "../envs/wget.yaml"
     shell: """
 
 
-        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        # If some previous batch of comparem2 has downloaded the database, we'll just reuse it.
         if [ -f "{output}" ]; then
 
             >&2 echo "Flag exists already: touch it to update the mtime ..."
@@ -87,13 +87,13 @@ rule checkm2_download:
 
 rule dbcan_download:
     output:
-        #database_representative = touch("{base_variable}/databases/dbcan/ac2_dbcan_database_representative.flag"),
-        database_representative = DATABASES + "/dbcan/ac2_dbcan_database_representative.flag",
+        #database_representative = touch("{base_variable}/databases/dbcan/comparem2_dbcan_database_representative.flag"),
+        database_representative = DATABASES + "/dbcan/comparem2_dbcan_database_representative.flag",
     conda: "../envs/dbcan.yaml"
     threads: 8
     shell: """
         
-        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        # If some previous batch of comparem2 has downloaded the database, we'll just reuse it.
         if [ -f "{output}" ]; then    
 
             >&2 echo "Flag exists already: touch it to update the mtime ..."
@@ -129,7 +129,7 @@ rule dbcan_download:
 
 rule gtdb_download:
     output:
-        database_representative = DATABASES + "/gtdb/ac2_gtdb_database_representative.flag"
+        database_representative = DATABASES + "/gtdb/comparem2_gtdb_database_representative.flag"
     conda: "../envs/wget.yaml"
     shell: """
 
@@ -137,19 +137,19 @@ rule gtdb_download:
 
         # Pick a source file
         # Release 214
-        # db_pick="https://ns9864k.web.sigma2.no/TheMEMOgroup/cmkobel/asscom2-assets/gtdb/release214/gtdbtk_data.tar.gz" # NMBU/MEMO mirror in norway
+        # db_pick="https://ns9864k.web.sigma2.no/TheMEMOgroup/cmkobel/comparem2-assets/gtdb/release214/gtdbtk_data.tar.gz" # NMBU/MEMO mirror in norway
         #db_pick="https://data.gtdb.ecogenomic.org/releases/latest/auxillary_files/gtdbtk_data.tar.gz" # Official location
         #db_pick="https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_data.tar.gz" # Official alternative mirror
         
         # Release 220
-        db_pick="https://ns9864k.web.sigma2.no/TheMEMOgroup/cmkobel/asscom2-assets/gtdb/release220/gtdbtk_r220_data.tar.gz" # NMBU/MEMO mirror in norway
+        db_pick="https://ns9864k.web.sigma2.no/TheMEMOgroup/cmkobel/comparem2-assets/gtdb/release220/gtdbtk_r220_data.tar.gz" # NMBU/MEMO mirror in norway
         #db_pick="https://data.gtdb.ecogenomic.org/releases/release220/220.0/auxillary_files/gtdbtk_package/full_package/gtdbtk_r220_data.tar.gz"
         #db_pick="https://data.ace.uq.edu.au/public/gtdb/data/releases/release220/220.0/auxillary_files/gtdbtk_package/full_package/gtdbtk_r220_data.tar.gz"
 
 
         db_destination=$(dirname {output.database_representative})/gtdb_db.tar.gz
 
-        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        # If some previous batch of comparem2 has downloaded the database, we'll just reuse it.
         if [ -f "{output}" ]; then    
 
             >&2 echo "Flag exists already: touch it to update the mtime ..."
@@ -188,13 +188,13 @@ rule gtdb_download:
 
 rule bakta_download:
     output:
-        database_representative = DATABASES + "/bakta/ac2_bakta_database_representative.flag"
+        database_representative = DATABASES + "/bakta/comparem2_bakta_database_representative.flag"
     conda: "../envs/bakta.yaml"
     shell: """
 
         # https://github.com/oschwengers/bakta?tab=readme-ov-file#database-download
 
-        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        # If some previous batch of comparem2 has downloaded the database, we'll just reuse it.
         if [ -f "{output}" ]; then    
 
             >&2 echo "Flag exists already: touch it to update the mtime ..."
@@ -208,7 +208,7 @@ rule bakta_download:
                 --output $(dirname {output.database_representative}) \
                 --type full # or light
                 
-            # Run Bakta using '--db /spaceface/shared_databases/asscom2_v2.5.5+/bakta/db' or set a BAKTA_DB environment variable: 'export BAKTA_DB=/spaceface/shared_databases/asscom2_v2.5.5+/bakta/db'
+            # Run Bakta using '--db /spaceface/shared_databases/comparem2_v2.5.5+/bakta/db' or set a BAKTA_DB environment variable: 'export BAKTA_DB=/spaceface/shared_databases/comparem2_v2.5.5+/bakta/db'
 
             
             >&2 echo "bakta DB setup completed"
@@ -225,13 +225,13 @@ rule bakta_download:
 
 rule eggnog_download:
     output:
-        database_representative = DATABASES + "/eggnog/ac2_eggnog_database_representative.flag"
+        database_representative = DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag"
     conda: "../envs/eggnog.yaml"
     shell: """
 
         # https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2.1.5-to-v2.1.12#setup
 
-        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        # If some previous batch of comparem2 has downloaded the database, we'll just reuse it.
         if [ -f "{output}" ]; then    
 
             >&2 echo "Flag exists already: touch it to update the mtime ..."
@@ -260,13 +260,13 @@ rule eggnog_download:
 
 rule antismash_download:
     output:
-        database_representative = DATABASES + "/antismash/ac2_antismash_database_representative.flag"
+        database_representative = DATABASES + "/antismash/comparem2_antismash_database_representative.flag"
     conda: "../envs/antismash.yaml"
     shell: """
 
         # https://docs.antismash.secondarymetabolites.org/install/
 
-        # If some previous batch of asscom2 has downloaded the database, we'll just reuse it.
+        # If some previous batch of comparem2 has downloaded the database, we'll just reuse it.
         if [ -f "{output}" ]; then    
 
             >&2 echo "Flag exists already: touch it to update the mtime ..."

@@ -2,7 +2,7 @@
 
 # What analyses does it do?
 
-Below is the graph the shows the order of execution of all possible analyses "rules" in Assemblycomparator2:
+Below is the graph the shows the order of execution of all possible analyses "rules" in CompareM2:
 
 
 ![dag](https://github.com/cmkobel/assemblycomparator2/assets/5913696/db6b58ac-cec0-43fe-b06f-18048ef3b642)
@@ -10,7 +10,7 @@ Below is the graph the shows the order of execution of all possible analyses "ru
 
 This figure does not show the pseudo rules such as `meta`, `isolate`, `fast`, etc.
 
-**Hint:** Use `asscom2 --until <rule> [<another rule>...]` to run one or several specific analyses only. The rule names for each analysis to pick is listed below:
+**Hint:** Use `comparem2 --until <rule> [<another rule>...]` to run one or several specific analyses only. The rule names for each analysis to pick is listed below:
 
 ## For each sample
 
@@ -50,7 +50,7 @@ Then on the basis of the analysis of each input genomic assembly, these analyses
 
 There are also a few pseudo targets defined. For instance `fast` which runs sequence_lengths, assembly-stats and mashtree. There is also one named `isolate` which runs all the analyses that are relevant for clinical isolates (sequence_lengths, prokka, mlst, abricate, assembly-stats, gtdbtk, busco, checkm2, roary, snp-dists, fasttree, mashtree) as well as one named `meta` which runs the analyses that are relevant to metagenomes (aka. MAGs), these are sequence_lengths, prokka, gtdbtk, busco, checkm2, mashtree.
 
-**Hint:** You can run one of these pseudorules just like any other rulename with `asscom2 --until meta` or `asscom2 --until isolate`
+**Hint:** You can run one of these pseudorules just like any other rulename with `comparem2 --until meta` or `comparem2 --until isolate`
 
 
 

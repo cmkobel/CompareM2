@@ -1,4 +1,4 @@
-name: asscom2_launcher
+name: comparem2_launcher
 channels:
   - conda-forge
   - bioconda

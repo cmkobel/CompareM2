@@ -15,7 +15,7 @@ input_genomes: "*.fna *.fa *.fasta *.fas"
 # Decide which annotator to use for downstream tools that use the output of either prokka or bakta.
 annotator: "prokka" # prokka|bakta # Affects .faa used in dbcan, interproscan, diamond_kegg
 
-output_directory: "results_ac2"
+output_directory: "results_comparem2"
 
 # --- Parameters affecting specific tools only ----------------------
 

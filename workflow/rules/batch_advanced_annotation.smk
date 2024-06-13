@@ -35,7 +35,7 @@ def get_mem_gtdbtk(wildcards, attempt):
 rule gtdbtk:
     input: 
         metadata = "{output_directory}/metadata.tsv",
-        database_representative = DATABASES + "/gtdb/ac2_gtdb_database_representative.flag",
+        database_representative = DATABASES + "/gtdb/comparem2_gtdb_database_representative.flag",
         fasta = df["input_file_fasta"].tolist(),
     output: 
         tsv = "{output_directory}/gtdbtk/gtdbtk.summary.tsv"

@@ -2,7 +2,7 @@ name: latest-dry-run
 on: workflow_dispatch
 
 env:
-  ASSCOM2_PROFILE: "profile/conda/default"
+  COMPAREM2_PROFILE: "profile/conda/default"
 
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
           mamba-version: "*"
           channels: conda-forge,bioconda,defaults
           auto-activate-base: false
-          activate-environment: asscom2
+          activate-environment: comparem2
           environment-file: environment.yaml
       
       - name: check solution
@@ -39,11 +39,11 @@ jobs:
         run: |
           python --version
           snakemake --version
-          ./asscom2 --version
-          ./asscom2 --help
+          ./comparem2 --version
+          ./comparem2 --help
 
 
       - name: dry run
         run: |
           unzip tests/E._faecium/fna.zip
-          ./asscom2 --config input_genomes="*.fna" --dry-run
+          ./comparem2 --config input_genomes="*.fna" --dry-run

@@ -40,7 +40,7 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
     input: 
         metadata = "{output_directory}/metadata.tsv",
         aminoacid = "{output_directory}/samples/{sample}/.annotation/{sample}.faa",
-        database_representative = DATABASES + "/dbcan/ac2_dbcan_database_representative.flag"
+        database_representative = DATABASES + "/dbcan/comparem2_dbcan_database_representative.flag"
     output: 
         overview_table = "{output_directory}/samples/{sample}/dbcan/overview.txt",
         diamond_table = "{output_directory}/samples/{sample}/dbcan/diamond.out"
@@ -82,7 +82,7 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
 rule eggnog:
     input: 
         metadata = "{results_directory}/metadata.tsv",
-        database_representative = DATABASES + "/eggnog/ac2_eggnog_database_representative.flag",
+        database_representative = DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag",
         assembly = "{results_directory}/samples/{sample}/{sample}.fna"
     output:
         ffn = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.fasta",
@@ -232,7 +232,7 @@ rule gapseq: # Continuation on gapseq_find results.
 rule antismash:
     input: 
         metadata = "{output_directory}/metadata.tsv",
-        database_representative = DATABASES + "/antismash/ac2_antismash_database_representative.flag",
+        database_representative = DATABASES + "/antismash/comparem2_antismash_database_representative.flag",
         gbk = "{output_directory}/samples/{sample}/prokka/{sample}.gbk",
     output:
         json = "{output_directory}/samples/{sample}/antismash/{sample}.json",

@@ -13,14 +13,14 @@ rerun-incomplete: true
 
 # This one could be cool to have working 
 show-failed-logs: true
-jobname: "ac2_{name}_{jobid}.sh" # Super helpful because it shows the job in qstat
+jobname: "comparem2_{name}_{jobid}.sh" # Super helpful because it shows the job in qstat
 
 # ---- Conda/Mamba ----
 use-conda: true
 
 
 conda-frontend: 'mamba'
-conda-prefix: '~/.asscom2/conda'
+conda-prefix: '~/.comparem2/conda'
 
 
 

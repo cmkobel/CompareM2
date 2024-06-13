@@ -7,7 +7,7 @@ __author__ = "Carl M. Kobel"
 __version__ = "2.7.1"
 # Places to bump
 #  - here
-#  - workflow/Snakefile, because the snakefile can possibly be run without the ./asscom2 binary. Report gets from here.
+#  - workflow/Snakefile, because the snakefile can possibly be run without the ./comparem2 binary. Report gets from here.
 #  - changelog
 # Also, paste changelog into the github release. Use pre-release and publish it after it has been tested.
 
@@ -16,24 +16,24 @@ __version__ = "2.7.1"
 
 # For developing and testing (using conda) prior to publication of next version apptainer image, you can run the following from the repository directory:
 # Conda
-# export ASSCOM2_BASE="$(realpath ~/asscom2)"; export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/conda/default"; ${ASSCOM2_BASE}/asscom2 --config input_genomes="${ASSCOM2_BASE}/tests/E._faecium/*.fna" --until fast
+# export COMPAREM2_BASE="$(realpath ~/comparem2)"; export COMPAREM2_PROFILE="${COMPAREM2_BASE}/profile/conda/default"; ${COMPAREM2_BASE}/comparem2 --config input_genomes="${COMPAREM2_BASE}/tests/E._faecium/*.fna" --until fast
 
 # If you haven't made any changes to the environment yamls, you can test using the apptainer/docker image.
 # Apptainer
-# export ASSCOM2_BASE="$(realpath ~/asscom2)"; export ASSCOM2_PROFILE="${ASSCOM2_BASE}/profile/apptainer/default"; ${ASSCOM2_BASE}/asscom2 --config input_genomes="${ASSCOM2_BASE}/tests/E._faecium/*.fna" --until fast
+# export COMPAREM2_BASE="$(realpath ~/comparem2)"; export COMPAREM2_PROFILE="${COMPAREM2_BASE}/profile/apptainer/default"; ${COMPAREM2_BASE}/comparem2 --config input_genomes="${COMPAREM2_BASE}/tests/E._faecium/*.fna" --until fast
 
 
 # --- Development: Update Dockerfile --------------------------------
 # Update Dockerfile:
-# export ASSCOM2_BASE="$(pwd -P)"; export ASSCOM2_PROFILE="profiles/apptainer/default"; snakemake --snakefile "${ASSCOM2_BASE}/workflow/Snakefile" --configfile "${ASSCOM2_BASE}/config/config.yaml" --containerize > Dockerfile 
-# And then remove the header text (asscom2 logo).
+# export COMPAREM2_BASE="$(pwd -P)"; export COMPAREM2_PROFILE="profiles/apptainer/default"; snakemake --snakefile "${COMPAREM2_BASE}/workflow/Snakefile" --configfile "${COMPAREM2_BASE}/config/config.yaml" --containerize > Dockerfile 
+# And then remove the header text (comparem2 logo).
 # In the future I will make my docker images myself:
 # sudo docker build -t cmkobel/assemblycomparator2:v2.7.1 .
 # sudo docker push cmkobel/assemblycomparator2:v2.7.1
 
 # --- Development: Update DAG figure for documentation --------------
 # Update dag picture in documentation with this command (with anaconda/graphviz)
-# asscom2 --forceall --rulegraph | dot -Tpng > dag.png
+# comparem2 --forceall --rulegraph | dot -Tpng > dag.png
 
 """
 This is the launcher script for assemblycomparator2.
@@ -42,7 +42,7 @@ It has two main functions.
 1) It checks that the necessary environment variables has been set. If not, it uses reasonable defaults.
 2) Then it calls the snakemake pipeline using the command line arguments passed to this here script.
 
-Because any command line arguments are passed directly to the subprocess.run()-snakemake call in the bottom of this script, you can use any snakemake-compatible command line argument to this script. E.g: `asscom2 --dry-run`.
+Because any command line arguments are passed directly to the subprocess.run()-snakemake call in the bottom of this script, you can use any snakemake-compatible command line argument to this script. E.g: `comparem2 --dry-run`.
 
 This "binary" file works instead of the alias that has been previously used.
 
@@ -57,7 +57,7 @@ import shutil
 
 
 # Create logger that prints to the terminal.
-logger = logging.getLogger('asscom2_launcher')
+logger = logging.getLogger('comparem2_launcher')
 logger.setLevel(logging.INFO)
 console_handler = logging.StreamHandler()
 #console_handler.setLevel(logging.DEBUG)
@@ -72,40 +72,40 @@ logger.addHandler(console_handler)
 
 # Read system variables and use defaults if necessary.
 
-# Sets the ASSCOM2_BASE to the directory of this python script file which (script file) should be neighboring the correct snakefile.
+# Sets the COMPAREM2_BASE to the directory of this python script file which (script file) should be neighboring the correct snakefile.
 try:
-    ASSCOM2_BASE = os.environ['ASSCOM2_BASE']
-    logger.debug(f"ASSCOM2_BASE was already set to \"{ASSCOM2_BASE}\".")
+    COMPAREM2_BASE = os.environ['COMPAREM2_BASE']
+    logger.debug(f"COMPAREM2_BASE was already set to \"{COMPAREM2_BASE}\".")
 except KeyError as e:
-    ASSCOM2_BASE = os.path.dirname(os.path.realpath(__file__)) # This seems to work even for symlinks (it gets the physical path.). Update: Maybe that is why the apptainer environment can't find the cwd?
-    os.environ["ASSCOM2_BASE"] = ASSCOM2_BASE
-    logger.debug(f"ASSCOM2_BASE was not set and has been defaulted to \"{ASSCOM2_BASE}\".")
+    COMPAREM2_BASE = os.path.dirname(os.path.realpath(__file__)) # This seems to work even for symlinks (it gets the physical path.). Update: Maybe that is why the apptainer environment can't find the cwd?
+    os.environ["COMPAREM2_BASE"] = COMPAREM2_BASE
+    logger.debug(f"COMPAREM2_BASE was not set and has been defaulted to \"{COMPAREM2_BASE}\".")
 
-# Defines the ASSCOM2_PROFILE relative to the ASSCOM2_BASE if not set already.
+# Defines the COMPAREM2_PROFILE relative to the COMPAREM2_BASE if not set already.
 # Detects and prioritizes to use apptainer if it exists.
 try:
-    ASSCOM2_PROFILE = os.environ['ASSCOM2_PROFILE']
-    logger.debug(f"ASSCOM2_PROFILE was already set to \"{ASSCOM2_PROFILE}\".")
+    COMPAREM2_PROFILE = os.environ['COMPAREM2_PROFILE']
+    logger.debug(f"COMPAREM2_PROFILE was already set to \"{COMPAREM2_PROFILE}\".")
 except KeyError as e: # The profile has not been set.
     # We might check whether apptainer is present. If it is we will use it, if not, we'll use conda.
     if shutil.which("apptainer") is not None: # Apptainer exists, use it.
-        ASSCOM2_PROFILE = f"{ASSCOM2_BASE}/profile/apptainer/default"
+        COMPAREM2_PROFILE = f"{COMPAREM2_BASE}/profile/apptainer/default"
         logger.debug(f"Using apptainer.")
     else: 
-        ASSCOM2_PROFILE = f"{ASSCOM2_BASE}/profile/conda/default"
+        COMPAREM2_PROFILE = f"{COMPAREM2_BASE}/profile/conda/default"
         logger.debug(f"Using conda.")
     
-    os.environ["ASSCOM2_PROFILE"] = ASSCOM2_PROFILE
-    logger.debug(f"ASSCOM2_PROFILE was not set and has been defaulted to \"{ASSCOM2_PROFILE}\".")
+    os.environ["COMPAREM2_PROFILE"] = COMPAREM2_PROFILE
+    logger.debug(f"COMPAREM2_PROFILE was not set and has been defaulted to \"{COMPAREM2_PROFILE}\".")
 
-# Defines the ASSCOM2_DATABASES relative to the ASSCOM2_BASE if not set already.
+# Defines the COMPAREM2_DATABASES relative to the COMPAREM2_BASE if not set already.
 try:
-    ASSCOM2_DATABASES = os.environ['ASSCOM2_DATABASES']
-    logger.debug(f"ASSCOM2_DATABASES was already set to \"{ASSCOM2_DATABASES}\".")
+    COMPAREM2_DATABASES = os.environ['COMPAREM2_DATABASES']
+    logger.debug(f"COMPAREM2_DATABASES was already set to \"{COMPAREM2_DATABASES}\".")
 except KeyError as e:
-    ASSCOM2_DATABASES = f"{ASSCOM2_BASE}/databases"
-    os.environ["ASSCOM2_DATABASES"] = ASSCOM2_DATABASES
-    logger.debug(f"ASSCOM2_DATABASES was not set and has been defaulted to \"{ASSCOM2_DATABASES}\".")
+    COMPAREM2_DATABASES = f"{COMPAREM2_BASE}/databases"
+    os.environ["COMPAREM2_DATABASES"] = COMPAREM2_DATABASES
+    logger.debug(f"COMPAREM2_DATABASES was not set and has been defaulted to \"{COMPAREM2_DATABASES}\".")
 
 
 
@@ -119,10 +119,10 @@ trailing_arguments = sys.argv[1:]
 trailing_arguments_concatenated = " ".join(trailing_arguments)
 logger.debug(f"The concatenated trailing arguments are {trailing_arguments_concatenated}")
 
-command_main = f"snakemake --snakefile \"{ASSCOM2_BASE}\"/workflow/Snakefile --profile \"{ASSCOM2_PROFILE}\" --configfile \"{ASSCOM2_BASE}\"/config/config.yaml  " + trailing_arguments_concatenated
+command_main = f"snakemake --snakefile \"{COMPAREM2_BASE}\"/workflow/Snakefile --profile \"{COMPAREM2_PROFILE}\" --configfile \"{COMPAREM2_BASE}\"/config/config.yaml  " + trailing_arguments_concatenated
 logger.debug(f"Command to run is\n{command_main}")
 
-command_report = f"""snakemake --snakefile "$ASSCOM2_BASE/dynamic_report/workflow/Snakefile" --profile "$ASSCOM2_PROFILE" --configfile=.report_config.yaml"""
+command_report = f"""snakemake --snakefile "$COMPAREM2_BASE/dynamic_report/workflow/Snakefile" --profile "$COMPAREM2_PROFILE" --configfile=.report_config.yaml"""
 
 
 
@@ -135,7 +135,7 @@ if "--version" in trailing_arguments or "-v" in trailing_arguments:
     
 elif "--help" in trailing_arguments or "-h" in trailing_arguments:
     #print(help_message)
-    with open(ASSCOM2_BASE + "/docs/help_text.txt") as file:
+    with open(COMPAREM2_BASE + "/docs/help_text.txt") as file:
         for line in file:
             print(line, end = "")
     print()
@@ -148,7 +148,7 @@ else:
     
     # Run dynamic report pipeline   
     # Only run report if there is metadata and something is worth rendering.
-    # if os.path.isfile("{output_directory}/metadata.tsv") and os.path.isfile("{output_directory}/.asscom2_void_report.flag"):  # Should be moved to the report pipeline itself.
+    # if os.path.isfile("{output_directory}/metadata.tsv") and os.path.isfile("{output_directory}/.comparem2_void_report.flag"):  # Should be moved to the report pipeline itself.
     
     if os.path.isfile(".report_config.yaml"):
         process_report = subprocess.run(command_report, shell = True)

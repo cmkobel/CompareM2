@@ -19,7 +19,7 @@ if (F) {
     # Work macbook
     input_kegg_asset <- "~/assemblycomparator2/resources/ko00001.json"
     output_path <- paste0(getwd(), "/outt")
-    # input_diamond = "results_ac2/samples/Treatment_LowE.metabat.242/diamond_kegg/Treatment_LowE.metabat.242_diamond_kegg.tsv"
+    # input_diamond = "results_comparem2/samples/Treatment_LowE.metabat.242/diamond_kegg/Treatment_LowE.metabat.242_diamond_kegg.tsv"
     input_diamond <- "samples/116_2/eggnog/116_2.emapper.annotations"
 }
 

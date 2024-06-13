@@ -2,7 +2,7 @@
 .DS_Store
 conda_base/
 .snakemake
-output_asscom2/
+output_comparem2/
 ._*
 singularity_images
 
@@ -143,5 +143,5 @@ tests
 busco_downloads
 databases
 trash
-results_ac2
+results_comparem2
 

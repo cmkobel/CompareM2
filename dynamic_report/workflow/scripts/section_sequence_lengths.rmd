@@ -5,7 +5,7 @@
 
 ```{r sequence_lengths-table, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, (N*0.2)+0.3), fig.width = 10}
 
-# setwd("~/asscom2/tests/strachan_campylo") # DEBUG
+# setwd("~/comparem2/tests/strachan_campylo") # DEBUG
 
 
 

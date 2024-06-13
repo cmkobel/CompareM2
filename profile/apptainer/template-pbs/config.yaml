@@ -13,15 +13,15 @@ rerun-incomplete: true
 
 # This one could be cool to have working 
 show-failed-logs: true
-jobname: "ac2_{name}_{jobid}.sh" # Super helpful because it shows the job in qstat
+jobname: "comparem2_{name}_{jobid}.sh" # Super helpful because it shows the job in qstat
 
 # Apptainer
 use-conda: true # This one is necessary to activate the environment inside the apptainer image.
 use-singularity: true
 
-singularity-prefix: '~/.asscom2/singularity-prefix' # Directory in which singularity images will be stored. Couldn't find a way of using the $ASSCOM_BASE system variable, so users should manually change this here if they want to use something else.
-# singularity-args: "--bind $ASSCOM2_BASE,$ASSCOM2_DATABASES" # Must also bind ASSCOM2_BASE so we can access databases and report scripts etc. When this issue is solved I'll add individual arguments to rules and make it more flexible https://github.com/snakemake/snakemake/issues/262
-singularity-args: '--bind "$ASSCOM2_BASE","$ASSCOM2_DATABASES","$(pwd)"' # Must also bind ASSCOM2_BASE so we can access databases and report scripts etc. When this issue is solved I'll add individual arguments to rules and make it more flexible https://github.com/snakemake/snakemake/issues/262
+singularity-prefix: '~/.comparem2/singularity-prefix' # Directory in which singularity images will be stored. Couldn't find a way of using the $ASSCOM_BASE system variable, so users should manually change this here if they want to use something else.
+# singularity-args: "--bind $COMPAREM2_BASE,$COMPAREM2_DATABASES" # Must also bind COMPAREM2_BASE so we can access databases and report scripts etc. When this issue is solved I'll add individual arguments to rules and make it more flexible https://github.com/snakemake/snakemake/issues/262
+singularity-args: '--bind "$COMPAREM2_BASE","$COMPAREM2_DATABASES","$(pwd)"' # Must also bind COMPAREM2_BASE so we can access databases and report scripts etc. When this issue is solved I'll add individual arguments to rules and make it more flexible https://github.com/snakemake/snakemake/issues/262
 
 
 

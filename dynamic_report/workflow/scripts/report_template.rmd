@@ -1,6 +1,6 @@
 ---
 title: "`r batch_title`"
-subtitle: "Assemblycomparator2 Report"
+subtitle: "CompareM2 Report"
 date: "`r Sys.time()`"
 output:
   html_document:
@@ -72,60 +72,60 @@ debug = F
 if (debug) {
     # strachan_campylo on threadripper through posit workbench
     # strachan_campylo on threadripper
-    base_variable = "~/evo/asscom2"
-    output_directory = "results_ac2"
-    setwd("~/asscom2/tests/strachan_campylo")
-    setwd("~/evo/asscom2/tests/MAGs/")
+    base_variable = "~/evo/comparem2"
+    output_directory = "results_comparem2"
+    setwd("~/comparem2/tests/strachan_campylo")
+    setwd("~/evo/comparem2/tests/MAGs/")
     
     batch_title = basename(getwd())
     
     # strachan_campylo on threadripper
-    base_variable = "~/asscom2"
-    output_directory = "results_ac2"
-    setwd("~/asscom2/tests/strachan_campylo")
+    base_variable = "~/comparem2"
+    output_directory = "results_comparem2"
+    setwd("~/comparem2/tests/strachan_campylo")
     batch_title = basename(getwd())
 
 
     # E._faecium_30 on thylakoid
     base_variable = "~/assemblycomparator2"
-    output_directory = "results_ac2"
+    output_directory = "results_comparem2"
     setwd("~/assemblycomparator2/tests/E._faecium_30")
     batch_title = basename(getwd())
 
     # MAGs on thylakoid
     base_variable = "~/assemblycomparator2"
-    output_directory = "results_ac2"
+    output_directory = "results_comparem2"
     setwd("~/assemblycomparator2/tests/MAGs")
     batch_title = basename(getwd())
 
     # MAGs on axodines
     base_variable = "~/axodines/assemblycomparator2"
-    output_directory = "results_ac2"
+    output_directory = "results_comparem2"
     setwd("~/axodines/assemblycomparator2/tests/MAGs")
     batch_title = basename(getwd())
 
     # synth rumen on axodines
     base_variable = "~/axodines/assemblycomparator2"
-    output_directory = "results_ac2"
+    output_directory = "results_comparem2"
     setwd("~/axodines/assemblycomparator2/tests/synth_rumen")
     batch_title = basename(getwd())
     
     
     # synth rumen copied to local
     base_variable = "~/assemblycomparator2"
-    output_directory = "results_ac2"
+    output_directory = "results_comparem2"
     setwd("~/assemblycomparator2/tests/synth_rumen")
     batch_title = basename(getwd())
     
     # strachans on macbook
     base_variable = "~/assemblycomparator2"
-    output_directory = "results_ac2"
+    output_directory = "results_comparem2"
     setwd("~/assemblycomparator2/tests/strachan_campylo")
     batch_title = basename(getwd())
     
     # student bins on macbook
     base_variable = "~/assemblycomparator2"
-    output_directory = "results_ac2"
+    output_directory = "results_comparem2"
     setwd("~/assemblycomparator2/tests/student")
     batch_title = basename(getwd())
     
@@ -137,7 +137,7 @@ if (debug) {
     
     # busco on mac
     base_variable = "~/assemblycomparator2/"
-    output_directory = "results_ac2_fixstr_busco"
+    output_directory = "results_comparem2_fixstr_busco"
     setwd("~/assemblycomparator2/")
     batch_title = basename(getwd())
     

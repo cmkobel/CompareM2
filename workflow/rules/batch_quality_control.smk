@@ -2,7 +2,7 @@
 rule checkm2:
     input:
         metadata = "{output_directory}/metadata.tsv",
-        database_representative = DATABASES + "/checkm2/ac2_checkm2_database_representative.flag",
+        database_representative = DATABASES + "/checkm2/comparem2_checkm2_database_representative.flag",
         fasta = df["input_file_fasta"].tolist()
     output:
         table = touch("{output_directory}/checkm2/quality_report.tsv"),

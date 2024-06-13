@@ -101,7 +101,7 @@ rule prokka:
 rule bakta:
     input: 
         metadata = "{output_directory}/metadata.tsv",
-        database_representative = DATABASES + "/bakta/ac2_bakta_database_representative.flag",
+        database_representative = DATABASES + "/bakta/comparem2_bakta_database_representative.flag",
         assembly = "{output_directory}/samples/{sample}/{sample}.fna"
     output:
         gff = "{output_directory}/samples/{sample}/bakta/{sample}.gff",

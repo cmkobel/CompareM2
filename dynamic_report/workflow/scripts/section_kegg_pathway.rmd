@@ -4,7 +4,7 @@
 
 ```{r kegg-pathway, echo = F, message = F, warning = F, error = T}
 
-#setwd("~/asscom2/tests/strachan_campylo") # DEBUG
+#setwd("~/comparem2/tests/strachan_campylo") # DEBUG
 
 kegg_pathway_results_raw = read_tsv(glob_list$kegg_pathway)
 

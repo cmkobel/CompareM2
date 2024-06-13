@@ -2,7 +2,7 @@
 
 # Future functionality 
 
-In the future we might add some of the following software packages into Assemblycomparator2. This document serves as a backlog of tools that we want to integrate when time allows.
+In the future we might add some of the following software packages into CompareM2. This document serves as a backlog of tools that we want to integrate when time allows.
 
 **Assembly basis (within each sample)**
   

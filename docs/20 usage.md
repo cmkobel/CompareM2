@@ -2,11 +2,11 @@
 
 
 Overall, Assemblycomparator follows standard command line practices.
-Assemblycomparator2 is built on top of Snakemake. Hence, when tweaking your run, you must pass the parameters through the `--config` key. All [Snakemake options](https://snakemake.readthedocs.io/en/stable/executing/cli.html) are available as well.
+CompareM2 is built on top of Snakemake. Hence, when tweaking your run, you must pass the parameters through the `--config` key. All [Snakemake options](https://snakemake.readthedocs.io/en/stable/executing/cli.html) are available as well.
 
 
 ```txt
-asscom2 [ --config KEY=VALUE [KEY2=VALUE]... ]
+comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
   [ --until RULE [RULE2]... ]
   [ --forcerun RULE [RULE2]... ]
   [ --dry-run ]
@@ -21,49 +21,49 @@ asscom2 [ --config KEY=VALUE [KEY2=VALUE]... ]
   - Run *all* analyses across all fasta files in the current working directory.
     
     ```
-    asscom2
+    comparem2
     ```
 
   - Run only jobs *until* prokka
     
     ```
-    asscom2 --until prokka
+    comparem2 --until prokka
     ```
 
   - Run *all* analyses with specified input and output.
     
     ```
-    asscom2 --config input_genomes="path/to/genomes_*.fna" output_directory="my_analysis"
+    comparem2 --config input_genomes="path/to/genomes_*.fna" output_directory="my_analysis"
     ```
 
   - Use a *fofn* - a file of file names. 
     
     ```
-    asscom2 --config fofn="my_fofn.txt"
+    comparem2 --config fofn="my_fofn.txt"
     ```
 
   - Run a *dry run*.
     
     ```
-    asscom2 --config input_genomes="path/to/genomes_*.fna" --dry-run
+    comparem2 --config input_genomes="path/to/genomes_*.fna" --dry-run
     ```
 
   - Specify annotator. (default is "prokka")
     
     ```
-    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta"
+    comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta"
     ```
 
   - Run only the *fast* rules. [(read more about pseudo rules)](https://assemblycomparator2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#pseudo-rules)
     
     ```
-    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast
+    comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast
     ```
 
   - Run panaroo as well.
     
     ```
-    asscom2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast panaroo
+    comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast panaroo
     ```
 
 
@@ -76,7 +76,7 @@ Pass a parameter to the snakemake pipeline, where the following keys are availab
 
   - `fofn="fofn.txt"` (Deactivated by default. When set to a path it overrides key input_genomes. A fofn can be created with `ls *.fna > fofn.txt`)
 
-  - `output_directory="results_ac2"` (All results are written here.)
+  - `output_directory="results_comparem2"` (All results are written here.)
 
   - `annotator="prokka"` (Choice of annotation tool. Alternatively "bakta".)
     
@@ -114,17 +114,17 @@ Show this help and exit.
 ## Environment variables
 No environment variables are strictly necessary to set, but the following might be useful:
 
-  - `ASSCOM2_PROFILE` (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running Assemblycomparator2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/assemblycomparator2/profile/\*).
+  - `COMPAREM2_PROFILE` (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running CompareM2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/assemblycomparator2/profile/\*).
   
-  - `ASSCOM2_DATABASES` (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
+  - `COMPAREM2_DATABASES` (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
   
 ## Output
-Creates a directory named "results_ac2/" (or what the output_directory parameter is set to) that contains all of the analysis results that are computed.
+Creates a directory named "results_comparem2/" (or what the output_directory parameter is set to) that contains all of the analysis results that are computed.
 
 A file tree with depth level 1 looks like so:
 
 ```txt
-results_ac2/
+results_comparem2/
 ├── abricate/
 ├── assembly-stats/
 ├── benchmarks/
@@ -151,7 +151,7 @@ Results from input genomes are in dir "samples/" and results across all samples 
 
 The samples/<sample\> directory for each sample looks like so: (Again, depth level 1 only.)
 ```txt
-results_ac2/
+results_comparem2/
 └──samples/
    └──<sample>/
       ├── antismash/

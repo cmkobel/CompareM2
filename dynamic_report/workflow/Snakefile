@@ -1,11 +1,11 @@
-# This subpipeline is run when the main asscom2 pipeline is done. 
-# This subpipeline checks if the void report flag (.asscom2_void_report.flag) file has been modified by a rule in the parent pipeline. If so, the report will be rendered.
+# This subpipeline is run when the main comparem2 pipeline is done. 
+# This subpipeline checks if the void report flag (.comparem2_void_report.flag) file has been modified by a rule in the parent pipeline. If so, the report will be rendered.
 
 
 __author__ = 'Carl M. Kobel'
 
 # These could be written to the config file when running the main pipeline.
-output_directory = config['output_directory'] # E.g. results_ac2
+output_directory = config['output_directory'] # E.g. results_comparem2
 base_variable = config['base_variable'] # E.g. path/to/installation/of/assemblycomparator2
 batch_title = config['batch_title'] # E.g. E._faecium 
 __version__ = config['__version__']
@@ -26,7 +26,7 @@ except:
 def should_run(wildcards):
     """ Returns the final output file (report .html) in case the metadata and exists and the report is voided. Otherwise it returns an empty list and no jobs are run.
     """
-    if os.path.isfile(f"{output_directory}/metadata.tsv") and os.path.isfile(f"{output_directory}/.asscom2_void_report.flag"):
+    if os.path.isfile(f"{output_directory}/metadata.tsv") and os.path.isfile(f"{output_directory}/.comparem2_void_report.flag"):
         return [f"{output_directory}/report_{batch_title}.html"]
     else:
         return [] # empty list, no running requirement.
@@ -57,7 +57,7 @@ rule all:
 # This rule needs to be inside its own snakefile, as it is the only way I can run it on onerror/onsuccess
 rule dynamic_report:
     input:
-        flag = f"{output_directory}/.asscom2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
+        flag = f"{output_directory}/.comparem2_void_report.flag", # This is the file being touched when void_report is called in every rule in the parent pipeline.
         metadata = f"{output_directory}/metadata.tsv", # Without the metadata, the report doesn't make sense. Most segments use the metadata to translate sample names from files paths.
     conda: "envs/r-markdown.yaml"
     params: 
@@ -107,4 +107,4 @@ onsuccess:
     shell(f"""rm .report_config.yaml""")
 
 
-# Note: The stderr/out from rule report should not be shown on screen as it problematically wipes possible interesting fail-outputs from the main asscom2 pipeline.
+# Note: The stderr/out from rule report should not be shown on screen as it problematically wipes possible interesting fail-outputs from the main comparem2 pipeline.
