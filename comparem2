@@ -4,7 +4,7 @@ __author__ = "Carl M. Kobel"
 
 
 # --- Development: Versioning ---------------------------------------
-__version__ = "2.7.1"
+__version__ = "2.8.1"
 # Places to bump
 #  - here
 #  - workflow/Snakefile, because the snakefile can possibly be run without the ./comparem2 binary. Report gets from here.
@@ -28,8 +28,7 @@ __version__ = "2.7.1"
 # export COMPAREM2_BASE="$(pwd -P)"; export COMPAREM2_PROFILE="profiles/apptainer/default"; snakemake --snakefile "${COMPAREM2_BASE}/workflow/Snakefile" --configfile "${COMPAREM2_BASE}/config/config.yaml" --containerize > Dockerfile 
 # And then remove the header text (comparem2 logo).
 # In the future I will make my docker images myself:
-# sudo docker build -t cmkobel/comparem2:v2.7.1 .
-# sudo docker push cmkobel/comparem2:v2.7.1
+# sudo docker build -t cmkobel/comparem2:v2.8.1 . && sudo docker push cmkobel/comparem2:v2.8.1
 
 # --- Development: Update DAG figure for documentation --------------
 # Update dag picture in documentation with this command (with anaconda/graphviz)
