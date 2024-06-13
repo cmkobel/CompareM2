@@ -21,7 +21,7 @@ In the future we might add some of the following software packages into CompareM
   - Recombination in core genome using the Bruen's PHI statistic or ClonalFrameML.
   - Identification of horizontally transferred genes?
 
-Please [add an issue on the repository](https://github.com/cmkobel/assemblycomparator2/issues) if you have any ideas or requests.
+Please [add an issue on the repository](https://github.com/cmkobel/comparem2/issues) if you have any ideas or requests.
 
 
 {!resources/footer.md!}

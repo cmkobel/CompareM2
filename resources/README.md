@@ -1,7 +1,7 @@
 # assets/ directory
 
 These files are included to make the life a little easier for some of the scripts.
-None of these files are licensed for assemblycomparator2, but they are included anyway, in the hope that the owners will accept that they're being used.
+None of these files are licensed for comparem2, but they are included anyway, in the hope that the owners will accept that they're being used.
 If this is a problem, I will create a script that downloads the files over the original mirrors.
 
 file: ko00001.json

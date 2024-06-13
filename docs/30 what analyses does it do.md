@@ -5,7 +5,7 @@
 Below is the graph the shows the order of execution of all possible analyses "rules" in CompareM2:
 
 
-![dag](https://github.com/cmkobel/assemblycomparator2/assets/5913696/db6b58ac-cec0-43fe-b06f-18048ef3b642)
+![dag](https://github.com/cmkobel/comparem2/assets/5913696/db6b58ac-cec0-43fe-b06f-18048ef3b642)
 
 
 This figure does not show the pseudo rules such as `meta`, `isolate`, `fast`, etc.
@@ -43,7 +43,7 @@ Then on the basis of the analysis of each input genomic assembly, these analyses
   - `iqtree` [IQ-tree](http://www.iqtree.org/) Phylogenetic Tree of core genome with bootstrapping (lacking in report).
   - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) Super fast distance measurement
   - `treecluster` [TreeCluster](https://github.com/niemasd/TreeCluster) Clustering of phylogenetic trees (lacking in report).
-  - **A nice report easy to share with your friends (See demos [below](https://assemblycomparator2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report))**
+  - **A nice report easy to share with your friends (See demos [below](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report))**
 
 
 ## Pseudo-rules
@@ -58,7 +58,7 @@ There are also a few pseudo targets defined. For instance `fast` which runs sequ
 
 These demo reports are available for inspiration while you wait for your own report to complete.
 
-  - [report_strachan_campylo.html](https://github.com/cmkobel/assemblycomparator2/raw/master/tests/strachan_campylo/report_strachan_campylo.html.zip)
+  - [report_strachan_campylo.html](https://github.com/cmkobel/comparem2/raw/master/tests/strachan_campylo/report_strachan_campylo.html.zip)
 
     32 Campylobacter genomes, Metagenome and genome sequencing from the rumen epithelial wall of dairy cattle. From Nature 2022 - Strachan et al. (doi.<nolink />org/10.1038/s41564-022-01300-y).
   - 

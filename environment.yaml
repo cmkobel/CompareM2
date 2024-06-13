@@ -8,4 +8,4 @@ dependencies:
   - mamba # Necessary for snakemake to install child environments during development.
   - pandas
 
-# Update this with the running requirements in https://github.com/bioconda/bioconda-recipes/blob/master/recipes/assemblycomparator2/meta.yaml
+# Update this with the running requirements in https://github.com/bioconda/bioconda-recipes/blob/master/recipes/comparem2/meta.yaml

@@ -1,4 +1,6 @@
-2.7.2
+
+2.8.1
+  - Breaking change: Changed named from comparem2 to CompareM2.
   - Compressed test files.
   - Updated header text.
   - Bring back the ass.
@@ -34,7 +36,7 @@
   - Implemented a way to set the output directory which now defaults to the old static "results_comparem2".
   - Implemented TreeCluster that on the 4.5% and 10% basis defines clusters on the mashtree distances so the user can easily get an impression on the relative differences between samples.
   - Fix an error that makes snp-dists results not show up in the report. (Thanks to @AstaLaugesen)
-  - Added documentation over at https://assemblycomparator2.readthedocs.io/en/latest/
+  - Added documentation over at https://comparem2.readthedocs.io/en/latest/
 
 2.6.2
   - Fix wrong path for dbcan results (not yet implemented in report)
@@ -74,7 +76,7 @@
   - Added support for motulizer and motupan. Yet lacking in report and awaits further integration.
 
 2.5.10
-  - assemblycomparator2 now supports iqtree with bootstrapping. Runs on the core genome produced by roary. Yet to be included in the report.
+  - comparem2 now supports iqtree with bootstrapping. Runs on the core genome produced by roary. Yet to be included in the report.
 
 2.5.9
   - Fixed an error where checkm2 would fail setting the download location internally when running comparem2 using the apptainer/docker container. https://github.com/chklovski/CheckM2/issues/73
@@ -96,7 +98,7 @@
   - Using the mashtree order in plots in the report. Using alphabetical order redundantly in case mashtree hasn't run (sucessfully). Minor adjustments to other plots. TODO: midpoint root tree somehow and order all tables in the report as well.
 
 2.5.3
-  - Using snakemake's --containerize to automatically generate images which are then synced to dockerhub as cmkobel/assemblycomparator2. Support for hpc queues isn't yet tested.
+  - Using snakemake's --containerize to automatically generate images which are then synced to dockerhub as cmkobel/comparem2. Support for hpc queues isn't yet tested.
 
 2.5.2
   - dbcan, including download

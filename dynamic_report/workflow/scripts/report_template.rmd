@@ -87,58 +87,58 @@ if (debug) {
 
 
     # E._faecium_30 on thylakoid
-    base_variable = "~/assemblycomparator2"
+    base_variable = "~/comparem2"
     output_directory = "results_comparem2"
-    setwd("~/assemblycomparator2/tests/E._faecium_30")
+    setwd("~/comparem2/tests/E._faecium_30")
     batch_title = basename(getwd())
 
     # MAGs on thylakoid
-    base_variable = "~/assemblycomparator2"
+    base_variable = "~/comparem2"
     output_directory = "results_comparem2"
-    setwd("~/assemblycomparator2/tests/MAGs")
+    setwd("~/comparem2/tests/MAGs")
     batch_title = basename(getwd())
 
     # MAGs on axodines
-    base_variable = "~/axodines/assemblycomparator2"
+    base_variable = "~/axodines/comparem2"
     output_directory = "results_comparem2"
-    setwd("~/axodines/assemblycomparator2/tests/MAGs")
+    setwd("~/axodines/comparem2/tests/MAGs")
     batch_title = basename(getwd())
 
     # synth rumen on axodines
-    base_variable = "~/axodines/assemblycomparator2"
+    base_variable = "~/axodines/comparem2"
     output_directory = "results_comparem2"
-    setwd("~/axodines/assemblycomparator2/tests/synth_rumen")
+    setwd("~/axodines/comparem2/tests/synth_rumen")
     batch_title = basename(getwd())
     
     
     # synth rumen copied to local
-    base_variable = "~/assemblycomparator2"
+    base_variable = "~/comparem2"
     output_directory = "results_comparem2"
-    setwd("~/assemblycomparator2/tests/synth_rumen")
+    setwd("~/comparem2/tests/synth_rumen")
     batch_title = basename(getwd())
     
     # strachans on macbook
-    base_variable = "~/assemblycomparator2"
+    base_variable = "~/comparem2"
     output_directory = "results_comparem2"
-    setwd("~/assemblycomparator2/tests/strachan_campylo")
+    setwd("~/comparem2/tests/strachan_campylo")
     batch_title = basename(getwd())
     
     # student bins on macbook
-    base_variable = "~/assemblycomparator2"
+    base_variable = "~/comparem2"
     output_directory = "results_comparem2"
-    setwd("~/assemblycomparator2/tests/student")
+    setwd("~/comparem2/tests/student")
     batch_title = basename(getwd())
     
     # dbcan on macbook
-    base_variable = "~/assemblycomparator2/"
+    base_variable = "~/comparem2/"
     output_directory = "res_all"
     setwd("~/Desktop/test_dbcan")
     batch_title = basename(getwd())
     
     # busco on mac
-    base_variable = "~/assemblycomparator2/"
+    base_variable = "~/comparem2/"
     output_directory = "results_comparem2_fixstr_busco"
-    setwd("~/assemblycomparator2/")
+    setwd("~/comparem2/")
     batch_title = basename(getwd())
     
     
@@ -154,7 +154,7 @@ if (debug) {
 
 
 ## Global variables
-#base_variable = "~/assemblycomparator2/" # I need to find a way of pulling this out of thin air. Maybe there's a way of passing commands through the render call, or I can
+#base_variable = "~/comparem2/" # I need to find a way of pulling this out of thin air. Maybe there's a way of passing commands through the render call, or I can
 report_scripts = paste0(base_variable, "/dynamic_report/workflow/scripts/")
 
 
@@ -288,7 +288,7 @@ metadata_translate  %>%
 
 ### Report sections
 
-Here is an overview of the number of result files that have been found for each analysis. A report section is only rendered if relevant result files are present for that analysis. Each section can be triggered to run by calling assemblycomparator2 with a trailing `--until <section>`
+Here is an overview of the number of result files that have been found for each analysis. A report section is only rendered if relevant result files are present for that analysis. Each section can be triggered to run by calling comparem2 with a trailing `--until <section>`
 
 ```{r sample-switchboard, echo=FALSE, message=F, warning=F, error = T}
 
@@ -428,5 +428,5 @@ section_definition_table %>%
 
 
 
-<p class = "shaded">[assemblycomparator2 v`r version_string`](https://github.com/cmkobel/assemblycomparator2#assemblycomparator2) genomes to report pipeline. Copyright (C) 2019-2024 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/assemblycomparator2/blob/master/LICENSE)</p>
+<p class = "shaded">[comparem2 v`r version_string`](https://github.com/cmkobel/comparem2#comparem2) genomes to report pipeline. Copyright (C) 2019-2024 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/comparem2/blob/master/LICENSE)</p>
 

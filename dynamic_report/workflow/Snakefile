@@ -6,12 +6,12 @@ __author__ = 'Carl M. Kobel'
 
 # These could be written to the config file when running the main pipeline.
 output_directory = config['output_directory'] # E.g. results_comparem2
-base_variable = config['base_variable'] # E.g. path/to/installation/of/assemblycomparator2
+base_variable = config['base_variable'] # E.g. path/to/installation/of/comparem2
 batch_title = config['batch_title'] # E.g. E._faecium 
 __version__ = config['__version__']
 
-containerized: f"docker://cmkobel/assemblycomparator2:v{__version__}"
-#containerized: f"docker://cmkobel/assemblycomparator2:latest" # DEBUG
+containerized: f"docker://cmkobel/comparem2:v{__version__}"
+#containerized: f"docker://cmkobel/comparem2:latest" # DEBUG
 
 print('report subpipeline: output_directory:', output_directory)
 print('report subpipeline: base_variable:', base_variable)

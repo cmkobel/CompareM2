@@ -6,7 +6,7 @@
 
 If you use CompareM2, you can support further funding by bumping the citation count on this one:
 
-  - Kobel CM. *CompareM2* **GitHub** https://github.com/cmkobel/assemblycomparator2
+  - Kobel CM. *CompareM2* **GitHub** https://github.com/cmkobel/comparem2
 
 ## References for the included tools
 

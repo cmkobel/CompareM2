@@ -4,7 +4,7 @@
 
 ```{r busco, echo=FALSE, message=F, warning=F, error = T}
 
-#setwd("~/assemblycomparator2") # DEBUG
+#setwd("~/comparem2") # DEBUG
 
 
 busco_raw = read_delim(glob_list$busco, delim = ": ", col_names = c("name", "value"))

@@ -54,7 +54,7 @@ comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
     comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta"
     ```
 
-  - Run only the *fast* rules. [(read more about pseudo rules)](https://assemblycomparator2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#pseudo-rules)
+  - Run only the *fast* rules. [(read more about pseudo rules)](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#pseudo-rules)
     
     ```
     comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast
@@ -114,7 +114,7 @@ Show this help and exit.
 ## Environment variables
 No environment variables are strictly necessary to set, but the following might be useful:
 
-  - `COMPAREM2_PROFILE` (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running CompareM2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/assemblycomparator2/profile/\*).
+  - `COMPAREM2_PROFILE` (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running CompareM2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/comparem2/profile/\*).
   
   - `COMPAREM2_DATABASES` (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
   

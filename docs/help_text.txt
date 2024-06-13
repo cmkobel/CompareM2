@@ -10,8 +10,8 @@ SYNOPSIS
 DESCRIPTION
   Analyses bacterial and archaeal genomes.
   Based on snakemake, so you can use the same command line arguments.
-  Please check github.com/cmkobel/assemblycomparator2 for updates, help and to track issues.
-  Comprehensible documentation is available at assemblycomparator2.readthedocs.io/en/latest/
+  Please check github.com/cmkobel/comparem2 for updates, help and to track issues.
+  Comprehensible documentation is available at comparem2.readthedocs.io/en/latest/
     
 OPTIONS
   --config KEY=VALUE [KEY2=VALUE]...
@@ -57,7 +57,7 @@ OPTIONS
         
 ENVIRONMENT VARIABLES
   No environment variables are strictly necessary to set, but the following might be useful:
-    - COMPAREM2_PROFILE (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running CompareM2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/assemblycomparator2/profile/*).
+    - COMPAREM2_PROFILE (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running CompareM2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/comparem2/profile/*).
     
     - COMPAREM2_DATABASES (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
   

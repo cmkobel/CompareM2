@@ -28,15 +28,15 @@ __version__ = "2.7.1"
 # export COMPAREM2_BASE="$(pwd -P)"; export COMPAREM2_PROFILE="profiles/apptainer/default"; snakemake --snakefile "${COMPAREM2_BASE}/workflow/Snakefile" --configfile "${COMPAREM2_BASE}/config/config.yaml" --containerize > Dockerfile 
 # And then remove the header text (comparem2 logo).
 # In the future I will make my docker images myself:
-# sudo docker build -t cmkobel/assemblycomparator2:v2.7.1 .
-# sudo docker push cmkobel/assemblycomparator2:v2.7.1
+# sudo docker build -t cmkobel/comparem2:v2.7.1 .
+# sudo docker push cmkobel/comparem2:v2.7.1
 
 # --- Development: Update DAG figure for documentation --------------
 # Update dag picture in documentation with this command (with anaconda/graphviz)
 # comparem2 --forceall --rulegraph | dot -Tpng > dag.png
 
 """
-This is the launcher script for assemblycomparator2.
+This is the launcher script for comparem2.
 
 It has two main functions.
 1) It checks that the necessary environment variables has been set. If not, it uses reasonable defaults.
@@ -131,7 +131,7 @@ command_report = f"""snakemake --snakefile "$COMPAREM2_BASE/dynamic_report/workf
 
 
 if "--version" in trailing_arguments or "-v" in trailing_arguments:
-    print(f"assemblycomparator2 v{__version__}")
+    print(f"comparem2 v{__version__}")
     
 elif "--help" in trailing_arguments or "-h" in trailing_arguments:
     #print(help_message)
@@ -142,7 +142,7 @@ elif "--help" in trailing_arguments or "-h" in trailing_arguments:
 
     
 else:
-    # Run assemblycomparator2 main pipeline
+    # Run comparem2 main pipeline
     process_main = subprocess.run(command_main, shell = True)
     returncode_main = process_main.returncode
     

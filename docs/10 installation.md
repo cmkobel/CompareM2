@@ -3,11 +3,11 @@
 
 ## Install the bioconda package
 
-<img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/5b06b511-75c4-48cb-8ab8-f29b212ef6df">
+<img width="150" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/5b06b511-75c4-48cb-8ab8-f29b212ef6df">
 
 It is highly recommended that you have [Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request) on your system as it makes CompareM2 able to use a compressed Docker-image that speeds up installation significantly.
 
-<img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/c9d15678-b4a7-42be-b0de-b649479f6d74">
+<img width="150" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/c9d15678-b4a7-42be-b0de-b649479f6d74">
 
 First, you need to install a Conda or Mamba package manager.
 The recommended choice is [Miniforge](https://github.com/conda-forge/miniforge#install) which not only provides the required Python and Conda commands, 
@@ -20,13 +20,13 @@ but also includes Mamba - an extremely fast and robust replacement for the Conda
     ```
 
 
-<img width="150" align="right" src="https://github.com/cmkobel/assemblycomparator2/assets/5913696/6bc39697-7e90-49a0-a44e-64820f2c1024">
+<img width="150" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/6bc39697-7e90-49a0-a44e-64820f2c1024">
 
 Finally, CompareM2 can be installed into its own environment with the correct channels like so:
 
 ```bash
 
-mamba create -c conda-forge -c bioconda -n comparem2 assemblycomparator2
+mamba create -c conda-forge -c bioconda -n comparem2 comparem2
 
 ```
 
@@ -34,12 +34,12 @@ Installing into isolated environments is best practice in order to avoid side ef
 
 
 !!! note
-    If you want to develop new rules in the CompareM2 pipeline, you should consider following [the development version installation instructions](https://github.com/cmkobel/assemblycomparator2/blob/master/readme-development.md). The development version contains the full git repository and is purely conda-based so you can affect the next version of the Apptainer-compatible Docker image. 
+    If you want to develop new rules in the CompareM2 pipeline, you should consider following [the development version installation instructions](https://github.com/cmkobel/comparem2/blob/master/readme-development.md). The development version contains the full git repository and is purely conda-based so you can affect the next version of the Apptainer-compatible Docker image. 
 
 
 ## Optionally: Testing the installation
 
-Now you will be able to run comparem2. You can use the example data in path "tests/MAGs" to check that everything works. The first time you run comparem2 it will show the message "Pulling singularity image docker://cmkobel/assemblycomparator2." This might take some time depending on your network bandwidth as it downloads a +4GB Docker image that contains all the conda environments needed for each analysis.
+Now you will be able to run comparem2. You can use the example data in path "tests/MAGs" to check that everything works. The first time you run comparem2 it will show the message "Pulling singularity image docker://cmkobel/comparem2." This might take some time depending on your network bandwidth as it downloads a +4GB Docker image that contains all the conda environments needed for each analysis.
 
 ```bash
 
@@ -51,7 +51,7 @@ mkdir test_comparem2_install
 cd test_comparem2_install
 
 # Copy some test metagenomic assemblies from the test directory.
-cp $CONDA_PREFIX/share/assemblycomparator2-*/tests/E._faecium/*.fna .
+cp $CONDA_PREFIX/share/comparem2-*/tests/E._faecium/*.fna .
 
 # Should take about a minute to complete the "fast" pseudo-rule.
 comparem2 --until fast
