@@ -1,6 +1,10 @@
 # CompareM2
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/cmkobel/assemblycomparator2/dry-run.yaml)](https://github.com/cmkobel/assemblycomparator2/actions/) [![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/assemblycomparator2?label=docker%20pulls)](https://assemblycomparator2.readthedocs.io/en/latest/10%20installation/)  [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/assemblycomparator2?label=Bioconda%20downloads&color=%2300CC00)](https://assemblycomparator2.readthedocs.io/en/latest/10%20installation/) [![conda build](https://img.shields.io/conda/v/bioconda/assemblycomparator2)](https://assemblycomparator2.readthedocs.io/en/latest/10%20installation/) [![Documentation Status](https://readthedocs.org/projects/assemblycomparator2/badge/?version=latest)](https://assemblycomparator2.readthedocs.io/en/latest/?badge=latest)
 
+<table><tr><td>
+If you're looking for CompareM, a tool that calculates AAI and codon usage, please follow this link: https://github.com/donovan-h-parks/CompareM
+</td></tr></table>
+
 🧬 CompareM2 "comparem2" is a genomes-to-report pipeline. It accepts prokaryotic (bacterial and archaeal) genomic assemblies and compares them in many different ways. 
 
 🦠 Being designed to analyze assemblies of both isolates and metagenomes (MAGs), it is useful for anyone working with microbial genomics.
