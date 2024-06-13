@@ -5,7 +5,7 @@
 If you're looking for CompareM, a tool that calculates AAI and codon usage, please follow this link: https://github.com/donovan-h-parks/CompareM
 </td></tr></table>
 
-🧬 CompareM2 "comparem2" is a genomes-to-report pipeline. It accepts prokaryotic (bacterial and archaeal) genomic assemblies and compares them in many different ways. 
+🧬 CompareM2 is a genomes-to-report pipeline. It accepts prokaryotic (bacterial and archaeal) genomic assemblies and compares them in many different ways. 
 
 🦠 Being designed to analyze assemblies of both isolates and metagenomes (MAGs), it is useful for anyone working with microbial genomics.
 
