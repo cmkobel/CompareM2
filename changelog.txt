@@ -13,6 +13,7 @@
   - Updated the busco report section so it accepts the .faa file that was added in v2.7.1.
   - Add tmpdir to eggnog.
   - Compute md5sum of input genome in rule copy.
+  - Minor fixes.
 
 2.7.1
   - Breaking change: File hierarchy now follows what is recommended in the snakemake documentation. Rules are now in individual files.
