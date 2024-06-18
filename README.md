@@ -13,8 +13,6 @@ If you're looking for CompareM, a tool that calculates AAI and codon usage, plea
 
 👩‍🔬 CompareM2 integrates several analyses that yield scientific results about genomic assemblies on several levels: Quality control, annotation, function and species calling as well as comparative analyses like computation of core/pan genomes and phylogenetics. 
 
-<img width="150" alt="snakemake logo" align="right" style="float: right" src="https://github.com/cmkobel/comparem2/assets/5913696/7188e748-9d37-43ae-a5d5-100e9560df1f">
-
 🐍 CompareM2 works by calling a Snakemake workflow that can be easily modified to use different parameters for the  underlying tools.
 
 <a href="https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report"><img width="220" style="width: 220px" alt="report document logo" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/e5f9b72c-2137-4850-8779-a5528d8ccbaf"></a>
@@ -26,11 +24,7 @@ If you're looking for CompareM, a tool that calculates AAI and codon usage, plea
 
 **The comprehensive documentation is available at [comparem2.readthedocs.org](https://comparem2.readthedocs.org).**
 
-Please log any issues you have in the [issues tab of the repository](https://github.com/cmkobel/comparem2/issues).
-
-Development is active and will continue. We're actively looking for collaborators to join and synergize this project. Pull requests are warmly encouraged.
-
 ---
 
-[CompareM2](https://github.com/cmkobel/comparem2) genomes to report pipeline. Copyright (C) 2024 [Carl M. Kobel](https://github.com/cmkobel) [GNU GPL v3](https://github.com/cmkobel/comparem2/blob/master/LICENSE)
+[CompareM2](https://github.com/cmkobel/comparem2) genomes to report pipeline. Copyright (C) 2024 [C. M. Kobel](https://github.com/cmkobel) GNU GPL v3
 
