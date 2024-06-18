@@ -1,5 +1,6 @@
 2.8.2
   - Add --cite parameter to executable.
+  - New more differentiated logo for cli.
 
 2.8.1
   - Breaking change: Changed named from Assemblycomparator2 to CompareM2.
