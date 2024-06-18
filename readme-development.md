@@ -9,7 +9,7 @@ CompareM2 only works on Linux.
 comparem2 can be installed by downloading the code and setting up an alias in your user profile that let's you launch the pipeline from any directory on your machine.
 
 The only requisites for running comparem2 is:
-  - conda compatible package manager (Recommended: [mamba from miniforge](https://github.com/conda-forge/miniforge#install))
+  - conda compatible package manager (We recommend [mamba from miniforge](https://github.com/conda-forge/miniforge#install))
   - *git* distributed version control
 
 #### 0) Prerequisites
