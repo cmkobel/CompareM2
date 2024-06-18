@@ -1,3 +1,5 @@
+2.8.2
+  - Add --cite parameter to executable.
 
 2.8.1
   - Breaking change: Changed named from Assemblycomparator2 to CompareM2.
