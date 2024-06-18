@@ -11,16 +11,13 @@ If you're looking for CompareM, a tool that calculates AAI and codon usage, plea
 
 💾 [Installing](https://comparem2.readthedocs.io/en/latest/10%20installation/) CompareM2 on your system gives you access to [many](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/) powerful state-of-the-art tools for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
 
-<img alt="comparem2 animation" src="https://github.com/cmkobel/comparem2/assets/5913696/623f6b42-2de6-457c-8f0d-3b3e5d646967">
-
-
 👩‍🔬 CompareM2 integrates several analyses that yield scientific results about genomic assemblies on several levels: Quality control, annotation, function and species calling as well as comparative analyses like computation of core/pan genomes and phylogenetics. 
 
-<img width="150" alt="snakemake logo" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/7188e748-9d37-43ae-a5d5-100e9560df1f">
+<img width="150" alt="snakemake logo" align="right" style="float: right" src="https://github.com/cmkobel/comparem2/assets/5913696/7188e748-9d37-43ae-a5d5-100e9560df1f">
 
 🐍 CompareM2 works by calling a Snakemake workflow that can be easily modified to use different parameters for the  underlying tools.
 
-<a href="https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report"><img height="192" alt="report document logo" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/e5f9b72c-2137-4850-8779-a5528d8ccbaf"></a>
+<a href="https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report"><img width="220" style="width: 220px" alt="report document logo" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/e5f9b72c-2137-4850-8779-a5528d8ccbaf"></a>
 
 📙 Central results are dynamically integrated in a compact portable report .html-document. It can be browsed in any web browser and can be easily shared as a single file. This report is generated even if some jobs in the pipeline fail. [See examples](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report).
 
