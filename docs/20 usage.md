@@ -152,8 +152,8 @@ Results from input genomes are in dir "samples/" and results across all samples 
 The samples/<sample\> directory for each sample looks like so: (Again, depth level 1 only.)
 ```txt
 results_comparem2/
-└──samples/
-   └──<sample>/
+└── samples/
+   └── <sample>/
       ├── antismash/
       ├── bakta/
       ├── busco/
