@@ -92,14 +92,14 @@ rule dynamic_report:
             )'
 
         # Clean up 
-        rm -r .writable_template_copy # Problem is that this file is only removed if pipeline finishes.
+        rm -r .writable_template_copy # Problem is that this file is only removed if pipeline finishes. Should it be removed by onerror?
 
         # End script
         test -f "{params.end_script}" && echo "running end script" && . {params.end_script} {batch_title} {output_directory}/report_{batch_title}.html 
         
         # Print the ass. Thanks to George Taiaroa.
-        echo "{params.text_box}"
-        cat {base_variable}/resources/ass.txt
+        echo {params.text_box}
+        cat "{base_variable}/resources/ass.txt"
     """
 
 

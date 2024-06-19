@@ -80,7 +80,7 @@ void_report = f"date -Iseconds >> {output_directory}/.comparem2_void_report.flag
 
 # --- Header --------------------------------------------------------
 
-with open("resources/logo.txt") as logo_file:
+with open(f"{base_variable}/resources/logo.txt") as logo_file:
     for line in logo_file:
         print(line, end = "")
 
@@ -401,7 +401,7 @@ onstart:
     
     
 # TODO: A speedup could be to list the possible locations, and skipping the missing ones. By doing a full run and listing all possible files, these can be easily enlisted.
-final = f"""echo "comparem2 v{__version__}" > {output_directory}/.software_version.txt; find {output_directory} -name ".software_version.txt" | xargs cat | sort | uniq > {output_directory}/version_info.txt"""
+final = f"""echo "CompareM2 v{__version__}" > {output_directory}/.software_version.txt; find {output_directory} -name ".software_version.txt" | xargs cat | sort | uniq > {output_directory}/version_info.txt"""
 onsuccess:
     shell(final)
 onerror:
