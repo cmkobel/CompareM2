@@ -39,7 +39,7 @@ comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
   - Use a *fofn* - a file of file names. 
     
     ```
-    comparem2 --config fofn="my_fofn.txt"
+    ls path/to/*.fna > my_fofn.txt; comparem2 --config fofn="my_fofn.txt"
     ```
 
   - Run a *dry run*.
