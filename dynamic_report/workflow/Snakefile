@@ -1,6 +1,7 @@
 # This subpipeline is run when the main comparem2 pipeline is done. 
 # This subpipeline checks if the void report flag (.comparem2_void_report.flag) file has been modified by a rule in the parent pipeline. If so, the report will be rendered.
 
+import pandas as pd
 
 __author__ = 'Carl M. Kobel'
 
@@ -103,8 +104,21 @@ rule dynamic_report:
     """
 
 
+final = f"""cat {output_directory}/tables/{batch_title}__sections.tsv  | column -t"""
+report_sections_table = pd.read_csv(f"{output_directory}/tables/{batch_title}__sections.tsv", sep = "\t").to_string(index = False)
+report_sections_header = f"""
+The '{batch_title}' report has been rendered to {rules.dynamic_report.output}
+Below is an overview of which sections have been rendered.
+
+  Report sections
+  ---------------"""
+
+
 onsuccess:
     shell(f"""rm .report_config.yaml""")
-
+    print(report_sections_header)
+    print(report_sections_table)
+    print("//")
+    
 
 # Note: The stderr/out from rule report should not be shown on screen as it problematically wipes possible interesting fail-outputs from the main comparem2 pipeline.
