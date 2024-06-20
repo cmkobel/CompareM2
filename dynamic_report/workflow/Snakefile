@@ -104,20 +104,20 @@ rule dynamic_report:
     """
 
 
-final = f"""cat {output_directory}/tables/{batch_title}__sections.tsv  | column -t"""
-report_sections_table = pd.read_csv(f"{output_directory}/tables/{batch_title}__sections.tsv", sep = "\t").to_string(index = False)
-report_sections_header = f"""
-The '{batch_title}' report has been rendered to {rules.dynamic_report.output}
-Below is an overview of which sections have been rendered.
-
-  Report sections
-  ---------------"""
 
 
 onsuccess:
     shell(f"""rm .report_config.yaml""")
     print(report_sections_header)
     print(report_sections_table)
+    
+    print(f"""
+The '{batch_title}' report has been rendered to {rules.dynamic_report.output}
+Below is an overview of which sections have been rendered.
+
+  Report sections
+  ---------------""")
+    print(pd.read_csv(f"{output_directory}/tables/{batch_title}__sections.tsv", sep = "\t").to_string(index = False))
     print("//")
     
 
