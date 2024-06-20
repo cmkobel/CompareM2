@@ -102,8 +102,19 @@ rule dynamic_report:
         echo "{params.text_box}"
         cat "{base_variable}/resources/ass.txt"
     """
+    
 
-
+def format_sections():
+    """This function reads the sections tsv and formats in a nice way (by removing the terminal-incompatible emoji's).
+    """
+    file = f"{output_directory}/tables/{batch_title}__sections.tsv"
+    if os.path.exists(file): 
+        df_sections = pd.read_csv(file, sep = "\t")
+        df_sections = df_sections.rename(columns={"render": "render_emoji"})
+        df_sections['render'] = [i.encode('ascii',errors='ignore').decode() for i in df_sections['render_emoji']]
+        return df_sections[["section", "n / expected", "render"]].to_string(index = False)
+    else: # If something messes up the report so bad that this file is not written. 
+        return f"(could not read {file})"
 
 
 onsuccess:
@@ -114,10 +125,7 @@ Below is an overview of which sections have been rendered.
 
   Report sections
   ---------------""")
-    df_sections = pd.read_csv(f"{output_directory}/tables/{batch_title}__sections.tsv", sep = "\t")
-    df_sections = df_sections.rename(columns={"render": "render_emoji"})
-    df_sections['render'] = [i.encode('ascii',errors='ignore').decode() for i in df_sections['render_emoji']]
-    print(df_sections[["section", "n / expected", "render"]].to_string(index = False))
+    print(format_sections())
     print("//")
     
 

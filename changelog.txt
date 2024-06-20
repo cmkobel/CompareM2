@@ -1,7 +1,7 @@
 2.8.2
   - Add --cite parameter to executable.
   - New more differentiated logo for cli.
-  
+  - Prints report sections in the end of the dynamic report pipeline.
   - Minor fixes.
 
 2.8.1
