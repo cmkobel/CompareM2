@@ -108,9 +108,6 @@ rule dynamic_report:
 
 onsuccess:
     shell(f"""rm .report_config.yaml""")
-    print(report_sections_header)
-    print(report_sections_table)
-    
     print(f"""
 The '{batch_title}' report has been rendered to {rules.dynamic_report.output}
 Below is an overview of which sections have been rendered.
