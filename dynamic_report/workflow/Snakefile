@@ -114,7 +114,10 @@ Below is an overview of which sections have been rendered.
 
   Report sections
   ---------------""")
-    print(pd.read_csv(f"{output_directory}/tables/{batch_title}__sections.tsv", sep = "\t").to_string(index = False))
+    df_sections = pd.read_csv(f"{output_directory}/tables/{batch_title}__sections.tsv", sep = "\t")
+    df_sections = df_sections.rename(columns={"render": "render_emoji"})
+    df_sections['render'] = [i.encode('ascii',errors='ignore').decode() for i in df_sections['render_emoji']]
+    print(df_sections[["section", "n / expected", "render"]].to_string(index = False))
     print("//")
     
 
