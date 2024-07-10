@@ -23,8 +23,9 @@ output_directory: "results_comparem2"
 
 mlst_scheme: "automatic"
 
-prokka_rfam: true # true (default) or false
-prokka_compliant: true # true (default) or false
+prokka_kingdom: bacteria # archaea|bacteria|mitochondria|viruses
+prokka_rfam: false # true or false
+prokka_compliant: true # true or false
 
 treecluster_threshold: 0.045
 iqtree_bootstraps: 100

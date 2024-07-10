@@ -30,7 +30,6 @@ def get_annotation_results(wildcards):
         f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.log",
         f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.ffn",
         f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.tsv",
-        
     ]
         
     
@@ -70,7 +69,8 @@ rule prokka:
         gff_nofasta = "{output_directory}/samples/{sample}/prokka/{sample}.gff_nofasta", # Might come in handy.
     params: 
         prokka_rfam = "--rfam" if interpret_true(config['prokka_rfam']) else "", # Set to true (default) or false in config.
-        prokka_compliant = "--compliant" if interpret_true(config['prokka_compliant']) else "" # Set to true (default) or false in config.
+        prokka_compliant = "--compliant" if interpret_true(config['prokka_compliant']) else "", # Set to true (default) or false in config.
+        prokka_kingdom = str(config['prokka_kingdom']),
     conda: "../envs/prokka.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.prokka_sample.{sample}.tsv"
     resources:
@@ -82,6 +82,7 @@ rule prokka:
         prokka --version > "$(dirname {output.gff})/.software_version.txt"
         
         prokka \
+            --kingdom {params.prokka_kingdom} \
             --cpus {threads} \
             --force \
             {params.prokka_rfam} \

@@ -2,6 +2,8 @@
   - Add --cite parameter to executable.
   - New more differentiated logo for cli.
   - Prints report sections in the end of the dynamic report pipeline.
+  - Explicit option to run prokka in archaea mode.
+  - config setting prokka_rfam is false by default.
   - Minor fixes.
 
 2.8.1
