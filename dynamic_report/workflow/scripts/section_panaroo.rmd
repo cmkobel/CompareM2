@@ -9,16 +9,12 @@ The core genome denotes the genes which are conserved between all samples (inter
 
 ```{r panaroo-table, echo=FALSE, message=F, warning=F, error=T}
 
-#   setwd("~/comparem2/tests/strachan_campylo") # DEBUG
-#setwd("~/evo/comparem2/tests/MAGs") #DEBUG
 
+#setwd("~/CompareM2") #DEBUG
 
 
 # Should exist in the case that the glob_list$panaroo = ...gene_presence_absence.Rtab file exists.
 panaroo_summary_file = paste0(output_directory, "/panaroo/summary_statistics.txt")
-
-
-
 
 read_tsv(panaroo_summary_file, col_names = c("partition", "definition", "count")) %>% 
 
@@ -32,49 +28,35 @@ read_tsv(panaroo_summary_file, col_names = c("partition", "definition", "count")
 
 ```{r panaroo-matrix, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
 
-#setwd("~/evo/comparem2/tests/MAGs") # DEBUG
 
-panaroo_long = read_tsv(glob_list$panaroo) %>% 
+#setwd("~/CompareM2") #DEBUG
+panaroo_raw = read_tsv(glob_list$panaroo)
+ 
+
+panaroo_long = panaroo_raw %>% 
     mutate(shared_by = rowSums(across(where(is.numeric)))) %>%
-    pivot_longer(c(everything(), -Gene, -shared_by), names_to = "sample", values_to = "present") %>% 
-    filter(present >= 1) 
+    pivot_longer(c(everything(), -Gene, -shared_by), names_to = "sample", values_to = "present", cols_vary = "slowest") %>% 
+    filter(present >= 1) %>% # Just to be on the safe side.
+    
+    group_by(Gene) %>% 
+    mutate(samples = paste(sample, collapse = ", ")) %>% # This creates a sortable column that identifies the unique combination of samples, so they can be ordered better.
+    
+    identity()
 
 
 panaroo_plot_df = metadata_translate %>% 
     select(index, sample) %>% 
     left_join(panaroo_long, by = "sample") %>% 
     
-    arrange(desc(shared_by), desc(index)) %>% 
-    mutate(gene_order = 1:n()) %>% 
-    mutate(gene_num = Gene %>% factor() %>% as.integer()) %>% 
+    #arrange(desc(shared_by), desc(index)) %>%  # previous, before using "samples"
     
-    # Create exponential bins
-    #mutate(what = 2^(shared_by %>% log2() %>% round())) %>% # Wait, isn't it easier to just color in a logarithmic fashion?
+    arrange(desc(shared_by), desc(samples)) %>%  # Here is where we define the gene order
+    mutate(gene_order = 1:n()) %>% 
     identity()
 
-
-
-# panaroo_plot_df = read_tsv(glob_list$panaroo) %>% 
-#     mutate(shared_by = rowSums(across(where(is.numeric)))) %>%
-#     pivot_longer(c(everything(), -Gene, -shared_by), names_to = "sample", values_to = "present") %>% 
-#     filter(present >= 1)  %>%
-# 
-#     # Two sorting options:
-#     arrange(desc(shared_by), desc(sample)) %>% 
-#     #arrange(sample, shared_by) %>% 
-# 
-#     mutate(gene_order = 1:n()) %>% 
-#     mutate(gene_num = Gene %>% factor() %>% as.integer()) %>% 
-#     identity()
-
-
-
-
-
 panaroo_plot_df %>%
-    #ggplot(aes(reorder(Gene, gene_order), reorder(sample, desc(index)), fill = factor(shared_by))) +
     ggplot(aes(reorder(Gene, gene_order), reorder(sample, desc(index)), 
-        fill =  shared_by
+        fill = shared_by
     )) +
     
     geom_tile() +
@@ -84,18 +66,12 @@ panaroo_plot_df %>%
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
     ) +
-    scale_fill_binned(
-        trans = "log",
-        #breaks = 2^(0:11), # Getting error: (## Error in check.length("fill"): 'gpar' element 'fill' must not be length 0) when there is no shared genes and using this breaks difinition. Must disable it.
-        type = "viridis",
-        #direction = -1
-    ) +
+    
+    scale_fill_continuous(type = "viridis", trans = "identity") +
     labs(
         x = "gene",
         y = "sample",
-        #fill = "number of\nsamples", 
-        fill = "shared by\nsamples", 
-        
+        fill = "shared by\nsamples"
     )
 
 ```
@@ -104,6 +80,7 @@ panaroo_plot_df %>%
 
 
 ---
+
 
 
 

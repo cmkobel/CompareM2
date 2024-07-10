@@ -50,14 +50,6 @@ library(ape)
 library(rmarkdown)
 
 
-#library(gridExtra) # Not sure if I'm still using this? Think it was only the checkm2 figure.
-# I failed trying looking for a package that would robustly midpoint root the tree.
-#library(prettydoc) # Rmarkdown themes?
-#library(phytools)
-#library(phangorn)
-
-
-
 ```
 
 
@@ -140,6 +132,13 @@ if (debug) {
     output_directory = "results_comparem2_fixstr_busco"
     setwd("~/comparem2/")
     batch_title = basename(getwd())
+    
+    # panaroo on mac
+    base_variable = "~/comparem2/"
+    output_directory = "results_comparem2_panaroo"
+    setwd("~/comparem2/")
+    batch_title = basename(getwd())
+    
     
     
 }
@@ -411,19 +410,6 @@ section_definition_table %>%
 
 ```{r section_mashtree, child = paste0(report_scripts, "section_mashtree.rmd"), eval = render$mashtree}
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
