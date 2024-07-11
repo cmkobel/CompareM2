@@ -16,11 +16,11 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
         presence = "{output_directory}/panaroo/gene_presence_absence.csv",
         alignment = "{output_directory}/panaroo/core_gene_alignment.aln",
         #analyses = ["{output_directory}/panaroo/summary_statistics.txt", "{output_directory}/panaroo/core_gene_alignment.aln", "{output_directory}/panaroo/gene_presence_absence.csv"]
-    params: # Possibly make this editable from the CLI.
-        sequence_identity_threshold = "0.98", # default
-        core_genome_sample_threshold = "0.95", # default
-        clean_mode = "sensitive", # default
-        protein_family_sequence_identity_threshold = "0.7", # default
+    params: 
+        sequence_identity_threshold = float(config["panaroo_sequence_identity_threshold"]),
+        core_genome_sample_threshold = float(config["panaroo_core_genome_sample_threshold"]),
+        clean_mode = str(config["panaroo_clean_mode"]),
+        protein_family_sequence_identity_threshold = float(config["panaroo_protein_family_sequence_identity_threshold"]),
         
     benchmark: "{output_directory}/benchmarks/benchmark.panaroo.tsv"
     threads: 16
@@ -32,22 +32,18 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
     conda: "../envs/panaroo.yaml" # deactivated 
     shell: """
     
-
         # Collect version number.
         panaroo --version > "$(dirname {output.summary})/.software_version.txt"
 
         panaroo \
-            -i {input.gff:q} \
             -o {wildcards.output_directory}/panaroo \
             -a core \
             --threshold {params.sequence_identity_threshold} \
             --clean-mode {params.clean_mode} \
             --core_threshold {params.core_genome_sample_threshold} \
             -f {params.protein_family_sequence_identity_threshold} \
-            -t {threads}
-            
-            
-        #touch {output} # DEBUG
+            -t {threads} \
+            -i {input.gff:q}
             
         {void_report}
 
@@ -118,7 +114,7 @@ rule compute_snp_dists:
         
     """
 
-# This is a dummy rule that forces recomputation of the DAG after the core genome alignment has been produced. It solves a possibly known error in snakemake which I could possibly mitigate by updating snakemake. But since I'm already testing a lot of other features, I cannot take the burden of also changing snakemake version so this is the workaround for now.
+# This is a dummy rule that forces recomputation of the DAG after the core genome alignment has been produced. It solves a possibly known error in snakemake which I could possibly mitigate by updating snakemake (TODO). But since I'm already testing a lot of other features, I cannot take the burden of also changing snakemake version so this is the workaround for now.
 rule snp_dists:
     input: "{output_directory}/snp-dists/snp-dists.tsv"
     output: touch("{output_directory}/snp-dists/.done.flag")

@@ -21,14 +21,20 @@ output_directory: "results_comparem2"
 
 # Settings for individual tools (rules). Add your own and make a pull request!
 
+iqtree_bootstraps: 100 # Number of bootstraps
+
 mlst_scheme: "automatic"
 
+panaroo_clean_mode: "sensitive" # default
+panaroo_core_genome_sample_threshold: 0.95 # default
+panaroo_protein_family_sequence_identity_threshold: 0.7 # default
+panaroo_sequence_identity_threshold: 0.98 # default
+
+prokka_compliant: true # true or false
 prokka_kingdom: bacteria # archaea|bacteria|mitochondria|viruses
 prokka_rfam: false # true or false
-prokka_compliant: true # true or false
 
 treecluster_threshold: 0.045
-iqtree_bootstraps: 100
 
 # --- Parameters affecting the report -------------------------------
 

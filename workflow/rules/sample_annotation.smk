@@ -21,7 +21,7 @@ def get_annotation_results(wildcards):
         annotator = "prokka"
         
         
-    print(f"Pipeline: Using the {annotator} annotator for sample \"{wildcards.sample}\"{extra_message}.")
+    #print(f"Pipeline: Using the {annotator} annotator for sample \"{wildcards.sample}\"{extra_message}.")
     
     # Return should only contain one item, as I can't name them and I need to refer to a single one in rule annotate where I'm accessing its dirname().
     return [

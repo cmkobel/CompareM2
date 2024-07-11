@@ -4,6 +4,8 @@
   - Prints report sections in the end of the dynamic report pipeline.
   - Explicit option to run prokka in archaea mode.
   - config setting prokka_rfam is false by default.
+  - Brought Panaroo options out into config.
+  - Docker image follows minor version only. So all subsequent patches will use the same Docker image for Apptainer.
   - Minor fixes.
 
 2.8.1

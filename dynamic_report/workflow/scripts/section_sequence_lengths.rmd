@@ -3,7 +3,7 @@
 `rule sequence_lengths`
 
 
-```{r sequence_lengths-table, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, (N*0.2)+0.3), fig.width = 10}
+```{r sequence_lengths-table, echo=FALSE, message=F, warning=F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
 
 # setwd("~/comparem2/tests/strachan_campylo") # DEBUG
 
@@ -47,7 +47,7 @@ sequence_lengths_meta_df %>%
     ggplot(aes(length, reorder(sample_and_GC, desc(index)), fill = GC)) + 
     geom_bar(stat = "identity", color = "black", linewidth = 0.2) + 
     theme_classic() +
-    theme(legend.position = "bottom") +
+    #theme(legend.position = "bottom") +
     theme(panel.grid.major.x = element_line(colour = "grey92")) + 
     labs(y = "sample (GC%)") +
     scale_fill_viridis_c()

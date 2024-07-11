@@ -4,7 +4,12 @@
 
 __author__ = "Carl M. Kobel"
 
-__version__ = "2.8.1"
+__version__ = "2.8.2" # Haven't yet found a neat way of passing the version from the comparem2 executable, so for now it has to be defined here as well.
+
+# https://semver.org/
+version_major = ".".join(__version__.split(".")[:1])
+version_minor = ".".join(__version__.split(".")[:2])
+version_patch = ".".join(__version__.split(".")[:3])
 
 
 import os
@@ -17,7 +22,9 @@ import csv # for quoting # Can be disabled?
 import subprocess # For void_report
 import datetime # For void_report
 
-containerized: f"docker://cmkobel/comparem2:v{__version__}"
+
+# From v2.8.2: Only minor versions change the docker image.
+containerized: f"docker://cmkobel/comparem2:v{version_minor}"
 #containerized: f"docker://cmkobel/comparem2:latest" # DEBUG
 
 # When executing, Snakemake will fail with a reasonable error message if the variables below are undefined.
@@ -127,11 +134,11 @@ if len(input_genomes_parsed) < 1:
 df = pd.DataFrame(data = {'input_file': input_genomes_parsed})
 
 # Check that the directory is not empty.
-if df.shape[0] == 0:
+N = df.shape[0]
+if N == 0:
     raise Exception("Error: No fasta files in the current directory. Quitting ...")
     #raise Exception("Zero genomic files present.")
     sys.exit(1)
-    
 
 # Check if there are missing files.
 missing_files = [file for file in df["input_file"].tolist() if not os.path.isfile(file)]
