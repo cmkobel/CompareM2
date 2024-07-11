@@ -3,7 +3,7 @@
 
 
 !!! info
-    If you're looking for CompareM, a tool that calculates AAI and codon usage, please follow this link: [github.com/donovan-h-parks/CompareM](https://github.com/donovan-h-parks/CompareM)
+    If you're looking for the original version of CompareM, a tool to calculate AAI and codon usage, please follow this link: [github.com/donovan-h-parks/CompareM](https://github.com/donovan-h-parks/CompareM)
     
 
 
