@@ -37,7 +37,7 @@ If you are planning to make a pull request, you can also clone your personal for
 
 #### 2) Force using Conda to create and run individual tools.
 
-Using the profile on this path disables the Docker compatible apptainer image.
+If you have Apptainer on your machine, you should use this specific profile to force using Conda instead.
 
 _Skippable_: If you are planning to make changes in CompareM2 that do not add or modify individual Conda environments, you can skip this step.
 
@@ -56,6 +56,7 @@ Finally, you can run the pipeline with the following code:
 ```bash
 conda activate comparem2_dev
 unzip tests/E._faecium/fna.zip # Or gather your own relevant files for testing.
+
 ./comparem2 --config input_genomes="*.fna" --until fast --dry-run
 
 ```
