@@ -41,7 +41,7 @@ rule mlst:
         fasta = df["input_file_fasta"].tolist(),
     output: "{output_directory}/mlst/mlst.tsv",
     params:
-        mlst_scheme = f"--scheme {config["mlst_scheme"]}" if config["mlst_scheme"] != "automatic" else "",
+        passthrough_parameters = passthrough_parameter_unpack("mlst"),
         list_ = "{output_directory}/mlst/mlst_schemes.txt", 
     threads: 4
     conda: "../envs/mlst.yaml"
@@ -53,7 +53,7 @@ rule mlst:
 
         mlst \
             --threads {threads} \
-            {params.mlst_scheme_interpreted} \
+            {params.passthrough_parameters} \
             {input.fasta:q} \
             > {output:q}
 

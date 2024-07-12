@@ -6,6 +6,9 @@ def get_mem_panaroo(wildcards, attempt):
     return [32000, 64000, 128000][attempt-1]
 
 
+
+#print(passthrough_parameter_unpack("none")) # DEBUG
+
 # Maybe it shouldn't be panaroo which is the checkpoint, but rather every rule that uses the core genome, like rule snp_dists? Let me try!
 checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-dists should only run if the core genome is non-empty.
     input: 
@@ -16,12 +19,8 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
         presence = "{output_directory}/panaroo/gene_presence_absence.csv",
         alignment = "{output_directory}/panaroo/core_gene_alignment.aln",
         #analyses = ["{output_directory}/panaroo/summary_statistics.txt", "{output_directory}/panaroo/core_gene_alignment.aln", "{output_directory}/panaroo/gene_presence_absence.csv"]
-    params: 
-        panaroo_threshold = float(config["panaroo_threshold"]), # Sequence identity threshold.
-        panaroo_core_threshold = float(config["panaroo_core_threshold"]), # Core genome sample threshold.
-        panaroo_clean_mode = str(config["panaroo_clean_mode"]), # Clean mode 
-        panaroo_f = float(config["panaroo_f"]), # Family threshold
-        
+    params:        
+        passthrough_parameters = passthrough_parameter_unpack("panaroo")
     benchmark: "{output_directory}/benchmarks/benchmark.panaroo.tsv"
     threads: 16
     #retries: 2
@@ -34,17 +33,13 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
     
         # Collect version number.
         panaroo --version > "$(dirname {output.summary})/.software_version.txt"
-
+            
         panaroo \
             -o {wildcards.output_directory}/panaroo \
-            -a core \
-            --threshold {params.panaroo_threshold} \
-            --clean-mode {params.panaroo_clean_mode} \
-            --core_threshold {params.panaroo_core_threshold} \
-            -f {params.panaroo_f} \
             -t {threads} \
+            {params.passthrough_parameters} \
             -i {input.gff:q}
-            
+        
         {void_report}
 
     """

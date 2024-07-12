@@ -9,6 +9,7 @@ rule interproscan:
         tsv = "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv",
     params:
         file_base = "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan",
+        passthrough_parameters = passthrough_parameter_unpack("interproscan")
     conda: "../envs/interproscan.yaml" # Not sure if it should be called by a version number?
     benchmark: "{output_directory}/benchmarks/benchmark.interproscan.{sample}.tsv"
     threads: 8
@@ -21,19 +22,18 @@ rule interproscan:
 
         # https://interproscan-docs.readthedocs.io/en/latest/HowToRun.html#command-line-options
         interproscan.sh \
-            --applications TIGRFAM,Hamap,Pfam \
             --cpu {threads} \
             --output-file-base {params.file_base:q} \
             --disable-precalc \
             --formats TSV \
-            --goterms \
             --iprlookup \
-            --pathways \
+            {params.passthrough_parameters} \
             --seqtype p \
             --tempdir {resources.tmpdir} \
             --input {input.aminoacid:q}
 
     """
+
 
 
 rule dbcan: # I can't decide whether this rule should really be called "run_dbcan", since that is the name of the software.

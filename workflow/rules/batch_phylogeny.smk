@@ -29,9 +29,9 @@ rule treecluster:
         metadata = "{output_directory}/metadata.tsv",
         newick = "{output_directory}/mashtree/mashtree.newick",
     output: 
-        table_10 = "{output_directory}/treecluster/treecluster_threshold_0.10.tsv",
+        table = "{output_directory}/treecluster/treecluster.tsv",
     params:
-        treecluster_threshold = float(config['treecluster_threshold']) # Default is "0.045"
+        passthrough_parameters = passthrough_parameter_unpack("treecluster")
     conda: "../envs/treecluster.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.treecluster.tsv"
     threads: 8
@@ -40,22 +40,14 @@ rule treecluster:
     shell: """
     
         # Collect version number.
-        TreeCluster.py --version > "$(dirname {output.table_10})/.software_version.txt"
+        TreeCluster.py --version > "$(dirname {output})/.software_version.txt"
         
-        # First compute with standard 10 (=1-0.90 ANI)
         TreeCluster.py \
           --input {input.newick} \
-          --output {output.table_10} \
-          --threshold 0.10
+          --output {output.table} \
+          {params.passthrough_parameters}
           
-        # Secondly compute with custom (defaults to 0.045 (= 1-0.955 ANI))
-        TreeCluster.py \
-          --input {input.newick} \
-          --output {wildcards.output_directory}/treecluster/treecluster_threshold_{params.treecluster_threshold}.tsv \
-          --method max_clade \
-          --threshold {params.treecluster_threshold}
-              
-        {void_report}
+        {void_report} # Implemented yet?
         
     """ 
 
@@ -103,7 +95,7 @@ rule iqtree:
     output: 
         newick = "{output_directory}/iqtree/core_genome_iqtree.treefile"
     params: 
-        iqtree_boot = int(config['iqtree_boot'])
+        passthrough_parameters = passthrough_parameter_unpack("iqtree")
     conda: "../envs/iqtree.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.iqtree.tsv"
     threads: 16
@@ -118,8 +110,7 @@ rule iqtree:
 
         iqtree \
             -s {input.fasta:q} \
-            -m GTR \
-            --boot {params.iqtree_boot} \
+            {params.passthrough_parameters} \
             --prefix $(dirname {output.newick:q})/core_genome_iqtree \
             -redo
 

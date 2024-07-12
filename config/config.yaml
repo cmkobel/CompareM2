@@ -17,27 +17,39 @@ annotator: "prokka" # prokka|bakta # Affects .faa used in dbcan, interproscan, d
 
 output_directory: "results_comparem2"
 
-# --- Parameters affecting specific tools only ----------------------
 
-# Settings for individual tools (rules). Add your own and make a pull request!
+# --- Parameter passthrough "set_" parameters for individual rules --
 
-iqtree_boot: 100 # Number of bootstraps
+# These parameters are interpreted and any parameter can be added. Please check the documentation of each tool.
+# Flag arguments are set with an empty string, and unset by removing the key altogether. 
 
-mlst_scheme: "automatic"
+set_interproscan--applications: "TIGRFAM,Hamap,Pfam"
+set_interproscan--goterms: "" # flag
+set_interproscan--pathways: "" # flag
 
-panaroo_clean_mode: "sensitive" # default
-panaroo_core_genome_sample_threshold: 0.95 # default
-panaroo_protein_family_sequence_identity_threshold: 0.7 # default
-panaroo_sequence_identity_threshold: 0.98 # default
+set_iqtree--boot: 100
+set_iqtree-m: GTR
 
-prokka_compliant: true # true or false
-prokka_kingdom: bacteria # archaea|bacteria|mitochondria|viruses
-prokka_rfam: false # true or false
+# set_mlst--scheme: abaumannii # abaumannii achromobacter aeromonas afumigatus cdifficile efaecium hcinaedi hparasuis hpylori kpneumoniae leptospira saureus xfastidiosa yersinia ypseudotuberculosis yruckeri
 
-treecluster_threshold: 0.045
+set_panaroo--clean-mode: "sensitive"
+set_panaroo--core_threshold: 0.95
+set_panaroo--threshold: 0.98
+set_panaroo-a: core
+set_panaroo-f: 0.7
+
+set_prokka--compliant: "" # flag
+set_prokka--kingdom: bacteria # archaea|bacteria|mitochondria|viruses
+#set_prokka--rfam: "" # flag
+
+set_treecluster--method: max_clade # avg_clade, leaf_dist_avg, leaf_dist_max, leaf_dist_min, length, length_clade, max, max_clade, med_clade, root_dist, single_linkage, single_linkage_cut, single_linkage_union, sum_branch, sum_branch_clade
+set_treecluster--threshold: 0.05
+
+
 
 # --- Parameters affecting the report -------------------------------
 
 # Title. Used in the report.
 # User can manually set the title. Otherwise the default is to use the name of the current working directory.
 title: "CHANGE_THIS_TO_ACTIVATE" 
+
