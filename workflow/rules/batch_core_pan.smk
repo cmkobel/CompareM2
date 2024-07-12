@@ -17,10 +17,10 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
         alignment = "{output_directory}/panaroo/core_gene_alignment.aln",
         #analyses = ["{output_directory}/panaroo/summary_statistics.txt", "{output_directory}/panaroo/core_gene_alignment.aln", "{output_directory}/panaroo/gene_presence_absence.csv"]
     params: 
-        sequence_identity_threshold = float(config["panaroo_sequence_identity_threshold"]),
-        core_genome_sample_threshold = float(config["panaroo_core_genome_sample_threshold"]),
-        clean_mode = str(config["panaroo_clean_mode"]),
-        protein_family_sequence_identity_threshold = float(config["panaroo_protein_family_sequence_identity_threshold"]),
+        panaroo_threshold = float(config["panaroo_threshold"]), # Sequence identity threshold.
+        panaroo_core_threshold = float(config["panaroo_core_threshold"]), # Core genome sample threshold.
+        panaroo_clean_mode = str(config["panaroo_clean_mode"]), # Clean mode 
+        panaroo_f = float(config["panaroo_f"]), # Family threshold
         
     benchmark: "{output_directory}/benchmarks/benchmark.panaroo.tsv"
     threads: 16
@@ -38,10 +38,10 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
         panaroo \
             -o {wildcards.output_directory}/panaroo \
             -a core \
-            --threshold {params.sequence_identity_threshold} \
-            --clean-mode {params.clean_mode} \
-            --core_threshold {params.core_genome_sample_threshold} \
-            -f {params.protein_family_sequence_identity_threshold} \
+            --threshold {params.panaroo_threshold} \
+            --clean-mode {params.panaroo_clean_mode} \
+            --core_threshold {params.panaroo_core_threshold} \
+            -f {params.panaroo_f} \
             -t {threads} \
             -i {input.gff:q}
             

@@ -103,7 +103,7 @@ rule iqtree:
     output: 
         newick = "{output_directory}/iqtree/core_genome_iqtree.treefile"
     params: 
-        iqtree_bootstraps = int(config['iqtree_bootstraps'])
+        iqtree_boot = int(config['iqtree_boot'])
     conda: "../envs/iqtree.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.iqtree.tsv"
     threads: 16
@@ -119,7 +119,7 @@ rule iqtree:
         iqtree \
             -s {input.fasta:q} \
             -m GTR \
-            --boot {params.iqtree_bootstraps} \
+            --boot {params.iqtree_boot} \
             --prefix $(dirname {output.newick:q})/core_genome_iqtree \
             -redo
 

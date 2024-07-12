@@ -35,21 +35,13 @@ rule abricate:
     """
 
 
-# TODO extract function
-# Parse the mlst scheme for bash
-if config["mlst_scheme"] == "automatic":
-    mlst_scheme_interpreted = "",
-else:
-    mlst_scheme_interpreted = f"--scheme {config['mlst_scheme']}",
-#print(f"Info: The mlst_scheme is set to <{mlst_scheme_interpreted}>") # Debug message.
-
 rule mlst:
     input: 
         metadata = "{output_directory}/metadata.tsv",
         fasta = df["input_file_fasta"].tolist(),
     output: "{output_directory}/mlst/mlst.tsv",
     params:
-        mlst_scheme_interpreted = mlst_scheme_interpreted,
+        mlst_scheme = f"--scheme {config["mlst_scheme"]}" if config["mlst_scheme"] != "automatic" else "",
         list_ = "{output_directory}/mlst/mlst_schemes.txt", 
     threads: 4
     conda: "../envs/mlst.yaml"
@@ -60,7 +52,8 @@ rule mlst:
         mlst -v > "$(dirname output.ncbi_detailed)/.software_version.txt"
 
         mlst \
-            --threads {threads} {params.mlst_scheme_interpreted} \
+            --threads {threads} \
+            {params.mlst_scheme_interpreted} \
             {input.fasta:q} \
             > {output:q}
 

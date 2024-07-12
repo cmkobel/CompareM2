@@ -21,7 +21,7 @@ output_directory: "results_comparem2"
 
 # Settings for individual tools (rules). Add your own and make a pull request!
 
-iqtree_bootstraps: 100 # Number of bootstraps
+iqtree_boot: 100 # Number of bootstraps
 
 mlst_scheme: "automatic"
 
