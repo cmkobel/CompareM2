@@ -79,13 +79,23 @@ def passthrough_parameter_unpack(rule_name):
     
     # Create a new dict that only contains the keys that start with the wanted prefix.
     rule_parameters = {k: v for k, v in config.items() if k.startswith(prefix)}
-    print(rule_parameters) # DEBUG
+    #print(rule_parameters) # DEBUG
+    
     
     # Create parameter list with spaces between key-value.
     formatted_list = [str(k[len(prefix):]) + " " + str(v) for k,v in rule_parameters.items()]
     
+    
+    rv = " ".join(formatted_list)
+    # Pretty print
+    print("passthrough parameters to", rule_name, end = ": \"")
+    #for k in formatted_list:
+    #    print(f"{k}", end="")
+    print(rv, end = "")
+    print("\"")
+    
     # Format as "shell" and return
-    return " ".join(formatted_list)
+    return rv
     
     
 # --- Field variables -----------------------------------------------
