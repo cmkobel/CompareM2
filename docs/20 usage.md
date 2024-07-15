@@ -90,15 +90,18 @@ Pass a parameter to the snakemake pipeline, where the following keys are availab
 
 #### Passthrough arguments
 
-From v2.8.2, CompareM2 has the ability to pass _any_ command line argument (option parameter pair) through to _any_ rule in the workflow. This is done by using a generalized "passthrough argument" feature that recognizes config arguments options starting with string "set_" and passes them to the correct rule upon generating the shell scripts for each rule in the workflow. The general syntax for these passthrough arguments is `set_<rule><option>=<parameter>` where rule is the rule name, option is the option key and parameter is the parameter value. 
+From v2.8.2, CompareM2 has the ability to pass _any_ command line argument (option-parameter pair) through to _any_ rule in the workflow. This is done by using a generalized "passthrough argument" feature that recognizes config argument options starting with string "set_" and passes them to the correct rule upon generating the shell scripts for each rule in the workflow. The general syntax for these passthrough arguments is `set_<rule><option>=<parameter>` where rule is the rule name, option is the option key, and parameter is the parameter value. 
 
 !!! info
     This feature requires modification of Snakemake such that it can accept special characters through the config strings given at the command line. This modification can easily be done using the following command that ships with the bioconda package:
+    
     ```
     enable_passthrough_parameters_comparem2
     ```
+    
+    Otherwise you may receive the Snakemake error: "Invalid config definition: Config entry must start with a valid identifier."
 
-An example can be used to explain how this feature can be used in practice: Consider using the Prokka annotator (rule name `prokka`), which is capable of annotating both bacterial and archaeal genomes it is necessary to set the "--kingdom" argument to "archaea" when analyzing archaea. This is for Prokka to use the correct internal databases when annotating the genes, because the default is bacteria. In this case the rule name is `prokka`, the option key is `--kingdom` and the parameter value is `archaea`. When using CompareM2, this setting can be set following the passthrough parameter syntax like so:
+An example can be used to explain how this feature can be used in practice: Consider using the Prokka annotator, which is capable of annotating both bacterial and archaeal genomes. Here it is necessary to set the "--kingdom" argument to "archaea" when analyzing archaea. This is necessary because Prokka will otherwise use a default bacterial gene database to annotate the genes. In this case the rule name is `prokka`, the option key is `--kingdom` and the parameter value is `archaea`. When using CompareM2, this setting can be set following the passthrough parameter syntax like so:
  
 ```
 # comparem2 --until set_<rule><key>=<value> # Syntax template.
