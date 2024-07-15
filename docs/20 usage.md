@@ -119,7 +119,7 @@ In case of non-empty parameter values, use of apostrophes is optional.
 
 Using a space separator, several command line arguments can be given at once for several different tools. In the following example we're also loosening the Panaroo core genome identity "--threshold" option down to 95% to increase the apparent number of genes in the core genome.
 
-```
+```bash
 comparem2 --config set_prokka--kingdom=archaea set_panaroo--threshold=0.95 --until panaroo fast
 ```
 
