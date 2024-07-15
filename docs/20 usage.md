@@ -94,21 +94,19 @@ From v2.8.2, CompareM2 has the ability to pass _any_ command line argument (opti
 
 !!! info
     This feature requires modification of Snakemake such that it can accept special characters through the config strings given at the command line. This modification can easily be done using the following command that ships with the bioconda package:
-    
     ```
     enable_passthrough_parameters_comparem2
     ```
-    
     Otherwise you may receive the Snakemake error: "Invalid config definition: Config entry must start with a valid identifier."
 
-An example can be used to explain how this feature can be used in practice: Consider using the Prokka annotator, which is capable of annotating both bacterial and archaeal genomes. Here it is necessary to set the "--kingdom" argument to "archaea" when analyzing archaea. This is necessary because Prokka will otherwise use a default bacterial gene database to annotate the genes. In this case the rule name is `prokka`, the option key is `--kingdom` and the parameter value is `archaea`. When using CompareM2, this setting can be set following the passthrough parameter syntax like so:
+An example can be used to explain how this feature can be used in practice: Consider using the Prokka annotator, which is capable of annotating both bacterial and archaeal genomes. Here it is necessary to set the "--kingdom" argument to "archaea" when analyzing archaea. This is necessary because Prokka will otherwise use its default bacterial gene database to annotate the genes. In this case the rule name is `prokka`, the option key is `--kingdom` and the parameter value is `archaea`. When using CompareM2, this setting can be set following the passthrough parameter syntax like so:
  
 ```
 # comparem2 --until set_<rule><key>=<value> # Syntax template.
 comparem2 --until set_prokka--kingdom=archaea
 ```
 
-Notice how the double dash prefix is part of the the set_ string. This is because many different styles of command line argument options need to be supported (e.g.: `--command_key`, --command-key, -command_key` etc).
+Notice how the double dash prefix in "--kingdom" is part of the the set_ string. This is because many different styles of command line argument options need to be supported (e.g.: "--command_key", "--command-key", "-command_key" etc).
 
 In some cases, command line arguments are options that work like a flag, meaning that they need no parameter value. In this case, an empty string can be given an the parameter value:
 
@@ -118,7 +116,7 @@ comparem2 --until set_prokka--compliant=""
 
 In case of non-empty parameter values, it is optional to use apostrophes.
 
-Several command line arguments can be given at once for several different tools, using a space separator. In the following example we're also loosening the Panaroo core genome identity `--threshold` option down to 95% to increase the apparent number of genes in the core genome.
+Using a space separator, several command line arguments can be given at once for several different tools. In the following example we're also loosening the Panaroo core genome identity "--threshold" option down to 95% to increase the apparent number of genes in the core genome.
 
 ```
 comparem2 --config set_prokka--kingdom=archaea set_panaroo--threshold=0.95 --until panaroo fast
@@ -131,7 +129,7 @@ comparem2 --config set_prokka--kingdom=archaea set_panaroo--threshold=0.95 --unt
   
 CompareM2 comes with a number of sane default arguments which can be observed [here](https://github.com/cmkobel/CompareM2/blob/master/config/config.yaml). Any passthrough argument that the user gives on the command line overwrites these defaults.
 
-
+---
             
 ### `--until RULE [RULE2]...`
 Select to run up until and including a specific rule in the rule graph. Available rules:
