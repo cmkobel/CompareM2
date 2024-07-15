@@ -90,7 +90,7 @@ Pass a parameter to the snakemake pipeline, where the following keys are availab
 
 #### Passthrough arguments
 
-From v2.8.2, CompareM2 has the ability to pass _any_ command line argument (option-parameter pair) through to _any_ rule in the workflow. This is done by using a generalized "passthrough argument" feature that recognizes config argument options starting with string "set_" and passes them to the correct rule upon generating the shell scripts for each rule in the workflow. The general syntax for these passthrough arguments is `set_<rule><option>=<parameter>` where rule is the rule name, option is the option key, and parameter is the parameter value. 
+From v2.8.2, CompareM2 has the ability to pass any command line argument (option-parameter pair) through to any rule in the workflow. This is done by using a generalized "passthrough argument" feature that recognizes config argument options starting with string "set_" and passes them to the correct rule upon generating the shell scripts for each rule in the workflow. The general syntax for these passthrough arguments is `set_<rule><option>=<parameter>` where rule is the rule name, option is the option key, and parameter is the parameter value. 
 
 !!! info
     This feature requires modification of Snakemake such that it can accept special characters through the config strings given at the command line. This modification can easily be done using the following command that ships with the bioconda package:
