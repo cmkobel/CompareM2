@@ -80,13 +80,51 @@ Pass a parameter to the snakemake pipeline, where the following keys are availab
 
   - `annotator="prokka"` (Choice of annotation tool. Alternatively "bakta".)
     
-There also is a series of parameters inside specific tools that can be tweaked directly from the command line interface. Please consult the individual documentation of the relevant tool for more info. Examples of possible values are given in parenthesis:
 
-  - `mlst_scheme="automatic"`
-  - `prokka_rfam=true` (true or false)
-  - `prokka_compliant=true` (true or false)
-  - `treecluster_threshold=0.045` (interpreted as float)
-  - `iqtree_bootstraps=100` (interpreted as int)
+
+
+#### Passthrough arguments
+
+!!! info
+  This feature requires modification of the Snakemake source code to accept special characters through the config strings given at the command line. This modification will have to be run using the following built in command, to enable this modification.
+  ```
+  enable_passthrough_parameters_comparem2
+   ```
+
+From v2.8.2, CompareM2 has the ability to pass _any_ command line argument (option parameter pair) through to _any_ rule in the workflow. This is done by using a generalized "passthrough argument" feature that recognizes config arguments starting with string `set_` and passes them to the correct rule upon generating the shell scripts for each rule in the workflow. The general syntax for these passthrough parameters is `set_<rule><option>=<parameter>` where rule is the rule name, option is the option key and parameter is the parameter value. 
+
+An example can be used to explain how this can be used in practice: When using the Prokka annotator (rule name `prokka`), which is an annotator of both bacterial and archaeal genomes it is necessary to set the `--kingdom` argument to "archaea" when analyzing archaea in order to use the correct internal databases. This is because the default is set to "bacteria". In this case the rule name is "prokka", the option key is "--kingdom" and the parameter value is "archaea". When using CompareM2, this setting can be set by using the passthrough parameter feature like so:
+ 
+```
+# comparem2 --until set_<rule><key>=<value # Syntax template.
+comparem2 --until set_prokka--kingdom=archaea
+```
+
+
+Notice how the double dash prefix is part of the the set_ string. This is designed in such a way, that any command line argument key can be used. This is necessary as there exists many different styles for styling command line arguments (e.g.: `--command_key`, --command-key, -command_key` etc).
+
+In some cases, command line arguments are options that work like flag, meaning that they take no parameter value. In this case, an empty string can be given an the parameter value:
+
+```
+comparem2 --until set_prokka--compliant=""
+```
+
+Several command line arguments can be given at once for several different tools, using a space separator. In this example we're also loosening the Panaroo core genome identity `--threshold` option down to 95% to increase the called core genome size.
+
+```
+comparem2 --config set_prokka--kingdom=archaea set_panaroo--threshold=0.95 --until panaroo fast
+```
+
+
+
+!!! note 
+  Remember that there are no limitations of which command line arguments can be passed through the passthrough argument feature. But this also means that it is the responsibility of the user to verify that the options are valid.
+
+  
+CompareM2 comes with a number of sane default arguments which can be observed [here](https://github.com/cmkobel/CompareM2/blob/master/config/config.yaml). These will be overwritten by any argument that is set using the command line passthrough argument feature.
+
+
+
             
 ### `--until RULE [RULE2]...`
 Select to run up until and including a specific rule in the rule graph. Available rules:
