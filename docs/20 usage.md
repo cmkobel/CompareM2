@@ -198,16 +198,16 @@ results_comparem2/
 ├── panaroo/
 ├── report_<title>.html
 ├── samples/
-   └── <sample>/
-      ├── antismash/
-      ├── bakta/
-      ├── busco/
-      ├── dbcan/
-      ├── eggnog/
-      ├── <sample>.fna
-      ├── interproscan/
-      ├── prokka/
-      └── sequence_lengths/
+│  └── <sample>/
+│     ├── antismash/
+│     ├── bakta/
+│     ├── busco/
+│     ├── dbcan/
+│     ├── eggnog/
+│     ├── <sample>.fna
+│     ├── interproscan/
+│     ├── prokka/
+│     └── sequence_lengths/
 ├── snp-dists/
 ├── tables/
 ├── treecluster/
