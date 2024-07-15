@@ -11,7 +11,7 @@
 
 🦠 Being designed to analyze assemblies of both isolates and metagenomes (MAGs), it is useful for anyone working with microbial genomics.
 
-💾 [Installing](https://comparem2.readthedocs.io/en/latest/10%20installation/) CompareM2 on your system gives you access to [many](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/) powerful state-of-the-art tools for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
+💾 [Installing](https://comparem2.readthedocs.io/en/latest/10%20installation/) CompareM2 on your system gives you access to many powerful state-of-the-art tools for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
 
 👩‍🔬 CompareM2 integrates [several analyses](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/) that yield scientific results about genomic assemblies on several levels: Quality control, annotation, function and species calling as well as comparative analyses like computation of core/pan genomes and phylogenetics. 
 
