@@ -99,22 +99,22 @@ From v2.8.2, CompareM2 has the ability to pass _any_ command line argument (opti
     ```
     Otherwise you may receive the Snakemake error: "Invalid config definition: Config entry must start with a valid identifier."
 
-An example can be used to explain how this feature can be used in practice: Consider using the Prokka annotator, which is capable of annotating both bacterial and archaeal genomes. Here it is necessary to set the "--kingdom" argument to "archaea" when analyzing archaea. This is necessary because Prokka will otherwise use its default bacterial gene database to annotate the genes. In this case the rule name is `prokka`, the option key is `--kingdom` and the parameter value is `archaea`. When using CompareM2, this setting can be set following the passthrough argument syntax like so:
+An example can be used to explain how this feature can be used in practice: Consider using the Prokka annotator, which is capable of annotating both bacterial and archaeal genomes. By default, Prokka is set to bacterial annotation, so in case we want to annotate an archaea, we can set the "--kingdom" argument to "archaea". In this case the rule name is `prokka`, the option key is `--kingdom` and the parameter value is `archaea`. When using CompareM2, this setting can be set following the passthrough argument syntax like so:
  
 ```bash
 # comparem2 --until set_<rule><key>=<value> # Syntax template.
 comparem2 --until set_prokka--kingdom=archaea
 ```
 
-Notice how the double dash prefix in "--kingdom" is part of the the set_ string. This is because many different styles of command line argument options need to be supported (e.g.: "--command_key", "--command-key", "-command_key" etc).
+Notice how the double dash prefix in "--kingdom" is part of the the set_ string. This is because many different styles of command line argument options need to be supported (e.g.: "--command_key", "--command-key", "-command_key" etc). 
 
-In some cases, command line arguments are options that work like a flag, meaning that they need no parameter value. In this case, an empty string can be given an the parameter value:
+In some cases, command line options are flags, meaning that they need no parameter value. In this case, an empty string can be given as parameter value:
 
 ```bash
-comparem2 --until set_prokka--compliant=""
+comparem2 --until set_prokka--rfam="" # --rfam enables searching for ncRNAs with Infernal+Rfam.
 ```
 
-In case of non-empty parameter values, it is optional to use apostrophes.
+In case of non-empty parameter values, use of apostrophes is optional.
 
 Using a space separator, several command line arguments can be given at once for several different tools. In the following example we're also loosening the Panaroo core genome identity "--threshold" option down to 95% to increase the apparent number of genes in the core genome.
 
@@ -174,9 +174,13 @@ No environment variables are strictly necessary to set, but the following might 
 
 
 ## Output
-Creates a directory named "results_comparem2/" (or what the output_directory parameter is set to) that contains all of the analysis results that are computed.
+CompareM2 creates a directory named "results_comparem2/" (or what the output_directory parameter is set to) that contains all of the analysis results that are computed.
 
-A file tree with depth level 1 looks like so:
+Results from input genomes are in dir "samples/" and results across all samples are in the root. 
+
+The report is named "report_<title>.html" after the title of the run which defaults to the name of the current working directory.
+
+
 
 ```txt
 results_comparem2/
@@ -194,20 +198,6 @@ results_comparem2/
 ├── panaroo/
 ├── report_<title>.html
 ├── samples/
-├── snp-dists/
-├── tables/
-├── treecluster/
-└── version_info.txt
-```
-
-Results from input genomes are in dir "samples/" and results across all samples are in the root. The report is named after the title of the run which is the same as the name of the current working directory.
-
-<sample\> is defined as the basename without extension of each file given as input genome.
-
-The samples/<sample\> directory for each sample looks like so: (Again, depth level 1 only.)
-```txt
-results_comparem2/
-└── samples/
    └── <sample>/
       ├── antismash/
       ├── bakta/
@@ -218,10 +208,12 @@ results_comparem2/
       ├── interproscan/
       ├── prokka/
       └── sequence_lengths/
+├── snp-dists/
+├── tables/
+├── treecluster/
+└── version_info.txt
 ```
 
-For the file tree of each of the analysis tools you will have to consult the documentation of each tool.
-
-
+For the file tree of each of the analysis tools, please consult the respective documentation.
 
 {!resources/footer.md!}
