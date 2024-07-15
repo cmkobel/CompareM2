@@ -99,7 +99,7 @@ From v2.8.2, CompareM2 has the ability to pass _any_ command line argument (opti
     ```
     Otherwise you may receive the Snakemake error: "Invalid config definition: Config entry must start with a valid identifier."
 
-An example can be used to explain how this feature can be used in practice: Consider using the Prokka annotator, which is capable of annotating both bacterial and archaeal genomes. Here it is necessary to set the "--kingdom" argument to "archaea" when analyzing archaea. This is necessary because Prokka will otherwise use its default bacterial gene database to annotate the genes. In this case the rule name is `prokka`, the option key is `--kingdom` and the parameter value is `archaea`. When using CompareM2, this setting can be set following the passthrough parameter syntax like so:
+An example can be used to explain how this feature can be used in practice: Consider using the Prokka annotator, which is capable of annotating both bacterial and archaeal genomes. Here it is necessary to set the "--kingdom" argument to "archaea" when analyzing archaea. This is necessary because Prokka will otherwise use its default bacterial gene database to annotate the genes. In this case the rule name is `prokka`, the option key is `--kingdom` and the parameter value is `archaea`. When using CompareM2, this setting can be set following the passthrough argument syntax like so:
  
 ```
 # comparem2 --until set_<rule><key>=<value> # Syntax template.
