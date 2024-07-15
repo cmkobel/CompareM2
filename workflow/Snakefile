@@ -46,6 +46,7 @@ def get_fofn(path):
     return as_list
     
 
+
 def get_input_genomes(pattern):
     """ Runs ls on the pattern and parses what is returned. Uses module subprocess.
     """
@@ -83,14 +84,11 @@ def passthrough_parameter_unpack(rule_name):
     
     
     # Create parameter list with spaces between key-value.
-    formatted_list = [str(k[len(prefix):]) + " " + str(v) for k,v in rule_parameters.items()]
-    
-    
+    formatted_list = [str(k[len(prefix):]) + " " + str(v) for k,v in rule_parameters.items()]    
     rv = " ".join(formatted_list)
+
     # Pretty print
     print("passthrough parameters to", rule_name, end = ": \"")
-    #for k in formatted_list:
-    #    print(f"{k}", end="")
     print(rv, end = "")
     print("\"")
     
