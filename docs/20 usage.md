@@ -94,7 +94,7 @@ From v2.8.2, CompareM2 has the ability to pass any command line argument (option
 
 !!! info
     This feature requires modification of Snakemake such that it can accept special characters through the config strings given at the command line. This modification can easily be done using the following command that ships with the bioconda package:
-    ```bash
+    ```
     enable_passthrough_parameters_comparem2
     ```
     Otherwise you may receive the Snakemake error: "Invalid config definition: Config entry must start with a valid identifier."
