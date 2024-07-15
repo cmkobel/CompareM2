@@ -13,7 +13,7 @@
 
 💾 [Installing](https://comparem2.readthedocs.io/en/latest/10%20installation/) CompareM2 on your system gives you access to [many](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/) powerful state-of-the-art tools for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
 
-👩‍🔬 CompareM2 integrates several analyses that yield scientific results about genomic assemblies on several levels: Quality control, annotation, function and species calling as well as comparative analyses like computation of core/pan genomes and phylogenetics. 
+👩‍🔬 CompareM2 integrates [several analyses](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/) that yield scientific results about genomic assemblies on several levels: Quality control, annotation, function and species calling as well as comparative analyses like computation of core/pan genomes and phylogenetics. 
 
 🐍 CompareM2 works by calling a Snakemake workflow that can be easily modified to use [different parameters](https://comparem2.readthedocs.io/en/latest/20%20usage/#passthrough-arguments) for the  underlying tools.
 
