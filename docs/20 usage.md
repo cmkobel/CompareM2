@@ -178,7 +178,7 @@ CompareM2 creates a directory named "results_comparem2/" (or what the output_dir
 
 Results from input genomes are in dir "samples/" and results across all samples are in the root. 
 
-The report is named "report_\<title>.html" after the title of the run which defaults to the name of the current working directory.
+The report is named "report_&lt;title>.html" after the title of the run which defaults to the name of the current working directory.
 
 
 
