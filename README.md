@@ -15,7 +15,7 @@
 
 👩‍🔬 CompareM2 integrates several analyses that yield scientific results about genomic assemblies on several levels: Quality control, annotation, function and species calling as well as comparative analyses like computation of core/pan genomes and phylogenetics. 
 
-🐍 CompareM2 works by calling a Snakemake workflow that can be easily modified to use different parameters for the  underlying tools.
+🐍 CompareM2 works by calling a Snakemake workflow that can be easily modified to use [different parameters](https://comparem2.readthedocs.io/en/latest/20%20usage/#passthrough-arguments) for the  underlying tools.
 
 <a href="https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report"><img width="220" style="width: 220px" alt="report document logo" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/e5f9b72c-2137-4850-8779-a5528d8ccbaf"></a>
 
