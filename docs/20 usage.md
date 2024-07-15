@@ -86,7 +86,7 @@ Pass a parameter to the snakemake pipeline, where the following keys are availab
   - `annotator="prokka"` Choice of annotation tool. Alternatively "bakta".
     
 
-
+---
 
 #### Passthrough arguments
 
@@ -94,14 +94,14 @@ From v2.8.2, CompareM2 has the ability to pass _any_ command line argument (opti
 
 !!! info
     This feature requires modification of Snakemake such that it can accept special characters through the config strings given at the command line. This modification can easily be done using the following command that ships with the bioconda package:
-    ```
+    ```bash
     enable_passthrough_parameters_comparem2
     ```
     Otherwise you may receive the Snakemake error: "Invalid config definition: Config entry must start with a valid identifier."
 
 An example can be used to explain how this feature can be used in practice: Consider using the Prokka annotator, which is capable of annotating both bacterial and archaeal genomes. Here it is necessary to set the "--kingdom" argument to "archaea" when analyzing archaea. This is necessary because Prokka will otherwise use its default bacterial gene database to annotate the genes. In this case the rule name is `prokka`, the option key is `--kingdom` and the parameter value is `archaea`. When using CompareM2, this setting can be set following the passthrough argument syntax like so:
  
-```
+```bash
 # comparem2 --until set_<rule><key>=<value> # Syntax template.
 comparem2 --until set_prokka--kingdom=archaea
 ```
@@ -110,7 +110,7 @@ Notice how the double dash prefix in "--kingdom" is part of the the set_ string.
 
 In some cases, command line arguments are options that work like a flag, meaning that they need no parameter value. In this case, an empty string can be given an the parameter value:
 
-```
+```bash
 comparem2 --until set_prokka--compliant=""
 ```
 
@@ -141,18 +141,28 @@ There are also a number of pseudo rules, effectively "shortcuts" to a list of ru
   - isolate     (Only rules that are relevant for genomes of isolate origin.)
   - meta        (Only rules that are relevant for genomes "MAGs" of metagenomic origin.)
   - report      (Re-renders the report.)
+
+---
           
 ### `--forcerun RULE [RULE2]...`
 Force rerunning of one or more rules that already have been completed. This is generally necessary when changing running parameters in the config (see "--config" above).
+
+---
     
 ### `--dry-run`
 Run a "dry run": Shows what will run without doing it.
 
+---
+
 ### `--version`, `-v `
 Show current version.
+
+---
     
 ### `--help`, `-h`
 Show this help and exit.
+
+---
         
 ## Environment variables
 No environment variables are strictly necessary to set, but the following might be useful:
@@ -160,7 +170,9 @@ No environment variables are strictly necessary to set, but the following might 
   - `COMPAREM2_PROFILE` (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running CompareM2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/comparem2/profile/\*).
   
   - `COMPAREM2_DATABASES` (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
-  
+
+
+
 ## Output
 Creates a directory named "results_comparem2/" (or what the output_directory parameter is set to) that contains all of the analysis results that are computed.
 
