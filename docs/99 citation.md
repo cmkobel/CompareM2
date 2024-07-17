@@ -6,7 +6,7 @@
 
 If you use CompareM2, you can support further funding by bumping the citation count on this one:
 
-  - Kobel CM. *CompareM2* **GitHub** https://github.com/cmkobel/comparem2
+  - Kobel, C. M. et al. CompareM2 is a genomes-to-report pipeline for comparing microbial genomes. 2024.07.12.603264 Preprint at https://doi.org/10.1101/2024.07.12.603264 (2024).
 
 ## References for the included tools
 

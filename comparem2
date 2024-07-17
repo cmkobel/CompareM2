@@ -141,7 +141,7 @@ elif "--help" in trailing_arguments or "-h" in trailing_arguments:
 
 
 elif "--cite" in trailing_arguments:
-    print("If you use CompareM2, you can support further funding by bumping the citation count on this one:\n\n\tKobel CM. CompareM2 GitHub https://github.com/cmkobel/comparem2\n\nCompareM2 would not have existed, if it hadn't been for the integrated software packages and their databases. Please cite the appropriate tools as well. There is an up to date list on this site:\n\n\thttps://comparem2.readthedocs.io/en/latest/99%20citation/\n")
+    print("If you use CompareM2, you can support further funding by bumping the citation count on this one:\n\n\tKobel, C. M. et al. CompareM2 is a genomes-to-report pipeline for comparing microbial genomes. 2024.07.12.603264 Preprint at https://doi.org/10.1101/2024.07.12.603264 (2024).\n\nCompareM2 would not have existed, if it hadn't been for the integrated software packages and their databases. Please cite the appropriate tools as well. Please follow this link for an up to date list: https://comparem2.readthedocs.io/en/latest/99%20citation/\n")
 
     
 else:
