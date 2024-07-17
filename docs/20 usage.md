@@ -9,8 +9,9 @@ CompareM2 is built on top of Snakemake. Hence, when tweaking your run, you must 
 comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
   [ --until RULE [RULE2]... ]
   [ --forcerun RULE [RULE2]... ]
+  [ --printshellcmds ]
   [ --dry-run ]
-  [ --version ]  [ --help ]
+  [ --version ]  [ --help ] [--cite]
 ```
 
 ## Usage examples
