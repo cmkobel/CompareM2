@@ -2,7 +2,7 @@
 
 
 Overall, CompareM2 follows standard command line practices.
-CompareM2 is built on top of Snakemake. Hence, when tweaking your run, you must pass the parameters through the `--config` key. All [Snakemake options](https://snakemake.readthedocs.io/en/stable/executing/cli.html) are available as well.
+CompareM2 is built on top of Snakemake. Hence, when tweaking your run, you must pass the parameters through the `--config` key. Although all [Snakemake options](https://snakemake.readthedocs.io/en/stable/executing/cli.html) are available to use, here we bring the ones that are necessary and useful for daily-driving CompareM2.
 
 
 ```txt
