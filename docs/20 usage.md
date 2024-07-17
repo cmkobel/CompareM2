@@ -123,12 +123,27 @@ Using a space separator, several command line arguments can be given at once for
 comparem2 --config set_prokka--kingdom=archaea set_panaroo--threshold=0.95 --until panaroo fast
 ```
 
-
-!!! note 
-    Remember that there are no limitations on which command line arguments can be passed to the passthrough argument feature. The user should follow the documentation of each individual tool to make sure that the command line arguments given are valid.
-
   
 CompareM2 comes with a number of sane default arguments which can be observed [here](https://github.com/cmkobel/CompareM2/blob/master/config/config.yaml). Any passthrough argument that the user gives on the command line overwrites these defaults.
+
+
+#### Validating command line arguments
+
+There are no limitations on which command line arguments can be passed to the passthrough argument feature. Thus, the user should follow the documentation of each individual tool to make sure that the command line arguments given are valid. In order to validate that the arguments given to rules are as expected, the full generated shell command of each rule can be printed with `-p`. It is especially useful to do this in conjunction with the `--dry-run` argument. Example below:
+
+```bash
+comparem2 --until panaroo --config set_panaroo--threshold=0.99 -p --dry-run
+#> [...] 
+#>    panaroo \
+#>        -o results_comparem2/panaroo \
+#>        -t 16 \
+#>        --clean-mode sensitive \
+#>        --core_threshold 0.95 \
+#>        --threshold 0.99 \
+#> [...]
+```
+
+
 
 ---
             
@@ -147,6 +162,11 @@ There are also a number of pseudo rules, effectively "shortcuts" to a list of ru
           
 ### `--forcerun RULE [RULE2]...`
 Force rerunning of one or more rules that already have been completed. This is generally necessary when changing running parameters in the config (see "--config" above).
+
+
+### `--printshellcmds`, `-p`
+
+Print the full generated shell commands of each rule in the workflow. 
 
 ---
     
