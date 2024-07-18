@@ -85,13 +85,14 @@ rule eggnog:
         database_representative = DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag",
         assembly = "{results_directory}/samples/{sample}/{sample}.fna"
     output:
-        ffn = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.fasta",
-        gff = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.gff", # Why is it sometimes called emapper.genepred.gff?
         hits = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.hits",
         orthologs = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.seed_orthologs",
         tsv = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.annotations",
-    #params:
-            
+        ffn = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.fasta",
+        
+        gff = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.gff", # Why is it sometimes called emapper.genepred.gff?
+    params:
+        passthrough_parameters = passthrough_parameter_unpack("eggnog")
     conda: "../envs/eggnog.yaml"
     benchmark: "{results_directory}/benchmarks/benchmark.eggnog_sample.{sample}.tsv"
     resources:
@@ -110,16 +111,18 @@ rule eggnog:
         echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.gff})/.database_version.txt"
         
         emapper.py \
-            -m diamond \
             --data_dir $(dirname {input.database_representative}) \
-            --itype genome \
-            --genepred prodigal \
-            --override \
-            --cpu {threads} \
             --output_dir "$(dirname {output.gff})/" \
-            --temp_dir $TMPDIR \
             -o "{wildcards.sample}" \
-            -i {input.assembly:q} 
+            -i {input.assembly:q} \
+            --cpu {threads} \
+            --itype genome \
+            --override \
+            --temp_dir $TMPDIR \
+            --decorate_gff yes \
+            {params.passthrough_parameters}
+            
+        touch {output} # Just to check what comes out.
 
         {void_report}
 

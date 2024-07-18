@@ -111,6 +111,7 @@ rule bakta:
         #gff_generic = "{output_directory}/samples/{sample}/annotation/{sample}.gff3",
     params:
         DATABASES = DATABASES
+        passthrough_parameters = passthrough_parameter_unpack("bakta")
     conda: "../envs/bakta.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.bakta_sample.{sample}.tsv"
     resources:
@@ -129,6 +130,7 @@ rule bakta:
             --output $(dirname {output.gff}) \
             --threads {threads} \
             --force \
+            {params.passthrough_parameters} \
             {input.assembly}
             
         # Optimize compatibility between prokka and bakta to make fluent use of either result easy.

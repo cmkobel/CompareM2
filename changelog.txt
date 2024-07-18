@@ -1,3 +1,7 @@
+2.9.1
+  - Breaking change: new passthrough parameter system.
+  - Minor fixes.
+
 2.8.2
   - Add --cite parameter to executable.
   - New more differentiated logo for cli.
