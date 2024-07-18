@@ -10,7 +10,9 @@ Below is the graph the shows the order of execution of all possible analyses "ru
 
 This figure does not show the pseudo rules such as `meta`, `isolate`, `fast`, etc.
 
-**Hint:** Use `comparem2 --until <rule> [<another rule>...]` to run one or several specific analyses only. The rule names for each analysis to pick is listed below:
+
+!!! note "Hint"
+    Use `comparem2 --until <rule> [<another rule>...]` to run one or several specific analyses only. The rule names for each analysis to pick is listed below:
 
 ## For each sample
 
@@ -51,7 +53,7 @@ Then on the basis of the analysis of each input genomic assembly, these analyses
 There are also a few pseudo targets defined. For instance `fast` which runs sequence_lengths, assembly-stats and mashtree. There is also one named `isolate` which runs all the analyses that are relevant for clinical isolates (sequence_lengths, prokka, mlst, abricate, assembly-stats, gtdbtk, busco, checkm2, roary, snp-dists, fasttree, mashtree) as well as one named `meta` which runs the analyses that are relevant to metagenomes (aka. MAGs), these are sequence_lengths, prokka, gtdbtk, busco, checkm2, mashtree.
 
 
-!!! info "Hint"
+!!! note "Hint"
     You can run one of these pseudorules just like any other rulename with `comparem2 --until meta` or `comparem2 --until isolate`
 
 
