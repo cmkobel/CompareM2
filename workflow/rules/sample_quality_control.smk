@@ -113,7 +113,7 @@ rule busco:
                 --force \
                 --skip_bbtools \
                 --download_path {params.database_path} \
-                {params.passthrough_parameters}
+                {params.passthrough_parameters} \
                 --offline || (>&2 echo "comparem2: Busco failed internally.")
 
         # Cat all auto lineage results together or create empty file
