@@ -110,7 +110,7 @@ rule bakta:
         ffn = "{output_directory}/samples/{sample}/bakta/{sample}.ffn",
         #gff_generic = "{output_directory}/samples/{sample}/annotation/{sample}.gff3",
     params:
-        DATABASES = DATABASES
+        DATABASES = DATABASES,
         passthrough_parameters = passthrough_parameter_unpack("bakta")
     conda: "../envs/bakta.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.bakta_sample.{sample}.tsv"

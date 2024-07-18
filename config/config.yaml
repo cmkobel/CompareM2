@@ -31,12 +31,20 @@ set_bakta--gram: "?"
 set_eggnog--genepred: prodigal
 set_eggnog-m: diamond
 
+set_fasttree-gtr: ""
+
 set_interproscan--applications: "TIGRFAM,Hamap,Pfam"
 set_interproscan--goterms: "" # flag
 set_interproscan--pathways: "" # flag
 
 set_iqtree--boot: 100
 set_iqtree-m: GTR
+
+set_mashtree--genomesize: 5000000
+set_mashtree--mindepth: 5  
+set_mashtree--kmerlength: 21
+set_mashtree--sketch-size: 10000
+
 
 # set_mlst--scheme: abaumannii # abaumannii achromobacter aeromonas afumigatus cdifficile efaecium hcinaedi hparasuis hpylori kpneumoniae leptospira saureus xfastidiosa yersinia ypseudotuberculosis yruckeri
 

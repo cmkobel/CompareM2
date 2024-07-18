@@ -5,6 +5,8 @@ rule mashtree:
     output: 
         tree = "{output_directory}/mashtree/mashtree.newick",
         dist = "{output_directory}/mashtree/mash_dist.tsv",
+    params:
+        passthrough_parameters = passthrough_parameter_unpack("mashtree")
     conda: "../envs/mashtree.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.mashtree.tsv"
     threads: 16
@@ -18,6 +20,7 @@ rule mashtree:
         mashtree \
             --numcpus {threads} \
             --outmatrix {output.dist:q} \
+            {params.passthrough_parameters} \
             {input.fasta:q} > {output.tree:q}
 
         {void_report}
@@ -62,6 +65,8 @@ rule fasttree:
         fasta = core_genome_if_exists,
     output: 
         newick = "{output_directory}/fasttree/fasttree.newick"
+    params:
+        passthrough_parameters = passthrough_parameter_unpack("fasttree"),
     conda: "../envs/fasttree.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.fasttree.tsv"
     threads: 4
@@ -78,7 +83,8 @@ rule fasttree:
 
         fasttree \
             -nt \
-            -gtr {input.fasta:q} \
+            {params.passthrough_parameters} \
+            {input.fasta:q} \
         > {output.newick:q} \
         2> {output.newick:q}.log 
 
