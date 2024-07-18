@@ -68,6 +68,7 @@ panaroo_plot_df %>%
     ) +
     
     scale_fill_continuous(type = "viridis", trans = "identity") +
+    scale_x_discrete(breaks = seq(1, 1000000, 100)) +
     labs(
         x = "gene",
         y = "sample",

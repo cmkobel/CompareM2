@@ -17,8 +17,8 @@ version_major = ".".join(__version__.split(".")[:1])
 version_minor = ".".join(__version__.split(".")[:2])
 version_patch = ".".join(__version__.split(".")[:3])
 
+# Docker image is only updated for each minor version. This reduces overhead related to storage, transfer, and debugging.
 containerized: f"docker://cmkobel/comparem2:v{version_minor}"
-#containerized: f"docker://cmkobel/comparem2:latest" # DEBUG
 
 print('report subpipeline: output_directory:', output_directory)
 print('report subpipeline: base_variable:', base_variable)

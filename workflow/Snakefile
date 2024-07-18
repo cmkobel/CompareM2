@@ -17,15 +17,16 @@ from os import listdir
 from os.path import isfile, join
 import pandas as pd
 import numpy as np
+
+# TODO: Test disabling these:
 from shutil import copyfile
 import csv # for quoting # Can be disabled?
 import subprocess # For void_report
 import datetime # For void_report
 
 
-# From v2.8.2: Only minor versions change the docker image.
+# Docker image is only updated for each minor version. This reduces overhead related to storage, transfer, and debugging.
 containerized: f"docker://cmkobel/comparem2:v{version_minor}"
-#containerized: f"docker://cmkobel/comparem2:latest" # DEBUG
 
 # When executing, Snakemake will fail with a reasonable error message if the variables below are undefined.
 envvars:

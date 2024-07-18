@@ -145,8 +145,7 @@ if (debug) {
 
 ```
 
-
-`r paste0("This report was generated using the results located at ", output_directory, " using the installation at ", base_variable, ".")`
+`r paste0("This report was generated on ", Sys.time(), " using CompareM2 v", version_string, " based at ", base_variable, ". Content in this report is dynamically rendered based on the results located at", current_dir, ".")`
 
 
 ```{r setup-globals, echo=F, message=F, warning=F}
@@ -322,7 +321,7 @@ section_definition_table = tribble(
     "prokka",            N, Sys.glob(paste0(output_directory, "/samples/*/prokka/*.txt")),
     "kegg_pathway",      1, Sys.glob(paste0(output_directory, "/kegg_pathway/kegg_pathway_enrichment_analysis.tsv")),
     "dbcan",             N, Sys.glob(paste0(output_directory, "/samples/*/dbcan/dbcan-sub.hmm.out")),
-    "panaroo",             1, Sys.glob(paste0(output_directory, "/panaroo/gene_presence_absence.Rtab")), # This also counts for the panaroo summary file.
+    "panaroo",           1, Sys.glob(paste0(output_directory, "/panaroo/gene_presence_absence.Rtab")), # This also counts for the panaroo summary file.
     "snp_dists",         1, Sys.glob(paste0(output_directory, "/snp-dists/snp-dists.tsv")),
     "mashtree",          1, Sys.glob(mashtree_voluntary_dependency) # Reuse from earlier.
     
