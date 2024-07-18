@@ -44,6 +44,7 @@ rule gtdbtk:
         out_dir = "{output_directory}/gtdbtk/",
         base_variable = base_variable, # not used?
         mash_db = f"{DATABASES}/gtdb_sketch_release220/mash_db.msh",
+        passthrough_parameters = passthrough_parameter_unpack("gtdbtk"),
     threads: 8
     #retries: 3
     resources:
@@ -74,8 +75,8 @@ rule gtdbtk:
             --batchfile {wildcards.output_directory}/gtdbtk/batchfile.tsv \
             --out_dir {params.out_dir:q} \
             --cpus {threads} \
-            --keep_intermediates \
-            --force
+            --force \
+            {params.passthrough_parameters} 
 
         # Homogenize database version number
         #cp {wildcards.output_directory}/gtdbtk/gtdbtk.bac120.summary.tsv {output:q}

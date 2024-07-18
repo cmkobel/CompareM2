@@ -1,6 +1,6 @@
 # Copy the input file to its new home
 # Homogenizes the file extension as well (.fa)
-# Should I rename this to "rule any2fasta" just to make it more transparent? 
+# Should I rename this to "rule any2fasta" just to make it more transparent? Or just remove it. I think it creates as many problems as it solves.
 rule copy:
     input: 
         genome = lambda wildcards: df[df["sample"]==wildcards.sample]["input_file"].values[0],
@@ -36,7 +36,9 @@ rule assembly_stats:
         # Collect version number.
         echo "assembly-stats $(assembly-stats -v)" > "$(dirname {output})/.software_version.txt"
         
-        assembly-stats -t {input.fasta:q} > {output:q}
+        assembly-stats \
+            -t \
+            {input.fasta:q} > {output:q}
 
         {void_report}
 
@@ -58,7 +60,13 @@ rule sequence_lengths:
         # Collect version number.
         echo "seqkit $(seqkit -h | grep 'Version:')" > "$(dirname {output})/.software_version.txt"
         
-        seqkit fx2tab {input.assembly:q} -l -g -G -n -H \
+        seqkit fx2tab \
+            {input.assembly:q} \
+            -l \
+            -g \
+            -G \
+            -n \
+            -H \
         > {output:q}
 
     """
@@ -76,6 +84,7 @@ rule busco:
         base_variable = base_variable,
         database_path = DATABASES + "/busco",
         out_dir = "{output_directory}/samples/{sample}/busco",
+        passthrough_parameters = passthrough_parameter_unpack("busco"),
     conda: "../envs/busco.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.busco_sample.{sample}.tsv"
     threads: 1 # Because run_sepp hangs for a long time, not doing anything, I'd rather have more processes started on any type CPU.
@@ -101,12 +110,10 @@ rule busco:
                 --cpu {threads} \
                 --in {input.faa:q} \
                 --out {params.out_dir} \
-                --mode protein \
-                --auto-lineage-prok \
                 --force \
-                --tar \
                 --skip_bbtools \
                 --download_path {params.database_path} \
+                {params.passthrough_parameters}
                 --offline || (>&2 echo "comparem2: Busco failed internally.")
 
         # Cat all auto lineage results together or create empty file

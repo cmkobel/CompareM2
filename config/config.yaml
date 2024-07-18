@@ -28,10 +28,16 @@ output_directory: "results_comparem2"
 set_bakta--translation-table: 11
 set_bakta--gram: "?"
 
+set_busco--tar: ""
+set_busco--mode: "protein"
+set_busco--auto-lineage-prok: ""
+
 set_eggnog--genepred: prodigal
 set_eggnog-m: diamond
 
 set_fasttree-gtr: ""
+
+set_gtdbtk--keep_intermediates: ""
 
 set_interproscan--applications: "TIGRFAM,Hamap,Pfam"
 set_interproscan--goterms: "" # flag
