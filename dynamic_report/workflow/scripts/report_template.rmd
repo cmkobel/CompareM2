@@ -145,7 +145,7 @@ if (debug) {
 
 ```
 
-`r paste0("This report was generated on ", Sys.time(), " using CompareM2 v", version_string, " based at ", base_variable, ". Content in this report is dynamically rendered based on the results located at", current_dir, ".")`
+`r paste0("This report was generated on ", Sys.time(), " using CompareM2 v", version_string, " based at ", base_variable, ". Content is dynamically rendered based on the results located at ", current_dir, ".")`
 
 
 ```{r setup-globals, echo=F, message=F, warning=F}
