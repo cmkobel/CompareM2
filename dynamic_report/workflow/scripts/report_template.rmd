@@ -62,71 +62,7 @@ library(rmarkdown)
 # DEBUG setup for vscode on KTFL running R on ssh to saga
 debug = F
 if (debug) {
-    # strachan_campylo on threadripper through posit workbench
-    # strachan_campylo on threadripper
-    base_variable = "~/evo/comparem2"
-    output_directory = "results_comparem2"
-    setwd("~/comparem2/tests/strachan_campylo")
-    setwd("~/evo/comparem2/tests/MAGs/")
-    
-    batch_title = basename(getwd())
-    
-    # strachan_campylo on threadripper
-    base_variable = "~/comparem2"
-    output_directory = "results_comparem2"
-    setwd("~/comparem2/tests/strachan_campylo")
-    batch_title = basename(getwd())
-
-
-    # E._faecium_30 on thylakoid
-    base_variable = "~/comparem2"
-    output_directory = "results_comparem2"
-    setwd("~/comparem2/tests/E._faecium_30")
-    batch_title = basename(getwd())
-
-    # MAGs on thylakoid
-    base_variable = "~/comparem2"
-    output_directory = "results_comparem2"
-    setwd("~/comparem2/tests/MAGs")
-    batch_title = basename(getwd())
-
-    # MAGs on axodines
-    base_variable = "~/axodines/comparem2"
-    output_directory = "results_comparem2"
-    setwd("~/axodines/comparem2/tests/MAGs")
-    batch_title = basename(getwd())
-
-    # synth rumen on axodines
-    base_variable = "~/axodines/comparem2"
-    output_directory = "results_comparem2"
-    setwd("~/axodines/comparem2/tests/synth_rumen")
-    batch_title = basename(getwd())
-    
-    
-    # synth rumen copied to local
-    base_variable = "~/comparem2"
-    output_directory = "results_comparem2"
-    setwd("~/comparem2/tests/synth_rumen")
-    batch_title = basename(getwd())
-    
-    # strachans on macbook
-    base_variable = "~/comparem2"
-    output_directory = "results_comparem2"
-    setwd("~/comparem2/tests/strachan_campylo")
-    batch_title = basename(getwd())
-    
-    # student bins on macbook
-    base_variable = "~/comparem2"
-    output_directory = "results_comparem2"
-    setwd("~/comparem2/tests/student")
-    batch_title = basename(getwd())
-    
-    # dbcan on macbook
-    base_variable = "~/comparem2/"
-    output_directory = "res_all"
-    setwd("~/Desktop/test_dbcan")
-    batch_title = basename(getwd())
-    
+        
     # busco on mac
     base_variable = "~/comparem2/"
     output_directory = "results_comparem2_fixstr_busco"
@@ -174,6 +110,7 @@ figno = function() {
     figno_var
 }
 
+# This function returns a data table with custom settings.
 custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, width = NULL, show_n = 10, save_tsv = TRUE) {
     
     name = paste(batch_title, filename, sep = "__")
