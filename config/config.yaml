@@ -26,7 +26,7 @@ output_directory: "results_comparem2"
 
 # set_bakta--meta: ""
 set_bakta--translation-table: 11
-set_bakta--gram="?"
+set_bakta--gram: "?"
 
 set_eggnog--genepred: prodigal
 set_eggnog-m: diamond
