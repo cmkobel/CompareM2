@@ -22,7 +22,7 @@
 
 🧑‍💻 CompareM2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  Apptainer/Singularity/Docker images and conda environment definitions are available for all dependent software to run.
 
-🙋 If you have any questions, issues or ideas about using CompareM2, please raise an issue: https://github.com/cmkobel/CompareM2/issues
+🙋 If you have any questions, issues or ideas about using CompareM2, please raise an issue: [github.com/cmkobel/CompareM2/issues](https://github.com/cmkobel/CompareM2/issues)
 
 **The comprehensive documentation is available at [CompareM2.readthedocs.io](https://comparem2.readthedocs.io).**
 

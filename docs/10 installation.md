@@ -5,7 +5,7 @@
 
 <img width="150" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/5b06b511-75c4-48cb-8ab8-f29b212ef6df">
 
-It is highly recommended that you have [Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request) on your system as it makes CompareM2 able to use a compressed Docker-image that speeds up installation significantly.
+It is recommended that you have [Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request) on your system as it makes CompareM2 able to use a compressed Docker-image that speeds up installation significantly.
 
 <img width="150" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/c9d15678-b4a7-42be-b0de-b649479f6d74">
 
@@ -13,7 +13,7 @@ First, you need to install a Conda or Mamba package manager.
 The recommended choice is [Miniforge](https://github.com/conda-forge/miniforge#install) which not only provides the required Python and Conda commands, 
 but also includes Mamba - an extremely fast and robust replacement for the Conda package manager which is highly recommended.
 
-!!! info
+!!! note
     In case you don't use Miniforge you can always install Mamba into any other Conda-based Python distribution with:
     ```
     conda install -n base -c conda-forge mamba
