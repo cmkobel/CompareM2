@@ -23,14 +23,13 @@ output_directory: "results_comparem2"
 # These parameters are interpreted and any parameter can be added. Please check the documentation of each tool.
 # Flag arguments are set with an empty string, and unset by removing the key altogether. 
 
-
 # set_bakta--meta: ""
 set_bakta--translation-table: 11
 set_bakta--gram: "?"
 
-set_busco--tar: ""
+set_busco--tar: "" # flag
 set_busco--mode: "protein"
-set_busco--auto-lineage-prok: ""
+set_busco--auto-lineage-prok: "" # flag
 
 set_eggnog--genepred: prodigal
 set_eggnog-m: diamond
@@ -51,7 +50,6 @@ set_mashtree--mindepth: 5
 set_mashtree--kmerlength: 21
 set_mashtree--sketch-size: 10000
 
-
 # set_mlst--scheme: abaumannii # abaumannii achromobacter aeromonas afumigatus cdifficile efaecium hcinaedi hparasuis hpylori kpneumoniae leptospira saureus xfastidiosa yersinia ypseudotuberculosis yruckeri
 
 set_panaroo--clean-mode: "sensitive" # Stringency mode.
@@ -67,7 +65,6 @@ set_prokka--kingdom: bacteria # archaea|bacteria|mitochondria|viruses
 
 set_treecluster--method: max_clade # avg_clade, leaf_dist_avg, leaf_dist_max, leaf_dist_min, length, length_clade, max, max_clade, med_clade, root_dist, single_linkage, single_linkage_cut, single_linkage_union, sum_branch, sum_branch_clade
 set_treecluster--threshold: 0.05
-
 
 
 # --- Parameters affecting the report -------------------------------
