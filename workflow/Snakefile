@@ -41,7 +41,7 @@ def get_fofn(path):
     """ Reads a newline separated list of input_genomes files to process.
         Uses the pandas csv reader and reads only the first value in each row.
     """
-    df = pd.read_csv(path, header = None, delimiter = "\t")
+    df = pd.read_csv(path, header = None, delimiter = "\t", comment = "#")
     as_list = df[0].to_list()
 
     return as_list

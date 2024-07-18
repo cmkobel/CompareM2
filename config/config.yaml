@@ -1,20 +1,23 @@
 # TODO: This config should be saved in the results directory, so the user later knows which settings were used.
 
+
 # --- Overall parameters affecting input and the whole pipeline -----
 
-
 # File of file names.
-# CHANGE_THIS_TO_ACTIVATE or change this to "path/to/fofn.txt" to activate: fofn.txt is a newline separated (like csv) list of input genomes to process. Takes precedence over parameter 'input_genomes'.
-fofn: "CHANGE_THIS_TO_ACTIVATE"
+# Overwrites parameter 'input_genomes' but is deactivated by default.
+# Change this to "path/to/fofn.txt" to activate. A fofn.txt is a newline separated (like csv) list of input genomes to process. Single column with no column name. Individual lines can be deactivated with a hash-sign "#".
+fofn: "CHANGE_THIS_TO_ACTIVATE" # E.g. "path/to/fofn.txt"
 
 # Input genomes
-# In case fofn isn't set. Has a default value that means that it will pick up any genome in the terminals current working dir. If you give multiple files or a single file has spaces or weird characters, these characters should be escaped.
-input_genomes: "*.fna *.fa *.fasta *.fas" 
+# In case fofn isn't set. Has a default value that means that it will pick up any genome files in the terminal's current working dir. If you give multiple files or a single file has spaces or weird characters, these characters should be escaped. 
+input_genomes: "*.fna *.fa *.fasta *.fas" # E.g. "path/to/*.fna"
 
-# annotator
+# Annotator
 # Decide which annotator to use for downstream tools that use the output of either prokka or bakta.
 annotator: "prokka" # prokka|bakta # Affects .faa used in dbcan, interproscan, diamond_kegg
 
+# Output directory
+# This is the directory where all results are written.
 output_directory: "results_comparem2"
 
 
