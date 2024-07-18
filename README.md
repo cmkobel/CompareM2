@@ -1,7 +1,7 @@
 # CompareM2
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/cmkobel/comparem2/dry-run.yaml)](https://github.com/cmkobel/comparem2/actions/) [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/comparem2?label=Bioconda%20downloads&color=%2300CC00)](https://comparem2.readthedocs.io/en/latest/10%20installation/) [![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/comparem2?label=docker%20pulls)](https://comparem2.readthedocs.io/en/latest/10%20installation/) [![Documentation Status](https://readthedocs.org/projects/comparem2/badge/?version=latest)](https://comparem2.readthedocs.io/en/latest/?badge=latest) [![https://doi.org/10.1101/2024.07.12.603264](https://img.shields.io/badge/DOI-10.1101%2F2024.07.12.603264-blue.svg)](https://doi.org/10.1101/2024.07.12.603264)
 
-!!! info
+!!! note
     If you're looking for the original version of CompareM, a tool to calculate AAI and codon usage, please follow this link: [github.com/donovan-h-parks/CompareM](https://github.com/donovan-h-parks/CompareM)
     
 
@@ -22,6 +22,7 @@
 
 🧑‍💻 CompareM2 can be run either on a local workstation (recommended >= 64GiB RAM), or a HPC (high performance computing) cluster. Both  Apptainer/Singularity/Docker images and conda environment definitions are available for all dependent software to run.
 
+🙋 If you have any questions, issues or ideas about using CompareM2, please raise an issue: https://github.com/cmkobel/CompareM2/issues
 
 **The comprehensive documentation is available at [CompareM2.readthedocs.io](https://comparem2.readthedocs.io).**
 
