@@ -35,7 +35,6 @@ rule interproscan:
     """
 
 
-
 rule dbcan: # I can't decide whether this rule should really be called "run_dbcan", since that is the name of the software.
     input: 
         metadata = "{output_directory}/metadata.tsv",
