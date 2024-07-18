@@ -96,7 +96,7 @@ rule eggnog:
     benchmark: "{results_directory}/benchmarks/benchmark.eggnog_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
-    threads: 4 # Not sure if the underlying tools are capable of doing lots of parallel computation.
+    threads: 8 # Not sure if the underlying tools are capable of doing lots of parallel computation.
     shell: """
         
         # https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2.1.5-to-v2.1.12#basic-usage
