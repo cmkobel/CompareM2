@@ -93,16 +93,16 @@ rule busco:
         runtime = "1h",
     shell: """
 
-        # Busco fails because of a problem with the sepp package. This doesn't really matter as we just want the completeness results.
-        # But, this means that we need a hacky workaround to let this job exit gracefully (exit code 0) on the basis of whether any completeness results have been written to disk.
-        # Hence, the actual exit code of busco, we will ignore.
-        
         # Collect version number.
         busco -v > "$(dirname {output.table_extract})/.software_version.txt"
         
         # Collect database version.
         echo -e "$(date -Iseconds)\t{input.database_representative}" > "$(dirname {output.table_extract})/.database_version.txt"
 
+        # Busco fails because of a problem with the sepp package. This doesn't really matter as we just want the completeness results.
+        # But, this means that we need a hacky workaround to let this job exit gracefully (exit code 0) on the basis of whether any completeness results have been written to disk.
+        # Hence, the actual exit code of busco, we will ignore.        
+        
         # https://busco.ezlab.org/busco_userguide.html#offline
         # Is the timeout bug fixed? Update: nope.
         timeout 1800 \
