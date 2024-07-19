@@ -1,7 +1,9 @@
 2.9.1
-  - Breaking change: new passthrough parameter system.
+  - Breaking change: new passthrough parameter system rolled out to most rules.
   - Update cite value to reflect preprint doi https://doi.org/10.1101/2024.07.12.603264 
   - Add more tools to passthrough argument feature. And write documentation.
+  - Fixed an error that meant that panaroo was using the Prokka annotation (.gff) regardless of the annotator being set with --config annotator=[bakta|prokka].
+  - Fixed an error that meant that both Bakta and Prokka would run even though the user had selected one with --config annotator=[bakta|prokka]. Thanks to @michoug
   - Minor fixes.
 
 2.8.2
