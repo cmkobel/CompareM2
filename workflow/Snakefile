@@ -392,7 +392,7 @@ rule meta:
         "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
         "{output_directory}/gtdbtk/gtdbtk.summary.tsv", \
         "{output_directory}/mlst/mlst.tsv", \
-        "{output_directory}/samples/{sample}/prokka/{sample}.gff", \
+        "{output_directory}/samples/{sample}/.annotation/{sample}.gff", \
         "{output_directory}/mashtree/mashtree.newick"], \
         output_directory = output_directory, \
         sample = df["sample"])
@@ -410,7 +410,7 @@ rule isolate:
         "{output_directory}/gtdbtk/gtdbtk.summary.tsv", \
         "{output_directory}/mlst/mlst.tsv", \
         "{output_directory}/abricate/card_detailed.tsv", \
-        "{output_directory}/samples/{sample}/prokka/{sample}.gff", \
+        "{output_directory}/samples/{sample}/.annotation/{sample}.gff", \
         "{output_directory}/panaroo/summary_statistics.txt", \
         "{output_directory}/fasttree/fasttree.newick", \
         "{output_directory}/snp-dists/snp-dists.tsv", \
