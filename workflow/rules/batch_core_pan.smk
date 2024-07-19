@@ -13,7 +13,7 @@ def get_mem_panaroo(wildcards, attempt):
 checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-dists should only run if the core genome is non-empty.
     input: 
         metadata = "{output_directory}/metadata.tsv",
-        gff = expand("{output_directory}/samples/{sample}/prokka/{sample}.gff", sample = df["sample"], output_directory = output_directory),
+        gff = expand("{output_directory}/samples/{sample}/.annotation/{sample}.gff", sample = df["sample"], output_directory = output_directory),
     output:
         summary = "{output_directory}/panaroo/summary_statistics.txt",
         presence = "{output_directory}/panaroo/gene_presence_absence.csv",
