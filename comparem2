@@ -30,6 +30,12 @@ __version__ = "2.8.2"
 # In the future I will make my docker images myself:
 # sudo docker build -t cmkobel/comparem2:v2.8.1 . && sudo docker push cmkobel/comparem2:v2.8.1
 
+# In case the exact same docker image should be used for consecutive versions of comparem2: (example)
+# sudo docker pull cmkobel/comparem2:v2.8.1
+# sudo docker tag cmkobel/comparem2:v2.8.1 cmkobel/comparem2:v2.9
+# sudo docker push cmkobel/comparem2:v2.9
+
+
 # --- Development: Update DAG figure for documentation --------------
 # Update dag picture in documentation with this command (with anaconda/graphviz)
 # comparem2 --forceall --rulegraph | dot -Tpng > dag.png
