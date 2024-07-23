@@ -113,6 +113,7 @@ rule busco:
                 --force \
                 --skip_bbtools \
                 --download_path {params.database_path} \
+                --mode protein \
                 {params.passthrough_parameters} \
                 --offline || (>&2 echo "comparem2: Busco failed internally.")
 

@@ -31,7 +31,6 @@ set_bakta--translation-table: 11
 set_bakta--gram: "?"
 
 set_busco--tar: "" # flag
-set_busco--mode: "protein"
 set_busco--auto-lineage-prok: "" # flag
 
 set_eggnog--genepred: prodigal
