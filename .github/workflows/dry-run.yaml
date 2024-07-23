@@ -47,3 +47,9 @@ jobs:
         run: |
           unzip tests/E._faecium/fna.zip
           ./comparem2 --config input_genomes="*.fna" --dry-run
+          ./comparem2 --config input_genomes="*.fna" --until fast --dry-run
+          ./comparem2 --config input_genomes="*.fna" --until isolate --dry-run
+          ./comparem2 --config input_genomes="*.fna" --until meta --dry-run
+          ./comparem2 --config input_genomes="*.fna" --until downloads --dry-run
+          
+          
