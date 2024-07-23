@@ -28,12 +28,12 @@ __version__ = "2.10.1"
 # export COMPAREM2_BASE="$(pwd -P)"; export COMPAREM2_PROFILE="profiles/apptainer/default"; snakemake --snakefile "${COMPAREM2_BASE}/workflow/Snakefile" --configfile "${COMPAREM2_BASE}/config/config.yaml" --containerize | grep -A 10000 "FROM condaforge" > Dockerfile
 # And then remove the header text (comparem2 logo, etc.) if necessary
 # In the future I will make my docker images myself:
-# sudo docker build -t cmkobel/comparem2:v2.8.1 . && sudo docker push cmkobel/comparem2:v2.8.1
+# sudo docker build -t cmkobel/comparem2:v2.10 . && sudo docker push cmkobel/comparem2:v2.10
 
 # In case the exact same docker image should be used for consecutive versions of comparem2: (example)
-# sudo docker pull cmkobel/comparem2:v2.8.1
-# sudo docker tag cmkobel/comparem2:v2.8.1 cmkobel/comparem2:v2.9
-# sudo docker push cmkobel/comparem2:v2.9
+# sudo docker pull cmkobel/comparem2:v2.9
+# sudo docker tag cmkobel/comparem2:v2.9 cmkobel/comparem2:v2.10
+# sudo docker push cmkobel/comparem2:v2.10
 
 
 # --- Development: Update DAG figure for documentation --------------
