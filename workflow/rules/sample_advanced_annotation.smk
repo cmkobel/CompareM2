@@ -88,7 +88,8 @@ rule eggnog:
         orthologs = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.seed_orthologs",
         tsv = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.annotations",
         ffn = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.fasta",
-        gff = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.gff", # Why is it sometimes called emapper.genepred.gff?
+        gff = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.gff", # Why is it sometimes called emapper.genepred.gff?
+        gff_decorated = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.decorated.gff", # Why is it sometimes called emapper.genepred.gff?
     params:
         passthrough_parameters = passthrough_parameter_unpack("eggnog")
     conda: "../envs/eggnog.yaml"
@@ -120,7 +121,7 @@ rule eggnog:
             --decorate_gff yes \
             {params.passthrough_parameters}
             
-        touch {output} # Just to check what comes out.
+        # touch {output} # Just to check what comes out.
 
         {void_report}
 

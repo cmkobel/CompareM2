@@ -250,7 +250,7 @@ rule all:
         "{output_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
         "{output_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
         "{output_directory}/samples/{sample}/.annotation/{sample}.gff", \
-        "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.gff", \
+        "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.gff", \
         "{output_directory}/samples/{sample}/dbcan/overview.txt", \
         "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
         "{output_directory}/checkm2/quality_report.tsv", \

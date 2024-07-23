@@ -1,12 +1,9 @@
 name: eggnog
 channels:
-  - anaconda
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::diamond
-  - anaconda::biopython
-  - bioconda::eggnog-mapper
+  - bioconda::eggnog-mapper=2.1.12
 
 
 # https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2.1.5-to-v2.1.12#user-content-Installation
