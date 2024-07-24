@@ -271,6 +271,7 @@ rule all:
         # "{output_directory}/samples/{sample}/gapseq/gapseq_done.flag", \ # Still working on this one.
         # "{output_directory}/samples/{sample}/antismash/{sample}.json", \ # Issue when running with apptainer
 
+
 # Write the sample table for later reference.
 rule metadata:
     input: df['input_file_fasta']

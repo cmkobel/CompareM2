@@ -134,12 +134,10 @@ command_report = f"""snakemake --snakefile "$COMPAREM2_BASE/dynamic_report/workf
 
 # Finally, run the pipeline.
 
-
 if "--version" in trailing_arguments or "-v" in trailing_arguments:
     print(f"comparem2 v{__version__}")
     
 elif "--help" in trailing_arguments or "-h" in trailing_arguments:
-    #print(help_message)
     with open(COMPAREM2_BASE + "/docs/help_text.txt") as file:
         for line in file:
             print(line, end = "")
@@ -147,7 +145,7 @@ elif "--help" in trailing_arguments or "-h" in trailing_arguments:
 
 
 elif "--cite" in trailing_arguments:
-    print("If you use CompareM2, you can support further funding by bumping the citation count on this one:\n\n\tKobel, C. M. et al. CompareM2 is a genomes-to-report pipeline for comparing microbial genomes. 2024.07.12.603264 Preprint at https://doi.org/10.1101/2024.07.12.603264 (2024).\n\nCompareM2 would not have existed, if it hadn't been for the integrated software packages and their databases. Please cite the appropriate tools as well. An up to date list is maintained here: https://comparem2.readthedocs.io/en/latest/99%20citation/\n")
+    print("If you use CompareM2, you can support further funding by bumping the citation count on this one:\n\n\tKobel, C. M. et al. CompareM2 is a genomes-to-report pipeline for comparing microbial genomes. 2024.07.12.603264 Preprint at https://doi.org/10.1101/2024.07.12.603264 (2024).\n\nCompareM2 would not have existed, if it hadn't been for the integrated software packages and their databases. Please cite the appropriate tools as well. An updated list is maintained here: https://comparem2.readthedocs.io/en/latest/99%20citation/\n")
 
     
 else:
@@ -163,8 +161,8 @@ else:
         process_report = subprocess.run(command_report, shell = True)
         returncode_report = process_report.returncode
     else:
-        print("Pipeline: .report_config.yaml has not yet been created.") # This happens when doing a dry-run in a new dir.
-        
+        #print("Pipeline: .report_config.yaml has not yet been created.") # This happens when doing a dry-run in a new dir.
+        pass
     # Exit with the return code of the main pipeline.
     sys.exit(returncode_main)
     
