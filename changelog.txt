@@ -1,6 +1,7 @@
 2.10.1
   - Breaking change: New Docker image (pinned eggnog)
   - Variation in output files from Eggnog means that eggnog is now pinned to v2.1.12. Thanks to @michoug
+  - Quiet report output
   - Minor fixes.
 
 2.9.1
