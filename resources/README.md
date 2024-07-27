@@ -1,4 +1,4 @@
-# assets/ directory
+# resources/ directory
 
 These files are included to make the life a little easier for some of the scripts.
 None of these files are licensed for comparem2, but they are included anyway, in the hope that the owners will accept that they're being used.
