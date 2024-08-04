@@ -69,7 +69,7 @@ def interpret_true(text):
     return str(text).strip().lower() == "true"
     
 
-def passthrough_parameter_unpack(rule_name, delimiter = " "):
+def passthrough_parameter_unpack(rule_name):
     """ This function is responsible for the parameter passthrough 
     functionality. Given a rule name, it filters for the wanted keys and 
     formats the key-value pairs as a "shell" string. This shell string can
