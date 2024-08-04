@@ -74,6 +74,7 @@ def passthrough_parameter_unpack(rule_name, delimiter = " ", separator = " "):
     functionality. Given a rule name, it filters for the wanted keys and 
     formats the key-value pairs as a "shell" string. This shell string can
     then be pasted directly into the shell command for each program. 
+    The delimiter is the character delimiting key and value. The separator is the character that separates individual options.
     """
     
     # Add constant "set" prefix to differentiate the config settings and to avoid key name conflicts.
