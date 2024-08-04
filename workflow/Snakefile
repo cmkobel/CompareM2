@@ -84,7 +84,9 @@ def passthrough_parameter_unpack(rule_name, delimiter = " "):
     #print(rule_parameters) # DEBUG
     
     # Create parameter list with spaces between key-value.
-    formatted_list = [str(key[len(prefix):]) + delimiter + str(value) for key, value in rule_parameters.items()]    
+    # Only include the value if it is non-empty.
+    formatted_list = [str(key[len(prefix):]) + delimiter + str(value) if value != "" else str(key[len(prefix):]) for key, value in rule_parameters.items()]    
+    
     rv = " ".join(formatted_list)
 
     # Pretty print
