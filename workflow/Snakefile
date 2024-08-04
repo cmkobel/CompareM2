@@ -69,7 +69,7 @@ def interpret_true(text):
     return str(text).strip().lower() == "true"
     
 
-def passthrough_parameter_unpack(rule_name, delimiter = " "):
+def passthrough_parameter_unpack(rule_name, delimiter = " ", separator = " "):
     """ This function is responsible for the parameter passthrough 
     functionality. Given a rule name, it filters for the wanted keys and 
     formats the key-value pairs as a "shell" string. This shell string can
@@ -87,7 +87,7 @@ def passthrough_parameter_unpack(rule_name, delimiter = " "):
     # Only include the value if it is non-empty.
     formatted_list = [str(key[len(prefix):]) + delimiter + str(value) if value != "" else str(key[len(prefix):]) for key, value in rule_parameters.items()]    
     
-    rv = " ".join(formatted_list)
+    rv = separator.join(formatted_list)
 
     # Pretty print
     print("passthrough parameters to", rule_name, end = ": \"")
