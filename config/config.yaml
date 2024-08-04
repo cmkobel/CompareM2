@@ -33,7 +33,6 @@ set_bakta--gram: "?"
 set_busco--tar: "" # flag
 set_busco--auto-lineage-prok: "" # flag
 
-set_eggnog--genepred: prodigal
 set_eggnog--decorate_gff: "yes"
 set_eggnog-m: diamond
 

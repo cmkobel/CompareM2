@@ -1,3 +1,7 @@
+2.10.2
+  - Speed up: Eggnog reuses the proteins called by the default annotation tool instead of redoing it itself with prodigal. 
+  - Minor fixes.
+
 2.10.1
   - Breaking change: New Docker image (pinned eggnog)
   - Variation in output files from Eggnog means that eggnog is now pinned to v2.1.12. Thanks to @michoug

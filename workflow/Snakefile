@@ -69,7 +69,7 @@ def interpret_true(text):
     return str(text).strip().lower() == "true"
     
 
-def passthrough_parameter_unpack(rule_name):
+def passthrough_parameter_unpack(rule_name, delimiter = " "):
     """ This function is responsible for the parameter passthrough 
     functionality. Given a rule name, it filters for the wanted keys and 
     formats the key-value pairs as a "shell" string. This shell string can
@@ -80,12 +80,11 @@ def passthrough_parameter_unpack(rule_name):
     prefix = "set_" + rule_name
     
     # Create a new dict that only contains the keys that start with the wanted prefix.
-    rule_parameters = {k: v for k, v in config.items() if k.startswith(prefix)}
+    rule_parameters = {key: value for key, value in config.items() if key.startswith(prefix)}
     #print(rule_parameters) # DEBUG
     
-    
     # Create parameter list with spaces between key-value.
-    formatted_list = [str(k[len(prefix):]) + " " + str(v) for k,v in rule_parameters.items()]    
+    formatted_list = [str(key[len(prefix):]) + " " + str(value) for key, value in rule_parameters.items()]    
     rv = " ".join(formatted_list)
 
     # Pretty print

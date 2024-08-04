@@ -12,7 +12,7 @@ rule interproscan:
         passthrough_parameters = passthrough_parameter_unpack("interproscan")
     conda: "../envs/interproscan.yaml" # Not sure if it should be called by a version number?
     benchmark: "{output_directory}/benchmarks/benchmark.interproscan.{sample}.tsv"
-    threads: 8
+    threads: 16
     resources: 
         mem_mb = 8000
     shell: """
@@ -75,27 +75,28 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
     """
 
 
-
+# Why am I using both results and output directory here?
 
 # aka eggnog-mapper
 rule eggnog:
     input: 
-        metadata = "{results_directory}/metadata.tsv",
+        metadata = "{output_directory}/metadata.tsv",
         database_representative = DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag",
-        assembly = "{results_directory}/samples/{sample}/{sample}.fna"
+        #assembly = "{output_directory}/samples/{sample}/{sample}.fna",
+        faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg, eggnog
     output:
-        hits = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.hits",
-        orthologs = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.seed_orthologs",
-        tsv = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.annotations",
-        ffn = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.fasta",
-        gff = "{results_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.gff", 
+        hits = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.hits",
+        orthologs = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.seed_orthologs",
+        tsv = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.annotations",
+        #ffn = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.fasta", # Not produced since eggnog reuses the .annotation .faa (proteins mode) instead.
+        gff = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.gff", 
     params:
         passthrough_parameters = passthrough_parameter_unpack("eggnog")
     conda: "../envs/eggnog.yaml"
-    benchmark: "{results_directory}/benchmarks/benchmark.eggnog_sample.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.eggnog_sample.{sample}.tsv"
     resources:
         mem_mb = 8192,
-    threads: 8 # Not sure if the underlying tools are capable of doing lots of parallel computation.
+    threads: 16 # At least for diamond, parellel computation is efficient.
     shell: """
         
         # https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2.1.5-to-v2.1.12#basic-usage
@@ -112,12 +113,14 @@ rule eggnog:
             --data_dir $(dirname {input.database_representative}) \
             --output_dir "$(dirname {output.gff})/" \
             -o "{wildcards.sample}" \
-            -i {input.assembly:q} \
+            -i {input.faa:q} \
             --cpu {threads} \
-            --itype genome \
+            --itype proteins \
             --override \
             --temp_dir $TMPDIR \
             {params.passthrough_parameters}
+            
+        # Originally I wanted eggnog to be an alternative to prokka or bakta, but since it doesn't produce a .faa file there is no point in using like so. So now there is no point in re-calling genes with prodigal at genome state - I might as well reuse the protein .faa from the annotation tool instead. This should be faster
             
         # touch {output} # Just to check what comes out.
 
