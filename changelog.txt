@@ -7,6 +7,11 @@
   - Variation in output files from Eggnog means that eggnog is now pinned to v2.1.12. Thanks to @michoug
   - Quiet report output
   - Minor fixes.
+  
+  - build1:
+  - build2: (not sure yet if new build is warranted due to the io.github.snakemake.conda_env_hash being changed?)
+    - Docker image did not contain bakta when annotator was set to prokka during containerization. Issue fixed within v2.10.1. Thanks to @flefler.
+    - Passthrough parameters notice removed.
 
 2.9.1
   - Breaking change: new passthrough parameter system rolled out to most rules.
