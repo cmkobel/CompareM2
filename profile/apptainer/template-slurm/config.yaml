@@ -20,7 +20,6 @@ use-conda: true # This one is necessary to activate the environment inside the a
 use-singularity: true
 
 singularity-prefix: '~/.comparem2/singularity-prefix' # Directory in which singularity images will be stored. Couldn't find a way of using the $ASSCOM_BASE system variable, so users should manually change this here if they want to use something else.
-# singularity-args: "--bind $COMPAREM2_BASE,$COMPAREM2_DATABASES" # Must also bind COMPAREM2_BASE so we can access databases and report scripts etc. When this issue is solved I'll add individual arguments to rules and make it more flexible https://github.com/snakemake/snakemake/issues/262
 singularity-args: '--bind "$COMPAREM2_BASE","$COMPAREM2_DATABASES","$(pwd)"' # Must also bind COMPAREM2_BASE so we can access databases and report scripts etc. When this issue is solved I'll add individual arguments to rules and make it more flexible https://github.com/snakemake/snakemake/issues/262
 
 
@@ -36,7 +35,7 @@ cluster:
     --parsable
     --cpus-per-task={threads}
     --mem={resources.mem_mb}
-    --job-name=comparem2_{rule}_{wildcards}
+    --job-name=cm2_{rule}_{wildcards}
     --output=.snakemake/log/%j-{rule}.out.log
     --error=.snakemake/log/%j-{rule}.err.log
     --time={resources.runtime}

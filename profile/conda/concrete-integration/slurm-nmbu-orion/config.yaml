@@ -34,7 +34,7 @@ cluster:
     --parsable
     --cpus-per-task={threads}
     --mem={resources.mem_mb}
-    --job-name=comparem2_{rule}_{wildcards}
+    --job-name=cm2_{rule}_{wildcards}
     --output=.snakemake/log/%j-{rule}.out.log
     --error=.snakemake/log/%j-{rule}.err.log
     --time={resources.runtime}
