@@ -4,7 +4,7 @@ __author__ = "Carl M. Kobel"
 
 
 # --- Development: Versioning ---------------------------------------
-__version__ = "2.10.1"
+__version__ = "2.11.1"
 # Places to bump
 #  - here
 #  - workflow/Snakefile, because the snakefile can possibly be run without the ./comparem2 binary. Report gets from here.

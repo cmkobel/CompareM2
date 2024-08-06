@@ -4,7 +4,7 @@
 
 __author__ = "Carl M. Kobel"
 
-__version__ = "2.10.1" # Haven't yet found a neat way of passing the version from the comparem2 executable, so for now it has to be defined here as well.
+__version__ = "2.11.1" # Haven't yet found a neat way of passing the version from the comparem2 executable, so for now it has to be defined here as well.
 
 # https://semver.org/
 version_major = ".".join(__version__.split(".")[:1])
@@ -267,10 +267,10 @@ rule all:
         "{output_directory}/mashtree/mashtree.newick", \
         "{output_directory}/treecluster/treecluster.tsv", \
         "{output_directory}/fasttree/fasttree.newick", \
+        "{output_directory}/samples/{sample}/antismash/{sample}.json", \
         "{output_directory}/iqtree/core_genome_iqtree.treefile"], \
         output_directory = output_directory, sample = df["sample"]) 
 
-        # "{output_directory}/snp-dists/done.flag", \
         # "{output_directory}/samples/{sample}/gapseq/gapseq_done.flag", \ # Still working on this one.
         # "{output_directory}/samples/{sample}/antismash/{sample}.json", \ # Issue when running with apptainer
 
