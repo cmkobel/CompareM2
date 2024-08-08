@@ -114,7 +114,7 @@ def format_sections():
     if os.path.exists(file): 
         df_sections = pd.read_csv(file, sep = "\t").rename(columns={"render": "render_emoji"})
         df_sections['render'] = [i.encode('ascii', errors='ignore').decode() for i in df_sections['render_emoji']]
-        return df_sections[["section", "n / expected", "render"]].to_string(index = False)
+        return df_sections[["section", "render"]].to_string(index = False)
     else: # If something messes up the report so bad that this file is not written. 
         return f"(could not read {file})"
 
