@@ -7,7 +7,7 @@ rule copy:
     output: 
         fasta = "{output_directory}/samples/{sample}/{sample}.fna",
         md5sum = "{output_directory}/samples/{sample}/{sample}.md5.txt",
-    conda: "../envs/any2fasta.yaml"
+    #conda: "../envs/any2fasta.yaml"
     threads: 1 # Weirdly, or bugly, there must be a thread n definition in the rule. Otherwise, the set-threads option (in the orion profile) will not be taken up. 
     resources:
         mem_mb = 256,
@@ -15,9 +15,10 @@ rule copy:
     shell: """
 
         # Collect version number.
-        any2fasta -v > "$(dirname {output.fasta})/.software_version.txt"
+        #any2fasta -v > "$(dirname {output.fasta})/.software_version.txt"
         
-        any2fasta {input.genome:q} > {output.fasta:q}
+        #any2fasta {input.genome:q} > {output.fasta:q}
+        cp {input.genome:q} {output.fasta:q}
         
         md5sum {output.fasta:q} > {output.md5sum:q}
         
