@@ -18,10 +18,9 @@ This figure does not show the pseudo rules such as `meta`, `isolate`, `fast`, et
 
 First, independent analyses are run on each of the input genomic assembly files.
 
-  - `copy` [any2fasta](https://github.com/tseemann/any2fasta) Wide input format support and validation.
   - `sequence_lengths` [seqkit](https://bioinf.shenwei.me/seqkit/usage/) Lengths and GC-content of individual contigs.
   - `assembly_stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) Generic assembly statistics.
-  - `busco` [Busco](https://busco.ezlab.org/) Estimate assembly completeness and contamination.
+  - `busco` [BUSCO](https://busco.ezlab.org/) Estimate assembly completeness and contamination.
   - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) Estimate assembly completeness and contamination.
   - `prokka` [prokka](https://github.com/tseemann/prokka) Genomic annotation of Archaea and Bacteria. 
   - `bakta` [bakta](https://github.com/oschwengers/bakta) Genomic annotation of Bacteria (lacking in report, but used downstream by other tools).
