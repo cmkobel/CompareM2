@@ -11,7 +11,7 @@ comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
   [ --forcerun RULE [RULE2]... ]
   [ --printshellcmds ]
   [ --dry-run ]
-  [ --version ]  [ --help ] [--cite]
+  [ --version ] [ --help ] [--cite]
 ```
 
 ## Usage examples
