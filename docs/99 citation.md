@@ -55,6 +55,8 @@ What is unique about CompareM2 is that it works strictly downstream of assemblin
 Below we are listing some competing pipelines that partly overlap with the use cases of CompareM2.
 
   - [Aviary](https://github.com/rhysnewell/aviary)
+  - [Anvi'o](https://anvio.org/)
+  - [ASA³P](https://github.com/oschwengers/asap)
   - [Bactopia](https://github.com/bactopia/bactopia)
   - [DRAM](https://github.com/WrightonLabCSU/DRAM)
   - [Nullarbor](https://github.com/tseemann/nullarbor) 
