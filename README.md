@@ -24,7 +24,7 @@
 
 🙋 If you have any questions, issues or ideas about using CompareM2, please raise an issue [here](https://github.com/cmkobel/CompareM2/issues).
 
-📙 **The comprehensive documentation is available at [CompareM2.readthedocs.io](https://comparem2.readthedocs.io).**
+📙 **The comprehensive documentation is available at [CompareM2.readthedocs.io](https://comparem2.readthedocs.io).** And the code base is available at [github.com/cmkobel/CompareM2](https://github.com/cmkobel/CompareM2).
 
 ---
 
