@@ -105,7 +105,7 @@ An example can be used to explain how this feature can be used in practice: Cons
  
 ```bash
 # comparem2 --until set_<rule><key>=<value> # Syntax template.
-comparem2 --until set_prokka--kingdom=archaea
+comparem2 --config set_prokka--kingdom=archaea
 ```
 
 Notice how the double dash prefix in "--kingdom" is part of the the set_ string. This is because many different styles of command line argument options need to be supported (e.g.: "--command_key", "--command-key", "-command_key" etc). 
@@ -113,7 +113,7 @@ Notice how the double dash prefix in "--kingdom" is part of the the set_ string.
 In some cases, command line options are flags, meaning that they need no parameter value. In this case, an empty string can be given as parameter value:
 
 ```bash
-comparem2 --until set_prokka--rfam="" # --rfam enables searching for ncRNAs with Infernal+Rfam.
+comparem2 --config set_prokka--rfam="" # --rfam enables searching for ncRNAs with Infernal+Rfam.
 ```
 
 In case of non-empty parameter values, use of apostrophes is optional.
@@ -133,7 +133,7 @@ CompareM2 comes with a number of sane default arguments which can be observed [h
 There are no limitations on which command line arguments can be passed to the passthrough argument feature. Thus, the user should follow the documentation of each individual tool to make sure that the command line arguments given are valid. In order to validate that the arguments given to rules are as expected, the full generated shell command of each rule can be printed with `-p`. It is especially useful to do this in conjunction with the `--dry-run` argument. Example below:
 
 ```bash
-comparem2 --until panaroo --config set_panaroo--threshold=0.99 -p --dry-run
+comparem2 --config set_panaroo--threshold=0.99 --until panaroo -p --dry-run
 #> [...] 
 #>    panaroo \
 #>        -o results_comparem2/panaroo \
