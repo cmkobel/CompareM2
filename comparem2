@@ -59,6 +59,8 @@ import os
 import sys
 import subprocess
 import shutil
+import parse_status
+
 
 
 # Create logger that prints to the terminal.
@@ -124,10 +126,13 @@ trailing_arguments = sys.argv[1:]
 trailing_arguments_concatenated = " ".join(trailing_arguments)
 logger.debug(f"The concatenated trailing arguments are {trailing_arguments_concatenated}")
 
-command_main = f"snakemake --snakefile \"{COMPAREM2_BASE}\"/workflow/Snakefile --profile \"{COMPAREM2_PROFILE}\" --configfile \"{COMPAREM2_BASE}\"/config/config.yaml  " + trailing_arguments_concatenated
+command_main = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml"  """ + trailing_arguments_concatenated
 logger.debug(f"Command to run is\n{command_main}")
 
 command_report = f"""snakemake --snakefile "$COMPAREM2_BASE/dynamic_report/workflow/Snakefile" --profile "$COMPAREM2_PROFILE" --configfile=.report_config.yaml --quiet all"""
+
+command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --summary | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv"""
+
 
 
 
@@ -135,9 +140,11 @@ command_report = f"""snakemake --snakefile "$COMPAREM2_BASE/dynamic_report/workf
 # Finally, run the pipeline.
 
 if "--version" in trailing_arguments or "-v" in trailing_arguments:
+    # Show the version.
     print(f"comparem2 v{__version__}")
     
 elif "--help" in trailing_arguments or "-h" in trailing_arguments:
+    # Show the help file.
     with open(COMPAREM2_BASE + "/docs/help_text.txt") as file:
         for line in file:
             print(line, end = "")
@@ -161,6 +168,15 @@ elif "--cite" in trailing_arguments:
     - https://comparem2.readthedocs.io/en/latest/99%20citation/
 """)
 
+elif "--status" in trailing_arguments:
+    # Pretty print the snakemake summary
+    print("debug command:", command_status)
+    process_status = subprocess.run(command_status, shell = True)
+    returncode_status = process_status.returncode
+    
+    
+    
+    sys.exit(returncode_status)
     
 else:
     # Run comparem2 main pipeline
