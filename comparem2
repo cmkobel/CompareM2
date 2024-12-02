@@ -126,14 +126,51 @@ trailing_arguments = sys.argv[1:]
 trailing_arguments_concatenated = " ".join(trailing_arguments)
 logger.debug(f"The concatenated trailing arguments are {trailing_arguments_concatenated}")
 
-command_main = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml"  """ + trailing_arguments_concatenated
-logger.debug(f"Command to run is\n{command_main}")
 
-command_report = f"""snakemake --snakefile "$COMPAREM2_BASE/dynamic_report/workflow/Snakefile" --profile "$COMPAREM2_PROFILE" --configfile=.report_config.yaml --quiet all"""
+def run_main():
+    command_main = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml"  """ + trailing_arguments_concatenated
+    
+    command_report = f"""snakemake --snakefile "$COMPAREM2_BASE/dynamic_report/workflow/Snakefile" --profile "$COMPAREM2_PROFILE" --configfile=.report_config.yaml --quiet all"""
 
-command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --summary | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv"""
+    logger.debug(f"Command to run is\n{command_main}")
+    
+    # Run comparem2 main pipeline
+    process_main = subprocess.run(command_main, shell = True)
+    returncode_main = process_main.returncode
+    
+    # Run dynamic report pipeline   
+    # Only run report if there is metadata and something is worth rendering.
+    # if os.path.isfile("{output_directory}/metadata.tsv") and os.path.isfile("{output_directory}/.comparem2_void_report.flag"):  # Should be moved to the report pipeline itself.
+    
+    if os.path.isfile(".report_config.yaml"):
+        process_report = subprocess.run(command_report, shell = True)
+        returncode_report = process_report.returncode
+    else:
+        #print("Pipeline: .report_config.yaml has not yet been created.") # This happens when doing a dry-run in a new dir.
+        pass
+    
+    # Print status
+    #pretty_print_snakemake_summary()
+    
+    # Exit with the return code of the main pipeline.
+    return returncode_main
 
 
+
+def run_status():
+    
+    command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --summary | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv"""
+
+    # Pretty print the snakemake summary
+    #print("debug command:", command_status)
+    
+    # Call the snakemake --summary 
+    process_status = subprocess.run(command_status, shell = True)
+    returncode_status = process_status.returncode
+    
+    parse_status.present_status(".status.tsv")
+    
+    return returncode_status
 
 
 
@@ -151,7 +188,7 @@ elif "--help" in trailing_arguments or "-h" in trailing_arguments:
     print()
 
 
-elif "--cite" in trailing_arguments:
+elif "--cite" in trailing_arguments: # cite
     print("""
   CompareM2 Citation
   ------------------
@@ -159,7 +196,7 @@ elif "--cite" in trailing_arguments:
   If you use CompareM2, you can support further funding by bumping the
   citation count on this one:
 
-    - Kobel, C. M. et al. CompareM2 is a genomes-to-report pipeline for comparing microbial genomes. 2024.07.12.603264 Preprint at https://doi.org/10.1101/2024.07.12.603264 (2024).
+    - Kobel et al. CompareM2 is a genomes-to-report pipeline for comparing microbial genomes. 2024.07.12.603264 Preprint at https://doi.org/10.1101/2024.07.12.603264 (2024).
 
   CompareM2 would not have existed, if it hadn't been for the
   integrated software packages and their databases. Please cite the
@@ -168,31 +205,14 @@ elif "--cite" in trailing_arguments:
     - https://comparem2.readthedocs.io/en/latest/99%20citation/
 """)
 
-elif "--status" in trailing_arguments:
-    # Pretty print the snakemake summary
-    print("debug command:", command_status)
-    process_status = subprocess.run(command_status, shell = True)
-    returncode_status = process_status.returncode
+elif "--status" in trailing_arguments: # status
+    sys.exit(run_status())
     
+else: # main
     
+    returncode_main = run_main()
     
-    sys.exit(returncode_status)
+    run_status()
     
-else:
-    # Run comparem2 main pipeline
-    process_main = subprocess.run(command_main, shell = True)
-    returncode_main = process_main.returncode
-    
-    # Run dynamic report pipeline   
-    # Only run report if there is metadata and something is worth rendering.
-    # if os.path.isfile("{output_directory}/metadata.tsv") and os.path.isfile("{output_directory}/.comparem2_void_report.flag"):  # Should be moved to the report pipeline itself.
-    
-    if os.path.isfile(".report_config.yaml"):
-        process_report = subprocess.run(command_report, shell = True)
-        returncode_report = process_report.returncode
-    else:
-        #print("Pipeline: .report_config.yaml has not yet been created.") # This happens when doing a dry-run in a new dir.
-        pass
-    # Exit with the return code of the main pipeline.
     sys.exit(returncode_main)
     

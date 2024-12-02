@@ -11,7 +11,8 @@ comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
   [ --forcerun RULE [RULE2]... ]
   [ --printshellcmds ]
   [ --dry-run ]
-  [ --version ] [ --help ] [ --cite ]
+  [ --status ]
+  [ --version ]  [ --help ]  [ --cite]
 ```
 
 ## Usage examples
@@ -162,8 +163,8 @@ There are also a number of pseudo rules, effectively "shortcuts" to a list of ru
 ---
           
 ### `--forcerun RULE [RULE2]...`
-Force rerunning of one or more rules that already have been completed. This is generally necessary when changing running parameters in the config (see "--config" above).
 
+Force rerunning of one or more rules that already have been completed. This is generally necessary when changing running parameters in the config (see "--config" above).
 
 ### `--printshellcmds`, `-p`
 
@@ -172,17 +173,32 @@ Print the full generated shell commands of each rule in the workflow.
 ---
     
 ### `--dry-run`
+
 Run a "dry run": Shows what will run without doing it.
 
 ---
 
+### `--status`
+
+Print the state of completion of the rules in the pipeline. The percentage of completed files are shown.
+
+---
+
 ### `--version`, `-v `
+
 Show current version.
 
 ---
     
 ### `--help`, `-h`
+
 Show this help and exit.
+
+---
+ 
+### `--cite`
+
+Show citation info.
 
 ---
         

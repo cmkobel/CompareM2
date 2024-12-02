@@ -131,9 +131,9 @@ print(f"                                     v{__version__}")
 print("                                                                         ")
 print("  Variables                                                              ")
 print("  ---------                                                              ")
-print(f"    title         : '{batch_title}'")
-print(f"    base          : '{base_variable}'")
-print(f"    databases     : '{DATABASES}'")
+print(f"    title         : \"{batch_title}\"")
+print(f"    base          : \"{base_variable}\"")
+print(f"    databases     : \"{DATABASES}\"")
 print("                                                                         ")
 print("  Available rules                                                        ")
 print("  ---------------                                                        ")
@@ -440,10 +440,10 @@ onstart:
     shell(f"""
     
         echo "# config for dynamic report pipeline" > .report_config.yaml
-        echo batch_title: \"{batch_title}\" >> .report_config.yaml
-        echo output_directory: \"{output_directory}\" >> .report_config.yaml
-        echo base_variable: \"{base_variable}\" >> .report_config.yaml
-        echo __version__: \"{__version__}\" >> .report_config.yaml
+        echo batch_title: "{batch_title}" >> .report_config.yaml
+        echo output_directory: "{output_directory}" >> .report_config.yaml
+        echo base_variable: "{base_variable}" >> .report_config.yaml
+        echo __version__: "{__version__}" >> .report_config.yaml
         
     """)
     
