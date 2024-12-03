@@ -179,32 +179,18 @@ def run_status():
         summary = summary.groupby(["rule", "status"]).size().reset_index().rename(columns={0:"count"})
         summary = summary.pivot(index = "rule", columns = "status", values = "count").rename_axis(None, axis=1).reset_index()
         summary = summary.fillna(0)
-        print(summary)
         
-        # Make sure that required columns are available after pivoting, which may not be the case when _all_ are missing or ok.
-        try:
-            summary["ok"]
-            summary["missing"]
-        except KeyError as e:
-            # In case any key is missing, fill it with zeros. Could also have been a passive coalesce action with no ifs. But I guess python makes it beautiful even though it is a bit complex.
-            for i in e.args:
-                print(f"debug: filling key \"{i}\" with zeros.")
-                summary[i] = 0
+        # Convert to int, independent of what columns are there besides column "rule".
+        summary_int = summary.loc[:, summary.columns != 'rule'].astype(int)
+        summary_int.insert(0, "rule", summary['rule'])
+        #print(summary)
         
-        # Calculate interpretative statistic
-        summary["complete"] = summary["ok"] / (summary["ok"]+summary["missing"])
-        
-        # In case NaNs are introduced (division by zero) fill with zeros.
-        summary = summary.fillna(0)
-        #print(summary["complete"])
-        summary["completion %"] = (summary["complete"] * 100).astype(int).astype(str) + " %"
-
         # Present
         print("Below is an overview of the completion of each rule in the CompareM2 pipeline.")
         print()
         print("  CompareM2 status")
         print("  ----------------")
-        print(summary[["rule", "completion %"]].to_string(index = False))
+        print(summary_int.to_string(index = False))
         print("//")
         
         try:
