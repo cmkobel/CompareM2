@@ -1,6 +1,5 @@
-## Cazymes from dbCAN
+## `dbcan` - Carbohydrate active enzymes
 
-`rule dbcan`
 
 ```{r dbcan, echo = F, message = F, warning = F, error = T}
 # Show data table and make a heatmap for substrates to highlight interpretation

@@ -1,4 +1,4 @@
-## sequence_lengths - Contig sizes and GC-content
+## `sequence_lengths` - Contig sizes and GC-content
 
 
 

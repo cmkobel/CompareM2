@@ -1,6 +1,6 @@
-## KEGG pathway enrichment analysis
+## `kegg_pathway` - KEGG pathway enrichment analysis
 
-`rule kegg_pathway` For each genome the prokka-prodigal called amino-acid sequences are searched in the Uniref100-KO database. This is the same database that CheckM2 uses. For the results produced for this analysis, the alignment criteria are stricter (>=85% coverage and >=50% identity). Using clusterProfilers "enricher" function, Benjamini-Hochberg adjusted p-values for the pathway enrichment for the called genes is computed.
+For each genome the prokka-prodigal called amino-acid sequences are searched in the Uniref100-KO database. This is the same database that CheckM2 uses. For the results produced for this analysis, the alignment criteria are stricter (>=85% coverage and >=50% identity). Using clusterProfilers "enricher" function, Benjamini-Hochberg adjusted p-values for the pathway enrichment for the called genes is computed.
 
 ```{r kegg-pathway, echo = F, message = F, warning = F, error = T}
 

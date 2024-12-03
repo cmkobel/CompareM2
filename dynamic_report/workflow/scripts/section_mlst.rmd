@@ -1,6 +1,4 @@
-## MLST
-
-`rule mlst`
+## `mlst` - Multi locus sequence typing
 
 ```{r mlst, echo = F, message = F, warning = F, error = T}
 

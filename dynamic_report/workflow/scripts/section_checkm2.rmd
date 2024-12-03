@@ -1,6 +1,5 @@
-## Checkm2
+## `checkm2` - Checkm2
 
-`rule checkm2`
 
 ```{r checkm2, echo = F, message = F, warning = F, error = T}
 

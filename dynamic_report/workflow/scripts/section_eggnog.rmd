@@ -1,4 +1,4 @@
-## Eggnog - Functional annotation through orthology assignment 
+## `eggnog` - Functional annotation through orthology assignment 
 
 [Eggnog-mapper ](https://github.com/eggnogdb/eggnog-mapper/) annotates genomes using a database of pre-computed groups of orthologs to transfer functional information.
 

@@ -1,6 +1,6 @@
-## GTDB taxonomical classification
+## `gtdb` - Genome taxonomy database taxonomical classification
 
-`rule gtdbtk` [GTDB](https://gtdb.ecogenomic.org/) uses several public repositories with reference sequences and assigns the most likely name by measuring the average nucleotide identity (ANI) and relative evolutionary divergence (RED).
+[GTDB](https://gtdb.ecogenomic.org/) uses several public repositories with reference sequences and assigns the most likely name by measuring the average nucleotide identity (ANI) and relative evolutionary divergence (RED).
 
 
 ```{r gtdb, echo = F, message = F, warning = F, error = T}

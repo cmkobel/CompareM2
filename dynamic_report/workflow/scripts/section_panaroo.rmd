@@ -1,9 +1,9 @@
 
 
 
-## Pan and Core genome
+## `panaroo` - Pan and Core genome
 
-`rule panaroo` [Panaroo](https://gtonkinhill.github.io/panaroo/#/) the pan genome pipeline computes the number of orthologous genes in a number of core/pan spectrum partitions.
+[Panaroo](https://gtonkinhill.github.io/panaroo/#/) the pan genome pipeline computes the number of orthologous genes in a number of core/pan spectrum partitions.
 
 The core genome denotes the genes which are conserved between all samples (intersection), whereas the pan genome is the union of all genes across all samples.
 
