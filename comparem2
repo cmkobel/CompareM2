@@ -179,7 +179,7 @@ def run_status():
         summary = summary.groupby(["rule", "status"]).size().reset_index().rename(columns={0:"count"})
         summary = summary.pivot(index = "rule", columns = "status", values = "count").rename_axis(None, axis=1).reset_index()
         summary = summary.fillna(0)
-        #print(summary)
+        print(summary)
         
         # Make sure that required columns are available after pivoting, which may not be the case when _all_ are missing or ok.
         try:
