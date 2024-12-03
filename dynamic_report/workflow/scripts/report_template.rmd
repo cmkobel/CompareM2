@@ -82,7 +82,7 @@ if (debug) {
     batch_title = basename(getwd())
     
     
-    # eggnog cwh on thyla
+    # eggnog caroline wh on thyla
     base_variable = "~/comparem2"
     output_directory = "/home/thylakoid/PhD/47_CEH/CWH_mags/cwh_mags_renamed_TR/results_comparem2"
     setwd("~/comparem2/")
