@@ -87,7 +87,11 @@ metadata_translate %>%
     ggplot(aes(COG_category_splitted, reorder(sample, desc(index)), fill = count)) + 
     scale_fill_viridis_b(trans = "log", direction = -1) + 
     geom_tile() +
-    theme_classic()
+    theme_classic() + 
+    labs(
+        x = "COG category", 
+        y = "sample"
+    )
 
 
 ```
