@@ -68,12 +68,6 @@ cog_categories = tribble(
     "Z", "Cytoskeleton"
 )
 
-eggnog_annotations %>% 
-    select(sample, COG_category) %>% 
-    group_by(sample) %>% 
-    count(COG_category) %>% 
-    arrange(desc(n))
-
 
 eggnog_annotations_plot_df = eggnog_annotations %>% 
     select(sample, COG_category) %>% #head(40) %>% 
@@ -89,10 +83,10 @@ eggnog_annotations_plot_df = eggnog_annotations %>%
 
 
 metadata_translate %>%
-    select(sample) %>%
+    select(index, sample) %>%
     left_join(eggnog_annotations_plot_df, by = "sample") %>% 
 
-    ggplot(aes(COG_category_splitted, sample, fill = count)) + 
+    ggplot(aes(COG_category_splitted, reorder(sample, desc(index)), fill = count)) + 
     scale_fill_viridis_b(trans = "log", direction = -1) + 
     geom_tile()
 
