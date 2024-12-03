@@ -34,7 +34,7 @@ metadata_translate %>%
 
 
 
-```{r eggnog-plot, echo = F, message = F, warning = F, error = T}
+```{r eggnog-plot, echo = F, message = F, warning = F, error = T, fig.height = max(1.8, N*0.2), fig.width = 10}
 
 cog_categories = tribble(
     ~"letter", ~"description",
@@ -92,7 +92,7 @@ metadata_translate %>%
 
 ```
 
-*Fig. `r figno()`: Counts of genes from [COG categories](https://www.ncbi.nlm.nih.gov/research/cog/). When a gene is part of several categories, a weighted average is calculated. Column "?" denotes genes not allocated to a COG categories.*
+*Fig. `r figno()`: Counts of genes from [COG categories](https://www.ncbi.nlm.nih.gov/research/cog/). Column "?" denotes genes not allocated to any COG category. COG categories are abbreviated as follows: A RNA processing and modification, B Chromatin structure and dynamics, C Energy production and conversion, D Cell cycle control, cell division, chromosome partitioning, E Amino acid transport and metabolism, F Nucleotide transport and metabolism, G Carbohydrate transport and metabolism, H Coenzyme transport and metabolism, I Lipid transport and metabolism, J Translation, ribosomal structure and biogenesis, K Transcription, L Replication, recombination and repair, M Cell wall/membrane/envelope biogenesis, N Cell motility, O Posttranslational modification, protein turnover, chaperones, P Inorganic ion transport and metabolism, Q Secondary metabolites biosynthesis, transport and catabolism, R General function prediction only, S Function unknown, T Signal transduction mechanisms, U Intracellular trafficking, secretion, and vesicular transport, V Defense mechanisms, W Extracellular structures, X Mobilome: prophages, transposons, Y Nuclear structure, Z Cytoskeleton.*
 
 
 ---
