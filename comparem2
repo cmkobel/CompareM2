@@ -60,7 +60,10 @@ import sys
 import subprocess
 import shutil
 #import parse_status
-import pandas as pd
+try:
+    import pandas as pd
+except ModuleNotFoundError:
+    print("did you activate the correct environment?")
 
 
 # Create logger that prints to the terminal.
@@ -113,7 +116,6 @@ except KeyError as e:
     COMPAREM2_DATABASES = f"{COMPAREM2_BASE}/databases"
     os.environ["COMPAREM2_DATABASES"] = COMPAREM2_DATABASES
     logger.debug(f"COMPAREM2_DATABASES was not set and has been defaulted to \"{COMPAREM2_DATABASES}\".")
-
 
 
 
