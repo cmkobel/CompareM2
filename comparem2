@@ -60,10 +60,7 @@ import sys
 import subprocess
 import shutil
 #import parse_status
-try:
-    import pandas as pd
-except ModuleNotFoundError:
-    print("did you activate the correct environment?")
+import pandas as pd
 
 
 # Create logger that prints to the terminal.
