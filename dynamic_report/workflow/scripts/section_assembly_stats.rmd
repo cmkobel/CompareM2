@@ -1,5 +1,5 @@
 
-## Assembly statistics
+## assembly_stats - Assembly statistics
 
 `rule assembly_stats`
 

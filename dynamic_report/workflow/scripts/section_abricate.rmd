@@ -1,4 +1,4 @@
-## Antimicrobial Resistance
+## Abricate - Antimicrobial Resistance
 
 Using [Abricate](https://github.com/tseemann/abricate#abricate), the assemblies are scanned for known resistance genes in the NCBI, CARD, Plasmidfinder and VFDB antimicrobial resistance and virulence factor databases. Here only the results from Card and VFDB are shown.
 

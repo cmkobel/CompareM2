@@ -1,6 +1,5 @@
-## BUSCO
+## `busco` - BUSCO
 
-`rule busco`
 
 ```{r busco, echo=FALSE, message=F, warning=F, error = T}
 
