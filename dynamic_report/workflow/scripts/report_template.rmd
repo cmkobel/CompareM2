@@ -75,6 +75,20 @@ if (debug) {
     setwd("~/comparem2/")
     batch_title = basename(getwd())
     
+    # base on thyla
+    base_variable = "~/comparem2/"
+    output_directory = "results_comparem2"
+    setwd("~/comparem2/")
+    batch_title = basename(getwd())
+    
+    
+    # eggnog cwh on thyla
+    base_variable = "~/comparem2"
+    output_directory = "/home/thylakoid/PhD/47_CEH/CWH_mags/cwh_mags_renamed_TR/results_comparem2"
+    setwd("~/comparem2/")
+    batch_title = basename(getwd())
+    
+    
     
     
 }
@@ -90,8 +104,6 @@ if (debug) {
 ## Global variables
 #base_variable = "~/comparem2/" # I need to find a way of pulling this out of thin air. Maybe there's a way of passing commands through the render call, or I can
 report_scripts = paste0(base_variable, "/dynamic_report/workflow/scripts/")
-
-
 
 
 ## Global functions
@@ -256,6 +268,7 @@ section_definition_table = tribble(
         )
     ),
     "prokka",            N, Sys.glob(paste0(output_directory, "/samples/*/prokka/*.txt")),
+    "eggnog",            N, Sys.glob(paste0(output_directory, "/samples/*/eggnog/*.emapper.annotations")),
     "kegg_pathway",      1, Sys.glob(paste0(output_directory, "/kegg_pathway/kegg_pathway_enrichment_analysis.tsv")),
     "dbcan",             N, Sys.glob(paste0(output_directory, "/samples/*/dbcan/dbcan-sub.hmm.out")),
     "panaroo",           1, Sys.glob(paste0(output_directory, "/panaroo/gene_presence_absence.Rtab")), # This also counts for the panaroo summary file.
@@ -306,7 +319,7 @@ section_definition_table %>%
 
 ---
 
-
+# QC
 
 ```{r section_assembly_stats, child = paste0(report_scripts, "section_assembly_stats.rmd"), eval = render$assembly_stats}
 ```
@@ -320,8 +333,7 @@ section_definition_table %>%
 ```{r section_checkm2, child = paste0(report_scripts, "section_checkm2.rmd"), eval = render$checkm2}
 ```
 
-```{r section_gtdbtk, child = paste0(report_scripts, "section_gtdbtk.rmd"), eval = render$gtdbtk}
-```
+# Annotation
 
 ```{r section_mlst, child = paste0(report_scripts, "section_mlst.rmd"), eval = render$mlst}
 ```
@@ -332,13 +344,25 @@ section_definition_table %>%
 ```{r section_prokka, child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}
 ```
 
+# Advanced annotation
+
+```{r section_eggnog, child = paste0(report_scripts, "section_eggnog.rmd"), eval = render$kegg_eggnog}
+```
+
 ```{r section_kegg_pathway, child = paste0(report_scripts, "section_kegg_pathway.rmd"), eval = render$kegg_pathway}
 ```
 
 ```{r section_dbcan, child = paste0(report_scripts, "section_dbcan.rmd"), eval = render$dbcan}
 ```
 
+# Core-pan genome analysis
+
 ```{r section_panaroo, child = paste0(report_scripts, "section_panaroo.rmd"), eval = render$panaroo}
+```
+
+# Phylogenetic analysis
+
+```{r section_gtdbtk, child = paste0(report_scripts, "section_gtdbtk.rmd"), eval = render$gtdbtk}
 ```
 
 ```{r section_snp_dists, child = paste0(report_scripts, "section_snp_dists.rmd"), eval = render$snp_dists}

@@ -6,9 +6,7 @@
 
 ```{r assembly_stats, echo = F, message = F, warning = F, error = T}
 
-
-
-
+#setwd("~/comparem2")
 
 #assembly_stats_df = read_tsv(glob$assembly_stats) 
 assembly_stats_df = read_tsv(glob_list$assembly_stats) 
@@ -17,8 +15,15 @@ assembly_stats_df = read_tsv(glob_list$assembly_stats)
 metadata_translate %>%
     select(sample, file_long) %>%
     left_join(assembly_stats_df, by = c("file_long" = "filename")) %>%
-    select(sample, everything(), -file_long, -N50n, -N70, -N70n, -N90n) %>%
-    custom_dt("assembly_stats", dom = "Blfrtip")
+    select(sample, everything(), -file_long, -N50n, -N70, -N70n, -N90n) %>% 
+    custom_dt("assembly_stats", dom = "Blfrtip", save = F)
+    
+    # formatStyle(
+    # "total_length",
+    # background = styleColorBar(range(out$total_length) + c( -1000, 1000), 'lightblue'),
+    # backgroundSize = "100% 90%",
+    # backgroundRepeat = "no-repeat",
+    # backgroundPosition = "center")
 
 
 ```
