@@ -59,8 +59,8 @@ import os
 import sys
 import subprocess
 import shutil
-import parse_status
-
+#import parse_status
+import pandas as pd
 
 
 # Create logger that prints to the terminal.
@@ -74,7 +74,7 @@ logger.addHandler(console_handler)
 
 
 
-
+# --- Read environment variables or set defaults --------------------
 
 
 # Read system variables and use defaults if necessary.
@@ -116,6 +116,9 @@ except KeyError as e:
 
 
 
+
+
+# --- Define runs ---------------------------------------------------
 
 # Then call the pipeline (alias) using the variables that have just been set, including the command line parameters that have been passed to this script. As we have already saved the new environment variables with os.environ(), we can just call as is.
 
@@ -159,6 +162,58 @@ def run_main():
 
 def run_status():
     
+    def present_status(path = ".status.tsv", delete_after_use = True): 
+    
+        summary = pd.read_csv(path, delimiter="\t") 
+        summary = summary.dropna(subset=['rule'])
+        #print(summary)
+        
+        # Hide irrelevant stuff
+        summary = summary.loc[~summary["rule"].str.endswith("_download")]
+        summary = summary.loc[~summary["rule"].str.contains("^copy$")]
+        summary = summary.loc[~summary["rule"].str.contains("^compute_snp_dists$")]
+        summary = summary.loc[~summary["rule"].str.contains("^report_env$")]
+        summary = summary.loc[~summary["rule"].str.contains("^bakta_env$")]
+        summary = summary.loc[~summary["rule"].str.contains("^annotate$")]
+        
+        # Count occurrences of statuses and pivot.
+        summary = summary.groupby(["rule", "status"]).size().reset_index().rename(columns={0:"count"})
+        summary = summary.pivot(index = "rule", columns = "status", values = "count").rename_axis(None, axis=1).reset_index()
+        summary = summary.fillna(0)
+        #print(summary)
+        
+        # Make sure that required columns are available after pivoting, which may not be the case when _all_ are missing or ok.
+        try:
+            summary["ok"]
+            summary["missing"]
+        except KeyError as e:
+            # In case any key is missing, fill it with zeros. Could also have been a passive coalesce action with no ifs. But I guess python makes it beautiful even though it is a bit complex.
+            for i in e.args:
+                print(f"debug: filling key \"{i}\" with zeros.")
+                summary[i] = 0
+        
+        # Calculate interpretative statistic
+        summary["complete"] = summary["ok"] / (summary["ok"]+summary["missing"])
+        
+        # In case NaNs are introduced (division by zero) fill with zeros.
+        summary = summary.fillna(0)
+        #print(summary["complete"])
+        summary["completion %"] = (summary["complete"] * 100).astype(int).astype(str) + " %"
+
+        # Present
+        print("Below is an overview of the completion of each rule in the CompareM2 pipeline.")
+        print()
+        print("  CompareM2 status")
+        print("  ----------------")
+        print(summary[["rule", "completion %"]].to_string(index = False))
+        print("//")
+        
+        try:
+            if delete_after_use:
+                os.remove(path)
+        except FileNotFoundError:
+            pass # ignore
+    
     command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --summary | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv"""
 
     # Pretty print the snakemake summary
@@ -168,13 +223,13 @@ def run_status():
     process_status = subprocess.run(command_status, shell = True)
     returncode_status = process_status.returncode
     
-    parse_status.present_status(".status.tsv")
+    present_status(".status.tsv")
     
     return returncode_status
 
 
 
-# Finally, run the pipeline.
+# --- Finally, run the pipeline. ------------------------------------
 
 if "--version" in trailing_arguments or "-v" in trailing_arguments:
     # Show the version.
@@ -206,7 +261,10 @@ elif "--cite" in trailing_arguments: # cite
 """)
 
 elif "--status" in trailing_arguments: # status
-    sys.exit(run_status())
+    try:
+        sys.exit(run_status())
+    except pd.errors.EmptyDataError:
+        pass
     
 else: # main
     

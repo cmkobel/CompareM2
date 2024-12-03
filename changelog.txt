@@ -3,6 +3,8 @@
   - Updated KEGG data from 2023-08-28 to 2024-08-13.
   - Added --status functionality.
   - Minor streamlining of code.
+  - Changed interpretation of panaroo summary_statistics in case of non-existent core_genome.
+  - Hard-coded eggnog decorate gff "yes" (#114)
 
 2.11.1
   - Speed up: Eggnog reuses the proteins called by the default annotation tool instead of redoing it itself with prodigal. 

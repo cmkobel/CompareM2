@@ -13,12 +13,27 @@ The core genome denotes the genes which are conserved between all samples (inter
 #setwd("~/CompareM2") #DEBUG
 
 
+panaroo_summary_statistics_file = paste0(output_directory, "/panaroo/summary_statistics.txt")
+
 # Should exist in the case that the glob_list$panaroo = ...gene_presence_absence.Rtab file exists.
-panaroo_summary_file = paste0(output_directory, "/panaroo/summary_statistics.txt")
+# This file only exists when the core genome is non-empty. Which is why we need an if-statement to check.
 
-read_tsv(panaroo_summary_file, col_names = c("partition", "definition", "count")) %>% 
+if(file.exists(panaroo_summary_statistics_file)) {
+    panaroo_summary_file = panaroo_summary_statistics_file
 
+    read_tsv(panaroo_summary_file, col_names = c("partition", "definition", "count")) %>% 
+        custom_dt("panaroo", dom = "t", ordering = F, width = 500)
+        
+} else {
+    tibble(
+        partition = "Core genes", 
+        definition = "(99% <= strains <= 100%)", 
+        count = 0)
+    
+} %>%
     custom_dt("panaroo", dom = "t", ordering = F, width = 500)
+    
+# A better way would be to calculate this table directly from the gene_presence_absence.Rtab file that is used in the next section. But that would require time.
 
 
 

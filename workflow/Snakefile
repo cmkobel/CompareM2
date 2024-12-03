@@ -261,7 +261,7 @@ rule all:
         "{output_directory}/gtdbtk/gtdbtk.summary.tsv", \
         "{output_directory}/abricate/card_detailed.tsv", \
         "{output_directory}/mlst/mlst.tsv", \
-        "{output_directory}/panaroo/summary_statistics.txt", \
+        "{output_directory}/panaroo/gene_presence_absence.Rtab", \
         "{output_directory}/snp-dists/snp-dists.tsv", \
         "{output_directory}/snp-dists/.done.flag", \
         "{output_directory}/mashtree/mashtree.newick", \
@@ -423,7 +423,7 @@ rule isolate:
         "{output_directory}/gtdbtk/gtdbtk.summary.tsv", \
         "{output_directory}/mlst/mlst.tsv", \
         "{output_directory}/abricate/card_detailed.tsv", \
-        "{output_directory}/panaroo/summary_statistics.txt", \
+        "{output_directory}/panaroo/gene_presence_absence.Rtab", \
         "{output_directory}/fasttree/fasttree.newick", \
         "{output_directory}/snp-dists/snp-dists.tsv", \
         "{output_directory}/mashtree/mashtree.newick"], \

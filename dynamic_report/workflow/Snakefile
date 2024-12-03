@@ -119,16 +119,13 @@ def format_sections():
         return f"(could not read {file})"
 
 
+clean_up = f"""test -d .parallel && rm -rf .parallel""" # Was there something about keras as well? These files could also be deleted
+
 onsuccess:
     shell(f"""rm .report_config.yaml""")
-    print(f"""
-The '{batch_title}' report has been rendered to {rules.dynamic_report.output}
-Below is an overview of which sections have been rendered.
-
-  Report sections
-  ---------------""")
-    print(format_sections())
-    print("//")
+    #print(f"\n\nThe '{batch_title}' report has been rendered to {rules.dynamic_report.output}\nBelow is an overview of which sections have been rendered.\n\n  Report sections\n  ---------------\n{format_sections()}\n//")
+    shell(clean_up)
+    
     
 
 # Note: The stderr/out from rule report should not be shown on screen as it problematically wipes possible interesting fail-outputs from the main comparem2 pipeline.

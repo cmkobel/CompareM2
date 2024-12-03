@@ -118,6 +118,7 @@ rule eggnog:
             --itype proteins \
             --override \
             --temp_dir $TMPDIR \
+            --decorate_gff yes \
             {params.passthrough_parameters}
             
         # Originally I wanted eggnog to be an alternative to prokka or bakta, but since it doesn't produce a .faa file there is no point in using like so. So now there is no point in re-calling genes with prodigal at genome state - I might as well reuse the protein .faa from the annotation tool instead. This should be faster
