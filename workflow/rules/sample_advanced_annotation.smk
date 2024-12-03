@@ -85,11 +85,12 @@ rule eggnog:
         #assembly = "{output_directory}/samples/{sample}/{sample}.fna",
         faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg, eggnog
     output:
+        #gff = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.gff", 
+        gff = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.decorated.gff" # Looks like not genepred, but decorated is produced. Is that because of the settings or version changes?
         hits = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.hits",
         orthologs = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.seed_orthologs",
         tsv = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.annotations",
-        #ffn = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.fasta", # Not produced since eggnog reuses the .annotation .faa (proteins mode) instead.
-        gff = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.genepred.gff", 
+    # 2.1.12: {sample}.emapper.decorated.gff, {sample}.emapper.hits, {sample}.emapper.seed_orthologs, {sample}.emapper.annotations,
     params:
         passthrough_parameters = passthrough_parameter_unpack("eggnog")
     conda: "../envs/eggnog.yaml"

@@ -81,7 +81,7 @@ logger.addHandler(console_handler)
 
 # Sets the COMPAREM2_BASE to the directory of this python script file which (script file) should be neighboring the correct snakefile.
 try:
-    COMPAREM2_BASE = os.environ['COMPAREM2_BASE']
+    COMPAREM2_BASE = os.environ["COMPAREM2_BASE"]
     logger.debug(f"COMPAREM2_BASE was already set to \"{COMPAREM2_BASE}\".")
 except KeyError as e:
     COMPAREM2_BASE = os.path.dirname(os.path.realpath(__file__)) # This seems to work even for symlinks (it gets the physical path.). Update: Maybe that is why the apptainer environment can't find the cwd?
@@ -91,7 +91,7 @@ except KeyError as e:
 # Defines the COMPAREM2_PROFILE relative to the COMPAREM2_BASE if not set already.
 # Detects and prioritizes to use apptainer if it exists.
 try:
-    COMPAREM2_PROFILE = os.environ['COMPAREM2_PROFILE']
+    COMPAREM2_PROFILE = os.environ["COMPAREM2_PROFILE"]
     logger.debug(f"COMPAREM2_PROFILE was already set to \"{COMPAREM2_PROFILE}\".")
 except KeyError as e: # The profile has not been set.
     # We might check whether apptainer is present. If it is we will use it, if not, we'll use conda.
@@ -107,7 +107,7 @@ except KeyError as e: # The profile has not been set.
 
 # Defines the COMPAREM2_DATABASES relative to the COMPAREM2_BASE if not set already.
 try:
-    COMPAREM2_DATABASES = os.environ['COMPAREM2_DATABASES']
+    COMPAREM2_DATABASES = os.environ["COMPAREM2_DATABASES"]
     logger.debug(f"COMPAREM2_DATABASES was already set to \"{COMPAREM2_DATABASES}\".")
 except KeyError as e:
     COMPAREM2_DATABASES = f"{COMPAREM2_BASE}/databases"
