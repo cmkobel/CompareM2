@@ -346,7 +346,7 @@ section_definition_table %>%
 
 # Advanced annotation
 
-```{r section_eggnog, child = paste0(report_scripts, "section_eggnog.rmd"), eval = render$kegg_eggnog}
+```{r section_eggnog, child = paste0(report_scripts, "section_eggnog.rmd"), eval = render$eggnog}
 ```
 
 ```{r section_kegg_pathway, child = paste0(report_scripts, "section_kegg_pathway.rmd"), eval = render$kegg_pathway}
