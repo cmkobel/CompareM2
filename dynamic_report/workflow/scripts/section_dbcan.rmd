@@ -73,7 +73,7 @@ n_dbcan_substrates = df_dbcan_plot_data$substrate_final %>% unique() %>% length(
 df_dbcan_plot_data %>% 
     ggplot(aes(substrate_final, reorder(sample, desc(index)), fill = n)) + 
     geom_tile() +
-    scale_fill_viridis_c() + 
+    scale_fill_viridis_c(direction = -1) + 
     theme_classic() + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) + 
     labs(

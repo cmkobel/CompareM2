@@ -49,7 +49,7 @@ sequence_lengths_meta_df %>%
     #theme(legend.position = "bottom") +
     theme(panel.grid.major.x = element_line(colour = "grey92")) + 
     labs(y = "sample (GC%)") +
-    scale_fill_viridis_c()
+    scale_fill_viridis_c(direction = -1)
 
         
 ```
