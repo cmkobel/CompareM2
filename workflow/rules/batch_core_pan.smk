@@ -16,7 +16,7 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
         gff = expand("{output_directory}/samples/{sample}/.annotation/{sample}.gff", sample = df["sample"], output_directory = output_directory),
     output:
         summary = "{output_directory}/panaroo/summary_statistics.txt", # Todo: don't rely on this file as it is not produced when the core is empty. Instead, the core should be inferred from the gene_absence_presence file.
-        presence = "{output_directory}/panaroo/gene_presence_absence.csv",
+        presence = "{output_directory}/panaroo/gene_presence_absence.Rtab",
         alignment = "{output_directory}/panaroo/core_gene_alignment.aln",
         #analyses = ["{output_directory}/panaroo/summary_statistics.txt", "{output_directory}/panaroo/core_gene_alignment.aln", "{output_directory}/panaroo/gene_presence_absence.csv"]
     params:        

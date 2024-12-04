@@ -159,7 +159,8 @@ custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, wid
 ```
 
 
-## Samples
+
+s# Sample overview
 
 ```{r sample-overview, echo=FALSE, message=F, warning=F, error = T}
 
@@ -319,7 +320,7 @@ section_definition_table %>%
 
 ---
 
-# QC
+
 
 ```{r section_assembly_stats, child = paste0(report_scripts, "section_assembly_stats.rmd"), eval = render$assembly_stats}
 ```
@@ -333,7 +334,7 @@ section_definition_table %>%
 ```{r section_checkm2, child = paste0(report_scripts, "section_checkm2.rmd"), eval = render$checkm2}
 ```
 
-# Annotation
+
 
 ```{r section_mlst, child = paste0(report_scripts, "section_mlst.rmd"), eval = render$mlst}
 ```
@@ -344,7 +345,7 @@ section_definition_table %>%
 ```{r section_prokka, child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}
 ```
 
-# Advanced annotation
+
 
 ```{r section_eggnog, child = paste0(report_scripts, "section_eggnog.rmd"), eval = render$eggnog}
 ```
@@ -355,12 +356,12 @@ section_definition_table %>%
 ```{r section_dbcan, child = paste0(report_scripts, "section_dbcan.rmd"), eval = render$dbcan}
 ```
 
-# Core-pan genome analysis
+
 
 ```{r section_panaroo, child = paste0(report_scripts, "section_panaroo.rmd"), eval = render$panaroo}
 ```
 
-# Phylogenetic analysis
+
 
 ```{r section_gtdbtk, child = paste0(report_scripts, "section_gtdbtk.rmd"), eval = render$gtdbtk}
 ```
