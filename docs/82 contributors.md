@@ -5,5 +5,6 @@
   - Oliver Kjærlund Hansen ([@OliverKjHansen](https://github.com/OliverKjHansen))
   - Ben J. Woodcroft ([@wwood](https://github.com/wwood/))
 
+{!CONTRIBUTORS.md!}
 
 {!resources/footer.md!}
