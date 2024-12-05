@@ -11,11 +11,33 @@
 assembly_stats_df = read_tsv(glob_list$assembly_stats) 
         
 
-metadata_translate %>%
+assembly_stats_df_plot = metadata_translate %>%
     select(sample, file_long) %>%
     left_join(assembly_stats_df, by = c("file_long" = "filename")) %>%
-    select(sample, everything(), -file_long, -N50n, -N70, -N70n, -N90n) %>% 
-    custom_dt("assembly_stats", dom = "Blfrtip", save = F)
+    select(sample, everything(), -file_long, -N50n, -N70, -N70n, -N90n) 
+
+assembly_stats_df_plot %>% 
+    custom_dt("assembly_stats", dom = "Blfrtip", save = F) %>% 
+    formatStyle(
+        'total_length',
+        background = styleColorBar(c(0, max(assembly_stats_df_plot$total_length)), rgb(186/255, 226/255, 220/255, )),
+        backgroundSize = '100% 80%',
+        backgroundRepeat = 'no-repeat',
+        backgroundPosition = 'center') %>% 
+    formatStyle(
+        'mean_length',
+        background = styleColorBar(c(0, max(assembly_stats_df_plot$mean_length)), rgb(186/255, 220/255, 226/255, )),
+        backgroundSize = '100% 80%',
+        backgroundRepeat = 'no-repeat',
+        backgroundPosition = 'center') %>% 
+    formatStyle(
+        'N50',
+        background = styleColorBar(c(0, max(assembly_stats_df_plot$N50)), "#C6DDF0"),
+        backgroundSize = '100% 80%',
+        backgroundRepeat = 'no-repeat',
+        backgroundPosition = 'center')
+    
+    
     
     # formatStyle(
     # "total_length",

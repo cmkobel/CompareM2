@@ -39,6 +39,8 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
             -t {threads} \
             {params.passthrough_parameters} \
             -i {input.gff:q}
+            
+        # Todo: Make a script that generates a summary file that says the number of core genes based off the core_absence_presence.Rtab file. This file is output no matter the core genome size and can be used for comparem2 to count the size for deciding which options to take with snp_dists etc. It can just be four fields. core, full X number of genes
         
         {void_report}
 

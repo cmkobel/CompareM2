@@ -21,8 +21,24 @@ checkm2_presentable = metadata_translate %>%
     rename_with(str_replace_all, pattern = "_", replacement = " ")
     
 
+
+
 checkm2_presentable %>%
-    custom_dt("checkm2")
+    custom_dt("checkm2") %>% 
+    formatStyle(
+        'Completeness',
+        background = styleColorBar(c(0, 100), rgb(203/255, 239/255, 212/255)),
+        backgroundSize = '100% 80%',
+        backgroundRepeat = 'no-repeat',
+        backgroundPosition = 'center') %>% 
+    formatStyle(
+        'Contamination',
+        background = styleColorBar(c(0, 100), rgb(254/255, 224/255, 194/255)),
+        backgroundSize = '100% 80%',
+        backgroundRepeat = 'no-repeat',
+        backgroundPosition = 'center')
+    
+
 
 
 ```

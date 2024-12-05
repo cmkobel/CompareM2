@@ -15,12 +15,12 @@ kegg_pathway_results_raw = read_tsv(glob_list$kegg_pathway)
 kegg_pathway_results = kegg_pathway_results_raw %>% 
     mutate(
         #geneID = str_replace_all(geneID, "/", " "),
-        `-log10(p_adjusted)` = -log10(`p.adjust`) %>% signif(5),
+        #`-log10(p_adjusted)` = -log10(`p.adjust`) %>% signif(5),
         class = class %>% str_remove("^[0-9]+") %>% str_trim(), # I'm removing the number codes in front as they're too long and unnecessary.
         group = group %>% str_remove("^[0-9]+") %>% str_trim(),
         hierarchy = paste(class, group, sep = "; ") 
     ) %>% 
-    select(sample, class, group, hierarchy, pathway, `-log10(p_adjusted)`, `gene ratio` = GeneRatio, KOs = geneID, count = Count)
+    select(sample, class, group, hierarchy, pathway, `p.adjust`, `gene ratio` = GeneRatio, KOs = geneID, count = Count)
 
 N_kegg_groups = kegg_pathway_results$group %>% unique() %>% length()
 
