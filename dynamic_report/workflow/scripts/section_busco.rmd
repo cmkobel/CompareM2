@@ -32,13 +32,15 @@ busco_df = busco_raw %>%
     group_by(file) %>% 
     arrange(desc(C)) %>% 
     mutate(rank = 1:n()) %>% 
-    ungroup()
+    ungroup() %>% 
+    rename(sample = file)
 
 # Present table
 busco_df_meta = metadata_translate %>%
-    left_join(busco_df %>% filter(rank == 1), by = c("sample" = "file")) %>%
-    select(-file, -file_long, -rank) %>%
-    arrange(lineage)
+    select(sample) %>% 
+    left_join(busco_df %>%
+    filter(rank == 1)) %>% select(-rank) 
+    #arrange(lineage)
 
 
 busco_df_meta %>% 
