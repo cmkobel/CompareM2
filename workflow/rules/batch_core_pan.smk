@@ -15,11 +15,12 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
         metadata = "{output_directory}/metadata.tsv",
         gff = expand("{output_directory}/samples/{sample}/.annotation/{sample}.gff", sample = df["sample"], output_directory = output_directory),
     output:
-        summary = "{output_directory}/panaroo/summary_statistics.txt", # Todo: don't rely on this file as it is not produced when the core is empty. Instead, the core should be inferred from the gene_absence_presence file.
+        summary = "{output_directory}/panaroo/cm2_summary_statistics.tsv", # Todo: don't rely on this file as it is not produced when the core is empty. Instead, the core should be inferred from the gene_absence_presence file.
         presence = "{output_directory}/panaroo/gene_presence_absence.Rtab",
         alignment = "{output_directory}/panaroo/core_gene_alignment.aln",
         #analyses = ["{output_directory}/panaroo/summary_statistics.txt", "{output_directory}/panaroo/core_gene_alignment.aln", "{output_directory}/panaroo/gene_presence_absence.csv"]
     params:        
+        script_summary = base_variable + "/workflow/scripts/panaroo_generate_summary_stats.py",
         passthrough_parameters = passthrough_parameter_unpack("panaroo")
     benchmark: "{output_directory}/benchmarks/benchmark.panaroo.tsv"
     threads: 16
@@ -28,7 +29,7 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
         #mem_mb = 32768,
         mem_mb = get_mem_panaroo,
         runtime = "24h",
-    conda: "../envs/panaroo.yaml" # deactivated 
+    conda: "../envs/panaroo.yaml" 
     shell: """
     
         # Collect version number.
@@ -39,13 +40,15 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
             -t {threads} \
             {params.passthrough_parameters} \
             -i {input.gff:q}
-            
-        # Todo: Make a script that generates a summary file that says the number of core genes based off the core_absence_presence.Rtab file. This file is output no matter the core genome size and can be used for comparem2 to count the size for deciding which options to take with snp_dists etc. It can just be four fields. core, full X number of genes
+
+        # The summary stat table is very handy to quickly check the size of the core genome. Unfortunately it is not generated when the core genome is absent, so here comparem2 is reproducing it from the presence file which is generated in all cases.
+        {params.script_summary} {output.presence:q} > {output.summary:q}
         
         {void_report}
 
     """
     
+
 
 def core_genome_if_exists(wildcards): 
     
