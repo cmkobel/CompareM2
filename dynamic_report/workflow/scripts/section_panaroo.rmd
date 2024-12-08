@@ -13,8 +13,7 @@ The core genome denotes the genes which are conserved between all samples (inter
 #setwd("~/CompareM2") #DEBUG
 
 
-#panaroo_summary_statistics_file = paste0(output_directory, "/panaroo/summary_statistics.txt")
-panaroo_summary_statistics_file = paste0(output_directory, "/panaroo/cm2_summary_statistics.tsv")
+panaroo_summary_statistics_file = paste0(output_directory, "/panaroo/summary_statistics.txt")
 
 # Should exist in the case that the glob_list$panaroo = ...gene_presence_absence.Rtab file exists.
 # This file only exists when the core genome is non-empty. Which is why we need an if-statement to check.
@@ -22,10 +21,8 @@ panaroo_summary_statistics_file = paste0(output_directory, "/panaroo/cm2_summary
 if(file.exists(panaroo_summary_statistics_file)) {
     panaroo_summary_file = panaroo_summary_statistics_file
 
-    #read_tsv(panaroo_summary_file, col_names = c("partition", "definition", "count")) %>% 
-    read_tsv(panaroo_summary_file, col_names = c("partition", "count")) %>% 
-        #custom_dt("panaroo", dom = "t", ordering = F, width = 500)
-        custom_dt("panaroo", dom = "t", ordering = F, width = 400)
+    read_tsv(panaroo_summary_file, col_names = c("partition", "definition", "count")) %>% 
+        custom_dt("panaroo", dom = "t", ordering = F, width = 500)
         
 } else {
     tibble(
@@ -34,8 +31,7 @@ if(file.exists(panaroo_summary_statistics_file)) {
         count = 0)
     
 } %>%
-    #custom_dt("panaroo", dom = "t", ordering = F, width = 500)
-    custom_dt("panaroo", dom = "t", ordering = F, width = 400)
+    custom_dt("panaroo", dom = "t", ordering = F, width = 500)
     
 # A better way would be to calculate this table directly from the gene_presence_absence.Rtab file that is used in the next section. But that would require time.
 
