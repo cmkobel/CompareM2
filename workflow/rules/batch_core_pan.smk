@@ -15,9 +15,9 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
         metadata = "{output_directory}/metadata.tsv",
         gff = expand("{output_directory}/samples/{sample}/.annotation/{sample}.gff", sample = df["sample"], output_directory = output_directory),
     output:
-        summary = "{output_directory}/panaroo/cm2_summary_statistics.tsv", # Todo: don't rely on this file as it is not produced when the core is empty. Instead, the core should be inferred from the gene_absence_presence file.
+        summary = "{output_directory}/panaroo/summary_statistics.txt", # Todo: don't rely on this file as it is not produced when the core is empty. Instead, the core should be inferred from the gene_absence_presence file.
         presence = "{output_directory}/panaroo/gene_presence_absence.Rtab",
-        alignment = "{output_directory}/panaroo/core_gene_alignment.aln",
+        #alignment = "{output_directory}/panaroo/core_gene_alignment.aln",
         #analyses = ["{output_directory}/panaroo/summary_statistics.txt", "{output_directory}/panaroo/core_gene_alignment.aln", "{output_directory}/panaroo/gene_presence_absence.csv"]
     params:        
         script_summary = base_variable + "/workflow/scripts/panaroo_generate_summary_stats.py",
@@ -42,7 +42,9 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
             -i {input.gff:q}
 
         # The summary stat table is very handy to quickly check the size of the core genome. Unfortunately it is not generated when the core genome is absent, so here comparem2 is reproducing it from the presence file which is generated in all cases.
-        {params.script_summary} {output.presence:q} > {output.summary:q}
+        # A better solution might actually be to change panaroo so it produces this file nonetheless. 
+        #{params.script_summary} {output.presence:q} > {output.summary:q}
+        # Nevermind, turns out that it is the alignment file that isn't created, which makes more sense. # Now I just need to find a way of returning the alignment file when that exists.
         
         {void_report}
 
@@ -53,7 +55,8 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
 def core_genome_if_exists(wildcards): 
     
     summary_file = checkpoints.panaroo.get(**wildcards).output["summary"]
-    alignment_file = checkpoints.panaroo.get(**wildcards).output["alignment"]
+    #alignment_file = checkpoints.panaroo.get(**wildcards).output["alignment"]
+    alignment_file = "{output_directory}/panaroo/core_gene_alignment.aln"
     
     try:   
         with summary_file.open() as f:
