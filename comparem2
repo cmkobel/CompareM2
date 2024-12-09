@@ -165,7 +165,7 @@ def run_status():
     
         try:
             summary = pd.read_csv(path, delimiter="\t") 
-        except pandas.errors.EmptyDataError as e:
+        except pd.errors.EmptyDataError as e:
             print("No status data to present")
             return
         
