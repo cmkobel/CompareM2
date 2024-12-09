@@ -9,6 +9,7 @@ CompareM2 is built on top of Snakemake. Hence, when tweaking your run, you must 
 comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
   [ --until RULE [RULE2]... ]
   [ --forcerun RULE [RULE2]... ]
+  [ --downloads ]
   [ --printshellcmds ]
   [ --dry-run ]
   [ --status ]
@@ -165,6 +166,10 @@ There are also a number of pseudo rules, effectively "shortcuts" to a list of ru
 ### `--forcerun RULE [RULE2]...`
 
 Force rerunning of one or more rules that already have been completed. This is generally necessary when changing running parameters in the config (see "--config" above).
+
+### `--downloads`
+
+Download all databases without performing any analyses.
 
 ### `--printshellcmds`, `-p`
 
