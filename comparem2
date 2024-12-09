@@ -180,7 +180,6 @@ def run_status():
         summary = summary.loc[~summary["rule"].str.contains("^annotate$")]
         summary = summary.loc[~summary["rule"].str.contains("^metadata$")]
         
-        
         # Count occurrences of statuses and pivot.
         summary = summary.groupby(["rule", "status"]).size().reset_index().rename(columns={0:"count"})
         summary = summary.pivot(index = "rule", columns = "status", values = "count").rename_axis(None, axis=1).reset_index()
@@ -236,6 +235,7 @@ def run_status():
     
     return returncode_status
 
+
 def run_downloads():
     command_download = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --config input_genomes="" --until downloads"""
 
@@ -274,6 +274,7 @@ def run_main():
 
 if "--help" in trailing_arguments or "-h" in trailing_arguments:
     sys.exit(run_help())
+
 
 elif "--version" in trailing_arguments or "-v" in trailing_arguments:
     sys.exit(run_version())

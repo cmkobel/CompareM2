@@ -49,6 +49,9 @@ OPTIONS
   --forcerun RULE [RULE2]...
     Force rerunning of one or more rules that already have been completed. This is generally necessary when changing running parameters in the config (see "--config" above).
     
+  --downloads
+    Download all databases without performing any analyses.
+    
   --printshellcmds, -p
     Print the full generated shell commands of each rule in the workflow. 
     
