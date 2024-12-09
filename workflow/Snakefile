@@ -228,11 +228,15 @@ if N > 0:
     n_duplicates = duplicates.shape[0]
     if n_duplicates > 0:
         raise Exception(f"Error: Sample names are not unique. The following ({n_duplicates}) input genome(s) are duplicated:\n{duplicates.to_string(index = False)}")
+
 else:
     df = pd.DataFrame(data = {'sample': list(), 'input_file': list(), 'input_file_fasta': list(), })
 
     print(f"Warning: No files to process.")
 
+
+
+# --- Check existence of prerequisited directories
 
 # The DATABASES directory must exist, otherwise apptainer gets confused and throws the following:
 # WARNING: skipping mount of /home/thylakoid/comparem2/databaseas: stat /home/thylakoid/comparem2/databaseas: no such file or directory
@@ -257,26 +261,32 @@ localrules: metadata, annotate, antismash_download, bakta_download, eggnog_downl
 
 # --- Main rule to collect all targets ------------------------------
 
-
 def generate_final_output(N):
+    """Depending on the number of input genomes, different analyses make sense"""
+    print(f"Info: Deciding revelant outputs depending on the number of inputs (N = {N}): ", end = "")
+    
     final_output = list()
+    description = list()
     
     if N >= 3: # Three or more
+        description.append("phylogenetics")
         final_output += expand([\
             "{output_directory}/fasttree/fasttree.newick", \
             "{output_directory}/iqtree/core_genome_iqtree.treefile"], \
-            output_directory = output_directory, sample = df["sample"]))
-            
+            output_directory = output_directory, sample = df["sample"])
+        
     if N >= 2: # Two or more
+        description.append("pairwise comparisons")
         final_output += expand([\
             "{output_directory}/panaroo/gene_presence_absence.Rtab", \
             "{output_directory}/snp-dists/snp-dists.tsv", \
             "{output_directory}/snp-dists/.done.flag", \
             "{output_directory}/mashtree/mashtree.newick", \
-            "{output_directory}/treecluster/treecluster.tsv", \    
-            output_directory = output_directory, sample = df["sample"]))
-
+            "{output_directory}/treecluster/treecluster.tsv"], \
+            output_directory = output_directory, sample = df["sample"])
+            
     if N >= 1: # One or more
+        description.append("singular analyses")
         final_output += expand([\
             "{output_directory}/metadata.tsv", \
             "{output_directory}/.install_report_environment_aot.flag", \
@@ -293,20 +303,26 @@ def generate_final_output(N):
             "{output_directory}/gtdbtk/gtdbtk.summary.tsv", \
             "{output_directory}/abricate/card_detailed.tsv", \
             "{output_directory}/mlst/mlst.tsv", \
-            "{output_directory}/samples/{sample}/antismash/{sample}.json", \
-            output_directory = output_directory, sample = df["sample"]))
+            "{output_directory}/samples/{sample}/antismash/{sample}.json"], \
+            output_directory = output_directory, sample = df["sample"])
             
-    if N >= 0: # Zero or more
+    if N == 0: # Zero or more
+        description.append("downloads")
         final_output += expand([\
             DATABASES + "/checkm2/comparem2_checkm2_database_representative.flag",
             DATABASES + "/busco/comparem2_busco_database_representative.flag",
             DATABASES + "/dbcan/comparem2_dbcan_database_representative.flag",
             DATABASES + "/gtdb/comparem2_gtdb_database_representative.flag",
             DATABASES + "/bakta/comparem2_bakta_database_representative.flag",
-            DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag")
+            DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag"])
+            
+            
+    print(", ".join(description))
+    return final_output
         
 rule all:
     input: generate_final_output(N)
+    #input: "{output_directory}/metadata.tsv"
         # "{output_directory}/samples/{sample}/gapseq/gapseq_done.flag", \ # Still working on this one.
         # "{output_directory}/samples/{sample}/antismash/{sample}.json", \ # Issue when running with apptainer
 
@@ -472,7 +488,7 @@ rule isolate:
 
 # Why doesn't this happen on onsuccess and onerror? But does that really matter?
 onstart:
-    print("Writing config for dynamic report pipeline.")
+    #print("Info: Writing config for dynamic report pipeline.")
     shell(f"""
     
         echo "# config for dynamic report pipeline" > .report_config.yaml

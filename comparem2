@@ -129,6 +129,118 @@ trailing_arguments_concatenated = " ".join(trailing_arguments)
 logger.debug(f"The concatenated trailing arguments are {trailing_arguments_concatenated}")
 
 
+def run_help():
+    # Show the help file.
+    with open(COMPAREM2_BASE + "/docs/help_text.txt") as file:
+        for line in file:
+            print(line, end = "")
+    print()
+
+def run_version():
+    print(f"comparem2 v{__version__}")
+    return 0
+
+def run_cite():
+    print("""
+  CompareM2 Citation
+  ------------------
+
+  If you use CompareM2, you can support further funding by bumping the
+  citation count on this one:
+
+    - Kobel et al. CompareM2 is a genomes-to-report pipeline for comparing microbial genomes. 2024.07.12.603264 Preprint at https://doi.org/10.1101/2024.07.12.603264 (2024).
+
+  CompareM2 would not have existed, if it hadn't been for the
+  integrated software packages and their databases. Please cite the
+  appropriate tools as well. An updated list is maintained here:
+
+    - https://comparem2.readthedocs.io/en/latest/99%20citation/
+    """)
+    return 0
+
+def run_status():
+    
+    def present_status(path = ".status.tsv", delete_after_use = True): 
+    
+        try:
+            summary = pd.read_csv(path, delimiter="\t") 
+        except pd.errors.EmptyDataError as e:
+            print("Info: No status data to present (1).")
+            return
+        
+        summary = summary.dropna(subset=["rule"])
+        #print(summary)
+        
+        # Hide irrelevant stuff
+        summary = summary.loc[~summary["rule"].str.endswith("_download")]
+        summary = summary.loc[~summary["rule"].str.contains("^copy$")]
+        summary = summary.loc[~summary["rule"].str.contains("^compute_snp_dists$")]
+        summary = summary.loc[~summary["rule"].str.contains("^report_env$")]
+        summary = summary.loc[~summary["rule"].str.contains("^bakta_env$")]
+        summary = summary.loc[~summary["rule"].str.contains("^annotate$")]
+        summary = summary.loc[~summary["rule"].str.contains("^metadata$")]
+        
+        
+        # Count occurrences of statuses and pivot.
+        summary = summary.groupby(["rule", "status"]).size().reset_index().rename(columns={0:"count"})
+        summary = summary.pivot(index = "rule", columns = "status", values = "count").rename_axis(None, axis=1).reset_index()
+        summary = summary.fillna(0)
+        
+        # Make sure that at least the ok column exists after pivoting.
+        try:
+            summary["ok"]
+        except KeyError as e:
+            # In case any key is missing, fill it with zeros. Could also have been a passive coalesce action with no ifs. But I guess python makes it beautiful even though it is a bit complex.
+            for i in e.args:
+                #print(f"debug: filling key \"{i}\" with zeros.")
+                summary[i] = 0
+        
+        
+        # Calculate interpretative statistic
+        final = summary[["rule"]]
+        final.insert(1, "ok %", (summary["ok"] / (summary.loc[:, summary.columns != 'rule'].sum(axis = 1)) * 100).astype(int).astype(str) + " %")
+        final = final.fillna(0)
+        #print(final)
+    
+    
+        # If only filtered (downloads, copy etc. ) rules are (were) present, it shouldn't be presented.
+        if final.shape[0] == 0:
+            print("Info: No status data to present (2).")
+            return
+        
+        # Present
+        print("Below is an overview of the completion of each rule in the CompareM2 pipeline.")
+        print("Only rules which are relevant for the the number of input genomes are shown.")
+        print()
+        print("  CompareM2 status")
+        print("  ----------------")
+        print(final.to_string(index = False))
+        print("//")
+        
+        try:
+            if delete_after_use:
+                pass #os.remove(path)
+        except FileNotFoundError:
+            pass # ignore
+    
+    command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --summary | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv"""
+
+    # Pretty print the snakemake summary
+    #print("debug command:", command_status)
+    
+    # Call the snakemake --summary 
+    process_status = subprocess.run(command_status, shell = True)
+    returncode_status = process_status.returncode
+    
+    present_status(".status.tsv")
+    
+    return returncode_status
+
+def run_downloads():
+    command_download = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --config input_genomes="{COMPAREM2_BASE}/resources/dummy.fa" --until downloads"""
+
+    return subprocess.run(command_download, shell = True).returncode
+
 def run_main():
     command_main = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml"  """ + trailing_arguments_concatenated
     
@@ -158,137 +270,29 @@ def run_main():
     return returncode_main
 
 
-
-def run_status():
-    
-    def present_status(path = ".status.tsv", delete_after_use = True): 
-    
-        try:
-            summary = pd.read_csv(path, delimiter="\t") 
-        except pd.errors.EmptyDataError as e:
-            print("No status data to present")
-            return
-        
-        summary = summary.dropna(subset=["rule"])
-        #print(summary)
-        
-        # Hide irrelevant stuff
-        summary = summary.loc[~summary["rule"].str.endswith("_download")]
-        summary = summary.loc[~summary["rule"].str.contains("^copy$")]
-        summary = summary.loc[~summary["rule"].str.contains("^compute_snp_dists$")]
-        summary = summary.loc[~summary["rule"].str.contains("^report_env$")]
-        summary = summary.loc[~summary["rule"].str.contains("^bakta_env$")]
-        summary = summary.loc[~summary["rule"].str.contains("^annotate$")]
-        summary = summary.loc[~summary["rule"].str.contains("^metadata$")]
-        
-        
-        # Count occurrences of statuses and pivot.
-        summary = summary.groupby(["rule", "status"]).size().reset_index().rename(columns={0:"count"})
-        summary = summary.pivot(index = "rule", columns = "status", values = "count").rename_axis(None, axis=1).reset_index()
-        summary = summary.fillna(0)
-        
-        # Make sure that at least the ok column exists after pivoting.
-        try:
-            summary["ok"]
-        except KeyError as e:
-            # In case any key is missing, fill it with zeros. Could also have been a passive coalesce action with no ifs. But I guess python makes it beautiful even though it is a bit complex.
-            for i in e.args:
-                print(f"debug: filling key \"{i}\" with zeros.")
-                summary[i] = 0
-        
-        
-        # Calculate interpretative statistic
-        final = summary[["rule"]]
-        final.insert(1, "ok %", (summary["ok"] / (summary.loc[:, summary.columns != 'rule'].sum(axis = 1)) * 100).astype(int).astype(str) + " %")
-        final = final.fillna(0)
-        #print(final)
-    
-        # Present
-        print("Below is an overview of the completion of each rule in the CompareM2 pipeline.")
-        print()
-        print("  CompareM2 status")
-        print("  ----------------")
-        print(final.to_string(index = False))
-        print("//")
-        
-        try:
-            if delete_after_use:
-                os.remove(path)
-        except FileNotFoundError:
-            pass # ignore
-    
-    command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --summary | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv"""
-
-    # Pretty print the snakemake summary
-    #print("debug command:", command_status)
-    
-    # Call the snakemake --summary 
-    process_status = subprocess.run(command_status, shell = True)
-    returncode_status = process_status.returncode
-    
-    present_status(".status.tsv")
-    
-    return returncode_status
-
-
-def run_download():
-    command_download = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --config input_genomes="...dummy.fa" --until downloads"""
-
-    return subprocess.run(command_download, shell = True).returncode
-
-
-
-
 # --- Finally, run the pipeline. ------------------------------------
+
 if "--help" in trailing_arguments or "-h" in trailing_arguments:
-    # Show the help file.
-    with open(COMPAREM2_BASE + "/docs/help_text.txt") as file:
-        for line in file:
-            print(line, end = "")
-    print()
-    sys.exit(0)
+    sys.exit(run_help())
 
 elif "--version" in trailing_arguments or "-v" in trailing_arguments:
-    # Show the version.
-    print(f"comparem2 v{__version__}")
-    sys.exit(0)
+    sys.exit(run_version())
 
 
 elif "--cite" in trailing_arguments: # cite
-    print("""
-  CompareM2 Citation
-  ------------------
+    sys.exit(run_cite())
 
-  If you use CompareM2, you can support further funding by bumping the
-  citation count on this one:
-
-    - Kobel et al. CompareM2 is a genomes-to-report pipeline for comparing microbial genomes. 2024.07.12.603264 Preprint at https://doi.org/10.1101/2024.07.12.603264 (2024).
-
-  CompareM2 would not have existed, if it hadn't been for the
-  integrated software packages and their databases. Please cite the
-  appropriate tools as well. An updated list is maintained here:
-
-    - https://comparem2.readthedocs.io/en/latest/99%20citation/
-""")
-    sys.exit(0)
 
 elif "--status" in trailing_arguments: # status
-    try:
-        sys.exit(run_status())
-    except pd.errors.EmptyDataError:
-        pass
-    sys.exit(0)
+    sys.exit(run_status())
     
     
-elif "--download" in trailing_arguments: # download databases
-    sys.exit(run_download())
+elif "--downloads" in trailing_arguments: # download databases
+    sys.exit(run_downloads())
     
     
 else: # main
-    
     returncode_main = run_main()
-    
     run_status()
-    
     sys.exit(returncode_main)
     

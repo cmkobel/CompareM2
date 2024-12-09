@@ -39,12 +39,21 @@ jobs:
         run: |
           python --version
           snakemake --version
-          ./comparem2 --version
           ./comparem2 --help
+          ./comparem2 --version
+          ./comparem2 --cite
+          ./comparem2 --status
+          
 
 
       - name: dry run
         run: |
+          ./comparem2 --dry-run
+          touch dummy_1.fa; ./comparem2 --dry-run
+          touch dummy_2.fa; ./comparem2 --dry-run
+          touch dummy_3.fa; ./comparem2 --dry-run
+          
+          
           unzip tests/E._faecium/fna.zip
           ./comparem2 --config input_genomes="*.fna" --dry-run
           ./comparem2 --config input_genomes="*.fna" --until fast --dry-run
@@ -52,4 +61,5 @@ jobs:
           ./comparem2 --config input_genomes="*.fna" --until meta --dry-run
           ./comparem2 --config input_genomes="*.fna" --until downloads --dry-run
           
+          ls dummy_{2,3}.fa > fofn.txt; ./comparem2 --config fofn="fofn.txt" --dry-run   
           
