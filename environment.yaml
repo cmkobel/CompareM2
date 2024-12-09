@@ -6,7 +6,7 @@ dependencies:
   - snakemake-minimal <8
   - pulp <2.8
   - python <3.12
-  - mamba # Necessary for snakemake to install child environments during development.
+  - mamba <2 # Necessary for snakemake to install child environments during development.
   - pandas
 
 # Update this with the running requirements in https://github.com/bioconda/bioconda-recipes/blob/master/recipes/comparem2/meta.yaml
