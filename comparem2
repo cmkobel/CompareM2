@@ -167,6 +167,7 @@ def run_status():
             summary = pd.read_csv(path, delimiter="\t") 
         except pandas.errors.EmptyDataError as e:
             print("No status data to present")
+            return
         
         summary = summary.dropna(subset=["rule"])
         #print(summary)
