@@ -157,7 +157,9 @@ else: # Not using, fofn, use input_genomes which has a default value of "*.fna *
     input_genomes_parsed = get_input_genomes(config['input_genomes']) # Run with 'comparem2 --config input_genomes="my_files*.fna' to customize.
 
 if len(input_genomes_parsed) < 1:
-    raise Exception(f"Could not find {config['input_genomes']}. Quitting ...")
+    #raise Exception(f"Could not find {config['input_genomes']}. Quitting ...")
+    #print(f"Warning: No input files")
+    pass
 
 
 
@@ -167,59 +169,69 @@ df = pd.DataFrame(data = {'input_file': input_genomes_parsed})
 
 # Check that the directory is not empty.
 N = df.shape[0]
-if N == 0:
-    raise Exception("Error: No fasta files in the current directory. Quitting ...")
-    #raise Exception("Zero genomic files present.")
-    sys.exit(1)
+if N > 0:
+    
 
-# Check if there are missing files.
-missing_files = [file for file in df["input_file"].tolist() if not os.path.isfile(file)]
-if len(missing_files) > 0: # If any files do not exist, inform and exit.
-    print("Pipeline: Error, all input files must exist.")
-    raise FileNotFoundError(f"The following files are not found: {missing_files}")
+    # Check if there are missing files.
+    missing_files = [file for file in df["input_file"].tolist() if not os.path.isfile(file)]
+    if len(missing_files) > 0: # If any files do not exist, inform and exit.
+        print("Pipeline: Error, all input files must exist.")
+        raise FileNotFoundError(f"The following files are not found: {missing_files}")
+
+    # Gain basenames (file name without path)
+    df['basename'] = [os.path.basename(i) for i in df['input_file'].tolist()] # Todo: basename and basename_clean could be "sample", simply.
+
+    # Convert weird characters to underscores (mashtree doesn't like spaces).
+    df['basename_clean'] = df['basename'].str.replace(' ','_').str.replace(',','_').str.replace('"','_').str.replace('\'','_') # Convert punctuation marks to underscores: Makes everything easier.
+    
+    # Remove extension by splitting, removing last, and joining.
+    df['sample'] = [".".join((i.split(".")[:-1])) for i in df['basename_clean']] 
+    
+    # Extract extension
+    df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] 
+    
+    # This is where the input file is copied to in the first snakemake rule "copy".
+    df['input_file_fasta'] = output_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fna" 
+    
+    # Python usually uses 0-index, which may not be intuitive for lay person users. To make sure no one is confused, we name the index as a "one"-index.
+    df['1-index'] = [i+1 for i in range(len(df))] 
+
+    # Check that list of input files is non-empty.
+    if df.shape[0] == 0:
+        raise Exception("Error: No fasta files in the current directory. Quitting ...(2)")
+        #raise Exception("Zero genomic files present.")
+        sys.exit(1)
 
 
-df['basename'] = [os.path.basename(i) for i in df['input_file'].tolist()]
+    
+    # --- Display sample table ------------------------------------------
 
-# Since mashtree doesn't like spaces in filenames, we must convert those.
-df['basename_clean'] = df['basename'].str.replace(' ','_').str.replace(',','_').str.replace('"','_').str.replace('\'','_') # Convert punctuation marks to underscores: Makes everything easier.
-df['sample'] = [".".join((i.split(".")[:-1])) for i in df['basename_clean']] # Remove extension by splitting, removing last, and joining.
-df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] # Extract extension
-df['input_file_fasta'] = output_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fna" # This is where the input file is copied to in the first snakemake rule "copy".
-df['1-index'] = [i+1 for i in range(len(df))] # Python usually uses 0-index, which may not be intuitive for lay person users. To make sure no one is confused, we name the index as a "one"-index.
+    print() # Visual padding
+    print("  Sample overview")
+    print("  ---------------")
+    df = df.reset_index(drop = True)
+    #print(df[['input_file', 'sample', 'extension']])
+    #print(df[['input_file', 'extension', 'input_file_fasta']])
+    #print(df[['1-index', 'sample', 'extension']].to_string(index = False))
+    #print(df[['1-index', 'input_file', 'basename', 'sample', 'extension', 'input_file_fasta']].to_string(index = False))
+    print(df[['1-index', 'input_file', 'sample']].to_string(index = False))
 
-# Check that list of input files is non-empty.
-if df.shape[0] == 0:
-    raise Exception("Error: No fasta files in the current directory. Quitting ...(2)")
-    #raise Exception("Zero genomic files present.")
-    sys.exit(1)
+    print("//")
+    print()
 
+    # Warn the user if there exists spaces in the file names. (update but how would that be possible with the replacements?)
+    if any([" " in i for i in df['input_file'].tolist()]): # TODO test if it still works after new globbing system.
+        print("Warning: One or more file names contain space(s). These have been replaced with underscores \" \" -> \"_\"")
 
-  
-# --- Display sample table ------------------------------------------
+    # Check if the sample names are unique
+    duplicates = df[df.duplicated(['sample'])]
+    n_duplicates = duplicates.shape[0]
+    if n_duplicates > 0:
+        raise Exception(f"Error: Sample names are not unique. The following ({n_duplicates}) input genome(s) are duplicated:\n{duplicates.to_string(index = False)}")
+else:
+    df = pd.DataFrame(data = {'sample': list(), 'input_file': list(), 'input_file_fasta': list(), })
 
-print() # Visual padding
-print("  Sample overview")
-print("  ---------------")
-df = df.reset_index(drop = True)
-#print(df[['input_file', 'sample', 'extension']])
-#print(df[['input_file', 'extension', 'input_file_fasta']])
-#print(df[['1-index', 'sample', 'extension']].to_string(index = False))
-#print(df[['1-index', 'input_file', 'basename', 'sample', 'extension', 'input_file_fasta']].to_string(index = False))
-print(df[['1-index', 'input_file', 'sample']].to_string(index = False))
-
-print("//")
-print()
-
-# Warn the user if there exists spaces in the file names.
-if any([" " in i for i in df['input_file'].tolist()]): # TODO test if it still works after new globbing system.
-    print("Warning: One or more file names contain space(s). These have been replaced with underscores \" \" -> \"_\"")
-
-# Check if the sample names are unique
-duplicates = df[df.duplicated(['sample'])]
-n_duplicates = duplicates.shape[0]
-if n_duplicates > 0:
-    raise Exception(f"Error: Sample names are not unique. The following ({n_duplicates}) input genome(s) are duplicated:\n{duplicates.to_string(index = False)}")
+    print(f"Warning: No files to process.")
 
 
 # The DATABASES directory must exist, otherwise apptainer gets confused and throws the following:
@@ -244,33 +256,57 @@ localrules: metadata, annotate, antismash_download, bakta_download, eggnog_downl
 
 
 # --- Main rule to collect all targets ------------------------------
-rule all:
-    input: expand([\
-        "{output_directory}/metadata.tsv", \
-        "{output_directory}/.install_report_environment_aot.flag", \
-        "{output_directory}/assembly-stats/assembly-stats.tsv", \
-        "{output_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
-        "{output_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
-        "{output_directory}/samples/{sample}/.annotation/{sample}.gff", \
-        "{output_directory}/.install_bakta_environment_aot.flag", \
-        "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.decorated.gff", \
-        "{output_directory}/samples/{sample}/dbcan/overview.txt", \
-        "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
-        "{output_directory}/checkm2/quality_report.tsv", \
-        "{output_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
-        "{output_directory}/gtdbtk/gtdbtk.summary.tsv", \
-        "{output_directory}/abricate/card_detailed.tsv", \
-        "{output_directory}/mlst/mlst.tsv", \
-        "{output_directory}/panaroo/gene_presence_absence.Rtab", \
-        "{output_directory}/snp-dists/snp-dists.tsv", \
-        "{output_directory}/snp-dists/.done.flag", \
-        "{output_directory}/mashtree/mashtree.newick", \
-        "{output_directory}/treecluster/treecluster.tsv", \
-        "{output_directory}/fasttree/fasttree.newick", \
-        "{output_directory}/samples/{sample}/antismash/{sample}.json", \
-        "{output_directory}/iqtree/core_genome_iqtree.treefile"], \
-        output_directory = output_directory, sample = df["sample"]) 
 
+
+def generate_final_output(N):
+    final_output = list()
+    
+    if N >= 3: # Three or more
+        final_output += expand([\
+            "{output_directory}/fasttree/fasttree.newick", \
+            "{output_directory}/iqtree/core_genome_iqtree.treefile"], \
+            output_directory = output_directory, sample = df["sample"]))
+            
+    if N >= 2: # Two or more
+        final_output += expand([\
+            "{output_directory}/panaroo/gene_presence_absence.Rtab", \
+            "{output_directory}/snp-dists/snp-dists.tsv", \
+            "{output_directory}/snp-dists/.done.flag", \
+            "{output_directory}/mashtree/mashtree.newick", \
+            "{output_directory}/treecluster/treecluster.tsv", \    
+            output_directory = output_directory, sample = df["sample"]))
+
+    if N >= 1: # One or more
+        final_output += expand([\
+            "{output_directory}/metadata.tsv", \
+            "{output_directory}/.install_report_environment_aot.flag", \
+            "{output_directory}/assembly-stats/assembly-stats.tsv", \
+            "{output_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
+            "{output_directory}/samples/{sample}/busco/short_summary_extract.tsv", \
+            "{output_directory}/samples/{sample}/.annotation/{sample}.gff", \
+            "{output_directory}/.install_bakta_environment_aot.flag", \
+            "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.decorated.gff", \
+            "{output_directory}/samples/{sample}/dbcan/overview.txt", \
+            "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
+            "{output_directory}/checkm2/quality_report.tsv", \
+            "{output_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv", \
+            "{output_directory}/gtdbtk/gtdbtk.summary.tsv", \
+            "{output_directory}/abricate/card_detailed.tsv", \
+            "{output_directory}/mlst/mlst.tsv", \
+            "{output_directory}/samples/{sample}/antismash/{sample}.json", \
+            output_directory = output_directory, sample = df["sample"]))
+            
+    if N >= 0: # Zero or more
+        final_output += expand([\
+            DATABASES + "/checkm2/comparem2_checkm2_database_representative.flag",
+            DATABASES + "/busco/comparem2_busco_database_representative.flag",
+            DATABASES + "/dbcan/comparem2_dbcan_database_representative.flag",
+            DATABASES + "/gtdb/comparem2_gtdb_database_representative.flag",
+            DATABASES + "/bakta/comparem2_bakta_database_representative.flag",
+            DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag")
+        
+rule all:
+    input: generate_final_output(N)
         # "{output_directory}/samples/{sample}/gapseq/gapseq_done.flag", \ # Still working on this one.
         # "{output_directory}/samples/{sample}/antismash/{sample}.json", \ # Issue when running with apptainer
 
