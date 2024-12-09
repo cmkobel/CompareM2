@@ -163,7 +163,11 @@ def run_status():
     
     def present_status(path = ".status.tsv", delete_after_use = True): 
     
-        summary = pd.read_csv(path, delimiter="\t") 
+        try:
+            summary = pd.read_csv(path, delimiter="\t") 
+        except pandas.errors.EmptyDataError as e:
+            print("No status data to present")
+        
         summary = summary.dropna(subset=["rule"])
         #print(summary)
         
