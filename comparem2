@@ -237,7 +237,7 @@ def run_status():
     return returncode_status
 
 def run_downloads():
-    command_download = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --config input_genomes="{COMPAREM2_BASE}/resources/dummy.fa" --until downloads"""
+    command_download = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --config input_genomes="" --until downloads"""
 
     return subprocess.run(command_download, shell = True).returncode
 
