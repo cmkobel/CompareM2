@@ -2,10 +2,13 @@ NAME
   CompareM2 (a.k.a. "comparem2") - Genomes to report pipeline
 
 SYNOPSIS
-  comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]  [ --until RULE [RULE2]... ]
+  comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
+    [ --until RULE [RULE2]... ]
     [ --forcerun RULE [RULE2]... ]
+    [ --printshellcmds ]
     [ --dry-run ]
-    [ --version ]  [ --help ]
+    [ --status ]
+    [ --version ]  [ --help ]  [ --cite ]
 
 DESCRIPTION
   Analyses bacterial and archaeal genomes.
@@ -46,11 +49,17 @@ OPTIONS
   --forcerun RULE [RULE2]...
     Force rerunning of one or more rules that already have been completed. This is generally necessary when changing running parameters in the config (see "--config" above).
     
+  --printshellcmds, -p
+    Print the full generated shell commands of each rule in the workflow. 
+    
   --dry-run
     Run a "dry run": Shows what will run without doing it.
 
   --version, -v 
     Show current version.
+
+  --status
+    Print the state of completion of the rules in the pipeline of the current working directory. The percentage of completed files are shown.
     
   --help, -h
     Show this help and exit.
