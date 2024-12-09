@@ -2,6 +2,6 @@ name: assembly-stats
 channels:
   - conda-forge
   - bioconda
-  - defaults
+  #- defaults
 dependencies:
   - assembly-stats=1

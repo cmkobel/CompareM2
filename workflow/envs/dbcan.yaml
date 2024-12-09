@@ -1,6 +1,6 @@
 name: dbcan
 channels:
-  - anaconda
+  #- anaconda
   - conda-forge
   - bioconda
 dependencies:

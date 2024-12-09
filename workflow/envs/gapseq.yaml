@@ -2,7 +2,6 @@ name: gapseq
 channels:
   - conda-forge
   - bioconda
-  - defaults
   - r
 dependencies:
   - r-base=4.3

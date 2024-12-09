@@ -1,5 +1,6 @@
 name: fasttree
 channels:
+  - conda-forge
   - bioconda
 dependencies:
   - fasttree=2
