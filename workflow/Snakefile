@@ -52,7 +52,6 @@ def get_input_genomes(pattern):
     """ Runs ls on the pattern and parses what is returned. Uses module subprocess.
     """
 
-
     if pattern is not None:
     
         # Construct full command.
@@ -343,7 +342,7 @@ rule metadata:
     resources:
         runtime = "1h"
     shell: """
-        echo '''{params.dataframe}''' > "{output:q}"
+        echo '''{params.dataframe}''' > {output:q}
         {void_report}
     """
 

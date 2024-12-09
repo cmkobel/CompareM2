@@ -1,5 +1,10 @@
 2.12.1
-  - Remove anaconda and defaults channels from worklow conda envs
+  - Breaking change: New Docker image.
+  - Remove anaconda and defaults channels from worklow conda envs.
+  - Rule "all" inputs are now set by the number of input genomes.
+  - Added --downloads functionality. (Thanks to @auve)
+  - Handles empty input genomes.
+  
 
 2.11.2
   - Disabled any2fasta. Not relevant when only supporting fasta files is input anyway.
