@@ -2,7 +2,6 @@ name: r-markdown
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
   - r-base=4.1 #=4.2.2
   - r-essentials

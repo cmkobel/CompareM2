@@ -1,5 +1,6 @@
 name: interproscan
 channels: 
+  - conda-forge
   - bioconda
 dependencies:
   - interproscan=5

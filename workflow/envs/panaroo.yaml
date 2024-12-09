@@ -2,7 +2,7 @@ name: panaroo
 channels:
   - conda-forge
   - bioconda
-  - defaults
+  #- defaults
 dependencies:
   - python=3.9
   - panaroo>=1.3

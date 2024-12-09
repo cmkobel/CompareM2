@@ -1,3 +1,6 @@
+2.12.1
+  - Remove anaconda and defaults channels from worklow conda envs
+
 2.11.2
   - Disabled any2fasta. Not relevant when only supporting fasta files is input anyway.
   - Updated KEGG data from 2023-08-28 to 2024-08-13.
