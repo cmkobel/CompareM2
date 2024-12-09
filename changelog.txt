@@ -2,7 +2,7 @@
   - Breaking change: New Docker image.
   - Remove anaconda and defaults channels from worklow conda envs.
   - Rule "all" inputs are now set by the number of input genomes.
-  - Added --downloads functionality. (Thanks to @auve)
+  - Added --downloads functionality. (Thanks to @avera1988)
   - Handles empty input genomes.
   
 
