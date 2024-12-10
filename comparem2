@@ -4,7 +4,7 @@ __author__ = "Carl M. Kobel"
 
 
 # --- Development: Versioning ---------------------------------------
-__version__ = "2.11.2"
+__version__ = "2.12.1"
 # Places to bump
 #  - here
 #  - workflow/Snakefile, because the snakefile can possibly be run without the ./comparem2 binary. Report gets from here.
@@ -25,10 +25,12 @@ __version__ = "2.11.2"
 
 # --- Development: Update Dockerfile --------------------------------
 # Update Dockerfile:
-# ./comparem2 --containerize | grep -A 10000 "FROM condaforge" > Dockerfile
-# And remove the header text (comparem2 logo, etc.) if necessary.
-# The docker image can then be built:
-# sudo docker build -t cmkobel/comparem2:v2.10 . && sudo docker push cmkobel/comparem2:v2.10
+# ./comparem2 --containerize | grep -A 10000 "FROM condaforge" | grep -B 10000 "mamba clean --all -y" > Dockerfile
+# And check that there is no  preceding or following text (comparem2 logo, status summary etc.).
+# The docker image can then be built: (example)
+# apptainer_cm2_version="v2.11"
+# echo $apptainer_cm2_version
+# sudo docker build -t cmkobel/comparem2:${apptainer_cm2_version} . && sudo docker push cmkobel/comparem2:${apptainer_cm2_version}
 
 # In case the exact same docker image should be used for consecutive versions of comparem2: (example)
 # sudo docker pull cmkobel/comparem2:v2.9

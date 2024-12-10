@@ -1,17 +1,16 @@
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="1012a21c168dba061542d315c54c19d5de65aa5c4817eedcaaf1733f1ad13ddc"
+LABEL io.github.snakemake.conda_env_hash="3562fc390be15359c3108e94d044e36fba8cf71fa123135885fa10bdb9d64e4a"
 
 # Step 1: Retrieve conda environments
 
 # Conda environment:
 #   source: dynamic_report/workflow/envs/r-markdown.yaml
-#   prefix: /conda-envs/b06d3784eaabfc8abcf62a294f54bad9
+#   prefix: /conda-envs/b5c6b988e4a325065292b3d680193d32
 #   name: r-markdown
 #   channels:
 #     - conda-forge
 #     - bioconda
-#     - defaults
 #   dependencies:
 #     - r-base=4.1 #=4.2.2
 #     - r-essentials
@@ -27,30 +26,30 @@ LABEL io.github.snakemake.conda_env_hash="1012a21c168dba061542d315c54c19d5de65aa
 #     #- r-gridextra
 #   
 #   # Removing most of these dependencies fixes the #74 issue. So the plan now is to purge as many of them as possible and then build a new master docker image and see if it fixes the problem. KISS, no bloat, is the philosophy.
-RUN mkdir -p /conda-envs/b06d3784eaabfc8abcf62a294f54bad9
-COPY dynamic_report/workflow/envs/r-markdown.yaml /conda-envs/b06d3784eaabfc8abcf62a294f54bad9/environment.yaml
+RUN mkdir -p /conda-envs/b5c6b988e4a325065292b3d680193d32
+COPY dynamic_report/workflow/envs/r-markdown.yaml /conda-envs/b5c6b988e4a325065292b3d680193d32/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/abricate.yaml
-#   prefix: /conda-envs/a77979bb28302ba15eb49ca8f93197f7
+#   prefix: /conda-envs/0c9e577925e28e957323002a68981008
 #   name: abricate
 #   channels:
 #     - conda-forge
 #     - bioconda
-#     - defaults
+#     #- defaults
 #   dependencies:
 #     - abricate=1
-RUN mkdir -p /conda-envs/a77979bb28302ba15eb49ca8f93197f7
-COPY workflow/envs/abricate.yaml /conda-envs/a77979bb28302ba15eb49ca8f93197f7/environment.yaml
+RUN mkdir -p /conda-envs/0c9e577925e28e957323002a68981008
+COPY workflow/envs/abricate.yaml /conda-envs/0c9e577925e28e957323002a68981008/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/antismash.yaml
-#   prefix: /conda-envs/2ae6d7c5468f4b0e569c09e067b92cfe
+#   prefix: /conda-envs/4ae94d2c4b9a52f46cfad5eb92750982
 #   name: antismash
 #   channels: 
 #     - conda-forge
 #     - bioconda
-#     - defaults
+#     #- defaults
 #   dependencies:
 #     - antismash=7
 #   
@@ -58,33 +57,21 @@ COPY workflow/envs/abricate.yaml /conda-envs/a77979bb28302ba15eb49ca8f93197f7/en
 #   # conda activate antismash
 #   # download-antismash-databases
 #   # conda deactivate
-RUN mkdir -p /conda-envs/2ae6d7c5468f4b0e569c09e067b92cfe
-COPY workflow/envs/antismash.yaml /conda-envs/2ae6d7c5468f4b0e569c09e067b92cfe/environment.yaml
-
-# Conda environment:
-#   source: workflow/envs/any2fasta.yaml
-#   prefix: /conda-envs/55f257b7a2d5325550dfe5652bd53c22
-#   name: any2fasta
-#   channels:
-#     - conda-forge
-#     - bioconda
-#   dependencies:
-#     - any2fasta=0
-RUN mkdir -p /conda-envs/55f257b7a2d5325550dfe5652bd53c22
-COPY workflow/envs/any2fasta.yaml /conda-envs/55f257b7a2d5325550dfe5652bd53c22/environment.yaml
+RUN mkdir -p /conda-envs/4ae94d2c4b9a52f46cfad5eb92750982
+COPY workflow/envs/antismash.yaml /conda-envs/4ae94d2c4b9a52f46cfad5eb92750982/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/assembly-stats.yaml
-#   prefix: /conda-envs/5c39a05942fff213bbc045e0d6dc61a3
+#   prefix: /conda-envs/b116edf022cd78b810f7c18e1d4cb568
 #   name: assembly-stats
 #   channels:
 #     - conda-forge
 #     - bioconda
-#     - defaults
+#     #- defaults
 #   dependencies:
 #     - assembly-stats=1
-RUN mkdir -p /conda-envs/5c39a05942fff213bbc045e0d6dc61a3
-COPY workflow/envs/assembly-stats.yaml /conda-envs/5c39a05942fff213bbc045e0d6dc61a3/environment.yaml
+RUN mkdir -p /conda-envs/b116edf022cd78b810f7c18e1d4cb568
+COPY workflow/envs/assembly-stats.yaml /conda-envs/b116edf022cd78b810f7c18e1d4cb568/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/bakta.yaml
@@ -102,18 +89,6 @@ RUN mkdir -p /conda-envs/349bbcba5bdfd7faab9097a8a3f7f6d2
 COPY workflow/envs/bakta.yaml /conda-envs/349bbcba5bdfd7faab9097a8a3f7f6d2/environment.yaml
 
 # Conda environment:
-#   source: workflow/envs/busco.yaml
-#   prefix: /conda-envs/29ddfde03b648d05bcbe1b488c9d275e
-#   name: busco
-#   channels:
-#     - conda-forge
-#     - bioconda
-#   dependencies:
-#     - busco=5.7
-RUN mkdir -p /conda-envs/29ddfde03b648d05bcbe1b488c9d275e
-COPY workflow/envs/busco.yaml /conda-envs/29ddfde03b648d05bcbe1b488c9d275e/environment.yaml
-
-# Conda environment:
 #   source: workflow/envs/checkm2.yaml
 #   prefix: /conda-envs/cc9543e16cbf71e94c901e40623c2b25
 #   name: checkm2_conda
@@ -127,18 +102,18 @@ COPY workflow/envs/checkm2.yaml /conda-envs/cc9543e16cbf71e94c901e40623c2b25/env
 
 # Conda environment:
 #   source: workflow/envs/dbcan.yaml
-#   prefix: /conda-envs/8fd5cba1a415e69056b71dd889a203b8
+#   prefix: /conda-envs/06095a97a5b2a1ad8552af1df6312c10
 #   name: dbcan
 #   channels:
-#     - anaconda
+#     #- anaconda
 #     - conda-forge
 #     - bioconda
 #   dependencies:
 #     - python=3.8
 #     - dbcan=4 #.1.3 # I might want to fix this to 4.1.3 as I'm seeing problems with 4.1.4 ?
-#     - anaconda::wget # Not sure if I should also add anaconda as a channel?
-RUN mkdir -p /conda-envs/8fd5cba1a415e69056b71dd889a203b8
-COPY workflow/envs/dbcan.yaml /conda-envs/8fd5cba1a415e69056b71dd889a203b8/environment.yaml
+#     - conda-forge::wget # Not sure if I should also add anaconda as a channel?
+RUN mkdir -p /conda-envs/06095a97a5b2a1ad8552af1df6312c10
+COPY workflow/envs/dbcan.yaml /conda-envs/06095a97a5b2a1ad8552af1df6312c10/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/eggnog.yaml
@@ -158,14 +133,15 @@ COPY workflow/envs/eggnog.yaml /conda-envs/5ab146b4f8a224935ba7154dde2d9065/envi
 
 # Conda environment:
 #   source: workflow/envs/fasttree.yaml
-#   prefix: /conda-envs/785d03a6b41f3872cfe5d325544fd5a7
+#   prefix: /conda-envs/5bf95c616c0ba0db0478590fc40d2505
 #   name: fasttree
 #   channels:
+#     - conda-forge
 #     - bioconda
 #   dependencies:
 #     - fasttree=2
-RUN mkdir -p /conda-envs/785d03a6b41f3872cfe5d325544fd5a7
-COPY workflow/envs/fasttree.yaml /conda-envs/785d03a6b41f3872cfe5d325544fd5a7/environment.yaml
+RUN mkdir -p /conda-envs/5bf95c616c0ba0db0478590fc40d2505
+COPY workflow/envs/fasttree.yaml /conda-envs/5bf95c616c0ba0db0478590fc40d2505/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/gtdbtk.yaml
@@ -181,16 +157,17 @@ COPY workflow/envs/gtdbtk.yaml /conda-envs/df2a53a81d11717a831dda8590f53cd5/envi
 
 # Conda environment:
 #   source: workflow/envs/interproscan.yaml
-#   prefix: /conda-envs/8614b56b87888c570d4ed7d9eda3b5be
+#   prefix: /conda-envs/7d12a67dde56d160f55937194337f2c4
 #   name: interproscan
 #   channels: 
+#     - conda-forge
 #     - bioconda
 #   dependencies:
 #     - interproscan=5
 #   
 #   # conda install -c bioconda interproscan
-RUN mkdir -p /conda-envs/8614b56b87888c570d4ed7d9eda3b5be
-COPY workflow/envs/interproscan.yaml /conda-envs/8614b56b87888c570d4ed7d9eda3b5be/environment.yaml
+RUN mkdir -p /conda-envs/7d12a67dde56d160f55937194337f2c4
+COPY workflow/envs/interproscan.yaml /conda-envs/7d12a67dde56d160f55937194337f2c4/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/iqtree.yaml
@@ -218,46 +195,46 @@ COPY workflow/envs/mashtree.yaml /conda-envs/19c3e22137382d27c7ff2a7f802d1b99/en
 
 # Conda environment:
 #   source: workflow/envs/mlst.yaml
-#   prefix: /conda-envs/9d60f0b222fb3b85a8e15fb48d16d15b
+#   prefix: /conda-envs/441fdf65234f80a1472c9e3dabc23e99
 #   name: mlst
 #   channels:
 #     - conda-forge
 #     - bioconda
-#     - defaults    
+#     #- defaults    
 #   dependencies:
 #     - mlst=2
-RUN mkdir -p /conda-envs/9d60f0b222fb3b85a8e15fb48d16d15b
-COPY workflow/envs/mlst.yaml /conda-envs/9d60f0b222fb3b85a8e15fb48d16d15b/environment.yaml
+RUN mkdir -p /conda-envs/441fdf65234f80a1472c9e3dabc23e99
+COPY workflow/envs/mlst.yaml /conda-envs/441fdf65234f80a1472c9e3dabc23e99/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/panaroo.yaml
-#   prefix: /conda-envs/75b0e966fbd3cc274cc2d44b43c772ea
+#   prefix: /conda-envs/ee827f9c5c29bae85e8f39537571ae58
 #   name: panaroo
 #   channels:
 #     - conda-forge
 #     - bioconda
-#     - defaults
+#     #- defaults
 #   dependencies:
 #     - python=3.9
 #     - panaroo>=1.3
 #     
 #   # https://gtonkinhill.github.io/panaroo/#/gettingstarted/installation
-RUN mkdir -p /conda-envs/75b0e966fbd3cc274cc2d44b43c772ea
-COPY workflow/envs/panaroo.yaml /conda-envs/75b0e966fbd3cc274cc2d44b43c772ea/environment.yaml
+RUN mkdir -p /conda-envs/ee827f9c5c29bae85e8f39537571ae58
+COPY workflow/envs/panaroo.yaml /conda-envs/ee827f9c5c29bae85e8f39537571ae58/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/prokka.yaml
-#   prefix: /conda-envs/b417c9814002b674416363d8b7b41887
+#   prefix: /conda-envs/6c1c1cc7bda74d875fab714481417a27
 #   name: prokka
 #   channels:
 #     - conda-forge
 #     - bioconda
-#     - defaults # not sure about whether this one should be present
+#     #- defaults # not sure about whether this one should be present
 #   dependencies:
 #     - prokka=1
 #     - openjdk<=17.0.2
-RUN mkdir -p /conda-envs/b417c9814002b674416363d8b7b41887
-COPY workflow/envs/prokka.yaml /conda-envs/b417c9814002b674416363d8b7b41887/environment.yaml
+RUN mkdir -p /conda-envs/6c1c1cc7bda74d875fab714481417a27
+COPY workflow/envs/prokka.yaml /conda-envs/6c1c1cc7bda74d875fab714481417a27/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/r-clusterProfiler.yaml
@@ -275,14 +252,15 @@ COPY workflow/envs/r-clusterProfiler.yaml /conda-envs/c7ea168f1c2f891901d5ae5c90
 
 # Conda environment:
 #   source: workflow/envs/seqkit.yaml
-#   prefix: /conda-envs/578271d635a58e711b2c022ba49a040e
+#   prefix: /conda-envs/87a18131a84b118b7e4841b35afee564
 #   name: seqkit
 #   channels:
+#     - conda-forge
 #     - bioconda
 #   dependencies:
 #     - seqkit=2
-RUN mkdir -p /conda-envs/578271d635a58e711b2c022ba49a040e
-COPY workflow/envs/seqkit.yaml /conda-envs/578271d635a58e711b2c022ba49a040e/environment.yaml
+RUN mkdir -p /conda-envs/87a18131a84b118b7e4841b35afee564
+COPY workflow/envs/seqkit.yaml /conda-envs/87a18131a84b118b7e4841b35afee564/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/snp-dists.yaml
@@ -321,26 +299,24 @@ COPY workflow/envs/wget.yaml /conda-envs/3d07f847725ad902762b77365977b881/enviro
 
 # Step 2: Generate conda environments
 
-RUN mamba env create --prefix /conda-envs/b06d3784eaabfc8abcf62a294f54bad9 --file /conda-envs/b06d3784eaabfc8abcf62a294f54bad9/environment.yaml && \
-    mamba env create --prefix /conda-envs/a77979bb28302ba15eb49ca8f93197f7 --file /conda-envs/a77979bb28302ba15eb49ca8f93197f7/environment.yaml && \
-    mamba env create --prefix /conda-envs/2ae6d7c5468f4b0e569c09e067b92cfe --file /conda-envs/2ae6d7c5468f4b0e569c09e067b92cfe/environment.yaml && \
-    mamba env create --prefix /conda-envs/55f257b7a2d5325550dfe5652bd53c22 --file /conda-envs/55f257b7a2d5325550dfe5652bd53c22/environment.yaml && \
-    mamba env create --prefix /conda-envs/5c39a05942fff213bbc045e0d6dc61a3 --file /conda-envs/5c39a05942fff213bbc045e0d6dc61a3/environment.yaml && \
+RUN mamba env create --prefix /conda-envs/b5c6b988e4a325065292b3d680193d32 --file /conda-envs/b5c6b988e4a325065292b3d680193d32/environment.yaml && \
+    mamba env create --prefix /conda-envs/0c9e577925e28e957323002a68981008 --file /conda-envs/0c9e577925e28e957323002a68981008/environment.yaml && \
+    mamba env create --prefix /conda-envs/4ae94d2c4b9a52f46cfad5eb92750982 --file /conda-envs/4ae94d2c4b9a52f46cfad5eb92750982/environment.yaml && \
+    mamba env create --prefix /conda-envs/b116edf022cd78b810f7c18e1d4cb568 --file /conda-envs/b116edf022cd78b810f7c18e1d4cb568/environment.yaml && \
     mamba env create --prefix /conda-envs/349bbcba5bdfd7faab9097a8a3f7f6d2 --file /conda-envs/349bbcba5bdfd7faab9097a8a3f7f6d2/environment.yaml && \
-    mamba env create --prefix /conda-envs/29ddfde03b648d05bcbe1b488c9d275e --file /conda-envs/29ddfde03b648d05bcbe1b488c9d275e/environment.yaml && \
     mamba env create --prefix /conda-envs/cc9543e16cbf71e94c901e40623c2b25 --file /conda-envs/cc9543e16cbf71e94c901e40623c2b25/environment.yaml && \
-    mamba env create --prefix /conda-envs/8fd5cba1a415e69056b71dd889a203b8 --file /conda-envs/8fd5cba1a415e69056b71dd889a203b8/environment.yaml && \
+    mamba env create --prefix /conda-envs/06095a97a5b2a1ad8552af1df6312c10 --file /conda-envs/06095a97a5b2a1ad8552af1df6312c10/environment.yaml && \
     mamba env create --prefix /conda-envs/5ab146b4f8a224935ba7154dde2d9065 --file /conda-envs/5ab146b4f8a224935ba7154dde2d9065/environment.yaml && \
-    mamba env create --prefix /conda-envs/785d03a6b41f3872cfe5d325544fd5a7 --file /conda-envs/785d03a6b41f3872cfe5d325544fd5a7/environment.yaml && \
+    mamba env create --prefix /conda-envs/5bf95c616c0ba0db0478590fc40d2505 --file /conda-envs/5bf95c616c0ba0db0478590fc40d2505/environment.yaml && \
     mamba env create --prefix /conda-envs/df2a53a81d11717a831dda8590f53cd5 --file /conda-envs/df2a53a81d11717a831dda8590f53cd5/environment.yaml && \
-    mamba env create --prefix /conda-envs/8614b56b87888c570d4ed7d9eda3b5be --file /conda-envs/8614b56b87888c570d4ed7d9eda3b5be/environment.yaml && \
+    mamba env create --prefix /conda-envs/7d12a67dde56d160f55937194337f2c4 --file /conda-envs/7d12a67dde56d160f55937194337f2c4/environment.yaml && \
     mamba env create --prefix /conda-envs/31753de779143be0587a030432205123 --file /conda-envs/31753de779143be0587a030432205123/environment.yaml && \
     mamba env create --prefix /conda-envs/19c3e22137382d27c7ff2a7f802d1b99 --file /conda-envs/19c3e22137382d27c7ff2a7f802d1b99/environment.yaml && \
-    mamba env create --prefix /conda-envs/9d60f0b222fb3b85a8e15fb48d16d15b --file /conda-envs/9d60f0b222fb3b85a8e15fb48d16d15b/environment.yaml && \
-    mamba env create --prefix /conda-envs/75b0e966fbd3cc274cc2d44b43c772ea --file /conda-envs/75b0e966fbd3cc274cc2d44b43c772ea/environment.yaml && \
-    mamba env create --prefix /conda-envs/b417c9814002b674416363d8b7b41887 --file /conda-envs/b417c9814002b674416363d8b7b41887/environment.yaml && \
+    mamba env create --prefix /conda-envs/441fdf65234f80a1472c9e3dabc23e99 --file /conda-envs/441fdf65234f80a1472c9e3dabc23e99/environment.yaml && \
+    mamba env create --prefix /conda-envs/ee827f9c5c29bae85e8f39537571ae58 --file /conda-envs/ee827f9c5c29bae85e8f39537571ae58/environment.yaml && \
+    mamba env create --prefix /conda-envs/6c1c1cc7bda74d875fab714481417a27 --file /conda-envs/6c1c1cc7bda74d875fab714481417a27/environment.yaml && \
     mamba env create --prefix /conda-envs/c7ea168f1c2f891901d5ae5c900889dd --file /conda-envs/c7ea168f1c2f891901d5ae5c900889dd/environment.yaml && \
-    mamba env create --prefix /conda-envs/578271d635a58e711b2c022ba49a040e --file /conda-envs/578271d635a58e711b2c022ba49a040e/environment.yaml && \
+    mamba env create --prefix /conda-envs/87a18131a84b118b7e4841b35afee564 --file /conda-envs/87a18131a84b118b7e4841b35afee564/environment.yaml && \
     mamba env create --prefix /conda-envs/c003df5f674e91aedca01151ce198f86 --file /conda-envs/c003df5f674e91aedca01151ce198f86/environment.yaml && \
     mamba env create --prefix /conda-envs/460abd4b10197ad284c861f21f94f546 --file /conda-envs/460abd4b10197ad284c861f21f94f546/environment.yaml && \
     mamba env create --prefix /conda-envs/3d07f847725ad902762b77365977b881 --file /conda-envs/3d07f847725ad902762b77365977b881/environment.yaml && \
