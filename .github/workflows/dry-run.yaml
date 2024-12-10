@@ -49,6 +49,7 @@ jobs:
       - name: dry run
         run: |
           ./comparem2 --dry-run
+          rm -rf .snakemake results_comparem2
 
           ./comparem2 --until metadata
           rm -rf .snakemake results_comparem2
