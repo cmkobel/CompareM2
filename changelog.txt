@@ -4,7 +4,7 @@
   - Rule "all" inputs are now set by the number of input genomes.
   - Added --downloads functionality. (Thanks to @avera1988)
   - Handles empty input genomes.
-  - Removed busco altogether. Had too many problems with hanging jobs and crashes/incomplete results.
+  - Removed busco altogether. Had too many problems with hanging jobs and crashes/incomplete results. 
   
 
 2.11.2
