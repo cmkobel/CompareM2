@@ -64,7 +64,6 @@ def get_input_genomes(pattern):
         # Parse and return
         decoded = ls.stdout.decode('utf-8').split("\n")
         decoded_nonempty = [i for i in decoded if i != ''] # If there are no matches, we must remove the empty result. Also, there is always an empty result in the end because ls returns a final newline.
-        print("dn", decoded_nonempty)
         return decoded_nonempty
     
     else: # The pattern is none when empty, so this is an extreme edge case to handle, but nice nonetheless.

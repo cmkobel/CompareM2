@@ -251,7 +251,7 @@ rule antismash:
     shell: """
     
         # Clean directory. Antismash will fail if previous files exist.
-        rm $(dirname {output.json:q})/* || echo no files
+        rm -rf $(dirname {output.json:q})/* || echo "Continuing ..."
         
         # Collect version number.
         antismash --version > "$(dirname {output.json})/.software_version.txt"
