@@ -30,9 +30,6 @@ output_directory: "results_comparem2"
 set_bakta--translation-table: 11
 set_bakta--gram: "?"
 
-set_busco--tar: "" # flag
-set_busco--auto-lineage-prok: "" # flag
-
 set_eggnog-m: diamond
 
 set_fasttree-gtr: ""

@@ -1,50 +1,6 @@
 
 # --- Downloads -----------------------------------------------------------------
 
-# This rule runs once, downloading the busco dataset that is needed for rule busco.
-# Make sure that this job is run on a node that has internet access.
-rule busco_download:
-    output:
-        #touch("{base_variable}/databases/busco/busco_download_done.flag") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        #database_representative = touch("{base_variable}/databases/busco/file_versions.tsv") # Be aware that using snakemake --forcerun will delete the output before rerunning, thus the flag will _always_ be missing. This is  only relevant during development.
-        database_representative = touch(DATABASES + "/busco/comparem2_busco_database_representative.flag") # Should point to the directory where the following files reside: "file_versions.tsv  lineages/  placement_files/"
-    conda: "../envs/busco.yaml"
-    shell: """
-
-        # If some previous batch of comparem2 has downloaded the database, we'll just reuse it.
-        if [ -f "{output}" ]; then    
-
-            >&2 echo "Flag exists already: touch it to update the mtime ..."
-            touch {output:q}
-            
-        else
-
-            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
-
-            # Busco is a bit stupid in the way that it requires an input file, but doesn't read it when you just download.
-            touch dummy.fasta
-            
-            # https://busco.ezlab.org/busco_userguide.html#download-and-automated-update
-            busco \
-                --in dummy.fasta \
-                --out dummy \
-                --mode geno \
-                --auto-lineage-prok \
-                --force \
-                --download_path $(dirname {output:q}) \
-                --download prokaryota
-            
-            
-            touch {output:q}
-
-            # Clean up 
-            rm dummy.fasta
-        
-        fi
-
-    """
-
-
 
 # Updated according to chklovski's idea in https://github.com/chklovski/CheckM2/issues/73#issuecomment-1744207103
 rule checkm2_download:

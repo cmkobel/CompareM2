@@ -20,7 +20,6 @@ First, independent analyses are run on each of the input genomic assembly files.
 
   - `sequence_lengths` [seqkit](https://bioinf.shenwei.me/seqkit/usage/) Lengths and GC-content of individual contigs.
   - `assembly_stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) Generic assembly statistics.
-  - `busco` [BUSCO](https://busco.ezlab.org/) Estimate assembly completeness and contamination.
   - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) Estimate assembly completeness and contamination.
   - `prokka` [prokka](https://github.com/tseemann/prokka) Genomic annotation of Archaea and Bacteria. 
   - `bakta` [bakta](https://github.com/oschwengers/bakta) Genomic annotation of Bacteria (lacking in report, but used downstream by other tools).
@@ -49,7 +48,7 @@ Then on the basis of the analysis of each input genomic assembly, these analyses
 
 ## Pseudo-rules
 
-There are also a few pseudo targets defined. For instance `fast` which runs sequence_lengths, assembly-stats and mashtree. There is also one named `isolate` which runs all the analyses that are relevant for clinical isolates (sequence_lengths, prokka, mlst, abricate, assembly-stats, gtdbtk, busco, checkm2, roary, snp-dists, fasttree, mashtree) as well as one named `meta` which runs the analyses that are relevant to metagenomes (aka. MAGs), these are sequence_lengths, prokka, gtdbtk, busco, checkm2, mashtree.
+There are also a few pseudo targets defined. For instance `fast` which runs sequence_lengths, assembly-stats and mashtree. There is also one named `isolate` which runs all the analyses that are relevant for clinical isolates (sequence_lengths, prokka, mlst, abricate, assembly-stats, gtdbtk, checkm2, roary, snp-dists, fasttree, mashtree) as well as one named `meta` which runs the analyses that are relevant to metagenomes (aka. MAGs), these are sequence_lengths, prokka, gtdbtk, checkm2, mashtree.
 
 
 !!! note "Hint"

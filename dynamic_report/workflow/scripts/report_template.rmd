@@ -63,12 +63,6 @@ library(rmarkdown)
 debug = F
 if (debug) {
         
-    # busco on mac
-    base_variable = "~/comparem2/"
-    output_directory = "results_comparem2_fixstr_busco"
-    setwd("~/comparem2/")
-    batch_title = basename(getwd())
-    
     # panaroo on mac
     base_variable = "~/comparem2/"
     output_directory = "results_comparem2_panaroo"
@@ -246,7 +240,6 @@ Here is an overview of the number of result files that have been found for each 
 
 # glob$assembly_stats = Sys.glob(paste0(output_directory, "/assembly-stats/assembly-stats.tsv"))
 # glob$prokka = Sys.glob(paste0(output_directory, "/samples/*/prokka/*.txt"))
-# glob$busco = Sys.glob(paste0(output_directory, "/samples/*/busco/*_omesnatoehsnatoe_extract.tsv"))
 
 # Each section of this report is rendered on the basis of the presence of relevant result files.
 # In the table below, the globs, and expected number of globs are defined. 
@@ -256,7 +249,6 @@ section_definition_table = tribble(
 
     "assembly_stats",    1, Sys.glob(paste0(output_directory, "/assembly-stats/assembly-stats.tsv")),
     "sequence_lengths",  N, Sys.glob(paste0(output_directory, "/samples/*/sequence_lengths/*.tsv")),
-    "busco",             N, Sys.glob(paste0(output_directory, "/samples/*/busco/short_summary_extract.tsv")),
     "checkm2",           1, Sys.glob(paste0(output_directory, "/checkm2/quality_report.tsv")),
     "gtdbtk",            1, Sys.glob(paste0(output_directory, "/gtdbtk/gtdbtk.summary.tsv")),
     "mlst",              1, Sys.glob(paste0(output_directory, "/mlst/mlst.tsv")),
@@ -328,8 +320,6 @@ section_definition_table %>%
 ```{r section_sequence_lengths, child = paste0(report_scripts, "section_sequence_lengths.rmd"), eval = render$sequence_lengths}
 ```
 
-```{r section_busco, child = paste0(report_scripts, "section_busco.rmd"), eval = render$busco}
-```
 
 ```{r section_checkm2, child = paste0(report_scripts, "section_checkm2.rmd"), eval = render$checkm2}
 ```

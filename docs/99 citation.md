@@ -26,7 +26,6 @@ CompareM2 would not have existed, if it hadn't been for the integrated software 
   - Jolley, K. A. & Maiden, M. C. BIGSdb: Scalable analysis of bacterial genome variation at the population level. BMC Bioinformatics 11, 595 (2010).
   - Katz, L. S. et al. Mashtree: a rapid comparison of whole genome sequence files. J. Open Source Softw. 4, 1762 (2019).
   - Liu, B., Zheng, D., Zhou, S., Chen, L. & Yang, J. VFDB 2022: a general classification scheme for bacterial virulence factors. Nucleic Acids Res. 50, D912–D917 (2022).
-  - Manni, M., Berkeley, M. R., Seppey, M., Simão, F. A. & Zdobnov, E. M. BUSCO Update: Novel and Streamlined Workflows along with Broader and Deeper Phylogenetic Coverage for Scoring of Eukaryotic, Prokaryotic, and Viral Genomes. Mol. Biol. Evol. 38, 4647–4654 (2021).
   - Miell, I. & Sayers, A. Docker in Practice, Second Edition. (Simon and Schuster, 2019).
   - Minh, B. Q. et al. IQ-TREE 2: New Models and Efficient Methods for Phylogenetic Inference in the Genomic Era. Mol. Biol. Evol. 37, 1530–1534 (2020).
   - Mölder, F. et al. Sustainable data analysis with Snakemake. Preprint at https://doi.org/10.12688/f1000research.29032.2 (2021).
