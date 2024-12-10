@@ -49,6 +49,10 @@ jobs:
       - name: dry run
         run: |
           ./comparem2 --dry-run
+
+          ./comparem2 --until metadata
+          rm -rf .snakemake results_comparem2
+          
           touch dummy_1.fa; ./comparem2 --dry-run
           touch dummy_2.fa; ./comparem2 --dry-run
           touch dummy_3.fa; ./comparem2 --dry-run
