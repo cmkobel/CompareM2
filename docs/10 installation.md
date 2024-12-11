@@ -26,7 +26,7 @@ Finally, CompareM2 can be installed into its own environment with the correct ch
 
 ```bash
 
-mamba create -c conda-forge -c bioconda -n comparem2 comparem2
+mamba create -c conda-forge -c bioconda -n comparem2 comparem2="2.11"
 
 ```
 
