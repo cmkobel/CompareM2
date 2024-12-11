@@ -20,8 +20,8 @@ version_patch = ".".join(__version__.split(".")[:3])
 # Docker image is only updated for each minor version. This reduces overhead related to storage, transfer, and debugging.
 containerized: f"docker://cmkobel/comparem2:v{version_minor}"
 
-print('report subpipeline: output_directory:', output_directory)
-print('report subpipeline: base_variable:', base_variable)
+#print('Info: report: output_directory:', output_directory)
+#print('Info: report: base_variable:', base_variable)
 
 
 try: 

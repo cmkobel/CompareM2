@@ -11,7 +11,6 @@ version_major = ".".join(__version__.split(".")[:1])
 version_minor = ".".join(__version__.split(".")[:2])
 version_patch = ".".join(__version__.split(".")[:3])
 
-
 import os
 from os import listdir
 from os.path import isfile, join
@@ -269,7 +268,7 @@ localrules: metadata, annotate, antismash_download, bakta_download, eggnog_downl
 
 def generate_final_output(N):
     """Depending on the number of input genomes, different analyses make sense"""
-    print(f"Info: Deciding revelant outputs depending on the number of inputs (N = {N}): ", end = "")
+    print(f"Info: Selecting outputs depending on the number of inputs (N = {N}): ", end = "")
     
     final_output = list()
     description = list()
@@ -321,7 +320,7 @@ def generate_final_output(N):
             DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag"])
             
             
-    print(", ".join(description))
+    print(", ".join(description) + ".")
     return final_output
         
 rule all:

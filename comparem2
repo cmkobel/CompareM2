@@ -61,6 +61,7 @@ import subprocess
 import shutil
 #import parse_status
 import pandas as pd
+import random # for hints
 
 
 # Create logger that prints to the terminal.
@@ -72,6 +73,39 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
+
+# --- Routines ------------------------------------------------------
+
+def exit(returncode):
+    """Generates a random useful tip which can be shown in the end of the pipeline, and exits with the returncode given."""
+    
+    hints = [
+        "The comprehensible documentation is available at comparem2.readthedocs.org",
+        "If you have any issues running CompareM2, you can file it at github.com/cmkobel/comparem2/issues"
+        "You can pass a custom command line parameter to any rule, using the passthrough parameter feature.",
+        "You can select between prokka (default) or bakta with `comparem2 --config annotator=\"bakta\"`.",
+        "If you work with archaea, you should set the `comparem2 --config set_prokka--kingdom=archaea` option.",
+        "The M in CompareM2 is for microbes.",
+        "CompareM2 works for bacteria and archaea.",
+        "CompareM2 works for isolates and MAGs.",
+        "The command `comparem2 --status` option only shows the status.",
+        "The command `comparem2 --downloads` checks and downloads all databases.",
+        "The command `comparem2 --help` shows all options directly the terminal.",
+        "You can select to run specific rules with the `comparem2 --until <rule>` parameter.",
+        "The command `comparem2 --until fast` only runs a few quick jobs.",
+        "CompareM2 was once named 'Assemblycomparator2'.",
+        "If you don't specify any input genomes, CompareM2 runs on the fasta files in the current working directory.",
+    ]
+    
+    print(f"Tip: {random.choice(hints)}")
+    if returncode == 0:
+        print(f"Done.")
+    else:
+        print(f"Done. Exiting with return code '{returncode}'.")
+    
+    sys.exit(returncode)
+
+    
 
 
 # --- Read environment variables or set defaults --------------------
@@ -160,6 +194,8 @@ def run_cite():
 
 def run_status():
     
+    print("Info: Initializing status.")
+    
     def present_status(path = ".status.tsv", delete_after_use = True): 
     
         try:
@@ -208,6 +244,7 @@ def run_status():
             return
         
         # Present
+        print()
         print("Below is an overview of the completion of each rule in the CompareM2 pipeline.")
         print("Only rules which are relevant for the the number of input genomes are shown.")
         print()
@@ -222,7 +259,7 @@ def run_status():
         except FileNotFoundError:
             pass # ignore
     
-    command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --summary | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv"""
+    command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --summary --quiet all | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv"""
 
     # Pretty print the snakemake summary
     #print("debug command:", command_status)
@@ -249,6 +286,7 @@ def run_main():
     logger.debug(f"Command to run is\n{command_main}")
     
     # Run comparem2 main pipeline
+    print("Info: Initializing main pipeline.")
     process_main = subprocess.run(command_main, shell = True)
     returncode_main = process_main.returncode
     
@@ -257,6 +295,7 @@ def run_main():
     # if os.path.isfile("{output_directory}/metadata.tsv") and os.path.isfile("{output_directory}/.comparem2_void_report.flag"):  # Should be moved to the report pipeline itself.
     
     if os.path.isfile(".report_config.yaml"):
+        print("Info: Initializing dynamic report subpipeline.")
         process_report = subprocess.run(command_report, shell = True)
         returncode_report = process_report.returncode
     else:
@@ -267,6 +306,7 @@ def run_main():
     #pretty_print_snakemake_summary()
     
     # Exit with the return code of the main pipeline.
+    #print(generate_tip())
     return returncode_main
 
 
@@ -285,15 +325,16 @@ elif "--cite" in trailing_arguments: # cite
 
 
 elif "--status" in trailing_arguments: # status
-    sys.exit(run_status())
+    exit(run_status())
+    
     
     
 elif "--downloads" in trailing_arguments: # download databases
-    sys.exit(run_downloads())
+    exit(run_downloads())
     
     
 else: # main
     returncode_main = run_main()
     run_status()
-    sys.exit(returncode_main)
+    exit(returncode_main)
     

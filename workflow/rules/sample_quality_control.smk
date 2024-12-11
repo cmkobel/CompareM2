@@ -7,7 +7,7 @@ rule copy:
     output: 
         fasta = "{output_directory}/samples/{sample}/{sample}.fna",
         md5sum = "{output_directory}/samples/{sample}/{sample}.md5.txt",
-    #conda: "../envs/any2fasta.yaml"
+    conda: "../envs/assembly-stats.yaml"
     threads: 1 # Weirdly, or bugly, there must be a thread n definition in the rule. Otherwise, the set-threads option (in the orion profile) will not be taken up. 
     resources:
         mem_mb = 256,
