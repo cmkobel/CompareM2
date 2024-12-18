@@ -245,4 +245,31 @@ rule antismash_download:
 
 
 
+rule amrfinder_download:
+    output:
+        database_representative = DATABASES + "/amrfinder/comparem2_amrfinder_database_representative.flag"
+    conda: "../envs/amrfinder.yaml"
+    shell: """
 
+        # https://github.com/ncbi/amr/wiki/Running-AMRFinderPlus#usage
+
+        # If some previous batch of comparem2 has downloaded the database, we'll just reuse it.
+        if [ -f "{output}" ]; then    
+
+            >&2 echo "Flag exists already: touch it to update the mtime ..."
+            touch {output:q}
+            
+        else
+
+            >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
+            
+            amrfinder_update -d $(dirname {output.database_representative:q})
+            
+            >&2 echo "amrfinder DB setup completed"
+            echo "Downloaded at $(date -Iseconds)" > $(dirname {output.database_representative})/info.txt
+
+            touch {output:q}
+
+        fi
+
+    """

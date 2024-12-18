@@ -7,7 +7,7 @@ rule copy:
     output: 
         fasta = "{output_directory}/samples/{sample}/{sample}.fna",
         md5sum = "{output_directory}/samples/{sample}/{sample}.md5.txt",
-    conda: "../envs/assembly-stats.yaml"
+    #conda: "../envs/assembly-stats.yaml"
     threads: 1 # Weirdly, or bugly, there must be a thread n definition in the rule. Otherwise, the set-threads option (in the orion profile) will not be taken up. 
     resources:
         mem_mb = 256,
@@ -23,27 +23,6 @@ rule copy:
         md5sum {output.fasta:q} > {output.md5sum:q}
         
     """  
-
-
-rule assembly_stats:
-    input: 
-        metadata = "{output_directory}/metadata.tsv",
-        fasta = df["input_file_fasta"].tolist(),
-    output: "{output_directory}/assembly-stats/assembly-stats.tsv"
-    conda: "../envs/assembly-stats.yaml"
-    benchmark: "{output_directory}/benchmarks/benchmarks.assembly_stats.tsv"
-    shell: """
-    
-        # Collect version number.
-        echo "assembly-stats $(assembly-stats -v)" > "$(dirname {output})/.software_version.txt"
-        
-        assembly-stats \
-            -t \
-            {input.fasta:q} > {output:q}
-
-        {void_report}
-
-    """
 
 
 rule sequence_lengths:

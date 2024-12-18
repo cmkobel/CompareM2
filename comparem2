@@ -4,7 +4,7 @@ __author__ = "Carl M. Kobel"
 
 
 # --- Development: Versioning ---------------------------------------
-__version__ = "2.12.1"
+__version__ = "2.13.1"
 # Places to bump
 #  - here
 #  - workflow/Snakefile, because the snakefile can possibly be run without the ./comparem2 binary. Report gets from here.
@@ -61,7 +61,7 @@ import subprocess
 import shutil
 #import parse_status
 import pandas as pd
-import random # for hints
+import random # for tips
 
 
 # Create logger that prints to the terminal.
@@ -79,15 +79,16 @@ logger.addHandler(console_handler)
 def exit(returncode):
     """Generates a random useful tip which can be shown in the end of the pipeline, and exits with the returncode given."""
     
-    hints = [
-        "The comprehensible documentation is available at comparem2.readthedocs.org",
-        "If you have any issues running CompareM2, you can file it at github.com/cmkobel/comparem2/issues"
-        "You can pass a custom command line parameter to any rule, using the passthrough parameter feature.",
+    tips = [
+        "The comprehensive documentation is available at https://comparem2.readthedocs.io",
+        "If you have any issues running CompareM2, you can file it at https://github.com/cmkobel/comparem2/issues"
+        "Using the passthrough parameter feature you can pass a custom command line parameter to any rule.",
         "You can select between prokka (default) or bakta with `comparem2 --config annotator=\"bakta\"`.",
         "If you work with archaea, you should set the `comparem2 --config set_prokka--kingdom=archaea` option.",
         "The M in CompareM2 is for microbes.",
         "CompareM2 works for bacteria and archaea.",
         "CompareM2 works for isolates and MAGs.",
+        "CompareM2 works for genomes based on both long and short reads. And hybrids of both.",
         "The command `comparem2 --status` option only shows the status.",
         "The command `comparem2 --downloads` checks and downloads all databases.",
         "The command `comparem2 --help` shows all options directly the terminal.",
@@ -97,8 +98,8 @@ def exit(returncode):
         "If you don't specify any input genomes, CompareM2 runs on the fasta files in the current working directory.",
     ]
     
-    print(f"Tip: {random.choice(hints)}")
     if returncode == 0:
+        print(f"Tip: {random.choice(tips)}") # Be nice. Only print a tip if the run completed successfully.
         print(f"Done.")
     else:
         print(f"Done. Exiting with return code '{returncode}'.")
@@ -306,17 +307,16 @@ def run_main():
     #pretty_print_snakemake_summary()
     
     # Exit with the return code of the main pipeline.
-    #print(generate_tip())
     return returncode_main
 
 
 # --- Finally, run the pipeline. ------------------------------------
 
-if "--help" in trailing_arguments or "-h" in trailing_arguments:
+if "--help" in trailing_arguments or "-h" in trailing_arguments: # help
     sys.exit(run_help())
 
 
-elif "--version" in trailing_arguments or "-v" in trailing_arguments:
+elif "--version" in trailing_arguments or "-v" in trailing_arguments: # version
     sys.exit(run_version())
 
 
@@ -326,7 +326,6 @@ elif "--cite" in trailing_arguments: # cite
 
 elif "--status" in trailing_arguments: # status
     exit(run_status())
-    
     
     
 elif "--downloads" in trailing_arguments: # download databases

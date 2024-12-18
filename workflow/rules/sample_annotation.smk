@@ -41,7 +41,7 @@ rule annotate:
     output: # These are mostly the outputs that are used downstream.
         dir = directory("{output_directory}/samples/{sample}/.annotation/"),
         gff = "{output_directory}/samples/{sample}/.annotation/{sample}.gff",
-        faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg, eggnog
+        faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg, eggnog, amrfinderplus
         log = "{output_directory}/samples/{sample}/.annotation/{sample}.log",
         ffn = "{output_directory}/samples/{sample}/.annotation/{sample}.ffn",
         tsv = "{output_directory}/samples/{sample}/.annotation/{sample}.tsv",

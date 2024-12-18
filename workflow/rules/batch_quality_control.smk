@@ -1,4 +1,25 @@
 
+
+rule assembly_stats:
+    input: 
+        metadata = "{output_directory}/metadata.tsv",
+        fasta = df["input_file_fasta"].tolist(),
+    output: "{output_directory}/assembly-stats/assembly-stats.tsv"
+    conda: "../envs/assembly-stats.yaml"
+    benchmark: "{output_directory}/benchmarks/benchmarks.assembly_stats.tsv"
+    shell: """
+    
+        # Collect version number.
+        echo "assembly-stats $(assembly-stats -v)" > "$(dirname {output})/.software_version.txt"
+        
+        assembly-stats \
+            -t \
+            {input.fasta:q} > {output:q}
+
+        {void_report}
+
+    """
+
 rule checkm2:
     input:
         metadata = "{output_directory}/metadata.tsv",

@@ -82,6 +82,13 @@ if (debug) {
     setwd("~/comparem2/")
     batch_title = basename(getwd())
     
+    # e faecium on thyla
+    base_variable = "~/comparem2"
+    output_directory = "/home/thylakoid/comparem2/tests/E._faecium/results_comparem2"
+    setwd("~/comparem2/")
+    batch_title = basename(getwd())
+    
+    
     
     
     
@@ -260,6 +267,7 @@ section_definition_table = tribble(
             paste0(output_directory, "/abricate/vfdb_detailed.tsv")
         )
     ),
+    "amrfinder",         N, Sys.glob(paste0(output_directory, "/samples/*/amrfinder/*.tsv")),
     "prokka",            N, Sys.glob(paste0(output_directory, "/samples/*/prokka/*.txt")),
     "eggnog",            N, Sys.glob(paste0(output_directory, "/samples/*/eggnog/*.emapper.annotations")),
     "kegg_pathway",      1, Sys.glob(paste0(output_directory, "/kegg_pathway/kegg_pathway_enrichment_analysis.tsv")),
@@ -329,7 +337,7 @@ section_definition_table %>%
 ```{r section_mlst, child = paste0(report_scripts, "section_mlst.rmd"), eval = render$mlst}
 ```
 
-```{r section_abricate, child = paste0(report_scripts, "section_abricate.rmd"), eval = render$abricate}
+```{r section_amrfinder, child = paste0(report_scripts, "section_amrfinder.rmd"), eval = render$amrfinder}
 ```
 
 ```{r section_prokka, child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}

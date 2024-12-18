@@ -1,3 +1,9 @@
+2.13.1
+  - Breaking change: New Docker image.
+  - Added amrfinder, removed abricate.
+  - Added text hints.
+  
+
 2.12.1
   - Breaking change: New Docker image.
   - Remove anaconda and defaults channels from worklow conda envs.

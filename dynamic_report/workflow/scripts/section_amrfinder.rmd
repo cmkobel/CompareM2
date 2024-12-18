@@ -1,0 +1,36 @@
+## `amrfinder` - AMRFinderPlus
+
+[AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder/) - Identify AMR genes and point mutations, and virulence and stress resistance genes in assembled bacterial nucleotide and protein sequence.
+
+
+```{r abricate-card, echo = F, message = F, warning = F, error = T}
+amrfinder_data = read_tsv(glob_list$amrfinder, id = "file") %>%
+    mutate(
+        sample = basename(file) %>% str_remove("_amrfinder\\.tsv$")
+    ) %>%
+    relocate(sample) %>%
+    group_by(sample) %>% mutate(count = n()) %>% ungroup() %>%
+    select(sample, count, gene = `Element symbol`, identity = `% Identity to reference`, coverage = `% Coverage of reference`) %>%
+    
+    pivot_wider(id_cols = c(sample, count), names_from = gene, values_from = c(coverage)) %>%
+    identity()
+
+
+metadata_translate %>%
+    select(sample) %>% 
+    left_join(amrfinder_data, by = "sample") %>%
+    custom_dt("amrfinder") %>%
+    formatStyle(
+        'count',
+        background = styleColorBar(c(0, max(amrfinder_data$count)), rgb(255/255, 100/255, 100/255)),
+        backgroundSize = '100% 80%',
+        backgroundRepeat = 'no-repeat',
+        backgroundPosition = 'center') 
+    
+    
+```
+
+*Table `r tableno()`: Table of AMRFinderPlus results. Column "count" denotes the number of antimicrobial resistance genes in a sample. The numbers for each gene denote the percentage coverage of the reference gene.*
+
+
+---
