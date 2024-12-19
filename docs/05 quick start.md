@@ -20,6 +20,10 @@ open results_comparem2/report_*.html
 
 ```
 
+If you wish to run the full rulegraph, simply remove the _until_-parameter.
 
 
+
+
+{!resources/footer.md!}
 
