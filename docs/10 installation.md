@@ -52,7 +52,8 @@ cd test_comparem2_install
 
 # Copy some test metagenomic assemblies from the test directory.
 # cp $CONDA_PREFIX/share/comparem2-*/tests/E._faecium/*.fna . # Until v2.7.1 you must copy the .fna files
-unzip $CONDA_PREFIX/share/comparem2-*/tests/E._faecium/fna.zip # From 2.8.1
+# unzip $CONDA_PREFIX/share/comparem2-*/tests/E._faecium/fna.zip # From 2.8.1
+unzip $CONDA_PREFIX/share/comparem2-latest/tests/E._faecium/fna.zip # From 2.12.1
 
 # Should take about a minute to complete the "fast" pseudo-rule.
 comparem2 --until fast
