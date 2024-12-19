@@ -20,7 +20,6 @@ CompareM2 has a large number of available tools, here we just want to run the on
 
 comparem2 --config input_genomes="path/to/my/genomes_*.fna" --until fast 
 
-
 ```
 
 ## 3) Explore
