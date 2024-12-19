@@ -303,10 +303,14 @@ section_definition_table %>%
 
 # By the way: Remember to have double new lines between the dash-lines (---) and the r child chunks. Otherwise the parsing gets weird, with figure texts becoming headers.
 
+# Parse versions
+
+
+
+df_versions = tibble("versions" = read_lines(Sys.glob(paste0(output_directory, "/versions.txt")))) 
+
+
 ```
-
-
-*Table `r tableno()`: Overview of sections that are rendered in this report. "n / expected" shows the number of analysis files versus how many are expected to be present. Sections are only rendered if relevant files exist. Analyses that perform comparisons between samples generally only output one set of results independent on the number of input files*
 
 
 
@@ -364,6 +368,21 @@ section_definition_table %>%
 
 
 
+### Versions
+
+The table below shows the version information for the tools used to produce these results.
+
+```{r versions, echo=FALSE, message=F, warning=F, error = T}
+
+df_versions %>%
+    mutate(versions = str_replace_all(versions, " +", " ")) %>%
+    separate_wider_delim(versions, delim = " ", names = c("tool", "version"), too_many = "merge") %>%
+    custom_dt("versions", dom = "t", ordering = F, width = 500, show_n = nrow(df_versions))
+
+```
+
+
+---
 
 <p class = "shaded">[CompareM2](https://github.com/cmkobel/comparem2) v`r version_string` genomes-to-report pipeline. Copyright (C) 2019-2025 [contributors](https://comparem2.readthedocs.io/en/latest/82%20contributors/) GNU GPL v3.</p>
 

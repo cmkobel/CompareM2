@@ -2,6 +2,7 @@
   - Breaking change: New Docker image.
   - Added amrfinder, removed abricate.
   - Added text hints.
+  - Add version info to report.
   
 
 2.12.1
