@@ -229,7 +229,7 @@ The report is named "report_&lt;title>.html" after the title of the run which de
 
 ```txt
 results_comparem2/
-├── abricate/
+├── amrfinder/
 ├── assembly-stats/
 ├── benchmarks/
 ├── checkm2/

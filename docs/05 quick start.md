@@ -22,7 +22,7 @@ comparem2 --config input_genomes="path/to/my/genomes_*.fna" --until fast
 
 ## 3) Explore
 
-Open results_comparem2/report_*.html in your browser to gain a quick oversight of the results.
+Open results_comparem2/report_*.html ([demo](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report)) in your browser to gain a quick oversight of the results.
 
 The full results can be explored from the results_comparem2/ directory:
  
