@@ -19,21 +19,6 @@ CompareM2 has a large number of available tools, here we just want to run the on
 ```bash
 
 comparem2 --config input_genomes="path/to/my/genomes_*.fna" --until fast 
-#> Using profile /glittertind/home/carl/miniforge3/envs/comparem2/share/comparem2-latest/profile/apptainer/default for setting default command line arguments.
-#>  ____                                                               ___      
-#> /\  _`\                                               /\`- _/`\   /'___`\    
-#> \ \ \/\_\   ___  _ ___ ___  __ __     __     _ __    _\ \      \ /\_\_ \ |   
-#>  \ \ \/_/_ / __`\\' __` __`\\ '__`\ /'__`\  /\' __\/'__`\\ \__\ \\/_/ / / _  
-#>   \ \ \/\ \\ \/\ \\ \/\ \/\ \\ \/\ \\ \/\.\_\ \ \//\  __/ \ \_/\ \  / /__\ \ 
-#>    \ \____/ \____/ \_\ \_\ \_\\ , _/ \__/.\_\\ \_\\ \____\ \_\\ \_\/\_______\
-#>     \/___/ \/___/ \/_/\/_/\/_/ \ \ \/__/\/_ / \/_/ \/____/\/_/ \/_/\________/
-#>                               \ \_\                                          
-#>                                \/_/                                           
-#> 
-#>                       Formerly known as Assemblycomparator2              
-#>                        github.com/cmkobel/comparem2/issues               
-#>                              comparem2.readthedocs.io                    
-
 
 
 ```
