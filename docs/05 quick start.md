@@ -1,6 +1,6 @@
 # Quick start ⚡️
 
-If you have a set of bacterial or archaeal genomes, either MAGs or isolates, that you wish to analyze and compare - CompareM2 is the tool for you. 
+If you have a set of bacterial or archaeal genomes, either MAGs or isolates, that you wish to analyze and compare—CompareM2 is the tool for you. 
 
 ## 1) Install
 
