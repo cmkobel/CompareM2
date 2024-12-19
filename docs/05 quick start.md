@@ -1,5 +1,7 @@
 # Quick start ⚡️
 
+You have a set of bacterial or archaeal genomes, either MAGs or isolates, that you wish to analyze and compare.
+
 ## 1) Install
 
 Assuming you already have conda/mamba installed.
