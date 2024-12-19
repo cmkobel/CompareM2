@@ -1,10 +1,10 @@
 # Quick start ⚡️
 
-You have a set of bacterial or archaeal genomes, either MAGs or isolates, that you wish to analyze and compare.
+If you have a set of bacterial or archaeal genomes, either MAGs or isolates, that you wish to analyze and compare - CompareM2 is the tool for you. 
 
 ## 1) Install
 
-Assuming you already have conda/mamba installed.
+Assuming you already have conda/mamba installed, CompareM2 can be installed in a single step.
 
 ```bash
 
@@ -14,7 +14,7 @@ mamba create -c conda-forge -c bioconda -n comparem2 comparem2
 
 ## 2) Run
 
-Using `--until fast` to only run the fast analyses.
+CompareM2 has a large number of available tools, here we just want to run the ones that are fast.
 
 ```bash
 
@@ -23,6 +23,8 @@ comparem2 --config input_genomes="path/to/my/genomes_*.fna" --until fast
 ```
 
 ## 3) Explore
+
+When CompareM2 is done running, you can start exploring the results. The first thing to do, is to explore the dynamic report that shows the most important results from each analysis.
 
 Open results_comparem2/report_*.html ([demo](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report)) in your browser to gain a quick oversight of the results.
 
