@@ -17,8 +17,8 @@ The only requisites for running comparem2 is:
 First, check that you have the prerequisites available on your system. 
 
 ```bash
-which mamba && mamba --version
-which git && git --version
+which mamba && mamba --version # Should be <2
+which git 
 ```
 
 #### 1) Download pipeline and set up the launcher environment
