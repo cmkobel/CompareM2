@@ -1,6 +1,6 @@
-# Quick start
+# Quick start »
 
-## Install
+## 1) Install
 
 Assuming you already have conda/mamba installed.
 
@@ -10,7 +10,7 @@ mamba create -c conda-forge -c bioconda -n comparem2 comparem2
 
 ```
 
-## Run
+## 2) Run
 
 Using `--until fast` to only run the fast analyses.
 
@@ -18,9 +18,31 @@ Using `--until fast` to only run the fast analyses.
 
 comparem2 --config input_genomes="path/to/my/genomes_*.fna" --until fast 
 
-open results_comparem2/report_*.html
+```
+
+## 3) Explore
+
+Open results_comparem2/report_*.html in your browser to gain a quick oversight of the results.
+
+The full results can be explored from the results_comparem2/ directory:
+ 
+```bash
+
+tree results_comparem2/ -L 1
+#results_comparem2/
+#├── assembly-stats
+#├── benchmarks
+#├── mashtree
+#├── metadata.tsv
+#├── report_test_comparem2_install.html
+#├── samples
+#├── tables
+#└── versions.txt
 
 ```
+
+
+
 
 If you wish to run the [full](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/) rulegraph, simply remove the _until_-parameter.
 
