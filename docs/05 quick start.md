@@ -2,6 +2,8 @@
 
 ## Install
 
+Assuming you already have conda/mamba installed.
+
 ```bash
 
 mamba create -c conda-forge -c bioconda -n comparem2 comparem2
@@ -20,7 +22,7 @@ open results_comparem2/report_*.html
 
 ```
 
-If you wish to run the full rulegraph, simply remove the _until_-parameter.
+If you wish to run the [full](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/) rulegraph, simply remove the _until_-parameter.
 
 
 
