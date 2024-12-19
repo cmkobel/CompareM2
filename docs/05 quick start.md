@@ -65,9 +65,9 @@ tree results_comparem2/ -L 1
 ```
 
 
-If you wish to run the [full](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/) rulegraph, simply remove the _until_-parameter.
+If you wish to run the [full](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/) rulegraph, simply remove the _until_-parameter when running CompareM2.
 
-
+If you have any problems using CompareM2, you're very welcome to file an issue on the git repo: https://github.com/cmkobel/CompareM2/issues
 
 
 {!resources/footer.md!}
