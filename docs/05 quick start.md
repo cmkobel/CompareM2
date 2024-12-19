@@ -1,4 +1,4 @@
-# Quick start »
+# Quick start ⚡️
 
 ## 1) Install
 
@@ -29,19 +29,36 @@ The full results can be explored from the results_comparem2/ directory:
 ```bash
 
 tree results_comparem2/ -L 1
-#results_comparem2/
-#├── assembly-stats
-#├── benchmarks
-#├── mashtree
-#├── metadata.tsv
-#├── report_test_comparem2_install.html
-#├── samples
-#├── tables
-#└── versions.txt
+#> results_comparem2/
+#> ├── amrfinder/
+#> ├── assembly-stats/
+#> ├── benchmarks/
+#> ├── checkm2/
+#> ├── fasttree/
+#> ├── gtdbtk/
+#> ├── iqtree/
+#> ├── kegg_pathway/
+#> ├── mashtree/
+#> ├── metadata.tsv
+#> ├── mlst/
+#> ├── panaroo/
+#> ├── report_<title>.html
+#> ├── samples/
+#> │  └── <sample>/
+#> │     ├── antismash/
+#> │     ├── bakta/
+#> │     ├── dbcan/
+#> │     ├── eggnog/
+#> │     ├── <sample>.fna
+#> │     ├── interproscan/
+#> │     ├── prokka/
+#> │     └── sequence_lengths/
+#> ├── snp-dists/
+#> ├── tables/
+#> ├── treecluster/
+#> └── version_info.txt
 
 ```
-
-
 
 
 If you wish to run the [full](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/) rulegraph, simply remove the _until_-parameter.
