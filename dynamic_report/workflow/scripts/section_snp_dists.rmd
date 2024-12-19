@@ -65,7 +65,7 @@ snp_dists_plot_df = snp_dists_matrix %>%
 #     snp_dists_plot_df %>% 
 #     #ggplot(aes(value, fill = delta %>% factor())) +
 #     ggplot(aes(value, fill = delta, group = delta)) +
-#     scale_fill_continuous(type = "viridis", direction = -1,
+#     scale_fill_continuous(type = "viridis", direction = 1,
 #         #trans = "log", breaks = 2^(0:10)
 #     ) +
 #     geom_histogram() + 

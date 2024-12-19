@@ -70,10 +70,15 @@ n_dbcan_substrates = df_dbcan_plot_data$substrate_final %>% unique() %>% length(
 
 
 ```{r dbcan-plot-show, echo=FALSE, message=F, warning=F, error = T, fig.height = max(2.9, (n_dbcan_samples*0.2)+2.3), fig.width = max(5, (n_dbcan_substrates*0.2)+2.8)}
-df_dbcan_plot_data %>% 
+
+#metadata_translate %>%
+#    select(sample) %>%
+#    left_join(df_dbcan_plot_data, by = "sample") %>% 
+    
+df_dbcan_plot_data %>%
     ggplot(aes(substrate_final, reorder(sample, desc(index)), fill = n)) + 
     geom_tile() +
-    scale_fill_viridis_c(direction = -1) + 
+    scale_fill_viridis_c(direction = 1) + 
     theme_classic() + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) + 
     labs(

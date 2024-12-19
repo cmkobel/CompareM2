@@ -259,14 +259,6 @@ section_definition_table = tribble(
     "checkm2",           1, Sys.glob(paste0(output_directory, "/checkm2/quality_report.tsv")),
     "gtdbtk",            1, Sys.glob(paste0(output_directory, "/gtdbtk/gtdbtk.summary.tsv")),
     "mlst",              1, Sys.glob(paste0(output_directory, "/mlst/mlst.tsv")),
-    "abricate",          4, Sys.glob(
-        c(
-            paste0(output_directory, "/abricate/ncbi_detailed.tsv"),
-            paste0(output_directory, "/abricate/card_detailed.tsv"),
-            paste0(output_directory, "/abricate/plasmidfinder_detailed.tsv"),
-            paste0(output_directory, "/abricate/vfdb_detailed.tsv")
-        )
-    ),
     "amrfinder",         N, Sys.glob(paste0(output_directory, "/samples/*/amrfinder/*.tsv")),
     "prokka",            N, Sys.glob(paste0(output_directory, "/samples/*/prokka/*.txt")),
     "eggnog",            N, Sys.glob(paste0(output_directory, "/samples/*/eggnog/*.emapper.annotations")),
@@ -373,5 +365,5 @@ section_definition_table %>%
 
 
 
-<p class = "shaded">[CompareM2](https://github.com/cmkobel/comparem2) v`r version_string` genomes-to-report pipeline. Copyright (C) 2019-2024 [contributors](https://comparem2.readthedocs.io/en/latest/82%20contributors/) GNU GPL v3.</p>
+<p class = "shaded">[CompareM2](https://github.com/cmkobel/comparem2) v`r version_string` genomes-to-report pipeline. Copyright (C) 2019-2025 [contributors](https://comparem2.readthedocs.io/en/latest/82%20contributors/) GNU GPL v3.</p>
 

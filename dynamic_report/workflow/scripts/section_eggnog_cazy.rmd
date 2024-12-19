@@ -98,7 +98,7 @@ metadata_translate %>%
     left_join(eggnog_annotations_plot_df, by = "sample") %>% 
 
     ggplot(aes(COG_category_splitted, reorder(sample, desc(index)), fill = count)) + 
-    scale_fill_viridis_b(trans = "log", direction = -1) + 
+    scale_fill_viridis_b(trans = "log", direction = 1) + 
     geom_tile() +
     theme_classic() + 
     labs(

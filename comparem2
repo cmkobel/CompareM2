@@ -81,17 +81,17 @@ def exit(returncode):
     
     tips = [
         "The comprehensive documentation is available at https://comparem2.readthedocs.io",
-        "If you have any issues running CompareM2, you can file it at https://github.com/cmkobel/comparem2/issues"
-        "Using the passthrough parameter feature you can pass a custom command line parameter to any rule.",
+        "If you have any issues running CompareM2, you can file it at https://github.com/cmkobel/comparem2/issues",
+        "You can use the passthrough parameter feature to pass a custom command line parameter to any tool within CompareM2.",
         "You can select between prokka (default) or bakta with `comparem2 --config annotator=\"bakta\"`.",
         "If you work with archaea, you should set the `comparem2 --config set_prokka--kingdom=archaea` option.",
         "The M in CompareM2 is for microbes.",
         "CompareM2 works for bacteria and archaea.",
-        "CompareM2 works for isolates and MAGs.",
+        "CompareM2 works for microbial isolates and MAGs.",
         "CompareM2 works for genomes based on both long and short reads. And hybrids of both.",
         "The command `comparem2 --status` option only shows the status.",
         "The command `comparem2 --downloads` checks and downloads all databases.",
-        "The command `comparem2 --help` shows all options directly the terminal.",
+        "The command `comparem2 --help` shows all options directly in the terminal.",
         "You can select to run specific rules with the `comparem2 --until <rule>` parameter.",
         "The command `comparem2 --until fast` only runs a few quick jobs.",
         "CompareM2 was once named 'Assemblycomparator2'.",
@@ -262,6 +262,7 @@ def run_status():
     
     command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --summary --quiet all | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv"""
 
+    print("command_status:", command_status)
     # Pretty print the snakemake summary
     #print("debug command:", command_status)
     

@@ -317,7 +317,7 @@ def generate_final_output(N):
             DATABASES + "/dbcan/comparem2_dbcan_database_representative.flag",
             DATABASES + "/gtdb/comparem2_gtdb_database_representative.flag",
             DATABASES + "/bakta/comparem2_bakta_database_representative.flag",
-            DATABASES + "/bakta/comparem2_amrfinder_database_representative.flag",
+            DATABASES + "/amrfinder/comparem2_amrfinder_database_representative.flag",
             DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag"])
             
             

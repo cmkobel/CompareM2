@@ -55,7 +55,7 @@ metadata_translate %>%
     count(index, sample, hierarchy)  %>% 
     
     ggplot(aes(hierarchy, reorder(sample, desc(index)), fill = n)) + 
-    scale_fill_viridis_c(breaks = 2^(0:10), trans = "log", direction = -1) +
+    scale_fill_viridis_c(breaks = 2^(0:10), trans = "log", direction = 1) +
     theme_classic() + 
     #scale_y_discrete(position = "right") +
     scale_x_discrete(position = "top") +
