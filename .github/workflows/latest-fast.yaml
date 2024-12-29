@@ -26,7 +26,6 @@ jobs:
       - name: create environment with mamba
         uses: conda-incubator/setup-miniconda@v2
         with:
-          miniforge-version: "latest"
           mamba-version: "<2"
           channels: conda-forge,bioconda
           auto-activate-base: false
