@@ -1,4 +1,4 @@
-name: latest-dry-run-dispatch
+name: latest-fast
 on: workflow_dispatch
 
 
