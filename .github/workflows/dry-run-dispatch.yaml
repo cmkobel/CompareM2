@@ -1,6 +1,6 @@
 name: latest-dry-run
 on: workflow_dispatch
-runs-on: self-hosted
+
 
 env:
   COMPAREM2_PROFILE: "profile/conda/default"
@@ -9,7 +9,7 @@ env:
 jobs:
   create-env:
     name: ${{ matrix.os }} 
-    runs-on: ${{ matrix.os }}
+    runs-on: self-hosted
     defaults:
       run:
         shell: bash -l {0}
