@@ -1,5 +1,6 @@
 name: latest-dry-run
 on: workflow_dispatch
+runs-on: self-hosted
 
 env:
   COMPAREM2_PROFILE: "profile/conda/default"
