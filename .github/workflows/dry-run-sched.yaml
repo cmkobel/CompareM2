@@ -1,8 +1,7 @@
 name: latest-dry-run
 on:
-  - workflow_dispatch
-  - schedule:
-    - cron: "*/5 * * * *"
+  schedule:
+    - cron: "*/5 * * * *"
 
 env:
   COMPAREM2_PROFILE: "profile/conda/default"
