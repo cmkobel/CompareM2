@@ -28,7 +28,7 @@ jobs:
         with:
           mamba-version: "<2"
           channels: conda-forge,bioconda
-          auto-activate-base: false
+          auto-activate-base: true
           activate-environment: comparem2_launcher
           environment-file: environment.yaml
       
