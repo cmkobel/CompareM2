@@ -1,0 +1,7 @@
+name: comparem2_stable
+channels: 
+  - conda-forge
+  - bioconda
+dependencies:
+  - comparem2
+  

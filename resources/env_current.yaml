@@ -1,0 +1,12 @@
+name: comparem2_launcher
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - snakemake-minimal <8
+  - pulp <2.8
+  - python <3.12
+  - mamba <2 # Necessary for snakemake to install child environments during development.
+  - pandas
+
+# This file should always mirror: https://github.com/bioconda/bioconda-recipes/blob/master/recipes/comparem2/meta.yaml
