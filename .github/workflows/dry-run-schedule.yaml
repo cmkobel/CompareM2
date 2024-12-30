@@ -2,6 +2,7 @@ name: latest-dry-run-schedule
 on:
   schedule:
     - cron: "0 0 * * 1"
+  workflow_dispatch:
   
 
 env:
