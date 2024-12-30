@@ -27,6 +27,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           mamba-version: "<2"
+          miniforge-version: "latest"
           channels: conda-forge,bioconda
           auto-activate-base: false
           activate-environment: comparem2_launcher
