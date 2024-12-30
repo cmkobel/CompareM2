@@ -82,5 +82,7 @@ jobs:
       - name: full
         run: |
           ./comparem2 --config input_genomes="*.fna"
+          
+          tree results_comparem2
              
 

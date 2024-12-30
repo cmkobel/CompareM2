@@ -78,5 +78,7 @@ jobs:
         run: |
           unzip tests/E._faecium/fna.zip 
           ./comparem2 --config input_genomes="*.fna" --until fast
+          
+          tree results_comparem2
              
 
