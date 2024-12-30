@@ -1,8 +1,7 @@
 name: latest-dry-run
 on:
   schedule:
-    #- cron: "0 0 * * 1"
-    - cron: "*/10 * * * *"
+    - cron: "0 0 * * 1"
   workflow_dispatch:
   
 
