@@ -161,7 +161,7 @@ custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, wid
 
 
 
-s# Sample overview
+### Sample overview
 
 ```{r sample-overview, echo=FALSE, message=F, warning=F, error = T}
 
