@@ -1,6 +1,8 @@
 name: latest-fast
-on: workflow_dispatch
-
+on:
+  schedule:
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
 
 env:
   COMPAREM2_PROFILE: "profile/conda/default"
