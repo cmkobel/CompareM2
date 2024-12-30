@@ -3,6 +3,7 @@ on:
   schedule:
     - cron: "10 0 * * 1"
   workflow_dispatch:
+  
 
 env:
   COMPAREM2_PROFILE: "profile/conda/default"
@@ -88,3 +89,7 @@ jobs:
           tree results_comparem2
              
 
+# Runner can be started from thylakoid@johans:
+# sudo -u ci-runner bash
+# cd /mnt/evo/actions-runner/
+# ./run.sh
