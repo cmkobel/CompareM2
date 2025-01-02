@@ -1,9 +1,11 @@
 name: stable-apptainer
 on:
   schedule:
-    - cron: "20 0 * * 1"
+    - cron: "15 0 * * 1"
   workflow_dispatch:
   
+
+
 
 # env:
 #  COMPAREM2_PROFILE: "profile/conda/default"

@@ -3,6 +3,8 @@ on:
   schedule:
     - cron: "10 0 * * 1"
   workflow_dispatch:
+  release:
+    types: [published]
   
 
 env:
