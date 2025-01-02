@@ -1,4 +1,4 @@
-name: stable-fast-conda
+name: stable-conda
 on:
   schedule:
     - cron: "20 0 * * 1"
