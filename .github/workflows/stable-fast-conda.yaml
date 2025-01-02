@@ -35,6 +35,7 @@ jobs:
           miniforge-version: "latest"
           channels: conda-forge,bioconda
           auto-activate-base: false
+          channel-priority: true
           activate-environment: comparem2_stable
           environment-file: resources/env_stable.yaml
       
