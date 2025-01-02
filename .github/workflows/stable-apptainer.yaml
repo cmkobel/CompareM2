@@ -61,7 +61,7 @@ jobs:
           comparem2 --config input_genomes="*.fna" --until fast
           
           tree results_comparem2
-          rm -rf .snakemake results_comparem2
+          rm -rf .snakemake results_comparem2 *.fna
 
       
       - name: dry run
