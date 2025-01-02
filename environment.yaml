@@ -9,4 +9,6 @@ dependencies:
   - mamba <2 # Necessary for snakemake to install child environments during development.
   - pandas
 
+# This file is replaced by resources/env_current.yaml
+
 # This file should always mirror: https://github.com/bioconda/bioconda-recipes/blob/master/recipes/comparem2/meta.yaml
