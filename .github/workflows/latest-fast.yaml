@@ -32,6 +32,7 @@ jobs:
           miniforge-version: "latest"
           channels: conda-forge,bioconda
           auto-activate-base: false
+          channel-priority: true
           activate-environment: comparem2_launcher
           environment-file: resources/env_current.yaml
       

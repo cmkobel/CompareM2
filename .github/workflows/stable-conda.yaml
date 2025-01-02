@@ -6,7 +6,7 @@ on:
   
 
 env:
-  COMPAREM2_PROFILE: "/home/thylakoid/miniforge3/envs/comparem2/share/comparem2-latest/profile/conda/default" # Technically this is from a different environment, but I just want to disable apptainer
+  COMPAREM2_PROFILE: "/home/thylakoid/miniforge3/envs/comparem2/share/comparem2-latest/profile/conda/default" # I can't come up with a better way of disabling apptainer?
 #  COMPAREM2_PROFILE: "profile/conda/default"
 
 
