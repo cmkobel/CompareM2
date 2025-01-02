@@ -46,6 +46,7 @@ jobs:
         run: |
           python --version
           snakemake --version
+          apptainer --version
           which comparem2
           comparem2 --help
           comparem2 --version
@@ -57,7 +58,7 @@ jobs:
       - name: fast
         run: |
           unzip tests/E._faecium/fna.zip 
-          ./comparem2 --config input_genomes="*.fna" --until fast
+          comparem2 --config input_genomes="*.fna" --until fast
           
           tree results_comparem2
       
