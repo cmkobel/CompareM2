@@ -75,7 +75,7 @@ jobs:
 
 
       
-      - name: dry run
+      - name: dry run # With apptainer, dry run can't run without the image being pulled, so the dry run comes in the end instead.
         run: |
           comparem2 --dry-run
           rm -rf .snakemake results_comparem2
