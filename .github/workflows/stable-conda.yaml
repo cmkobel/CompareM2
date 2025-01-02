@@ -85,6 +85,17 @@ jobs:
           comparem2 --config input_genomes="*.fna" --until fast
           
           tree results_comparem2
+          rm -rf .snakemake results_comparem2 *.fna
+
+      
+      - name: full
+        run: |
+          unzip tests/E._faecium/fna.zip 
+          comparem2 --config input_genomes="*.fna"
+          
+          tree results_comparem2
+      
+      
 
 # Runner can be started from thylakoid@johans:
 # sudo -u ci-runner bash

@@ -64,6 +64,15 @@ jobs:
           
           tree results_comparem2
           rm -rf .snakemake results_comparem2 *.fna
+          
+      - name: full
+        run: |
+          unzip tests/E._faecium/fna.zip 
+          comparem2 --config input_genomes="*.fna"
+          
+          tree results_comparem2
+          rm -rf .snakemake results_comparem2 *.fna
+
 
       
       - name: dry run
@@ -87,7 +96,9 @@ jobs:
           comparem2 --config input_genomes="*.fna" --until downloads --dry-run
           
           ls dummy_{2,3}.fa > fofn.txt; comparem2 --config fofn="fofn.txt" --dry-run   
-          rm -rf *.fna
+          rm -rf .snakemake results_comparem2 *.fna
+          
+          
           
       
 
