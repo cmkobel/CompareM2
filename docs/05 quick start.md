@@ -14,7 +14,7 @@ mamba create -c conda-forge -c bioconda -n comparem2 comparem2
 
 ## 2) Run
 
-CompareM2 has a large number of available tools ([list](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#for-each-sample)), here we just want to run the ones that are fast.
+CompareM2 has a large number of available tools ([list](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/)), here we just want to run the ones that are fast.
 
 ```bash
 
