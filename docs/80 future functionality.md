@@ -13,6 +13,7 @@ In the future we might add some of the following software packages into CompareM
   - [Kaptive](https://github.com/katholt/Kaptive) Identification of surface polysaccharide loci for Klebsiella and Acinetobacter baumannii.
   - [AMRFinderPlus](https://github.com/ncbi/amr/) Identification of AMR genes and their point mutations.
   - [gapseq](https://github.com/jotech/gapseq/tree/master) GEMs, pathway completeness and much more.
+  - [distillR](https://github.com/anttonalberdi/distillR) High level functional annotation using graph based metabolic capacity indices.
 
 
 **Batch basis (across all samples)**
