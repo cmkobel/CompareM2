@@ -10,8 +10,6 @@ In the future we might add some of the following software packages into CompareM
   - Integration of the [DRAM](https://github.com/WrightonLabCSU/DRAM) databases for easier metabolic interpretation.
   - [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) Identification of possible replication origins of chromids.
   - [RFplasmid](https://github.com/aldertzomer/RFPlasmid) Identification of plasmids using the pentamer-random-forest method.
-  - [Kaptive](https://github.com/katholt/Kaptive) Identification of surface polysaccharide loci for Klebsiella and Acinetobacter baumannii.
-  - [AMRFinderPlus](https://github.com/ncbi/amr/) Identification of AMR genes and their point mutations.
   - [gapseq](https://github.com/jotech/gapseq/tree/master) GEMs, pathway completeness and much more.
   - [distillR](https://github.com/anttonalberdi/distillR) High level functional annotation using graph based metabolic capacity indices.
 
@@ -19,7 +17,7 @@ In the future we might add some of the following software packages into CompareM
 **Batch basis (across all samples)**
 
   - GC3-profiling "fingerprinting" of the distribution of GC-content.
-  - Recombination in core genome using the Bruen's PHI statistic or ClonalFrameML.
+  - Recombination in core genome using the Bruen's PHI statistic or ClonalFrameML. (requires stable synteny calculation)
   - Identification of horizontally transferred genes?
 
 Please [add an issue on the repository](https://github.com/cmkobel/comparem2/issues) if you have any ideas or requests.
