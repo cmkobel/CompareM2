@@ -24,7 +24,7 @@ rule checkm2_download:
 
             url="https://zenodo.org/records/5571251/files/checkm2_database.tar.gz"
 
-            wget --no-check-certificate -O "{params.destination}/checkm2_database.tar.gz" "$url"
+            wget -q --no-check-certificate -O "{params.destination}/checkm2_database.tar.gz" "$url"
 
             tar \
                 -xvf "{params.destination}/checkm2_database.tar.gz" \
@@ -118,7 +118,7 @@ rule gtdb_download:
             >&2 echo "Downlading $db_pick to $db_destination"
             mkdir -p $(dirname "$db_destination")
 
-            wget --no-check-certificate -O "$db_destination" "$db_pick"
+            wget -q --no-check-certificate -O "$db_destination" "$db_pick"
 
             >&2 echo "Decompressing ..."
             tar \
