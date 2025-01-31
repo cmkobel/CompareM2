@@ -1,6 +1,6 @@
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="3562fc390be15359c3108e94d044e36fba8cf71fa123135885fa10bdb9d64e4a"
+LABEL io.github.snakemake.conda_env_hash="22cb0e992026e0a51e7865cde3fe4f121ebee6884b03236720bb5eac7c59f150"
 
 # Step 1: Retrieve conda environments
 
@@ -30,17 +30,16 @@ RUN mkdir -p /conda-envs/b5c6b988e4a325065292b3d680193d32
 COPY dynamic_report/workflow/envs/r-markdown.yaml /conda-envs/b5c6b988e4a325065292b3d680193d32/environment.yaml
 
 # Conda environment:
-#   source: workflow/envs/abricate.yaml
-#   prefix: /conda-envs/0c9e577925e28e957323002a68981008
-#   name: abricate
+#   source: workflow/envs/amrfinder.yaml
+#   prefix: /conda-envs/98af290ab46d66d8dd29fcb7342c19b1
+#   name: amrfinder
 #   channels:
 #     - conda-forge
 #     - bioconda
-#     #- defaults
 #   dependencies:
-#     - abricate=1
-RUN mkdir -p /conda-envs/0c9e577925e28e957323002a68981008
-COPY workflow/envs/abricate.yaml /conda-envs/0c9e577925e28e957323002a68981008/environment.yaml
+#     - ncbi-amrfinderplus=4
+RUN mkdir -p /conda-envs/98af290ab46d66d8dd29fcb7342c19b1
+COPY workflow/envs/amrfinder.yaml /conda-envs/98af290ab46d66d8dd29fcb7342c19b1/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/antismash.yaml
@@ -300,7 +299,7 @@ COPY workflow/envs/wget.yaml /conda-envs/3d07f847725ad902762b77365977b881/enviro
 # Step 2: Generate conda environments
 
 RUN mamba env create --prefix /conda-envs/b5c6b988e4a325065292b3d680193d32 --file /conda-envs/b5c6b988e4a325065292b3d680193d32/environment.yaml && \
-    mamba env create --prefix /conda-envs/0c9e577925e28e957323002a68981008 --file /conda-envs/0c9e577925e28e957323002a68981008/environment.yaml && \
+    mamba env create --prefix /conda-envs/98af290ab46d66d8dd29fcb7342c19b1 --file /conda-envs/98af290ab46d66d8dd29fcb7342c19b1/environment.yaml && \
     mamba env create --prefix /conda-envs/4ae94d2c4b9a52f46cfad5eb92750982 --file /conda-envs/4ae94d2c4b9a52f46cfad5eb92750982/environment.yaml && \
     mamba env create --prefix /conda-envs/b116edf022cd78b810f7c18e1d4cb568 --file /conda-envs/b116edf022cd78b810f7c18e1d4cb568/environment.yaml && \
     mamba env create --prefix /conda-envs/349bbcba5bdfd7faab9097a8a3f7f6d2 --file /conda-envs/349bbcba5bdfd7faab9097a8a3f7f6d2/environment.yaml && \

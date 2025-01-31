@@ -28,7 +28,7 @@ __version__ = "2.13.1"
 # touch dummy1.fa dummy2.fa dummy3.fa; ./comparem2 --containerize | grep -A 10000 "FROM condaforge" | grep -B 10000 "mamba clean --all -y" > Dockerfile
 # And check that there is no  preceding or following text (comparem2 logo, status summary etc.).
 # The docker image can then be built: (example)
-# sudo docker build -t cmkobel/comparem2:v2.12 . && sudo docker push cmkobel/comparem2:v2.12
+# sudo docker build -t cmkobel/comparem2:v2.13 . && sudo docker push cmkobel/comparem2:v2.13
 
 # In case the exact same docker image should be used for consecutive versions of comparem2, although this shouldn't be the case when using the minor version for apptainer images only: (example)
 # sudo docker pull cmkobel/comparem2:v2.9
@@ -211,7 +211,7 @@ def run_status():
         # Hide irrelevant stuff
         summary = summary.loc[~summary["rule"].str.endswith("_download")]
         summary = summary.loc[~summary["rule"].str.contains("^copy$")]
-        summary = summary.loc[~summary["rule"].str.contains("^compute_snp_dists$")]
+        summary = summary.loc[~summary["rule"].str.contains("^core_genome_checkpoint$")]
         summary = summary.loc[~summary["rule"].str.contains("^report_env$")]
         summary = summary.loc[~summary["rule"].str.contains("^bakta_env$")]
         summary = summary.loc[~summary["rule"].str.contains("^annotate$")]
