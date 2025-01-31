@@ -3,7 +3,8 @@
   - Added amrfinder, removed abricate.
   - Added text hints.
   - Add version info to report.
-  - New checkpoint system that uses file testing and failures instead of the built in checkpoint system which turned out to not be working correctly.
+  - New checkpoint system that uses file testing and failures instead of the built in checkpoint system which turned out to not be working correctly. @AstaLaugesen
+  - Deeper CI tests on GitHub Actions.
   
 
 2.12.1
