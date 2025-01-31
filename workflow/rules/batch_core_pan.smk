@@ -10,7 +10,7 @@ def get_mem_panaroo(wildcards, attempt):
 #print(passthrough_parameter_unpack("none")) # DEBUG
 
 # Maybe it shouldn't be panaroo which is the checkpoint, but rather every rule that uses the core genome, like rule snp_dists? Let me try!
-checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-dists should only run if the core genome is non-empty.
+rule panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-dists should only run if the core genome is non-empty.
     input: 
         metadata = "{output_directory}/metadata.tsv",
         gff = expand("{output_directory}/samples/{sample}/.annotation/{sample}.gff", sample = df["sample"], output_directory = output_directory),
@@ -51,39 +51,6 @@ checkpoint panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-
     """
     
 
-# This function is not currently used
-def core_genome_if_exists(wildcards): 
-    
-    summary_file = checkpoints.panaroo.get(**wildcards).output["summary"]
-    #alignment_file = checkpoints.panaroo.get(**wildcards).output["alignment"]
-    alignment_file = "{output_directory}/panaroo/core_gene_alignment.aln"
-    
-    with summary_file.open() as f:
-    #with open(file) as f: 
-
-        for line in f:
-            line = line.strip()
-            #print(f"line: {line}")
-            
-            # Find the line that states the size of the core genome.
-            if "Core genes" in line:
-                #print(f"Pipeline: Parsing Panaroo core genome from line \"{line}\"")
-                splitted = line.split("\t")
-                #print(splitted)
-                core_genome_size = int(splitted[-1])
-                
-                #print(f"Pipeline: Parsed core genome size is: {repr(core_genome_size)}")
-                break
-            
-        # Return alignment file when there is a core genome.
-        if core_genome_size > 0:
-            print(f"Pipeline: Core genome exists ({core_genome_size} genes).")
-            return [alignment_file]
-            
-        # Otherwise, return an empty list.
-        else:
-            print(f"Pipeline: Core genome is empty ({core_genome_size} genes).")
-            return list()
             
         
 
