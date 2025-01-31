@@ -51,17 +51,14 @@ rule panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-dists 
     """
     
 
-            
-        
-
-# This is the rule that fails if there is no core genome. Thus we will not depend on snp_dists, fasttree and iqtrees handling of empty inputs to make sure that there is a clear signal given to the user, that the core genome is non-existent. Note that this is not a "real" snakemake-checkpoint, as those do not handle conditional running at all.
+# Instead of passing a missing file into the dependents of the core genome, this rule fails and stops the downstream jobs. Note that this is not a "real" snakemake-checkpoint, as those cannot conditional running whatsoever.
+# A possible todo is to make this into a python script that parses the summary and actually prints the size of the core genome. But alas, another day.
 rule core_genome_checkpoint:
     input: 
         summary = "{output_directory}/panaroo/summary_statistics.txt"
     output: 
         aln = "{output_directory}/panaroo/core_gene_alignment_verified.aln"
     shell: """
-    
     
         if [ -f "{output_directory}/panaroo/core_gene_alignment.aln" ]; then
             echo "Pipeline: Core genome exists."
@@ -70,9 +67,7 @@ rule core_genome_checkpoint:
         else 
             echo "Pipeline: Warning: Core genome does not exist: Downstream analyses will be cancelled."
             exit 1
-        fi
-
-        
+        fi    
         
     """
 
