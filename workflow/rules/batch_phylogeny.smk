@@ -62,7 +62,7 @@ def get_mem_fasttree(wildcards, attempt):
 rule fasttree:
     input:
         metadata = "{output_directory}/metadata.tsv",
-        fasta = core_genome_if_exists,
+        fasta = "{output_directory}/panaroo/core_gene_alignment_verified.aln",
     output: 
         newick = "{output_directory}/fasttree/fasttree.newick"
     params:
@@ -97,7 +97,7 @@ rule fasttree:
 rule iqtree:
     input:
         metadata = "{output_directory}/metadata.tsv",
-        fasta = core_genome_if_exists,
+        fasta = "{output_directory}/panaroo/core_gene_alignment_verified.aln",
     output: 
         newick = "{output_directory}/iqtree/core_genome_iqtree.treefile"
     params: 

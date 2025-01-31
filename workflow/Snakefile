@@ -284,8 +284,8 @@ def generate_final_output(N):
         description.append("pairwise comparisons")
         final_output += expand([\
             "{output_directory}/panaroo/gene_presence_absence.Rtab", \
+            "{output_directory}/panaroo/core_gene_alignment_verified.aln", \
             "{output_directory}/snp-dists/snp-dists.tsv", \
-            "{output_directory}/snp-dists/.done.flag", \
             "{output_directory}/mashtree/mashtree.newick", \
             "{output_directory}/treecluster/treecluster.tsv"], \
             output_directory = output_directory, sample = df["sample"])
