@@ -68,7 +68,7 @@ jobs:
       - name: full
         run: |
           unzip tests/E._faecium/fna.zip 
-          comparem2 --config input_genomes="*.fna" --omit-from antismash
+          comparem2 --config input_genomes="*.fna" --omit-from antismash_download
           
           tree results_comparem2
           rm -rf .snakemake results_comparem2 *.fna
