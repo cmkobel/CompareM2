@@ -5,7 +5,9 @@
 Below is the graph the shows the order of execution of all possible analyses "rules" in CompareM2:
 
 
-![dag](https://github.com/cmkobel/comparem2/assets/5913696/db6b58ac-cec0-43fe-b06f-18048ef3b642)
+
+![dag](https://github.com/user-attachments/assets/1e6956c6-4c23-4659-8c74-aabf0bc10a28)
+
 
 
 This figure does not show the pseudo rules such as `meta`, `isolate`, `fast`, etc.
