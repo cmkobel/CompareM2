@@ -28,7 +28,7 @@ First, independent analyses are run on each of the input genomic assembly files.
   - `antismash` [antismash](https://docs.antismash.secondarymetabolites.org/) Detection of biosynthesis genes (lacking in report).
   - `eggnog` [eggnog-mapper](https://github.com/eggnogdb/eggnog-mapper/) Functional annotation.
   - `interproscan` [InterProScan](https://github.com/ebi-pf-team/interproscan) Protein function using Tigrfam, Hamap and Pfam (lacking in report).
-  - `abricate` [abricate](https://github.com/tseemann/abricate) Virulence and resistance gene identification.
+  - `amrfinder` [AMRFinderPlus](https://github.com/ncbi/amr/) Virulence and resistance gene identification.
   - `mlst` [mlst](https://github.com/tseemann/mlst) Multi locus sequence typing.
   - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) Species recognition.
   
