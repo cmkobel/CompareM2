@@ -31,6 +31,7 @@ First, independent analyses are run on each of the input genomic assembly files.
   - `amrfinder` [AMRFinderPlus](https://github.com/ncbi/amr/) Virulence and resistance gene identification.
   - `mlst` [mlst](https://github.com/tseemann/mlst) Multi locus sequence typing.
   - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) Species recognition.
+  - `gapseq` [Gapseq](https://gapseq.readthedocs.io/en/latest/) Genome scale metabolic modeling reconstruction modeling and gapfilling.
   
 
 ## Across samples
