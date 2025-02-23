@@ -1,44 +1,6 @@
 name: gapseq
 channels:
-  - conda-forge
   - bioconda
-  - r
+  - conda-forge
 dependencies:
-  - r-base=4.3
-  - perl
-  - parallel
-  - gawk
-  - sed
-  - grep
-  - bc
-  - git
-  - coreutils
-  - wget
-  - openssl
-  - barrnap
-  - bedtools
-  - exonerate
-  - glpk
-  - hmmer
-  - blast
-  - bioconda::libsbml 
-  - r-data.table
-  - r-stringr
-  - r-stringi
-  - r-getopt
-  - r-doParallel
-  - r-foreach
-  - r-r.utils
-  - r-sybil
-  - r-biocmanager
-  - bioconductor-biostrings
-  - r-jsonlite
-  - r-renv
-  - r-glpkapi
-  - r-rcurl
-  - r-httr
-  - r-chnosz
-
-
-
-# This is the initial version before the bioconda package is published. Requires some manual work but is nice for testing before the package comes online.
+  - gapseq

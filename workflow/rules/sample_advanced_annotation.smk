@@ -130,15 +130,15 @@ rule eggnog:
     """
     
 
-
+# Finally, gapseq is on bioconda, and seems to work. But I now don't understand why I did the rule order thing - Is that really necessary? Seams unnecessarily complicated.
 rule gapseq_find:
     input: 
         metadata = "{output_directory}/metadata.tsv",
         faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa"
     output:
         dir = directory("{output_directory}/samples/{sample}/gapseq"),
-        pathways = "{output_directory}/samples/{sample}/gapseq/{sample}-Pathways.tbl",
-        reactions = "{output_directory}/samples/{sample}/gapseq/{sample}-Reactions.tbl",
+        pathways = "{output_directory}/samples/{sample}/gapseq/{sample}-all-Pathways.tbl",
+        reactions = "{output_directory}/samples/{sample}/gapseq/{sample}-all-Reactions.tbl",
         transporter = "{output_directory}/samples/{sample}/gapseq/{sample}-Transporter.tbl",
         flag = "{output_directory}/samples/{sample}/gapseq/gapseq_done.flag",
     conda: "../envs/gapseq.yaml"

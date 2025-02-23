@@ -39,7 +39,7 @@ __version__ = "2.13.1"
 
 # --- Development: Update DAG figure for documentation --------------
 # Update dag picture in documentation with this command (with anaconda/graphviz)
-# comparem2 --forceall --rulegraph | dot -Tpng > dag.png
+# conda install anaconda::graphviz; comparem2 --forceall --rulegraph | dot -Tpng > dag.png
 
 """
 This is the launcher script for comparem2.
