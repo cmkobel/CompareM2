@@ -34,6 +34,9 @@ set_eggnog-m: diamond
 
 set_fasttree-gtr: ""
 
+set_gapseq-b: "auto" # gapseq draft (-r reactions | -t transporter -c genome -p pathways) [-b pos|neg|archaea|auto]
+
+
 set_gtdbtk--keep_intermediates: ""
 
 set_interproscan--applications: "TIGRFAM,Hamap,Pfam"

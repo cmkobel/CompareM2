@@ -140,17 +140,15 @@ rule gapseq_find:
         pathways = "{output_directory}/samples/{sample}/gapseq/{sample}-all-Pathways.tbl",
         reactions = "{output_directory}/samples/{sample}/gapseq/{sample}-all-Reactions.tbl",
         transporter = "{output_directory}/samples/{sample}/gapseq/{sample}-Transporter.tbl",
-        flag = "{output_directory}/samples/{sample}/gapseq/gapseq_done.flag",
     conda: "../envs/gapseq.yaml"
-    benchmark: "{output_directory}/benchmarks/benchmark.gapseq_find_sample.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.gapseq_find.{sample}.tsv"
     resources:
         mem_mb = 8192,
-    threads: 4
+    threads: 2
     shell: """
     
-    
         # Collect version number.
-        # Todo
+        gapseq -v | awk '{ print "gapseq:", $0 }' > "$(dirname {output.pathways})/.software_version.txt"
         
         # -K is only for multiple sequence alignments
         # -O is "offline mode"
@@ -170,12 +168,6 @@ rule gapseq_find:
             -f {output.dir} \
             -K {threads} \
             {input.faa:q}
-            
-            
-        touch {output.flag} # To have a common output with rule gapseq for the ruleorder
-            
-        touch {output} # DEBUG
-    
 
         {void_report}
 
@@ -186,46 +178,54 @@ rule gapseq: # Continuation on gapseq_find results.
     input: 
         metadata = "{output_directory}/metadata.tsv",
         assembly = "{output_directory}/samples/{sample}/{sample}.fna",
-        pathways = "{output_directory}/samples/{sample}/gapseq/{sample}_pathways.tsv",
+        pathways = "{output_directory}/samples/{sample}/gapseq/{sample}-all-Pathways.tbl",
+        reactions = "{output_directory}/samples/{sample}/gapseq/{sample}-all-Reactions.tbl",
+        transporter = "{output_directory}/samples/{sample}/gapseq/{sample}-Transporter.tbl",
     output:
-        rxnWeights = "{output_directory}/samples/{sample}/gapseq/{sample}-rxnWeights.tbl",
-        rxnXgenes = "{output_directory}/samples/{sample}/gapseq/{sample}-rxnXgenes.tbl",
-        draft = "{output_directory}/samples/{sample}/gapseq/{sample}-draft.tbl",
-        draft_xml = "{output_directory}/samples/{sample}/gapseq/{sample}-draft_xml.xml",
+        rxnWeights = "{output_directory}/samples/{sample}/gapseq/{sample}-rxnWeights.RDS", 
+        rxnXgenes = "{output_directory}/samples/{sample}/gapseq/{sample}-rxnXgenes.RDS",
+        draft = "{output_directory}/samples/{sample}/gapseq/{sample}-draft.RDS",
+        draft_xml = "{output_directory}/samples/{sample}/gapseq/{sample}-draft.xml",
 
-        filled = "{output_directory}/samples/{sample}/gapseq/{sample}.tbl",
-        filled_xml = "{output_directory}/samples/{sample}/gapseq/{sample}.xml",
-        
-        flag = "{output_directory}/samples/{sample}/gapseq/gapseq_done.flag",
+        #filled = "{output_directory}/samples/{sample}/gapseq/{sample}.tbl",
+        filled_xml = "{output_directory}/samples/{sample}/gapseq/{sample}.xml"
     params:
         dir = "{output_directory}/samples/{sample}/gapseq",
-
+        passthrough_parameters = passthrough_parameter_unpack("gapseq")
     conda: "../envs/gapseq.yaml"
-    benchmark: "{output_directory}/benchmarks/benchmark.gapseq_find_sample.{sample}.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.gapseq.{sample}.tsv"
     resources:
         mem_mb = 8192,
-    threads: 4
+    threads: 1
     shell: """
+    
+        echo "Drafting ..."
 
         # Produces *-rxnWeights.RDS, *-rxnXgenes.RDS, *-draft.RDS, *-draft.xml
         gapseq draft \
-            -r toy/myb71-all-Reactions.tbl \
-            -t toy/myb71-Transporter.tbl \
-            -p toy/myb71-all-Pathways.tbl \
-            -c {input:assembly:q}
+            -r {input.reactions:q} \
+            -t {input.transporter:q} \
+            -p {input.pathways:q} \
+            -c {input.assembly:q} \
+            -f {params.dir:q} \
+            {params.passthrough_parameters}
+            
+        ls 
+        echo so far so goood
+        ls {params.dir}
+        echo $CONDA_PREFIX
+        ls $CONDA_PREFIX
+        
+        echo "Filling ..."
         
         # Produces *.RDS and *.xml
         gapseq fill \
-            -m toy/myb71-draft.RDS \
-            -c toy/myb71-rxnWeights.RDS \
-            -g toy/myb71-rxnXgenes.RDS \
-            -n dat/media/TSBmed.csv
+            -m {output.draft:q} \
+            -c {output.rxnWeights:q} \
+            -g {output.rxnXgenes:q} \
+            -f {params.dir:q} \
+            -n $CONDA_PREFIX/share/gapseq/dat/media/TSBmed.csv
             
-            
-            
-        touch {output.flag} # To have a common output with rule gapseq for the ruleorder
-        
-        touch {output} # DEBUG
 
         {void_report}
 

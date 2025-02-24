@@ -307,7 +307,8 @@ def generate_final_output(N):
             "{output_directory}/gtdbtk/gtdbtk.summary.tsv", \
             "{output_directory}/samples/{sample}/amrfinder/{sample}_amrfinder.tsv", \
             "{output_directory}/mlst/mlst.tsv", \
-            "{output_directory}/samples/{sample}/gapseq/gapseq_done.flag", \
+            "{output_directory}/samples/{sample}/gapseq/{sample}-all-Pathways.tbl", \
+            "{output_directory}/samples/{sample}/gapseq/{sample}-draft.RDS", \
             "{output_directory}/samples/{sample}/antismash/{sample}.json"], \
             output_directory = output_directory, sample = df["sample"])
             

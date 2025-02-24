@@ -95,3 +95,30 @@ rule gtdbtk:
 
     """ 
 
+
+
+rule gapseq_pan: 
+    input:
+        draft = expand("{output_directory}/samples/{sample}/gapseq/{sample}-draft.RDS", sample = df["sample"])
+        rxnWeights = expand("{output_directory}/samples/{sample}/gapseq/{sample}-rxnWeights.RDS", sample = df["sample"])
+        rxnXgenes = expand("{output_directory}/samples/{sample}/gapseq/{sample}-rxnXgenes.RDS", sample = df["sample"])
+        pathways = expand("{output_directory}/samples/{sample}/gapseq/{sample}-all-Pathways.tbl", sample = df["sample"])
+    output:
+        dir = directory("{output_directory}/gapseq/pan/pan.tsv")
+    benchmark: "{output_directory}/benchmarks/benchmark.gapseq_pan.{sample}.tsv"
+    conda: "../envs/gapseq.yaml"
+    shell: """
+    
+        cp {input.draft} {output.dir}
+        cp {input.rxnWeights} {output.dir}
+        cp {input.rxnXgenes} {output.dir}
+        cp {input.pathways} {output.dir}
+        
+
+        gapseq pan \
+            -m {output.dir} \
+            -c {output.dir} \
+            -g {output.dir} \
+            -w {output.dir} \
+    
+    """
