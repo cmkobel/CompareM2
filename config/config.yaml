@@ -34,7 +34,11 @@ set_eggnog-m: diamond
 
 set_fasttree-gtr: ""
 
+set_gapseq_find-t: "auto" # -t Taxonomic range for reference sequences to be used. (Bacteria, Archaea, auto; default: Bacteria). See Details.
 set_gapseq-b: "auto" # gapseq draft (-r reactions | -t transporter -c genome -p pathways) [-b pos|neg|archaea|auto]
+set_gapseq-n: "$CONDA_PREFIX/share/gapseq/dat/media/TSBmed.csv"
+set_gapseq_pan-n: "$CONDA_PREFIX/share/gapseq/dat/media/TSBmed.csv"
+
 
 
 set_gtdbtk--keep_intermediates: ""

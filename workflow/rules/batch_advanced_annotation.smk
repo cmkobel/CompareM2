@@ -99,26 +99,44 @@ rule gtdbtk:
 
 rule gapseq_pan: 
     input:
-        draft = expand("{output_directory}/samples/{sample}/gapseq/{sample}-draft.RDS", sample = df["sample"])
-        rxnWeights = expand("{output_directory}/samples/{sample}/gapseq/{sample}-rxnWeights.RDS", sample = df["sample"])
-        rxnXgenes = expand("{output_directory}/samples/{sample}/gapseq/{sample}-rxnXgenes.RDS", sample = df["sample"])
-        pathways = expand("{output_directory}/samples/{sample}/gapseq/{sample}-all-Pathways.tbl", sample = df["sample"])
+        draft = expand("{output_directory}/samples/{sample}/gapseq/{sample}-draft.RDS", sample = df["sample"], output_directory = output_directory),
+        rxnWeights = expand("{output_directory}/samples/{sample}/gapseq/{sample}-rxnWeights.RDS",  sample = df["sample"], output_directory = output_directory),
+        rxnXgenes = expand("{output_directory}/samples/{sample}/gapseq/{sample}-rxnXgenes.RDS",  sample = df["sample"], output_directory = output_directory),
+        pathways = expand("{output_directory}/samples/{sample}/gapseq/{sample}-all-Pathways.tbl",  sample = df["sample"], output_directory = output_directory),
     output:
-        dir = directory("{output_directory}/gapseq/pan/pan.tsv")
-    benchmark: "{output_directory}/benchmarks/benchmark.gapseq_pan.{sample}.tsv"
+        dir = directory("{output_directory}/gapseq_pan"),
+        draft = "{output_directory}/gapseq_pan/panModel-draft.RDS",
+        rxnWeigths = "{output_directory}/gapseq_pan/panModel-rxnWeigths.RDS", # Watch out for the alternative spelling.
+        rxnXgenes = "{output_directory}/gapseq_pan/panModel-rxnXgenes.RDS",
+
+        
+    benchmark: "{output_directory}/benchmarks/benchmark.gapseq_pan.tsv"
     conda: "../envs/gapseq.yaml"
     shell: """
     
-        cp {input.draft} {output.dir}
-        cp {input.rxnWeights} {output.dir}
-        cp {input.rxnXgenes} {output.dir}
-        cp {input.pathways} {output.dir}
-        
-
-        gapseq pan \
-            -m {output.dir} \
-            -c {output.dir} \
-            -g {output.dir} \
-            -w {output.dir} \
+        echo "Drafting ..."
     
+        gapseq pan \
+            -f {output.dir} \
+            -m {input.draft} \
+            -c {input.rxnWeights} \
+            -g {input.rxnXgenes} \
+            -w {input.pathways} 
+        
+        ls {output.dir}
+
+        echo "Filling ..."
+                
+        gapseq fill \
+             -m {output.draft} \
+             -c {output.rxnWeigths} \
+             -g {output.rxnXgenes} \
+             -f {output.dir} \
+             -n $CONDA_PREFIX/share/gapseq/dat/media/TSBmed.csv
+             
+        gapseq medium \
+            -m {output.dir}/gapseq_pan/panModel.RDS \
+            -p {output.dir}/gapseq_pan/panModel-tmp-Pathways.tbl 
+
+
     """
