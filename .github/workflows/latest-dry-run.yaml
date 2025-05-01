@@ -24,6 +24,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v3
         with:
           environment-file: resources/env_current.yaml
+          activate-environment: comparem2_launcher
           miniforge-version: latest
 
 
