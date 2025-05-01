@@ -11,38 +11,22 @@ env:
   COMPAREM2_PROFILE: "profile/conda/default"
 
 
+
 jobs:
-  create-env:
-    name: ${{ matrix.os }} 
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash -l {0}
-        
+  example-10-miniforge:
+    name: Ex10 (${{ matrix.os }}, Miniforge)
+    runs-on: ${{ matrix.os }}-latest
     strategy:
-      fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        
+        os: ["ubuntu"]
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v2
-        
-      - name: create environment with mamba
-        uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
         with:
-          mamba-version: "<2"
-          miniforge-version: "latest"
-          channels: conda-forge,bioconda
-          auto-activate-base: false
-          channel-priority: true
-          activate-environment: comparem2_launcher
           environment-file: resources/env_current.yaml
-      
-      - name: check solution
-        run: |
-          mamba env export
-      
+          miniforge-version: latest
+
+
       - name: test installation
         run: |
           python --version
