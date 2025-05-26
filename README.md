@@ -6,7 +6,7 @@
     
 
 
-🧬 CompareM2 is a genomes-to-report pipeline. It accepts prokaryotic (bacterial and archaeal) genomic assemblies and compares them in many different ways. 
+🧬 CompareM2 is a genomes-to-report pipeline. It is a distribution of many powerful and elegant tools, to deeply analyze microbial genomes. 
 
 🦠 Being designed to analyze assemblies of both isolates and metagenomes (MAGs), it is useful for anyone working with microbial genomics.
 
