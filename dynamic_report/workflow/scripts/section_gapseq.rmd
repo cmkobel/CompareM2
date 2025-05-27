@@ -1,0 +1,77 @@
+## `gapseq_find` - Genome-Scale Models
+
+Gapseq predicts and analyzes metabolic pathways and genome-scale networks. Gapseq find produces preliminary results before gapfilling the genome-scale metabolic model (GEM).
+
+
+
+```{r gapseq, echo = F, message = F, warning = F, error = T}
+
+
+
+df_gapseq = read_delim(glob_list$gapseq, id = "file", comment = "#") %>% 
+    #separate_wider_regex(file, c("\/gapseq\/", sample = ".*", "-all-Pathways.tbl"))
+    #select(file, name, value) %>%
+    #filter(name != "organism") %>%
+    #filter(str_detect(value, "\\d")) %>%
+    mutate(
+        sample = basename(file) %>% str_remove("-all-Pathways.tbl$"),
+    ) %>% 
+    relocate(sample) %>% 
+    select(-file)
+    #pivot_wider(id_cols = sample, values_fill = 0)
+
+
+# table with some
+#df_gapseq %>% 
+#    filter(Prediction) %>% 
+#    pivot_wider(id_cols = sample, names_from = Name, values_from = Completeness, values_fn = list) %>% view()
+
+# Main table
+gapseq_table = metadata_translate %>%
+    select(sample) %>%
+    left_join(df_gapseq, by = "sample") %>%
+    filter(Prediction) %>% select(-Prediction)
+
+# A / what is there?
+gapseq_table %>% 
+    select(sample, Name, Completeness) %>% 
+    custom_dt("gapseq") %>% 
+    formatStyle(
+        'Completeness',
+        background = styleColorBar(c(0, 100), rgb(203/255, 239/255, 212/255)),
+        backgroundSize = '100% 80%',
+        backgroundRepeat = 'no-repeat',
+        backgroundPosition = 'center'
+    )
+
+
+# B / What separates the samples?
+# This method is inspired by our nat comms paper. It shows each pc and the factors that separate them. It shows thresholded information.
+
+# pca1 = gapseq_table %>% 
+#     select(sample, ID, Completeness) %>% 
+#     pivot_wider(id_cols = sample, names_from = ID, values_from = Completeness, values_fill = 0) %>% 
+#     column_to_rownames("sample") %>% 
+#     prcomp()
+#     
+# 
+# pca1$x %>% as_tibble(rownames = "sample") %>% 
+#     ggplot(aes("PC1", PC1)) + 
+#     geom_point()
+# 
+# # rank the pathways
+# pca1$rotation %>% as_tibble(rownames = "ID") %>% 
+#     pivot_longer(-ID, names_to = "principal_component", values_to = "loading") %>% 
+#     group_by(principal_component) %>% 
+#     arrange(principal_component, desc(loading^2)) %>% 
+#     mutate(rank = 1:n(), cumsum = cumsum(loading^2)/sum(loading^2), included = cumsum<0.5)
+    
+  
+
+
+
+```
+
+*Table `r tableno()`: Pathways predicted to be present by gapseq using the [gapseq find command](https://gapseq.readthedocs.io/en/latest/usage/basics.html#pathway-and-transporter-prediction).*
+
+---

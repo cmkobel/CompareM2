@@ -88,6 +88,12 @@ if (debug) {
     setwd("~/comparem2/")
     batch_title = basename(getwd())
     
+    # e faecium weird
+    base_variable = "~/comparem2"
+    output_directory = "/home/thylakoid/comparem2/test_comparem2_install/test_comparem2_install/results_comparem2"
+    setwd("~/comparem2/")
+    batch_title = basename(getwd())
+    
     
     
     
@@ -264,6 +270,7 @@ section_definition_table = tribble(
     "eggnog",            N, Sys.glob(paste0(output_directory, "/samples/*/eggnog/*.emapper.annotations")),
     "kegg_pathway",      1, Sys.glob(paste0(output_directory, "/kegg_pathway/kegg_pathway_enrichment_analysis.tsv")),
     "dbcan",             N, Sys.glob(paste0(output_directory, "/samples/*/dbcan/dbcan-sub.hmm.out")),
+    "gapseq",            N, Sys.glob(paste0(output_directory, "/samples/*/gapseq/*-all-Pathways.tbl")),
     "panaroo",           1, Sys.glob(paste0(output_directory, "/panaroo/gene_presence_absence.Rtab")), # This also counts for the panaroo summary file.
     "snp_dists",         1, Sys.glob(paste0(output_directory, "/snp-dists/snp-dists.tsv")),
     "mashtree",          1, Sys.glob(mashtree_voluntary_dependency) # Reuse from earlier.
@@ -349,6 +356,10 @@ df_versions = tibble("versions" = read_lines(Sys.glob(paste0(output_directory, "
 
 ```{r section_dbcan, child = paste0(report_scripts, "section_dbcan.rmd"), eval = render$dbcan}
 ```
+
+```{r section_gapseq, child = paste0(report_scripts, "section_gapseq.rmd"), eval = render$gapseq}
+```
+
 
 
 

@@ -148,7 +148,7 @@ rule gapseq_find:
     shell: """
     
         # Collect version number.
-        gapseq -v | awk '{ print "gapseq:", $0 }' > "$(dirname {output.pathways})/.software_version.txt"
+        gapseq -v | awk '{{ print "gapseq:", $0 }}' > "$(dirname {output.pathways})/.software_version.txt"
         
         # -K is only for multiple sequence alignments
         # -O is "offline mode"
