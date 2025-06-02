@@ -148,7 +148,7 @@ rule gapseq_find:
     shell: """
     
         # Collect version number.
-        gapseq -v | awk '{{ print "gapseq:", $0 }}' > "$(dirname {output.pathways})/.software_version.txt"
+        gapseq -v | awk '{{ print "gapseq", $0 }}' > "$(dirname {output.pathways})/.software_version.txt"
         
         # -K is only for multiple sequence alignments
         # -O is "offline mode"
@@ -174,7 +174,7 @@ rule gapseq_find:
     """
     
     
-rule gapseq: # Continuation on gapseq_find results.
+rule gapseq_fill: # Continuation on gapseq_find results.
     input: 
         metadata = "{output_directory}/metadata.tsv",
         assembly = "{output_directory}/samples/{sample}/{sample}.fna",
@@ -186,12 +186,17 @@ rule gapseq: # Continuation on gapseq_find results.
         rxnXgenes = "{output_directory}/samples/{sample}/gapseq/{sample}-rxnXgenes.RDS",
         draft = "{output_directory}/samples/{sample}/gapseq/{sample}-draft.RDS",
         draft_xml = "{output_directory}/samples/{sample}/gapseq/{sample}-draft.xml",
-
+    
+        medium = "{output_directory}/samples/{sample}/gapseq/{sample}-medium.csv",
+    
         #filled = "{output_directory}/samples/{sample}/gapseq/{sample}.tbl",
         filled_xml = "{output_directory}/samples/{sample}/gapseq/{sample}.xml"
     params:
         dir = "{output_directory}/samples/{sample}/gapseq",
-        passthrough_parameters = passthrough_parameter_unpack("gapseq")
+        passthrough_parameters_draft = passthrough_parameter_unpack("gapseq_fill_draft"),
+        passthrough_parameters_medium = passthrough_parameter_unpack("gapseq_fill_medium"),
+        passthrough_parameters_fill = passthrough_parameter_unpack("gapseq_fill_fill"),
+        gapseq_medium = config["gapseq_medium"]
     conda: "../envs/gapseq.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.gapseq.{sample}.tsv"
     resources:
@@ -199,7 +204,7 @@ rule gapseq: # Continuation on gapseq_find results.
     threads: 1
     shell: """
     
-        echo "Drafting ..."
+        echo "1) Drafting ..."
 
         # Produces *-rxnWeights.RDS, *-rxnXgenes.RDS, *-draft.RDS, *-draft.xml
         gapseq draft \
@@ -208,15 +213,24 @@ rule gapseq: # Continuation on gapseq_find results.
             -p {input.pathways:q} \
             -c {input.assembly:q} \
             -f {params.dir:q} \
-            {params.passthrough_parameters}
+            {params.passthrough_parameters_draft}
             
-        ls 
-        echo so far so goood
-        ls {params.dir}
-        echo $CONDA_PREFIX
-        ls $CONDA_PREFIX
+
+        echo "2) Preparing medium definition ..."
+                
+        if [ -f "{params.gapseq_medium}" ]; then
+            echo "Medium: Predefined path exists. Copying '{params.gapseq_medium}'"
+            cat "{params.gapseq_medium}" > {output.medium}
+            echo -e "gapseq\tmedium {params.gapseq_medium}" > "$(dirname {output.medium})/.software_version.txt"
+        else
+            echo "Medium: Predicting growth medium ..."
+            gapseq medium -m {output.draft} -p {input.pathways} -o {output.medium} {params.passthrough_parameters_medium}
+            echo -e "gapseq\tmedium predicted de novo using gapseq medium" > "$(dirname {output.medium})/.software_version.txt"
+
+        fi
         
-        echo "Filling ..."
+
+        echo "3) Filling ..."    
         
         # Produces *.RDS and *.xml
         gapseq fill \
@@ -224,10 +238,11 @@ rule gapseq: # Continuation on gapseq_find results.
             -c {output.rxnWeights:q} \
             -g {output.rxnXgenes:q} \
             -f {params.dir:q} \
-            -n $CONDA_PREFIX/share/gapseq/dat/media/TSBmed.csv
+            -n {output.medium} \
+            {params.passthrough_parameters_fill}
             
 
-        {void_report}
+        # {void_report} How to present this?
 
     """
     
@@ -267,7 +282,7 @@ rule antismash:
             --databases "{params.DATABASES}/antismash" \
             {input.gbk:q}
 
-        {void_report}
+        # {void_report} Not yet implemented.
 
     """
     

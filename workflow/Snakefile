@@ -4,7 +4,7 @@
 
 __author__ = "Carl M. Kobel"
 
-__version__ = "2.13.1" # Haven't yet found a neat way of passing the version from the comparem2 executable, so for now it has to be defined here as well.
+__version__ = "2.14.1" # Haven't yet found a neat way of passing the version from the comparem2 executable, so for now it has to be defined here as well.
 
 # https://semver.org/
 version_major = ".".join(__version__.split(".")[:1])
@@ -129,7 +129,6 @@ with open(f"{base_variable}/resources/logo.txt") as logo_file:
         print(line, end = "")
 
 print()
-print("                      Formerly known as Assemblycomparator2              ")
 print("                       github.com/cmkobel/comparem2/issues               ")
 print("                             comparem2.readthedocs.io                    ")
 print(f"                                     v{__version__}")
@@ -144,7 +143,8 @@ print("  Available rules                                                        
 print("  ---------------                                                        ")
 print("    Q.C.          : copy assembly_stats sequence_lengths checkm2         ")
 print("    Annotate      : prokka bakta                                         ")
-print("    Adv. annotate : eggnog interproscan dbcan kegg_pathway amrfinderplus mlst")
+print("    Adv. annotate : eggnog interproscan dbcan kegg_pathway amrfinderplus ")
+print("                    mlst gapseq_find                                     ")
 print("    Core-pan      : panaroo                                              ")
 print("    Phylogenetic  : mashtree fasttree gtdbtk iqtree treecluster snp_dists")
 print("    Pseudo        : meta isolate downloads fast report                   ")

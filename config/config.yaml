@@ -34,10 +34,12 @@ set_eggnog-m: diamond
 
 set_fasttree-gtr: ""
 
+gapseq_medium: "$CONDA_PREFIX/share/gapseq/dat/media/TSBmed.csv"
 set_gapseq_find-t: "auto" # -t Taxonomic range for reference sequences to be used. (Bacteria, Archaea, auto; default: Bacteria). See Details.
-set_gapseq-b: "auto" # gapseq draft (-r reactions | -t transporter -c genome -p pathways) [-b pos|neg|archaea|auto]
-set_gapseq-n: "$CONDA_PREFIX/share/gapseq/dat/media/TSBmed.csv"
-set_gapseq_pan-n: "$CONDA_PREFIX/share/gapseq/dat/media/TSBmed.csv"
+ 
+set_gapseq_fill_draft-b: "auto"
+#set_gapseq_fill_medium-c: "cpd00007:0;cpd00159:10" # To remove oxygen and add L-Lactate with 10 mmol/gDW/hr to the final medium.
+#set_gapseq_fill_fill-b: 50
 
 
 
