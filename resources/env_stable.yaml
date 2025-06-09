@@ -1,4 +1,4 @@
-name: comparem2_stable
+name: comparem2_launcher
 channels: 
   - conda-forge
   - bioconda
