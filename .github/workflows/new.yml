@@ -23,8 +23,8 @@ jobs:
     - name: Set up Conda
       uses: conda-incubator/setup-miniconda@v2
       with:
-        auto-update-conda: false
-        conda-version: "4.10.3"  # Specify the desired Conda version
+        auto-update-conda: true
+        #conda-version: "4.10.3"  # Specify the desired Conda version
 
     - name: Create Conda environment
       run: |
