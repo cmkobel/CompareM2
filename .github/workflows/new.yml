@@ -1,4 +1,8 @@
-name: Conda CI
+name: Conda-CI
+on:
+  schedule:
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
 
 on:
   push:
