@@ -32,6 +32,7 @@ jobs:
           
     - name: test installation
       run: |
+        conda activate comparem2_launcher
         python --version
         snakemake --version
         ./comparem2 --help
@@ -43,6 +44,7 @@ jobs:
 
     - name: dry run
       run: |
+        conda activate comparem2_launcher
         ./comparem2 --dry-run
         rm -rf .snakemake results_comparem2
 
@@ -69,6 +71,7 @@ jobs:
 
     - name: fast
       run: |
+        conda activate comparem2_launcher
         unzip tests/E._faecium/fna.zip 
         ./comparem2 --config input_genomes="*.fna" --until fast
         
