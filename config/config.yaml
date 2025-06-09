@@ -34,7 +34,7 @@ set_eggnog-m: diamond
 
 set_fasttree-gtr: ""
 
-gapseq_medium: "$CONDA_PREFIX/share/gapseq/dat/media/TSBmed.csv"
+# gapseq_medium: "$CONDA_PREFIX/share/gapseq/dat/media/TSBmed.csv"
 set_gapseq_find-t: "auto" # -t Taxonomic range for reference sequences to be used. (Bacteria, Archaea, auto; default: Bacteria). See Details.
  
 set_gapseq_fill_draft-b: "auto"
@@ -78,5 +78,5 @@ set_treecluster--threshold: 0.05
 
 # Title. Used in the report.
 # User can manually set the title. Otherwise the default is to use the name of the current working directory.
-title: "CHANGE_THIS_TO_ACTIVATE" 
+#title: "My Project Title" 
 

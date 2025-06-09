@@ -106,18 +106,28 @@ def passthrough_parameter_unpack(rule_name, delimiter = " ", separator = " "):
     
 # --- Field variables -----------------------------------------------
 
-# User can manually set the title from the config.
-if config["title"] != "CHANGE_THIS_TO_ACTIVATE": 
+
+# Set default variables in case they are not set in the config file.
+try:
     batch_title = str(config["title"]).strip()
-else: # Otherwise the default is to use the name of the current directory.
+except KeyError:
+    # Todo: Implement debug logger with verbosity levels.
     batch_title = os.getcwd().split("/")[-1]
+    
+# Set default gapseq medium in case there is none set in the config file.
+try:
+    gapseq_medium = config["gapseq_medium"]
+except KeyError:
+    gapseq_medium = "..."
+    
 
 # Read environment variables.
 base_variable = os.environ['COMPAREM2_BASE'] # rename to COMPAREM2_BASE
 DATABASES = os.environ['COMPAREM2_DATABASES'] # Defines where the databases are stored. One for all. when snakemake issue 262 is solved I'll make this more flexible for each rule.
 
+
 # Other constants.
-output_directory = config["output_directory"] # Should be renamed to "output_directory".
+output_directory = config["output_directory"] 
 void_report = f"date -Iseconds >> {output_directory}/.comparem2_void_report.flag" # The modification time of this file tells the report subpipeline whether it needs to run. Thus, void_report is called in the end of every successful rule.
 
 
@@ -136,7 +146,7 @@ print("                                                                         
 print("  Variables                                                              ")
 print("  ---------                                                              ")
 print(f"    title         : \"{batch_title}\"")
-print(f"    base          : \"{base_variable}\"")
+print(f"    base          : \"{base_variable}\"") # Working directory?
 print(f"    databases     : \"{DATABASES}\"")
 print("                                                                         ")
 print("  Available rules                                                        ")
@@ -310,10 +320,11 @@ def generate_final_output(N):
             "{output_directory}/samples/{sample}/gapseq/{sample}-all-Pathways.tbl", \
             "{output_directory}/samples/{sample}/gapseq/{sample}-draft.RDS", \
             "{output_directory}/gapseq_pan/panModel-draft.RDS", \
+            "{output_directory}/samples/{sample}/gapseq/{sample}-all-Pathways.tbl", \
             "{output_directory}/samples/{sample}/antismash/{sample}.json"], \
             output_directory = output_directory, sample = df["sample"])
             
-    if N == 0: # Zero or more
+    if N == 0: # Zero exactly
         description.append("downloads")
         final_output += expand([\
             DATABASES + "/checkm2/comparem2_checkm2_database_representative.flag",
@@ -329,9 +340,6 @@ def generate_final_output(N):
         
 rule all:
     input: generate_final_output(N)
-    #input: "{output_directory}/metadata.tsv"
-        # "{output_directory}/samples/{sample}/gapseq/gapseq_done.flag", \ # Still working on this one.
-        # "{output_directory}/samples/{sample}/antismash/{sample}.json", \ # Issue when running with apptainer
 
 
 # Write the sample table for later reference.

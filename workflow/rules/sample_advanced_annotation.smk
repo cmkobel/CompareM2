@@ -196,7 +196,7 @@ rule gapseq_fill: # Continuation on gapseq_find results.
         passthrough_parameters_draft = passthrough_parameter_unpack("gapseq_fill_draft"),
         passthrough_parameters_medium = passthrough_parameter_unpack("gapseq_fill_medium"),
         passthrough_parameters_fill = passthrough_parameter_unpack("gapseq_fill_fill"),
-        gapseq_medium = config["gapseq_medium"]
+        gapseq_medium = gapseq_medium
     conda: "../envs/gapseq.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.gapseq.{sample}.tsv"
     resources:
@@ -221,11 +221,11 @@ rule gapseq_fill: # Continuation on gapseq_find results.
         if [ -f "{params.gapseq_medium}" ]; then
             echo "Medium: Predefined path exists. Copying '{params.gapseq_medium}'"
             cat "{params.gapseq_medium}" > {output.medium}
-            echo -e "gapseq\tmedium {params.gapseq_medium}" > "$(dirname {output.medium})/.software_version.txt"
+            echo -e "gapseq\tmedium {params.gapseq_medium}" >> "$(dirname {output.medium})/.software_version.txt"
         else
             echo "Medium: Predicting growth medium ..."
             gapseq medium -m {output.draft} -p {input.pathways} -o {output.medium} {params.passthrough_parameters_medium}
-            echo -e "gapseq\tmedium predicted de novo using gapseq medium" > "$(dirname {output.medium})/.software_version.txt"
+            echo -e "gapseq:\tmedium predicted de novo using gapseq medium" > "$(dirname {output.medium})/.software_version.txt"
 
         fi
         
