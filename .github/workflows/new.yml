@@ -39,5 +39,5 @@ jobs:
       shell: bash -l {0}  # Ensures we are using the login shell to initialize Conda
       run: |
         conda activate comparem2_launcher  # Ensure environment is active
-        comparem2 --version  # Replace with your test command or other actions
+        ./comparem2 --version  # Replace with your test command or other actions
 
