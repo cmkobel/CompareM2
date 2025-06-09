@@ -14,7 +14,7 @@ DESCRIPTION
   Analyses bacterial and archaeal genomes.
   Based on snakemake, so you can use the same command line arguments.
   Please check github.com/cmkobel/comparem2 for updates, help and to track issues.
-  Comprehensible documentation is available at comparem2.readthedocs.io/en/latest/
+  Comprehensive documentation is available at comparem2.readthedocs.io/en/latest/
     
 OPTIONS
   --config KEY=VALUE [KEY2=VALUE]...
