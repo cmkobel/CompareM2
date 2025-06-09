@@ -1,8 +1,6 @@
-name: Conda-CI
-on:
-  schedule:
-    - cron: "0 0 * * 1"
-  workflow_dispatch:
+name: new
+  
+
 
 on:
   push:
@@ -11,6 +9,8 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+      
 
 jobs:
   build:
