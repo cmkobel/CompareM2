@@ -39,12 +39,6 @@ jobs:
       run: |
         conda activate comparem2_launcher  # Replace with the name of your environment
 
-    - name: Run tests
-      shell: bash -l {0}  # Ensures we are using the login shell to initialize Conda
-      run: |
-        conda activate comparem2_launcher  # Ensure environment is active
-        ./comparem2 --version  # Replace with your test command or other actions
-
         
     - name: test installation
       shell: bash -l {0} # Use login shell.
@@ -57,3 +51,27 @@ jobs:
         ./comparem2 --cite
         ./comparem2 --status
           
+
+    - name: dry run
+      shell: bash -l {0}
+      run: |
+        conda activate comparem2_launcher
+        ./comparem2 --dry-run
+        rm -rf .snakemake results_comparem2
+
+        ./comparem2 --until metadata
+        rm -rf .snakemake results_comparem2
+        
+        touch dummy_1.fa; ./comparem2 --dry-run
+        touch dummy_2.fa; ./comparem2 --dry-run
+        touch dummy_3.fa; ./comparem2 --dry-run
+        
+        
+        unzip tests/E._faecium/fna.zip
+        ./comparem2 --config input_genomes="*.fna" --dry-run
+        ./comparem2 --config input_genomes="*.fna" --until fast --dry-run
+        ./comparem2 --config input_genomes="*.fna" --until isolate --dry-run
+        ./comparem2 --config input_genomes="*.fna" --until meta --dry-run
+        ./comparem2 --config input_genomes="*.fna" --until downloads --dry-run
+        
+        ls dummy_{2,3}.fa > fofn.txt; ./comparem2 --config fofn="fofn.txt" --dry-run  
