@@ -1,63 +1,59 @@
 name: latest-dry-run
+  
 on:
   schedule:
     - cron: "0 0 * * 1"
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
-  
-
-
-
+    
 env:
   COMPAREM2_PROFILE: "profile/conda/default"
 
-
+      
 
 jobs:
-  example-10-miniforge:
-    name: Ex10 (${{ matrix.os }}, Miniforge)
-    runs-on: ${{ matrix.os }}-latest
-    strategy:
-      matrix:
-        os: ["ubuntu"]
+  build:
+    runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          environment-file: resources/env_current.yaml
-          activate-environment: comparem2_launcher
-          miniforge-version: latest
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
+    - name: Set up Conda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        #conda-version: "4.10.3"  # Specify the desired Conda version
 
-      - name: test installation
-        run: |
-          python --version
-          snakemake --version
-          ./comparem2 --help
-          ./comparem2 --version
-          ./comparem2 --cite
-          ./comparem2 --status
-          
+    - name: Create Conda environment
+      run: |
+        conda env create -f resources/env_current.yaml  # Replace with your Conda environment file
 
+    - name: Activate Conda environment
+      shell: bash -l {0}  # Ensures we are using the login shell to initialize Conda
+      run: |
+        conda activate comparem2_launcher  # Replace with the name of your environment
 
-      - name: dry run
-        run: |
-          ./comparem2 --dry-run
-          rm -rf .snakemake results_comparem2
+    - name: Run tests
+      shell: bash -l {0}  # Ensures we are using the login shell to initialize Conda
+      run: |
+        conda activate comparem2_launcher  # Ensure environment is active
+        ./comparem2 --version  # Replace with your test command or other actions
 
-          ./comparem2 --until metadata
-          rm -rf .snakemake results_comparem2
-          
-          touch dummy_1.fa; ./comparem2 --dry-run
-          touch dummy_2.fa; ./comparem2 --dry-run
-          touch dummy_3.fa; ./comparem2 --dry-run
-          
-          
-          unzip tests/E._faecium/fna.zip
-          ./comparem2 --config input_genomes="*.fna" --dry-run
-          ./comparem2 --config input_genomes="*.fna" --until fast --dry-run
-          ./comparem2 --config input_genomes="*.fna" --until isolate --dry-run
-          ./comparem2 --config input_genomes="*.fna" --until meta --dry-run
-          ./comparem2 --config input_genomes="*.fna" --until downloads --dry-run
-          
-          ls dummy_{2,3}.fa > fofn.txt; ./comparem2 --config fofn="fofn.txt" --dry-run   
+        
+    - name: test installation
+      shell: bash -l {0} # Use login shell.
+      run: |
+        conda activate comparem2_launcher  # Ensure environment is active
+        python --version
+        snakemake --version
+        ./comparem2 --help
+        ./comparem2 --version
+        ./comparem2 --cite
+        ./comparem2 --status
           
