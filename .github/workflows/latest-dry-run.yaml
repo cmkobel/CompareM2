@@ -19,6 +19,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
 
     steps:
     - name: Checkout repository
@@ -36,7 +39,7 @@ jobs:
 
         
     - name: test installation
-      shell: bash -l {0} # Use login shell.
+      #shell: bash -l {0} # Use login shell.
       run: |
         conda activate comparem2_launcher  # Ensure environment is active
         python --version
@@ -48,7 +51,7 @@ jobs:
           
 
     - name: dry run
-      shell: bash -l {0}
+      #shell: bash -l {0}
       run: |
         conda activate comparem2_launcher
         ./comparem2 --dry-run
