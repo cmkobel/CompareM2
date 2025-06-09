@@ -14,6 +14,9 @@ env:
 jobs:
   build:
     runs-on: self-hosted
+    defaults:
+      run:
+        shell: bash -l {0}
 
     steps:
     - name: Checkout repository
