@@ -1,0 +1,37 @@
+name: Conda CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Conda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        conda-version: "4.10.3"  # Specify the desired Conda version
+
+    - name: Create Conda environment
+      run: |
+        conda env create -f resources/env_current.yaml  # Replace with your Conda environment file
+
+    - name: Activate Conda environment
+      run: |
+        source activate comparem2_launcher  # Replace with the name of your environment
+
+    - name: Run tests
+      run: |
+        conda activate comparem2_launcher  # Ensure environment is active
+        comparem2 --version  # Replace with your test command or other actions
+
