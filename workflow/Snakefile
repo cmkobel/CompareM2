@@ -108,6 +108,8 @@ def passthrough_parameter_unpack(rule_name, delimiter = " ", separator = " "):
 
 
 # Set default variables in case they are not set in the config file.
+
+# Set custom title, overriding the name of the current working dir.
 try:
     batch_title = str(config["title"]).strip()
 except KeyError:
@@ -122,7 +124,7 @@ except KeyError:
     
 
 # Read environment variables.
-base_variable = os.environ['COMPAREM2_BASE'] # rename to COMPAREM2_BASE
+base_variable = os.environ['COMPAREM2_BASE'] # Place where installation resides. rename to COMPAREM2_BASE or installation_dir?
 DATABASES = os.environ['COMPAREM2_DATABASES'] # Defines where the databases are stored. One for all. when snakemake issue 262 is solved I'll make this more flexible for each rule.
 
 
@@ -146,7 +148,7 @@ print("                                                                         
 print("  Variables                                                              ")
 print("  ---------                                                              ")
 print(f"    title         : \"{batch_title}\"")
-print(f"    base          : \"{base_variable}\"") # Working directory?
+print(f"    base          : \"{base_variable}\"") 
 print(f"    databases     : \"{DATABASES}\"")
 print("                                                                         ")
 print("  Available rules                                                        ")
@@ -319,10 +321,10 @@ def generate_final_output(N):
             "{output_directory}/mlst/mlst.tsv", \
             "{output_directory}/samples/{sample}/gapseq/{sample}-all-Pathways.tbl", \
             "{output_directory}/samples/{sample}/gapseq/{sample}-draft.RDS", \
-            "{output_directory}/gapseq_pan/panModel-draft.RDS", \
-            "{output_directory}/samples/{sample}/gapseq/{sample}-all-Pathways.tbl", \
             "{output_directory}/samples/{sample}/antismash/{sample}.json"], \
             output_directory = output_directory, sample = df["sample"])
+            
+            #"{output_directory}/gapseq_pan/panModel-draft.RDS", \
             
     if N == 0: # Zero exactly
         description.append("downloads")
