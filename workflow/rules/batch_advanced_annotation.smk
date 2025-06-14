@@ -43,7 +43,7 @@ rule gtdbtk:
         batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{output_directory}/gtdbtk/",
         base_variable = base_variable, # not used?
-        mash_db = f"{DATABASES}/gtdb_sketch_release220/mash_db.msh",
+        mash_db = f"{DATABASES}/gtdb_sketch_release226/mash_db.msh",
         passthrough_parameters = passthrough_parameter_unpack("gtdbtk"),
     threads: 8
     #retries: 3
@@ -65,7 +65,7 @@ rule gtdbtk:
         mkdir -p $(dirname {params.mash_db:q})
 
         # I need to find a neat way of setting these variables. Maybe the user has an older/newer version than what is hardcoded here. 
-        export GTDBTK_DATA_PATH="$(dirname {input.database_representative:q})/release220/" # Should be defined from config file, and not be hardwired.
+        export GTDBTK_DATA_PATH="$(dirname {input.database_representative:q})/release226/" # Should be defined from config file, and not be hardwired.
         
         # Create batchfile
         echo '''{params.batchfile_content}''' > {wildcards.output_directory}/gtdbtk/batchfile.tsv
