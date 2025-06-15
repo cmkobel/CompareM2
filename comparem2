@@ -19,7 +19,7 @@ __version__ = "2.14.1"
 # Conda
 # export COMPAREM2_BASE="$(realpath ~/comparem2)"; export COMPAREM2_PROFILE="${COMPAREM2_BASE}/profile/conda/default"; ${COMPAREM2_BASE}/comparem2 --config input_genomes="${COMPAREM2_BASE}/tests/E._faecium/*.fna" --until fast
 
-# If you haven't made any changes to the environment yamls, you can test using the apptainer/docker image.
+# If you haven't made any changes to the environment yamls, and there are no new versions of bundled software, you can test using the apptainer/docker image.
 # Apptainer
 # export COMPAREM2_BASE="$(realpath ~/comparem2)"; export COMPAREM2_PROFILE="${COMPAREM2_BASE}/profile/apptainer/default"; ${COMPAREM2_BASE}/comparem2 --config input_genomes="${COMPAREM2_BASE}/tests/E._faecium/*.fna" --until fast
 
@@ -28,8 +28,8 @@ __version__ = "2.14.1"
 # Update Dockerfile:
 # touch dummy1.fa dummy2.fa dummy3.fa; ./comparem2 --containerize | grep -A 10000 "FROM condaforge" | grep -B 10000 "mamba clean --all -y" > Dockerfile
 # And check that there is no  preceding or following text (comparem2 logo, status summary etc.).
-# The docker image can then be built: (example)
-# sudo docker build -t cmkobel/comparem2:v2.13 . && sudo docker push cmkobel/comparem2:v2.13
+# The docker image can then be built: (example only, remember to bump versions)
+# sudo docker build -t cmkobel/comparem2:v2.7 . && sudo docker push cmkobel/comparem2:v2.7
 
 # In case the exact same docker image should be used for consecutive versions of comparem2, although this shouldn't be the case when using the minor version for apptainer images only: (example)
 # sudo docker pull cmkobel/comparem2:v2.9
