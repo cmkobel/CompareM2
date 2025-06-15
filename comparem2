@@ -10,7 +10,7 @@ __version__ = "2.14.1"
 #  - workflow/Snakefile, because the snakefile can possibly be run without the ./comparem2 binary. Report gets from here.
 #  - changelog
 # Also, paste changelog into the github release. Use pre-release and publish it after it has been tested.
-# Consider testing the latest full CI test https://github.com/cmkobel/CompareM2/actions/workflows/latest-full.yaml
+# Consider testing the "latest-full" CI test https://github.com/cmkobel/CompareM2/actions/workflows/latest-full.yaml
 
 
 # --- Development: Testing "nightly" --------------------------------
