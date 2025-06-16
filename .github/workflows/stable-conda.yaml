@@ -85,7 +85,7 @@ jobs:
       run: |
         conda activate comparem2_launcher
         unzip tests/E._faecium/fna.zip 
-        comparem2 --config input_genomes="*.fna"
+        comparem2 --config input_genomes="*.fna" --omit-from gapseq_fill
         
         tree results_comparem2
       
