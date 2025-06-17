@@ -36,6 +36,7 @@ jobs:
       
     - name: test installation
       run: |
+        conda activate comparem2_launcher
         python --version
         snakemake --version
         apptainer --version
@@ -49,6 +50,7 @@ jobs:
 
     - name: fast
       run: |
+        conda activate comparem2_launcher
         unzip tests/E._faecium/fna.zip 
         comparem2 --config input_genomes="*.fna" --until fast
         
@@ -57,6 +59,7 @@ jobs:
         
     - name: full
       run: |
+        conda activate comparem2_launcher
         unzip tests/E._faecium/fna.zip 
         comparem2 --config input_genomes="*.fna" --omit-from antismash_download gapseq_fill
         
@@ -67,6 +70,7 @@ jobs:
     
     - name: dry run # With apptainer, dry run can't run without the image being pulled, so the dry run comes in the end instead.
       run: |
+        conda activate comparem2_launcher
         comparem2 --dry-run
         rm -rf .snakemake results_comparem2
 
