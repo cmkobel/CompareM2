@@ -88,6 +88,12 @@ jobs:
         comparem2 --config input_genomes="*.fna" --omit-from gapseq_fill
         
         tree results_comparem2
+    
+    - name: status 
+      run: |
+        conda activate comparem2_launcher
+        comparem2 --status
+
       
       
 

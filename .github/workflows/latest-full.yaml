@@ -86,6 +86,12 @@ jobs:
         ./comparem2 --status
         
         tree results_comparem2
+        
+    - name: status 
+      run: |
+        conda activate comparem2_launcher
+        comparem2 --status
+
              
 
 # Runner can be started from thylakoid@johans:

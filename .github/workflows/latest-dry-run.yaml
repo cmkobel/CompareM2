@@ -73,3 +73,8 @@ jobs:
         ./comparem2 --config input_genomes="*.fna" --until downloads --dry-run
         
         ls dummy_{2,3}.fa > fofn.txt; ./comparem2 --config fofn="fofn.txt" --dry-run  
+    
+    - name: status 
+      run: |
+        conda activate comparem2_launcher
+        comparem2 --status
