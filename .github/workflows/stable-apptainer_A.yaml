@@ -1,0 +1,108 @@
+name: stable-apptainer
+on:
+  schedule:
+    - cron: "15 0 * * 1"
+  workflow_dispatch:
+  
+
+
+
+# env:
+#  COMPAREM2_PROFILE: "profile/conda/default"
+
+
+
+jobs:
+  build:
+    runs-on: self-hosted
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Conda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        miniconda-version: "latest"
+        #conda-version: "4.10.3"  # Specify the desired Conda version
+
+    - name: Create Conda environment
+      run: |
+        conda env create -f resources/env_stable.yaml  # Replace with your Conda environment file
+      
+    - name: test installation
+      run: |
+        conda activate comparem2_launcher
+        python --version
+        snakemake --version
+        apptainer --version
+        which comparem2
+        comparem2 --help
+        comparem2 --version
+        comparem2 --cite
+        comparem2 --status  
+
+    
+
+    - name: fast
+      run: |
+        conda activate comparem2_launcher
+        unzip tests/E._faecium/fna.zip 
+        comparem2 --config input_genomes="*.fna" --until fast
+        
+        tree results_comparem2
+        rm -rf .snakemake results_comparem2 *.fna
+        
+    - name: full
+      run: |
+        conda activate comparem2_launcher
+        unzip tests/E._faecium/fna.zip 
+        comparem2 --config input_genomes="*.fna" --omit-from antismash_download gapseq_find eggnog_download gtdbtk_download
+        
+        tree results_comparem2
+        rm -rf .snakemake results_comparem2 *.fna
+
+
+    
+    - name: dry run # With apptainer, dry run can't run without the image being pulled, so the dry run comes in the end instead.
+      run: |
+        conda activate comparem2_launcher
+        comparem2 --dry-run
+        rm -rf .snakemake results_comparem2
+
+        comparem2 --until metadata
+        rm -rf .snakemake results_comparem2
+        
+        touch dummy_1.fa; comparem2 --dry-run
+        touch dummy_2.fa; comparem2 --dry-run
+        touch dummy_3.fa; comparem2 --dry-run
+        
+        
+        unzip tests/E._faecium/fna.zip
+        comparem2 --config input_genomes="*.fna" --dry-run
+        comparem2 --config input_genomes="*.fna" --until fast --dry-run
+        comparem2 --config input_genomes="*.fna" --until isolate --dry-run
+        comparem2 --config input_genomes="*.fna" --until meta --dry-run
+        comparem2 --config input_genomes="*.fna" --until downloads --dry-run
+        
+        ls dummy_{2,3}.fa > fofn.txt; comparem2 --config fofn="fofn.txt" --dry-run   
+        rm -rf .snakemake results_comparem2 *.fna
+    
+    - name: status 
+      run: |
+        conda activate comparem2_launcher
+        comparem2 --status
+
+        
+        
+        
+      
+
+# Runner can be started from thylakoid@johans:
+# sudo -u ci-runner bash
+# cd /mnt/evo/actions-runner/
+# ./run.sh
