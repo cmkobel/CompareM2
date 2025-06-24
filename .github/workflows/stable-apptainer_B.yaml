@@ -1,4 +1,4 @@
-name: stable-apptainer
+name: stable-apptainer_B
 on:
   schedule:
     - cron: "15 0 * * 1"
