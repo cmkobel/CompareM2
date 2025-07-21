@@ -164,42 +164,60 @@ print("  (Use ´--until <rule> [<rule2>..]´ to activate only one or more rules)
     
 
 # --- Parse input files -------------------------------------------------------
+    
 
-
-# Uses snakemakes built in config system to set default and custom parameters. 
-
-if config['fofn'] != "CHANGE_THIS_TO_ACTIVATE": # Read in the fofn, only if the default value is changed (in the config/config.yaml file or command line --config fofn=path/to/fofn.txt)
+try: # Try to use the fofn, if it is set.
     input_genomes_parsed = get_fofn(config['fofn'])
-else: # Not using, fofn, use input_genomes which has a default value of "*.fna *.fa *.fasta *.fas", but can also be changed.
+except KeyError: # Otherwise, fall back on input_genomes which has a default value of "*.fna *.fa *.fasta *.fas", but can also be changed.
     input_genomes_parsed = get_input_genomes(config['input_genomes']) # Run with 'comparem2 --config input_genomes="my_files*.fna' to customize.
 
-if len(input_genomes_parsed) < 1:
-    #raise Exception(f"Could not find {config['input_genomes']}. Quitting ...")
-    #print(f"Warning: No input files")
-    pass
+    
+# Parse added refseq accessions.
+try:
+    add_refseq = config["add_refseq"] # example: GCF_009734005.1
+    add_refseq_list = [str(i).strip() for i in add_refseq.split(",")] # A bit of sanitization.
+    print(f"Add refseq: The following {len(add_refseq_list)} refseq accession(s) have been added: {add_refseq_list}")
+except KeyError:
+    add_refseq_list = list() # An empty list.
+    
 
 
 
 # --- Construct sample table ----------------------------------------
 
-df = pd.DataFrame(data = {'input_file': input_genomes_parsed})
+# First, we create the table with refseq genomes
+df_refseq = pd.DataFrame(data = {'sample': add_refseq_list})
+if df_refseq.shape[0] > 0: # If the table is nonempty, we can add some attributes to it
+    df_refseq['origin'] = "refseq"
+    df_refseq['input_file'] = output_directory + "/.refseq_downloads/" + df_refseq['sample'] + "/" + df_refseq['sample'] + ".fna"  
+    df_refseq['input_file_copy'] = output_directory + "/samples/" + df_refseq['sample'] + "/" + df_refseq['sample'] + ".fna"  
 
-# Check that the directory is not empty.
-N = df.shape[0]
-if N > 0:
+# A refseq genome will be requested downstream, thus requiring the files in .refseq_downloads to be downloaded. 
     
 
-    # Check if there are missing files.
+
+# Then, we create the table with the inputted local genomes
+df = pd.DataFrame(data = {'input_file': input_genomes_parsed})
+
+
+if df.shape[0] > 0:
+    
+
+    # Check if files exist.
     missing_files = [file for file in df["input_file"].tolist() if not os.path.isfile(file)]
     if len(missing_files) > 0: # If any files do not exist, inform and exit.
         print("Pipeline: Error, all input files must exist.")
         raise FileNotFoundError(f"The following files are not found: {missing_files}")
 
     # Gain basenames (file name without path)
-    df['basename'] = [os.path.basename(i) for i in df['input_file'].tolist()] # Todo: basename and basename_clean could be "sample", simply.
+    df['basename'] = [os.path.basename(i) for i in df['input_file'].tolist()] 
 
     # Convert weird characters to underscores (mashtree doesn't like spaces).
     df['basename_clean'] = df['basename'].str.replace(' ','_').str.replace(',','_').str.replace('"','_').str.replace('\'','_') # Convert punctuation marks to underscores: Makes everything easier.
+    
+    # Warn the user if there exists spaces in the file names. (update but how would that be possible with the replacements?)
+    if any([" " in i for i in df['input_file'].tolist()]):
+        print("Warning: One or more file names contain space(s). These have been replaced with underscores \" \" -> \"_\"")
     
     # Remove extension by splitting, removing last, and joining.
     df['sample'] = [".".join((i.split(".")[:-1])) for i in df['basename_clean']] 
@@ -208,49 +226,59 @@ if N > 0:
     df['extension'] =  [i.split(".")[-1] for i in df['input_file'].tolist()] 
     
     # This is where the input file is copied to in the first snakemake rule "copy".
-    df['input_file_fasta'] = output_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fna" 
+    df['input_file_copy'] = output_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fna"  
     
-    # Python usually uses 0-index, which may not be intuitive for lay person users. To make sure no one is confused, we name the index as a "one"-index.
-    df['1-index'] = [i+1 for i in range(len(df))] 
+    # As opposed to added refseq accessions, the local files should be marked.
+    df['origin'] = "local"
+    
+    df_local = df
 
-    # Check that list of input files is non-empty.
-    if df.shape[0] == 0:
-        raise Exception("Error: No fasta files in the current directory. Quitting ...(2)")
-        #raise Exception("Zero genomic files present.")
-        sys.exit(1)
+
+
+# Put the two tables together
+df = pd.concat([df, df_refseq])
+
+# Reset the index.
+df = df.reset_index(level = 0)
+# Python usually uses 0-index, which may not be intuitive for lay person users. To make sure no one is confused, we name the index as a "one"-index.
+df['1-index'] = [i+1 for i in range(len(df))] 
+
+# Count the final metadata table
+N = df.shape[0]
 
 
     
-    # --- Display sample table ------------------------------------------
+
+
+# --- Display sample table ------------------------------------------
+if df.shape[0] > 0:
+
 
     print() # Visual padding
     print("  Sample overview")
     print("  ---------------")
     df = df.reset_index(drop = True)
     #print(df[['input_file', 'sample', 'extension']])
-    #print(df[['input_file', 'extension', 'input_file_fasta']])
+    #print(df[['input_file', 'extension', 'input_file_copy']])
     #print(df[['1-index', 'sample', 'extension']].to_string(index = False))
-    #print(df[['1-index', 'input_file', 'basename', 'sample', 'extension', 'input_file_fasta']].to_string(index = False))
-    print(df[['1-index', 'input_file', 'sample']].to_string(index = False))
+    #print(df[['1-index', 'input_file', 'basename', 'sample', 'extension', 'input_file_copy']].to_string(index = False))
+    
+    #print(df[['1-index', 'input_file', 'sample', 'origin']].to_string(index = False))
+    print(df[['1-index', 'input_file', 'input_file_copy', 'sample', 'origin']].to_string(index = False))
 
     print("//")
     print()
 
-    # Warn the user if there exists spaces in the file names. (update but how would that be possible with the replacements?)
-    if any([" " in i for i in df['input_file'].tolist()]): # TODO test if it still works after new globbing system.
-        print("Warning: One or more file names contain space(s). These have been replaced with underscores \" \" -> \"_\"")
-
+    
     # Check if the sample names are unique
     duplicates = df[df.duplicated(['sample'])]
     n_duplicates = duplicates.shape[0]
+
     if n_duplicates > 0:
         raise Exception(f"Error: Sample names are not unique. The following ({n_duplicates}) input genome(s) are duplicated:\n{duplicates.to_string(index = False)}")
-
 else:
-    df = pd.DataFrame(data = {'sample': list(), 'input_file': list(), 'input_file_fasta': list(), })
-
+    df = pd.DataFrame(data = {'sample': list(), 'input_file': list(), 'input_file_copy': list(), }) # If there is no input, at least make sure that the necessary columns exist.
     print(f"Warning: No input genomes to process.")
-
 
 
 # --- Check existence of prerequisited directories
@@ -269,11 +297,15 @@ if not os.path.isdir(output_directory):
 # --- Localrules and ruleorders -------------------------------------
 
 # The localrules are routine tasks that take up very little cpu. In some cases there won't be internet access on compute nodes, why it is smart that downloads are run on the local (aka. frontend) node. 
-localrules: metadata, annotate, antismash_download, bakta_download, eggnog_download, checkm2_download, dbcan_download, gtdb_download, report, report_env, bakta_env
+localrules: metadata, get_refseq, annotate, antismash_download, bakta_download, eggnog_download, checkm2_download, dbcan_download, gtdb_download, report, report_env, bakta_env
+# I wonder why, I decided that copy should not be a localrule.
 
 #ruleorder: prokka > bakta > eggnog # I solved this by having an external output called ".annotation" that requests the appropriate annotator based on the config parameter "annotator". Could have otherwise been a nice solution but would be harder to keep track of which annotation was used for what.
 
 #ruleorder: gapseq_find > gapseq # Most of the time, we just want the pathways completion fractions. Drafting and gapfilling a complete GEM is a bit overkill, but should of course be possible if the user wants it.
+
+
+
 
 
 # --- Main rule to collect all targets ------------------------------
@@ -346,7 +378,7 @@ rule all:
 
 # Write the sample table for later reference.
 rule metadata:
-    input: df['input_file_fasta']
+    input: df[df["origin"] == "local"]["input_file_copy"] # Only the local files are required local input. Otherwise the online genomes must be downloaded first.
     output: "{output_directory}/metadata.tsv"
     params: dataframe = df.to_csv(None, index_label = "index", sep = "\t")
     resources:

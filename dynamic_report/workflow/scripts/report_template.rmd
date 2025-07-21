@@ -183,7 +183,7 @@ N = metadata_df %>% nrow() # Global variable.
 
 # Generate a very simple table which can be used to convert long paths or their basenames to sample names
 metadata_translate_lexicographic = metadata_df %>% 
-    select(sample, file_long = input_file_fasta) %>%
+    select(sample, file_long = input_file_copy) %>%
     mutate(
         file = basename(file_long),
         index = 1:n() # Using a numerical index is so much easier I think.

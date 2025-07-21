@@ -3,7 +3,7 @@
 rule assembly_stats:
     input: 
         metadata = "{output_directory}/metadata.tsv",
-        fasta = df["input_file_fasta"].tolist(),
+        fasta = df["input_file_copy"].tolist(),
     output: "{output_directory}/assembly-stats/assembly-stats.tsv"
     conda: "../envs/assembly-stats.yaml"
     benchmark: "{output_directory}/benchmarks/benchmarks.assembly_stats.tsv"
@@ -24,7 +24,7 @@ rule checkm2:
     input:
         metadata = "{output_directory}/metadata.tsv",
         database_representative = DATABASES + "/checkm2/comparem2_checkm2_database_representative.flag",
-        fasta = df["input_file_fasta"].tolist()
+        fasta = df["input_file_copy"].tolist()
     output:
         table = touch("{output_directory}/checkm2/quality_report.tsv"),
     conda: "../envs/checkm2.yaml"

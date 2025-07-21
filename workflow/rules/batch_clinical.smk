@@ -2,7 +2,7 @@
 #rule abricate:
 #    input: 
 #        metadata = "{output_directory}/metadata.tsv",
-#        fasta = df["input_file_fasta"].tolist(),
+#        fasta = df["input_file_copy"].tolist(),
 #    output:
 #        ncbi_detailed = "{output_directory}/abricate/ncbi_detailed.tsv",
 #        ncbi_sum = "{output_directory}/abricate/ncbi_summarized.tsv",
@@ -38,7 +38,7 @@
 rule mlst:
     input: 
         metadata = "{output_directory}/metadata.tsv",
-        fasta = df["input_file_fasta"].tolist(),
+        fasta = df["input_file_copy"].tolist(),
     output: "{output_directory}/mlst/mlst.tsv",
     params:
         passthrough_parameters = passthrough_parameter_unpack("mlst"),

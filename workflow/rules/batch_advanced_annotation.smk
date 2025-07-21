@@ -36,11 +36,11 @@ rule gtdbtk:
     input: 
         metadata = "{output_directory}/metadata.tsv",
         database_representative = DATABASES + "/gtdb/comparem2_gtdb_database_representative.flag",
-        fasta = df["input_file_fasta"].tolist(),
+        fasta = df["input_file_copy"].tolist(),
     output: 
         tsv = "{output_directory}/gtdbtk/gtdbtk.summary.tsv"
     params:
-        batchfile_content = df[['input_file_fasta', 'sample']].to_csv(header = False, index = False, sep = "\t"),
+        batchfile_content = df[['input_file_copy', 'sample']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{output_directory}/gtdbtk/",
         base_variable = base_variable, # not used?
         mash_db = f"{DATABASES}/gtdb_sketch_release226/mash_db.msh",

@@ -9,7 +9,6 @@ def get_mem_panaroo(wildcards, attempt):
 
 #print(passthrough_parameter_unpack("none")) # DEBUG
 
-# Maybe it shouldn't be panaroo which is the checkpoint, but rather every rule that uses the core genome, like rule snp_dists? Let me try!
 rule panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-dists should only run if the core genome is non-empty.
     input: 
         metadata = "{output_directory}/metadata.tsv",
@@ -51,7 +50,7 @@ rule panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-dists 
     """
     
 
-# Instead of passing a missing file into the dependents of the core genome, this rule fails and stops the downstream jobs. Note that this is not a "real" snakemake-checkpoint, as those cannot conditional running whatsoever.
+# Instead of passing a missing file into the dependents of the core genome, this rule fails and stops the downstream jobs. Note that this is not a "real" snakemake-checkpoint, as those cannot support conditional running whatsoever.
 # A possible todo is to make this into a python script that parses the summary and actually prints the size of the core genome. But alas, another day.
 rule core_genome_checkpoint:
     input: 

@@ -246,6 +246,30 @@ rule gapseq_fill: # Continuation on gapseq_find results.
 
     """
     
+# This is a simple idea. Use the dram standard report as basis. Enumerate the same pathways/functions and show, with metabolic rates, which are present based on a specific medium. Could be relevant for streptococcus.
+# rule gapseq_survey:
+#     input: filled_xml = "{output_directory}/samples/{sample}/gapseq/{sample}.xml"
+#     output: survey_tsv = "{output_directory}/samples/{sample}/gapseq/{sample}_survey.tsv
+#     conda: "../envs/r-cobrar.yaml"
+#     benchmark: "{output_directory}/benchmarks/benchmark.gapseq.{sample}.tsv"
+#     shell: """ # partly copied from batch_advanced_annotation::rule kegg_pathway
+    
+#         # Collect version number.
+#         R -s -q -e "library(cobrar); sessionInfo()"  | grep -P "R version|clusterProfiler" > "$(dirname {output.pathway_enrichment})/.software_version.txt"
+
+#         Rscript {params.script:q} \
+#             {input.kegg_asset:q} \
+#             {params.output_dir:q} \
+#             {input.eggnog_annotations:q}
+            
+#         {void_report}
+
+#     """
+    
+    
+
+    
+    
     
 
 rule antismash:
@@ -266,7 +290,7 @@ rule antismash:
     shell: """
     
         # Clean directory. Antismash will fail if previous files exist.
-        rm -rf $(dirname {output.json:q})/* || echo "Continuing ..."
+        rm -rf $(dirname {output.json})/* || echo "Continuing ..."
         
         # Collect version number.
         antismash --version > "$(dirname {output.json})/.software_version.txt"

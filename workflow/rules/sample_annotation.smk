@@ -12,6 +12,8 @@ def get_annotation_results(wildcards):
     
     extra_message = "" # Extra message that can be added for debugging etc.
     
+    # Instead of having this being set by the config["annotator"], it could be set by the corresponding line in the metadata table. Thus each sample could be either prokka, bakta or get_refseq. It is fine to have the config set this, but then it should be copied into the metadata sheet first, and then taken from there.
+    # The thing is that the annotator should not download, as we need the genome already when rule copy runs. So probably 
     if parsed == "bakta":
         annotator = "bakta"
     elif parsed == "prokka":
@@ -141,3 +143,20 @@ rule bakta:
     """
 
 
+# rule get_refseq:
+#     output:
+#         gff = "{output_directory}/samples/{sample}/bakta/{sample}.gff",
+#         faa = "{output_directory}/samples/{sample}/bakta/{sample}.faa",
+#         tsv = "{output_directory}/samples/{sample}/bakta/{sample}.tsv",
+#         log = "{output_directory}/samples/{sample}/bakta/{sample}.log",
+#         ffn = "{output_directory}/samples/{sample}/bakta/{sample}.ffn",
+#     conda: "../envs/ncbi-datasets.yaml"
+#     benchmark: "{output_directory}/benchmarks/benchmark.get_refseq_sample.{sample}.tsv"
+#     shell: """
+    
+#         datasets \
+#             download genome \
+#             accession GCF_900186865.1 \
+#             --include gff3,rna,cds,protein,genome,seq-report
+    
+#     """

@@ -6,7 +6,7 @@
 # File of file names.
 # Overwrites parameter 'input_genomes' but is deactivated by default.
 # Change this to "path/to/fofn.txt" to activate. A fofn.txt is a newline separated (like csv) list of input genomes to process. Single column with no column name. Individual lines can be deactivated with a hash-sign "#".
-fofn: "CHANGE_THIS_TO_ACTIVATE" # E.g. "path/to/fofn.txt"
+#fofn: "CHANGE_THIS_TO_ACTIVATE" # E.g. "path/to/fofn.txt" #From now on, just setting the variable activates it (no KeyError)
 
 # Input genomes
 # In case fofn isn't set. Has a default value that means that it will pick up any genome files in the terminal's current working dir. If you give multiple files or a single file has spaces or weird characters, these characters should be escaped. 

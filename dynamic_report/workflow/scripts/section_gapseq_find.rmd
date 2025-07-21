@@ -45,26 +45,7 @@ gapseq_table %>%
     )
 
 
-# B / What separates the samples?
-# This method is inspired by our nat comms paper. It shows each pc and the factors that separate them. It shows thresholded information.
 
-# pca1 = gapseq_table %>% 
-#     select(sample, ID, Completeness) %>% 
-#     pivot_wider(id_cols = sample, names_from = ID, values_from = Completeness, values_fill = 0) %>% 
-#     column_to_rownames("sample") %>% 
-#     prcomp()
-#     
-# 
-# pca1$x %>% as_tibble(rownames = "sample") %>% 
-#     ggplot(aes("PC1", PC1)) + 
-#     geom_point()
-# 
-# # rank the pathways
-# pca1$rotation %>% as_tibble(rownames = "ID") %>% 
-#     pivot_longer(-ID, names_to = "principal_component", values_to = "loading") %>% 
-#     group_by(principal_component) %>% 
-#     arrange(principal_component, desc(loading^2)) %>% 
-#     mutate(rank = 1:n(), cumsum = cumsum(loading^2)/sum(loading^2), included = cumsum<0.5)
     
   
 
@@ -73,5 +54,6 @@ gapseq_table %>%
 ```
 
 *Table `r tableno()`: Pathways predicted to be present by gapseq using the [gapseq find command](https://gapseq.readthedocs.io/en/latest/usage/basics.html#pathway-and-transporter-prediction).*
+
 
 ---

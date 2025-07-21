@@ -1,7 +1,7 @@
 rule mashtree:
     input: 
         metadata = "{output_directory}/metadata.tsv",
-        fasta = df["input_file_fasta"].tolist(),
+        fasta = df["input_file_copy"].tolist(),
     output: 
         tree = "{output_directory}/mashtree/mashtree.newick",
         dist = "{output_directory}/mashtree/mash_dist.tsv",

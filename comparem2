@@ -78,7 +78,7 @@ logger.addHandler(console_handler)
 # --- Routines ------------------------------------------------------
 
 def exit(returncode):
-    """Generates a random useful tip which can be shown in the end of the pipeline, and exits with the returncode given."""
+    """Generates a random useful tip which can be shown in the end of the pipeline, and exits with the returncode given.""" # Inspired by T. Seemann
     
     tips = [
         "The comprehensive documentation is available at https://comparem2.readthedocs.io",
@@ -97,6 +97,9 @@ def exit(returncode):
         "The command `comparem2 --until fast` only runs a few quick jobs.",
         "CompareM2 was once named 'Assemblycomparator2'.",
         "If you don't specify any input genomes, CompareM2 runs on the fasta files in the current working directory.",
+        "Make sure you explore the dynamic report that has been generated in the results directory.",
+        "You can add refseq genomes and annotations to your analysis with `comparem2 --config add_refseq=<refseq accession>"
+        
     ]
     
     if returncode == 0:
