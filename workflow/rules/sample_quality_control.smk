@@ -9,23 +9,36 @@
 # Generates the input_file later used by rule copy.
 rule get_refseq:
     output:
-        fasta = touch("{output_directory}/.refseq_downloads/{sample}/{sample}.fna"),
+        assembly = "{output_directory}/.refseq_downloads/{sample}/{sample}.fna",
+        gff = "{output_directory}/.refseq_downloads/{sample}/ncbi_dataset/data/{sample}/renamed/{sample}.gff",
+        faa = "{output_directory}/.refseq_downloads/{sample}/ncbi_dataset/data/{sample}/renamed/{sample}.faa",
+        log = "{output_directory}/.refseq_downloads/{sample}/ncbi_dataset/data/{sample}/renamed/{sample}.log",
+        ffn = "{output_directory}/.refseq_downloads/{sample}/ncbi_dataset/data/{sample}/renamed/{sample}.ffn", # better check this one 
+        tsv = "{output_directory}/.refseq_downloads/{sample}/ncbi_dataset/data/{sample}/renamed/{sample}.tsv", 
     conda: "../envs/ncbi_datasets.yaml"
     shell: """
 
-        # Reset directory in case of previous partial downloads.    
-        rm -rf $(dirname {output.fasta})/* || echo "Continuing ..."
 
         datasets \
             download genome \
             accession {wildcards.sample} \
-            --filename "$(dirname {output})/ncbi_{wildcards.sample}.zip" \
+            --filename "$(dirname {output.assembly})/ncbi_{wildcards.sample}.zip" \
             --include genome,rna,protein,cds,gff3,gtf,gbff,seq-report
             
-        unzip "$(dirname {output.fasta})/ncbi_{wildcards.sample}.zip" -d "$(dirname {output.fasta})"
+        echo "A" | unzip "$(dirname {output.assembly})/ncbi_{wildcards.sample}.zip" -d "$(dirname {output.assembly})"
         
         # Make a predictable path (The assembly accession is unpredictable)
-        cp $(dirname {output.fasta})/ncbi_dataset/data/{wildcards.sample}/{wildcards.sample}_*_genomic.fna $(dirname {output.fasta})/ncbi_dataset/data/{wildcards.sample}/{wildcards.sample}_assembly.fna
+        cp $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/{wildcards.sample}_*_genomic.fna {output.assembly}
+        
+        # Prepare annotation files for later.
+        cp $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/genomic.gff {output.gff}
+        cp $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/protein.faa {output.faa}
+        cp $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/sequence_report.jsonl {output.log}
+        cp $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/cds_from_genomic.fna {output.ffn}
+        cp $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/genomic.gtf {output.tsv}
+        
+        
+        
         
     """
 
@@ -36,7 +49,6 @@ rule copy:
         genome = lambda wildcards: df[df["sample"] == wildcards.sample]["input_file"].tolist()
     output: 
         fasta = "{output_directory}/samples/{sample}/{sample}.fna",
-        md5sum = "{output_directory}/samples/{sample}/{sample}.md5.txt",
         log = "{output_directory}/samples/{sample}/{sample}.log",
     #conda: "../envs/assembly-stats.yaml"
     params:
@@ -50,8 +62,8 @@ rule copy:
     
         echo {wildcards}
         cp {input.genome:q} {output.fasta:q}
-        md5sum {output.fasta:q} > {output.md5sum:q}
-        echo "Copied from $(realpath {input}) on $(date)" > {output.log}
+        echo "Copied from $(realpath {input}) on $(date)" > {output.log:q}
+        md5sum {output.fasta:q} >> {output.log:q}
         
     """  
     

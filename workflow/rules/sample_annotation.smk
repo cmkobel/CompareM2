@@ -6,33 +6,51 @@ def get_annotation_results(wildcards):
         anonymous rule but I think this is more snakemakistic. 
         This could also have been an action in the end of the annotaton rules (prokka and bakta), but then it would become complicated when the user wanted to run both, to possibly compare the output.
     """
-        
-    raw = config["annotator"]
-    parsed = str(raw).lower().strip()
     
-    extra_message = "" # Extra message that can be added for debugging etc.
+    origin = df[df["sample"] == wildcards.sample]["origin"].tolist()[0]
+    print("cre", origin)
     
-    # Instead of having this being set by the config["annotator"], it could be set by the corresponding line in the metadata table. Thus each sample could be either prokka, bakta or get_refseq. It is fine to have the config set this, but then it should be copied into the metadata sheet first, and then taken from there.
-    # The thing is that the annotator should not download, as we need the genome already when rule copy runs. So probably 
-    if parsed == "bakta":
-        annotator = "bakta"
-    elif parsed == "prokka":
-        annotator = "prokka"
-    else: # base case, fall back to prokka.
-        extra_message += " (default)"
-        annotator = "prokka"
+    if origin == "local":
         
+        raw = config["annotator"]
+        parsed = str(raw).lower().strip()
         
-    #print(f"Pipeline: Using the {annotator} annotator for sample \"{wildcards.sample}\"{extra_message}.")
+        extra_message = "" # Extra message that can be added for debugging etc.
+        
+        # Instead of having this being set by the config["annotator"], it could be set by the corresponding line in the metadata table. Thus each sample could be either prokka, bakta or get_refseq. It is fine to have the config set this, but then it should be copied into the metadata sheet first, and then taken from there.
+        # The thing is that the annotator should not download, as we need the genome already when rule copy runs. So probably 
+        if parsed == "bakta":
+            annotator = "bakta"
+        elif parsed == "prokka":
+            annotator = "prokka"
+        else: # base case, fall back to prokka.
+            extra_message += " (default)"
+            annotator = "prokka"
+            
+            
+        #print(f"Pipeline: Using the {annotator} annotator for sample \"{wildcards.sample}\"{extra_message}.")
+        
+        # Return should only contain one item, as I can't name them and I need to refer to a single one in rule annotate where I'm accessing its dirname().
+        rv = [
+            f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.gff",
+            f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.faa",
+            f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.log",
+            f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.ffn",
+            f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.tsv",
+        ]
+        
+    elif origin == "refseq":
+
+        rv = [
+            f"{wildcards.output_directory}/.refseq_downloads/{wildcards.sample}/ncbi_dataset/data/{wildcards.sample}/renamed/{wildcards.sample}.gff",
+            f"{wildcards.output_directory}/.refseq_downloads/{wildcards.sample}/ncbi_dataset/data/{wildcards.sample}/renamed/{wildcards.sample}.faa",
+            f"{wildcards.output_directory}/.refseq_downloads/{wildcards.sample}/ncbi_dataset/data/{wildcards.sample}/renamed/{wildcards.sample}.log",
+            f"{wildcards.output_directory}/.refseq_downloads/{wildcards.sample}/ncbi_dataset/data/{wildcards.sample}/renamed/{wildcards.sample}.ffn", # better check this one 
+            f"{wildcards.output_directory}/.refseq_downloads/{wildcards.sample}/ncbi_dataset/data/{wildcards.sample}/renamed/{wildcards.sample}.tsv", # Not sure about this one. Maybe remove?
+        ]
+        
     
-    # Return should only contain one item, as I can't name them and I need to refer to a single one in rule annotate where I'm accessing its dirname().
-    return [
-        f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.gff",
-        f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.faa",
-        f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.log",
-        f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.ffn",
-        f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.tsv",
-    ]
+    return rv
         
     
 
