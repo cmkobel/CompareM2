@@ -31,11 +31,11 @@ rule get_refseq:
         cp $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/{wildcards.sample}_*_genomic.fna {output.assembly}
         
         # Prepare annotation files for later.
-        cp $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/genomic.gff {output.gff}
-        cp $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/protein.faa {output.faa}
-        cp $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/sequence_report.jsonl {output.log}
-        cp $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/cds_from_genomic.fna {output.ffn}
-        cp $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/genomic.gtf {output.tsv}
+        ln -sr $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/genomic.gff {output.gff}
+        ln -sr $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/protein.faa {output.faa}
+        ln -sr $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/sequence_report.jsonl {output.log}
+        ln -sr $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/cds_from_genomic.fna {output.ffn}
+        ln -sr $(dirname {output.assembly})/ncbi_dataset/data/{wildcards.sample}/genomic.gtf {output.tsv}
         
         
         
