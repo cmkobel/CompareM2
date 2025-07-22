@@ -9,6 +9,7 @@ def get_annotation_results(wildcards):
     
     origin = df[df["sample"] == wildcards.sample]["origin"].tolist()[0]
 
+
     
     if origin == "local":
         
@@ -42,13 +43,12 @@ def get_annotation_results(wildcards):
     elif origin == "refseq":
 
         rv = [
-            f"{wildcards.output_directory}/.refseq_downloads/{wildcards.sample}/ncbi_dataset/data/{wildcards.sample}/renamed/{wildcards.sample}.gff",
-            f"{wildcards.output_directory}/.refseq_downloads/{wildcards.sample}/ncbi_dataset/data/{wildcards.sample}/renamed/{wildcards.sample}.faa",
-            f"{wildcards.output_directory}/.refseq_downloads/{wildcards.sample}/ncbi_dataset/data/{wildcards.sample}/renamed/{wildcards.sample}.log",
-            f"{wildcards.output_directory}/.refseq_downloads/{wildcards.sample}/ncbi_dataset/data/{wildcards.sample}/renamed/{wildcards.sample}.ffn", # better check this one 
-            f"{wildcards.output_directory}/.refseq_downloads/{wildcards.sample}/ncbi_dataset/data/{wildcards.sample}/renamed/{wildcards.sample}.tsv", # Not sure about this one. Maybe remove?
+            f"{wildcards.output_directory}/samples/{wildcards.sample}/refseq/.renamed/{wildcards.sample}.gff",
+            f"{wildcards.output_directory}/samples/{wildcards.sample}/refseq/.renamed/{wildcards.sample}.faa",
+            f"{wildcards.output_directory}/samples/{wildcards.sample}/refseq/.renamed/{wildcards.sample}.log",
+            f"{wildcards.output_directory}/samples/{wildcards.sample}/refseq/.renamed/{wildcards.sample}.ffn", # better check this one 
+            f"{wildcards.output_directory}/samples/{wildcards.sample}/refseq/.renamed/{wildcards.sample}.tsv", # Not sure about this one. Maybe remove?
         ]
-        
     
     return rv
         

@@ -189,7 +189,9 @@ except KeyError:
 df_refseq = pd.DataFrame(data = {'sample': add_refseq_list})
 if df_refseq.shape[0] > 0: # If the table is nonempty, we can add some attributes to it
     df_refseq['origin'] = "refseq"
-    df_refseq['input_file'] = output_directory + "/.refseq_downloads/" + df_refseq['sample'] + "/" + df_refseq['sample'] + ".fna"  
+    #df_refseq['input_file'] = output_directory + "/.refseq_downloads/" + df_refseq['sample'] + "/" + df_refseq['sample'] + ".fna"  
+    
+    df_refseq['input_file'] = output_directory + "/samples/" + df_refseq['sample'] + "/refseq/" + df_refseq['sample'] + "_assembly.fna"  
     df_refseq['input_file_copy'] = output_directory + "/samples/" + df_refseq['sample'] + "/" + df_refseq['sample'] + ".fna"  
 
 # A refseq genome will be requested downstream, thus requiring the files in .refseq_downloads to be downloaded. 
