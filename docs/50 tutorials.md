@@ -11,7 +11,11 @@ The quickest way to get started with CompareM2 is to use publicly available geno
 
 First, we'll gain a quick phylogenetic overview over some publicly available genomes. A sufficient tree can be computed with mashtree.
 
+After following the [installation instructions](https://comparem2.readthedocs.io/en/latest/10%20installation/), the following can be run on the command line
+
 ```bash
+conda activate comparem2_launcher
+
 mkdir E._faecium_public && cd E._faecium_public
 
 comparem2 --config add_refseq=GCF...,GCF... --until mashtree
