@@ -197,7 +197,7 @@ def run_cite():
     """)
     return 0
 
-def run_status(): 
+def run_status():  
     
     print("Info: Initializing status.")
     
@@ -206,8 +206,8 @@ def run_status():
         try:
             summary = pd.read_csv(path, delimiter="\t") 
         except pd.errors.EmptyDataError as e:
-            print("Info: No status data to present, based on the inputted genomes (1).")
-            return 1
+            print("Info: 1) No status data to present, based on the inputted genomes.")
+            return
         
         summary = summary.dropna(subset=["rule"])
         #print(summary)
@@ -245,8 +245,8 @@ def run_status():
     
         # If only filtered (downloads, copy etc. ) rules are (were) present, it shouldn't be presented.
         if final.shape[0] == 0:
-            print("Info: No status data to present, based on the inputted genomes (2).")
-            return 1
+            print("Info: 2) No status data to present, based on the inputted genomes.")
+            return
         
         # Present
         print()
@@ -264,7 +264,7 @@ def run_status():
         except FileNotFoundError:
             pass # ignore
         
-        return 0
+        return
     
     command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --summary --quiet all | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv"""
 
@@ -276,10 +276,10 @@ def run_status():
     process_status = subprocess.run(command_status, shell = True)
     returncode_status = process_status.returncode
     
-    alternative_returncode = present_status(".status.tsv")
+    present_status(".status.tsv")
     
     #return returncode_status
-    return alternative_returncode
+    return 0
 
 
 def run_downloads():
