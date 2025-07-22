@@ -2,20 +2,20 @@
 
 # What analyses does it do?
 
-## An introduction to the rulegraph
+## The CompareM2 pipeline
 
-CompareM2 can perform a large number of bioinformatic tasks which are each defined in "rules". Rules can be thought of as task templates that define the computer code that performs the same computational task on many different input files (e.g. genomes). Some of the rules are interdependent on one another and form chains of results that successively feed into more high level analyses. Below is a visualization of the dependency relationships between these rules.
+CompareM2 can perform a large number of bioinformatic tasks which are each defined in "rules". Rules can be thought of as task templates that generate the computer code that performs the same computational task on many different input files (e.g. inputted genomes). Some of the rules are interdependent on one another and form chains of results that successively feed into more high level analyses down the line - hence pipeline. Below is a visualization of the dependency relationships between these rules.
  
 
 ![dag2 pdf](https://github.com/user-attachments/assets/855674a4-d80b-4892-8b14-5d87ad7de86b)
 
-The visualized rulegraph a directed acyclic graph. The direction goes from the start (copy) where inputted genomes are copied into the results directory, to the end (all) where all results are collected before being sent to the dynamic report document. 
+The visualized pipeline is a directed acyclic graph. The direction goes from start (copy) in the top where inputted genomes are copied into the results directory, to the end (all) in the bottom where results are collected before being directed into the dynamic report document. 
 
 
-In many cases it may be desirable to run only a subset of the analyses on a given set of microbial assemblies. CompareM2 uses Snakemakes powerful rulegraph execution to direct the order of execution for the many rules and their dependencies. This means that the user can select to run only specific parts of the rule graph. This can be achieved in practice by using the "until" parameter. 
+In many cases it may be desirable to run only a subset of the analyses on a given set of microbial assemblies. CompareM2 uses Snakemake's powerful pipeline execution to direct the order of execution for the many rules and their dependencies. This means that the user can select to run only specific parts of the rule graph. This can be achieved in practice by using the "until" parameter. 
 
 
-By defining a rule to run *until*, the Snakemake executor can select to use only the parts of the rulegraph, that lead up to the production of the desired analysis. One example is to only compute a pan-genome using panaroo. To do this, first the inputted genome must be copied into the results directory (rule all), then the genome is annotated (rule annotate) using bakta og prokka, and then finally the pan-genome can be computed across several samples (rule panaroo). To run this exact chain of dependencies of panaroo including itself, the user can run `comparem2 --until panaroo`. By running this command, only the relevant jobs for generating the pan-genome are computed.
+By defining a rule to run *until*, the Snakemake executor can select to use only the parts of the pipeline, that lead up to the production of the desired analysis. One example is to only compute a core-pan genome using panaroo. To do this, first the inputted genome must be copied into the results directory (rule all), then the genome is annotated (rule annotate) using bakta og prokka, and then finally the core-pan genome can be computed across several samples (rule panaroo). To run this exact chain of dependencies of panaroo including itself, the user can simply run `comparem2 --until panaroo`. By running this command, only the relevant jobs for generating the core-pan genome are computed.
 
 
 !!! note "TL;DR"
@@ -80,7 +80,9 @@ These demo reports are available for inspiration while you wait for your own rep
   
     6 Methanoflorens (archaeal) genomes. Representants of Bog-38 which are part of GTDB.
     
-
+  - [report_]
+  
+    500 Lysobacteraceae representants. 
 
 
 
