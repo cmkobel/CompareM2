@@ -1,4 +1,4 @@
-# Tutorials
+# Practical examples
 
 (This page is under construction. Will be finished before the end of august 2025.)
 
