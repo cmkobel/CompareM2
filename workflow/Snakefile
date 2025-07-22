@@ -299,7 +299,9 @@ if not os.path.isdir(output_directory):
 # --- Localrules and ruleorders -------------------------------------
 
 # The localrules are routine tasks that take up very little cpu. In some cases there won't be internet access on compute nodes, why it is smart that downloads are run on the local (aka. frontend) node. 
-localrules: metadata, get_refseq, annotate, antismash_download, bakta_download, eggnog_download, checkm2_download, dbcan_download, gtdb_download, report, report_env, bakta_env
+localrules: metadata, annotate, antismash_download, bakta_download, eggnog_download, checkm2_download, dbcan_download, gtdb_download, report, report_env, bakta_env
+# get_refseq
+
 # I wonder why, I decided that copy should not be a localrule.
 
 #ruleorder: prokka > bakta > eggnog # I solved this by having an external output called ".annotation" that requests the appropriate annotator based on the config parameter "annotator". Could have otherwise been a nice solution but would be harder to keep track of which annotation was used for what.
