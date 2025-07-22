@@ -160,6 +160,12 @@ custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, wid
     )
 }
 
+cm2_save_plot = function(content) {
+    name = paste(batch_title, content, sep = "__")
+    ggsave(filename = paste0(output_directory, "/tables/", name, ".pdf")) # Save a vector version.
+
+}
+
 
 
 

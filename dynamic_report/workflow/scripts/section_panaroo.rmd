@@ -88,6 +88,8 @@ panaroo_plot_df %>%
         y = "sample",
         fill = "shared by\nsamples"
     )
+    
+cm2_save_plot("panaroo")
 
 ```
 

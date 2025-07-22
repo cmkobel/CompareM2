@@ -14,7 +14,7 @@ input_genomes: "*.fna *.fa *.fasta *.fas" # E.g. "path/to/*.fna"
 
 # Annotator
 # Decide which annotator to use for downstream tools that use the output of either prokka or bakta.
-annotator: "prokka" # prokka|bakta # Affects .faa used in dbcan, interproscan, diamond_kegg
+annotator: "bakta" # prokka|bakta # Affects .faa used in dbcan, interproscan, diamond_kegg
 
 # Output directory
 # This is the directory where all results are written.

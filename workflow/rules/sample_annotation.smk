@@ -24,9 +24,9 @@ def get_annotation_results(wildcards):
             annotator = "bakta"
         elif parsed == "prokka":
             annotator = "prokka"
-        else: # base case, fall back to prokka.
+        else: # base case, fall back.
             extra_message += " (default)"
-            annotator = "prokka"
+            annotator = "bakta"
             
     elif origin == "refseq":
         annotator = "refseq_annotation"

@@ -85,6 +85,8 @@ df_dbcan_plot_data %>%
         x = "substrate", 
         y = "sample"
     )
+    
+cm2_save_plot("dbcan")
 
 ```
 

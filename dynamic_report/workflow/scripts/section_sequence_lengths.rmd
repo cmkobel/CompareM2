@@ -50,6 +50,8 @@ sequence_lengths_meta_df %>%
     theme(panel.grid.major.x = element_line(colour = "grey92")) + 
     labs(y = "sample (GC%)") +
     scale_fill_viridis_c(direction = 1)
+    
+cm2_save_plot("sequence_lengths")
 
         
 ```

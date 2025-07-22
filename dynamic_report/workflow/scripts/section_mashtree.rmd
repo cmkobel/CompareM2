@@ -41,6 +41,8 @@ ape::plot.phylo(tree, align.tip.label = T, font = 1, cex = 0.73)
 axis(1)
            
 
+# TODO: Save figure.
+
 ```
 
 *Fig. `r figno()`: Approximation of a phylogenetic tree calculated with mashtree. The horizontal axis is an approximation to 1-ANI. The tree is not rooted.*

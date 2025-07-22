@@ -91,6 +91,8 @@ snp_dists_additional_text = ""
 
 snp_dists_plot
 
+cm2_save_plot("snp_dists)
+
 
 ```
 *Fig. `r figno()`: Pairwise SNP distances between all samples. `r paste(snp_dists_additional_text)`*

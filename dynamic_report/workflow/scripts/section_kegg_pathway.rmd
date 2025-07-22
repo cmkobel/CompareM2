@@ -69,6 +69,8 @@ metadata_translate %>%
         y = "sample",
         fill = "significant groups"
     )
+    
+cm2_save_plot("kegg_pathway")
 
 ```
 

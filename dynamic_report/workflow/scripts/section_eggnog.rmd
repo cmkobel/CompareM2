@@ -92,6 +92,8 @@ metadata_translate %>%
         x = "COG category", 
         y = "sample"
     )
+    
+cm2_save_plot("eggnog")
 
 
 ```
