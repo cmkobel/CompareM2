@@ -2,47 +2,58 @@
 
 # What analyses does it do?
 
-Below is the graph the shows the order of execution of all possible analyses "rules" in CompareM2:
+## An introduction to the rulegraph
 
+CompareM2 can perform a large number of bioinformatic tasks which are each defined in "rules". Rules can be thought of as task templates that define the computer code that performs the same computational task on many different input files (e.g. genomes). Some of the rules are interdependent on one another and form chains of results that successively feed into more high level analyses. Below is a visualization of the dependency relationships between these rules.
+ 
 
 ![dag2 pdf](https://github.com/user-attachments/assets/855674a4-d80b-4892-8b14-5d87ad7de86b)
 
+The visualized rulegraph a directed acyclic graph. The direction goes from the start (copy) where inputted genomes are copied into the results directory, to the end (all) where all results are collected before being sent to the dynamic report document. 
 
-This figure does not show the pseudo rules such as `meta`, `isolate`, `fast`, etc.
+
+In many cases it may be desirable to run only a subset of the analyses on a given set of microbial assemblies. CompareM2 uses Snakemakes powerful rulegraph execution to direct the order of execution for the many rules and their dependencies. This means that the user can select to run only specific parts of the rule graph. This can be achieved in practice by using the "until" parameter. 
 
 
-!!! note "Hint"
+By defining a rule to run *until*, the Snakemake executor can select to use only the parts of the rulegraph, that lead up to the production of the desired analysis. One example is to only compute a pan-genome using panaroo. To do this, first the inputted genome must be copied into the results directory (rule all), then the genome is annotated (rule annotate) using bakta og prokka, and then finally the pan-genome can be computed across several samples (rule panaroo). To run this exact chain of dependencies of panaroo including itself, the user can run `comparem2 --until panaroo`. By running this command, only the relevant jobs for generating the pan-genome are computed.
+
+
+!!! note "TL;DR"
     Use `comparem2 --until <rule> [<another rule>...]` to run one or several specific analyses only. The rule names for each analysis to pick is listed below:
 
-## For each sample
+## Included analyses
+
+Below is a comprehensive list of all rules (analyses) available in CompareM2.
+
+### For each sample
 
 First, independent analyses are run on each of the input genomic assembly files.
 
   - `sequence_lengths` [seqkit](https://bioinf.shenwei.me/seqkit/usage/) Lengths and GC-content of individual contigs.
   - `assembly_stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) Generic assembly statistics.
-  - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) Estimate assembly completeness and contamination.
-  - `prokka` [prokka](https://github.com/tseemann/prokka) Genomic annotation of Archaea and Bacteria. 
+  - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) Assembly completeness and contamination.
   - `bakta` [bakta](https://github.com/oschwengers/bakta) Genomic annotation of Bacteria (lacking in report, but used downstream by other tools).
+  - `prokka` [prokka](https://github.com/tseemann/prokka) Legacy genomic annotation of Archaea and Bacteria. 
   - `kegg_pathway` [clusterProfiler](https://yulab-smu.top/biomedical-knowledge-mining-book/) KEGG ortholog-based pathway enrichment analysis.
-  - `dbcan` [dbCAN4](https://github.com/linnabrown/run_dbcan) Annotation of carbohydrate-active "CAZyme" enzymes (lacking in report).
+  - `dbcan` [dbCAN4](https://github.com/linnabrown/run_dbcan) Annotation of carbohydrate-active enzymes (CAZymes) (lacking in report).
   - `antismash` [antismash](https://docs.antismash.secondarymetabolites.org/) Detection of biosynthesis genes (lacking in report).
   - `eggnog` [eggnog-mapper](https://github.com/eggnogdb/eggnog-mapper/) Functional annotation.
   - `interproscan` [InterProScan](https://github.com/ebi-pf-team/interproscan) Protein function using Tigrfam, Hamap and Pfam (lacking in report).
   - `amrfinder` [AMRFinderPlus](https://github.com/ncbi/amr/) Virulence and resistance gene identification.
   - `mlst` [mlst](https://github.com/tseemann/mlst) Multi locus sequence typing.
   - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) Species recognition.
-  - `gapseq` [Gapseq](https://gapseq.readthedocs.io/en/latest/) Genome scale metabolic modeling reconstruction modeling and gapfilling.
+  - `gapseq` [Gapseq](https://gapseq.readthedocs.io/en/latest/) Genome scale metabolic reconstruction gapfilling and modeling.
   
 
 ## Across samples
 
-Then on the basis of the analysis of each input genomic assembly, these analyses are run across all samples.
+Then, on the basis of the analysis of each input genomic assembly, these analyses are run across all samples.
 
   - `panaroo` [panaroo](https://github.com/gtonkinhill/panaroo) Pan and core genome.
-  - `snp_dists` [snp-dists](https://github.com/tseemann/snp-dists) Core genome pairwise snp-distances.
+  - `snp_dists` [snp-dists](https://github.com/tseemann/snp-dists) Pairwise snp-distances on the core genome.
   - `fasttree` [FastTree](http://www.microbesonline.org/fasttree/) Phylogenetic tree of the core genome.
   - `iqtree` [IQ-tree](http://www.iqtree.org/) Phylogenetic Tree of core genome with bootstrapping (lacking in report).
-  - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) Super fast distance measurement
+  - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) Super fast distance measurement and neighbor joining.
   - `treecluster` [TreeCluster](https://github.com/niemasd/TreeCluster) Clustering of phylogenetic trees (lacking in report).
   - **A nice report easy to share with your friends (See demos [below](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report))**
 

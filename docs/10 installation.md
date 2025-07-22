@@ -80,6 +80,8 @@ If you are working on a shared computational resource like a laboratory workstat
 export COMPAREM2_DATABASES="/absolute/path/to/shared_databases/comparem2_v2.5.8+"
 ```
 
+As a system administrator you may wish to set the "COMPAREM2_DATABASES" variable globally for all users. On common debian/ubuntu systems using bash, this can be done by putting the same export statement into /etc/bash.bashrc
+
 ### HPC profiles for Snakemake
 
  If you have experience with snakemake and are working on a high performance computing cluster (HPC), you can modify and use the cluster configuration profiles in the "profiles/" directory. You can define the use of one of these profiles by setting the "COMPAREM2_PROFILE" environment variable. You can put this into your ~/.bashrc or execute the command before using CompareM2. You can read more about snakemake profiles [here](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles) or browse more default profiles [here](https://github.com/snakemake-profiles).
