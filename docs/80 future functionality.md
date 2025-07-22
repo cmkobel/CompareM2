@@ -16,7 +16,7 @@ In the future we might add some of the following software packages into CompareM
 
 **Batch basis (across all samples)**
 
-  - GC3-profiling "fingerprinting" of the distribution of GC-content.
+  - GC3-profiling "fingerprinting" of the distribution of synonymous GC-content.
   - Recombination in core genome using the Bruen's PHI statistic or ClonalFrameML. (requires stable synteny calculation)
   - Identification of horizontally transferred genes?
 
