@@ -40,7 +40,7 @@ First, independent analyses are run on each of the input genomic assembly files.
   - `eggnog` | [Eggnog-mapper](https://github.com/eggnogdb/eggnog-mapper/) functional annotation.
   - `interproscan` | [Interproscan](https://github.com/ebi-pf-team/interproscan) protein function using Tigrfam, Hamap and Pfam (lacking in report).
   - `amrfinder` | [Amrfinderplus](https://github.com/ncbi/amr/) virulence and resistance gene identification.
-  - `mlst` | [Mlst](https://github.com/tseemann/mlst) Multi locus sequence typing.
+  - `mlst` | [Mlst](https://github.com/tseemann/mlst) multi locus sequence typing.
   - `gtdbtk` | [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) species identification.
   - `gapseq` | [Gapseq](https://gapseq.readthedocs.io/en/latest/) genome scale metabolic reconstruction gapfilling and modeling.
   
@@ -49,12 +49,12 @@ First, independent analyses are run on each of the input genomic assembly files.
 
 Then, on the basis of the analysis of each input genomic assembly, these analyses are run across all samples.
 
-  - `panaroo` [panaroo](https://github.com/gtonkinhill/panaroo) Pan and core genome.
-  - `snp_dists` [snp-dists](https://github.com/tseemann/snp-dists) Pairwise snp-distances on the core genome.
-  - `fasttree` [FastTree](http://www.microbesonline.org/fasttree/) Phylogenetic tree of the core genome.
-  - `iqtree` [IQ-tree](http://www.iqtree.org/) Phylogenetic Tree of core genome with bootstrapping (lacking in report).
-  - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) Super fast distance measurement and neighbor joining.
-  - `treecluster` [TreeCluster](https://github.com/niemasd/TreeCluster) Clustering of phylogenetic trees (lacking in report).
+  - `panaroo` | [Panaroo](https://github.com/gtonkinhill/panaroo) pan and core genomes.
+  - `snp_dists` | [Snp-dists](https://github.com/tseemann/snp-dists) pairwise snp-distances on the core genome.
+  - `fasttree` | [Fasttree](http://www.microbesonline.org/fasttree/) phylogenetic tree of the core genome.
+  - `iqtree` | [Iq-tree](http://www.iqtree.org/) phylogenetic tree of core genome with bootstrapping (lacking in report).
+  - `mashtree` | [Mashtree](https://github.com/lskatz/mashtree) super fast distance measurement and neighbor joining.
+  - `treecluster` | [Treecluster](https://github.com/niemasd/TreeCluster) clustering of phylogenetic trees (lacking in report).
   - **A nice report easy to share with your friends (See demos [below](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report))**
 
 
