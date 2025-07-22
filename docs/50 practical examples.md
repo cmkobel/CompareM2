@@ -24,7 +24,7 @@ comparem2 --config add_refseq=GCF...,GCF... --until mashtree
 
 ## Tutorial 2 - Metagenomic characterization
 
-Assemblies of microbial genomes come in many different forms. A common way to investigate the diversity of ecological niches is to assemble and bin the microbes in a specific sample. By assembling a metagenome and binning it into discrete species representatives, it is possible to paint a picture of the functional potential they ?direct on their environment.
+Assemblies of microbial genomes come in many different forms. A common way to investigate the diversity of ecological niches is to assemble and bin the microbes in a biological sample. By assembling a metagenome and binning it into discrete species representatives, it is possible to paint a picture of the functional potential they ?direct on their environment.
 
 Here, we'll use genomes from the ?? study, which can be downloaded here.
 
