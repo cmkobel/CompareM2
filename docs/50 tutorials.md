@@ -1,5 +1,7 @@
 # Tutorials
 
+(This page is under construction. Will be finished before the end of august 2025.)
+
 CompareM2 contains different tools to cover varying aspects of microbial genome analysis. Here we showcase some different ways to use CompareM2 to achieve insights into the functional potentials of microbial genomes, and how they relate to one another.
 
 
