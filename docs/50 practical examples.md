@@ -29,4 +29,9 @@ Assemblies of microbial genomes come in many different forms. A common way to in
 Here, we'll use genomes from the ?? study, which can be downloaded here.
 
 
+
+## Tutorial 3 - Another example
+
+Can I come up with a third unique non-trivial use case?
+
 {!resources/footer.md!}
