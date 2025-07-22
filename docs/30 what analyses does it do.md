@@ -29,52 +29,32 @@ Below is a comprehensive list of all rules (analyses) available in CompareM2.
 
 First, independent analyses are run on each of the input genomic assembly files.
 
-  - rule `sequence_lengths` 
-    [Seqkit](https://bioinf.shenwei.me/seqkit/usage/) lengths and GC-content of individual contigs.
-  - rule `assembly_stats` 
-    [Assembly-stats](https://github.com/sanger-pathogens/assembly-stats) generic assembly statistics.
-  - rule `checkm2` 
-    [CheckM2](https://github.com/chklovski/CheckM2/) assembly completeness and contamination.
-  - rule `bakta` 
-    [Bakta](https://github.com/oschwengers/bakta) genomic annotation of Bacteria (lacking in report, but used downstream by other tools).
-  - rule `prokka` 
-    [Prokka](https://github.com/tseemann/prokka) legacy genomic annotation of Archaea and Bacteria. 
-  - rule `kegg_pathway` 
-    [Clusterprofiler](https://yulab-smu.top/biomedical-knowledge-mining-book/) KEGG ortholog-based pathway enrichment analysis.
-  - rule `dbcan` 
-    [Dbcan](https://github.com/linnabrown/run_dbcan) annotation of carbohydrate-active enzymes (CAZymes) (lacking in report).
-  - rule `antismash` 
-    [Antismash](https://docs.antismash.secondarymetabolites.org/) detection of biosynthesis genes (lacking in report).
-  - rule `eggnog` 
-    [Eggnog-mapper](https://github.com/eggnogdb/eggnog-mapper/) functional annotation.
-  - rule `interproscan` 
-    [Interproscan](https://github.com/ebi-pf-team/interproscan) protein function using Tigrfam, Hamap and Pfam (lacking in report).
-  - rule `amrfinder` 
-    [Amrfinderplus](https://github.com/ncbi/amr/) virulence and resistance gene identification.
-  - rule `mlst` 
-    [Mlst](https://github.com/tseemann/mlst) multi locus sequence typing.
-  - rule `gtdbtk` 
-    [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) species identification.
-  - rule `gapseq` 
-    [Gapseq](https://gapseq.readthedocs.io/en/latest/) genome scale metabolic reconstruction gapfilling and modeling.
+  - rule `sequence_lengths`: [Seqkit](https://bioinf.shenwei.me/seqkit/usage/) lengths and GC-content of individual contigs.
+  - rule `assembly_stats`: [Assembly-stats](https://github.com/sanger-pathogens/assembly-stats) generic assembly statistics.
+  - rule `checkm2`: [CheckM2](https://github.com/chklovski/CheckM2/) assembly completeness and contamination.
+  - rule `bakta`: [Bakta](https://github.com/oschwengers/bakta) genomic annotation of Bacteria (lacking in report, but used downstream by other tools).
+  - rule `prokka`: [Prokka](https://github.com/tseemann/prokka) legacy genomic annotation of Archaea and Bacteria. 
+  - rule `kegg_pathway`: [Clusterprofiler](https://yulab-smu.top/biomedical-knowledge-mining-book/) KEGG ortholog-based pathway enrichment analysis.
+  - rule `dbcan`: [Dbcan](https://github.com/linnabrown/run_dbcan) annotation of carbohydrate-active enzymes (CAZymes) (lacking in report).
+  - rule `antismash`: [Antismash](https://docs.antismash.secondarymetabolites.org/) detection of biosynthesis genes (lacking in report).
+  - rule `eggnog`: [Eggnog-mapper](https://github.com/eggnogdb/eggnog-mapper/) functional annotation.
+  - rule `interproscan`: [Interproscan](https://github.com/ebi-pf-team/interproscan) protein function using Tigrfam, Hamap and Pfam (lacking in report).
+  - rule `amrfinder`: [Amrfinderplus](https://github.com/ncbi/amr/) virulence and resistance gene identification.
+  - rule `mlst`: [Mlst](https://github.com/tseemann/mlst) multi locus sequence typing.
+  - rule `gtdbtk`: [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) species identification.
+  - rule `gapseq`: [Gapseq](https://gapseq.readthedocs.io/en/latest/) genome scale metabolic reconstruction gapfilling and modeling.
   
 
 ## Across samples
 
 Then, on the basis of the analysis of each input genomic assembly, these analyses are run across all samples.
 
-  - rule `panaroo` 
-    [Panaroo](https://github.com/gtonkinhill/panaroo) pan and core genomes.
-  - rule `snp_dists` 
-    [Snp-dists](https://github.com/tseemann/snp-dists) pairwise snp-distances on the core genome.
-  - rule `fasttree` 
-    [Fasttree](http://www.microbesonline.org/fasttree/) phylogenetic tree of the core genome.
-  - rule `iqtree` 
-    [Iq-tree](http://www.iqtree.org/) phylogenetic tree of core genome with bootstrapping (lacking in report).
-  - rule `mashtree` 
-    [Mashtree](https://github.com/lskatz/mashtree) super fast distance measurement and neighbor joining.
-  - rule `treecluster` 
-    [Treecluster](https://github.com/niemasd/TreeCluster) clustering of phylogenetic trees (lacking in report).
+  - rule `panaroo`: [Panaroo](https://github.com/gtonkinhill/panaroo) pan and core genomes.
+  - rule `snp_dists`: [Snp-dists](https://github.com/tseemann/snp-dists) pairwise snp-distances on the core genome.
+  - rule `fasttree`: [Fasttree](http://www.microbesonline.org/fasttree/) phylogenetic tree of the core genome.
+  - rule `iqtree`: [Iq-tree](http://www.iqtree.org/) phylogenetic tree of core genome with bootstrapping (lacking in report).
+  - rule `mashtree`: [Mashtree](https://github.com/lskatz/mashtree) super fast distance measurement and neighbor joining.
+  - rule `treecluster`: [Treecluster](https://github.com/niemasd/TreeCluster) clustering of phylogenetic trees (lacking in report).
   - **A nice report easy to share with your friends (See demos [below](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report))**
 
 
