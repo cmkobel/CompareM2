@@ -19,7 +19,7 @@ By defining a rule to run *until*, the Snakemake executor can select to use only
 
 
 !!! note "TL;DR"
-    Use `comparem2 --until <rule> [<another rule>...]` to run one or several specific analyses only. The rule names for each analysis to pick is listed below:
+    Use `comparem2 --until <rule> [<another rule>...]` to run one or several specific analyses only. The rule names for each analysis to pick is listed in the next section:
 
 ## Included analyses
 
@@ -29,20 +29,20 @@ Below is a comprehensive list of all rules (analyses) available in CompareM2.
 
 First, independent analyses are run on each of the input genomic assembly files.
 
-  - `sequence_lengths` [seqkit](https://bioinf.shenwei.me/seqkit/usage/) Lengths and GC-content of individual contigs.
-  - `assembly_stats` [assembly-stats](https://github.com/sanger-pathogens/assembly-stats) Generic assembly statistics.
-  - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) Assembly completeness and contamination.
-  - `bakta` [bakta](https://github.com/oschwengers/bakta) Genomic annotation of Bacteria (lacking in report, but used downstream by other tools).
-  - `prokka` [prokka](https://github.com/tseemann/prokka) Legacy genomic annotation of Archaea and Bacteria. 
-  - `kegg_pathway` [clusterProfiler](https://yulab-smu.top/biomedical-knowledge-mining-book/) KEGG ortholog-based pathway enrichment analysis.
-  - `dbcan` [dbCAN4](https://github.com/linnabrown/run_dbcan) Annotation of carbohydrate-active enzymes (CAZymes) (lacking in report).
-  - `antismash` [antismash](https://docs.antismash.secondarymetabolites.org/) Detection of biosynthesis genes (lacking in report).
-  - `eggnog` [eggnog-mapper](https://github.com/eggnogdb/eggnog-mapper/) Functional annotation.
-  - `interproscan` [InterProScan](https://github.com/ebi-pf-team/interproscan) Protein function using Tigrfam, Hamap and Pfam (lacking in report).
-  - `amrfinder` [AMRFinderPlus](https://github.com/ncbi/amr/) Virulence and resistance gene identification.
-  - `mlst` [mlst](https://github.com/tseemann/mlst) Multi locus sequence typing.
-  - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) Species recognition.
-  - `gapseq` [Gapseq](https://gapseq.readthedocs.io/en/latest/) Genome scale metabolic reconstruction gapfilling and modeling.
+  - `sequence_lengths` | [Seqkit](https://bioinf.shenwei.me/seqkit/usage/) lengths and GC-content of individual contigs.
+  - `assembly_stats` | [Assembly-stats](https://github.com/sanger-pathogens/assembly-stats) generic assembly statistics.
+  - `checkm2` | [CheckM2](https://github.com/chklovski/CheckM2/) assembly completeness and contamination.
+  - `bakta` | [Bakta](https://github.com/oschwengers/bakta) genomic annotation of Bacteria (lacking in report, but used downstream by other tools).
+  - `prokka` | [Prokka](https://github.com/tseemann/prokka) legacy genomic annotation of Archaea and Bacteria. 
+  - `kegg_pathway` | [Clusterprofiler](https://yulab-smu.top/biomedical-knowledge-mining-book/) KEGG ortholog-based pathway enrichment analysis.
+  - `dbcan` | [Dbcan](https://github.com/linnabrown/run_dbcan) annotation of carbohydrate-active enzymes (CAZymes) (lacking in report).
+  - `antismash` | [Antismash](https://docs.antismash.secondarymetabolites.org/) detection of biosynthesis genes (lacking in report).
+  - `eggnog` | [Eggnog-mapper](https://github.com/eggnogdb/eggnog-mapper/) functional annotation.
+  - `interproscan` | [Interproscan](https://github.com/ebi-pf-team/interproscan) protein function using Tigrfam, Hamap and Pfam (lacking in report).
+  - `amrfinder` | [Amrfinderplus](https://github.com/ncbi/amr/) virulence and resistance gene identification.
+  - `mlst` | [Mlst](https://github.com/tseemann/mlst) Multi locus sequence typing.
+  - `gtdbtk` | [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) species identification.
+  - `gapseq` | [Gapseq](https://gapseq.readthedocs.io/en/latest/) genome scale metabolic reconstruction gapfilling and modeling.
   
 
 ## Across samples
