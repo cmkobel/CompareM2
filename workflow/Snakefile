@@ -279,7 +279,7 @@ if df.shape[0] > 0:
     if n_duplicates > 0:
         raise Exception(f"Error: Sample names are not unique. The following ({n_duplicates}) input genome(s) are duplicated:\n{duplicates.to_string(index = False)}")
 else:
-    df = pd.DataFrame(data = {'sample': list(), 'input_file': list(), 'input_file_copy': list(), }) # If there is no input, at least make sure that the necessary columns exist.
+    df = pd.DataFrame(data = {'sample': list(), 'input_file': list(), 'input_file_copy': list(), "origin": list()}) # If there is no input, at least make sure that the necessary columns exist.
     print(f"Warning: No input genomes to process.")
 
 
