@@ -3,8 +3,9 @@
 # One problem I haven't solved is how to deal with inputs, as refseqqed genomes can't have an input
 rule gather:
     output: 
-        assembly = "{output_directory}/samples/{sample}/{sample}.fna",
+        assembly = ensure("{output_directory}/samples/{sample}/{sample}.fna", non_empty = True),
         log = "{output_directory}/samples/{sample}/{sample}.log",
+    retries: 2
     params: 
         origin = lambda wildcards: df[df["sample"] == wildcards.sample]["origin"].tolist()[0],
         input_file = lambda wildcards: df[df["sample"] == wildcards.sample]["input_file"].tolist()[0], # Only used for genomes of local origin. Value should be NaN for refseq genomes.
@@ -40,7 +41,7 @@ rule gather:
         shell("""
             
             md5sum {output.assembly:q} > {output.log:q}
-            echo "# Copied from $(realpath {input}) on $(date)" >> {output.log:q}
+            echo "# Copied from $(realpath {params.input_file}) on $(date)" >> {output.log:q}
         
         """)
    
