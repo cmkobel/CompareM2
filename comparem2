@@ -77,7 +77,7 @@ logger.addHandler(console_handler)
 
 # --- Routines ------------------------------------------------------
 
-def exit(returncode):
+def tip_exit(returncode):
     """Generates a random useful tip which can be shown in the end of the pipeline, and exits with the returncode given.""" # Inspired by T. Seemann
     
     tips = [
@@ -256,7 +256,7 @@ def run_status():
         # Present
         print()
         print("Below is an overview of the completion of each rule in the CompareM2 pipeline.")
-        print("Only rules which are relevant for the the inputted genomes are shown.") # So it should fail when there is no meaningful output.
+        print("This summary was computed last time CompareM2 was run.")
         print()
         print("  CompareM2 status")
         print("  ----------------")
@@ -287,15 +287,15 @@ def run_main():
     if os.path.exists(".status.tsv"):
         os.remove(".status.tsv")    
     
-    
+    # Define run commands
     command_main = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml"  """ + trailing_arguments_concatenated 
-    
-    command_report = f"""snakemake --snakefile "$COMPAREM2_BASE/dynamic_report/workflow/Snakefile" --profile "$COMPAREM2_PROFILE" --configfile=.report_config.yaml --quiet all""" # todo: Find out why the comparem2_base and profile are formatted differently here.
     
     command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" """ + trailing_arguments_concatenated_nostatus + """ --until all --summary --quiet all | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv""" 
     # always leave a .status.tsv file for future interesteds.
     # The reason why it says --until all is to try generating all outputs to see what is really there.
-
+    
+    command_report = f"""snakemake --snakefile "$COMPAREM2_BASE/dynamic_report/workflow/Snakefile" --profile "$COMPAREM2_PROFILE" --configfile=.report_config.yaml --quiet all""" # todo: Find out why the comparem2_base and profile are formatted differently here.
+    
 
     logger.debug(f"Command to run is\n{command_main}")
     
@@ -303,8 +303,6 @@ def run_main():
     print("Info: Initializing main pipeline.")
     process_main = subprocess.run(command_main, shell = True)
     process_status = subprocess.run(command_status, shell = True)
-    
-    
     
     returncode_main = process_main.returncode
     returncode_status = process_status.returncode
@@ -331,27 +329,27 @@ def run_main():
 # --- Finally, run the pipeline. ------------------------------------
 
 if "--help" in trailing_arguments or "-h" in trailing_arguments: # help
-    exit(run_help())
+    sys.exit(run_help()) # sys.exit means to exit without using the tip_exit()
 
 
 elif "--version" in trailing_arguments or "-v" in trailing_arguments: # version
-    exit(run_version())
+    sys.exit(run_version())
 
 
 elif "--cite" in trailing_arguments: # cite
-    exit(run_cite())
+    sys.exit(run_cite())
 
 
 elif "--status" in trailing_arguments: # status
-    exit(run_status()) 
+    tip_exit(run_status()) 
     
     
 elif "--downloads" in trailing_arguments: # download databases
-    exit(run_downloads())
+    tip_exit(run_downloads())
     
     
 else: # main
     returncode_main = run_main()
     run_status()
-    exit(returncode_main)
+    tip_exit(returncode_main)
     

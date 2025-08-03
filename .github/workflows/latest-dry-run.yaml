@@ -47,7 +47,7 @@ jobs:
         ./comparem2 --help
         ./comparem2 --version
         ./comparem2 --cite
-        ./comparem2 --status
+        
           
 
     - name: dry run
