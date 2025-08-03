@@ -1,6 +1,7 @@
 2.15.1 or patch? (no need to update docker image when ncbi-datasets-cli is added to launcher)
   - Add option to add refseq analysis as comparison to local genomes using `comparem2 --config add_refseq=<accession>`
   - Changed the way --status works, so now it computes the summary ahead of time. #122
+  - Fixed an error where some sample basis jobs would rerun when other samples were added or removed.
 
 
 2.14.1

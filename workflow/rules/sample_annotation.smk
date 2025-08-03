@@ -58,8 +58,8 @@ def get_annotation_results(wildcards):
 # When the annotator choice is changed, the old files are deleted. they shouldn't though, so what I'm thinking is that these files should be linked as individual files instead of as a whole directory. Then the individual links can be deleted and new ones can be laid out. Problem solved, let's get cracking. Update: The problem with this solution is that it doesn't rerun the annotation step when the annotator is changed, but I guess that makes fine sense. Another update: Nu har jeg prøvet at skifte fra prokka til bakta, det ser ud til at den ikke laver nye links? Sandsynligvis fordi annotate slet ikke bliver kørt når man skriver --until bakta. Ja hvis man bare skriver --until annotate. After testing, I can confirm that it works well, but you will have to write --forcerun bakta if you want it to update. Conclusion: Now I've tried both approaches - both having a linked dir and individually linked files. I think a linked dir is cleaner, but the code is not because you need a lot of dirname commands, and you need to remove the (potential old) links in the end of bakta and prokka. The solution I have now, with individually linked files is simpler, so I think I'll stick with it.
 rule annotate:
     input: 
-        metadata = "{output_directory}/metadata.tsv", # Update linking when new genomes are input.
         targets = get_annotation_results,
+        #metadata = "{output_directory}/metadata.tsv", # Update linking when new genomes are input.
     output: # These are mostly the outputs that are used downstream.
         dir = directory("{output_directory}/samples/{sample}/.annotation/"),
         gff = "{output_directory}/samples/{sample}/.annotation/{sample}.gff",
@@ -80,7 +80,9 @@ rule get_refseq_annotation:
     input:
         assembly = "{output_directory}/samples/{sample}/{sample}.fna",
     output:
+        gff_nofasta = "{output_directory}/samples/{sample}/refseq_annotation/{sample}.gff_nofasta",
         gff = "{output_directory}/samples/{sample}/refseq_annotation/{sample}.gff",
+        
         faa = "{output_directory}/samples/{sample}/refseq_annotation/{sample}.faa",
         log = "{output_directory}/samples/{sample}/refseq_annotation/{sample}.log",
         ffn = "{output_directory}/samples/{sample}/refseq_annotation/{sample}.ffn",
@@ -89,12 +91,20 @@ rule get_refseq_annotation:
     shell: """
     
         # Just a matter of linking the files to a meaningful directory. No annotation is performed, just that the files are put into a directory that looks a bit like the prokka and bakta directories.
+        # Has to be copied rather than linked. So we don't link the same file for the non-nofasta gff.
+        cp {output_directory}/samples/{wildcards.sample}/refseq_download/ncbi_dataset/data/{wildcards.sample}/genomic.gff {output.gff_nofasta}
+        
+        # Make a prokka-like gff containing the contigs after a ##FASTA line. 
         ln -sr {output_directory}/samples/{wildcards.sample}/refseq_download/ncbi_dataset/data/{wildcards.sample}/genomic.gff {output.gff}
+        echo "##FASTA" >> {output.gff}
+        cat {input.assembly} >> {output.gff}
+        
         ln -sr {output_directory}/samples/{wildcards.sample}/refseq_download/ncbi_dataset/data/{wildcards.sample}/protein.faa {output.faa}
         ln -sr {output_directory}/samples/{wildcards.sample}/refseq_download/ncbi_dataset/data/{wildcards.sample}/sequence_report.jsonl {output.log}
         ln -sr {output_directory}/samples/{wildcards.sample}/refseq_download/ncbi_dataset/data/{wildcards.sample}/cds_from_genomic.fna {output.ffn}
         ln -sr {output_directory}/samples/{wildcards.sample}/refseq_download/ncbi_dataset/data/{wildcards.sample}/genomic.gtf {output.tsv}
         ln -sr {output_directory}/samples/{wildcards.sample}/refseq_download/ncbi_dataset/data/{wildcards.sample}/genomic.gbff {output.gbk} # Not sure if it is problematic to have a "flat file". Let's see what happens.
+        
     
         # TODO: Investigate what happens if a genbank or gtf file does not exist for a given accession. I simply don't know how comprehensive the refseq db is.        
 

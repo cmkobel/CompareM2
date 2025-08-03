@@ -64,6 +64,7 @@ set_panaroo--core_threshold: 0.95 # Core-genome sample threshold.
 set_panaroo--threshold: 0.98 # Sequence identity threshold.
 set_panaroo-a: core # Output alignment.
 set_panaroo-f: 0.7 # Protein family sequence identity threshold.
+set_panaroo--remove-invalid-genes: "" # Exclude genes with unusual length or that with premature stop codons (pseudogenes) from refseq.
 
 set_prokka--compliant: "" # flag
 set_prokka--kingdom: bacteria # archaea|bacteria|mitochondria|viruses

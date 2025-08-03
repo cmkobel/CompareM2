@@ -50,8 +50,8 @@ rule gather:
 
 rule sequence_lengths:
     input:
-        metadata = "{output_directory}/metadata.tsv",
         assembly = "{output_directory}/samples/{sample}/{sample}.fna", 
+        #metadata = "{output_directory}/metadata.tsv", # Only batch jobs need metadata (for proper updating)
     output: "{output_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv"
     threads: 1
     resources:

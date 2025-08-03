@@ -2,8 +2,8 @@
 # By default it runs TIGRFAM, Hamap, Pfam
 rule interproscan:
     input: 
-        metadata = "{output_directory}/metadata.tsv",
         aminoacid = "{output_directory}/samples/{sample}/.annotation/{sample}.faa",
+        #metadata = "{output_directory}/metadata.tsv",
         # No external database is needed.
     output:
         tsv = "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv",
@@ -37,9 +37,9 @@ rule interproscan:
 
 rule dbcan: # I can't decide whether this rule should really be called "run_dbcan", since that is the name of the software.
     input: 
-        metadata = "{output_directory}/metadata.tsv",
         aminoacid = "{output_directory}/samples/{sample}/.annotation/{sample}.faa",
         database_representative = DATABASES + "/dbcan/comparem2_dbcan_database_representative.flag"
+        #metadata = "{output_directory}/metadata.tsv",
     output: 
         overview_table = "{output_directory}/samples/{sample}/dbcan/overview.txt",
         diamond_table = "{output_directory}/samples/{sample}/dbcan/diamond.out"
@@ -80,10 +80,10 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
 # aka eggnog-mapper
 rule eggnog:
     input: 
-        metadata = "{output_directory}/metadata.tsv",
         database_representative = DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag",
-        #assembly = "{output_directory}/samples/{sample}/{sample}.fna",
         faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg, eggnog
+        #assembly = "{output_directory}/samples/{sample}/{sample}.fna",
+        #metadata = "{output_directory}/metadata.tsv",
     output:
         gff = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.decorated.gff", # Looks like not genepred, but decorated is produced. Is that because of the settings or version changes?
         hits = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.hits",
@@ -133,8 +133,8 @@ rule eggnog:
 # Finally, gapseq is on bioconda, and seems to work. But I now don't understand why I did the rule order thing - Is that really necessary? Seams unnecessarily complicated.
 rule gapseq_find:
     input: 
-        metadata = "{output_directory}/metadata.tsv",
         faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa"
+        #metadata = "{output_directory}/metadata.tsv",
     output:
         dir = directory("{output_directory}/samples/{sample}/gapseq"),
         pathways = "{output_directory}/samples/{sample}/gapseq/{sample}-all-Pathways.tbl",
@@ -176,11 +176,11 @@ rule gapseq_find:
     
 rule gapseq_fill: # Continuation on gapseq_find results.
     input: 
-        metadata = "{output_directory}/metadata.tsv",
         assembly = "{output_directory}/samples/{sample}/{sample}.fna",
         pathways = "{output_directory}/samples/{sample}/gapseq/{sample}-all-Pathways.tbl",
         reactions = "{output_directory}/samples/{sample}/gapseq/{sample}-all-Reactions.tbl",
         transporter = "{output_directory}/samples/{sample}/gapseq/{sample}-Transporter.tbl",
+        #metadata = "{output_directory}/metadata.tsv",
     output:
         rxnWeights = "{output_directory}/samples/{sample}/gapseq/{sample}-rxnWeights.RDS", 
         rxnXgenes = "{output_directory}/samples/{sample}/gapseq/{sample}-rxnXgenes.RDS",
@@ -274,9 +274,9 @@ rule gapseq_fill: # Continuation on gapseq_find results.
 
 rule antismash:
     input: 
-        metadata = "{output_directory}/metadata.tsv",
         database_representative = DATABASES + "/antismash/comparem2_antismash_database_representative.flag",
         gbk = "{output_directory}/samples/{sample}/prokka/{sample}.gbk",
+        #metadata = "{output_directory}/metadata.tsv",
     output:
         json = "{output_directory}/samples/{sample}/antismash/{sample}.json",
     params:
