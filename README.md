@@ -6,13 +6,15 @@
     
 
 
-🧬 CompareM2 is a genomes-to-report pipeline. It is a versatile distribution of many powerful tools to thoroughly analyze microbial genomes. 
+🧬 CompareM2 is a "pre-plumbed", scalable genomes-to-report pipeline. It contains all the essential tools to thoroughly characterize microbial genomes. 
+
+📇 CompareM2 even auto-generates a full-bodied report with interpretable information and publication ready graphics from the analyses of your own genomes.
 
 🦠 Being designed to analyze assemblies of both isolates and metagenomes (MAGs), it is useful for anyone working with microbial genomics.
 
 💾 [Installing](https://comparem2.readthedocs.io/en/latest/10%20installation/) CompareM2 on your system gives you access to many powerful state-of-the-art tools for analysis of prokaryotic genomes which will accelerate your research. It is easy to use and can be used by non-bioinformaticians.
 
-👩‍🔬 CompareM2 integrates [several analyses](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/) that yield scientific results about genomic assemblies on several levels: Quality control, annotation, function and species calling as well as comparative analyses like computation of core/pan genomes and phylogenetics. 
+👩‍🔬 CompareM2 integrates [several analyses](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/) that yield scientific results about genomic assemblies on several levels: Quality control, phylogenetics, pan/core genome, anti-microbial resistance and virulence profiling, species detection, pathway annotation, metabolic modeling and much more. And new tools are continuously added.
 
 🐍 CompareM2 works by calling a Snakemake workflow that can be easily modified to use [different parameters](https://comparem2.readthedocs.io/en/latest/20%20usage/#passthrough-arguments) for the  underlying tools.
 
@@ -28,6 +30,6 @@
 
 ---
 
-[CompareM2](https://github.com/cmkobel/comparem2) genomes-to-report pipeline. Copyright (C) 2024 [contributors](https://comparem2.readthedocs.io/en/latest/82%20contributors/) GNU GPL v3.
+Comparem2 [repo](https://github.com/cmkobel/comparem2) genomes-to-report pipeline. Copyright (C) 2024 [contributors](https://comparem2.readthedocs.io/en/latest/82%20contributors/) GNU GPL v3.
 
 
