@@ -80,6 +80,12 @@ jobs:
         rm -rf .snakemake results_comparem2 *.fna
 
     
+    - name: prokka
+      run: |
+        conda activate comparem2_launcher
+        unzip tests/E._faecium/fna.zip 
+        ./comparem2 --config input_genomes="*.fna" annotator=prokka --until annotate
+        
     - name: full
       run: |
         conda activate comparem2_launcher
