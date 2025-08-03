@@ -165,6 +165,8 @@ except KeyError as e:
 # Concatenate the trailing command line arguments to add to the snakemake command.
 trailing_arguments = sys.argv[1:]
 trailing_arguments_concatenated = " ".join(trailing_arguments)
+trailing_arguments_concatenated_nostatus = " ".join([i for i in trailing_arguments if i != "--status"]) # Don't propagate --status to snakemake as it is only understood by CompareM2.
+
 logger.debug(f"The concatenated trailing arguments are {trailing_arguments_concatenated}")
 
 
@@ -198,23 +200,26 @@ def run_cite():
     return 0
 
 def run_status():  
-    
+    # This function just presents the summary that is already written into .status.tsv by run_main()
     print("Info: Initializing status.")
     
-    def present_status(path = ".status.tsv", delete_after_use = True): 
+    def present_status(path = ".status.tsv"): 
     
         try:
             summary = pd.read_csv(path, delimiter="\t") 
         except pd.errors.EmptyDataError as e:
-            print("Info: 1) No status data to present, based on the inputted genomes.")
-            return
+            print("Error: 1) No status data to present based on the inputted genomes.")
+            raise e
+        except FileNotFoundError as e:
+            print("Error: 2) .status.tsv file does not exist. Please run CompareM2 again with the same input files before calling status.")
+            raise e
         
         summary = summary.dropna(subset=["rule"])
         #print(summary)
         
         # Hide irrelevant stuff
         summary = summary.loc[~summary["rule"].str.endswith("_download")]
-        summary = summary.loc[~summary["rule"].str.contains("^copy$")]
+        summary = summary.loc[~summary["rule"].str.contains("^gather$")]
         summary = summary.loc[~summary["rule"].str.contains("^core_genome_checkpoint$")]
         summary = summary.loc[~summary["rule"].str.contains("^report_env$")]
         summary = summary.loc[~summary["rule"].str.contains("^bakta_env$")]
@@ -246,7 +251,7 @@ def run_status():
         # If only filtered (downloads, copy etc. ) rules are (were) present, it shouldn't be presented.
         if final.shape[0] == 0:
             print("Info: 2) No status data to present, based on the inputted genomes.")
-            return
+            return 1
         
         # Present
         print()
@@ -258,25 +263,13 @@ def run_status():
         print(final.to_string(index = False))
         print("//")
         
-        try:
-            if delete_after_use:
-                pass #os.remove(path)
-        except FileNotFoundError:
-            pass # ignore
         
-        return
-    
-    command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" --summary --quiet all | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv"""
+        return 0
 
-    print("command_status:", command_status)
-    # Pretty print the snakemake summary
-    #print("debug command:", command_status)
-    
-    # Call the snakemake --summary 
-    process_status = subprocess.run(command_status, shell = True)
-    returncode_status = process_status.returncode
-    
-    present_status(".status.tsv")
+    try:
+        present_status()
+    except Exception:
+        return 1
     
     #return returncode_status
     return 0
@@ -288,16 +281,33 @@ def run_downloads():
     return subprocess.run(command_download, shell = True).returncode
 
 def run_main():
-    command_main = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml"  """ + trailing_arguments_concatenated
     
-    command_report = f"""snakemake --snakefile "$COMPAREM2_BASE/dynamic_report/workflow/Snakefile" --profile "$COMPAREM2_PROFILE" --configfile=.report_config.yaml --quiet all"""
+    
+    # Remove the old .status.tsv file so we don't accidentally show an old status if the main job fails.
+    if os.path.exists(".status.tsv"):
+        os.remove(".status.tsv")    
+    
+    
+    command_main = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml"  """ + trailing_arguments_concatenated 
+    
+    command_report = f"""snakemake --snakefile "$COMPAREM2_BASE/dynamic_report/workflow/Snakefile" --profile "$COMPAREM2_PROFILE" --configfile=.report_config.yaml --quiet all""" # todo: Find out why the comparem2_base and profile are formatted differently here.
+    
+    command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" """ + trailing_arguments_concatenated_nostatus + """ --until all --summary --quiet all | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv""" 
+    # always leave a .status.tsv file for future interesteds.
+    # The reason why it says --until all is to try generating all outputs to see what is really there.
+
 
     logger.debug(f"Command to run is\n{command_main}")
     
     # Run comparem2 main pipeline
     print("Info: Initializing main pipeline.")
     process_main = subprocess.run(command_main, shell = True)
+    process_status = subprocess.run(command_status, shell = True)
+    
+    
+    
     returncode_main = process_main.returncode
+    returncode_status = process_status.returncode
     
     # Run dynamic report pipeline   
     # Only run report if there is metadata and something is worth rendering.
@@ -321,19 +331,19 @@ def run_main():
 # --- Finally, run the pipeline. ------------------------------------
 
 if "--help" in trailing_arguments or "-h" in trailing_arguments: # help
-    sys.exit(run_help())
+    exit(run_help())
 
 
 elif "--version" in trailing_arguments or "-v" in trailing_arguments: # version
-    sys.exit(run_version())
+    exit(run_version())
 
 
 elif "--cite" in trailing_arguments: # cite
-    sys.exit(run_cite())
+    exit(run_cite())
 
 
 elif "--status" in trailing_arguments: # status
-    exit(run_status())
+    exit(run_status()) 
     
     
 elif "--downloads" in trailing_arguments: # download databases

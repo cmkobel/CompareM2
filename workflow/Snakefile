@@ -191,7 +191,7 @@ if df_refseq.shape[0] > 0: # If the table is nonempty, we can add some attribute
     df_refseq['origin'] = "refseq"
     #df_refseq['input_file'] = output_directory + "/.refseq_downloads/" + df_refseq['sample'] + "/" + df_refseq['sample'] + ".fna"  
     
-    df_refseq['input_file'] = output_directory + "/samples/" + df_refseq['sample'] + "/refseq/" + df_refseq['sample'] + "_assembly.fna"  
+    df_refseq['input_file'] = np.nan # never used # output_directory + "/samples/" + df_refseq['sample'] + "/refseq/" + df_refseq['sample'] + "_assembly.fna"  
     df_refseq['input_file_copy'] = output_directory + "/samples/" + df_refseq['sample'] + "/" + df_refseq['sample'] + ".fna"  
 
 # A refseq genome will be requested downstream, thus requiring the files in .refseq_downloads to be downloaded. 
@@ -247,7 +247,6 @@ df['1-index'] = [i+1 for i in range(len(df))]
 
 # Count the final metadata table
 N = df.shape[0]
-
 
     
 
@@ -389,6 +388,10 @@ rule metadata:
         runtime = "1h"
     shell: """
         echo '''{params.dataframe}''' > {output:q}
+        
+        # For --status, there must be a static link, that doesn't depend on the modifiable output directory.
+        ln -srf {output:q} .comparem2_metadata.tsv # or .snakemake/auxilliary/comparem2_metadata.tsv ?
+        
         {void_report}
     """
 

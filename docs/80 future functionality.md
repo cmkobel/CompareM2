@@ -7,10 +7,9 @@ In the future we might add some of the following software packages into CompareM
 **Assembly basis (within each sample)**
   
   - [AlphaFold](https://github.com/google-deepmind/alphafold) Neural network protein folding prediction genome annotation.
-  - Integration of the [DRAM](https://github.com/WrightonLabCSU/DRAM) databases for easier metabolic interpretation.
+  - Integration of the [DRAM](https://github.com/WrightonLabCSU/DRAM) databases for metabolic interpretation.
   - [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) Identification of possible replication origins of chromids.
   - [RFplasmid](https://github.com/aldertzomer/RFPlasmid) Identification of plasmids using the pentamer-random-forest method.
-  - [gapseq](https://github.com/jotech/gapseq/tree/master) GEMs, pathway completeness and much more.
   - [distillR](https://github.com/anttonalberdi/distillR) High level functional annotation using graph based metabolic capacity indices.
 
 
