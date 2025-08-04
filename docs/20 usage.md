@@ -99,10 +99,8 @@ Input genomes for CompareM2 can be specified in several ways. The default is to 
   
 
 ##### File of file names
-
-**File of file names**
   
-When analyzing larger sets of microbial genomes it can be useful to define these in a "file of file names" (fofn). This is supported by the `fofn` config key. When the `fofn` key is set, it always overrides the `input_genomes` key. A fofn-file can be generated simply by piping a list of filenames on the command line. Example below:
+When analyzing larger sets of microbial genomes it can be useful to define these in a "file of file names" (fofn). This is supported by the `fofn` config key in CompareM2. When the `fofn` key is set, it always overrides the `input_genomes` key. A fofn-file can be generated simply by piping a list of filenames on the command line. Example below:
 
 
 ```bash
@@ -111,10 +109,11 @@ ls *.fna > fofn.txt
 comparem2 --config fofn="fofn.txt"
 
 ```
+
   
 ##### Pre-annotated reference genomes
 
-For many use cases it may be useful to add reference genomes from the [RefSeq or Genbank databases](https://www.ncbi.nlm.nih.gov/datasets/genome/), which contains consistently pre-annotated high quality genomes. Using the `add_refseq` config key, you can add one or more (comma separated) RefSeq or GenBank genome/assembly accessions as input to your CompareM2 run. The genomes and their [PGAP](https://www.ncbi.nlm.nih.gov/refseq/annotation_prok/process/) annotations will be automatically downloaded using the NCBI Datasets command-line tools. The annotation is used as-is in the downstream tools in the CompareM2 pipeline. Examples below:
+For many use cases it may be useful to add reference genomes from the [RefSeq or Genbank databases](https://www.ncbi.nlm.nih.gov/datasets/genome/), which contains consistently pre-annotated high quality genomes. Using the `add_refseq` config key, you can add one or more (comma separated) RefSeq or GenBank genome/assembly accessions as input to your CompareM2 run. The genomes and their [PGAP](https://www.ncbi.nlm.nih.gov/refseq/annotation_prok/process/) annotations will be automatically downloaded using the [NCBI Datasets](https://www.ncbi.nlm.nih.gov/datasets) command-line tools. The annotation is used as-is in the downstream tools in the CompareM2 pipeline. Examples below:
 
   - `add_refseq=<Refseq-Accession>[,<Refseq-Accession2>]...` 
   - `add_refseq="GCF_029023785.1"`
