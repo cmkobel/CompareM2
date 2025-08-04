@@ -116,7 +116,7 @@ comparem2 --config fofn="fofn.txt"
 
 For many use cases it may be useful to add reference genomes from the [RefSeq or Genbank databases](https://www.ncbi.nlm.nih.gov/datasets/genome/), which contains consistently pre-annotated high quality genomes. Using the `add_refseq` config key, you can add one or more (comma separated) RefSeq or GenBank genome/assembly accessions as input to your CompareM2 run. The genomes and their [PGAP](https://www.ncbi.nlm.nih.gov/refseq/annotation_prok/process/) annotations will be automatically downloaded using the [NCBI Datasets](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/command-line-tools/download-and-install/) command-line tools. The annotation is used as-is in the downstream tools in the CompareM2 pipeline. Examples below:
 
-  - `add_refseq=<Refseq-Accession>[,<Refseq-Accession2>]...` 
+  - `add_refseq=<RefSeq-accession>[,<RefSeq-accession2>]...` 
   - `add_refseq="GCF_029023785.1"`
   
 #### Configuration of output directory
@@ -296,11 +296,12 @@ results_comparem2/
 ├── report_<title>.html
 ├── samples/
 │  └── <sample>/
+│     ├── <sample>.fna
 │     ├── antismash/
 │     ├── bakta/
 │     ├── dbcan/
 │     ├── eggnog/
-│     ├── <sample>.fna
+│     ├── gapseq/
 │     ├── interproscan/
 │     ├── prokka/
 │     └── sequence_lengths/
