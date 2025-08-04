@@ -4,7 +4,7 @@
 
 ## The CompareM2 pipeline
 
-CompareM2 can perform a large number of bioinformatic tasks which are each defined in "rules". Rules can be thought of as task templates that generate the computer code that performs the same computational task on many different input files (e.g. inputted genomes). Some of the rules are interdependent on one another and form chains of results that successively feed into more high level analyses down the line - hence pipeline. Below is a visualization of the dependency relationships between these rules.
+CompareM2 can perform a large number of bioinformatic tasks which are each defined in "rules". Rules can be thought of as task templates that generate the computer code that performs the same computational task on many different input files (e.g. inputted genomes). Some of the rules are interdependent on one another and form chains of results that successively feed into more high level analyses down the line - hence pipeline. Below is a visualization of the dependency relationships between these rules. The arrows show the order of the individual rules, when the pipeline runs.
  
 
 ![dag2 pdf](https://github.com/user-attachments/assets/855674a4-d80b-4892-8b14-5d87ad7de86b)
