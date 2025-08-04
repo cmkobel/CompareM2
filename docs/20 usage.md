@@ -160,7 +160,7 @@ comparem2 --config set_prokka--kingdom=archaea set_panaroo--threshold=0.95 --unt
 CompareM2 comes with a number of sane default arguments which can be observed [here](https://github.com/cmkobel/CompareM2/blob/master/config/config.yaml). Any passthrough argument that the user gives on the command line overwrites these defaults.
 
 
-#### Validating command line arguments
+##### Validating command line arguments
 
 There are no limitations on which command line arguments can be passed to the passthrough argument feature. Thus, when modifiying the options using the passthrough arguments feature, the user should follow the documentation of each individual tool to make sure that the command line arguments given are valid. In order to validate that the arguments given to rules are as expected, the full generated shell command of each rule can be printed with `-p`. It is especially useful to do this in conjunction with the `--dry-run` argument. Example with Panaroo below:
 
@@ -178,9 +178,14 @@ comparem2 --config set_panaroo--threshold=0.99 --until panaroo -p --dry-run
 
 
 
+
 ---
+
+### General Snakemake commands
+
+As CompareM2 is built on top of Snakemake, it supports its built in features and command line arguments. Below is a listing of the most relevant Snakemake commands to use together with CompareM2
             
-### `--until RULE [RULE2]...`
+#### `--until RULE [RULE2]...`
 Select to run up until and including a specific rule in the rule graph. Available rules:
 abricate annotate antismash assembly_stats bakta checkm2 copy dbcan eggnog fasttree gapseq gapseq_find gtdbtk interproscan iqtree kegg_pathway mashtree mlst prokka sequence_lengths snp_dists treecluster antismash_download bakta_download checkm2_download dbcan_download eggnog_download gtdb_download panaroo
     
@@ -193,31 +198,31 @@ There are also a number of pseudo rules, effectively "shortcuts" to a list of ru
 
 ---
           
-### `--forcerun RULE [RULE2]...`
+#### `--forcerun RULE [RULE2]...`
 
 Force rerunning of one or more rules that already have been completed. This is generally necessary when changing running parameters in the config (see "--config" above).
 
 ---
 
-### `--downloads`
-
----
+#### `--downloads`
 
 Download all databases without performing any analyses.
 
-### `--printshellcmds`, `-p`
+---
+
+#### `--printshellcmds`, `-p`
 
 Print the full generated shell commands of each rule in the workflow. 
 
 ---
     
-### `--dry-run`
+#### `--dry-run`
 
 Run a "dry run": Shows what will run without doing it.
 
 ---
 
-### `--status`
+#### `--status`
 
 Print the state of completion of the rules in the pipeline. The percentage of completed files are shown.
 
@@ -225,19 +230,19 @@ Run `comparem2 --status` at any time to get an overview of what has been done an
 
 ---
 
-### `--version`, `-v `
+#### `--version`, `-v `
 
 Show current version.
 
 ---
     
-### `--help`, `-h`
+#### `--help`, `-h`
 
 Show this help and exit.
 
 ---
  
-### `--cite`
+#### `--cite`
 
 Show citation info.
 
