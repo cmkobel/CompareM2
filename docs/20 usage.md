@@ -61,6 +61,12 @@ Here we bring som usage examples showcasing some of the more often used features
     ```
     comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast
     ```
+    
+  - Add some RefSeq references to the same run.
+  
+    ```
+    comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" add_refseq="GCF_009734005.1,GCF_029023785.1" --until fast
+    ```
 
   - Run panaroo as well.
     
@@ -183,7 +189,7 @@ comparem2 --config set_panaroo--threshold=0.99 --until panaroo -p --dry-run
 
 ### General Snakemake commands
 
-As CompareM2 is built on top of Snakemake, it supports its built in features and command line arguments. Below is a listing of the most relevant Snakemake commands to use together with CompareM2
+As CompareM2 is built on top of Snakemake, it supports its built in features and command line arguments. Below is a listing of the most relevant Snakemake commands to use together with CompareM2.
             
 #### `--until RULE [RULE2]...`
 Select to run up until and including a specific rule in the rule graph. Available rules:
