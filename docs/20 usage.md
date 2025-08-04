@@ -88,7 +88,6 @@ The CompareM2 pipeline uses a configuration file with default settings to contro
 #### Configuration of input genomes
 
 
-
 Input genomes for CompareM2 can be specified in several ways. The default is to use the `input_genomes` config key, and its default value is "*.fna *.fa *.fasta *.fas". In essence, this means that if the user does not specify this key, alle genome fastas in the current working directory will be input into CompareM2 for analysis. The string given to input genomes is evaluated using the [LS(1)](https://www.linux.org/docs/man1/ls.html) which means that asterisks can be used for globbing. Examples below:
     
   - `input_genomes="*.fna *.fa *.fasta *.fas"` (default)
