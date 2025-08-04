@@ -217,12 +217,6 @@ Force rerunning of one or more rules that already have been completed. This is g
 
 ---
 
-#### `--downloads`
-
-Download all databases without performing any analyses.
-
----
-
 #### `--printshellcmds`, `-p`
 
 Print the full generated shell commands of each rule in the workflow. 
@@ -232,6 +226,16 @@ Print the full generated shell commands of each rule in the workflow.
 #### `--dry-run`
 
 Run a "dry run": Shows what will run without doing it.
+
+---
+
+### Special CompareM2 commands
+
+These commands do not invoke the Snakemake pipeline, but allows the user to gain necessary information about the CompareM2 setup, or to modify it in various ways.
+
+#### `--downloads`
+
+Download all databases without performing any analyses.
 
 ---
 
@@ -302,6 +306,7 @@ results_comparem2/
 ├── treecluster/
 └── version_info.txt
 ```
+
 
 For the file tree of each of the analysis tools, please consult the respective documentation.
 
