@@ -132,7 +132,7 @@ CompareM2 ships with two annotation tools: Bakta and Prokka. Bakta is default, a
   - `annotator="bakta"` bakta (default) | prokka
   
 
----
+
 
 #### Passthrough arguments
 
@@ -191,9 +191,6 @@ comparem2 --config set_panaroo--threshold=0.99 --until panaroo -p --dry-run
 
 
 
-
----
-
 ### General Snakemake commands
 
 As CompareM2 is built on top of Snakemake, it supports its built in features and command line arguments. Below is a listing of the most relevant Snakemake commands to use together with CompareM2.
@@ -209,25 +206,22 @@ There are also a number of pseudo rules, effectively "shortcuts" to a list of ru
   - meta        (Only rules that are relevant for genomes "MAGs" of metagenomic origin.)
   - report      (Re-renders the report.)
 
----
+
           
 #### `--forcerun RULE [RULE2]...`
 
 Force rerunning of one or more rules that already have been completed. This is generally necessary when changing running parameters in the config (see "--config" above).
 
----
 
 #### `--printshellcmds`, `-p`
 
 Print the full generated shell commands of each rule in the workflow. 
 
----
     
 #### `--dry-run`
 
 Run a "dry run": Shows what will run without doing it.
 
----
 
 ### Special CompareM2 commands
 
@@ -237,7 +231,6 @@ These commands do not invoke the Snakemake pipeline, but allows the user to gain
 
 Download all databases without performing any analyses.
 
----
 
 #### `--status`
 
@@ -245,25 +238,21 @@ Print the state of completion of the rules in the pipeline. The percentage of co
 
 Run `comparem2 --status` at any time to get an overview of what has been done and what is missing in any project directory. Should be run from the same directory as where CompareM2 was originally run for the results in question. 
 
----
 
 #### `--version`, `-v `
 
 Show current version.
 
----
     
 #### `--help`, `-h`
 
 Show this help and exit.
 
----
  
 #### `--cite`
 
 Show citation info.
 
----
 
 
 ## Output
