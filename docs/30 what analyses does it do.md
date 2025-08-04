@@ -9,6 +9,8 @@ CompareM2 can perform a large number of bioinformatic tasks which are each defin
 
 ![dag2 pdf](https://github.com/user-attachments/assets/855674a4-d80b-4892-8b14-5d87ad7de86b)
 
+[\[open figure\]](https://github.com/user-attachments/assets/855674a4-d80b-4892-8b14-5d87ad7de86b)
+
 The visualized pipeline is a directed acyclic graph. The direction goes from start (copy) in the top where inputted genomes are copied into the results directory, to the end (all) in the bottom where results are collected before being directed into the dynamic report document. 
 
 

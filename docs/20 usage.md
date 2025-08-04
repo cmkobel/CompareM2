@@ -196,7 +196,7 @@ comparem2 --config set_panaroo--threshold=0.99 --until panaroo -p --dry-run
 As CompareM2 is built on top of Snakemake, it supports its built in features and command line arguments. Below is a listing of the most relevant Snakemake commands to use together with CompareM2.
             
 #### `--until RULE [RULE2]...`
-Select to run up until and including a specific rule in the rule graph. Available rules:
+Select to run until (inclusive) a specific rule in the rule graph. Available rules:
 abricate annotate antismash assembly_stats bakta checkm2 copy dbcan eggnog fasttree gapseq gapseq_find gtdbtk interproscan iqtree kegg_pathway mashtree mlst prokka sequence_lengths snp_dists treecluster antismash_download bakta_download checkm2_download dbcan_download eggnog_download gtdb_download panaroo
     
 There are also a number of pseudo rules, effectively "shortcuts" to a list of rules.
