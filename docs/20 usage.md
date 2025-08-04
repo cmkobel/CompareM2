@@ -86,16 +86,19 @@ Here we bring som usage examples showcasing some of the more often used features
 
 ###  `--config KEY="VALUE" [KEY2="VALUE"]...`
 
-The CompareM2 pipeline uses a configuration file with default settings to control the way it runs. This configuration can be changed on the fly -- This is to give the user easy access to the many features inside CompareM2. Multiple configuration options can be set at the same time as long as the all are stated after the `--config` parameter on the command-line. The full default configuration file is available in ./config/config.yaml (in the installation directory). Below, we will document and showcase examples of the configuration parameters that are relevant when daily-driving CompareM2.
+The CompareM2 pipeline uses a configuration file with default settings to control the way it runs. This configuration can be changed on the fly -- This is to give the user easy access to the many features inside CompareM2. Multiple configuration options can be set at the same time as long as the all are stated after the `--config` statement on the command-line. The full default configuration file is available in ./config/config.yaml (in the installation directory). Below, we will document and showcase examples of the configuration parameters that are relevant when using CompareM2.
 
 #### Configuration of input genomes
 
 
-Input genomes for CompareM2 can be specified in several ways. The default is to use the `input_genomes` config key, and its default value is "*.fna *.fa *.fasta *.fas". In essence, this means that if the user does not specify this key, alle genome fastas in the current working directory will be input into CompareM2 for analysis. The string given to input genomes is evaluated using GNU [LS(1)](https://www.linux.org/docs/man1/ls.html) which means that asterisks can be used for globbing. Examples below:
+Input genomes for CompareM2 can be specified in several ways. The default is to use the `input_genomes` config key, and its default value is "*.fna *.fa *.fasta *.fas". In essence, this means that if the user does not specify this key, all genome fastas in the current working directory will be input into CompareM2 for analysis. The string given to input genomes is evaluated using GNU [LS(1)](https://www.linux.org/docs/man1/ls.html) which means that asterisks can be used for globbing. Examples below:
     
   - `input_genomes="*.fna *.fa *.fasta *.fas"` (default)
   - `input_genomes="path/to/my/genomes*.fna"`
   - `input_genomes="path/genome1.fna path/genome2.fna"`
+  
+
+##### File of file names
   
 When analyzing larger sets of microbial genomes it can be useful to define these in a "file of file names" (fofn). This is supported by the `fofn` config key. When the `fofn` key is set, it always overrides the `input_genomes` key. A fofn-file can be generated simply by piping a list of filenames on the command line. Example below:
 
