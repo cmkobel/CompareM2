@@ -106,12 +106,11 @@ For many use cases it may be useful to add reference genomes from the [RefSeq or
   - `add_refseq=<Refseq-Accession>[,<Refseq-Accession2>]...` 
   - `add_refseq="GCF_029023785.1"`
   
-  
-  
-    
 #### Configuration of the output directory
 
-All results from CompareM2 are output into a subdirectory. The default name of this directory is "results_comparem2", but it can be changed by using the `output_directory` config key. Example: `output_directory="results_comparem2"`.
+All results from CompareM2 are output into a subdirectory. The default name of this directory is "results_comparem2", but it can be changed by using the `output_directory` config key. Example below: 
+
+  - `output_directory="results_comparem2"`.
 
 #### Configuration of annotation tool
 
