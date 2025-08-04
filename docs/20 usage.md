@@ -260,14 +260,6 @@ Show this help and exit.
 Show citation info.
 
 ---
-        
-## Environment variables
-No environment variables are strictly necessary to set, but the following might be useful:
-
-  - `COMPAREM2_PROFILE` (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running CompareM2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/comparem2/profile/\*).
-  
-  - `COMPAREM2_DATABASES` (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
-
 
 
 ## Output
