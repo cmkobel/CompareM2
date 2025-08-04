@@ -26,11 +26,6 @@ Here we bring som usage examples showcasing some of the more often used features
     comparem2
     ```
     
-  - Add some RefSeq references to the same run.
-  
-    ```
-    comparem2 --config add_refseq="GCF_009734005.1,GCF_029023785.1"
-    ```
 
   - Run only jobs *until* bakta
     
@@ -54,6 +49,12 @@ Here we bring som usage examples showcasing some of the more often used features
     
     ```
     comparem2 --config input_genomes="path/to/genomes_*.fna" --dry-run
+    ```
+  
+  - Analyze some RefSeq references.
+  
+    ```
+    comparem2 --config add_refseq="GCF_009734005.1,GCF_029023785.1"
     ```
 
   - Specify annotator. (default is "prokka")
