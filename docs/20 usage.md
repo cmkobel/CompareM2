@@ -120,13 +120,13 @@ For many use cases it may be useful to add reference genomes from the [RefSeq or
   
 #### Configuration of the output directory
 
-All results from CompareM2 are output into a subdirectory. The default name of this directory is "results_comparem2", but it can be changed by using the `output_directory` config key. Example below: 
+All results from CompareM2 are output into a subdirectory. The default name of this directory is "results_comparem2", but it can be changed, using the `output_directory` config key. Example below: 
 
   - `output_directory="results_comparem2"`.
 
 #### Configuration of annotation tool
 
-CompareM2 ships with two annotation tools: Bakta and Prokka. Bakta is default, and Prokka is bundled to better support users who work with Archaea. The choice of annotation tool in CompareM2 can have a large effect on your downstream results, as many tools use the output of the annotator as input. If you wish to change the annotation tool, you can do so with the `annotator` config key. Example below: 
+CompareM2 ships with two annotation tools: Bakta and Prokka. Bakta is default, and Prokka is bundled to better support users who work with Archaea. The choice of annotation tool in CompareM2 can have a large effect on your downstream results, as many tools use the output of the selected annotator as input. If you wish to change the annotation tool, you can do so with the `annotator` config key. Example below: 
 
   - `annotator="bakta"` bakta (default) | prokka
   
