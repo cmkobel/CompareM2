@@ -79,24 +79,27 @@ Here we bring som usage examples showcasing some of the more often used features
 ## Options 
 
 ###  `--config KEY="VALUE" [KEY2="VALUE"]...`
-Pass a parameter to the snakemake pipeline, where the following keys are available. 
-
-Config options are passed directly to the CompareM2 pipeline without affecting the Snakemake library. These options are for fine grained control
 
 The CompareM2 pipeline uses a configuration file with default settings to control the way it runs. This configuration can be changed on the fly -- This is to give the user easy access to the many features inside CompareM2. Multiple configuration options can be set at the same time as long as the all are stated after the `--config` parameter on the command-line. The full default configuration file is available in ./config/config.yaml (in the installation directory). Below, we will document and showcase examples of the configuration parameters that are relevant when daily-driving CompareM2.
 
 #### Configuration of input genomes
 
 
-Input genomes for CompareM2 can be specified in several ways. The default is to use the `input_genomes` config key, and its default value is "*.fna *.fa *.fasta *.fas". In essence, this means that if the user does not specify this key, alle genome fastas in the current working directory will be input into CompareM2 for analysis. The string given to input genomes is evaluated using the [LS(1)](https://www.linux.org/docs/man1/ls.html) which means that asterisks can be used for globbing. Examples below:
+Input genomes for CompareM2 can be specified in several ways. The default is to use the `input_genomes` config key, and its default value is "*.fna *.fa *.fasta *.fas". In essence, this means that if the user does not specify this key, alle genome fastas in the current working directory will be input into CompareM2 for analysis. The string given to input genomes is evaluated using GNU [LS(1)](https://www.linux.org/docs/man1/ls.html) which means that asterisks can be used for globbing. Examples below:
     
   - `input_genomes="*.fna *.fa *.fasta *.fas"` (default)
   - `input_genomes="path/to/my/genomes*.fna"`
   - `input_genomes="path/genome1.fna path/genome2.fna"`
   
-When analyzing larger sets of microbial genomes it can be useful to define these in a "file of file names" (fofn). This is supported by the `fofn` config key. When the `fofn` key is set, it always overrides the `input_genomes` key. A fofn-file can be generated simply by piping a list of filenames via ls (`ls *.fna > fofn.txt`).
+When analyzing larger sets of microbial genomes it can be useful to define these in a "file of file names" (fofn). This is supported by the `fofn` config key. When the `fofn` key is set, it always overrides the `input_genomes` key. A fofn-file can be generated simply by piping a list of filenames via GNU LS
 
-  - `fofn="fofn.txt"` 
+
+```bash
+
+ls *.fna > fofn.txt
+comparem2 --config fofn="fofn.txt"
+
+```
   
 For many use cases it may be useful to add reference genomes from the [RefSeq or Genbank databases](https://www.ncbi.nlm.nih.gov/datasets/genome/), which contains consistently pre-annotated high quality genomes. Using the `add_refseq` config key, you can add one or more (comma separated) RefSeq or GenBank genome/assembly IDs as input to your CompareM2 run. The genomes and their [PGAP](https://www.ncbi.nlm.nih.gov/refseq/annotation_prok/process/) annotations will be automatically downloaded and integrated in downstream tools in the CompareM2 pipeline. Examples below:
 
