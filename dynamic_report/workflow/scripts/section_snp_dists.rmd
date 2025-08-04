@@ -49,45 +49,17 @@ snp_dists_plot_df = snp_dists_matrix %>%
     drop_na() %>% 
     identity()
     
-    # left_join(metadata_translate %>% select(sample_index = index, sample)) %>% 
-    # left_join(metadata_translate %>% select(name_index = index, name = sample)) %>% 
-    # mutate(delta = sample_index - name_index) %>% 
-    # mutate(delta = abs(sample_index - name_index)) %>% 
-
-        #wmutate(group = cut_number(delta, min(unique(.$delta), 10))) # DISABLED
-    #identity()
-    
-    # ggplot(aes(delta %>% log())) + 
-    # geom_histogram() 
-
-# if (ARRANGEMENT == "phylogenetic") {
-# snp_dists_plot = 
-#     snp_dists_plot_df %>% 
-#     #ggplot(aes(value, fill = delta %>% factor())) +
-#     ggplot(aes(value, fill = delta, group = delta)) +
-#     scale_fill_continuous(type = "viridis", direction = 1,
-#         #trans = "log", breaks = 2^(0:10)
-#     ) +
-#     geom_histogram() + 
-#     theme_bw() + 
-#     labs(
-#         x = "pairwise SNP distance", 
-#         fill = "horizontal distance\nin tree"
-#     )
-#     snp_dists_additional_text = "The color indicates the relative distance for the pair when considering the index positions of a phylogenetic tree resembling the samples which is produced with mashtree. The index positions in a phylogenetic tree can be haphazard, but will always correlate with kinship."
-# 
-# } else { # ARRANGEMENT == "lexicographic" # no fill coloring
 snp_dists_plot = 
     snp_dists_plot_df %>% 
-    #ggplot(aes(value, fill = delta %>% factor())) +
+    
     ggplot(aes(value)) +
     geom_histogram(alpha = 0.95) + 
     theme_bw() + 
     labs(
         x = "pairwise SNP distance", 
     ) 
-snp_dists_additional_text = ""
-#}
+
+
 
 snp_dists_plot
 
@@ -95,7 +67,7 @@ cm2_save_plot("snp_dists)
 
 
 ```
-*Fig. `r figno()`: Pairwise SNP distances between all samples. `r paste(snp_dists_additional_text)`*
+*Fig. `r figno()`: Pairwise SNP distances between all samples. *
 
 
 

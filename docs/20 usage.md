@@ -18,6 +18,7 @@ comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
 
 ## Usage examples
 
+Here we bring som usage examples showcasing some of the more often used features.
 
   - Run *all* analyses across all fasta files in the current working directory.
     
@@ -78,15 +79,21 @@ comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
 ## Options 
 
 ###  `--config KEY=VALUE [KEY2=VALUE]...`
-Pass a parameter to the snakemake pipeline, where the following keys are available, defaults are stated as standard.
+Pass a parameter to the snakemake pipeline, where the following keys are available. 
     
-  - `input_genomes="*.fna *.fa *.fasta *.fas"` Path to input genomes. As the default value indicates, all fasta type files in the present directory will be analyzed.
+  - `input_genomes="*.fna *.fa *.fasta *.fas"` Path to input genomes. As the default value indicates, all fasta type files in the present directory will be analyzed. Default is as stated in the example, to input all genomes available in the current working directory.
 
-  - `fofn="fofn.txt"` Deactivated by default. When set to a path it overrides key input_genomes. A fofn can be created with `ls *.fna > fofn.txt`
+  - `fofn="fofn.txt"` When set to a path it overrides key input_genomes. A fofn can simply be created, for example, with `ls *.fna > fofn.txt`. Deactivated by default. 
 
-  - `output_directory="results_comparem2"` All results are written here.
+  - `output_directory="results_comparem2"` All results are written into this subdirectory. Default is "results_comparem2"
 
-  - `annotator="prokka"` Choice of annotation tool. Alternatively "bakta".
+  - `annotator="bakta"` 
+    
+    Choice of annotation tool. Alternatively "prokka". Default is "bakta"
+  
+  - `add_refseq=<Refseq-Accession>[,<Refseq-Accession2>...]` 
+  
+  Add one or more refseq accessions as reference genomes as a comma-separated list. Deactivated by default.
     
 
 ---
@@ -132,7 +139,7 @@ CompareM2 comes with a number of sane default arguments which can be observed [h
 
 #### Validating command line arguments
 
-There are no limitations on which command line arguments can be passed to the passthrough argument feature. Thus, the user should follow the documentation of each individual tool to make sure that the command line arguments given are valid. In order to validate that the arguments given to rules are as expected, the full generated shell command of each rule can be printed with `-p`. It is especially useful to do this in conjunction with the `--dry-run` argument. Example below:
+There are no limitations on which command line arguments can be passed to the passthrough argument feature. Thus, when modifiying the options using the passthrough arguments feature, the user should follow the documentation of each individual tool to make sure that the command line arguments given are valid. In order to validate that the arguments given to rules are as expected, the full generated shell command of each rule can be printed with `-p`. It is especially useful to do this in conjunction with the `--dry-run` argument. Example with Panaroo below:
 
 ```bash
 comparem2 --config set_panaroo--threshold=0.99 --until panaroo -p --dry-run

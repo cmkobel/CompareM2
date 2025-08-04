@@ -2,6 +2,11 @@
   - Add option to add refseq analysis as comparison to local genomes using `comparem2 --config add_refseq=<accession>`
   - Changed the way --status works, so now it computes the summary ahead of time. #122
   - Fixed an error where some sample basis jobs would rerun when other samples were added or removed.
+  - Added more in-depth documentation on the --until parameter
+  - Set Bakta as the default annotator (previously prokka, which is now deprecated)
+  - Report graphics are now exported as pdf (vector) into the results directory.
+  - Fixed bug regarding the snp-dists section in the report.
+  
 
 
 2.14.1
