@@ -20,16 +20,22 @@ comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
 
 Here we bring som usage examples showcasing some of the more often used features.
 
-  - Run *all* analyses across all fasta files in the current working directory.
+  - Run *all* analyses across all fasta genome files in the current working directory.
     
     ```
     comparem2
     ```
+    
+  - Add some RefSeq references to the same run.
+  
+    ```
+    comparem2 --config add_refseq="GCF_009734005.1,GCF_029023785.1"
+    ```
 
-  - Run only jobs *until* prokka
+  - Run only jobs *until* bakta
     
     ```
-    comparem2 --until prokka
+    comparem2 --until bakta
     ```
 
   - Run *all* analyses with specified input and output.
@@ -60,12 +66,6 @@ Here we bring som usage examples showcasing some of the more often used features
     
     ```
     comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast
-    ```
-    
-  - Add some RefSeq references to the same run.
-  
-    ```
-    comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" add_refseq="GCF_009734005.1,GCF_029023785.1" --until fast
     ```
 
   - Run panaroo as well.
