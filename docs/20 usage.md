@@ -99,6 +99,8 @@ Input genomes for CompareM2 can be specified in several ways. The default is to 
   
 
 ##### File of file names
+
+**File of file names**
   
 When analyzing larger sets of microbial genomes it can be useful to define these in a "file of file names" (fofn). This is supported by the `fofn` config key. When the `fofn` key is set, it always overrides the `input_genomes` key. A fofn-file can be generated simply by piping a list of filenames on the command line. Example below:
 
