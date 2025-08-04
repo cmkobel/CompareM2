@@ -239,7 +239,7 @@ Run a "dry run": Shows what will run without doing it.
 
 Print the state of completion of the rules in the pipeline. The percentage of completed files are shown.
 
-Run `comparem2 --status` at any time to get an overview of what has been done and what is missing in any project directory. Should be run from the same directory as where comparem2 was run. 
+Run `comparem2 --status` at any time to get an overview of what has been done and what is missing in any project directory. Should be run from the same directory as where CompareM2 was originally run for the results in question. 
 
 ---
 
