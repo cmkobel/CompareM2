@@ -264,8 +264,8 @@ if df.shape[0] > 0:
     #print(df[['1-index', 'sample', 'extension']].to_string(index = False))
     #print(df[['1-index', 'input_file', 'basename', 'sample', 'extension', 'input_file_copy']].to_string(index = False))
     
-    #print(df[['1-index', 'input_file', 'sample', 'origin']].to_string(index = False))
-    print(df[['1-index', 'input_file', 'input_file_copy', 'sample', 'origin']].to_string(index = False))
+    #print(df[['1-index', 'input_file', 'input_file_copy', 'sample', 'origin']].to_string(index = False))
+    print(df[['1-index', 'input_file', 'sample', 'origin']].to_string(index = False))
 
     print("//")
     print()

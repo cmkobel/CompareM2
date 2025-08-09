@@ -34,7 +34,7 @@ def get_annotation_results(wildcards):
         #print(f"Pipeline: Using the {annotator} annotator for sample \"{wildcards.sample}\"{extra_message}.")
         
         # Return should only contain one item, as I can't name them and I need to refer to a single one in rule annotate where I'm accessing its dirname().
-    print("Selected annotator for", wildcards.sample, ":", annotator)
+    #print("Selected annotator for", wildcards.sample, ":", annotator)
     return [
             f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.gff",
             f"{wildcards.output_directory}/samples/{wildcards.sample}/{annotator}/{wildcards.sample}.faa",

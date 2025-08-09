@@ -218,12 +218,13 @@ def run_status():
         #print(summary)
         
         # Hide irrelevant stuff
+        #summary = summary.loc[~summary["rule"].str.contains("^gather$")]
         summary = summary.loc[~summary["rule"].str.endswith("_download")]
-        summary = summary.loc[~summary["rule"].str.contains("^gather$")]
         summary = summary.loc[~summary["rule"].str.contains("^core_genome_checkpoint$")]
         summary = summary.loc[~summary["rule"].str.contains("^report_env$")]
         summary = summary.loc[~summary["rule"].str.contains("^bakta_env$")]
         summary = summary.loc[~summary["rule"].str.contains("^annotate$")]
+        summary = summary.loc[~summary["rule"].str.contains("^get_refseq_annotation$")]
         summary = summary.loc[~summary["rule"].str.contains("^metadata$")]
         
         # Count occurrences of statuses and pivot.

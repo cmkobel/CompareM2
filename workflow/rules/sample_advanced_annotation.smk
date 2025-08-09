@@ -201,7 +201,7 @@ rule gapseq_fill: # Continuation on gapseq_find results.
     benchmark: "{output_directory}/benchmarks/benchmark.gapseq.{sample}.tsv"
     resources:
         mem_mb = 8192,
-    threads: 1
+    threads: 1 # Gapseq is very badly optimized, so mostly runs with 4% CPU load on a single core anyway. 
     shell: """
     
         echo "1) Drafting ..."
