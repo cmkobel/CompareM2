@@ -1,4 +1,5 @@
 site_name: CompareM2
+copyright: (c) cmkobel 2019-2024
 theme:
   name: readthedocs
   highlightjs: true
