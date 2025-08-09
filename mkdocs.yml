@@ -2,7 +2,7 @@ site_name: CompareM2
 site_description: Documentation for CompareM2 the genomes-to-report pipeline 
 copyright: CompareM2 genomes-to-report pipeline. Copyright © 2019-2025 GNU GPL v3
 nav:
-  - Usage: "docs/20 usage.md"
+  - Usage: "20 usage.md"
   - Installation: "docs/10 installation.md"
 site_url: https://comparem2.readthedocs.io/
 theme:
