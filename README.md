@@ -28,7 +28,5 @@
 
 📙 The comprehensive documentation is available at [CompareM2.readthedocs.io](https://comparem2.readthedocs.io), and the code base is available at [github.com/cmkobel/CompareM2](https://github.com/cmkobel/CompareM2).
 
----
 
-[CompareM2](https://github.com/cmkobel/comparem2) genomes-to-report pipeline. Copyright © 2019-2025 GNU GPL v3
 
