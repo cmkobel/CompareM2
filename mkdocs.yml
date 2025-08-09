@@ -6,8 +6,8 @@ nav:
   - "Quick start": "05 quick start.md"
   - Installation: "10 installation.md"
   - Usage: "20 usage.md"
-  - "30 what analyses does it do.md"
-  - "Future functionality: "80 future functionality.md"
+  - "What": "30 what analyses does it do.md"
+  - "Future": "Future functionality: "80 future functionality.md"
   - "Contributors": "82 contributors.md"
   - "Citing and alternatives": "99 citation.md"
 site_url: https://comparem2.readthedocs.io/
