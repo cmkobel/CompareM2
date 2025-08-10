@@ -80,27 +80,25 @@ logger.addHandler(console_handler)
 def tip_exit(returncode):
     """Generates a random useful tip which can be shown in the end of the pipeline, and exits with the returncode given.""" # Inspired by T. Seemann
     
-    tips = [
-        "The comprehensive documentation is available at https://comparem2.readthedocs.io",
-        "If you ever run into any issues running CompareM2, please file it at https://github.com/cmkobel/comparem2/issues",
-        "You can use the passthrough parameter feature to pass a custom command line parameter to any tool within CompareM2.",
-        "You can select between bakta (default) or prokka with `comparem2 --config annotator=\"bakta\"`.",
-        "If you work with archaea, you should set the `comparem2 --config annotator=prokka set_prokka--kingdom=archaea` option.",
-        "The M in CompareM2 is for microbes.",
-        "CompareM2 works for bacteria and archaea.",
-        "CompareM2 works for microbial isolates and MAGs.",
-        "CompareM2 works for genomes based on both long and short reads. And hybrids of both.",
-        "The command `comparem2 --status` option only shows the status.",
-        "The command `comparem2 --downloads` checks and downloads all databases.",
-        "The command `comparem2 --help` shows all options directly in the terminal.",
-        "You can select to run specific rules with the `comparem2 --until <rule>` parameter.",
-        "The command `comparem2 --until fast` only runs a few quick jobs.",
-        "CompareM2 was once named 'Assemblycomparator2'.",
-        "If you don't specify any input genomes, CompareM2 runs on the fasta files in the current working directory.",
-        "Make sure you explore the dynamic report that has been generated in the results directory.",
-        "You can add refseq genomes and annotations to your analysis with `comparem2 --config add_refseq=<refseq accession>"
-        
-    ]
+    tips = list()
+    tips.append("The comprehensive documentation is available at https://comparem2.readthedocs.io")
+    tips.append("If you ever run into any issues running CompareM2, please file it at https://github.com/cmkobel/comparem2/issues")
+    tips.append("You can use the passthrough parameter feature to pass a custom command line parameter to any tool within CompareM2.")
+    tips.append("You can select between bakta (default) or prokka with `comparem2 --config annotator=\"bakta\"`.")
+    tips.append("If you work with archaea, you should set the `comparem2 --config annotator=prokka set_prokka--kingdom=archaea` options.")
+    tips.append("The M in CompareM2 is for microbes.")
+    tips.append("CompareM2 works for bacteria and archaea.")
+    tips.append("CompareM2 works for microbial isolates and MAGs.")
+    tips.append("CompareM2 works for genomes assembled from both long and short reads.")
+    tips.append("The command `comparem2 --status` option only shows the status.")
+    tips.append("The command `comparem2 --downloads` checks and downloads all databases.")
+    tips.append("The command `comparem2 --help` shows all options directly in the terminal.")
+    tips.append("You can select to run specific rules with the `comparem2 --until <rule>` parameter.")
+    tips.append("The command `comparem2 --until fast` only runs a few quick jobs.")
+    tips.append("CompareM2 was once named 'Assemblycomparator2'.")
+    tips.append("If you don't specify any input genomes, CompareM2 runs on the fasta files in the current working directory.")
+    tips.append("Make sure you explore the dynamic report that has been generated in the results directory.")
+    tips.append("You can add refseq genomes and annotations to your analysis with `comparem2 --config add_refseq=<refseq accession>")
     
     if returncode == 0:
         print(f"Tip: {random.choice(tips)}") # Be nice. Only print a tip if the run completed successfully.
@@ -247,6 +245,7 @@ def run_status():
         final.insert(1, "ok %", (summary["ok"] / (summary.loc[:, summary.columns != 'rule'].sum(axis = 1)) * 100).astype(int).astype(str) + " %")
         final = final.fillna(0)
         #print(final)
+        final.columns = final.columns.str.upper() # To visually separate columns from cells.
     
     
         # If only filtered (downloads, copy etc. ) rules are (were) present, it shouldn't be presented.
@@ -256,11 +255,11 @@ def run_status():
         
         # Present
         print()
-        print("Below is an overview of the completion of each rule in the CompareM2 pipeline.")
-        print("This summary was computed last time CompareM2 was run.")
-        print()
         print("  CompareM2 status")
         print("  ----------------")
+        print("  Below is an overview of the completion of each rule in the CompareM2 pipeline.")
+        print("This summary was computed last time CompareM2 was run.")
+        print()
         print(final.to_string(index = False))
         print("//")
         
@@ -295,7 +294,6 @@ def run_main():
     # always leave a .status.tsv file for future interesteds.
     # The reason why it says --until all is to try generating all outputs to see what is really there.
     
-    command_report = f"""snakemake --snakefile "$COMPAREM2_BASE/dynamic_report/workflow/Snakefile" --profile "$COMPAREM2_PROFILE" --configfile=.report_config.yaml --quiet all""" # todo: Find out why the comparem2_base and profile are formatted differently here.
     
 
     logger.debug(f"Command to run is\n{command_main}")
@@ -308,7 +306,18 @@ def run_main():
     returncode_main = process_main.returncode
     returncode_status = process_status.returncode
     
+    
+    
+    
+    # Exit with the return code of the main pipeline.
+    return returncode_main
+
+
+def run_report():
     # Run dynamic report pipeline   
+    
+    command_report = f"""snakemake --snakefile "$COMPAREM2_BASE/dynamic_report/workflow/Snakefile" --profile "$COMPAREM2_PROFILE" --configfile=.report_config.yaml --quiet all""" # todo: Find out why the comparem2_base and profile are formatted differently here.
+    
     # Only run report if there is metadata and something is worth rendering.
     # if os.path.isfile("{output_directory}/metadata.tsv") and os.path.isfile("{output_directory}/.comparem2_void_report.flag"):  # Should be moved to the report pipeline itself.
     
@@ -319,12 +328,6 @@ def run_main():
     else:
         #print("Pipeline: .report_config.yaml has not yet been created.") # This happens when doing a dry-run in a new dir.
         pass
-    
-    # Print status
-    #pretty_print_snakemake_summary()
-    
-    # Exit with the return code of the main pipeline.
-    return returncode_main
 
 
 # --- Finally, run the pipeline. ------------------------------------
@@ -349,8 +352,19 @@ elif "--downloads" in trailing_arguments: # download databases
     tip_exit(run_downloads())
     
     
-else: # main
+else: # Main
+    
+    # Main
     returncode_main = run_main()
-    run_status()
+    
+    # Report
+    run_report()
+    
+    # Status, in case of no dry run
+    if not "--dry-run" in trailing_arguments and not "--dryrun" in trailing_arguments and not "-n" in trailing_arguments:
+        print("ø", trailing_arguments)
+        run_status() 
+    
+    # Exit
     tip_exit(returncode_main)
     

@@ -80,4 +80,3 @@ set_treecluster--threshold: 0.05
 # Title. Used in the report.
 # User can manually set the title. Otherwise the default is to use the name of the current working directory.
 #title: "My Project Title" 
-

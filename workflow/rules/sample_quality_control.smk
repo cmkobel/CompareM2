@@ -1,6 +1,7 @@
 
 # One new main copy that uses the origin column to decide how to gain the genome. Either locally from disk or via refseq ncbi-datasets-cli download.
 # One problem I haven't solved is how to deal with inputs, as refseqqed genomes can't have an input
+# I'm actually considering going back to the old system where the ncbi accessions had their own rule. Then it can also pool and run quicker, have its own environment and resource settings. #129
 rule gather:
     output: 
         assembly = ensure("{output_directory}/samples/{sample}/{sample}.fna", non_empty = True),
@@ -8,7 +9,10 @@ rule gather:
     retries: 2
     params: 
         origin = lambda wildcards: df[df["sample"] == wildcards.sample]["origin"].tolist()[0],
-        input_file = lambda wildcards: df[df["sample"] == wildcards.sample]["input_file"].tolist()[0], # Only used for genomes of local origin. Value should be NaN for refseq genomes.
+        input_file = lambda wildcards: df[df["sample"] == wildcards.sample]["input_file"].tolist()[0], # Only used for genomes of local origin. Is nan for refseq genomes.
+    #resources: # Using resources actually worked quite well, but retries is just much simpler and quicker.
+    #    downloads = 1
+    log: "{output_directory}/samples/{sample}/{sample}.log"
     run: # Python code with conditionals to control gathering 
         if params.origin == "local": # Just copy the local file
             shell("""
@@ -40,15 +44,15 @@ rule gather:
         # Finally, for both:
         shell("""
             
-            md5sum {output.assembly:q} > {output.log:q}
-            echo "# Copied from $(realpath {params.input_file}) on $(date)" >> {output.log:q}
+            #md5sum {output.assembly:q} > {output.log:q}
+            #echo "# Copied from $(realpath {params.input_file}) on $(date)" >> {output.log:q}
         
         """)
    
     
 
 
-rule sequence_lengths:
+rule sequence_lengths: # TODO: rename to seqkit?
     input:
         assembly = "{output_directory}/samples/{sample}/{sample}.fna", 
         #metadata = "{output_directory}/metadata.tsv", # Only batch jobs need metadata (for proper updating)
