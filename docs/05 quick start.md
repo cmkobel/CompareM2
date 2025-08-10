@@ -58,7 +58,7 @@ tree results_comparem2/ -L 1
 #> │     ├── prokka/
 #> │     └── sequence_lengths/
 #> ├── snp-dists/
-#> ├── tables/
+#> ├── visuals/
 #> ├── treecluster/
 #> └── version_info.txt
 

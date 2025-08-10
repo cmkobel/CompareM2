@@ -1,0 +1,35 @@
+## `bakta` - Genomic annotation
+
+
+
+```{r bakta, echo = F, message = F, warning = F, error = T}
+
+
+bakta_summary = read_delim(glob_list$bakta, id = "file", comment = "#", col_names = c("content"), delim = ": ") %>% 
+    separate_wider_regex(cols = "content", patterns = c(name = "^.+", ":", value = ".+$"), too_few = "align_start") %>% 
+
+
+    filter(name %in% c("sample", "Length", "Count", "GC", "N50", "N90", "N, ratio", "coding, density", "tRNAs", "tmRNAs", "rRNAs", "ncRNAs", "ncRNA, regions", "CRISPR, arrays", "CDSs", "pseudogenes", "hypotheticals", "sORFs", "gaps", "oriCs", "oriVs", "oriTs")) %>% 
+    #filter(name != "organism") %>%
+    #filter(str_detect(value, "\\d")) %>%
+    mutate(
+        sample = basename(file) %>% str_remove("\\.txt$"),
+        value = as.numeric(value)
+    ) %>%
+    pivot_wider(id_cols = sample, values_fill = 0)
+
+#
+
+
+
+metadata_translate %>%
+    select(sample) %>%
+    left_join(bakta_summary, by = "sample") %>%
+    custom_dt("bakta")
+
+
+```
+
+*Table `r tableno()`: Overview of the number of different gene types. Called using the [Bakta](https://github.com/oschwengers/bakta) genome annotator.*
+
+---

@@ -3,7 +3,8 @@
 Counts the number of differences between any pair of samples on the core genome produced by roary. SNP distances do not approximate the evolutionary distance as they are not adjusted for different probabilities for transitions and transversions etc. Rather, they give a ballpark indication of the difference between the samples. Note that the number of SNP distances is highly sensitive to the core/pan genome size ratio.
 
 
-```{r snp_dists-table, echo = F, message = F, warning = F, error = T}
+```{r snp_dists-table, echo = F, message = F, warning = F, error = T, fig.height = 4, fig.width = 10}
+
 #setwd("~/comparem2/tests/strachan_campylo") # DEBUG
 #setwd("~/comparem2/tests/MAGs") # DEBUG
 snp_dists_raw = read_tsv(glob_list$snp_dists) %>% 

@@ -39,9 +39,19 @@ tree <- ape::read.tree(mashtree_file)
 tree$tip.label = paste0(" ", tree$tip.label)
 ape::plot.phylo(tree, align.tip.label = T, font = 1, cex = 0.73)
 axis(1)
-           
+          
 
-# TODO: Save figure.
+```
+
+```{r mashtree-pdf, echo=FALSE, message=F, warning=F, error = T}
+# Plot again, and save to disk
+
+invisible({
+    pdf(paste0(output_directory, "/visuals/", paste(batch_title, "mashtree", sep = "__"), ".pdf")) 
+    ape::plot.phylo(tree, align.tip.label = T, font = 1, cex = 0.73)
+    axis(1)
+    dev.off() 
+})
 
 ```
 

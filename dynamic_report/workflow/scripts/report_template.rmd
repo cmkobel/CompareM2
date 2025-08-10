@@ -140,7 +140,7 @@ custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, wid
     name = paste(batch_title, filename, sep = "__")
     
     if (save_tsv) {
-        write_tsv(x, paste0(output_directory, "/tables/", name, ".tsv")) # Save a copy on the harddisk for people without browsers.
+        write_tsv(x, paste0(output_directory, "/visuals/", name, ".tsv")) # Save a copy on the harddisk for people without browsers.
     }
     
     DT::datatable(
@@ -167,7 +167,7 @@ custom_dt = function(x, filename = "viewer_", dom = "Blfrtip", ordering = T, wid
 
 cm2_save_plot = function(content) {
     name = paste(batch_title, content, sep = "__")
-    ggsave(filename = paste0(output_directory, "/tables/", name, ".pdf")) # Save a vector version.
+    ggsave(filename = paste0(output_directory, "/visuals/", name, ".pdf")) # Save a vector version.
 
 }
 
@@ -277,6 +277,7 @@ section_definition_table = tribble(
     "gtdbtk",            1, Sys.glob(paste0(output_directory, "/gtdbtk/gtdbtk.summary.tsv")),
     "mlst",              1, Sys.glob(paste0(output_directory, "/mlst/mlst.tsv")),
     "amrfinder",         N, Sys.glob(paste0(output_directory, "/samples/*/amrfinder/*.tsv")),
+    "bakta",          N, Sys.glob(paste0(output_directory, "/samples/*/bakta/*.txt")),
     "prokka",            N, Sys.glob(paste0(output_directory, "/samples/*/prokka/*.txt")),
     "eggnog",            N, Sys.glob(paste0(output_directory, "/samples/*/eggnog/*.emapper.annotations")),
     "kegg_pathway",      1, Sys.glob(paste0(output_directory, "/kegg_pathway/kegg_pathway_enrichment_analysis.tsv")),
@@ -352,6 +353,9 @@ df_versions = tibble("versions" = read_lines(Sys.glob(paste0(output_directory, "
 ```
 
 ```{r section_amrfinder, child = paste0(report_scripts, "section_amrfinder.rmd"), eval = render$amrfinder}
+```
+
+```{r section_bakta, child = paste0(report_scripts, "section_bakta.rmd"), eval = render$bakta}
 ```
 
 ```{r section_prokka, child = paste0(report_scripts, "section_prokka.rmd"), eval = render$prokka}
