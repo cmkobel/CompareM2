@@ -8,7 +8,6 @@
   - Fixed bug regarding the snp-dists section in the report.
   
 
-
 2.14.1
   - Breaking change: New Docker image.
   - Added gapseq, rule "gapseq_find" is done and ready.
