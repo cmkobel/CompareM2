@@ -40,7 +40,7 @@ rule gtdbtk:
     output: 
         tsv = "{output_directory}/gtdbtk/gtdbtk.summary.tsv"
     params:
-        batchfile_content = df[['input_file_copy', 'sample']].to_csv(header = False, index = False, sep = "\t"),
+        batchfile_content = df[['input_file_copy', 'sample_gtdbtk']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{output_directory}/gtdbtk/",
         base_variable = base_variable, # not used?
         mash_db = f"{DATABASES}/gtdb_sketch_release226/mash_db.msh",
@@ -68,6 +68,7 @@ rule gtdbtk:
         export GTDBTK_DATA_PATH="$(dirname {input.database_representative:q})/release226/" # Should be defined from config file, and not be hardwired.
         
         # Create batchfile
+        echo '''{params.batchfile_content}''' 
         echo '''{params.batchfile_content}''' > {wildcards.output_directory}/gtdbtk/batchfile.tsv
         
         gtdbtk classify_wf \

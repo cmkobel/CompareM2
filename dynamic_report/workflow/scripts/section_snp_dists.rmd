@@ -63,7 +63,7 @@ snp_dists_plot =
 
 snp_dists_plot
 
-cm2_save_plot("snp_dists)
+cm2_save_plot("snp_dists")
 
 
 ```

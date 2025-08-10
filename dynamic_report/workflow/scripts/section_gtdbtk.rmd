@@ -5,10 +5,10 @@
 
 ```{r gtdb, echo = F, message = F, warning = F, error = T}
 
-        
-gtdbtk_df = read_tsv(glob_list$gtdbtk, comment = "=", na = c("", "NA", "N/A")) %>% 
 
-    select(sample = user_genome, classification, fastani_ani, fastani_reference, msa_percent, red_value) %>%
+gtdbtk_df = read_tsv(glob_list$gtdbtk, comment = "=", na = c("", "NA", "N/A")) %>% 
+    mutate(user_genome_original = str_remove(user_genome, "^cm2_")) %>% 
+    select(sample = user_genome_original, classification, fastani_ani, fastani_reference, msa_percent, red_value) %>%
     identity()
 
 

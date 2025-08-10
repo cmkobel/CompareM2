@@ -245,6 +245,7 @@ df = df.reset_index(level = 0)
 # Python usually uses 0-index, which may not be intuitive for lay person users. To make sure no one is confused, we name the index as a "one"-index.
 df['1-index'] = [i+1 for i in range(len(df))] 
 
+df["sample_gtdbtk"] = ["cm2_" + str(i) for i in df["sample"]] # Add an arbitrary string to the sample name so gtdbtk doesn't get confused https://github.com/Ecogenomics/GTDBTk/issues/131
 # Count the final metadata table
 N = df.shape[0]
 
