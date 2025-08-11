@@ -158,7 +158,7 @@ Notice how the double dash prefix in "--kingdom" is part of the the set_ string.
 In some cases, command line options are flags, meaning that they need no parameter value. In this case, an empty string can be given as parameter value:
 
 ```bash
-comparem2 --config set_prokka--rfam="" # --rfam enables searching for ncRNAs with Infernal+Rfam.
+comparem2 --config annotator=prokka set_prokka--rfam="" # --rfam enables searching for ncRNAs with Infernal+Rfam.
 ```
 
 In case of non-empty parameter values, use of apostrophes is optional.
