@@ -38,6 +38,7 @@ jobs:
         conda activate comparem2_launcher
         python --version
         snakemake --version
+        which comparem2
         ./comparem2 --help
         ./comparem2 --version
         ./comparem2 --cite
@@ -86,8 +87,6 @@ jobs:
       run: |
         conda activate comparem2_launcher
         ./comparem2 --config input_genomes="*.fna" add_refseq="GCF_009734005.1,GCF_029023785.1" --omit-from gapseq_fill
-        
-        tree results_comparem2
         
     - name: status 
       run: |
