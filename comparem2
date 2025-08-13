@@ -82,6 +82,9 @@ def tip_exit(returncode):
     
     tips = list()
     tips.append("The comprehensive documentation is available at https://comparem2.readthedocs.io")
+    tips.append("The comprehensive documentation is available at https://comparem2.readthedocs.io")
+    tips.append("The comprehensive documentation is available at https://comparem2.readthedocs.io")
+    tips.append("If you ever run into any issues running CompareM2, please file it at https://github.com/cmkobel/comparem2/issues")
     tips.append("If you ever run into any issues running CompareM2, please file it at https://github.com/cmkobel/comparem2/issues")
     tips.append("You can use the passthrough parameter feature to pass a custom command line parameter to any tool within CompareM2.")
     tips.append("You can select between bakta (default) or prokka with `comparem2 --config annotator=\"bakta\"`.")

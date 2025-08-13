@@ -275,7 +275,7 @@ rule gapseq_fill: # Continuation on gapseq_find results.
 rule antismash:
     input: 
         database_representative = DATABASES + "/antismash/comparem2_antismash_database_representative.flag",
-        gbk = "{output_directory}/samples/{sample}/prokka/{sample}.gbk",
+        gbk = "{output_directory}/samples/{sample}/prokka/{sample}.gbk", #culprit for always running prokka? Does bakta produce a gbk?
         #metadata = "{output_directory}/metadata.tsv",
     output:
         json = "{output_directory}/samples/{sample}/antismash/{sample}.json",

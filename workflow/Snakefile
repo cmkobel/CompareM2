@@ -344,10 +344,11 @@ def generate_final_output(N):
         final_output += expand([\
             "{output_directory}/metadata.tsv", \
             "{output_directory}/.install_report_environment_aot.flag", \
+            "{output_directory}/.install_bakta_environment_aot.flag", \
+            "{output_directory}/.install_prokka_environment_aot.flag", \
             "{output_directory}/assembly-stats/assembly-stats.tsv", \
             "{output_directory}/samples/{sample}/sequence_lengths/{sample}_seqlen.tsv", \
             "{output_directory}/samples/{sample}/.annotation/{sample}.gff", \
-            "{output_directory}/.install_bakta_environment_aot.flag", \
             "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.decorated.gff", \
             "{output_directory}/samples/{sample}/dbcan/overview.txt", \
             "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv", \
@@ -377,7 +378,7 @@ def generate_final_output(N):
     print(", ".join(description) + ".")
     return final_output
         
-rule all:
+rule all: # rule start?
     input: generate_final_output(N)
 
 
@@ -460,6 +461,17 @@ rule bakta_env:
         echo "Bakta conda env OK ..."
         
     """
+    
+rule prokka_env:
+    output: touch(f"{output_directory}/.install_prokka_environment_aot.flag")
+    conda: "envs/prokka.yaml"
+    shell: """
+    
+        echo "prokka conda env OK ..."
+        
+    """
+    
+
 
 # Just a dummy rule if you wanna force the report
 # comparem2 --until report
