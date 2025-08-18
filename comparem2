@@ -365,7 +365,6 @@ else: # Main
     
     # Status, in case of no dry run
     if not "--dry-run" in trailing_arguments and not "--dryrun" in trailing_arguments and not "-n" in trailing_arguments:
-        print("ø", trailing_arguments)
         run_status() 
     
     # Exit

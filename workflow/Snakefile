@@ -362,7 +362,7 @@ def generate_final_output(N):
             "{output_directory}/samples/{sample}/antismash/{sample}.json"], \
             output_directory = output_directory, sample = df["sample"])
             
-            #"{output_directory}/gapseq_pan/panModel-draft.RDS", \
+            #"{output_directory}/samples/{sample}/carveme/{sample}_carveme.xml", \
             
     if N == 0: # Zero exactly
         description.append("downloads")

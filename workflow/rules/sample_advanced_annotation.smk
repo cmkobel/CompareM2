@@ -310,3 +310,30 @@ rule antismash:
 
     """
     
+    
+rule carveme: # Gapseq is too slow.
+    input: 
+        faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa",
+    output:
+        xml = "{output_directory}/samples/{sample}/carveme/{sample}_carveme.xml",
+    conda: "../envs/carveme.yaml"
+    params:
+        passthrough_parameters = passthrough_parameter_unpack("carveme"),
+    benchmark: "{output_directory}/benchmarks/benchmark.carveme_sample.{sample}.tsv"
+    shell: """
+    
+        carve --help || echo OK
+        
+        # Build a model and gapfil it proritizing the reactions selected for gap-filling based on genetic evidence.
+        carve {input.faa} \
+            -o {output.xml} \
+            -g M9 \
+            -i M9 \
+            {params.passthrough_parameters}
+        
+        
+        # Microbial communities (another job?)
+    
+    
+    
+    """

@@ -30,6 +30,9 @@ output_directory: "results_comparem2"
 set_bakta--translation-table: 11
 set_bakta--gram: "?"
 
+set_carveme--gapfill: "LB" #M9,LB
+set_carveme--solver: "scip"
+
 set_eggnog-m: diamond
 
 set_fasttree-gtr: ""
