@@ -191,7 +191,8 @@ if df_refseq.shape[0] > 0: # If the table is nonempty, we can add some attribute
     df_refseq['origin'] = "refseq"
     #df_refseq['input_file'] = output_directory + "/.refseq_downloads/" + df_refseq['sample'] + "/" + df_refseq['sample'] + ".fna"  
     
-    df_refseq['input_file'] = np.nan # never used # output_directory + "/samples/" + df_refseq['sample'] + "/refseq/" + df_refseq['sample'] + "_assembly.fna"  
+    #df_refseq['input_file'] = np.nan # never used # output_directory + "/samples/" + df_refseq['sample'] + "/refseq/" + df_refseq['sample'] + "_assembly.fna"  
+    df_refseq['input_file'] = output_directory + "/refseq_download/decompressed/ncbi_dataset/data/" + df_refseq["sample"] + "/" + df_refseq["sample"] + "_assembly.fna" # I think I got a good idea here.
     df_refseq['input_file_copy'] = output_directory + "/samples/" + df_refseq['sample'] + "/" + df_refseq['sample'] + ".fna"  
 
 # A refseq genome will be requested downstream, thus requiring the files in .refseq_downloads to be downloaded. 
@@ -373,6 +374,8 @@ def generate_final_output(N):
             DATABASES + "/bakta/comparem2_bakta_database_representative.flag",
             DATABASES + "/amrfinder/comparem2_amrfinder_database_representative.flag",
             DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag"])
+            
+            
             
             
     print(", ".join(description) + ".")
