@@ -5,9 +5,10 @@
 
 ncbi_input_files = df[df["origin"] == "refseq"]["input_file"].tolist() # Empty list in case of no ncbi accessions.
 
-rule ncbi: # batch
+rule ncbi_dataset: # batch
     output: 
-        ncbi_input_files
+        zip = "{output_directory}/ncbi_dataset/ncbi_dataset.zip" # Conditional dependency for rule gather
+        #ncbi_input_files,
     #conda: "../envs/ncbi_datasets.yaml"
     params:
         accessions_joined_comma = ",".join(df[df["origin"] == "refseq"]["sample"].tolist()),
@@ -30,27 +31,16 @@ rule ncbi: # batch
         # Unzip
         echo "A" | unzip $path_zip -d $path_decompressed
         
-        
-        # Old school but works way of making the file names predictable.
-        # This can also be moved into the gather rule, but then you need a flag for making the correct dependency.
-        declare -a arr=({params.samples:q}) # Example: declare -a arr=("element1" "element2" "element3")
-        for i in "${{arr[@]}}"; do
-            source="results_comparem2/ncbi_dataset/decompressed/ncbi_dataset/data/${{i}}/${{i}}*_genomic.fna"
-            destination="results_comparem2/refseq_download/decompressed/ncbi_dataset/data/${{i}}/${{i}}_assembly.fna"
-            cp $source $destination || touch $destination # In case an accession is missing its assembly, we can let the others run.
-        done
-        
-        # This output should mimick the one in the df["input_file"]
+    
 
     """
 
 rule gather: # Before this rule there needs to be something that downloads the ncbi package in a single rule. But how do I make the dependency? It needs to be a flag?
     input:
-        df["input_file"].tolist()
+        lambda wildcards: "{output_directory}/ncbi_dataset/ncbi_dataset.zip" if "refseq" in df["origin"].tolist() else list()
     output: 
-        assembly = ensure("{output_directory}/samples/{sample}/{sample}.fna", non_empty = True),
+        input_file_copy = ensure("{output_directory}/samples/{sample}/{sample}.fna", non_empty = True),
         log = "{output_directory}/samples/{sample}/{sample}.log",
-    retries: 2
     params: 
         origin = lambda wildcards: df[df["sample"] == wildcards.sample]["origin"].tolist(),
         input_file = lambda wildcards: df[df["sample"] == wildcards.sample]["input_file"].tolist(), 
@@ -59,21 +49,19 @@ rule gather: # Before this rule there needs to be something that downloads the n
     log: "{output_directory}/samples/{sample}/{sample}.log"
     run: # Python code with conditionals to control gathering 
     
-        if params.origin == "refseq": # Download the file over the internet.
+        if params.origin == ["refseq"]: # Download the file over the internet.
             shell("""
             
-            
             # First, make the file name predictable
-            cp {output_directory}/samples/{wildcards.sample}/refseq_download/ncbi_dataset/data/{wildcards.sample}/{wildcards.sample}_*_genomic.fna {params.input_file}
-
+            cp results_comparem2/ncbi_dataset/decompressed/ncbi_dataset/data/{wildcards.sample}/{wildcards.sample}*_genomic.fna {params.input_file}
                 
             """)
             
         # Finally, for both:
         shell("""
                 
-            cp {params.input_file:q} {output.assembly:q}
-            #md5sum {output.assembly:q} > {output.log:q}
+            cp {params.input_file:q} {output.input_file_copy:q}
+            #md5sum {output.input_file_copy:q} > {output.log:q}
             #echo "# Copied from $(realpath {params.input_file}) on $(date)" >> {output.log:q}
             
         """)

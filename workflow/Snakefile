@@ -192,7 +192,7 @@ if df_refseq.shape[0] > 0: # If the table is nonempty, we can add some attribute
     #df_refseq['input_file'] = output_directory + "/.refseq_downloads/" + df_refseq['sample'] + "/" + df_refseq['sample'] + ".fna"  
     
     #df_refseq['input_file'] = np.nan # never used # output_directory + "/samples/" + df_refseq['sample'] + "/refseq/" + df_refseq['sample'] + "_assembly.fna"  
-    df_refseq['input_file'] = output_directory + "/refseq_download/decompressed/ncbi_dataset/data/" + df_refseq["sample"] + "/" + df_refseq["sample"] + "_assembly.fna" # I think I got a good idea here.
+    df_refseq["input_file"] = output_directory + "/ncbi_dataset/decompressed/ncbi_dataset/data/" + df_refseq["sample"] + "/" + df_refseq["sample"] + "_assembly.fna"
     df_refseq['input_file_copy'] = output_directory + "/samples/" + df_refseq['sample'] + "/" + df_refseq['sample'] + ".fna"  
 
 # A refseq genome will be requested downstream, thus requiring the files in .refseq_downloads to be downloaded. 
@@ -344,6 +344,7 @@ def generate_final_output(N):
         description.append("singular analyses")
         final_output += expand([\
             "{output_directory}/metadata.tsv", \
+            "{output_directory}/samples/{sample}/{sample}.fna", \
             "{output_directory}/.install_report_environment_aot.flag", \
             "{output_directory}/.install_bakta_environment_aot.flag", \
             "{output_directory}/.install_prokka_environment_aot.flag", \
