@@ -407,6 +407,8 @@ rule metadata:
 
 include: "rules/downloads.smk"
 
+include: "rules/gather.smk"
+
 
 # --- Rules run per sample ------------------------------------------
 
