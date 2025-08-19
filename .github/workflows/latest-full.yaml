@@ -60,11 +60,11 @@ jobs:
         
         
         unzip tests/E._faecium/fna.zip
-        ./comparem2 --config input_genomes="*.fna" add_refseq="GCF_009734005.1,GCF_029023785.1" --dry-run
-        ./comparem2 --config input_genomes="*.fna" add_refseq="GCF_009734005.1,GCF_029023785.1" --until fast --dry-run
-        ./comparem2 --config input_genomes="*.fna" add_refseq="GCF_009734005.1,GCF_029023785.1" --until isolate --dry-run
-        ./comparem2 --config input_genomes="*.fna" add_refseq="GCF_009734005.1,GCF_029023785.1" --until meta --dry-run
-        ./comparem2 --config input_genomes="*.fna" add_refseq="GCF_009734005.1,GCF_029023785.1" --until downloads --dry-run
+        ./comparem2 --config input_genomes="*.fna" add_ncbi="GCF_009734005.1,GCF_029023785.1" --dry-run
+        ./comparem2 --config input_genomes="*.fna" add_ncbi="GCF_009734005.1,GCF_029023785.1" --until fast --dry-run
+        ./comparem2 --config input_genomes="*.fna" add_ncbi="GCF_009734005.1,GCF_029023785.1" --until isolate --dry-run
+        ./comparem2 --config input_genomes="*.fna" add_ncbi="GCF_009734005.1,GCF_029023785.1" --until meta --dry-run
+        ./comparem2 --config input_genomes="*.fna" add_ncbi="GCF_009734005.1,GCF_029023785.1" --until downloads --dry-run
         
         ls dummy_{2,3}.fa > fofn.txt; ./comparem2 --config fofn="fofn.txt" --dry-run   
         rm -rf *.fna
@@ -76,17 +76,17 @@ jobs:
       run: |
         conda activate comparem2_launcher
         unzip tests/E._faecium/fna.zip 
-        ./comparem2 --config input_genomes="*.fna" add_refseq="GCF_009734005.1,GCF_029023785.1" --until fast
+        ./comparem2 --config input_genomes="*.fna" add_ncbi="GCF_009734005.1,GCF_029023785.1" --until fast
         
     - name: prokka
       run: |
         conda activate comparem2_launcher
-        ./comparem2 --config input_genomes="*.fna" add_refseq="GCF_009734005.1,GCF_029023785.1" annotator=prokka --until annotate
+        ./comparem2 --config input_genomes="*.fna" add_ncbi="GCF_009734005.1,GCF_029023785.1" annotator=prokka --until annotate
     
     - name: full
       run: |
         conda activate comparem2_launcher
-        ./comparem2 --config input_genomes="*.fna" add_refseq="GCF_009734005.1,GCF_029023785.1" --omit-from gapseq_fill
+        ./comparem2 --config input_genomes="*.fna" add_ncbi="GCF_009734005.1,GCF_029023785.1" --omit-from gapseq_fill
         
     - name: status 
       run: |
