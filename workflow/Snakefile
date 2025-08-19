@@ -172,30 +172,30 @@ except KeyError: # Otherwise, fall back on input_genomes which has a default val
     input_genomes_parsed = get_input_genomes(config['input_genomes']) # Run with 'comparem2 --config input_genomes="my_files*.fna' to customize.
 
     
-# Parse added refseq accessions.
+# Parse added ncbi accessions.
 try:
-    add_refseq = config["add_refseq"] # example: GCF_009734005.1
-    add_refseq_list = [str(i).strip() for i in add_refseq.split(",")] # A bit of sanitization.
-    print(f"Add refseq: The following {len(add_refseq_list)} refseq accession(s) have been added: {add_refseq_list}")
+    add_ncbi = config["add_ncbi"] # example: GCF_009734005.1
+    add_ncbi_list = [str(i).strip() for i in add_ncbi.split(",")] # A bit of sanitization.
+    print(f"Add ncbi: The following {len(add_ncbi_list)} ncbi accession(s) have been added: {add_ncbi_list}")
 except KeyError:
-    add_refseq_list = list() # An empty list.
+    add_ncbi_list = list() # An empty list.
     
 
 
 
 # --- Construct sample table ----------------------------------------
 
-# First, we create the table with refseq genomes
-df_refseq = pd.DataFrame(data = {'sample': add_refseq_list})
-if df_refseq.shape[0] > 0: # If the table is nonempty, we can add some attributes to it
-    df_refseq['origin'] = "refseq"
-    #df_refseq['input_file'] = output_directory + "/.refseq_downloads/" + df_refseq['sample'] + "/" + df_refseq['sample'] + ".fna"  
+# First, we create the table with ncbi genomes
+df_ncbi = pd.DataFrame(data = {'sample': add_ncbi_list})
+if df_ncbi.shape[0] > 0: # If the table is nonempty, we can add some attributes to it
+    df_ncbi['origin'] = "ncbi"
+    #df_ncbi['input_file'] = output_directory + "/.ncbi_downloads/" + df_ncbi['sample'] + "/" + df_ncbi['sample'] + ".fna"  
     
-    #df_refseq['input_file'] = np.nan # never used # output_directory + "/samples/" + df_refseq['sample'] + "/refseq/" + df_refseq['sample'] + "_assembly.fna"  
-    df_refseq["input_file"] = output_directory + "/ncbi_dataset/decompressed/ncbi_dataset/data/" + df_refseq["sample"] + "/" + df_refseq["sample"] + "_assembly.fna"
-    df_refseq['input_file_copy'] = output_directory + "/samples/" + df_refseq['sample'] + "/" + df_refseq['sample'] + ".fna"  
+    #df_ncbi['input_file'] = np.nan # never used # output_directory + "/samples/" + df_ncbi['sample'] + "/ncbi/" + df_ncbi['sample'] + "_assembly.fna"  
+    df_ncbi["input_file"] = output_directory + "/ncbi_dataset/decompressed/ncbi_dataset/data/" + df_ncbi["sample"] + "/" + df_ncbi["sample"] + "_assembly.fna"
+    df_ncbi['input_file_copy'] = output_directory + "/samples/" + df_ncbi['sample'] + "/" + df_ncbi['sample'] + ".fna"  
 
-# A refseq genome will be requested downstream, thus requiring the files in .refseq_downloads to be downloaded. 
+# A ncbi genome will be requested downstream, thus requiring the files in .ncbi_downloads to be downloaded. 
     
 
 
@@ -231,7 +231,7 @@ if df.shape[0] > 0:
     # This is where the input file is copied to in the first snakemake rule "copy".
     df['input_file_copy'] = output_directory + "/samples/" + df['sample'] + "/" + df['sample'] + ".fna"  
     
-    # As opposed to added refseq accessions, the local files should be marked.
+    # As opposed to added ncbi accessions, the local files should be marked.
     df['origin'] = "local"
     
     df_local = df
@@ -239,7 +239,7 @@ if df.shape[0] > 0:
 
 
 # Put the two tables together
-df = pd.concat([df, df_refseq])
+df = pd.concat([df, df_ncbi])
 
 # Reset the index.
 df = df.reset_index(level = 0)
@@ -302,7 +302,7 @@ if not os.path.isdir(output_directory):
 
 # The localrules are routine tasks that take up very little cpu. In some cases there won't be internet access on compute nodes, why it is smart that downloads are run on the local (aka. frontend) node. 
 localrules: metadata, annotate, antismash_download, bakta_download, eggnog_download, checkm2_download, dbcan_download, gtdb_download, report, report_env, bakta_env
-# get_refseq
+# get_ncbi
 
 # I wonder why, I decided that copy should not be a localrule.
 

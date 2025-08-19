@@ -101,7 +101,7 @@ def tip_exit(returncode):
     tips.append("CompareM2 was once named 'Assemblycomparator2'.")
     tips.append("If you don't specify any input genomes, CompareM2 runs on the fasta files in the current working directory.")
     tips.append("Make sure you explore the dynamic report that has been generated in the results directory.")
-    tips.append("You can add refseq genomes and annotations to your analysis with `comparem2 --config add_refseq=<refseq accession>")
+    tips.append("You can add ncbi genomes and annotations to your analysis with `comparem2 --config add_ncbi=<ncbi accession>")
     
     if returncode == 0:
         print(f"Tip: {random.choice(tips)}") # Be nice. Only print a tip if the run completed successfully.
@@ -224,8 +224,8 @@ def run_status():
         summary = summary.loc[~summary["rule"].str.contains("^core_genome_checkpoint$")]
         summary = summary.loc[~summary["rule"].str.contains("^report_env$")]
         summary = summary.loc[~summary["rule"].str.contains("^bakta_env$")]
-        summary = summary.loc[~summary["rule"].str.contains("^annotate$")]
-        summary = summary.loc[~summary["rule"].str.contains("^get_refseq_annotation$")]
+        #summary = summary.loc[~summary["rule"].str.contains("^annotate$")]
+        summary = summary.loc[~summary["rule"].str.contains("^get_ncbi_annotation$")]
         summary = summary.loc[~summary["rule"].str.contains("^metadata$")]
         
         # Count occurrences of statuses and pivot.

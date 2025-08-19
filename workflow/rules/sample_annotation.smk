@@ -18,7 +18,7 @@ def get_annotation_results(wildcards):
         
         extra_message = "" # Extra message that can be added for debugging etc.
         
-        # Instead of having this being set by the config["annotator"], it could be set by the corresponding line in the metadata table. Thus each sample could be either prokka, bakta or get_refseq. It is fine to have the config set this, but then it should be copied into the metadata sheet first, and then taken from there.
+        # Instead of having this being set by the config["annotator"], it could be set by the corresponding line in the metadata table. Thus each sample could be either prokka, bakta or get_ncbi. It is fine to have the config set this, but then it should be copied into the metadata sheet first, and then taken from there.
         # The thing is that the annotator should not download, as we need the genome already when rule copy runs. So probably 
         if parsed == "bakta":
             annotator = "bakta"
@@ -28,8 +28,8 @@ def get_annotation_results(wildcards):
             extra_message += " (default)"
             annotator = "bakta"
             
-    elif origin == "refseq":
-        annotator = "refseq_annotation"
+    elif origin == "ncbi":
+        annotator = "ncbi_annotation"
             
         #print(f"Pipeline: Using the {annotator} annotator for sample \"{wildcards.sample}\"{extra_message}.")
         
@@ -46,11 +46,11 @@ def get_annotation_results(wildcards):
 
         
 # rv = [
-#     f"{wildcards.output_directory}/samples/{wildcards.sample}/refseq/.renamed/{wildcards.sample}.gff",
-#     f"{wildcards.output_directory}/samples/{wildcards.sample}/refseq/.renamed/{wildcards.sample}.faa",
-#     f"{wildcards.output_directory}/samples/{wildcards.sample}/refseq/.renamed/{wildcards.sample}.log",
-#     f"{wildcards.output_directory}/samples/{wildcards.sample}/refseq/.renamed/{wildcards.sample}.ffn", # better check this one 
-#     f"{wildcards.output_directory}/samples/{wildcards.sample}/refseq/.renamed/{wildcards.sample}.tsv", # Not sure about this one. Maybe remove?
+#     f"{wildcards.output_directory}/samples/{wildcards.sample}/ncbi/.renamed/{wildcards.sample}.gff",
+#     f"{wildcards.output_directory}/samples/{wildcards.sample}/ncbi/.renamed/{wildcards.sample}.faa",
+#     f"{wildcards.output_directory}/samples/{wildcards.sample}/ncbi/.renamed/{wildcards.sample}.log",
+#     f"{wildcards.output_directory}/samples/{wildcards.sample}/ncbi/.renamed/{wildcards.sample}.ffn", # better check this one 
+#     f"{wildcards.output_directory}/samples/{wildcards.sample}/ncbi/.renamed/{wildcards.sample}.tsv", # Not sure about this one. Maybe remove?
 # ]
     
 
@@ -76,18 +76,18 @@ rule annotate:
         
     """
     
-rule get_refseq_annotation:
+rule get_ncbi_annotation:
     input:
         assembly = "{output_directory}/samples/{sample}/{sample}.fna",
     output:
-        gff_nofasta = "{output_directory}/samples/{sample}/refseq_annotation/{sample}.gff_nofasta",
-        gff = "{output_directory}/samples/{sample}/refseq_annotation/{sample}.gff",
+        gff_nofasta = "{output_directory}/samples/{sample}/ncbi_annotation/{sample}.gff_nofasta",
+        gff = "{output_directory}/samples/{sample}/ncbi_annotation/{sample}.gff",
         
-        faa = "{output_directory}/samples/{sample}/refseq_annotation/{sample}.faa",
-        log = "{output_directory}/samples/{sample}/refseq_annotation/{sample}.log",
-        ffn = "{output_directory}/samples/{sample}/refseq_annotation/{sample}.ffn",
-        tsv = "{output_directory}/samples/{sample}/refseq_annotation/{sample}.tsv",
-        gbk = "{output_directory}/samples/{sample}/refseq_annotation/{sample}.gbk", 
+        faa = "{output_directory}/samples/{sample}/ncbi_annotation/{sample}.faa",
+        log = "{output_directory}/samples/{sample}/ncbi_annotation/{sample}.log",
+        ffn = "{output_directory}/samples/{sample}/ncbi_annotation/{sample}.ffn",
+        tsv = "{output_directory}/samples/{sample}/ncbi_annotation/{sample}.tsv",
+        gbk = "{output_directory}/samples/{sample}/ncbi_annotation/{sample}.gbk", 
     shell: """
     
         # Just a matter of linking the files to a meaningful directory. No annotation is performed, just that the files are put into a directory that looks a bit like the prokka and bakta directories.
@@ -106,7 +106,7 @@ rule get_refseq_annotation:
         cp {output_directory}/ncbi_dataset/decompressed/ncbi_dataset/data/{wildcards.sample}/genomic.gbff {output.gbk} # Not sure if it is problematic to have a "flat file". Let's see what happens.
         
     
-        # TODO: Investigate what happens if a genbank or gtf file does not exist for a given accession. I simply don't know how comprehensive the refseq db is.        
+        # TODO: Investigate what happens if a genbank or gtf file does not exist for a given accession. I simply don't know how comprehensive the ncbi db is.        
 
 
         
@@ -199,7 +199,7 @@ rule bakta:
     """
 
 
-# rule get_refseq:
+# rule get_ncbi:
 #     output:
 #         gff = "{output_directory}/samples/{sample}/bakta/{sample}.gff",
 #         faa = "{output_directory}/samples/{sample}/bakta/{sample}.faa",
@@ -207,7 +207,7 @@ rule bakta:
 #         log = "{output_directory}/samples/{sample}/bakta/{sample}.log",
 #         ffn = "{output_directory}/samples/{sample}/bakta/{sample}.ffn",
 #     conda: "../envs/ncbi-datasets.yaml"
-#     benchmark: "{output_directory}/benchmarks/benchmark.get_refseq_sample.{sample}.tsv"
+#     benchmark: "{output_directory}/benchmarks/benchmark.get_ncbi_sample.{sample}.tsv"
 #     shell: """
     
 #         datasets \

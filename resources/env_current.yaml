@@ -8,7 +8,8 @@ dependencies:
   - python <3.12
   - mamba <2 # Necessary for snakemake to install child environments during development.
   - pandas
-  - conda-forge::ncbi-datasets-cli # For downloading refseq accessions
   
+
+
 # This file should always mirror: https://github.com/bioconda/bioconda-recipes/blob/master/recipes/comparem2/meta.yaml
 

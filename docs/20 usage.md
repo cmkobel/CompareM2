@@ -51,10 +51,10 @@ Here we bring som usage examples showcasing some of the more often used features
     comparem2 --config input_genomes="path/to/genomes_*.fna" --dry-run
     ```
   
-  - Analyze some RefSeq references.
+  - Analyze some NCBI references.
   
     ```
-    comparem2 --config add_refseq="GCF_009734005.1,GCF_029023785.1"
+    comparem2 --config add_ncbi="GCF_009734005.1,GCF_029023785.1"
     ```
 
   - Specify annotator. (default is "prokka")
@@ -114,10 +114,10 @@ comparem2 --config fofn="fofn.txt"
   
 ##### Pre-annotated reference genomes
 
-For many use cases it may be useful to add reference genomes from the [RefSeq or Genbank databases](https://www.ncbi.nlm.nih.gov/datasets/genome/), which contains consistently pre-annotated high quality genomes. Using the `add_refseq` config key, you can add one or more (comma separated) RefSeq or GenBank genome/assembly accessions as input to your CompareM2 run. The genomes and their [PGAP](https://www.ncbi.nlm.nih.gov/refseq/annotation_prok/process/) annotations will be automatically downloaded using the [NCBI Datasets](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/command-line-tools/download-and-install/) command-line tools. The annotation is used as-is in the downstream tools in the CompareM2 pipeline. Examples below:
+For many use cases it may be useful to add reference genomes from the [NCBI or Genbank databases](https://www.ncbi.nlm.nih.gov/datasets/genome/), which contains consistently pre-annotated high quality genomes. Using the `add_ncbi` config key, you can add one or more (comma separated) NCBI or GenBank genome/assembly accessions as input to your CompareM2 run. The genomes and their [PGAP](https://www.ncbi.nlm.nih.gov/ncbi/annotation_prok/process/) annotations will be automatically downloaded using the [NCBI Datasets](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/command-line-tools/download-and-install/) command-line tools. The annotation is used as-is in the downstream tools in the CompareM2 pipeline. Examples below:
 
-  - `add_refseq=<RefSeq-accession>[,<RefSeq-accession2>]...` 
-  - `add_refseq="GCF_029023785.1"`
+  - `add_ncbi=<NCBI-accession>[,<NCBI-accession2>]...` 
+  - `add_ncbi="GCF_029023785.1"`
   
 #### Configuration of output directory
 

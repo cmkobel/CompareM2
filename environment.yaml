@@ -8,7 +8,6 @@ dependencies:
   - python <3.12
   - mamba <2 # Necessary for snakemake to install child environments during development.
   - pandas
-  - conda-forge::ncbi-datasets-cli # For downloading refseq accessions
 
 # This file is replaced by resources/env_current.yaml
 
