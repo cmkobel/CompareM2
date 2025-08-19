@@ -68,7 +68,6 @@ rule gtdbtk:
         export GTDBTK_DATA_PATH="$(dirname {input.database_representative:q})/release226/" # Should be defined from config file, and not be hardwired.
         
         # Create batchfile
-        echo '''{params.batchfile_content}''' 
         echo '''{params.batchfile_content}''' > {wildcards.output_directory}/gtdbtk/batchfile.tsv
         
         gtdbtk classify_wf \
