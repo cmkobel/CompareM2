@@ -4,7 +4,7 @@
 
 __author__ = "Carl M. Kobel"
 
-__version__ = "2.14.1" # Haven't yet found a neat way of passing the version from the comparem2 executable, so for now it has to be defined here as well.
+__version__ = "2.15.1" # Haven't yet found a neat way of passing the version from the comparem2 executable, so for now it has to be defined here as well.
 
 # https://semver.org/
 version_major = ".".join(__version__.split(".")[:1])

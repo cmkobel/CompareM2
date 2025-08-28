@@ -4,7 +4,7 @@ __author__ = "Carl M. Kobel"
 
 
 # --- Development: Versioning ---------------------------------------
-__version__ = "2.14.1"
+__version__ = "2.15.1"
 # Places to bump
 #  - here
 #  - workflow/Snakefile, because the snakefile can possibly be run without the ./comparem2 binary. Report gets from here.
@@ -26,7 +26,7 @@ __version__ = "2.14.1"
 
 # --- Development: Update Dockerfile --------------------------------
 # Update Dockerfile:
-# touch dummy1.fa dummy2.fa dummy3.fa; ./comparem2 --containerize | grep -A 10000 "FROM condaforge" | grep -B 10000 "mamba clean --all -y" > Dockerfile
+# touch dummy1.fa dummy2.fa dummy3.fa; ./comparem2 --config add_ncbi=GCF2987 --containerize | grep -A 10000 "FROM condaforge" | grep -B 10000 "mamba clean --all -y" > Dockerfile
 # And check that there is no  preceding or following text (comparem2 logo, status summary etc.).
 # The docker image can then be built: (example only, remember to bump versions)
 # sudo docker build -t cmkobel/comparem2:v2.7 . && sudo docker push cmkobel/comparem2:v2.7
