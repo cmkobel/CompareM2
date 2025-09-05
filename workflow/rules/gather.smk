@@ -3,10 +3,11 @@
 # Only runs if there is one or more ncbi accessions added.
 rule ncbi_dataset: # Per batch
     output: 
-        zip = "{output_directory}/ncbi_dataset/ncbi_dataset.zip" # Conditional dependency for rule gather
+        zip = "{output_directory}/ncbi_dataset/ncbi_dataset.zip", # Conditional dependency for rule gather
+        accessions = "{output_directory}/ncbi_dataset/accessions.tsv" # And then this file will also be a dependency for copy, which will fix solve the original problem in #132
     conda: "../envs/ncbi_datasets.yaml"
     params:
-        accessions_joined_comma = ",".join(df[df["origin"] == "ncbi"]["sample"].tolist()),
+        accessions_joined_newline = "\n".join(df[df["origin"] == "ncbi"]["sample"].tolist()),
         samples = df[df["origin"] == "ncbi"]["sample"].tolist(),
         output_directory = output_directory
     shell: """
@@ -16,12 +17,16 @@ rule ncbi_dataset: # Per batch
         
         mkdir -p $path_decompressed
         
+        echo '''{params.accessions_joined_newline}''' > {output.accessions}
+        
         # Download 
         datasets \
             download genome \
-            accession "{params.accessions_joined_comma}" \
+            accession --inputfile {output.accessions} \
             --filename $path_zip \
             --include genome,rna,protein,cds,gff3,gtf,gbff,seq-report
+            
+
             
         # Unzip
         echo "A" | unzip -q $path_zip -d $path_decompressed 
