@@ -4,7 +4,7 @@
 # Finally I decided to run this in sample mode. So this needs to output sample specific files, and then it needs to use the resources load system to define maxiumum concurrent jobs. Using batch mode only makes sense if I implement my own cache, but that is way outside the scope of comparem2 and I'm just trying to make this work robustly, not prematurely quick..
 # So the bottom line is that each genome needs to unpack in its own directory, and then the annotation rule needs to use that sample-specific path.
 # This is getting better and better.
-rule ncbi_dataset: # Per sample
+rule get_ncbi: # Per sample
     output: 
         marker = "{output_directory}/samples/{sample}/ncbi/ncbi_dataset/data/dataset_catalog.json"
         #"results_comparem2/samples/{wildcards.sample}/ncbi_dataset/sequence_report.jsonl"
@@ -43,6 +43,7 @@ rule ncbi_dataset: # Per sample
 
     """
     
+
 
 def conditional_ncbi_dependency(wildcards):
     """ For rule copy
