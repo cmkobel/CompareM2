@@ -92,18 +92,19 @@ rule get_ncbi_annotation:
     
         # Just a matter of linking the files to a meaningful directory. No annotation is performed, just that the files are put into a directory that looks a bit like the prokka and bakta directories.
         # Has to be copied rather than linked. So we don't link the same file for the non-nofasta gff.
-        cp {output_directory}/ncbi_dataset/decompressed/ncbi_dataset/data/{wildcards.sample}/genomic.gff {output.gff_nofasta}
+        cp {output_directory}/samples/{wildcards.sample}/ncbi/ncbi_dataset/data/genomic.gff {output.gff_nofasta}
         
         # Make a prokka-like gff containing the contigs after a ##FASTA line. 
-        cp {output_directory}/ncbi_dataset/decompressed/ncbi_dataset/data/{wildcards.sample}/genomic.gff {output.gff}
+        cp {output_directory}/samples/{wildcards.sample}/ncbi/ncbi_dataset/data/genomic.gff {output.gff}
         echo "##FASTA" >> {output.gff}
         cat {input.assembly} >> {output.gff}
         
-        cp {output_directory}/ncbi_dataset/decompressed/ncbi_dataset/data/{wildcards.sample}/protein.faa {output.faa}
-        cp {output_directory}/ncbi_dataset/decompressed/ncbi_dataset/data/{wildcards.sample}/sequence_report.jsonl {output.log}
-        cp {output_directory}/ncbi_dataset/decompressed/ncbi_dataset/data/{wildcards.sample}/cds_from_genomic.fna {output.ffn}
-        cp {output_directory}/ncbi_dataset/decompressed/ncbi_dataset/data/{wildcards.sample}/genomic.gtf {output.tsv}
-        cp {output_directory}/ncbi_dataset/decompressed/ncbi_dataset/data/{wildcards.sample}/genomic.gbff {output.gbk} # Not sure if it is problematic to have a "flat file". Let's see what happens.
+        
+        cp {output_directory}/samples/{wildcards.sample}/ncbi/ncbi_dataset/data/protein.faa {output.faa}
+        cp {output_directory}/samples/{wildcards.sample}/ncbi/ncbi_dataset/data/sequence_report.jsonl {output.log}
+        cp {output_directory}/samples/{wildcards.sample}/ncbi/ncbi_dataset/data/cds_from_genomic.fna {output.ffn}
+        cp {output_directory}/samples/{wildcards.sample}/ncbi/ncbi_dataset/data/genomic.gtf {output.tsv}
+        cp {output_directory}/samples/{wildcards.sample}/ncbi/ncbi_dataset/data/genomic.gbff {output.gbk} # Not sure if it is problematic to have a "flat file". Let's see what happens.
         
     
         # TODO: Investigate what happens if a genbank or gtf file does not exist for a given accession. I simply don't know how comprehensive the ncbi db is.        

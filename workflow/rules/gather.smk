@@ -37,7 +37,7 @@ rule ncbi_dataset: # Per sample
         
         # Tidy up
         rm -r {wildcards.output_directory}/samples/{wildcards.sample}/ncbi/ncbi_dataset/data/{wildcards.sample}
-        rm {params.path_zip}
+        #rm {params.path_zip}
         
 
     """
@@ -85,8 +85,8 @@ rule copy: # Per sample
         shell("""
                 
             cp {params.input_file:q} {output.input_file_copy:q}
-            md5sum {output.input_file_copy:q} >> {output.log:q}
-            #echo "# Copied from $(realpath {params.input_file}) on $(date)" >> {output.log:q}
+            md5sum {output.input_file_copy:q} > {output.log:q}
+            echo "# Copied from $(realpath {params.input_file}) on $(date)" >> {output.log:q}
             
         """)
         
