@@ -192,7 +192,8 @@ if df_ncbi.shape[0] > 0: # If the table is nonempty, we can add some attributes 
     #df_ncbi['input_file'] = output_directory + "/.ncbi_downloads/" + df_ncbi['sample'] + "/" + df_ncbi['sample'] + ".fna"  
     
     #df_ncbi['input_file'] = np.nan # never used # output_directory + "/samples/" + df_ncbi['sample'] + "/ncbi/" + df_ncbi['sample'] + "_assembly.fna"  
-    df_ncbi["input_file"] = output_directory + "/ncbi_dataset/decompressed/ncbi_dataset/data/" + df_ncbi["sample"] + "/" + df_ncbi["sample"] + "_assembly.fna"
+    #df_ncbi["input_file"] = output_directory + "/ncbi_dataset/decompressed/ncbi_dataset/data/" + df_ncbi["sample"] + "/" + df_ncbi["sample"] + "_assembly.fna"
+    df_ncbi["input_file"] = output_directory + "/samples/" + df_ncbi["sample"] + "/ncbi/ncbi_dataset/data/" + df_ncbi["sample"] + "_assembly.fna" #
     df_ncbi['input_file_copy'] = output_directory + "/samples/" + df_ncbi['sample'] + "/" + df_ncbi['sample'] + ".fna"  
 
 # A ncbi genome will be requested downstream, thus requiring the files in .ncbi_downloads to be downloaded. 
