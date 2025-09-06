@@ -23,4 +23,4 @@ conda-prefix: '~/.comparem2/conda'
 # Local setup for a typical workstation
 resources:
   - mem_mb=512000
-  #- downloads=3000 
+  - downloads=10

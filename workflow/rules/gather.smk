@@ -17,8 +17,9 @@ rule ncbi_dataset: # Per sample
         #accessions_joined_newline = "\n".join(df[df["origin"] == "ncbi"]["sample"].tolist()),
         #samples = df[df["origin"] == "ncbi"]["sample"].tolist(),
         #accession = df[df["origin"] == "ncbi"]["sample"].tolist()[0],
-    #resources: # Using resources actually worked quite well, but retries is just much simpler and quicker.
-    #    downloads = 1 
+    resources: # Using resources actually worked quite well, but retries is just much simpler and quicker.
+        downloads = 1 
+    retries: 1 # Just in case of an intermittent server error.
     shell: """
         
         # Download 
@@ -37,7 +38,7 @@ rule ncbi_dataset: # Per sample
         
         # Tidy up
         rm -r {wildcards.output_directory}/samples/{wildcards.sample}/ncbi/ncbi_dataset/data/{wildcards.sample}
-        #rm {params.path_zip}
+        rm {params.path_zip}
         
 
     """
