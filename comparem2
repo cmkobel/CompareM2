@@ -261,7 +261,7 @@ def run_status():
         print("  CompareM2 status")
         print("  ----------------")
         print("  Below is an overview of the completion of each rule in the CompareM2 pipeline.")
-        print("This summary was computed last time CompareM2 was run.")
+        print("  This summary was computed last time CompareM2 was run.")
         print()
         print(final.to_string(index = False))
         print("//")

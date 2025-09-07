@@ -1,44 +1,64 @@
 # These rules make sure that all genomes, from ncbi or local, are ready and copied to a local location for further analysis.
 
-# Only runs if there is one or more ncbi accessions added.
-# Finally I decided to run this in sample mode. So this needs to output sample specific files, and then it needs to use the resources load system to define maxiumum concurrent jobs. Using batch mode only makes sense if I implement my own cache, but that is way outside the scope of comparem2 and I'm just trying to make this work robustly, not prematurely quick..
-# So the bottom line is that each genome needs to unpack in its own directory, and then the annotation rule needs to use that sample-specific path.
-# This is getting better and better.
+
+# Used to generate the ncbi cache marker path for a single sample/accession.
+ncbi_marker_path = lambda sample: f"{output_directory}/.ncbi_cache/accessions/{sample}/sequence_report.jsonl"
+
+
+ncbi_cache_misses = [sample for sample in df[df["origin"] == "ncbi"]["sample"].tolist() if not os.path.isfile(ncbi_marker_path(sample))]   
+#print("misses", ncbi_cache_misses) # debug
+
+# rule get_ncbi downloads to a cache, from which copy copies from. The cache is flat and not arranged by download.
 rule get_ncbi: # Per sample
     output: 
-        marker = "{output_directory}/samples/{sample}/ncbi/ncbi_dataset/data/dataset_catalog.json"
-        #"results_comparem2/samples/{wildcards.sample}/ncbi_dataset/sequence_report.jsonl"
-        #accessions = "{output_directory}/samples/{sample}/ncbi/accessions.tsv"
+        marker = [ncbi_marker_path(sample) for sample in ncbi_cache_misses],
     conda: "../envs/ncbi_datasets.yaml"
     params:
-        path_zip = "{output_directory}/samples/{sample}/ncbi/ncbi_dataset.zip",
-        path_decompressed = "{output_directory}/samples/{sample}/ncbi",
-        #output_directory = output_directory,
-        #accessions_joined_newline = "\n".join(df[df["origin"] == "ncbi"]["sample"].tolist()),
-        #samples = df[df["origin"] == "ncbi"]["sample"].tolist(),
-        #accession = df[df["origin"] == "ncbi"]["sample"].tolist()[0],
-    resources: # Using resources actually worked quite well, but retries is just much simpler and quicker.
-        downloads = 1 
-    retries: 1 # Just in case of an intermittent server error.
+        path_zip = f"{output_directory}/.ncbi_cache/download/ncbi_dataset.zip", # Deleted after decompression.
+        path_decompressed = f"{output_directory}/.ncbi_cache/download/decompressed",
+        accessions_joined_comma = ",".join(ncbi_cache_misses), 
+        n_accessions = len(ncbi_cache_misses)
     shell: """
-        
-        # Download 
-        datasets \
-            download genome \
-            accession {wildcards.sample} \
-            --filename {params.path_zip} \
-            --include genome,rna,protein,cds,gff3,gtf,gbff,seq-report
+    
+        # Since this rule has no inputs or outputs when there is no missing accessions, we need to handle running without accessions.
+        if [ {params.n_accessions} -gt 0 ]; then
             
-        # Unzip
-        echo "A" | unzip -q {params.path_zip} -d {params.path_decompressed}
+            echo CM2 rule get_ncbi: Number of accessions to download: {params.n_accessions}
+    
+            mkdir -p {output_directory}/.ncbi_cache/download
+            mkdir -p {output_directory}/.ncbi_cache/accessions/
+            
+            datasets --version > {output_directory}/.ncbi_cache/.software_version.txt
+
+            
+            # Download 
+            datasets \
+                download genome \
+                accession {params.accessions_joined_comma} \
+                --filename {params.path_zip} \
+                --include genome,rna,protein,cds,gff3,gtf,gbff,seq-report
+                
+            # Unzip archive
+            echo "A" | unzip -q {params.path_zip} -d {params.path_decompressed}
+            
+            
+            # cp metadata into dirs
+            for dir in {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/; do [ -d "$dir" ] && cp {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/assembly_data_report.jsonl "$dir" ; done
+            for dir in {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/; do [ -d "$dir" ] && cp {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/dataset_catalog.json "$dir" ; done
+            
+            
+            
+            # Move to a flat hierarchy
+            mv {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/ {output_directory}/.ncbi_cache/accessions/
+            
+            # Tidy up
+            rm -r {output_directory}/.ncbi_cache/download
         
-        
-        # mv
-        mv {wildcards.output_directory}/samples/{wildcards.sample}/ncbi/ncbi_dataset/data/{wildcards.sample}/* {wildcards.output_directory}/samples/{wildcards.sample}/ncbi/ncbi_dataset/data/
-        
-        # Tidy up
-        rm -r {wildcards.output_directory}/samples/{wildcards.sample}/ncbi/ncbi_dataset/data/{wildcards.sample}
-        rm {params.path_zip}
+        else
+            echo CM2 rule get_ncbi: Nothing to download
+            exit 0
+            
+        fi
         
 
     """
@@ -49,7 +69,10 @@ def conditional_ncbi_dependency(wildcards):
     """ For rule copy
         Rule copy only needs the ncbi dependency if there are any ncbi accessions added to the add_ncbi config-parameter. 
     """
-    conditional_dependency_path = "{output_directory}/samples/{sample}/ncbi/ncbi_dataset/data/dataset_catalog.json"
+    #conditional_dependency_path = "{output_directory}/samples/{sample}/ncbi/ncbi_dataset/data/dataset_catalog.json"
+    #conditional_dependency_path = "{output_directory}/.ncbi_cache/accessions/{sample}/sequence_report.jsonl"
+    conditional_dependency_path = ncbi_marker_path(wildcards.sample)
+    
 
     origin = df[df["sample"] == wildcards.sample]["origin"].tolist()[0]
 
@@ -62,7 +85,8 @@ def conditional_ncbi_dependency(wildcards):
 rule copy: # Per sample
     input:
         conditional_ncbi_dependency
-        #lambda wildcards: "{output_directory}/ncbi_dataset/ncbi_dataset.zip" if "ncbi" in df["origin"].tolist() else list()
+        #df["input_file"].tolist()
+        #lambda wildcards: ncbi_marker_path(sample) for sample in df[df["sample"] == wildcards.sample]["sample"] else list()
     output: 
         input_file_copy = ensure("{output_directory}/samples/{sample}/{sample}.fna", non_empty = True),
         log = "{output_directory}/samples/{sample}/{sample}.log",
@@ -78,7 +102,8 @@ rule copy: # Per sample
             shell("""
             
             # First, make the file name predictable
-            cp {wildcards.output_directory}/samples/{wildcards.sample}/ncbi/ncbi_dataset/data/{wildcards.sample}*_genomic.fna {params.input_file}
+            cp {output_directory}/.ncbi_cache/accessions/{wildcards.sample}/{wildcards.sample}*_genomic.fna {params.input_file}
+            
 
                 
             """)
