@@ -55,7 +55,7 @@ rule get_ncbi: # Per sample
             mv {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/ {output_directory}/.ncbi_cache/accessions/
             
             # Tidy up
-            #rm -r {output_directory}/.ncbi_cache/download
+            rm -r {output_directory}/.ncbi_cache/download
         
         else
             echo CM2 rule get_ncbi: Nothing to download
