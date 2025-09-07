@@ -1,3 +1,7 @@
+2.15.2
+  - new add_ncbi batch downloader with advanced caching
+  - fixed snakemake keep-incomplete to false
+
 2.15.1
   - Breaking change: Adding new conda environment to docker image containing the ncbi datasets cli tool.
   - Add option to add ncbi analysis as comparison to local genomes using `comparem2 --config add_ncbi=<accession>`
