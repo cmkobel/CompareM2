@@ -16,7 +16,9 @@ rule get_ncbi: # Per sample
     params:
         path_zip = f"{output_directory}/.ncbi_cache/download/ncbi_dataset.zip", # Deleted after decompression.
         path_decompressed = f"{output_directory}/.ncbi_cache/download/decompressed",
+        accessions_tsv = f"{output_directory}/.ncbi_cache/download/accessions.tsv",
         accessions_joined_comma = ",".join(ncbi_cache_misses), 
+        accessions_joined_newline = "\n".join(ncbi_cache_misses), 
         n_accessions = len(ncbi_cache_misses)
     shell: """
     
@@ -30,11 +32,12 @@ rule get_ncbi: # Per sample
             
             datasets --version > {output_directory}/.ncbi_cache/.software_version.txt
 
+            echo '''{params.accessions_joined_newline}''' > {params.accessions_tsv}
             
             # Download 
             datasets \
                 download genome \
-                accession {params.accessions_joined_comma} \
+                accession --inputfile {params.accessions_tsv} \
                 --filename {params.path_zip} \
                 --include genome,rna,protein,cds,gff3,gtf,gbff,seq-report
                 
@@ -52,7 +55,7 @@ rule get_ncbi: # Per sample
             mv {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/ {output_directory}/.ncbi_cache/accessions/
             
             # Tidy up
-            rm -r {output_directory}/.ncbi_cache/download
+            #rm -r {output_directory}/.ncbi_cache/download
         
         else
             echo CM2 rule get_ncbi: Nothing to download
