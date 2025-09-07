@@ -22,6 +22,6 @@ conda-prefix: '~/.comparem2/conda'
 
 
 resources:
-  - downloads=20
+  - downloads=10
 #  - mem_mb=512000
   
