@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconductor-clusterprofiler=4
+  - bioconductor-clusterprofiler =4
   - r-tidyverse
   - r-jsonlite
 

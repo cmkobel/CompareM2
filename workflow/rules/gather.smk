@@ -1,9 +1,8 @@
 # These rules make sure that all genomes, from ncbi or local, are ready and copied to a local location for further analysis.
 
 
-# Used to generate the ncbi cache marker path for a single sample/accession.
+# Used to generate the ncbi cache marker path for a single sample/accession. The assembly file has an unpredictable path so we use this .jsonl file instead.
 ncbi_marker_path = lambda sample: f"{output_directory}/.ncbi_cache/accessions/{sample}/sequence_report.jsonl"
-
 
 ncbi_cache_misses = [sample for sample in df[df["origin"] == "ncbi"]["sample"].tolist() if not os.path.isfile(ncbi_marker_path(sample))]   
 #print("misses", ncbi_cache_misses) # debug
@@ -17,7 +16,6 @@ rule get_ncbi: # Per sample
         path_zip = f"{output_directory}/.ncbi_cache/download/ncbi_dataset.zip", # Deleted after decompression.
         path_decompressed = f"{output_directory}/.ncbi_cache/download/decompressed",
         accessions_tsv = f"{output_directory}/.ncbi_cache/download/accessions.tsv",
-        accessions_joined_comma = ",".join(ncbi_cache_misses), 
         accessions_joined_newline = "\n".join(ncbi_cache_misses), 
         n_accessions = len(ncbi_cache_misses)
     shell: """
@@ -44,12 +42,9 @@ rule get_ncbi: # Per sample
             # Unzip archive
             echo "A" | unzip -q {params.path_zip} -d {params.path_decompressed}
             
-            
             # cp metadata into dirs
             for dir in {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/; do [ -d "$dir" ] && cp {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/assembly_data_report.jsonl "$dir" ; done
             for dir in {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/; do [ -d "$dir" ] && cp {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/dataset_catalog.json "$dir" ; done
-            
-            
             
             # Move to a flat hierarchy
             mv {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/ {output_directory}/.ncbi_cache/accessions/
@@ -63,7 +58,6 @@ rule get_ncbi: # Per sample
             
         fi
         
-
     """
     
 
@@ -71,12 +65,11 @@ rule get_ncbi: # Per sample
 def conditional_ncbi_dependency(wildcards):
     """ For rule copy
         Rule copy only needs the ncbi dependency if there are any ncbi accessions added to the add_ncbi config-parameter. 
+        Because df["input_file"] for ncbi accessions does not exist yet (because of unpredictable path), we need to use a marker instead.
     """
-    #conditional_dependency_path = "{output_directory}/samples/{sample}/ncbi/ncbi_dataset/data/dataset_catalog.json"
-    #conditional_dependency_path = "{output_directory}/.ncbi_cache/accessions/{sample}/sequence_report.jsonl"
+
     conditional_dependency_path = ncbi_marker_path(wildcards.sample)
     
-
     origin = df[df["sample"] == wildcards.sample]["origin"].tolist()[0]
 
     if origin == "ncbi":

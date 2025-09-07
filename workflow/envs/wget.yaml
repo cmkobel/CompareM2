@@ -1,5 +1,5 @@
 name: wget
 channels:
-  - anaconda
+  - conda-forge
 dependencies:
-  - wget=1
+  - wget =1
