@@ -28,7 +28,7 @@ output_directory: "results_comparem2"
 
 # set_bakta--meta: ""
 set_bakta--translation-table: 11
-#set_bakta--gram: "?" (default: "?")
+set_bakta--gram: "\"?\"" # (default: "?")
 
 set_carveme--gapfill: "LB" #M9,LB
 set_carveme--solver: "scip"
