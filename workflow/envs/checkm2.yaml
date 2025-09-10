@@ -3,4 +3,4 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - checkm2=1
+  - checkm2 >=1.1 # Necessary for the current "14897628" database.

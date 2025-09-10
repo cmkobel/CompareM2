@@ -3,8 +3,9 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::eggnog-mapper=2.1.12
+  - bioconda::eggnog-mapper =2.1.12
 
+# Eggnog-mapper (output files) seems to change a lot, so I'm fixating the version quite tightly.
 
 # https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2.1.5-to-v2.1.12#user-content-Installation
 # conda install -c bioconda -c conda-forge eggnog-mapper

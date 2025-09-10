@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - interproscan=5
+  - interproscan =5
 
 # conda install -c bioconda interproscan 
 

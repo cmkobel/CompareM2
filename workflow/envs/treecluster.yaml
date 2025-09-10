@@ -1,6 +1,8 @@
 name: treecluster
 channels: 
-  - defaults
+  - conda-forge
+  - bioconda
 dependencies:
   - pip:
     - treecluster
+    

@@ -5,9 +5,7 @@
 # Updated according to chklovski's idea in https://github.com/chklovski/CheckM2/issues/73#issuecomment-1744207103
 rule checkm2_download:
     output:
-        database_representative = DATABASES + "/checkm2/comparem2_checkm2_database_representative.flag",
-    params:
-        destination = DATABASES + "/checkm2"
+        database_representative = DATABASES + f"/cm2_v{version_minor}" + "/checkm2/comparem2_checkm2_database_representative.flag", # Could be local?
     conda: "../envs/wget.yaml"
     shell: """
 
@@ -22,15 +20,16 @@ rule checkm2_download:
 
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 
-            url="https://zenodo.org/records/5571251/files/checkm2_database.tar.gz"
+            #url="https://zenodo.org/records/5571251/files/checkm2_database.tar.gz"
+            url="https://zenodo.org/records/14897628/files/checkm2_database.tar.gz?download=1" from v1.1.0
 
-            wget -q --no-check-certificate -O "{params.destination}/checkm2_database.tar.gz" "$url"
+            wget -q --no-check-certificate -O "$(dirname {output.database_representative})/checkm2_database.tar.gz" "$url"
 
             tar \
-                -xvf "{params.destination}/checkm2_database.tar.gz" \
-                --directory "{params.destination}"
+                -xvf "$(dirname {output.database_representative})/checkm2_database.tar.gz" \
+                --directory "$(dirname {output.database_representative})"
 
-            rm "{params.destination}/checkm2_database.tar.gz" || echo "failed to clean up"
+            rm "$(dirname {output.database_representative})/checkm2_database.tar.gz" || echo "failed to clean up"
             
             touch {output:q}
         
@@ -44,7 +43,7 @@ rule checkm2_download:
 rule dbcan_download:
     output:
         #database_representative = touch("{base_variable}/databases/dbcan/comparem2_dbcan_database_representative.flag"),
-        database_representative = DATABASES + "/dbcan/comparem2_dbcan_database_representative.flag",
+        database_representative = DATABASES + f"/cm2_v{version_minor}" + "/dbcan/comparem2_dbcan_database_representative.flag",
     conda: "../envs/dbcan.yaml"
     threads: 8
     shell: """
@@ -85,7 +84,7 @@ rule dbcan_download:
 
 rule gtdb_download:
     output:
-        database_representative = DATABASES + "/gtdb/comparem2_gtdb_database_representative.flag"
+        database_representative = DATABASES + f"/cm2_v{version_minor}" + "/gtdb/comparem2_gtdb_database_representative.flag"
     conda: "../envs/wget.yaml"
     shell: """
 
@@ -148,7 +147,7 @@ rule gtdb_download:
 
 rule bakta_download:
     output:
-        database_representative = DATABASES + "/bakta/comparem2_bakta_database_representative.flag"
+        database_representative = DATABASES + f"/cm2_v{version_minor}" + "/bakta/comparem2_bakta_database_representative.flag"
     conda: "../envs/bakta.yaml"
     shell: """
 
@@ -185,7 +184,7 @@ rule bakta_download:
 
 rule eggnog_download:
     output:
-        database_representative = DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag"
+        database_representative = DATABASES + f"/cm2_v{version_minor}" + "/eggnog/comparem2_eggnog_database_representative.flag"
     conda: "../envs/eggnog.yaml"
     shell: """
 
@@ -220,7 +219,7 @@ rule eggnog_download:
 
 rule antismash_download:
     output:
-        database_representative = DATABASES + "/antismash/comparem2_antismash_database_representative.flag"
+        database_representative = DATABASES + f"/cm2_v{version_minor}" + "/antismash/comparem2_antismash_database_representative.flag"
     conda: "../envs/antismash.yaml"
     shell: """
 
@@ -251,7 +250,7 @@ rule antismash_download:
 
 rule amrfinder_download:
     output:
-        database_representative = DATABASES + "/amrfinder/comparem2_amrfinder_database_representative.flag"
+        database_representative = DATABASES + f"/cm2_v{version_minor}" + "/amrfinder/comparem2_amrfinder_database_representative.flag"
     conda: "../envs/amrfinder.yaml"
     shell: """
 

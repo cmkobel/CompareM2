@@ -4,7 +4,7 @@ channels:
   - bioconda
   #- defaults
 dependencies:
-  - antismash=7
+  - antismash =7
 
 # conda create -n antismash antismash
 # conda activate antismash
