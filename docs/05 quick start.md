@@ -8,7 +8,7 @@ Assuming you already have [conda/mamba installed](https://github.com/conda-forge
 
 ```bash
 
-mamba create -c conda-forge -c bioconda -n comparem2 comparem2
+mamba create -c conda-forge -c bioconda -n comparem2 comparem2=2.15.1
 
 ```
 
