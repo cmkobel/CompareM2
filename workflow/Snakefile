@@ -503,11 +503,11 @@ rule report:
 # Max 6 databases. Can't take adding any more.
 rule downloads:
     input:
-        DATABASES + "/checkm2/comparem2_checkm2_database_representative.flag",
-        DATABASES + "/dbcan/comparem2_dbcan_database_representative.flag",
-        DATABASES + "/gtdb/comparem2_gtdb_database_representative.flag",
-        DATABASES + "/bakta/comparem2_bakta_database_representative.flag",
-        DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag",
+        f"{DATABASES}/cm2_v{version_minor}/checkm2/comparem2_checkm2_database_representative.flag",
+        f"{DATABASES}/cm2_v{version_minor}/dbcan/comparem2_dbcan_database_representative.flag",
+        f"{DATABASES}/cm2_v{version_minor}/gtdb/comparem2_gtdb_database_representative.flag",
+        f"{DATABASES}/cm2_v{version_minor}/bakta/comparem2_bakta_database_representative.flag",
+        f"{DATABASES}/cm2_v{version_minor}/eggnog/comparem2_eggnog_database_representative.flag",
         
 
 
