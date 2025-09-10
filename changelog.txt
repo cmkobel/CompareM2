@@ -1,6 +1,7 @@
 2.16.1
   - 2nd try: Fixed some versions in the conda environments (has little to no effect on the overall pipeline). All conda environments now solve in strict channel priority mode.
   - Database downloads into a version-minor named directory inside environment variable $COMPAREM2_DATABASES
+  - Updated checkm2 database and pinned the conda env to the minimum version that supports this database.
 
 2.15.3
   - Reverted refactored workflow envs (.yaml) as the previous release (v2.15.2) was a patch and not a minor release.

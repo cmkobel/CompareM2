@@ -373,12 +373,12 @@ def generate_final_output(N):
     if N == 0: # Zero exactly
         description.append("downloads")
         final_output += expand([\
-            DATABASES + "/checkm2/comparem2_checkm2_database_representative.flag",
-            DATABASES + "/dbcan/comparem2_dbcan_database_representative.flag",
-            DATABASES + "/gtdb/comparem2_gtdb_database_representative.flag",
-            DATABASES + "/bakta/comparem2_bakta_database_representative.flag",
-            DATABASES + "/amrfinder/comparem2_amrfinder_database_representative.flag",
-            DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag"])
+            f"{DATABASES}/cm2_v{version_minor}/checkm2/comparem2_checkm2_database_representative.flag",
+            f"{DATABASES}/cm2_v{version_minor}/dbcan/comparem2_dbcan_database_representative.flag",
+            f"{DATABASES}/cm2_v{version_minor}/gtdb/comparem2_gtdb_database_representative.flag",
+            f"{DATABASES}/cm2_v{version_minor}/bakta/comparem2_bakta_database_representative.flag",
+            f"{DATABASES}/cm2_v{version_minor}/amrfinder/comparem2_amrfinder_database_representative.flag",
+            f"{DATABASES}/cm2_v{version_minor}/eggnog/comparem2_eggnog_database_representative.flag"])
             
             
             

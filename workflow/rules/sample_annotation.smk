@@ -158,7 +158,7 @@ rule prokka:
 
 rule bakta:
     input: 
-        database_representative = DATABASES + "/bakta/comparem2_bakta_database_representative.flag",
+        database_representative = DATABASES + f"/cm2_v{version_minor}/bakta/comparem2_bakta_database_representative.flag",
         assembly = "{output_directory}/samples/{sample}/{sample}.fna"
     output:
         gff = "{output_directory}/samples/{sample}/bakta/{sample}.gff",

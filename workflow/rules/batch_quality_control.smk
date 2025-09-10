@@ -23,7 +23,7 @@ rule assembly_stats:
 rule checkm2:
     input:
         metadata = "{output_directory}/metadata.tsv",
-        database_representative = DATABASES + "/checkm2/comparem2_checkm2_database_representative.flag",
+        database_representative = DATABASES + f"/cm2_v{version_minor}/checkm2/comparem2_checkm2_database_representative.flag",
         fasta = df["input_file_copy"].tolist()
     output:
         table = touch("{output_directory}/checkm2/quality_report.tsv"),

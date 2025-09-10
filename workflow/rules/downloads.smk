@@ -5,7 +5,7 @@
 # Updated according to chklovski's idea in https://github.com/chklovski/CheckM2/issues/73#issuecomment-1744207103
 rule checkm2_download:
     output:
-        database_representative = DATABASES + f"/cm2_v{version_minor}" + "/checkm2/comparem2_checkm2_database_representative.flag", # Could be local?
+        database_representative = DATABASES + f"/cm2_v{version_minor}/checkm2/comparem2_checkm2_database_representative.flag", # Could be local?
     conda: "../envs/wget.yaml"
     shell: """
 
@@ -21,7 +21,7 @@ rule checkm2_download:
             >&2 echo "Flag doesn't exist: Download the database and touch the flag ..."
 
             #url="https://zenodo.org/records/5571251/files/checkm2_database.tar.gz"
-            url="https://zenodo.org/records/14897628/files/checkm2_database.tar.gz?download=1" from v1.1.0
+            url="https://zenodo.org/records/14897628/files/checkm2_database.tar.gz?download=1" # from v1.1.0
 
             wget -q --no-check-certificate -O "$(dirname {output.database_representative})/checkm2_database.tar.gz" "$url"
 

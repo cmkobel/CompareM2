@@ -38,7 +38,7 @@ rule interproscan:
 rule dbcan: # I can't decide whether this rule should really be called "run_dbcan", since that is the name of the software.
     input: 
         aminoacid = "{output_directory}/samples/{sample}/.annotation/{sample}.faa",
-        database_representative = DATABASES + "/dbcan/comparem2_dbcan_database_representative.flag"
+        database_representative = DATABASES + f"/cm2_v{version_minor}/dbcan/comparem2_dbcan_database_representative.flag"
         #metadata = "{output_directory}/metadata.tsv",
     output: 
         overview_table = "{output_directory}/samples/{sample}/dbcan/overview.txt",
@@ -80,7 +80,7 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
 # aka eggnog-mapper
 rule eggnog:
     input: 
-        database_representative = DATABASES + "/eggnog/comparem2_eggnog_database_representative.flag",
+        database_representative = DATABASES + f"/cm2_v{version_minor}/eggnog/comparem2_eggnog_database_representative.flag",
         faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa", # Used in dbcan, interproscan, diamond_kegg, eggnog
         #assembly = "{output_directory}/samples/{sample}/{sample}.fna",
         #metadata = "{output_directory}/metadata.tsv",
@@ -274,7 +274,7 @@ rule gapseq_fill: # Continuation on gapseq_find results.
 
 rule antismash:
     input: 
-        database_representative = DATABASES + "/antismash/comparem2_antismash_database_representative.flag",
+        database_representative = DATABASES + f"/cm2_v{version_minor}/antismash/comparem2_antismash_database_representative.flag",
         gbk = "{output_directory}/samples/{sample}/prokka/{sample}.gbk", #culprit for always running prokka? Does bakta produce a gbk?
         #metadata = "{output_directory}/metadata.tsv",
     output:

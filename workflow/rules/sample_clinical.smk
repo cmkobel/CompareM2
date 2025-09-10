@@ -2,7 +2,7 @@
 rule amrfinder:
     input:
         faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa",
-        database_representative = DATABASES + "/amrfinder/comparem2_amrfinder_database_representative.flag"
+        database_representative = DATABASES + f"/cm2_v{version_minor}/amrfinder/comparem2_amrfinder_database_representative.flag"
         #metadata = "{output_directory}/metadata.tsv",
     output: 
         table = "{output_directory}/samples/{sample}/amrfinder/{sample}_amrfinder.tsv",
