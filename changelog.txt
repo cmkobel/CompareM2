@@ -1,3 +1,6 @@
+2.15.3
+  - Reverted refactored workflow envs (.yaml) as the previous release (v2.15.2) was a patch and not a minor release.
+
 2.15.2
   - New add_ncbi batch downloader with advanced caching.
   - Fixed snakemake keep-incomplete to false.
