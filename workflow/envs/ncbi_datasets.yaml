@@ -2,5 +2,5 @@ name: ncbi_datasets
 channels:
   - conda-forge  
 dependencies:
-  - conda-forge::ncbi-datasets-cli =18
+  - conda-forge::ncbi-datasets-cli
   - conda-forge::unzip

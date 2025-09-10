@@ -3,5 +3,5 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - ncbi-amrfinderplus =4
+  - ncbi-amrfinderplus=4
   

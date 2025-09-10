@@ -1,6 +1,6 @@
 name: gapseq
 channels:
-  - conda-forge
   - bioconda
+  - conda-forge
 dependencies:
   - gapseq

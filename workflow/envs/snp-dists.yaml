@@ -1,6 +1,6 @@
 name: snp-dists
 channels:
-  - conda-forge
   - bioconda
+  - conda-forge
 dependencies:
-  - snp-dists =0
+  - snp-dists=0

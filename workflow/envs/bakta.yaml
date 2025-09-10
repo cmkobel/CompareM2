@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bakta =1
+  - bakta=1
 
 # https://github.com/oschwengers/bakta?tab=readme-ov-file#bioconda
 # conda install -c conda-forge -c bioconda bakta

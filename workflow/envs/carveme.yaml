@@ -1,0 +1,9 @@
+name: carveme
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - carveme
+  - pandas <=2.2.3 # When https://github.com/cdanielmachado/carveme/issues/218 is closed, you can remove this specific line, and use the integrated pandas.
+  #- bioconda::diamond # already in the carveme package
+  

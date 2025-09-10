@@ -1,9 +1,10 @@
 name: dbcan
 channels:
+  #- anaconda
   - conda-forge
   - bioconda
 dependencies:
-  - python =3.8
-  - dbcan =4 #.1.3 # I might want to fix this to 4.1.3 as I'm seeing problems with 4.1.4 ?
+  - python=3.8
+  - dbcan=4 #.1.3 # I might want to fix this to 4.1.3 as I'm seeing problems with 4.1.4 ?
   - conda-forge::wget # Not sure if I should also add anaconda as a channel?
 
