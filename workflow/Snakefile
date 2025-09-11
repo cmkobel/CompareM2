@@ -157,7 +157,7 @@ print("  ---------------                                                        
 print("    Q.C.          : copy assembly_stats sequence_lengths checkm2         ")
 print("    Annotate      : prokka bakta                                         ")
 print("    Adv. annotate : eggnog interproscan dbcan kegg_pathway amrfinderplus ")
-print("                    mlst gapseq_find                                     ")
+print("                    mlst gapseq_find antismash                           ")
 print("    Core-pan      : panaroo                                              ")
 print("    Phylogenetic  : mashtree fasttree gtdbtk iqtree treecluster snp_dists")
 print("    Pseudo        : meta isolate downloads fast report                   ")

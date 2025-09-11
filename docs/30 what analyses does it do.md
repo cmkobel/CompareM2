@@ -29,39 +29,55 @@ By defining a rule to run *until*, the Snakemake executor can select to use only
 
 Below is a comprehensive list of all rules (analyses) available in CompareM2.
 
-### For each sample
-
-First, independent analyses are run on each of the input genomic assembly files.
-
-  - `sequence_lengths` [Seqkit](https://bioinf.shenwei.me/seqkit/usage/) lengths and GC-content of individual contigs.
+Available rules                                                                                                                                   
+  ---------------                                                                                                                                   
+    Q.C.          : copy assembly_stats sequence_lengths checkm2                                                                                    
+    Annotate      : prokka bakta                                                                                                                    
+    Adv. annotate : eggnog interproscan dbcan kegg_pathway amrfinderplus                                                                            
+                    mlst gapseq_find                                                                                                                
+    Core-pan      : panaroo                                                                                                                         
+    Phylogenetic  : mashtree fasttree gtdbtk iqtree treecluster snp_dists                                                                           
+    Pseudo        : meta isolate downloads fast report                               
+    
+### Quality Control
   - `assembly_stats` [Assembly-stats](https://github.com/sanger-pathogens/assembly-stats) generic assembly statistics.
+  - `sequence_lengths` [Seqkit](https://bioinf.shenwei.me/seqkit/usage/) lengths and GC-content of individual contigs.
   - `checkm2` [CheckM2](https://github.com/chklovski/CheckM2/) assembly completeness and contamination.
+
+### Annotation
+
+The output of the annotation tools is used downstream in the other tools. 
+
   - `bakta` [Bakta](https://github.com/oschwengers/bakta) genomic annotation of Bacteria (lacking in report, but used downstream by other tools).
   - `prokka` [Prokka](https://github.com/tseemann/prokka) legacy genomic annotation of Archaea and Bacteria. 
-  - `kegg_pathway` [Clusterprofiler](https://yulab-smu.top/biomedical-knowledge-mining-book/) KEGG ortholog-based pathway enrichment analysis.
-  - `dbcan` [Dbcan](https://github.com/linnabrown/run_dbcan) annotation of carbohydrate-active enzymes (CAZymes) (lacking in report).
-  - `antismash` [Antismash](https://docs.antismash.secondarymetabolites.org/) detection of biosynthesis genes (lacking in report).
+  
+### Advanced annotation
   - `eggnog` [Eggnog-mapper](https://github.com/eggnogdb/eggnog-mapper/) functional annotation.
   - `interproscan` [Interproscan](https://github.com/ebi-pf-team/interproscan) protein function using Tigrfam, Hamap and Pfam (lacking in report).
+  - `dbcan` [Dbcan](https://github.com/linnabrown/run_dbcan) annotation of carbohydrate-active enzymes (CAZymes) (lacking in report).
+  - `kegg_pathway` [Clusterprofiler](https://yulab-smu.top/biomedical-knowledge-mining-book/) KEGG ortholog-based pathway enrichment analysis.
   - `amrfinder` [Amrfinderplus](https://github.com/ncbi/amr/) virulence and resistance gene identification.
   - `mlst` [Mlst](https://github.com/tseemann/mlst) multi locus sequence typing.
-  - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) species identification.
   - `gapseq` [Gapseq](https://gapseq.readthedocs.io/en/latest/) genome scale metabolic reconstruction gapfilling and modeling.
+  - `antismash` [Antismash](https://docs.antismash.secondarymetabolites.org/) detection of biosynthesis genes (lacking in report).
   
-
-## Across samples
-
-Then, on the basis of the analysis of each input genomic assembly, these analyses are run across all samples.
-
+### Core-pan genomes
   - `panaroo` [Panaroo](https://github.com/gtonkinhill/panaroo) pan and core genomes.
-  - `snp_dists` [Snp-dists](https://github.com/tseemann/snp-dists) pairwise snp-distances on the core genome.
-  - `fasttree` [Fasttree](http://www.microbesonline.org/fasttree/) phylogenetic tree of the core genome.
-  - `iqtree` [Iq-tree](http://www.iqtree.org/) phylogenetic tree of core genome with bootstrapping (lacking in report).
+
+### Phylogenetic or Taxonomic
   - `mashtree` [Mashtree](https://github.com/lskatz/mashtree) super fast distance measurement and neighbor joining.
+  - `fasttree` [Fasttree](http://www.microbesonline.org/fasttree/) phylogenetic tree of the core genome.
+  - `gtdbtk` [GTDB-tk](https://ecogenomics.github.io/GTDBTk/) species identification.
+  - `iqtree` [Iq-tree](http://www.iqtree.org/) phylogenetic tree of core genome with bootstrapping (lacking in report).
   - `treecluster` [Treecluster](https://github.com/niemasd/TreeCluster) clustering of phylogenetic trees (lacking in report).
+  - `snp_dists` [Snp-dists](https://github.com/tseemann/snp-dists) pairwise snp-distances on the core genome.
+  
+### Dynamic report
+
+The report always runs and collects all the results.
+  
   - `report` **A nice report easy to share with your friends (See demos [below](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report))**
   
-The report always runs and collects all the results.
 
 
 ## Pseudo-rules
