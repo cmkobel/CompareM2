@@ -32,7 +32,6 @@ jobs:
         miniconda-version: "latest"
         channels: conda-forge,bioconda
         channel-priority: strict
-        #conda-version: "4.10.3"  # Specify the desired Conda version
 
     - name: Create Conda environment
       run: |
