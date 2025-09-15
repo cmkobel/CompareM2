@@ -1,6 +1,6 @@
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="0382cde30146d49c4e96ced9dd831418b2ac672f7368d69bfb0a5650f70417b7"
+LABEL io.github.snakemake.conda_env_hash="6bf6eb4de5f1a518ecd3ccf97d6ffc73742eb4f5c3d56d188dfe494f40bee7c4"
 
 # Step 1: Retrieve conda environments
 
@@ -115,20 +115,20 @@ COPY workflow/envs/dbcan.yaml /conda-envs/0bdcada8f1eab9a3ce6fde9e0c178019/envir
 
 # Conda environment:
 #   source: workflow/envs/eggnog.yaml
-#   prefix: /conda-envs/2493d9ca1cf103c1a5d590eabc55ee62
+#   prefix: /conda-envs/02b98f91dac6b126afc4df7fec340e6e
 #   name: eggnog
 #   channels:
 #     - conda-forge
 #     - bioconda
 #   dependencies:
-#     - bioconda::eggnog-mapper =2.1.12
+#     - bioconda::eggnog-mapper =2.1.13
 #   
 #   # Eggnog-mapper (output files) seems to change a lot, so I'm fixating the version quite tightly.
 #   
 #   # https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2.1.5-to-v2.1.12#user-content-Installation
 #   # conda install -c bioconda -c conda-forge eggnog-mapper
-RUN mkdir -p /conda-envs/2493d9ca1cf103c1a5d590eabc55ee62
-COPY workflow/envs/eggnog.yaml /conda-envs/2493d9ca1cf103c1a5d590eabc55ee62/environment.yaml
+RUN mkdir -p /conda-envs/02b98f91dac6b126afc4df7fec340e6e
+COPY workflow/envs/eggnog.yaml /conda-envs/02b98f91dac6b126afc4df7fec340e6e/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/fasttree.yaml
@@ -327,7 +327,7 @@ RUN mamba env create --prefix /conda-envs/b5c6b988e4a325065292b3d680193d32 --fil
     mamba env create --prefix /conda-envs/54dddd6c96716032490ac50d79fbfca3 --file /conda-envs/54dddd6c96716032490ac50d79fbfca3/environment.yaml && \
     mamba env create --prefix /conda-envs/bdfdfd3801dae19174ec1853e1ee5c8d --file /conda-envs/bdfdfd3801dae19174ec1853e1ee5c8d/environment.yaml && \
     mamba env create --prefix /conda-envs/0bdcada8f1eab9a3ce6fde9e0c178019 --file /conda-envs/0bdcada8f1eab9a3ce6fde9e0c178019/environment.yaml && \
-    mamba env create --prefix /conda-envs/2493d9ca1cf103c1a5d590eabc55ee62 --file /conda-envs/2493d9ca1cf103c1a5d590eabc55ee62/environment.yaml && \
+    mamba env create --prefix /conda-envs/02b98f91dac6b126afc4df7fec340e6e --file /conda-envs/02b98f91dac6b126afc4df7fec340e6e/environment.yaml && \
     mamba env create --prefix /conda-envs/16b1c29308bfbc29a57953ab2bb80d8f --file /conda-envs/16b1c29308bfbc29a57953ab2bb80d8f/environment.yaml && \
     mamba env create --prefix /conda-envs/69a625824fd518a54832a144b821a75c --file /conda-envs/69a625824fd518a54832a144b821a75c/environment.yaml && \
     mamba env create --prefix /conda-envs/7c44445e5cb959587ca3a58c9ef12b14 --file /conda-envs/7c44445e5cb959587ca3a58c9ef12b14/environment.yaml && \
