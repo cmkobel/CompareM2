@@ -29,7 +29,7 @@ __version__ = "2.16.1"
 # touch dummy1.fa dummy2.fa dummy3.fa; ./comparem2 --config add_ncbi=GCF2987 --containerize | grep -A 10000 "FROM condaforge" | grep -B 10000 "mamba clean --all -y" > Dockerfile
 # And check that there is no  preceding or following text (comparem2 logo, status summary etc.).
 # The docker image can then be built: (example only, remember to bump versions)
-# sudo docker build -t cmkobel/comparem2:v2.7 . && sudo docker push cmkobel/comparem2:v2.7
+# sudo docker build -t cmkobel/comparem2:v??? . && sudo docker push cmkobel/comparem2:v???
 
 # In case the exact same docker image should be used for consecutive versions of comparem2, although this shouldn't be the case when using the minor version for apptainer images only: (example)
 # sudo docker pull cmkobel/comparem2:v2.9
