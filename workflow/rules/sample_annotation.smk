@@ -185,7 +185,7 @@ rule bakta:
         echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.gff})/.database_version.txt"
         
         bakta \
-            --db {params.DATABASES}/bakta/db \
+            --db "$(dirname {input.database_representative})/db" \
             --output $(dirname {output.gff}) \
             --threads {threads} \
             --force \

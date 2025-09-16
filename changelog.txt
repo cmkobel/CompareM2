@@ -1,3 +1,6 @@
+2.16.2
+  - Fixed wrong database path for bakta
+
 2.16.1
   - 2nd try: Fixed some versions in the conda environments (has little to no effect on the overall pipeline). All conda environments now solve in strict channel priority mode.
   - Database downloads into a version-minor named directory inside environment variable $COMPAREM2_DATABASES
