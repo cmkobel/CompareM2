@@ -1,5 +1,5 @@
 2.16.2
-  - Fixed wrong database path for bakta
+  - Fixed wrong database path for bakta and antismash
 
 2.16.1
   - 2nd try: Fixed some versions in the conda environments (has little to no effect on the overall pipeline). All conda environments now solve in strict channel priority mode.

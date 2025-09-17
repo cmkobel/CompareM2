@@ -303,7 +303,7 @@ rule antismash:
             --cpus {threads} \
             --output-dir {params.dir:q} \
             --output-basename {wildcards.sample:q} \
-            --databases "{params.DATABASES}/antismash" \
+            --databases "$(dirname {input.database_representative})" \
             {input.gbk:q}
 
         # {void_report} Not yet implemented.
