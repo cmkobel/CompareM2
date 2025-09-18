@@ -28,16 +28,7 @@ By defining a rule to run *until*, the Snakemake executor can select to use only
 ## Included analyses
 
 Below is a comprehensive list of all rules (analyses) available in CompareM2.
-
-Available rules                                                                                                                                   
-  ---------------                                                                                                                                   
-    Q.C.          : copy assembly_stats sequence_lengths checkm2                                                                                    
-    Annotate      : prokka bakta                                                                                                                    
-    Adv. annotate : eggnog interproscan dbcan kegg_pathway amrfinderplus                                                                            
-                    mlst gapseq_find                                                                                                                
-    Core-pan      : panaroo                                                                                                                         
-    Phylogenetic  : mashtree fasttree gtdbtk iqtree treecluster snp_dists                                                                           
-    Pseudo        : meta isolate downloads fast report                               
+                         
     
 ### Quality Control
   - `assembly_stats` [Assembly-stats](https://github.com/sanger-pathogens/assembly-stats) generic assembly statistics.
