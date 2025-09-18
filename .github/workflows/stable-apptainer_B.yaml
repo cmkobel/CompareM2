@@ -62,7 +62,7 @@ jobs:
       run: |
         conda activate comparem2_launcher
         unzip tests/E._faecium/fna.zip 
-        comparem2 --config input_genomes="*.fna" --until eggnog kegg_pathway gapseq_find panaroo snp_dists fasttree interproscan amrfinder dbcan
+        comparem2 --config input_genomes="*.fna" --until kegg_pathway gapseq_find panaroo snp_dists fasttree interproscan amrfinder dbcan  # missing eggnog
         
         tree results_comparem2
         rm -rf .snakemake results_comparem2 *.fna

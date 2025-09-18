@@ -88,7 +88,7 @@ jobs:
     - name: full
       run: |
         conda activate comparem2_launcher
-        comparem2 --config input_genomes="*.fna" add_ncbi="GCF_009734005.1,GCF_029023785.1" --omit-from gapseq_fill
+        comparem2 --config input_genomes="*.fna" add_ncbi="GCF_009734005.1,GCF_029023785.1" --omit-from gapseq_fill eggnog_download
     
     - name: status 
       run: |
