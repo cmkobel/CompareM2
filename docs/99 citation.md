@@ -6,7 +6,7 @@
 
 If you use CompareM2, you can support further funding by bumping the citation count on this one:
 
-  - Kobel et al. CompareM2 is a genomes-to-report pipeline for comparing microbial genomes. Bioinformatics 41, btaf517 (2025) https://doi.org/10.1093/bioinformatics/btaf517
+  - Kobel et al. CompareM2 is a genomes-to-report pipeline for comparing microbial genomes. Bioinformatics 41, btaf517 (2025) [https://doi.org/10.1093/bioinformatics/btaf517](https://doi.org/10.1093/bioinformatics/btaf517)
 
 ## References for the included tools
 
