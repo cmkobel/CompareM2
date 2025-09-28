@@ -1,3 +1,6 @@
+2.16.3
+  - Using europe based mirror for downloading the gtdb data package. 
+
 2.16.2
   - Fixed wrong database path for bakta and antismash
 
