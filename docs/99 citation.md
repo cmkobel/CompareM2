@@ -36,7 +36,6 @@ CompareM2 would not have existed, if it hadn't been for the integrated software 
   - Yin, Y. et al. dbCAN: a web resource for automated carbohydrate-active enzyme annotation. Nucleic Acids Res. 40, W445–W451 (2012).
   - Zdobnov, E. M. & Apweiler, R. InterProScan – an integration platform for the signature-recognition methods in InterPro. Bioinformatics 17, 847–848 (2001).
   - Zimmermann, J., Kaleta, C. & Waschina, S. gapseq: informed prediction of bacterial metabolic pathways and reconstruction of accurate metabolic models. Genome Biol. 22, 81 (2021).
-  - 
 
 
 ## Alternative tools
