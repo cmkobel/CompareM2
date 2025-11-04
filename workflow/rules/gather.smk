@@ -40,6 +40,7 @@ rule get_ncbi: # Per sample
                 --include genome,rna,protein,cds,gff3,gtf,gbff,seq-report
                 
             # Unzip archive
+            echo "Unzipping ..."
             echo "A" | unzip -q {params.path_zip} -d {params.path_decompressed}
             
             # cp metadata into dirs
@@ -47,7 +48,10 @@ rule get_ncbi: # Per sample
             for dir in {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/; do [ -d "$dir" ] && cp {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/dataset_catalog.json "$dir" ; done
             
             # Move to a flat hierarchy
-            mv {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/ {output_directory}/.ncbi_cache/accessions/
+            echo "Moving ..."
+            cp -rf {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/ {output_directory}/.ncbi_cache/accessions/
+            
+            
             
             # Tidy up
             rm -r {output_directory}/.ncbi_cache/download

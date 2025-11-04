@@ -43,7 +43,6 @@ rule gtdbtk:
         batchfile_content = df[['input_file_copy', 'sample_gtdbtk']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{output_directory}/gtdbtk/",
         base_variable = base_variable, # not used?
-        mash_db = f"{DATABASES}/gtdb_sketch_release226/mash_db.msh",
         passthrough_parameters = passthrough_parameter_unpack("gtdbtk"),
     threads: 8
     #retries: 3
@@ -61,8 +60,6 @@ rule gtdbtk:
         # Collect database version.
         echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.tsv})/.database_version.txt"
 
-        # TODO: Using skip-ani-screen is not optimal, as it possibly speeds up a lot.
-        mkdir -p $(dirname {params.mash_db:q})
 
         # I need to find a neat way of setting these variables. Maybe the user has an older/newer version than what is hardcoded here. 
         export GTDBTK_DATA_PATH="$(dirname {input.database_representative:q})/release226/" # Should be defined from config file, and not be hardwired.
@@ -71,7 +68,6 @@ rule gtdbtk:
         echo '''{params.batchfile_content}''' > {wildcards.output_directory}/gtdbtk/batchfile.tsv
         
         gtdbtk classify_wf \
-            --mash_db {params.mash_db:q} \
             --batchfile {wildcards.output_directory}/gtdbtk/batchfile.tsv \
             --out_dir {params.out_dir:q} \
             --cpus {threads} \
