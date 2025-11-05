@@ -77,7 +77,7 @@ comparem2
 If you are working on a shared computational resource like a laboratory workstation or a HPC you might want to share a database directory so that each user will not have to redundantly download each database. To set this up, the first user must decide on a directory and set reading and writing permissions for the group of users that should be able to use the database. Writing permissions are necessary for the "database representative" flags that snakemake uses to keep track of the presence of the databases. Setting this custom path is a matter of defining the "COMPAREM2_DATABASES" environment variable. You can put this into your ~/.bashrc or execute the command before using CompareM2.
 
 ```bash
-export COMPAREM2_DATABASES="/absolute/path/to/shared_databases/comparem2_v2.5.8+"
+export COMPAREM2_DATABASES="/absolute/path/to/shared_databases/comparem2"
 ```
 
 As a system administrator you may wish to set the "COMPAREM2_DATABASES" variable globally for all users. On common debian/ubuntu systems using bash, this can be done by putting the same export statement into /etc/bash.bashrc
