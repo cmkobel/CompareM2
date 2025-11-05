@@ -49,12 +49,35 @@ rule get_ncbi: # Per sample
             
             # Move to a flat hierarchy
             echo "Moving ..."
-            cp -rf {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/ {output_directory}/.ncbi_cache/accessions/
+            #cp -rf {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/ {output_directory}/.ncbi_cache/accessions/
+            #for dir in {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/; do [ -d "$dir" ] && cp -rf "$dir" {output_directory}/.ncbi_cache/accessions/ ; done
             
+            # Instead, manually generate the file list and mention the ones that have missing sequence reports (like GCA_902373455.1 which is suppressed)
+            ## declare an array variable
+            declare -a arr=("{params.accessions_joined_newline}")
+            declare -a arr=("$(cat {params.accessions_tsv})")
+
+            for accession in "${{arr[@]}}"; do
+                echo "$accession"
+                if [ -d {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/${{accession}}]; then
+                    #copy content
+                    cp -rf $accession {output_directory}/.ncbi_cache/accessions/
+                else
+                    # Throw error
+                    echo "Error: rule get_ncbi, accession $accession is not available for download. This may be because the genome has been suppressed due to low biological quality, or because there is an error at NCBI. Please inspect https://www.ncbi.nlm.nih.gov/datasets/genome/${{accession}}/ for further info."
+                    
+                    # Create empty file to continue analysis
+                    mkdir -p results_comparem2/.ncbi_cache/accessions/${{accession}}
+                    touch results_comparem2/.ncbi_cache/accessions/${{accession}}/sequence_report.jsonl
+
+                    
+                fi
+                
+            done
             
             
             # Tidy up
-            rm -r {output_directory}/.ncbi_cache/download
+            #rm -r {output_directory}/.ncbi_cache/download
         
         else
             echo CM2 rule get_ncbi: Nothing to download
