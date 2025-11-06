@@ -49,35 +49,51 @@ rule get_ncbi: # Per sample
             
             # Move to a flat hierarchy
             echo "Moving ..."
-            #cp -rf {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/ {output_directory}/.ncbi_cache/accessions/
-            #for dir in {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/*/; do [ -d "$dir" ] && cp -rf "$dir" {output_directory}/.ncbi_cache/accessions/ ; done
+            
             
             # Instead, manually generate the file list and mention the ones that have missing sequence reports (like GCA_902373455.1 which is suppressed)
             ## declare an array variable
-            declare -a arr=("{params.accessions_joined_newline}")
-            declare -a arr=("$(cat {params.accessions_tsv})")
 
-            for accession in "${{arr[@]}}"; do
-                echo "$accession"
-                if [ -d {output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/${{accession}}]; then
-                    #copy content
-                    cp -rf $accession {output_directory}/.ncbi_cache/accessions/
+
+            # Sometimes an accession can not be downloaded from NCBI. This may be because it has been suppressed due to low biological quality, or because there may be a server error at NCBI. In any case, there is no need to waste the full download by failing this job, when there are errors. Therefore, the while loop below continues and creates empty sequence reports when genomes are non-downloadable. The downstream jobs will fail explicitly because there is no genome input, so the user will not have to worry about overlooking missing genomes.
+            
+            while IFS= read -r accession; do
+            
+                #echo "$accession"
+                
+                dir={output_directory}/.ncbi_cache/download/decompressed/ncbi_dataset/data/${{accession}}
+                
+                if [ -d $dir ]; then
+                    #echo content existsis
+                    # Copy content
+                    # Create dir and copy all content 
+                    mkdir -p {output_directory}/.ncbi_cache/accessions/${{accession}}
+                    cp -f ${{dir}}/* {output_directory}/.ncbi_cache/accessions/${{accession}}
+                    
+                    # Add accession to list of successes (so the user can rerun the analysis without the ones that fail downloading.)
+                    echo $accession >> {output_directory}/.ncbi_cache/successful_transfers.tsv
                 else
-                    # Throw error
-                    echo "Error: rule get_ncbi, accession $accession is not available for download. This may be because the genome has been suppressed due to low biological quality, or because there is an error at NCBI. Please inspect https://www.ncbi.nlm.nih.gov/datasets/genome/${{accession}}/ for further info."
+                    # "Throw" warning and continue
+                    # It is very important that we don't "waste" the download as it is time-consuming. Therefore it is better that the pipeline later fails because the genome is missing anyway. Therefore this rule succeeds and "continues" even when some genomes are not downloadable.
+                    
+                    warning_msg="Warning: rule get_ncbi: Accession $accession is not available for download. This may be because the genome has been suppressed due to low biological quality, or because there is an error at NCBI. Please inspect https://www.ncbi.nlm.nih.gov/datasets/genome/${{accession}}/ for further info. CompareM2 will proceed without this genome."
+                    echo $warning_msg
+                    echo "Please rerun CompareM2 without this accession. This can be easily done by using {output_directory}/.ncbi_cache/successful_transfers.tsv as input." 
+                    echo $accession >> {output_directory}/.ncbi_cache/failed_transfers.tsv
                     
                     # Create empty file to continue analysis
                     mkdir -p results_comparem2/.ncbi_cache/accessions/${{accession}}
-                    touch results_comparem2/.ncbi_cache/accessions/${{accession}}/sequence_report.jsonl
-
+                    
+                    warning_msg_jsonl="{{'assemblyAccession':'$accession','CM2_warning_message':'$warning_msg'}}"
+                    echo $warning_msg_jsonl > results_comparem2/.ncbi_cache/accessions/${{accession}}/sequence_report.jsonl
                     
                 fi
                 
-            done
+            done < {params.accessions_tsv}
             
             
             # Tidy up
-            #rm -r {output_directory}/.ncbi_cache/download
+            rm -r {output_directory}/.ncbi_cache/download
         
         else
             echo CM2 rule get_ncbi: Nothing to download
