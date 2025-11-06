@@ -1,6 +1,6 @@
-2.16.3
+2.17.1
+  - Major: New docker image: Updated gtdbtk to v2.5. (Still using GTDB release 226)
   - Using europe based mirror for downloading the gtdb data package. 
-  - Updated gtdbtk to v2.5. (Still using GTDB release 226)
   - Minor changes to gather.smk to avoid errors when partial downloads exist. 
 
 2.16.2
