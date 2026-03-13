@@ -3,10 +3,10 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - snakemake-minimal <8
-  - pulp <2.8 # What is this for?
-  - python <3.12
-  - mamba <2 # Necessary for snakemake to install child environments during development.
+  - snakemake >=9.16
+  - snakemake-executor-plugin-cluster-generic
+  - mamba
+  - conda
   - pandas
   
 

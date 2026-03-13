@@ -11,32 +11,31 @@ keep-incomplete: false # true for debugging. Must be false for production, other
 rerun-triggers: "mtime" # only schedule jobs to rerun if there has been a change in mtime of input/output files. That is: ignore code changes
 rerun-incomplete: true
 
-# This one could be cool to have working 
+# This one could be cool to have working
 show-failed-logs: true
-jobname: "comparem2_{name}_{jobid}.sh" # Super helpful because it shows the job in qstat
 
-# ---- Conda/Mamba ----
-use-conda: true
-
-
-conda-frontend: 'mamba'
+# Software deployment
+software-deployment-method:
+  - conda
 conda-prefix: '~/.comparem2/conda'
 
 
 
 # ---- QUT CMR Lyra specifics ----
 
-cluster-cancel: "qdel"
+executor: cluster-generic
 
-
-cluster:
-  qsub 
-    -V 
-    -A $USER 
-    -q YOURACCOUNTNAMEHERE 
-    -e .snakemake/log/%j-{rule}.err.log 
+cluster-generic-submit-cmd:
+  qsub
+    -V
+    -A $USER
+    -q YOURACCOUNTNAMEHERE
+    -e .snakemake/log/%j-{rule}.err.log
     -o .snakemake/log/%j-{rule}.out.log
-    -l select=1:ncpus={threads}:mem={resources.mem_mb}mb,walltime={resources.runtime} 
+    -l select=1:ncpus={threads}:mem={resources.mem_mb}mb,walltime={resources.runtime}
+
+cluster-generic-cancel-cmd: qdel
+cluster-generic-status-cmd: "qstat -f {jobid}"
 
  
 

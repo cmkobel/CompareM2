@@ -10,9 +10,9 @@ keep-incomplete: false #false # true for debugging. Must be false for production
 rerun-incomplete: true
 
 
-# Conda
-use-conda: true
-conda-frontend: mamba
+# Software deployment
+software-deployment-method:
+  - conda
 conda-prefix: '~/.comparem2/conda'
 
 

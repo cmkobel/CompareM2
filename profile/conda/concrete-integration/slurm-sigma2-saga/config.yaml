@@ -11,25 +11,22 @@ keep-incomplete: false # true for debugging. Must be false for production, other
 rerun-triggers: "mtime" # only schedule jobs to rerun if there has been a change in mtime of input/output files. That is: ignore code changes
 rerun-incomplete: true
 
-# This one could be cool to have working 
+# This one could be cool to have working
 show-failed-logs: true
 
 
-# ---- Conda/Mamba ----
-use-conda: true
-
-
-conda-frontend: 'mamba'
+# Software deployment
+software-deployment-method:
+  - conda
 conda-prefix: '~/.comparem2/conda'
 
 
 
 # ---- Sigma2 Saga SLURM specifics ----
 
-cluster-cancel: "scancel"
+executor: cluster-generic
 
-
-cluster:
+cluster-generic-submit-cmd:
   sbatch
     --parsable
     --cpus-per-task={threads}
@@ -40,6 +37,9 @@ cluster:
     --time={resources.runtime}
     --partition={resources.partition}
     --account=YOURACCOUNTNAMEHERE
+
+cluster-generic-cancel-cmd: scancel
+cluster-generic-status-cmd: "squeue -j {jobid} -h -o %T"
     
 
 

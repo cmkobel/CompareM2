@@ -15,21 +15,18 @@ rerun-incomplete: true
 
 
 
-# ---- Conda/Mamba ----
-use-conda: true
-
-
-conda-frontend: 'mamba'
+# Software deployment
+software-deployment-method:
+  - conda
 conda-prefix: '~/.comparem2/conda'
 
 
 
 # ----  Specifics ----
 
-cluster-cancel: "scancel"
+executor: cluster-generic
 
-
-cluster:
+cluster-generic-submit-cmd:
   sbatch
     --parsable
     --cpus-per-task={threads}
@@ -42,6 +39,9 @@ cluster:
 
 # Apparently, the account is not necessary on Orion.
 # --account=YOURACCOUNTNAMEHERE
+
+cluster-generic-cancel-cmd: scancel
+cluster-generic-status-cmd: "squeue -j {jobid} -h -o %T"
 
 default-resources:
   - threads=2
