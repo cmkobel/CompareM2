@@ -26,8 +26,6 @@ rule kegg_pathway:
 
 
 
-def get_mem_gtdbtk(wildcards, attempt): 
-    return [150000, 300000, 400000, 500000][attempt-1]
 
 
 
@@ -47,7 +45,7 @@ rule gtdbtk:
     threads: 8
     #retries: 3
     resources:
-        # mem_mb = get_mem_gtdbtk, # works great, but I want to use a limited amount to test a potential hardware upgrade
+        # mem_mb = retry_mem(150000, 300000, 400000, 500000), # works great, but I want to use a limited amount to test a potential hardware upgrade
         mem_mb = 131072,
         runtime = "48h"
     conda: "../envs/gtdbtk.yaml"

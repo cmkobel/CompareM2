@@ -75,6 +75,15 @@ def interpret_true(text):
     return str(text).strip().lower() == "true"
     
 
+def retry_mem(*values):
+    """Returns a Snakemake resource function that scales memory across retries.
+    Usage: mem_mb = retry_mem(16000, 32000, 64000)
+    """
+    def _get_mem(wildcards, attempt):
+        return values[attempt - 1]
+    return _get_mem
+
+
 def passthrough_parameter_unpack(rule_name, delimiter = " ", separator = " "):
     """ This function is responsible for the parameter passthrough 
     functionality. Given a rule name, it filters for the wanted keys and 
@@ -109,19 +118,8 @@ def passthrough_parameter_unpack(rule_name, delimiter = " ", separator = " "):
 
 
 # Set default variables in case they are not set in the config file.
-
-# Set custom title, overriding the name of the current working dir.
-try:
-    batch_title = str(config["title"]).strip()
-except KeyError:
-    # Todo: Implement debug logger with verbosity levels.
-    batch_title = os.getcwd().split("/")[-1]
-    
-# Set default gapseq medium in case there is none set in the config file.
-try:
-    gapseq_medium = config["gapseq_medium"]
-except KeyError:
-    gapseq_medium = "..."
+batch_title = str(config.get("title", os.getcwd().split("/")[-1])).strip()
+gapseq_medium = config.get("gapseq_medium", "...")
     
 
 # Read environment variables.
@@ -167,18 +165,18 @@ print("  (Use ´--until <rule> [<rule2>..]´ to activate only one or more rules)
 # --- Parse input files -------------------------------------------------------
     
 
-try: # Try to use the fofn, if it is set.
+if 'fofn' in config:
     input_genomes_parsed = get_fofn(config['fofn'])
-except KeyError: # Otherwise, fall back on input_genomes which has a default value of "*.fna *.fa *.fasta *.fas", but can also be changed.
+else: # Fall back on input_genomes which has a default value of "*.fna *.fa *.fasta *.fas", but can also be changed.
     input_genomes_parsed = get_input_genomes(config['input_genomes']) # Run with 'comparem2 --config input_genomes="my_files*.fna' to customize.
 
     
 # Parse added ncbi accessions.
-try:
-    add_ncbi = config["add_ncbi"] # example: GCF_009734005.1
-    add_ncbi_list = [str(i).strip() for i in add_ncbi.split(",")] # A bit of sanitization.
+add_ncbi_raw = config.get("add_ncbi", None)
+if add_ncbi_raw is not None:
+    add_ncbi_list = [str(i).strip() for i in add_ncbi_raw.split(",")] # A bit of sanitization.
     print(f"Add ncbi: The following {len(add_ncbi_list)} ncbi accession(s) have been added: {add_ncbi_list}")
-except KeyError:
+else:
     add_ncbi_list = list() # An empty list.
     
 

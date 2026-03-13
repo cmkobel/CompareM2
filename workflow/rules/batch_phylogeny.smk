@@ -92,8 +92,6 @@ rule treecluster:
 
 
 
-def get_mem_fasttree(wildcards, attempt): 
-    return [16000, 32000, 64000, 0][attempt-1]
 rule fasttree:
     input:
         metadata = "{output_directory}/metadata.tsv",
@@ -107,7 +105,7 @@ rule fasttree:
     threads: 4
     retries: 2
     resources:
-        mem_mb = get_mem_fasttree,
+        mem_mb = retry_mem(16000, 32000, 64000, 0),
         runtime = "24h",
     shell: """
     

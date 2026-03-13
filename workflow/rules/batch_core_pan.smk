@@ -2,8 +2,6 @@
     
         
         
-def get_mem_panaroo(wildcards, attempt): 
-    return [32000, 64000, 128000][attempt-1]
 
 
 
@@ -26,7 +24,7 @@ rule panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-dists 
     #retries: 2
     resources:
         #mem_mb = 32768,
-        mem_mb = get_mem_panaroo,
+        mem_mb = retry_mem(32000, 64000, 128000),
         runtime = "24h",
     conda: "../envs/panaroo.yaml" 
     shell: """
