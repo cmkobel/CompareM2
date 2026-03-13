@@ -35,7 +35,11 @@ See the [quick start guide](https://comparem2.readthedocs.io/en/latest/05%20quic
 
 CompareM2 is a Snakemake pipeline. It automatically selects which analyses to run based on the number of input genomes, manages all software dependencies via conda environments or a pre-built Docker/Apptainer image, and collects results into a single HTML report.
 
-It works strictly downstream of assembly and binning — bring genomes from any sequencing technology or source, and CompareM2 handles the rest.
+It is **assembly-agnostic** — it works strictly downstream of assembly and binning. Bring genomes from any sequencing technology or source, and CompareM2 handles the rest. This is a deliberate design choice: read mapping, assembly, and binning are highly dependent on sequencing technology and are best handled by specialized tools. CompareM2 focuses on what comes after.
+
+The dynamic report only includes sections for analyses that completed, so it adapts to partial runs. It is designed to be interpretable by non-bioinformaticians, with explanatory text and figures alongside the results.
+
+Benchmarking showed that CompareM2 scales approximately linearly with input size thanks to Snakemake's parallel job scheduling, and is significantly faster than comparable tools like Tormes and Bactopia ([Kobel et al. 2025](https://doi.org/10.1093/bioinformatics/btaf517)).
 
 ## Links
 

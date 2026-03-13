@@ -4,7 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CompareM2 is a Snakemake-based bioinformatics pipeline for comparing microbial genomes (bacteria and archaea, including MAGs). It is **not** a Python package — it is a workflow application with a Python launcher script. It only runs on Linux. It runs 36+ analysis tools and produces a publication-ready HTML report.
+CompareM2 is a Snakemake-based bioinformatics pipeline for comparing microbial genomes (bacteria and archaea, including MAGs). It is **not** a Python package — it is a workflow application with a Python launcher script. It only runs on Linux. It runs 30+ analysis tools and produces a publication-ready HTML report.
+
+**Publication:** Kobel et al. "CompareM2 is a genomes-to-report pipeline for comparing microbial genomes." *Bioinformatics* 41(9), btaf517 (2025). doi:10.1093/bioinformatics/btaf517. Open Access (CC-BY 4.0).
+
+**Authors:** Carl M. Kobel (NMBU, Norway — corresponding), Velma T.E. Aho (NMBU), Ove Øyås (NMBU), Niels Nørskov-Lauritsen (Univ. Southern Denmark), Ben J. Woodcroft (QUT, Australia), Phillip B. Pope (NMBU & QUT).
+
+**Key claims from the paper:**
+- Assembly-agnostic: works strictly downstream of assembly/binning, technology-independent
+- Benchmarked significantly faster than Tormes (sequential scheduling) and Bactopia (reads-based, generates artificial reads for assembly-only input)
+- Running time scales approximately linearly with input count, even beyond available CPU cores, thanks to Snakemake's parallel job scheduling
+- Dynamic report is adaptive — only includes sections for analyses that completed, can be rendered independently
+- Designed to be accessible to non-bioinformaticians: report includes explanatory text and figures
+- Scalable from single genomes to hundreds
+
+**Funding:** Novo Nordisk Foundation (0054575-SuPAcow), EU Horizon 2020 (101000213), Australian Research Council Future Fellowship (FT230100560).
 
 User-facing documentation (installation, quick start, usage, analyses) is hosted at https://comparem2.readthedocs.io/ and built from Markdown files in `docs/`.
 

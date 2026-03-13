@@ -6,7 +6,9 @@
 
 If you use CompareM2, please cite:
 
-  - Kobel et al. CompareM2 is a genomes-to-report pipeline for comparing microbial genomes. *Bioinformatics* 41, btaf517 (2025). [https://doi.org/10.1093/bioinformatics/btaf517](https://doi.org/10.1093/bioinformatics/btaf517)
+  - Kobel C.M., Aho V.T.E., Øyås O., Nørskov-Lauritsen N., Woodcroft B.J., Pope P.B. CompareM2 is a genomes-to-report pipeline for comparing microbial genomes. *Bioinformatics* 41(9), btaf517 (2025). [https://doi.org/10.1093/bioinformatics/btaf517](https://doi.org/10.1093/bioinformatics/btaf517)
+
+CompareM2 is Open Access under the [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) license.
 
 ## References for included tools
 
@@ -37,7 +39,9 @@ CompareM2 integrates many software packages. Please cite the relevant tools when
 
 CompareM2 works strictly downstream of assembly and binning. Unlike some competing tools, it deliberately excludes read-level processing (mapping, assembly, binning), since these steps are highly dependent on sequencing technology. CompareM2 instead provides a portable platform for comparing genomes regardless of how they were generated.
 
-Competing pipelines with partial feature overlap (alphabetical):
+Benchmarking in the CompareM2 paper showed it to be significantly faster than Tormes (which schedules jobs sequentially) and Bactopia (which is reads-based and must generate artificial reads for assembly-only input). CompareM2's running time scales approximately linearly with input count thanks to Snakemake's parallel job scheduling.
+
+Pipelines with partial feature overlap (alphabetical):
 
   - [Anvi'o](https://anvio.org/)
   - [ASA3P](https://github.com/oschwengers/asap)
