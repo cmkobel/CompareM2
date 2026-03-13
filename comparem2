@@ -360,6 +360,17 @@ def tip_exit(returncode):
     tips.append("If you don't specify any input genomes, CompareM2 runs on the fasta files in the current working directory.")
     tips.append("Make sure you explore the dynamic report that has been generated in the results directory.")
     tips.append("You can add ncbi genomes and annotations to your analysis with `comparem2 --config add_ncbi=<ncbi accession>")
+    tips.append("You can cite CompareM2 with `comparem2 --cite`.")
+    tips.append("Use `comparem2 --dry-run` to preview which jobs will run without executing anything.")
+    tips.append("CompareM2 can run on SLURM and PBS clusters using the profiles in the profile/ directory.")
+    tips.append("You can set a custom report title with `comparem2 --config title=\"My analysis\"`.")
+    tips.append("You can list input genomes in a file-of-filenames with `comparem2 --config fofn=\"filenames.txt\"`.")
+    tips.append("Check per-job log files in the logs/ directory of your output folder for detailed tool output.")
+    tips.append("Re-running CompareM2 on the same output directory will only recompute missing or outdated results.")
+    tips.append("You can combine multiple --until rules, e.g. `comparem2 --until checkm2 mashtree` to run only those analyses.")
+    tips.append("The dynamic report only includes sections for analyses that completed successfully.")
+    tips.append("No genomes were harmed in the making of this pipeline.")
+    tips.append("Tell your supervisor to cite the tools you use, not just the organism.")
     
     if returncode == 0:
         print(f"{C.DIM}Tip: {random.choice(tips)}{C.RESET}")
