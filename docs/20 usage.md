@@ -1,9 +1,6 @@
 # Usage
 
-
-Overall, CompareM2 follows standard command line practices.
-CompareM2 is built on top of Snakemake. Hence, when tweaking your run, you must pass the parameters through the `--config` key. Although all [Snakemake options](https://snakemake.readthedocs.io/en/stable/executing/cli.html) are available to use, here we bring the ones that are necessary and useful for daily-driving CompareM2.
-
+CompareM2 is built on top of Snakemake. Pipeline parameters are passed via `--config`, and all [Snakemake command-line options](https://snakemake.readthedocs.io/en/stable/executing/cli.html) are available.
 
 ```txt
 comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
@@ -13,173 +10,165 @@ comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
   [ --printshellcmds ]
   [ --dry-run ]
   [ --status ]
-  [ --version ]  [ --help ]  [ --cite]
+  [ --version ]  [ --help ]  [ --cite ]
 ```
 
-## Usage examples
 
-Here we bring som usage examples showcasing some of the more often used features.
+## Examples
 
-  - Run *all* analyses across all fasta genome files in the current working directory.
-    
-    ```
-    comparem2
-    ```
-    
+Run all analyses on all genome files (`*.fna *.fa *.fasta *.fas`) in the current directory:
 
-  - Run only jobs *until* bakta
-    
-    ```
-    comparem2 --until bakta
-    ```
+```bash
+comparem2
+```
 
-  - Run *all* analyses with specified input and output.
-    
-    ```
-    comparem2 --config input_genomes="path/to/genomes_*.fna" output_directory="my_analysis"
-    ```
+Run only the fast analyses:
 
-  - Use a *fofn* - a file of file names. 
-    
-    ```
-    ls path/to/*.fna > my_fofn.txt; comparem2 --config fofn="my_fofn.txt"
-    ```
+```bash
+comparem2 --until fast
+```
 
-  - Run a *dry run*.
-    
-    ```
-    comparem2 --config input_genomes="path/to/genomes_*.fna" --dry-run
-    ```
-  
-  - Analyze some NCBI references.
-  
-    ```
-    comparem2 --config add_ncbi="GCF_009734005.1,GCF_029023785.1"
-    ```
+Specify input and output paths:
 
-  - Specify annotator. (default is "prokka")
-    
-    ```
-    comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta"
-    ```
+```bash
+comparem2 --config input_genomes="path/to/genomes_*.fna" output_directory="my_analysis"
+```
 
-  - Run only the *fast* rules. [(read more about pseudo rules)](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#pseudo-rules)
-    
-    ```
-    comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast
-    ```
+Use a file-of-filenames (fofn):
 
-  - Run panaroo as well.
-    
-    ```
-    comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast panaroo
-    ```
+```bash
+ls path/to/*.fna > my_fofn.txt
+comparem2 --config fofn="my_fofn.txt"
+```
 
-  - And pass a command line argument directly to panaroo.
-    
-    ```
-    comparem2 --config input_genomes="path/to/genomes_*.fna" set_panaroo--threshold=0.95 annotator="bakta" --until fast panaroo 
-    ```
+Dry run (preview what will run without executing):
+
+```bash
+comparem2 --config input_genomes="path/to/genomes_*.fna" --dry-run
+```
+
+Analyze NCBI reference genomes by accession:
+
+```bash
+comparem2 --config add_ncbi="GCF_009734005.1,GCF_029023785.1"
+```
+
+Use Prokka instead of the default Bakta annotator:
+
+```bash
+comparem2 --config annotator="prokka"
+```
+
+Combine options — run fast analyses plus panaroo with Bakta annotation:
+
+```bash
+comparem2 --config input_genomes="path/to/genomes_*.fna" --until fast panaroo
+```
+
+Pass a parameter directly to an underlying tool:
+
+```bash
+comparem2 --config set_panaroo--threshold=0.95 --until fast panaroo
+```
 
 
+## Configuration reference
 
-## Options 
+### Input genomes (`input_genomes`)
 
-###  `--config KEY="VALUE" [KEY2="VALUE"]...`
+A glob pattern specifying which genome files to analyze. The default picks up all common FASTA extensions in the current directory:
 
-The CompareM2 pipeline uses a configuration file with default settings to control the way it runs. This configuration can be changed on the fly -- This is to give the user easy access to the many features inside CompareM2. Multiple configuration options can be set at the same time as long as the all are stated after the `--config` statement on the command-line. The full default configuration file is available in ./config/config.yaml (in the installation directory). Below, we will document and showcase examples of the configuration parameters that are relevant when using CompareM2.
-
-#### Configuration of input genomes
-
-
-Input genomes for CompareM2 can be specified in several ways. The default is to use the `input_genomes` config key, and its default value is "*.fna *.fa *.fasta *.fas". In essence, this means that if the user does not specify this key, all genome fastas in the current working directory will be input into CompareM2 for analysis. The string given to input genomes is evaluated using GNU [LS(1)](https://www.linux.org/docs/man1/ls.html) which means that asterisks can be used for globbing. Examples below:
-    
   - `input_genomes="*.fna *.fa *.fasta *.fas"` (default)
   - `input_genomes="path/to/my/genomes*.fna"`
   - `input_genomes="path/genome1.fna path/genome2.fna"`
-  
 
-##### File of file names
-  
-When analyzing larger sets of microbial genomes it can be useful to define these in a "file of file names" (fofn). This is supported by the `fofn` config key in CompareM2. When the `fofn` key is set, it always overrides the `input_genomes` key. A fofn-file can be generated simply by piping a list of filenames on the command line. Example below:
+### File of file names (`fofn`)
 
+For larger sets of genomes, list paths in a text file (one per line). When set, `fofn` overrides `input_genomes`:
 
 ```bash
-
 ls *.fna > fofn.txt
 comparem2 --config fofn="fofn.txt"
-
 ```
 
-  
-##### Pre-annotated reference genomes
+### Pre-annotated NCBI reference genomes (`add_ncbi`)
 
-For many use cases it may be useful to add reference genomes from the [NCBI or Genbank databases](https://www.ncbi.nlm.nih.gov/datasets/genome/), which contains consistently pre-annotated high quality genomes. Using the `add_ncbi` config key, you can add one or more (comma separated) NCBI or GenBank genome/assembly accessions as input to your CompareM2 run. The genomes and their [PGAP](https://www.ncbi.nlm.nih.gov/ncbi/annotation_prok/process/) annotations will be automatically downloaded using the [NCBI Datasets](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/command-line-tools/download-and-install/) command-line tools. The annotation is used as-is in the downstream tools in the CompareM2 pipeline. Examples below:
+Add reference genomes from [NCBI/GenBank](https://www.ncbi.nlm.nih.gov/datasets/genome/) by accession. Genomes and their [PGAP](https://www.ncbi.nlm.nih.gov/ncbi/annotation_prok/process/) annotations are downloaded automatically via [NCBI Datasets](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/command-line-tools/download-and-install/). Multiple accessions are comma-separated:
 
-  - `add_ncbi=<NCBI-accession>[,<NCBI-accession2>]...` 
-  - `add_ncbi="GCF_029023785.1"`
-  
-#### Configuration of output directory
-
-All results from CompareM2 are output into a subdirectory. The default name of this directory is "results_comparem2", but it can be changed, using the `output_directory` config key. Example below: 
-
-  - `output_directory="results_comparem2"`.
-
-#### Configuration of annotation tool
-
-CompareM2 ships with two annotation tools: Bakta and Prokka. Bakta is default, and Prokka is bundled to better support users who work with Archaea. The choice of annotation tool in CompareM2 can have a large effect on your downstream results, as many tools use the output of the selected annotator as input. If you wish to change the annotation tool, you can do so with the `annotator` config key. Example below: 
-
-  - `annotator="bakta"` bakta (default) | prokka
-  
-
-
-
-#### Passthrough arguments
-
-From v2.8.2, CompareM2 has the ability to pass any command line argument (option-parameter pair) through to any rule in the workflow. This is done by using a generalized "passthrough argument" feature that recognizes config argument options starting with string "set_" and passes them to the correct rule upon generating the shell scripts for each rule in the workflow. The general syntax for these passthrough arguments is `set_<rule><option>=<parameter>` where rule is the rule name, option is the option key, and parameter is the parameter value. 
-
-!!! note
-    This feature requires modification of Snakemake such that it can accept special characters through the config strings given at the command line. This modification can easily be done using the following command that ships with the bioconda package:
-    ```
-    enable_passthrough_parameters_comparem2
-    ```
-    
-    Otherwise you might receive the Snakemake error: "Invalid config definition: Config entry must start with a valid identifier."
-
-An example can be used to explain how this feature can be used in practice: Consider using the Prokka annotator, which is capable of annotating both bacterial and archaeal genomes. By default, Prokka is set to bacterial annotation, so in case we want to annotate an archaea, we can set the "--kingdom" argument to "archaea". In this case the rule name is `prokka`, the option key is `--kingdom` and the parameter value is `archaea`. When using CompareM2, this setting can be set following the passthrough argument syntax like so:
- 
 ```bash
-# comparem2 --until set_<rule><key>=<value> # Syntax template.
+comparem2 --config add_ncbi="GCF_029023785.1,GCF_009734005.1"
+```
+
+### Output directory (`output_directory`)
+
+Where results are written. Default: `results_comparem2`.
+
+```bash
+comparem2 --config output_directory="my_results"
+```
+
+### Annotation tool (`annotator`)
+
+CompareM2 ships with two annotators:
+
+  - **`bakta`** (default) — recommended for bacteria
+  - **`prokka`** — also supports archaea
+
+The choice of annotator affects many downstream analyses, as tools like panaroo, eggnog, and interproscan consume its output.
+
+```bash
+comparem2 --config annotator="prokka"
+```
+
+### Report title (`title`)
+
+Custom title for the HTML report. Defaults to the name of the current working directory.
+
+
+## Passthrough arguments
+
+CompareM2 can forward arbitrary command-line arguments to any underlying tool using a `set_` prefix in the config. The syntax is:
+
+```
+set_<rule><option>=<value>
+```
+
+Where `<rule>` is the Snakemake rule name, `<option>` is the tool's command-line flag (including dashes), and `<value>` is the parameter value.
+
+**Example:** Set Prokka's `--kingdom` flag to `archaea`:
+
+```bash
 comparem2 --config set_prokka--kingdom=archaea
 ```
 
-Notice how the double dash prefix in "--kingdom" is part of the the set_ string. This is because many different styles of command line argument options need to be supported (e.g.: "--command_key", "--command-key", "-command_key" etc). 
-
-In some cases, command line options are flags, meaning that they need no parameter value. In this case, an empty string can be given as parameter value:
+**Flag-only arguments** (no value) use an empty string:
 
 ```bash
-comparem2 --config annotator=prokka set_prokka--rfam="" # --rfam enables searching for ncRNAs with Infernal+Rfam.
+comparem2 --config set_prokka--rfam=""
 ```
 
-In case of non-empty parameter values, use of apostrophes is optional.
-
-Using a space separator, several command line arguments can be given at once for several different tools. In the following example we're also loosening the Panaroo core genome identity "--threshold" option down to 95% to increase the apparent number of genes in the core genome.
+**Multiple passthrough arguments** can be combined:
 
 ```bash
 comparem2 --config set_prokka--kingdom=archaea set_panaroo--threshold=0.95 --until panaroo fast
 ```
 
-  
-CompareM2 comes with a number of sane default arguments which can be observed [here](https://github.com/cmkobel/CompareM2/blob/master/config/config.yaml). Any passthrough argument that the user gives on the command line overwrites these defaults.
+The [default passthrough arguments](https://github.com/cmkobel/CompareM2/blob/master/config/config.yaml) can be overridden by specifying the same key on the command line.
 
+!!! note
+    Passthrough arguments require a modification to Snakemake to accept special characters in config strings. Run this command (included in the bioconda package) to enable it:
+    ```
+    enable_passthrough_parameters_comparem2
+    ```
+    Without this, Snakemake will report: "Invalid config definition: Config entry must start with a valid identifier."
 
-##### Validating command line arguments
+### Validating passthrough arguments
 
-There are no limitations on which command line arguments can be passed to the passthrough argument feature. Thus, when modifiying the options using the passthrough arguments feature, the user should follow the documentation of each individual tool to make sure that the command line arguments given are valid. In order to validate that the arguments given to rules are as expected, the full generated shell command of each rule can be printed with `-p`. It is especially useful to do this in conjunction with the `--dry-run` argument. Example with Panaroo below:
+Use `-p --dry-run` to preview the generated shell commands and verify that your arguments are being passed correctly:
 
 ```bash
 comparem2 --config set_panaroo--threshold=0.99 --until panaroo -p --dry-run
-#> [...] 
+#> [...]
 #>    panaroo \
 #>        -o results_comparem2/panaroo \
 #>        -t 16 \
@@ -190,79 +179,61 @@ comparem2 --config set_panaroo--threshold=0.99 --until panaroo -p --dry-run
 ```
 
 
+## Snakemake options
 
-### General Snakemake commands
+### `--until RULE [RULE2]...`
 
-As CompareM2 is built on top of Snakemake, it supports its built in features and command line arguments. Below is a listing of the most relevant Snakemake commands to use together with CompareM2.
-            
-#### `--until RULE [RULE2]...`
-Select to run until (inclusive) a specific rule in the rule graph. Available rules:
-abricate annotate antismash assembly_stats bakta checkm2 copy dbcan eggnog fasttree gapseq gapseq_find gtdbtk interproscan iqtree kegg_pathway mashtree mlst prokka sequence_lengths snp_dists treecluster antismash_download bakta_download checkm2_download dbcan_download eggnog_download gtdb_download panaroo
-    
-There are also a number of pseudo rules, effectively "shortcuts" to a list of rules.
-  - downloads   (Run rules that download and setup up necessary databases.)
-  - fast        (Only rules that complete within a few seconds. Useful for testing.)
-  - isolate     (Only rules that are relevant for genomes of isolate origin.)
-  - meta        (Only rules that are relevant for genomes "MAGs" of metagenomic origin.)
-  - report      (Re-renders the report.)
+Run only the specified rule(s) and their dependencies. Multiple rules can be listed. Available rules:
 
+`abricate` `amrfinder` `annotate` `antismash` `assembly_stats` `bakta` `bootstrap_mashtree` `carveme` `checkm2` `copy` `dbcan` `eggnog` `fasttree` `gapseq_find` `gapseq_fill` `gtdbtk` `interproscan` `iqtree` `kegg_pathway` `mashtree` `mlst` `panaroo` `prokka` `sequence_lengths` `snp_dists` `treecluster`
 
-          
-#### `--forcerun RULE [RULE2]...`
+Download rules: `antismash_download` `bakta_download` `checkm2_download` `dbcan_download` `eggnog_download` `gtdb_download`
 
-Force rerunning of one or more rules that already have been completed. This is generally necessary when changing running parameters in the config (see "--config" above).
+### Pseudo-rules
 
+Pseudo-rules are shortcuts that run a curated set of analyses:
 
-#### `--printshellcmds`, `-p`
+| Pseudo-rule | Description | Included analyses |
+|---|---|---|
+| `fast` | Completes in seconds; useful for testing | sequence_lengths, assembly-stats, mashtree |
+| `meta` | Analyses relevant for MAGs | annotation, assembly-stats, sequence_lengths, checkm2, eggnog, kegg_pathway, dbcan, interproscan, gtdbtk, mashtree |
+| `isolate` | Analyses relevant for clinical isolates | annotation, assembly-stats, sequence_lengths, eggnog, kegg_pathway, gtdbtk, mlst, amrfinder, panaroo, fasttree, snp-dists, mashtree |
+| `downloads` | Download and set up all databases | All database download rules |
+| `report` | Re-render the report only | Report generation |
 
-Print the full generated shell commands of each rule in the workflow. 
+Usage: `comparem2 --until meta` or `comparem2 --until isolate`
 
-    
-#### `--dry-run`
+### `--forcerun RULE [RULE2]...`
 
-Run a "dry run": Shows what will run without doing it.
+Force re-execution of completed rules. Necessary when changing config parameters for a rule that has already run.
 
+### `--printshellcmds`, `-p`
 
-### Special CompareM2 commands
+Print the generated shell command for each rule.
 
-These commands do not invoke the Snakemake pipeline, but allows the user to gain necessary information about the CompareM2 setup, or to modify it in various ways.
+### `--dry-run`
 
-#### `--downloads`
-
-Download all databases without performing any analyses.
+Show what would run without executing anything.
 
 
-#### `--status`
+## CompareM2-specific options
 
-Print the state of completion of the rules in the pipeline. The percentage of completed files are shown.
+These options do not invoke the Snakemake pipeline.
 
-Run `comparem2 --status` at any time to get an overview of what has been done and what is missing in any project directory. Should be run from the same directory as where CompareM2 was originally run for the results in question. 
-
-
-#### `--version`, `-v `
-
-Show current version.
-
-    
-#### `--help`, `-h`
-
-Show this help and exit.
-
- 
-#### `--cite`
-
-Show citation info.
+| Option | Description |
+|---|---|
+| `--downloads` | Download all databases without running analyses |
+| `--status` | Show completion status of each rule in the current project directory |
+| `--version`, `-v` | Show version |
+| `--help`, `-h` | Show help |
+| `--cite` | Show citation information |
 
 
+## Output structure
 
-## Output
-CompareM2 creates a directory named "results_comparem2/" (or what the output_directory parameter is set to) that contains all of the analysis results that are computed.
+CompareM2 writes all results to the output directory (default: `results_comparem2/`). Per-sample results are in `samples/<sample>/`, and cross-sample results are in the root.
 
-Results from input genomes are in dir "samples/" and results across all samples are in the root. 
-
-The report is named "report_&lt;title>.html" after the title of the run which defaults to the name of the current working directory.
-
-
+The report is named `report_<title>.html`, where `<title>` defaults to the current working directory name.
 
 ```txt
 results_comparem2/
@@ -296,7 +267,6 @@ results_comparem2/
 └── version_info.txt
 ```
 
-
-For the file tree of each of the analysis tools, please consult the respective documentation.
+For per-tool file details, consult the respective tool's documentation.
 
 {!resources/footer.md!}

@@ -1,37 +1,36 @@
-# Quick start ⚡️
+# Quick start
 
-If you have a set of bacterial or archaeal genomes, either MAGs or isolates, that you wish to analyze and compare—CompareM2 is the tool for you. 
+If you have bacterial or archaeal genomes — isolates or MAGs — that you want to analyze and compare, CompareM2 is the tool for you.
 
 ## 1) Install
 
-Assuming you already have [pixi installed](https://pixi.sh) on your linux machine, CompareM2 can be installed in a single step.
+With [pixi](https://pixi.sh) on a Linux machine:
 
 ```bash
-
 pixi global install -c conda-forge -c bioconda comparem2
-
 ```
 
 ## 2) Run
 
-CompareM2 has a large number of available tools ([list](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/)), here we just want to run the ones that are fast.
+CompareM2 includes many analysis tools ([full list](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/)). To run only the fast ones:
 
 ```bash
-
-comparem2 --config input_genomes="path/to/my/genomes_*.fna" --until fast 
-
+comparem2 --config input_genomes="path/to/my/genomes_*.fna" --until fast
 ```
 
 ## 3) Explore
 
-When CompareM2 is done running, you can start exploring the results. The first thing to do, is to explore the dynamic report that shows the most important results from each analysis.
+When CompareM2 finishes, open the report in your browser:
 
-Open results_comparem2/report_*.html ([demo](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report)) in your browser to gain a quick oversight of the results.
+```
+results_comparem2/report_<title>.html
+```
 
-The full results can be explored from the results_comparem2/ directory:
- 
+This dynamic HTML report summarizes the most important results from each analysis. See a [demo report](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report).
+
+The full results are organized in `results_comparem2/`:
+
 ```bash
-
 tree results_comparem2/ -L 1
 #> results_comparem2/
 #> ├── amrfinder/
@@ -61,14 +60,11 @@ tree results_comparem2/ -L 1
 #> ├── visuals/
 #> ├── treecluster/
 #> └── version_info.txt
-
 ```
 
+To run the [full pipeline](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/), simply omit the `--until` parameter.
 
-If you wish to run the [full](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/) rulegraph, simply remove the _until_-parameter when running CompareM2.
-
-If you have any problems using CompareM2, you're very welcome to file an issue on the git repo: [https://github.com/cmkobel/CompareM2/issues](https://github.com/cmkobel/CompareM2/issues).
+If you have any problems, please file an issue: [github.com/cmkobel/CompareM2/issues](https://github.com/cmkobel/CompareM2/issues).
 
 
 {!resources/footer.md!}
-

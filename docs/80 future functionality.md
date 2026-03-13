@@ -1,25 +1,24 @@
 
 
-# Future functionality 
+# Future functionality
 
-In the future we might add some of the following software packages into CompareM2. This document serves as a backlog of tools that we want to integrate when time allows.
+Tools we may integrate into CompareM2 when time allows.
 
-**Assembly basis (within each sample)**
-  
-  - [AlphaFold](https://github.com/google-deepmind/alphafold) Neural network protein folding prediction genome annotation.
-  - Integration of the [DRAM](https://github.com/WrightonLabCSU/DRAM) databases for metabolic interpretation.
-  - [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) Identification of possible replication origins of chromids.
-  - [RFplasmid](https://github.com/aldertzomer/RFPlasmid) Identification of plasmids using the pentamer-random-forest method.
-  - [distillR](https://github.com/anttonalberdi/distillR) High level functional annotation using graph based metabolic capacity indices.
+**Per-genome analyses**
 
+  - [AlphaFold](https://github.com/google-deepmind/alphafold) — Neural network protein structure prediction.
+  - [DRAM](https://github.com/WrightonLabCSU/DRAM) — Metabolic interpretation via distilled genome annotations.
+  - [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) — Replication origin identification in chromids.
+  - [RFplasmid](https://github.com/aldertzomer/RFPlasmid) — Plasmid identification using pentamer random forests.
+  - [distillR](https://github.com/anttonalberdi/distillR) — Graph-based metabolic capacity indices from functional annotations.
 
-**Batch basis (across all samples)**
+**Cross-genome analyses**
 
-  - GC3-profiling "fingerprinting" of the distribution of synonymous GC-content.
-  - Recombination in core genome using the Bruen's PHI statistic or ClonalFrameML. (requires stable synteny calculation)
-  - Identification of horizontally transferred genes?
+  - GC3-profiling — Synonymous GC-content distribution fingerprinting.
+  - Recombination detection in core genome using Bruen's PHI statistic or ClonalFrameML.
+  - Identification of horizontally transferred genes.
 
-Please [add an issue on the repository](https://github.com/cmkobel/comparem2/issues) if you have any ideas or requests.
+Please [open an issue](https://github.com/cmkobel/comparem2/issues) if you have ideas or requests.
 
 
 {!resources/footer.md!}
