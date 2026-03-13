@@ -139,10 +139,11 @@ def print_banner():
     print()
 
 
-def run_snakemake_filtered(command, quiet=False):
+def run_snakemake_filtered(command, quiet=False, dry_run=False):
     """Run a snakemake command and filter its output to show a clean status screen.
 
     When quiet=True, suppresses all output (for secondary invocations like status summary).
+    When dry_run=True, passes through job plan lines but suppresses preamble noise.
     Otherwise, parses snakemake's verbose output to show which jobs start, finish, or fail.
     """
     if quiet:
@@ -165,11 +166,24 @@ def run_snakemake_filtered(command, quiet=False):
         text=True, bufsize=1
     )
 
+    # Dry-run mode: pass through job plan lines, suppress preamble noise
+    if dry_run:
+        re_preamble = re.compile(r'^(Using profile|host:|Assuming|Building DAG|Complete log)')
+        for line in process.stdout:
+            line = line.rstrip('\n')
+            if re_preamble.match(line):
+                continue
+            print(line)
+            sys.stdout.flush()
+        process.wait()
+        return process.returncode
+
     # Track job metadata: jobid -> {rule, sample}
     job_info = {}
     total_jobs = None
     finished_jobs = 0
     failed_rules = []
+    failed_set = set()  # deduplicate FAILED messages
 
     # State for parsing job start blocks
     current_rule = None
@@ -259,17 +273,24 @@ def run_snakemake_filtered(command, quiet=False):
             done, total, pct = m.group(1), m.group(2), m.group(3)
             total_jobs = int(total)
             finished_jobs = int(done)
-            print(f"  {C.DIM}-- Progress: {done}/{total} steps ({pct}%) done{C.RESET}")
+            # Only show fraction when complete; otherwise just show count
+            # (Snakemake's total counts the full DAG, not just the --until subset)
+            if finished_jobs == total_jobs:
+                print(f"  {C.DIM}-- Progress: {done}/{total} steps ({pct}%) done{C.RESET}")
+            else:
+                print(f"  {C.DIM}-- Progress: {done} steps completed{C.RESET}")
             sys.stdout.flush()
             continue
 
-        # Match error in rule
+        # Match error in rule (deduplicate — Snakemake prints errors twice)
         m = re_job_error.match(line)
         if m:
             rule_name = m.group(1)
-            failed_rules.append(rule_name)
-            print(f"  {C.RED}{C.BOLD}!! FAILED:   {rule_name}{C.RESET}")
-            sys.stdout.flush()
+            if rule_name not in failed_set:
+                failed_set.add(rule_name)
+                failed_rules.append(rule_name)
+                print(f"  {C.RED}{C.BOLD}!! FAILED:   {rule_name}{C.RESET}")
+                sys.stdout.flush()
             in_error_block = True
             continue
 
@@ -301,12 +322,12 @@ def run_snakemake_filtered(command, quiet=False):
     if total_jobs is not None:
         n_failed = len(failed_rules)
         if n_failed > 0:
-            print(f"\n  {C.RED}{C.BOLD}Pipeline: {finished_jobs}/{total_jobs} steps completed, {n_failed} failed.{C.RESET}")
+            print(f"\n  {C.RED}{C.BOLD}Pipeline: {finished_jobs} steps completed, {n_failed} failed.{C.RESET}")
             print(f"  {C.DIM}Check logs/ in the output directory for details.{C.RESET}")
         elif finished_jobs == total_jobs:
             print(f"\n  {C.GREEN}{C.BOLD}Pipeline: all {total_jobs} steps completed successfully.{C.RESET}")
         else:
-            print(f"\n  {C.YELLOW}Pipeline: {finished_jobs}/{total_jobs} steps completed.{C.RESET}")
+            print(f"\n  {C.YELLOW}Pipeline: {finished_jobs} steps completed.{C.RESET}")
     elif process.returncode == 0:
         print(f"  {C.GREEN}Pipeline: nothing to do (all outputs up to date).{C.RESET}")
 
@@ -440,17 +461,17 @@ def run_cite():
 
 def run_status():  
     # This function just presents the summary that is already written into .status.tsv by run_main()
-    print(f"{C.DIM}Info: Initializing status.{C.RESET}")
+    print(f"  {C.DIM}Info: Initializing status.{C.RESET}")
     
     def present_status(path = ".status.tsv"): 
     
         try:
             summary = pd.read_csv(path, delimiter="\t") 
         except pd.errors.EmptyDataError as e:
-            print(f"{C.RED}Error: 1) No status data to present based on the inputted genomes.{C.RESET}")
+            print(f"  {C.DIM}Info: No status data to present based on the inputted genomes.{C.RESET}")
             raise e
         except FileNotFoundError as e:
-            print(f"{C.RED}Error: 2) .status.tsv file does not exist. Please run CompareM2 again with the same input files before calling status.{C.RESET}")
+            print(f"  {C.RED}Error: .status.tsv file does not exist. Please run CompareM2 again with the same input files before calling status.{C.RESET}")
             raise e
         
         summary = summary.dropna(subset=["rule"])
@@ -491,7 +512,7 @@ def run_status():
     
         # If only filtered (downloads, copy etc. ) rules are (were) present, it shouldn't be presented.
         if final.shape[0] == 0:
-            print(f"{C.DIM}Info: 2) No status data to present, based on the inputted genomes.{C.RESET}")
+            print(f"  {C.DIM}Info: No status data to present based on the inputted genomes.{C.RESET}")
             return 1
         
         # Present
@@ -538,7 +559,7 @@ def run_main():
     # Define run commands
     command_main = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" """ + trailing_arguments_concatenated
 
-    command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" """ + trailing_arguments_concatenated_nostatus + """ --until all --summary --quiet all | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv"""
+    command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" """ + trailing_arguments_concatenated_nostatus + """ --until all --summary --quiet all | grep -Pzo "output_file\\tdate\\trule\\tlog-file(.*\\n)*" > .status.tsv"""
     # always leave a .status.tsv file for future interesteds.
     # The reason why it says --until all is to try generating all outputs to see what is really there.
 
@@ -546,9 +567,9 @@ def run_main():
 
     logger.debug(f"Command to run is\n{command_main}")
 
-    # Run comparem2 main pipeline (pass through unfiltered for dry runs)
+    # Run comparem2 main pipeline
     if is_dry_run:
-        returncode_main = subprocess.run(command_main, shell=True).returncode
+        returncode_main = run_snakemake_filtered(command_main, dry_run=True)
     else:
         returncode_main = run_snakemake_filtered(command_main)
 
@@ -569,7 +590,7 @@ def run_report():
     # if os.path.isfile("{output_directory}/metadata.tsv") and os.path.isfile("{output_directory}/.comparem2_void_report.flag"):  # Should be moved to the report pipeline itself.
 
     if os.path.isfile(".report_config.yaml"):
-        print(f"{C.DIM}Info: Initializing dynamic report subpipeline.{C.RESET}")
+        print(f"  {C.DIM}Info: Initializing dynamic report subpipeline.{C.RESET}")
         run_snakemake_filtered(command_report, quiet=True)
     else:
         #print("Pipeline: .report_config.yaml has not yet been created.") # This happens when doing a dry-run in a new dir.
