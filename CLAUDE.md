@@ -15,11 +15,23 @@ Three-layer design:
 
 Key config: `config/config.yaml`. Passthrough parameters use `set_` prefix to forward tool-specific arguments (e.g., `set_iqtree--boot: 100`).
 
+**N-dependent output selection:** `generate_final_output(N)` in the Snakefile conditionally selects which analyses to run based on number of input genomes:
+- N=0: database downloads only
+- N≥1: singular analyses (annotation, QC, functional annotation)
+- N≥2: pairwise comparisons (panaroo, SNP-dists, mashtree, treecluster)
+- N≥3: phylogenetics (fasttree, IQtree, bootstrap mashtree)
+
+**Dynamic report trigger:** Every successful rule appends a timestamp to `{output_directory}/.comparem2_void_report.flag`. The launcher runs the report sub-pipeline after the main pipeline, and the report checks this flag's modification time to decide whether to rebuild. Report sections are individual RMarkdown files (`dynamic_report/workflow/section_*.rmd`).
+
 Conda environments for each tool live in `workflow/envs/*.yaml` (25 YAML files). Execution profiles (conda vs apptainer, local vs HPC) are in `profile/`.
 
 **Execution modes:** Local conda, HPC (SLURM/PBS profiles in `profile/`), or containerized (Docker/Apptainer).
 
+**Local rules** (run on login node, not compute): `get_ncbi`, `metadata`, `annotate`, download rules, `report`, `report_env`, `bakta_env`.
+
 ## Development Setup
+
+Requires `snakemake-minimal <8`, `python <3.12`, `mamba <2`, `pandas` (see `environment.yaml`).
 
 ```bash
 cd ~
