@@ -155,13 +155,6 @@ comparem2 --config set_prokka--kingdom=archaea set_panaroo--threshold=0.95 --unt
 
 The [default passthrough arguments](https://github.com/cmkobel/CompareM2/blob/master/config/config.yaml) can be overridden by specifying the same key on the command line.
 
-!!! note
-    Passthrough arguments require a modification to Snakemake to accept special characters in config strings. Run this command (included in the bioconda package) to enable it:
-    ```
-    enable_passthrough_parameters_comparem2
-    ```
-    Without this, Snakemake will report: "Invalid config definition: Config entry must start with a valid identifier."
-
 ### Validating passthrough arguments
 
 Use `-p --dry-run` to preview the generated shell commands and verify that your arguments are being passed correctly:
