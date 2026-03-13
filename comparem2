@@ -56,10 +56,11 @@ This "binary" file works instead of the alias that has been previously used.
 
 
 import logging
-import os 
+import os
 import sys
 import subprocess
 import shutil
+import shlex
 #import parse_status
 import pandas as pd
 import random # for tips
@@ -165,8 +166,8 @@ except KeyError as e:
 
 # Concatenate the trailing command line arguments to add to the snakemake command.
 trailing_arguments = sys.argv[1:]
-trailing_arguments_concatenated = " ".join(trailing_arguments)
-trailing_arguments_concatenated_nostatus = " ".join([i for i in trailing_arguments if i != "--status"]) # Don't propagate --status to snakemake as it is only understood by CompareM2.
+trailing_arguments_concatenated = " ".join(shlex.quote(a) for a in trailing_arguments)
+trailing_arguments_concatenated_nostatus = " ".join(shlex.quote(a) for a in trailing_arguments if a != "--status") # Don't propagate --status to snakemake as it is only understood by CompareM2.
 
 logger.debug(f"The concatenated trailing arguments are {trailing_arguments_concatenated}")
 
