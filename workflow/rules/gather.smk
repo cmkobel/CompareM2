@@ -82,10 +82,10 @@ rule get_ncbi: # Per sample
                     echo $accession >> {output_directory}/.ncbi_cache/failed_transfers.tsv
                     
                     # Create empty file to continue analysis
-                    mkdir -p results_comparem2/.ncbi_cache/accessions/${{accession}}
-                    
+                    mkdir -p {output_directory}/.ncbi_cache/accessions/${{accession}}
+
                     warning_msg_jsonl="{{'assemblyAccession':'$accession','CM2_warning_message':'$warning_msg'}}"
-                    echo $warning_msg_jsonl > results_comparem2/.ncbi_cache/accessions/${{accession}}/sequence_report.jsonl
+                    echo $warning_msg_jsonl > {output_directory}/.ncbi_cache/accessions/${{accession}}/sequence_report.jsonl
                     
                 fi
                 

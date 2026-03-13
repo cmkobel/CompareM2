@@ -567,15 +567,15 @@ rule isolate:
 # Why doesn't this happen on onsuccess and onerror? But does that really matter?
 onstart:
     #print("Info: Writing config for dynamic report pipeline.")
-    shell(f"""
-    
-        echo "# config for dynamic report pipeline" > .report_config.yaml
-        echo batch_title: "{batch_title}" >> .report_config.yaml
-        echo output_directory: "{output_directory}" >> .report_config.yaml
-        echo base_variable: "{base_variable}" >> .report_config.yaml
-        echo __version__: "{__version__}" >> .report_config.yaml
-        
-    """)
+    import yaml
+    with open(".report_config.yaml", "w") as f:
+        f.write("# config for dynamic report pipeline\n")
+        yaml.dump({
+            "batch_title": batch_title,
+            "output_directory": output_directory,
+            "base_variable": base_variable,
+            "__version__": __version__,
+        }, f, default_flow_style=False)
     
     
 # TODO: A speedup could be to list the possible locations, and skipping the missing ones. By doing a full run and listing all possible files, these can be easily enlisted.

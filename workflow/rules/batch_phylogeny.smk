@@ -28,16 +28,16 @@ rule mashtree:
 
 # passthrough_parameter_unpack() misreads keys if this rule is named "mashtree_bootstrap". 
 rule bootstrap_mashtree:
-    input: 
+    input:
         metadata = "{output_directory}/metadata.tsv",
         fasta = df["input_file_copy"].tolist(),
-    output: 
+    output:
         tree_boot = "{output_directory}/mashtree/mashtree_bootstrap.newick",
     params:
         passthrough_parameters_bootstrap = passthrough_parameter_unpack("bootstrap_mashtree"),
         passthrough_parameters = passthrough_parameter_unpack("mashtree"),
     conda: "../envs/mashtree.yaml"
-    benchmark: "{output_directory}/benchmarks/benchmark.mashtree.tsv"
+    benchmark: "{output_directory}/benchmarks/benchmark.bootstrap_mashtree.tsv"
     threads: 16 # sweet spot set on thylakoid. Essentially one thread per physical core.
     resources:
         mem_mb = 16000,

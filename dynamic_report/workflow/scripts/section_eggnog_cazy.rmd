@@ -13,11 +13,11 @@ eggnog_annotations = read_tsv(glob_list$eggnog, comment = "##", na = "-", id = "
     select(-file, query = "#query")
 
 
-eggnog_annotations %>% glimpse()
-eggnog_annotations %>% 
-    relocate(CAZy) %>% 
-    drop_na(CAZy) %>% 
-    view()
+# eggnog_annotations %>% glimpse()
+# eggnog_annotations %>%
+#     relocate(CAZy) %>%
+#     drop_na(CAZy) %>%
+#     view()
 
 
 ```
