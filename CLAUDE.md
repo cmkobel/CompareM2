@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 CompareM2 is a Snakemake-based bioinformatics pipeline for comparing microbial genomes (bacteria and archaea, including MAGs). It is **not** a Python package — it is a workflow application with a Python launcher script. It only runs on Linux. It runs 36+ analysis tools and produces a publication-ready HTML report.
 
+User-facing documentation (installation, quick start, usage, analyses) is hosted at https://comparem2.readthedocs.io/ and built from Markdown files in `docs/`.
+
 ## Architecture
 
 Three-layer design:
