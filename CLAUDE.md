@@ -31,9 +31,7 @@ Conda environments for each tool live in `workflow/envs/*.yaml` (25 YAML files).
 
 ## Development Setup
 
-Requires `snakemake-minimal <8`, `python <3.12`, `mamba <2`, `pandas` (see `environment.yaml`).
-
-### Using pixi (preferred)
+Install CompareM2 and its dependencies using pixi (`pixi.toml`):
 
 ```bash
 cd ~/comparem2
@@ -41,50 +39,33 @@ pixi install
 pixi shell
 ```
 
-This uses `pixi.toml` to install the `comparem2` package from conda-forge/bioconda. Once inside the pixi shell, run CompareM2 directly with the `comparem2` command.
-
-### Using mamba (alternative)
-
-```bash
-cd ~
-git clone https://github.com/cmkobel/comparem2.git comparem2
-cd comparem2
-mamba env create -y -f environment.yaml -n comparem2_dev
-conda activate comparem2_dev
-# Force conda over Apptainer (if Apptainer is installed):
-export COMPAREM2_PROFILE="$(realpath profile/conda/default)"
-```
+Once inside the pixi shell, run CompareM2 directly with the `comparem2` command.
 
 ## Common Commands
 
 ```bash
-# Development testing (conda)
-export COMPAREM2_BASE="$(realpath ~/comparem2)"
-export COMPAREM2_PROFILE="${COMPAREM2_BASE}/profile/conda/default"
-${COMPAREM2_BASE}/comparem2 --config input_genomes="${COMPAREM2_BASE}/tests/E._faecium/*.fna" --until fast
-
-# Same but with apptainer
-export COMPAREM2_PROFILE="${COMPAREM2_BASE}/profile/apptainer/default"
+# Development testing
+comparem2 --config input_genomes="tests/E._faecium/*.fna" --until fast
 
 # Dry run (validate pipeline structure)
-./comparem2 --config input_genomes="*.fna" --dry-run
+comparem2 --config input_genomes="*.fna" --dry-run
 
 # Run up to a specific rule
-./comparem2 --until <rule_name>
+comparem2 --until <rule_name>
 
 # Show pipeline status
-./comparem2 --status
+comparem2 --status
 
 # Download databases
-./comparem2 --downloads
+comparem2 --downloads
 
 # Generate DAG visualization
-conda install anaconda::graphviz
-./comparem2 --forceall --rulegraph | dot -Tpng > dag.png
+pixi add graphviz
+comparem2 --forceall --rulegraph | dot -Tpng > dag.png
 
 # Update Dockerfile
 touch dummy1.fa dummy2.fa dummy3.fa
-./comparem2 --config add_ncbi=GCF2987 --containerize | grep -A 10000 "FROM condaforge" | grep -B 10000 "mamba clean --all -y" > Dockerfile
+comparem2 --config add_ncbi=GCF2987 --containerize | grep -A 10000 "FROM condaforge" | grep -B 10000 "mamba clean --all -y" > Dockerfile
 ```
 
 ## Versioning
