@@ -4,7 +4,7 @@ If you have bacterial or archaeal genomes — isolates or MAGs — that you want
 
 ## 1) Install
 
-With [pixi](https://pixi.sh) on a Linux machine:
+With [pixi](https://pixi.prefix.dev/latest/#installation) on a Linux machine:
 
 ```bash
 pixi global install -c conda-forge -c bioconda comparem2

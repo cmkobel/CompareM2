@@ -9,7 +9,7 @@ It is recommended to have [Apptainer](https://Apptainer.org/docs/user/main/quick
 
 <img width="150" align="right" src="https://raw.githubusercontent.com/cmkobel/CompareM2/refs/heads/master/resources/pixi-logo.svg">
 
-First, install [pixi](https://pixi.sh) — a fast package manager for conda-forge and bioconda packages.
+First, install [pixi](https://pixi.prefix.dev/latest/#installation) — a fast package manager for conda-forge and bioconda packages.
 
 Then install CompareM2 globally:
 
