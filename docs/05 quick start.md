@@ -4,11 +4,11 @@ If you have a set of bacterial or archaeal genomes, either MAGs or isolates, tha
 
 ## 1) Install
 
-Assuming you already have [conda/mamba installed](https://github.com/conda-forge/miniforge#install) on your linux machine, CompareM2 can be installed in a single step.
+Assuming you already have [pixi installed](https://pixi.sh) on your linux machine, CompareM2 can be installed in a single step.
 
 ```bash
 
-mamba create -c conda-forge -c bioconda -n comparem2 comparem2
+pixi global install -c conda-forge -c bioconda comparem2
 
 ```
 

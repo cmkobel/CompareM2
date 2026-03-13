@@ -1,7 +1,7 @@
 
 # Installation
 
-## Install the bioconda package
+## Install with pixi (recommended)
 
 <img width="150" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/5b06b511-75c4-48cb-8ab8-f29b212ef6df">
 
@@ -9,20 +9,24 @@ It is recommended that you have [Apptainer](https://Apptainer.org/docs/user/main
 
 <img width="150" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/c9d15678-b4a7-42be-b0de-b649479f6d74">
 
-First, you need to install a Conda or Mamba package manager.
-The recommended choice is [Miniforge](https://github.com/conda-forge/miniforge#install) which not only provides the required Python and Conda commands, 
-but also includes Mamba - an extremely fast and robust replacement for the Conda package manager which is highly recommended.
+First, you need to install [pixi](https://pixi.sh) — a fast package manager for conda-forge and bioconda packages.
+
+Then, CompareM2 can be installed globally in a single step:
+
+```bash
+
+pixi global install -c conda-forge -c bioconda comparem2
+
+```
+
+This creates an isolated environment and makes the `comparem2` command available on your PATH.
 
 !!! note
-    In case you don't use Miniforge you can always install Mamba into any other Conda-based Python distribution with:
-    ```
-    conda install -n base -c conda-forge mamba
-    ```
+    If you want to develop new rules in the CompareM2 pipeline, you should consider following [the development version installation instructions](https://github.com/cmkobel/comparem2/blob/master/readme-development.md). The development version contains the full git repository and is purely conda-based so you can affect the next version of the Apptainer-compatible Docker image.
 
+## Alternative: Install with mamba
 
-<img width="150" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/6bc39697-7e90-49a0-a44e-64820f2c1024">
-
-Finally, CompareM2 can be installed into its own environment with the correct channels like so:
+If you prefer using conda/mamba, CompareM2 can also be installed with [Miniforge](https://github.com/conda-forge/miniforge#install):
 
 ```bash
 
@@ -30,11 +34,13 @@ mamba create -c conda-forge -c bioconda -n comparem2 comparem2
 
 ```
 
-Installing into isolated environments is best practice in order to avoid side effects with other packages.
+You will then need to activate the environment before using CompareM2:
 
+```bash
 
-!!! note
-    If you want to develop new rules in the CompareM2 pipeline, you should consider following [the development version installation instructions](https://github.com/cmkobel/comparem2/blob/master/readme-development.md). The development version contains the full git repository and is purely conda-based so you can affect the next version of the Apptainer-compatible Docker image. 
+mamba activate comparem2
+
+```
 
 
 ## Optionally: Testing the installation
@@ -42,9 +48,6 @@ Installing into isolated environments is best practice in order to avoid side ef
 Now you will be able to run CompareM2. You can use the example data in path "tests/MAGs" to check that everything works. The first time you run CompareM2 it will show the message "Pulling singularity image docker://cmkobel/comparem2." This might take some time depending on your network bandwidth as it downloads a +4GB Docker image that contains all the conda environments needed for each analysis.
 
 ```bash
-
-# Activate the newly created conda environment containing the comparem2 launcher.
-mamba activate comparem2
 
 # First, create an empty directory and enter.
 mkdir test_comparem2_install
