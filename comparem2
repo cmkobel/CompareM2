@@ -78,6 +78,28 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 
+# --- Terminal colors ------------------------------------------------
+
+class _Colors:
+    """ANSI color codes. Automatically disabled when stdout is not a terminal."""
+    _enabled = hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+
+    RESET   = "\033[0m"   if _enabled else ""
+    BOLD    = "\033[1m"    if _enabled else ""
+    DIM     = "\033[2m"    if _enabled else ""
+
+    # Foreground
+    RED     = "\033[31m"   if _enabled else ""
+    GREEN   = "\033[32m"   if _enabled else ""
+    YELLOW  = "\033[33m"   if _enabled else ""
+    BLUE    = "\033[34m"   if _enabled else ""
+    MAGENTA = "\033[35m"   if _enabled else ""
+    CYAN    = "\033[36m"   if _enabled else ""
+    WHITE   = "\033[37m"   if _enabled else ""
+
+C = _Colors()
+
+
 # --- Routines ------------------------------------------------------
 
 def print_banner():
@@ -86,7 +108,7 @@ def print_banner():
     try:
         with open(logo_path) as f:
             for line in f:
-                print(line, end="")
+                print(f"{C.BOLD}{C.CYAN}{line}{C.RESET}", end="")
     except FileNotFoundError:
         pass
 
@@ -94,26 +116,26 @@ def print_banner():
     title = os.path.basename(os.getcwd())
 
     print()
-    print("                       github.com/cmkobel/comparem2/issues               ")
-    print("                             comparem2.readthedocs.io                    ")
-    print(f"                                     v{__version__}")
-    print("                                                                         ")
-    print("  Variables                                                              ")
-    print("  ---------                                                              ")
-    print(f"    title         : \"{title}\"")
-    print(f"    base          : \"{COMPAREM2_BASE}\"")
-    print(f"    databases     : \"{COMPAREM2_DATABASES}\"")
-    print("                                                                         ")
-    print("  Available rules                                                        ")
-    print("  ---------------                                                        ")
-    print("    Q.C.          : copy assembly_stats sequence_lengths checkm2         ")
-    print("    Annotate      : prokka bakta                                         ")
-    print("    Adv. annotate : eggnog interproscan dbcan kegg_pathway amrfinderplus ")
-    print("                    mlst gapseq_find antismash                           ")
-    print("    Core-pan      : panaroo                                              ")
-    print("    Phylogenetic  : mashtree fasttree gtdbtk iqtree treecluster snp_dists")
-    print("    Pseudo        : meta isolate downloads fast report                   ")
-    print("  (Use --until <rule> [<rule2>..] to activate only one or more rules)    ")
+    print(f"                       {C.DIM}github.com/cmkobel/comparem2/issues{C.RESET}               ")
+    print(f"                             {C.DIM}comparem2.readthedocs.io{C.RESET}                    ")
+    print(f"                                     {C.BOLD}v{__version__}{C.RESET}")
+    print()
+    print(f"  {C.BOLD}Variables{C.RESET}                                                              ")
+    print(f"  ---------                                                              ")
+    print(f"    title         : {C.CYAN}\"{title}\"{C.RESET}")
+    print(f"    base          : {C.DIM}\"{COMPAREM2_BASE}\"{C.RESET}")
+    print(f"    databases     : {C.DIM}\"{COMPAREM2_DATABASES}\"{C.RESET}")
+    print()
+    print(f"  {C.BOLD}Available rules{C.RESET}                                                        ")
+    print(f"  ---------------                                                        ")
+    print(f"    Q.C.          : {C.CYAN}copy assembly_stats sequence_lengths checkm2{C.RESET}         ")
+    print(f"    Annotate      : {C.CYAN}prokka bakta{C.RESET}                                         ")
+    print(f"    Adv. annotate : {C.CYAN}eggnog interproscan dbcan kegg_pathway amrfinderplus{C.RESET} ")
+    print(f"                    {C.CYAN}mlst gapseq_find antismash{C.RESET}                           ")
+    print(f"    Core-pan      : {C.CYAN}panaroo{C.RESET}                                              ")
+    print(f"    Phylogenetic  : {C.CYAN}mashtree fasttree gtdbtk iqtree treecluster snp_dists{C.RESET}")
+    print(f"    Pseudo        : {C.CYAN}meta isolate downloads fast report{C.RESET}                   ")
+    print(f"  {C.DIM}(Use --until <rule> [<rule2>..] to activate only one or more rules){C.RESET}    ")
     print()
 
 
@@ -164,7 +186,7 @@ def run_snakemake_filtered(command, quiet=False):
             # End of a job block — emit the "started" line
             if in_job_block and current_rule:
                 sample_str = f" ({current_sample})" if current_sample else ""
-                print(f"  >> Started:  {current_rule}{sample_str}")
+                print(f"  {C.YELLOW}>>{C.RESET} Started:  {C.BOLD}{current_rule}{C.RESET}{C.DIM}{sample_str}{C.RESET}")
                 sys.stdout.flush()
                 if current_jobid is not None:
                     job_info[current_jobid] = {'rule': current_rule, 'sample': current_sample}
@@ -182,7 +204,7 @@ def run_snakemake_filtered(command, quiet=False):
             # If we were already in a block that didn't end with blank line, flush it
             if in_job_block and current_rule:
                 sample_str = f" ({current_sample})" if current_sample else ""
-                print(f"  >> Started:  {current_rule}{sample_str}")
+                print(f"  {C.YELLOW}>>{C.RESET} Started:  {C.BOLD}{current_rule}{C.RESET}{C.DIM}{sample_str}{C.RESET}")
                 sys.stdout.flush()
                 if current_jobid is not None:
                     job_info[current_jobid] = {'rule': current_rule, 'sample': current_sample}
@@ -209,7 +231,7 @@ def run_snakemake_filtered(command, quiet=False):
             # Non-indented line means end of block
             in_job_block = False
             sample_str = f" ({current_sample})" if current_sample else ""
-            print(f"  >> Started:  {current_rule}{sample_str}")
+            print(f"  {C.YELLOW}>>{C.RESET} Started:  {C.BOLD}{current_rule}{C.RESET}{C.DIM}{sample_str}{C.RESET}")
             sys.stdout.flush()
             if current_jobid is not None:
                 job_info[current_jobid] = {'rule': current_rule, 'sample': current_sample}
@@ -227,7 +249,7 @@ def run_snakemake_filtered(command, quiet=False):
             sample = info.get('sample')
             sample_str = f" ({sample})" if sample else ""
             finished_jobs += 1
-            print(f"  << Finished: {rule_name}{sample_str}")
+            print(f"  {C.GREEN}<<{C.RESET} Finished: {C.BOLD}{rule_name}{C.RESET}{C.DIM}{sample_str}{C.RESET}")
             sys.stdout.flush()
             continue
 
@@ -237,7 +259,7 @@ def run_snakemake_filtered(command, quiet=False):
             done, total, pct = m.group(1), m.group(2), m.group(3)
             total_jobs = int(total)
             finished_jobs = int(done)
-            print(f"  -- Progress: {done}/{total} steps ({pct}%) done")
+            print(f"  {C.DIM}-- Progress: {done}/{total} steps ({pct}%) done{C.RESET}")
             sys.stdout.flush()
             continue
 
@@ -246,7 +268,7 @@ def run_snakemake_filtered(command, quiet=False):
         if m:
             rule_name = m.group(1)
             failed_rules.append(rule_name)
-            print(f"  !! FAILED:   {rule_name}")
+            print(f"  {C.RED}{C.BOLD}!! FAILED:   {rule_name}{C.RESET}")
             sys.stdout.flush()
             in_error_block = True
             continue
@@ -254,13 +276,13 @@ def run_snakemake_filtered(command, quiet=False):
         # Pass through error details and log file hints
         if in_error_block:
             if re_log_file_hint.match(line):
-                print(f"     {line.strip()}")
+                print(f"     {C.DIM}{line.strip()}{C.RESET}")
                 sys.stdout.flush()
             continue
 
         # Pass through other snakemake errors/warnings
         if re_error_line.match(line):
-            print(f"  !! {line}")
+            print(f"  {C.RED}!! {line}{C.RESET}")
             sys.stdout.flush()
             in_error_block = True
             continue
@@ -270,7 +292,7 @@ def run_snakemake_filtered(command, quiet=False):
     # Flush any remaining job block
     if in_job_block and current_rule:
         sample_str = f" ({current_sample})" if current_sample else ""
-        print(f"  >> Started:  {current_rule}{sample_str}")
+        print(f"  {C.YELLOW}>>{C.RESET} Started:  {C.BOLD}{current_rule}{C.RESET}{C.DIM}{sample_str}{C.RESET}")
         sys.stdout.flush()
 
     process.wait()
@@ -279,14 +301,14 @@ def run_snakemake_filtered(command, quiet=False):
     if total_jobs is not None:
         n_failed = len(failed_rules)
         if n_failed > 0:
-            print(f"\n  Pipeline: {finished_jobs}/{total_jobs} steps completed, {n_failed} failed.")
-            print(f"  Check logs/ in the output directory for details.")
+            print(f"\n  {C.RED}{C.BOLD}Pipeline: {finished_jobs}/{total_jobs} steps completed, {n_failed} failed.{C.RESET}")
+            print(f"  {C.DIM}Check logs/ in the output directory for details.{C.RESET}")
         elif finished_jobs == total_jobs:
-            print(f"\n  Pipeline: all {total_jobs} steps completed successfully.")
+            print(f"\n  {C.GREEN}{C.BOLD}Pipeline: all {total_jobs} steps completed successfully.{C.RESET}")
         else:
-            print(f"\n  Pipeline: {finished_jobs}/{total_jobs} steps completed.")
+            print(f"\n  {C.YELLOW}Pipeline: {finished_jobs}/{total_jobs} steps completed.{C.RESET}")
     elif process.returncode == 0:
-        print("  Pipeline: nothing to do (all outputs up to date).")
+        print(f"  {C.GREEN}Pipeline: nothing to do (all outputs up to date).{C.RESET}")
 
     sys.stdout.flush()
     return process.returncode
@@ -319,10 +341,10 @@ def tip_exit(returncode):
     tips.append("You can add ncbi genomes and annotations to your analysis with `comparem2 --config add_ncbi=<ncbi accession>")
     
     if returncode == 0:
-        print(f"Tip: {random.choice(tips)}") # Be nice. Only print a tip if the run completed successfully.
-        print(f"Done.")
+        print(f"{C.DIM}Tip: {random.choice(tips)}{C.RESET}")
+        print(f"{C.GREEN}{C.BOLD}Done.{C.RESET}")
     else:
-        print(f"Done. Exiting with return code '{returncode}'.")
+        print(f"{C.RED}{C.BOLD}Done. Exiting with return code '{returncode}'.{C.RESET}")
     
     sys.exit(returncode)
 
@@ -418,17 +440,17 @@ def run_cite():
 
 def run_status():  
     # This function just presents the summary that is already written into .status.tsv by run_main()
-    print("Info: Initializing status.")
+    print(f"{C.DIM}Info: Initializing status.{C.RESET}")
     
     def present_status(path = ".status.tsv"): 
     
         try:
             summary = pd.read_csv(path, delimiter="\t") 
         except pd.errors.EmptyDataError as e:
-            print("Error: 1) No status data to present based on the inputted genomes.")
+            print(f"{C.RED}Error: 1) No status data to present based on the inputted genomes.{C.RESET}")
             raise e
         except FileNotFoundError as e:
-            print("Error: 2) .status.tsv file does not exist. Please run CompareM2 again with the same input files before calling status.")
+            print(f"{C.RED}Error: 2) .status.tsv file does not exist. Please run CompareM2 again with the same input files before calling status.{C.RESET}")
             raise e
         
         summary = summary.dropna(subset=["rule"])
@@ -469,18 +491,18 @@ def run_status():
     
         # If only filtered (downloads, copy etc. ) rules are (were) present, it shouldn't be presented.
         if final.shape[0] == 0:
-            print("Info: 2) No status data to present, based on the inputted genomes.")
+            print(f"{C.DIM}Info: 2) No status data to present, based on the inputted genomes.{C.RESET}")
             return 1
         
         # Present
         print()
-        print("  CompareM2 status")
-        print("  ----------------")
-        print("  Below is an overview of the completion of each rule in the CompareM2 pipeline.")
-        print("  This summary was computed last time CompareM2 was run.")
+        print(f"  {C.BOLD}CompareM2 status{C.RESET}")
+        print(f"  {C.DIM}----------------{C.RESET}")
+        print(f"  {C.DIM}Below is an overview of the completion of each rule in the CompareM2 pipeline.{C.RESET}")
+        print(f"  {C.DIM}This summary was computed last time CompareM2 was run.{C.RESET}")
         print()
         print(final.to_string(index = False))
-        print("//")
+        print(f"{C.DIM}//{C.RESET}")
         
         
         return 0
@@ -547,7 +569,7 @@ def run_report():
     # if os.path.isfile("{output_directory}/metadata.tsv") and os.path.isfile("{output_directory}/.comparem2_void_report.flag"):  # Should be moved to the report pipeline itself.
 
     if os.path.isfile(".report_config.yaml"):
-        print("Info: Initializing dynamic report subpipeline.")
+        print(f"{C.DIM}Info: Initializing dynamic report subpipeline.{C.RESET}")
         run_snakemake_filtered(command_report, quiet=True)
     else:
         #print("Pipeline: .report_config.yaml has not yet been created.") # This happens when doing a dry-run in a new dir.

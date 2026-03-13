@@ -1,5 +1,5 @@
 NAME
-  CompareM2 (a.k.a. "comparem2") - Genomes to report pipeline
+  CompareM2 (a.k.a. "comparem2") - Genomes-to-report pipeline for comparing microbial genomes
 
 SYNOPSIS
   comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
@@ -8,90 +8,163 @@ SYNOPSIS
     [ --printshellcmds ]
     [ --dry-run ]
     [ --status ]
+    [ --downloads ]
     [ --version ]  [ --help ]  [ --cite ]
 
 DESCRIPTION
-  Analyses bacterial and archaeal genomes.
-  Based on snakemake, so you can use the same command line arguments.
+  Analyses bacterial and archaeal genomes (isolates and MAGs).
+  Based on Snakemake, so you can use any Snakemake-compatible command line arguments.
   Please check github.com/cmkobel/comparem2 for updates, help and to track issues.
-  Comprehensive documentation is available at comparem2.readthedocs.io/en/latest/
-    
+  Comprehensive documentation is available at comparem2.readthedocs.io
+
+  If you use CompareM2 in published work, please cite:
+    Kobel et al. "CompareM2 is a genomes-to-report pipeline for comparing
+    microbial genomes." Bioinformatics 41(9), btaf517 (2025).
+    https://doi.org/10.1093/bioinformatics/btaf517
+
 OPTIONS
   --config KEY=VALUE [KEY2=VALUE]...
-    Pass a parameter to the snakemake pipeline, where the following keys are available, defaults are stated as standard. (Longer explanation in paranthesis.)
-        
-      - input_genomes="*.fna *.fa *.fasta *.fas" (Path to input genomes. As the default value indicates, all fasta type files in the present directory will be analyzed.)
-    
-      - fofn="fofn.txt" (Deactivated by default. When set to a path it overrides key input_genomes.)
-    
-      - output_directory="results_comparem2" (All results are written here.)
-    
-      - annotator="prokka" (Choice of annotation tool. Alternatively "bakta".)
-        
-            
+    Pass parameters to the pipeline. Available keys (defaults shown):
+
+      - input_genomes="*.fna *.fa *.fasta *.fas"
+          Path/glob to input genomes. By default, all fasta files in the
+          current directory are analyzed.
+
+      - fofn="fofn.txt"
+          Deactivated by default. When set to a path, overrides input_genomes.
+          A fofn is a newline-separated list of genome file paths. Lines
+          starting with "#" are ignored.
+
+      - output_directory="results_comparem2"
+          All results are written to this directory.
+
+      - annotator="bakta"
+          Choice of annotation tool. Alternatively "prokka".
+
+      - add_ncbi="GCF_000123456.1,GCF_000789012.1"
+          Deactivated by default. Comma-separated NCBI accessions to download
+          and include in the analysis alongside local genomes.
+
+      - title="My Project"
+          Title used in the report. Defaults to the current directory name.
+
+      - set_<tool><flag>: <value>
+          Passthrough parameters to forward any command line argument to the
+          underlying tools. Flag-only arguments use an empty string.
+          Examples:
+            --config set_iqtree--boot=200
+            --config set_panaroo--clean-mode="strict"
+            --config set_prokka--kingdom=archaea
+          See config/config.yaml for all defaults and the documentation of
+          each tool for available flags.
+
   --until RULE [RULE2]...
-    Select to run up until and including a specific rule in the rule graph. Available rules:
-    abricate annotate antismash assembly_stats bakta checkm2 copy dbcan eggnog fasttree gapseq gapseq_find gtdbtk interproscan iqtree kegg_pathway mashtree mlst prokka sequence_lengths snp_dists treecluster antismash_download bakta_download checkm2_download dbcan_download eggnog_download gtdb_download panaroo
-        
-    There are also a number of pseudo rules, effectively "shortcuts" to a list of rules.
-      - downloads   (Run rules that download and setup up necessary databases.)
+    Run up until and including specific rules. Available rules:
+
+    Quality control:
+      assembly_stats checkm2 copy sequence_lengths
+
+    Annotation:
+      annotate bakta prokka
+
+    Advanced annotation:
+      amrfinder antismash carveme dbcan eggnog gapseq_find gapseq_fill
+      gapseq_pan interproscan kegg_pathway
+
+    Core-pan genome:
+      panaroo snp_dists
+
+    Phylogenetic:
+      bootstrap_mashtree fasttree gtdbtk iqtree mashtree treecluster
+
+    Clinical:
+      amrfinder mlst
+
+    Database downloads:
+      amrfinder_download antismash_download bakta_download checkm2_download
+      dbcan_download eggnog_download gtdb_download
+
+    Pseudo rules (shortcuts):
+      - downloads   (Download and set up all necessary databases.)
       - fast        (Only rules that complete within a few seconds. Useful for testing.)
-      - isolate     (Only rules that are relevant for genomes of isolate origin.)
-      - meta        (Only rules that are relevant for genomes "MAGs" of metagenomic origin.)
-      - report      (Re-renders the report.)
-          
+      - isolate     (Only rules relevant for isolate genomes.)
+      - meta        (Only rules relevant for MAGs of metagenomic origin.)
+      - report      (Re-render the report.)
+
   --forcerun RULE [RULE2]...
-    Force rerunning of one or more rules that already have been completed. This is generally necessary when changing running parameters in the config (see "--config" above).
-    
+    Force rerunning of completed rules. Necessary when changing tool
+    parameters via --config set_<tool> options.
+
   --downloads
     Download all databases without performing any analyses.
-    
-  --printshellcmds, -p
-    Print the full generated shell commands of each rule in the workflow. 
-    
-  --dry-run
-    Run a "dry run": Shows what will run without doing it.
 
-  --version, -v 
+  --printshellcmds, -p
+    Print the full generated shell commands of each rule.
+
+  --dry-run, -n
+    Show what will run without executing anything.
+
+  --version, -v
     Show current version.
 
   --status
-    Print the state of completion of the rules in the pipeline of the current working directory. The percentage of completed files are shown.
-    
+    Print the completion state of each rule for the current working directory.
+
+  --cite
+    Show citation information.
+
   --help, -h
     Show this help and exit.
-        
-ENVIRONMENT VARIABLES
-  No environment variables are strictly necessary to set, but the following might be useful:
-    - COMPAREM2_PROFILE (default "profile/apptainer/local") specifies which of the Snakemake profiles to use. This can be useful for running CompareM2 on a HPC or using specific settings on a large workstation. Check out the bundled profiles in path profile/* (possibly in $CONDA_PREFIX/comparem2/profile/*).
-    
-    - COMPAREM2_DATABASES (default "databases/") specifies a database location. Useful when sharing a database installation between various users on the same workstation or HPC.
-  
-OUTPUT
-  Creates a directory named "results_comparem2/" (or what the output_directory parameter is set to) that contains all of the analysis results that are computed.
 
-        
+ENVIRONMENT VARIABLES
+  No environment variables are strictly necessary. CompareM2 auto-detects
+  whether to use Apptainer or Conda. The following can be useful:
+
+    - COMPAREM2_PROFILE
+        Specifies which Snakemake profile to use. Defaults to
+        "profile/apptainer/default" if Apptainer is available, otherwise
+        "profile/conda/default". Useful for running on HPC clusters (SLURM,
+        PBS) or with custom settings. See profile/* for bundled profiles.
+
+    - COMPAREM2_DATABASES
+        Specifies a database location. Defaults to "databases/" relative to
+        the CompareM2 installation. Useful when sharing databases between
+        users on a workstation or HPC.
+
+OUTPUT
+  Creates a directory named "results_comparem2/" (or the value of
+  output_directory) containing all analysis results and a dynamic HTML report.
+  Per-rule log files are written to the logs/ subdirectory within the output
+  directory for debugging.
+
 EXAMPLES
-  - Run all analyses with specified input genomes.
+  Run all analyses with specified input genomes:
     comparem2 --config input_genomes="path/to/genomes_*.fna"
 
-  - Use a "fofn" - a file of file names. 
+  Use a file-of-filenames:
     comparem2 --config fofn="my_fofn.txt"
 
-  - Use custom output dir. (default is "results_comparem2")
-    comparem2 --config input_genomes="path/to/genomes_*.fna" output_directory="my_analysis"
+  Use a custom output directory:
+    comparem2 --config input_genomes="*.fna" output_directory="my_analysis"
 
-  - Run a "dry run".
-    comparem2 --config input_genomes="path/to/genomes_*.fna" --dry-run
+  Perform a dry run:
+    comparem2 --config input_genomes="*.fna" --dry-run
 
-  - Specify annotator. (default is "prokka")
-    comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta"
+  Use bakta annotator (default) with specific settings:
+    comparem2 --config input_genomes="*.fna" annotator="bakta"
 
-  - Run only the "fast" rules.
-    comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast
+  Run only the fast rules:
+    comparem2 --config input_genomes="*.fna" --until fast
 
-  - Run panaroo as well.
-    comparem2 --config input_genomes="path/to/genomes_*.fna" annotator="bakta" --until fast panaroo
+  Run fast rules plus panaroo:
+    comparem2 --config input_genomes="*.fna" --until fast panaroo
 
-LICENSE:
-  CompareM2 "comparem2" genomes to report pipeline. Copyright (C) 2019-2024 Carl M. Kobel and contributors GNU GPL v3 
+  Include NCBI reference genomes:
+    comparem2 --config input_genomes="*.fna" add_ncbi="GCF_000005845.2"
+
+  Override tool parameters:
+    comparem2 --config input_genomes="*.fna" set_iqtree--boot=1000
+
+LICENSE
+  CompareM2 "comparem2" genomes-to-report pipeline.
+  Copyright (C) 2019-2026 Carl M. Kobel and contributors. GNU GPL v3.
