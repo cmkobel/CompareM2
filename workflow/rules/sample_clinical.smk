@@ -4,8 +4,9 @@ rule amrfinder:
         faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa",
         database_representative = DATABASES + f"/cm2_v{version_minor}/amrfinder/comparem2_amrfinder_database_representative.flag"
         #metadata = "{output_directory}/metadata.tsv",
-    output: 
+    output:
         table = "{output_directory}/samples/{sample}/amrfinder/{sample}_amrfinder.tsv",
+    log: "{output_directory}/logs/amrfinder_{sample}.log"
     params:
         passthrough_parameters = passthrough_parameter_unpack("amrfinder")
     threads: 1
@@ -14,7 +15,8 @@ rule amrfinder:
     conda: "../envs/amrfinder.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.sequence_lengths_sample.{sample}.tsv"
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number.
         echo "amrfinder $(amrfinder --version)" > "$(dirname {output.table})/.software_version.txt"
         

@@ -7,6 +7,7 @@ rule interproscan:
         # No external database is needed.
     output:
         tsv = "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan.tsv",
+    log: "{output_directory}/logs/interproscan_{sample}.log"
     params:
         file_base = "{output_directory}/samples/{sample}/interproscan/{sample}_interproscan",
         passthrough_parameters = passthrough_parameter_unpack("interproscan")
@@ -16,7 +17,8 @@ rule interproscan:
     resources: 
         mem_mb = 8000
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number.
         interproscan.sh --version | grep version > "$(dirname {output.tsv})/.software_version.txt"
 
@@ -40,9 +42,10 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
         aminoacid = "{output_directory}/samples/{sample}/.annotation/{sample}.faa",
         database_representative = DATABASES + f"/cm2_v{version_minor}/dbcan/comparem2_dbcan_database_representative.flag"
         #metadata = "{output_directory}/metadata.tsv",
-    output: 
+    output:
         overview_table = "{output_directory}/samples/{sample}/dbcan/overview.txt",
         diamond_table = "{output_directory}/samples/{sample}/dbcan/diamond.out"
+    log: "{output_directory}/logs/dbcan_{sample}.log"
     params: 
         out_dir = "{output_directory}/samples/{sample}/dbcan"
     conda: "../envs/dbcan.yaml" # Not sure if it should be called by a version number?
@@ -51,7 +54,8 @@ rule dbcan: # I can't decide whether this rule should really be called "run_dbca
     resources: 
         mem_mb = 8000
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number.
         conda list | grep dbcan > "$(dirname {output.overview_table})/.software_version.txt" # Todo, test on docker.
         
@@ -90,6 +94,7 @@ rule eggnog:
         orthologs = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.seed_orthologs",
         tsv = "{output_directory}/samples/{sample}/eggnog/{sample}.emapper.annotations",
         # 2.1.12: {sample}.emapper.decorated.gff, {sample}.emapper.hits, {sample}.emapper.seed_orthologs, {sample}.emapper.annotations,
+    log: "{output_directory}/logs/eggnog_{sample}.log"
     params:
         passthrough_parameters = passthrough_parameter_unpack("eggnog")
     conda: "../envs/eggnog.yaml"
@@ -98,7 +103,8 @@ rule eggnog:
         mem_mb = 8192,
     threads: 16 # At least for diamond, parellel computation is efficient.
     shell: """
-        
+        exec > {log} 2>&1
+
         # https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2.1.5-to-v2.1.12#basic-usage
         
         # Collect version number.
@@ -140,13 +146,15 @@ rule gapseq_find:
         pathways = "{output_directory}/samples/{sample}/gapseq/{sample}-all-Pathways.tbl",
         reactions = "{output_directory}/samples/{sample}/gapseq/{sample}-all-Reactions.tbl",
         transporter = "{output_directory}/samples/{sample}/gapseq/{sample}-Transporter.tbl",
+    log: "{output_directory}/logs/gapseq_find_{sample}.log"
     conda: "../envs/gapseq.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.gapseq_find.{sample}.tsv"
     resources:
         mem_mb = 8192,
     threads: 2
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number.
         gapseq -v | awk '{{ print "gapseq", $0 }}' > "$(dirname {output.pathways})/.software_version.txt"
         
@@ -182,15 +190,16 @@ rule gapseq_fill: # Continuation on gapseq_find results.
         transporter = "{output_directory}/samples/{sample}/gapseq/{sample}-Transporter.tbl",
         #metadata = "{output_directory}/metadata.tsv",
     output:
-        rxnWeights = "{output_directory}/samples/{sample}/gapseq/{sample}-rxnWeights.RDS", 
+        rxnWeights = "{output_directory}/samples/{sample}/gapseq/{sample}-rxnWeights.RDS",
         rxnXgenes = "{output_directory}/samples/{sample}/gapseq/{sample}-rxnXgenes.RDS",
         draft = "{output_directory}/samples/{sample}/gapseq/{sample}-draft.RDS",
         draft_xml = "{output_directory}/samples/{sample}/gapseq/{sample}-draft.xml",
-    
+
         medium = "{output_directory}/samples/{sample}/gapseq/{sample}-medium.csv",
-    
+
         #filled = "{output_directory}/samples/{sample}/gapseq/{sample}.tbl",
         filled_xml = "{output_directory}/samples/{sample}/gapseq/{sample}.xml"
+    log: "{output_directory}/logs/gapseq_fill_{sample}.log"
     params:
         dir = "{output_directory}/samples/{sample}/gapseq",
         passthrough_parameters_draft = passthrough_parameter_unpack("gapseq_fill_draft"),
@@ -203,7 +212,8 @@ rule gapseq_fill: # Continuation on gapseq_find results.
         mem_mb = 8192,
     threads: 1 # Gapseq is very badly optimized, so mostly runs with 4% CPU load on a single core anyway. 
     shell: """
-    
+        exec > {log} 2>&1
+
         echo "1) Drafting ..."
 
         # Produces *-rxnWeights.RDS, *-rxnXgenes.RDS, *-draft.RDS, *-draft.xml
@@ -279,6 +289,7 @@ rule antismash:
         #metadata = "{output_directory}/metadata.tsv",
     output:
         json = "{output_directory}/samples/{sample}/antismash/{sample}.json",
+    log: "{output_directory}/logs/antismash_{sample}.log"
     params:
         DATABASES = DATABASES,
         dir = "{output_directory}/samples/{sample}/antismash",
@@ -288,7 +299,8 @@ rule antismash:
         mem_mb = 8192,
     threads: 8
     shell: """
-    
+        exec > {log} 2>&1
+
         # Clean directory. Antismash will fail if previous files exist.
         rm -rf $(dirname {output.json})/* || echo "Continuing ..."
         
@@ -316,12 +328,14 @@ rule carveme: # Gapseq is too slow.
         faa = "{output_directory}/samples/{sample}/.annotation/{sample}.faa",
     output:
         xml = "{output_directory}/samples/{sample}/carveme/{sample}_carveme.xml",
+    log: "{output_directory}/logs/carveme_{sample}.log"
     conda: "../envs/carveme.yaml"
     params:
         passthrough_parameters = passthrough_parameter_unpack("carveme"),
     benchmark: "{output_directory}/benchmarks/benchmark.carveme_sample.{sample}.tsv"
     shell: """
-    
+        exec > {log} 2>&1
+
         carve --help || echo OK
         
         # Build a model and gapfil it proritizing the reactions selected for gap-filling based on genetic evidence.

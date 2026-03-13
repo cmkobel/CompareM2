@@ -40,6 +40,7 @@ rule mlst:
         metadata = "{output_directory}/metadata.tsv",
         fasta = df["input_file_copy"].tolist(),
     output: "{output_directory}/mlst/mlst.tsv",
+    log: "{output_directory}/logs/mlst.log"
     params:
         passthrough_parameters = passthrough_parameter_unpack("mlst"),
         list_ = "{output_directory}/mlst/mlst_schemes.txt", 
@@ -47,7 +48,8 @@ rule mlst:
     conda: "../envs/mlst.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.mlst.tsv"
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number.
         mlst -v > "$(dirname output.ncbi_detailed)/.software_version.txt"
 

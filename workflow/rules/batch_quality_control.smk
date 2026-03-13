@@ -1,17 +1,19 @@
 
 
 rule assembly_stats:
-    input: 
+    input:
         metadata = "{output_directory}/metadata.tsv",
         fasta = df["input_file_copy"].tolist(),
     output: "{output_directory}/assembly-stats/assembly-stats.tsv"
+    log: "{output_directory}/logs/assembly_stats.log"
     conda: "../envs/assembly-stats.yaml"
     benchmark: "{output_directory}/benchmarks/benchmarks.assembly_stats.tsv"
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number.
         echo "assembly-stats $(assembly-stats -v)" > "$(dirname {output})/.software_version.txt"
-        
+
         assembly-stats \
             -t \
             {input.fasta:q} > {output:q}
@@ -27,6 +29,7 @@ rule checkm2:
         fasta = df["input_file_copy"].tolist()
     output:
         table = touch("{output_directory}/checkm2/quality_report.tsv"),
+    log: "{output_directory}/logs/checkm2.log"
     conda: "../envs/checkm2.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.checkm2.tsv"
     threads: 8
@@ -37,13 +40,14 @@ rule checkm2:
         rule_dir = output_directory + "/checkm2",
         base_variable = base_variable,
     shell: """
+        exec > {log} 2>&1
 
         # Collect version number.
         echo "checkm2 $(checkm2 --version)" > "$(dirname {output})/.software_version.txt"
-        
+
         # Collect database version.
         echo -e "$(date -Iseconds)\t$(dirname {input.database_representative})" > "$(dirname {output.table})/.database_version.txt"
-        
+
         checkm2 predict \
             --threads {threads} \
             --input {input.fasta:q} \

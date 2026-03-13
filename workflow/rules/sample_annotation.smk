@@ -126,6 +126,7 @@ rule prokka:
         tsv = "{output_directory}/samples/{sample}/prokka/{sample}.tsv",
         gbk = "{output_directory}/samples/{sample}/prokka/{sample}.gbk",
         gff_nofasta = "{output_directory}/samples/{sample}/prokka/{sample}.gff_nofasta", # Might come in handy.
+    log: "{output_directory}/logs/prokka_{sample}.log"
     params:
         passthrough_parameters = passthrough_parameter_unpack("prokka")
     conda: "../envs/prokka.yaml"
@@ -134,7 +135,8 @@ rule prokka:
         mem_mb = 8192,
     threads: 4
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number.
         prokka --version > "$(dirname {output.gff})/.software_version.txt"
         
@@ -168,6 +170,7 @@ rule bakta:
         ffn = "{output_directory}/samples/{sample}/bakta/{sample}.ffn",
         #gff_generic = "{output_directory}/samples/{sample}/annotation/{sample}.gff3",
         # no gbk file?
+    log: "{output_directory}/logs/bakta_{sample}.log"
     params:
         DATABASES = DATABASES,
         passthrough_parameters = passthrough_parameter_unpack("bakta")
@@ -177,7 +180,8 @@ rule bakta:
         mem_mb = 16384,
     threads: 4
     shell: """
-                        
+        exec > {log} 2>&1
+
         # Collect version number.
         bakta --version > "$(dirname {output.gff})/.software_version.txt"
         

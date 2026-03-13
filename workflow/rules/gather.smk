@@ -9,8 +9,9 @@ ncbi_cache_misses = [sample for sample in df[df["origin"] == "ncbi"]["sample"].t
 
 # rule get_ncbi downloads to a cache, from which copy copies from. The cache is flat and not arranged by download.
 rule get_ncbi: # Per sample
-    output: 
+    output:
         marker = [ncbi_marker_path(sample) for sample in ncbi_cache_misses],
+    log: output_directory + "/logs/get_ncbi.log"
     conda: "../envs/ncbi_datasets.yaml"
     params:
         path_zip = f"{output_directory}/.ncbi_cache/download/ncbi_dataset.zip", # Deleted after decompression.
@@ -19,7 +20,8 @@ rule get_ncbi: # Per sample
         accessions_joined_newline = "\n".join(ncbi_cache_misses), 
         n_accessions = len(ncbi_cache_misses)
     shell: """
-    
+        exec > {log} 2>&1
+
         # Since this rule has no inputs or outputs when there is no missing accessions, we need to handle running without accessions.
         if [ {params.n_accessions} -gt 0 ]; then
             

@@ -61,6 +61,8 @@ import sys
 import subprocess
 import shutil
 import shlex
+import re
+import threading
 #import parse_status
 import pandas as pd
 import random # for tips
@@ -77,6 +79,218 @@ logger.addHandler(console_handler)
 
 
 # --- Routines ------------------------------------------------------
+
+def print_banner():
+    """Print the CompareM2 banner once from the launcher."""
+    logo_path = os.path.join(COMPAREM2_BASE, "resources", "logo.txt")
+    try:
+        with open(logo_path) as f:
+            for line in f:
+                print(line, end="")
+    except FileNotFoundError:
+        pass
+
+    # Title defaults to the CWD basename, same logic as in the Snakefile
+    title = os.path.basename(os.getcwd())
+
+    print()
+    print("                       github.com/cmkobel/comparem2/issues               ")
+    print("                             comparem2.readthedocs.io                    ")
+    print(f"                                     v{__version__}")
+    print("                                                                         ")
+    print("  Variables                                                              ")
+    print("  ---------                                                              ")
+    print(f"    title         : \"{title}\"")
+    print(f"    base          : \"{COMPAREM2_BASE}\"")
+    print(f"    databases     : \"{COMPAREM2_DATABASES}\"")
+    print("                                                                         ")
+    print("  Available rules                                                        ")
+    print("  ---------------                                                        ")
+    print("    Q.C.          : copy assembly_stats sequence_lengths checkm2         ")
+    print("    Annotate      : prokka bakta                                         ")
+    print("    Adv. annotate : eggnog interproscan dbcan kegg_pathway amrfinderplus ")
+    print("                    mlst gapseq_find antismash                           ")
+    print("    Core-pan      : panaroo                                              ")
+    print("    Phylogenetic  : mashtree fasttree gtdbtk iqtree treecluster snp_dists")
+    print("    Pseudo        : meta isolate downloads fast report                   ")
+    print("  (Use --until <rule> [<rule2>..] to activate only one or more rules)    ")
+    print()
+
+
+def run_snakemake_filtered(command, quiet=False):
+    """Run a snakemake command and filter its output to show a clean status screen.
+
+    When quiet=True, suppresses all output (for secondary invocations like status summary).
+    Otherwise, parses snakemake's verbose output to show which jobs start, finish, or fail.
+    """
+    if quiet:
+        process = subprocess.run(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return process.returncode
+
+    # Patterns for parsing snakemake output
+    re_rule_start = re.compile(r'^(?:local)?rule (\w+):')
+    re_jobid = re.compile(r'^\s+jobid: (\d+)')
+    re_wildcards = re.compile(r'^\s+wildcards: (.+)')
+    re_job_finished = re.compile(r'^Finished jobid: (\d+) \(Rule: (\w+)\)')
+    re_progress = re.compile(r'^(\d+) of (\d+) steps? \((\d+)%\) done')
+    re_job_error = re.compile(r'^Error in rule (\w+)')
+    re_error_line = re.compile(r'^(Error|WorkflowError|RuleException|MissingOutputException|CalledProcessError|ChildIOException)')
+    re_log_file_hint = re.compile(r'^\s+(log|Log file):')
+
+    process = subprocess.Popen(
+        command, shell=True,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        text=True, bufsize=1
+    )
+
+    # Track job metadata: jobid -> {rule, sample}
+    job_info = {}
+    total_jobs = None
+    finished_jobs = 0
+    failed_rules = []
+
+    # State for parsing job start blocks
+    current_rule = None
+    current_jobid = None
+    current_sample = None
+    in_job_block = False
+    in_error_block = False
+
+    for line in process.stdout:
+        line = line.rstrip('\n')
+
+        # Skip empty lines
+        if not line.strip():
+            # End of a job block — emit the "started" line
+            if in_job_block and current_rule:
+                sample_str = f" ({current_sample})" if current_sample else ""
+                print(f"  >> Started:  {current_rule}{sample_str}")
+                sys.stdout.flush()
+                if current_jobid is not None:
+                    job_info[current_jobid] = {'rule': current_rule, 'sample': current_sample}
+                current_rule = None
+                current_jobid = None
+                current_sample = None
+                in_job_block = False
+            if in_error_block:
+                in_error_block = False
+            continue
+
+        # Match rule start (beginning of job block)
+        m = re_rule_start.match(line)
+        if m:
+            # If we were already in a block that didn't end with blank line, flush it
+            if in_job_block and current_rule:
+                sample_str = f" ({current_sample})" if current_sample else ""
+                print(f"  >> Started:  {current_rule}{sample_str}")
+                sys.stdout.flush()
+                if current_jobid is not None:
+                    job_info[current_jobid] = {'rule': current_rule, 'sample': current_sample}
+            current_rule = m.group(1)
+            current_jobid = None
+            current_sample = None
+            in_job_block = True
+            continue
+
+        # Inside a job block, extract jobid and wildcards
+        if in_job_block:
+            m = re_jobid.match(line)
+            if m:
+                current_jobid = m.group(1)
+                continue
+            m = re_wildcards.match(line)
+            if m:
+                wc_parts = dict(part.split("=", 1) for part in m.group(1).split(", ") if "=" in part)
+                current_sample = wc_parts.get("sample")
+                continue
+            # Stay in block for other indented lines (output, log, reason, etc.)
+            if line.startswith('    ') or line.startswith('\t'):
+                continue
+            # Non-indented line means end of block
+            in_job_block = False
+            sample_str = f" ({current_sample})" if current_sample else ""
+            print(f"  >> Started:  {current_rule}{sample_str}")
+            sys.stdout.flush()
+            if current_jobid is not None:
+                job_info[current_jobid] = {'rule': current_rule, 'sample': current_sample}
+            current_rule = None
+            current_jobid = None
+            current_sample = None
+            # Fall through to process this line
+
+        # Match job finished: "Finished jobid: 4 (Rule: copy)"
+        m = re_job_finished.match(line)
+        if m:
+            jobid = m.group(1)
+            rule_name = m.group(2)
+            info = job_info.pop(jobid, {})
+            sample = info.get('sample')
+            sample_str = f" ({sample})" if sample else ""
+            finished_jobs += 1
+            print(f"  << Finished: {rule_name}{sample_str}")
+            sys.stdout.flush()
+            continue
+
+        # Match progress (e.g., "5 of 12 steps (42%) done")
+        m = re_progress.match(line)
+        if m:
+            done, total, pct = m.group(1), m.group(2), m.group(3)
+            total_jobs = int(total)
+            finished_jobs = int(done)
+            print(f"  -- Progress: {done}/{total} steps ({pct}%) done")
+            sys.stdout.flush()
+            continue
+
+        # Match error in rule
+        m = re_job_error.match(line)
+        if m:
+            rule_name = m.group(1)
+            failed_rules.append(rule_name)
+            print(f"  !! FAILED:   {rule_name}")
+            sys.stdout.flush()
+            in_error_block = True
+            continue
+
+        # Pass through error details and log file hints
+        if in_error_block:
+            if re_log_file_hint.match(line):
+                print(f"     {line.strip()}")
+                sys.stdout.flush()
+            continue
+
+        # Pass through other snakemake errors/warnings
+        if re_error_line.match(line):
+            print(f"  !! {line}")
+            sys.stdout.flush()
+            in_error_block = True
+            continue
+
+        # Everything else is suppressed (tool output, conda activation, etc.)
+
+    # Flush any remaining job block
+    if in_job_block and current_rule:
+        sample_str = f" ({current_sample})" if current_sample else ""
+        print(f"  >> Started:  {current_rule}{sample_str}")
+        sys.stdout.flush()
+
+    process.wait()
+
+    # Print summary
+    if total_jobs is not None:
+        n_failed = len(failed_rules)
+        if n_failed > 0:
+            print(f"\n  Pipeline: {finished_jobs}/{total_jobs} steps completed, {n_failed} failed.")
+            print(f"  Check logs/ in the output directory for details.")
+        elif finished_jobs == total_jobs:
+            print(f"\n  Pipeline: all {total_jobs} steps completed successfully.")
+        else:
+            print(f"\n  Pipeline: {finished_jobs}/{total_jobs} steps completed.")
+    elif process.returncode == 0:
+        print("  Pipeline: nothing to do (all outputs up to date).")
+
+    sys.stdout.flush()
+    return process.returncode
+
 
 def tip_exit(returncode):
     """Generates a random useful tip which can be shown in the end of the pipeline, and exits with the returncode given.""" # Inspired by T. Seemann
@@ -286,50 +500,55 @@ def run_downloads():
     return subprocess.run(command_download, shell = True).returncode
 
 def run_main():
-    
-    
+
+
     # Remove the old .status.tsv file so we don't accidentally show an old status if the main job fails.
     if os.path.exists(".status.tsv"):
-        os.remove(".status.tsv")    
-    
+        os.remove(".status.tsv")
+
+    # Print banner once, then suppress for all snakemake invocations
+    print_banner()
+    os.environ["COMPAREM2_BANNER_SHOWN"] = "1"
+
+    # Determine if this is a dry run (don't filter output in dry-run mode)
+    is_dry_run = any(arg in trailing_arguments for arg in ["--dry-run", "--dryrun", "-n"])
+
     # Define run commands
-    command_main = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml"  """ + trailing_arguments_concatenated 
-    
-    command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" """ + trailing_arguments_concatenated_nostatus + """ --until all --summary --quiet all | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv""" 
+    command_main = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" """ + trailing_arguments_concatenated
+
+    command_status = f"""snakemake --snakefile "{COMPAREM2_BASE}/workflow/Snakefile" --profile "{COMPAREM2_PROFILE}" --configfile "{COMPAREM2_BASE}/config/config.yaml" """ + trailing_arguments_concatenated_nostatus + """ --until all --summary --quiet all | grep -Pzo "output_file\\tdate\\trule\\tversion\\t(.*\\n)*" > .status.tsv"""
     # always leave a .status.tsv file for future interesteds.
     # The reason why it says --until all is to try generating all outputs to see what is really there.
-    
-    
+
+
 
     logger.debug(f"Command to run is\n{command_main}")
-    
-    # Run comparem2 main pipeline
-    print("Info: Initializing main pipeline.")
-    process_main = subprocess.run(command_main, shell = True)
-    process_status = subprocess.run(command_status, shell = True)
-    
-    returncode_main = process_main.returncode
-    returncode_status = process_status.returncode
-    
-    
-    
-    
+
+    # Run comparem2 main pipeline (pass through unfiltered for dry runs)
+    if is_dry_run:
+        returncode_main = subprocess.run(command_main, shell=True).returncode
+    else:
+        returncode_main = run_snakemake_filtered(command_main)
+
+    # Generate status summary (fully quiet - this is just data collection)
+    run_snakemake_filtered(command_status, quiet=True)
+
+
     # Exit with the return code of the main pipeline.
     return returncode_main
 
 
 def run_report():
-    # Run dynamic report pipeline   
-    
+    # Run dynamic report pipeline
+
     command_report = f"""snakemake --snakefile "$COMPAREM2_BASE/dynamic_report/workflow/Snakefile" --profile "$COMPAREM2_PROFILE" --configfile=.report_config.yaml --quiet all""" # todo: Find out why the comparem2_base and profile are formatted differently here.
-    
+
     # Only run report if there is metadata and something is worth rendering.
     # if os.path.isfile("{output_directory}/metadata.tsv") and os.path.isfile("{output_directory}/.comparem2_void_report.flag"):  # Should be moved to the report pipeline itself.
-    
+
     if os.path.isfile(".report_config.yaml"):
         print("Info: Initializing dynamic report subpipeline.")
-        process_report = subprocess.run(command_report, shell = True)
-        returncode_report = process_report.returncode
+        run_snakemake_filtered(command_report, quiet=True)
     else:
         #print("Pipeline: .report_config.yaml has not yet been created.") # This happens when doing a dry-run in a new dir.
         pass

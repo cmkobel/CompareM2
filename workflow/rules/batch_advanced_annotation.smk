@@ -3,15 +3,17 @@ rule kegg_pathway:
     input: 
         kegg_asset = base_variable + "/resources/ko00001.json", # Downloaded from kegg.jp
         eggnog_annotations = expand("{output_directory}/samples/{sample}/eggnog/{sample}.emapper.annotations", sample = df["sample"], output_directory = output_directory)
-    output: 
+    output:
         pathway_enrichment = "{output_directory}/kegg_pathway/kegg_pathway_enrichment_analysis.tsv"
+    log: "{output_directory}/logs/kegg_pathway.log"
     params:
         output_dir = "{output_directory}/kegg_pathway",
         script = base_variable + "/workflow/scripts/kegg_pathway_enrichment_analysis.R"
     conda: "../envs/r-clusterProfiler.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.kegg_pathway.tsv"
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number.
         R -s -q -e "library(clusterProfiler); sessionInfo()"  | grep -P "R version|clusterProfiler" > "$(dirname {output.pathway_enrichment})/.software_version.txt"
 
@@ -35,8 +37,9 @@ rule gtdbtk:
         metadata = "{output_directory}/metadata.tsv",
         database_representative = DATABASES + f"/cm2_v{version_minor}/gtdb/comparem2_gtdb_database_representative.flag",
         fasta = df["input_file_copy"].tolist(),
-    output: 
+    output:
         tsv = "{output_directory}/gtdbtk/gtdbtk.summary.tsv"
+    log: "{output_directory}/logs/gtdbtk.log"
     params:
         batchfile_content = df[['input_file_copy', 'sample_gtdbtk']].to_csv(header = False, index = False, sep = "\t"),
         out_dir = "{output_directory}/gtdbtk/",
@@ -51,7 +54,8 @@ rule gtdbtk:
     conda: "../envs/gtdbtk.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.gtdbtk.tsv"
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number.
         gtdbtk -v | head -n 1 >  "$(dirname {output.tsv})/.software_version.txt"
         
@@ -103,11 +107,12 @@ rule gapseq_pan:
         rxnWeigths = "{output_directory}/gapseq_pan/panModel-rxnWeigths.RDS", # Watch out for the alternative spelling.
         rxnXgenes = "{output_directory}/gapseq_pan/panModel-rxnXgenes.RDS",
 
-        
+    log: "{output_directory}/logs/gapseq_pan.log"
     benchmark: "{output_directory}/benchmarks/benchmark.gapseq_pan.tsv"
     conda: "../envs/gapseq.yaml"
     shell: """
-    
+        exec > {log} 2>&1
+
         echo "Drafting ..."
     
         gapseq pan \

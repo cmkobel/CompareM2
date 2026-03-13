@@ -2,9 +2,10 @@ rule mashtree:
     input: 
         metadata = "{output_directory}/metadata.tsv",
         fasta = df["input_file_copy"].tolist(),
-    output: 
+    output:
         tree = "{output_directory}/mashtree/mashtree.newick",
         dist = "{output_directory}/mashtree/mash_dist.tsv",
+    log: "{output_directory}/logs/mashtree.log"
     params:
         passthrough_parameters = passthrough_parameter_unpack("mashtree")
     conda: "../envs/mashtree.yaml"
@@ -13,7 +14,8 @@ rule mashtree:
     resources:
         mem_mb = 16000,
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number.
         mashtree -v > "$(dirname {output.tree})/.software_version.txt"
         
@@ -33,6 +35,7 @@ rule bootstrap_mashtree:
         fasta = df["input_file_copy"].tolist(),
     output:
         tree_boot = "{output_directory}/mashtree/mashtree_bootstrap.newick",
+    log: "{output_directory}/logs/bootstrap_mashtree.log"
     params:
         passthrough_parameters_bootstrap = passthrough_parameter_unpack("bootstrap_mashtree"),
         passthrough_parameters = passthrough_parameter_unpack("mashtree"),
@@ -42,7 +45,8 @@ rule bootstrap_mashtree:
     resources:
         mem_mb = 16000,
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number.
         mashtree -v > "$(dirname {output.tree_boot})/.software_version.txt"
         
@@ -66,8 +70,9 @@ rule treecluster:
     input: 
         metadata = "{output_directory}/metadata.tsv",
         newick = "{output_directory}/mashtree/mashtree.newick",
-    output: 
+    output:
         table = "{output_directory}/treecluster/treecluster.tsv",
+    log: "{output_directory}/logs/treecluster.log"
     params:
         passthrough_parameters = passthrough_parameter_unpack("treecluster")
     conda: "../envs/treecluster.yaml"
@@ -76,7 +81,8 @@ rule treecluster:
     resources:
         mem_mb = 16000,
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number.
         TreeCluster.py --version > "$(dirname {output})/.software_version.txt"
         
@@ -96,8 +102,9 @@ rule fasttree:
     input:
         metadata = "{output_directory}/metadata.tsv",
         fasta = "{output_directory}/panaroo/core_gene_alignment_verified.aln",
-    output: 
+    output:
         newick = "{output_directory}/fasttree/fasttree.newick"
+    log: "{output_directory}/logs/fasttree.log"
     params:
         passthrough_parameters = passthrough_parameter_unpack("fasttree"),
     conda: "../envs/fasttree.yaml"
@@ -108,7 +115,8 @@ rule fasttree:
         mem_mb = retry_mem(16000, 32000, 64000, 0),
         runtime = "24h",
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number. (Is quite hard for fasttree)
         fasttree -expert 2&> .temp_fasttree_version.txt; grep 'Detailed usage' .temp_fasttree_version.txt > "$(dirname {output.newick})/.software_version.txt"; rm .temp_fasttree_version.txt || echo "error deleting .temp_fasttree_version.txt"
 
@@ -131,8 +139,9 @@ rule iqtree:
     input:
         metadata = "{output_directory}/metadata.tsv",
         fasta = "{output_directory}/panaroo/core_gene_alignment_verified.aln",
-    output: 
+    output:
         newick = "{output_directory}/iqtree/core_genome_iqtree.treefile"
+    log: "{output_directory}/logs/iqtree.log"
     params: 
         passthrough_parameters = passthrough_parameter_unpack("iqtree")
     conda: "../envs/iqtree.yaml"
@@ -143,6 +152,7 @@ rule iqtree:
         mem_mb = 32000,
         runtime = "24h",
     shell: """
+        exec > {log} 2>&1
 
         # Collect version number.
         iqtree --version | grep version > "$(dirname {output.newick})/.software_version.txt"

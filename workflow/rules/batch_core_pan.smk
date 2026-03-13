@@ -16,6 +16,7 @@ rule panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-dists 
         presence = "{output_directory}/panaroo/gene_presence_absence.Rtab",
         #alignment = "{output_directory}/panaroo/core_gene_alignment.aln",
         #analyses = ["{output_directory}/panaroo/summary_statistics.txt", "{output_directory}/panaroo/core_gene_alignment.aln", "{output_directory}/panaroo/gene_presence_absence.csv"]
+    log: "{output_directory}/logs/panaroo.log"
     params:        
         script_summary = base_variable + "/workflow/scripts/panaroo_generate_summary_stats.py",
         passthrough_parameters = passthrough_parameter_unpack("panaroo")
@@ -28,7 +29,8 @@ rule panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-dists 
         runtime = "24h",
     conda: "../envs/panaroo.yaml" 
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number.
         panaroo --version > "$(dirname {output.summary})/.software_version.txt"
             
@@ -53,10 +55,12 @@ rule panaroo: # Checkpoint, because some rules i.e. fasttree, iqtree, snp-dists 
 rule core_genome_checkpoint:
     input: 
         summary = "{output_directory}/panaroo/summary_statistics.txt"
-    output: 
+    output:
         aln = "{output_directory}/panaroo/core_gene_alignment_verified.aln"
+    log: "{output_directory}/logs/core_genome_checkpoint.log"
     shell: """
-    
+        exec > {log} 2>&1
+
         if [ -f "{output_directory}/panaroo/core_gene_alignment.aln" ]; then
             echo "Pipeline: Core genome exists."
             cp "{output_directory}/panaroo/core_gene_alignment.aln" {output.aln}
@@ -74,11 +78,13 @@ rule snp_dists:
         metadata = "{output_directory}/metadata.tsv",
         aln = "{output_directory}/panaroo/core_gene_alignment_verified.aln",
     output: "{output_directory}/snp-dists/snp-dists.tsv"
+    log: "{output_directory}/logs/snp_dists.log"
     conda: "../envs/snp-dists.yaml"
     benchmark: "{output_directory}/benchmarks/benchmark.snp_dists.tsv"
     threads: 4
     shell: """
-    
+        exec > {log} 2>&1
+
         # Collect version number.
         snp-dists -v > "$(dirname {output})/.software_version.txt"
 
