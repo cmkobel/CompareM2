@@ -33,6 +33,18 @@ Conda environments for each tool live in `workflow/envs/*.yaml` (25 YAML files).
 
 Requires `snakemake-minimal <8`, `python <3.12`, `mamba <2`, `pandas` (see `environment.yaml`).
 
+### Using pixi (preferred)
+
+```bash
+cd ~/comparem2
+pixi install
+pixi shell
+```
+
+This uses `pixi.toml` to install the `comparem2` package from conda-forge/bioconda. Once inside the pixi shell, run CompareM2 directly with the `comparem2` command.
+
+### Using mamba (alternative)
+
 ```bash
 cd ~
 git clone https://github.com/cmkobel/comparem2.git comparem2
