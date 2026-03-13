@@ -7,7 +7,7 @@
 
 It is recommended that you have [Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request) on your system as it makes CompareM2 able to use a compressed Docker-image that speeds up installation significantly.
 
-<img width="150" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/c9d15678-b4a7-42be-b0de-b649479f6d74">
+<img width="150" align="right" src="https://raw.githubusercontent.com/cmkobel/CompareM2/refs/heads/master/resources/pixi-logo.svg">
 
 First, you need to install [pixi](https://pixi.sh) — a fast package manager for conda-forge and bioconda packages.
 
