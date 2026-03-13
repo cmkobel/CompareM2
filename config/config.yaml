@@ -60,6 +60,9 @@ set_mashtree--mindepth: 5
 set_mashtree--kmerlength: 21
 set_mashtree--sketch-size: 10000
 
+# mashtree_bootstrap inherits the mashtree arguments from above for running the individual reps.
+set_bootstrap_mashtree--reps: 100
+
 # set_mlst--scheme: abaumannii # abaumannii achromobacter aeromonas afumigatus cdifficile efaecium hcinaedi hparasuis hpylori kpneumoniae leptospira saureus xfastidiosa yersinia ypseudotuberculosis yruckeri
 
 set_panaroo--clean-mode: "sensitive" # Stringency mode.

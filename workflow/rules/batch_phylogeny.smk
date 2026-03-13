@@ -21,7 +21,42 @@ rule mashtree:
             --numcpus {threads} \
             --outmatrix {output.dist:q} \
             {params.passthrough_parameters} \
-            {input.fasta:q} > {output.tree:q}
+            {input.fasta:q} \
+        > {output.tree:q}
+        
+    """ 
+
+# passthrough_parameter_unpack() misreads keys if this rule is named "mashtree_bootstrap". 
+rule bootstrap_mashtree:
+    input: 
+        metadata = "{output_directory}/metadata.tsv",
+        fasta = df["input_file_copy"].tolist(),
+    output: 
+        tree_boot = "{output_directory}/mashtree/mashtree_bootstrap.newick",
+    params:
+        passthrough_parameters_bootstrap = passthrough_parameter_unpack("bootstrap_mashtree"),
+        passthrough_parameters = passthrough_parameter_unpack("mashtree"),
+    conda: "../envs/mashtree.yaml"
+    benchmark: "{output_directory}/benchmarks/benchmark.mashtree.tsv"
+    threads: 16 # sweet spot set on thylakoid. Essentially one thread per physical core.
+    resources:
+        mem_mb = 16000,
+    shell: """
+    
+        # Collect version number.
+        mashtree -v > "$(dirname {output.tree_boot})/.software_version.txt"
+        
+        mashtree_bootstrap.pl \
+            {params.passthrough_parameters_bootstrap} \
+            --numcpus {threads} \
+            {input.fasta} \
+            -- \
+            {params.passthrough_parameters} \
+        > {output.tree_boot}
+        
+        # Info:
+        #  -- Is used to separate options for mashtree_bootstrap.pl and mashtree
+    
 
         {void_report}
         

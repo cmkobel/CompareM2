@@ -4,3 +4,5 @@ channels:
   - bioconda
 dependencies:
   - mashtree =1
+  - bioconda::perl-list-moreutils # Apparently, I'm getting an error when running the bootstrapping, if I don't install this (Can't locate List/MoreUtils.pm in @INC (you may need to install the List::MoreUtils module) (@INC contains:...)
+  

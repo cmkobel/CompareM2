@@ -2,6 +2,7 @@
   - Major: New docker image: Updated gtdbtk to v2.5. (Still using GTDB release 226)
   - Using europe based mirror for downloading the gtdb data package. 
   - Minor changes to gather.smk to avoid errors when partial downloads exist. 
+  - Added new rule: bootstrap_mashtree which uses Katz' internal perl script. 
 
 2.16.2
   - Fixed wrong database path for bakta and antismash
