@@ -57,6 +57,8 @@ pixi shell
 
 Once inside the pixi shell, run CompareM2 directly with the `comparem2` command.
 
+When making bigger changes, run `pixi run test-fast` to validate before committing.
+
 ## Common Commands
 
 ```bash
