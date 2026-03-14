@@ -1,7 +1,11 @@
 name: comparem2_launcher
-channels: 
+channels:
   - conda-forge
   - bioconda
 dependencies:
   - comparem2
-  
+  - snakemake >=9.16
+  - snakemake-executor-plugin-cluster-generic
+  - mamba
+  - conda
+  - pandas
