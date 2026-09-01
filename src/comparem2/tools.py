@@ -52,25 +52,51 @@ class Database:
 
 @dataclass(frozen=True)
 class Context:
-    """Everything a tool needs to build its command line."""
+    """Everything a tool needs to build its command line.
+
+    Inputs are canonicalised: before anything runs, each input assembly is
+    linked to `<workdir>/samples/<sample>/<sample>.fna`, and every tool reads
+    from there. That is what lets the same code render both a real path and a
+    Snakemake wildcard path — build a Context with `sample="{sample}"` and
+    every path comes out templated.
+    """
 
     workdir: Path  # output directory for this run
     databases: Path  # root of the database directory
-    threads: int
-    assemblies: tuple[Path, ...]  # every input assembly
+    # `int` when running for real. During rule generation this is the literal
+    # string "{threads}", so Snakemake substitutes the count it actually
+    # granted — the same substitution trick as `sample="{sample}"`.
+    threads: int | str
+    samples: tuple[str, ...]  # every sample name, in input order
     sample: str | None = None  # set for Scope.GENOME, None for Scope.SET
+    # Tool defaults merged with any user overrides. Carried over from v2's
+    # `set_<tool>--<flag>: <value>` passthrough, which let users reach any
+    # tool argument without the pipeline having to know about it.
+    params: tuple[tuple[str, str], ...] = ()
+
+    def args(self) -> list[str]:
+        """Parameters as a flat argument list, in declaration order.
+
+        A flag with an empty value is emitted bare, so `--verbose: ""` works.
+        """
+        out: list[str] = []
+        for flag, value in self.params:
+            out.append(flag)
+            if value != "":
+                out.append(value)
+        return out
 
     @property
     def assembly(self) -> Path:
-        """The single input assembly. Only valid for Scope.GENOME."""
+        """This sample's canonical assembly. Only valid for Scope.GENOME."""
         if self.sample is None:
             raise ValueError("assembly is only defined for Scope.GENOME tools")
-        return next(a for a in self.assemblies if a.stem == self.sample)
+        return self.sample_out(self.sample, f"{self.sample}.fna")
 
     @property
-    def samples(self) -> tuple[str, ...]:
-        """Every sample name in the run, in input order."""
-        return tuple(a.stem for a in self.assemblies)
+    def assemblies(self) -> list[Path]:
+        """Every sample's canonical assembly, in input order."""
+        return [self.sample_out(s, f"{s}.fna") for s in self.samples]
 
     def out(self, *parts: str) -> Path:
         """A path inside this tool's output directory."""
@@ -100,10 +126,18 @@ class Tool:
     needs: tuple[str, ...] = ()  # names of tools that must finish first
     database: Database | None = None
     threads: int = 1
+    # Default arguments, overridable per run. Values carried from v2's
+    # config.yaml so v3 reproduces v2's behaviour unless told otherwise.
+    params: tuple[tuple[str, str], ...] = ()
+    # Some tools write their result to stdout rather than taking an -o flag.
+    # Commands stay as argument lists — never hand-built shell strings — so the
+    # redirect is declared here and added by whatever runs the command.
+    stdout_to_output: bool = False
 
     def __post_init__(self) -> None:
         if not self.summary:
             raise ValueError(f"{self.name}: summary is required — it is what the report shows")
+
 
 
 class Registry:

@@ -78,11 +78,13 @@ gtdbtk = Tool(
     summary="Taxonomic assignment against the GTDB reference tree.",
     scope=Scope.SET,
     conda=("bioconda::gtdbtk",),
-    # Emits bac120 and ar53 summaries separately; the rule concatenates them
-    # into one table so archaea and bacteria appear together in the report.
+    # Each genome lives in its own directory once inputs are canonicalised, so
+    # --genome_dir cannot be used; the rule writes a batchfile first.
+    # GTDB-Tk also emits bac120 and ar53 summaries separately, and the rule
+    # concatenates them so archaea and bacteria appear in one table.
     command=lambda c: [
         "gtdbtk", "classify_wf", "--cpus", str(c.threads), "--skip_ani_screen",
-        "--genome_dir", str(c.assemblies[0].parent),
+        "--batchfile", str(c.out("gtdbtk", "batchfile.tsv")),
         "--out_dir", str(c.out("gtdbtk")),
     ],
     outputs=lambda c: [c.out("gtdbtk", "gtdbtk.summary.tsv")],
@@ -153,6 +155,7 @@ mlst = Tool(
     conda=("bioconda::mlst",),
     command=lambda c: ["mlst", *[str(a) for a in c.assemblies]],
     outputs=lambda c: [c.out("mlst", "mlst.tsv")],
+    stdout_to_output=True,
 )
 
 
@@ -164,9 +167,13 @@ mashtree = Tool(
     scope=Scope.SET,
     conda=("bioconda::mashtree",),
     command=lambda c: [
-        "mashtree", "--numcpus", str(c.threads), *[str(a) for a in c.assemblies],
+        "mashtree", "--numcpus", str(c.threads), *c.args(),
+        *[str(a) for a in c.assemblies],
     ],
+    params=(("--genomesize", "5000000"), ("--mindepth", "5"),
+            ("--kmerlength", "21"), ("--sketch-size", "10000")),
     outputs=lambda c: [c.out("mashtree", "mashtree.newick")],
+    stdout_to_output=True,
     threads=8,
 )
 
@@ -178,8 +185,10 @@ treecluster = Tool(
     needs=("mashtree",),
     command=lambda c: [
         "TreeCluster.py", "-i", str(c.out("mashtree", "mashtree.newick")),
-        "-o", str(c.out("treecluster", "treecluster.tsv")),
+        "-o", str(c.out("treecluster", "treecluster.tsv")), *c.args(),
     ],
+    # --threshold is mandatory; these are v2's config.yaml defaults.
+    params=(("--method", "max_clade"), ("--threshold", "0.05")),
     outputs=lambda c: [c.out("treecluster", "treecluster.tsv")],
 )
 
@@ -228,6 +237,7 @@ snp_dists = Tool(
         "snp-dists", str(c.out("panaroo", "core_gene_alignment.aln")),
     ],
     outputs=lambda c: [c.out("snp-dists", "snp-dists.tsv")],
+    stdout_to_output=True,
 )
 
 fasttree = Tool(
@@ -241,6 +251,7 @@ fasttree = Tool(
         str(c.out("panaroo", "core_gene_alignment.aln")),
     ],
     outputs=lambda c: [c.out("fasttree", "fasttree.newick")],
+    stdout_to_output=True,
     threads=4,
 )
 

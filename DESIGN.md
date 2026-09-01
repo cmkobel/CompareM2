@@ -105,6 +105,37 @@ v2 downloads `--type full` (30 GB compressed, 84 GB on disk). v3 uses `light`
 (1.3 GB / 3.9 GB, Bakta's documented figures). Saves 29 GB for less specific
 annotation, which a wide view can absorb.
 
+### 2026-09-01 — Vertical slice runs end to end
+seqkit → mashtree → treecluster on v2's four *E. faecium* test genomes,
+on thylakoid (Linux, 24 cores). 7/7 steps, report rendered. This closes the
+central architectural question: **Snakemake rules can be generated from
+declarative specs**, including wildcards, dependencies and stdout redirection.
+
+Sanity checks that the result is real, not merely present: mashtree puts
+`116_2` and `116_2_duplicate` at distance 0.00000, and seqkit derives identical
+statistics for them (2,712,340 bp, 4 contigs, 38.0% GC).
+
+Three bugs the slice caught that no amount of reading would have:
+1. **Bare `{sample}` in a shell block is a runtime NameError.** Snakemake
+   resolves wildcards in `input:`/`output:` but exposes them as
+   `wildcards.sample` inside `shell:`. The Snakefile parsed and built the right
+   DAG, then failed on execution.
+2. **`TreeCluster.py` requires `-t/--threshold`.** The drafted command omitted
+   it. v2's defaults (`max_clade`, `0.05`) were adopted.
+3. **Sample names can contain spaces.** v2's own test set ships
+   `116_2 duplicate.fna`, which produces a silently broken wildcard.
+
+### 2026-09-01 — Passthrough parameters survive from v2
+v2's `set_<tool>--<flag>: <value>` is now `--set tool--flag=value`, backed by a
+`params` field on each `Tool`. Defaults are carried over from v2's
+`config.yaml` verbatim, so v3 reproduces v2's behaviour unless told otherwise.
+
+### 2026-09-01 — Unit tests, which v2 never had
+v2 validated only by running the pipeline in CI. That is the wrong instrument
+for a generator: a wrong wildcard yields a Snakefile that parses cleanly and
+builds the wrong DAG. 26 tests cover name sanitisation, dependency closure,
+rule generation and report rendering. `pixi run pytest tests/unit -q`.
+
 ## Where the install weight actually sits
 
 | Database   | Download   | Note                             |
