@@ -72,14 +72,77 @@ This works *because* the wide decision removed the historical conflict sources;
 re-test before adding any of them back. Note prokka costs roughly twice bakta in
 package weight — it pulls perl and BLAST.
 
+### 2026-09-01 — The tool set: 14 in, 8 out
+Selected tool by tool. v2 had 20; v3 has 14, of which 2 are new.
+
+**Kept** — seqkit, checkm2, gtdbtk, sylph, bakta, amrfinder, mlst, mashtree,
+treecluster, skani, panaroo, snp-dists, fasttree, carveme.
+
+**Dropped** — assembly-stats (seqkit covers it), prokka (bakta only; prokka cost
+0.84 GB more in packages, measured), eggnog, dbcan, interproscan, gapseq,
+iqtree, clusterProfiler (an R package, and R is gone).
+
+**New** — sylph (fast provisional taxonomy while GTDB-Tk runs) and skani
+(all-against-all ANI).
+
+Two decisions worth their reasoning:
+- **carveme in, gapseq out.** Genome-scale metabolic models are the one
+  capability Bactopia, funcscan and DRAM2 all lack. CarveMe keeps it at minutes
+  rather than gapseq's hours. It solves with open-source SCIP — no CPLEX
+  licence — but it was commented out of v2 (`Snakefile:332`), so it needs
+  verifying that it still runs.
+- **antismash dropped.** It was selected, then dropped when it turned out to
+  break the single environment: it pins `biopython 1.78` and `diamond 2.1.11`
+  against the newer numpy/biopython that checkm2, bakta and gtdbtk require.
+  One environment was judged worth more than one BGC caller, especially as
+  funcscan ships four.
+
+Final environment, measured for `linux-64`: **1142 packages, 1.58 GB, no
+conflicts.** Against v2's 25 environments.
+
+### 2026-09-01 — Bakta light, not full
+v2 downloads `--type full` (30 GB compressed, 84 GB on disk). v3 uses `light`
+(1.3 GB / 3.9 GB, Bakta's documented figures). Saves 29 GB for less specific
+annotation, which a wide view can absorb.
+
+## Where the install weight actually sits
+
+| Database   | Download   | Note                             |
+| ---------- | ---------: | -------------------------------- |
+| GTDB-Tk    | 141.4 GB   | measured; 91% of the total       |
+| CheckM2    |    1.7 GB  | measured                         |
+| Bakta light|    1.3 GB  | documented, not measured         |
+| AMRFinder  |  unmeasured| `amrfinder -u`, no static URL    |
+| sylph GTDB |  unmeasured| release not yet chosen           |
+| *software* |    1.58 GB | measured, one environment        |
+
+The environment is slim. The data is not, and GTDB-Tk is the whole reason.
+Making it opt-in was offered twice and declined twice; it stays in the default
+path. If "easy to install" ever has to be defended, this is the line item.
+
 ## Open questions
 - **Taxonomy.** The single largest install cost. GTDB-Tk is authoritative and
   141.4 GB; sylph/skani/mash-against-GTDB are fast and small but approximate.
   Candidates not yet measured.
-- **Tool set.** Selected manually by Carl. Not yet chosen.
-- **Taxonomy.** The single largest install cost, and the one decision that can
-  undo the numbers above. GTDB-Tk is authoritative and 141.4 GB; sylph and skani
-  are fast, small and approximate. Unresolved.
+- **Every command line in `catalogue.py` is unverified.** They were written
+  against documented interfaces, never executed — the tools are linux-64 and
+  the selection was made on macOS. This is the largest single risk in the
+  rewrite and should be the next thing closed.
+- **Three database sizes are unmeasured**: bakta-light (documented as 1.3 GB but
+  not measured), amrfinder, and sylph's GTDB sketch. Measure before any total is
+  shown to a user.
+- **sylph's GTDB release** is unchosen, and it should match GTDB-Tk's r226 or
+  the two tools will disagree about taxonomy in confusing ways.
+- **CarveMe needs verifying**: that it runs at all (it was disabled in v2), and
+  whether DIAMOND must be supplied explicitly — it is absent from CarveMe's
+  dependency closure, and v2 shipped a separate `diamond` environment.
+- **GTDB-Tk's summary output.** It writes `bac120` and `ar53` summaries
+  separately; the declared `gtdbtk.summary.tsv` requires a concatenation step
+  that does not exist yet.
 - **TUI against Snakemake.** Needs a spike: drive `snakemake.api` with a custom
   log handler and confirm the event stream is rich enough for live progress.
   Forking Snakemake to change the event handler is acceptable if needed.
+- **Report sections** for all 14 tools have to be written from scratch in
+  Python. Note v2 never displayed antismash, interproscan, iqtree, fasttree or
+  treecluster — so fasttree and treecluster need genuinely new sections, not
+  ports.

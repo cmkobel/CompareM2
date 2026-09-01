@@ -34,12 +34,14 @@ class Database:
     """
 
     name: str
-    url: str
-    size: int  # bytes, as served
+    url: str  # or the command that fetches it, when there is no static URL
+    size: int | None = None  # bytes; None means not yet measured — never guess
     sha256: str | None = None
 
     @property
     def human_size(self) -> str:
+        if self.size is None:
+            return "unmeasured"
         n = float(self.size)
         for unit in ("B", "kB", "MB", "GB", "TB"):
             if n < 1000 or unit == "TB":
@@ -65,11 +67,24 @@ class Context:
             raise ValueError("assembly is only defined for Scope.GENOME tools")
         return next(a for a in self.assemblies if a.stem == self.sample)
 
+    @property
+    def samples(self) -> tuple[str, ...]:
+        """Every sample name in the run, in input order."""
+        return tuple(a.stem for a in self.assemblies)
+
     def out(self, *parts: str) -> Path:
         """A path inside this tool's output directory."""
         if self.sample is None:
             return self.workdir.joinpath(*parts)
-        return self.workdir.joinpath("samples", self.sample, *parts)
+        return self.sample_out(self.sample, *parts)
+
+    def sample_out(self, sample: str, *parts: str) -> Path:
+        """A path inside another sample's output directory.
+
+        Set-scope tools need this to collect per-genome results from the tools
+        they depend on — the pangenome reading every genome's annotation, say.
+        """
+        return self.workdir.joinpath("samples", sample, *parts)
 
 
 @dataclass(frozen=True)
@@ -126,8 +141,17 @@ class Registry:
         return list(seen.values())
 
     def install_size(self, selected: Sequence[str] | None = None) -> int:
-        """Total bytes to download before `selected` can run."""
-        return sum(db.size for db in self.databases(selected))
+        """Total known bytes to download before `selected` can run.
+
+        Databases whose size has not been measured contribute nothing here, so
+        this is a lower bound. Call `unmeasured()` alongside it and say so —
+        a total that silently omits an unknown is worse than no total.
+        """
+        return sum(db.size for db in self.databases(selected) if db.size is not None)
+
+    def unmeasured(self, selected: Sequence[str] | None = None) -> list[Database]:
+        """Databases in `selected` whose download size is not yet known."""
+        return [db for db in self.databases(selected) if db.size is None]
 
     def closure(self, selected: Sequence[str] | None = None) -> list[Tool]:
         """`selected` plus everything it depends on, in declaration order.
