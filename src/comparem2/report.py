@@ -111,18 +111,223 @@ def _section_seqkit(tool: Tool, ctx: Context, workdir: Path) -> str:
     return _table(rows[1:], header=rows[0]) if len(rows) > 1 else '<p class="missing">No data.</p>'
 
 
+class _Node:
+    __slots__ = ("name", "length", "children", "x", "y")
+
+    def __init__(self, name: str = "", length: float = 0.0) -> None:
+        self.name = name
+        self.length = length
+        self.children: list[_Node] = []
+        self.x = 0.0
+        self.y = 0.0
+
+
+def parse_newick(text: str) -> _Node:
+    """Parse a newick string into a tree.
+
+    Deliberately dependency-free: pulling in a phylogenetics library to draw a
+    tree would undo the install-weight discipline the whole redesign is about.
+    """
+    pos = 0
+
+    def parse_node() -> _Node:
+        nonlocal pos
+        node = _Node()
+        if text[pos] == "(":
+            pos += 1
+            while True:
+                node.children.append(parse_node())
+                if text[pos] == ",":
+                    pos += 1
+                    continue
+                if text[pos] == ")":
+                    pos += 1
+                break
+        start = pos
+        # Stop at structural characters only. `:` must NOT be here — it
+        # separates the label from its branch length and belongs to the label.
+        while pos < len(text) and text[pos] not in ",);":
+            pos += 1
+        label = text[start:pos]
+        if ":" in label:
+            name, _, length = label.partition(":")
+            node.name = name.strip("'\"")
+            try:
+                node.length = float(length)
+            except ValueError:
+                node.length = 0.0
+        else:
+            node.name = label.strip("'\"")
+        return node
+
+    return parse_node()
+
+
+def _leaves(node: _Node) -> list[_Node]:
+    return [node] if not node.children else [x for c in node.children for x in _leaves(c)]
+
+
+PALETTE = ["#2b6cb0", "#b7791f", "#2f855a", "#9b2c2c", "#6b46c1", "#0987a0", "#b83280"]
+
+
+def draw_tree(root: _Node, clusters: dict[str, str] | None = None,
+              width: int = 720, row: int = 26) -> str:
+    """A rectangular phylogram as inline SVG."""
+    for i, leaf in enumerate(_leaves(root)):
+        leaf.y = i * row + row / 2
+
+    def place(node: _Node, x: float) -> float:
+        node.x = x + node.length
+        if node.children:
+            for child in node.children:
+                place(child, node.x)
+            node.y = (node.children[0].y + node.children[-1].y) / 2
+        return node.x
+
+    place(root, 0.0)
+    depth = max(n.x for n in _walk(root)) or 1.0
+    label_room = 260
+    scale = (width - label_room) / depth
+
+    colours: dict[str, str] = {}
+    if clusters:
+        for name in sorted(set(clusters.values())):
+            colours[name] = PALETTE[len(colours) % len(PALETTE)]
+
+    parts: list[str] = []
+    for node in _walk(root):
+        px = (node.x - node.length) * scale
+        parts.append(
+            f'<path d="M{px:.1f},{node.y:.1f} H{node.x * scale:.1f}" '
+            'fill="none" stroke="currentColor" stroke-width="1.4"/>'
+        )
+        if node.children:
+            top, bottom = node.children[0].y, node.children[-1].y
+            parts.append(
+                f'<path d="M{node.x * scale:.1f},{top:.1f} V{bottom:.1f}" '
+                'fill="none" stroke="currentColor" stroke-width="1.4"/>'
+            )
+        elif node.name:
+            cluster = (clusters or {}).get(node.name)
+            fill = colours.get(cluster, "currentColor") if cluster else "currentColor"
+            tag = f" · {html.escape(cluster)}" if cluster else ""
+            parts.append(
+                f'<text x="{node.x * scale + 8:.1f}" y="{node.y + 4:.1f}" '
+                f'font-size="13" fill="{fill}">{html.escape(node.name)}{tag}</text>'
+            )
+
+    height = len(_leaves(root)) * row + row
+    return (
+        f'<svg viewBox="0 0 {width} {height}" width="100%" height="{height}" '
+        f'role="img" aria-label="phylogenetic tree">{"".join(parts)}</svg>'
+    )
+
+
+def _walk(node: _Node):
+    yield node
+    for child in node.children:
+        yield from _walk(child)
+
+
+def _clusters(workdir: Path) -> dict[str, str]:
+    """TreeCluster assignments, when they exist, keyed by sample name."""
+    path = workdir / "treecluster" / "treecluster.tsv"
+    if not path.exists():
+        return {}
+    rows = _read_tsv(path)
+    return {r[0]: r[1] for r in rows[1:] if len(r) >= 2}
+
+
 def _section_mashtree(tool: Tool, ctx: Context, workdir: Path) -> str:
     path = ctx.out("mashtree", "mashtree.newick")
-    text = path.read_text().strip() if path.exists() else ""
-    return (
-        "<p class=\"summary\">Newick, rendered as text until the tree viewer exists.</p>"
-        f"<pre>{html.escape(text)}</pre>"
-    )
+    if not path.exists():
+        return '<p class="missing">No tree.</p>'
+    text = path.read_text().strip()
+    try:
+        svg = draw_tree(parse_newick(text), _clusters(workdir))
+    except (IndexError, ValueError):
+        # A malformed tree should degrade to the newick, not lose the section.
+        return f"<pre>{html.escape(text)}</pre>"
+    note = ""
+    if _clusters(workdir):
+        note = '<p class="summary">Leaves coloured by TreeCluster assignment.</p>'
+    return note + svg
+
+
+def _sample_of(value: str, samples: tuple[str, ...]) -> str:
+    """Map a tool's file-path column back to a sample name.
+
+    Tools that take file paths echo them back verbatim, which makes for an
+    unreadable report. Inputs are canonicalised to samples/<name>/<name>.fna,
+    so the stem is the sample name.
+    """
+    stem = Path(value).stem
+    return stem if stem in samples else value
+
+
+def _section_mlst(tool: Tool, ctx: Context, workdir: Path) -> str:
+    path = ctx.out("mlst", "mlst.tsv")
+    if not path.exists():
+        return '<p class="missing">No results.</p>'
+    rows = []
+    for rec in _read_tsv(path):
+        if not rec:
+            continue
+        scheme = rec[1] if len(rec) > 1 else ""
+        st = rec[2] if len(rec) > 2 else ""
+        alleles = ", ".join(rec[3:]) if len(rec) > 3 else ""
+        rows.append([_sample_of(rec[0], ctx.samples), scheme, st, alleles])
+    return _table(rows, header=["Genome", "Scheme", "Sequence type", "Alleles"])
+
+
+def _section_skani(tool: Tool, ctx: Context, workdir: Path) -> str:
+    """ANI as a shaded matrix — the densest wide-view summary in the report."""
+    path = ctx.out("skani", "ani.tsv")
+    if not path.exists():
+        return '<p class="missing">No results.</p>'
+    rows = _read_tsv(path)
+    if len(rows) < 2:
+        return '<p class="missing">Not enough genomes to compare.</p>'
+
+    names, matrix = [], []
+    for rec in rows[1:]:  # first line is the genome count
+        if len(rec) < 2:
+            continue
+        names.append(_sample_of(rec[0], ctx.samples))
+        matrix.append([float(v) if _numeric(v) else None for v in rec[1:]])
+
+    if not names:
+        return '<p class="missing">No comparisons.</p>'
+
+    values = [v for row in matrix for v in row if v is not None and v < 100]
+    low = min(values) if values else 95.0
+
+    head = "".join(f"<th>{html.escape(n)}</th>" for n in names)
+    out = [f"<table><thead><tr><th></th>{head}</tr></thead><tbody>"]
+    for name, row in zip(names, matrix):
+        cells = []
+        for value in row:
+            if value is None:
+                cells.append("<td></td>")
+                continue
+            # Shade across the observed range so differences stay visible even
+            # when every genome is the same species.
+            frac = 0.0 if low >= 100 else max(0.0, min(1.0, (value - low) / (100 - low)))
+            alpha = 0.08 + 0.5 * frac
+            cells.append(
+                f'<td class="n" style="background:rgba(43,108,176,{alpha:.2f})">'
+                f"{value:.2f}</td>"
+            )
+        out.append(f"<tr><th>{html.escape(name)}</th>{''.join(cells)}</tr>")
+    out.append("</tbody></table>")
+    return f'<p class="summary">Shaded from {low:.2f}% to 100%.</p>' + "".join(out)
 
 
 SECTIONS = {
     "seqkit": _section_seqkit,
     "mashtree": _section_mashtree,
+    "mlst": _section_mlst,
+    "skani": _section_skani,
 }
 
 

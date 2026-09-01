@@ -136,6 +136,28 @@ for a generator: a wrong wildcard yields a Snakefile that parses cleanly and
 builds the wrong DAG. 26 tests cover name sanitisation, dependency closure,
 rule generation and report rendering. `pixi run pytest tests/unit -q`.
 
+## Command-line verification status
+
+Drafted commands are worthless until executed. Verified means: ran on v2's four
+*E. faecium* test genomes on thylakoid and produced correct-looking output.
+
+| Tool        | Status     | Note                                             |
+| ----------- | ---------- | ------------------------------------------------ |
+| seqkit      | verified   | per-contig lengths and GC                         |
+| mashtree    | verified   | duplicates at distance 0.00000, as they should be |
+| treecluster | verified   | needed `--threshold`; v2 defaults adopted         |
+| skani       | verified   | duplicates at 100.00% ANI                         |
+| mlst        | verified   | ST32 / ST117 / ST78, correct for *E. faecium*     |
+| checkm2     | unverified | needs its 1.7 GB database                         |
+| bakta       | unverified | needs the light database                          |
+| amrfinder   | unverified | needs bakta output and `amrfinder -u`             |
+| panaroo     | unverified | needs bakta output                                |
+| snp-dists   | unverified | needs panaroo                                     |
+| fasttree    | unverified | needs panaroo                                     |
+| carveme     | unverified | needs bakta; also whether it runs at all          |
+| gtdbtk      | unverified | needs 141.4 GB; thylakoid has 180 GB free         |
+| sylph       | unverified | GTDB sketch release still unchosen                |
+
 ## Where the install weight actually sits
 
 | Database   | Download   | Note                             |
