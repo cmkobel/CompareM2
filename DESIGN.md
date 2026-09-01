@@ -48,17 +48,38 @@ alone is 141.4 GB (measured from `content-length`, 2026-09-01) against CheckM2's
 1.7 GB — a factor of 82. Any tool that would be added to v3 declares its
 database size in bytes, and the total is shown to the user before download.
 
-## Open questions
+### 2026-09-01 — Wide, not deep
+v3 is a quick wide view over many assemblies, not a deep view into each one.
+Deep functional and metabolic analysis is where DRAM2 and nf-core/funcscan are
+already strong; triage across a large set is unoccupied, and it is the direction
+the v2 benchmark result (scaling with input count) actually supports.
 
-- **Wide vs deep.** "Quick wide view over many assemblies" and "deep view into
-  each assembly" imply different tool sets. Unresolved; governs tool selection.
+Consequence: gtdbtk, antismash, gapseq, interproscan and eggnog are out of the
+default path. That is what makes the next decision possible.
+
+### 2026-09-01 — One conda environment
+Measured with pixi against `linux-64`, not assumed:
+
+| Environment                | Packages | Download |
+| -------------------------- | -------: | -------: |
+| core 8 tools               |      576 |  0.76 GB |
+| core + bakta + snakemake   |      830 |  0.83 GB |
+| core + prokka + snakemake  |      840 |  1.60 GB |
+
+(core = seqkit, checkm2, mashtree, treecluster, mlst, ncbi-amrfinderplus,
+sylph, skani.) All three solve with no conflicts, against v2's 25 environments.
+This works *because* the wide decision removed the historical conflict sources;
+re-test before adding any of them back. Note prokka costs roughly twice bakta in
+package weight — it pulls perl and BLAST.
+
+## Open questions
 - **Taxonomy.** The single largest install cost. GTDB-Tk is authoritative and
   141.4 GB; sylph/skani/mash-against-GTDB are fast and small but approximate.
   Candidates not yet measured.
 - **Tool set.** Selected manually by Carl. Not yet chosen.
-- **One conda environment or several?** v2 solved 25 environments on first run,
-  which dominated install time. A slim set may fit in one, killing that cost —
-  but only if the chosen tools' dependencies co-solve. Verify once the tool set
-  exists; a single container is the fallback.
+- **Taxonomy.** The single largest install cost, and the one decision that can
+  undo the numbers above. GTDB-Tk is authoritative and 141.4 GB; sylph and skani
+  are fast, small and approximate. Unresolved.
 - **TUI against Snakemake.** Needs a spike: drive `snakemake.api` with a custom
   log handler and confirm the event stream is rich enough for live progress.
+  Forking Snakemake to change the event handler is acceptable if needed.
