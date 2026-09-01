@@ -238,9 +238,15 @@ def _clusters(workdir: Path) -> dict[str, str]:
     return {r[0]: r[1] for r in rows[1:] if len(r) >= 2}
 
 
-def _section_mashtree(tool: Tool, ctx: Context, workdir: Path) -> str:
-    path = ctx.out("mashtree", "mashtree.newick")
-    if not path.exists():
+def _section_tree(tool: Tool, ctx: Context, workdir: Path) -> str:
+    """Render whichever newick this tool declares — not a hardcoded path.
+
+    Both mashtree and fasttree produce a newick, so the renderer takes the path
+    from the tool's own `outputs`, which is what the contract is for.
+    """
+    newicks = [p for p in tool.outputs(ctx) if p.suffix == ".newick"]
+    path = newicks[0] if newicks else None
+    if path is None or not path.exists():
         return '<p class="missing">No tree.</p>'
     text = path.read_text().strip()
     try:
@@ -323,11 +329,210 @@ def _section_skani(tool: Tool, ctx: Context, workdir: Path) -> str:
     return f'<p class="summary">Shaded from {low:.2f}% to 100%.</p>' + "".join(out)
 
 
+def _bar(value: float, colour: str, width: int = 90) -> str:
+    """A bar drawn with a div, so it survives being emailed as one file."""
+    pct = max(0.0, min(100.0, value))
+    return (
+        f'<span style="display:inline-block;width:{width}px;height:8px;'
+        f'background:color-mix(in srgb, currentColor 12%, transparent);'
+        f'border-radius:4px;vertical-align:middle;margin-right:.5rem">'
+        f'<span style="display:block;width:{pct:.0f}%;height:100%;'
+        f'background:{colour};border-radius:4px"></span></span>'
+    )
+
+
+def _section_checkm2(tool: Tool, ctx: Context, workdir: Path) -> str:
+    """Completeness and contamination — the 'is this genome usable' answer."""
+    path = ctx.out("checkm2", "quality_report.tsv")
+    if not path.exists():
+        return '<p class="missing">No results.</p>'
+    rows = _read_tsv(path)
+    if len(rows) < 2:
+        return '<p class="missing">No genomes assessed.</p>'
+    header = rows[0]
+    try:
+        i_name = header.index("Name")
+        i_comp = header.index("Completeness")
+        i_cont = header.index("Contamination")
+    except ValueError:
+        return _table(rows)
+
+    out = ["<table><thead><tr><th>Genome</th><th>Completeness</th>"
+           "<th>Contamination</th></tr></thead><tbody>"]
+    for rec in rows[1:]:
+        if len(rec) <= max(i_name, i_comp, i_cont):
+            continue
+        comp = float(rec[i_comp]) if _numeric(rec[i_comp]) else 0.0
+        cont = float(rec[i_cont]) if _numeric(rec[i_cont]) else 0.0
+        # MIMAG-style reading: high quality is >90% complete, <5% contaminated.
+        comp_colour = "#2f855a" if comp >= 90 else ("#b7791f" if comp >= 50 else "#9b2c2c")
+        cont_colour = "#2f855a" if cont < 5 else ("#b7791f" if cont < 10 else "#9b2c2c")
+        out.append(
+            f"<tr><td>{html.escape(rec[i_name])}</td>"
+            f'<td class="n">{_bar(comp, comp_colour)}{comp:.1f}%</td>'
+            f'<td class="n">{_bar(min(cont * 5, 100), cont_colour)}{cont:.2f}%</td></tr>'
+        )
+    out.append("</tbody></table>")
+    return ('<p class="summary">Green is high quality by MIMAG conventions: '
+            "&gt;90% complete, &lt;5% contaminated. Contamination bars are "
+            'scaled &times;5 so small values stay visible.</p>') + "".join(out)
+
+
+def _section_bakta(tool: Tool, ctx: Context, workdir: Path) -> str:
+    """Feature counts per genome, read straight from the GFF3."""
+    rows = []
+    for sample in ctx.samples:
+        gff = ctx.sample_out(sample, "bakta", f"{sample}.gff3")
+        if not gff.exists():
+            continue
+        counts: dict[str, int] = {}
+        with gff.open() as fh:
+            for line in fh:
+                if line.startswith("#"):
+                    continue
+                fields = line.split("\t")
+                if len(fields) > 2:
+                    counts[fields[2]] = counts.get(fields[2], 0) + 1
+        rows.append([
+            sample,
+            f"{counts.get('CDS', 0):,}",
+            f"{counts.get('tRNA', 0):,}",
+            f"{counts.get('rRNA', 0):,}",
+            f"{sum(v for k, v in counts.items() if k not in ('CDS', 'tRNA', 'rRNA', 'region')):,}",
+        ])
+    if not rows:
+        return '<p class="missing">No annotations.</p>'
+    return _table(rows, header=["Genome", "CDS", "tRNA", "rRNA", "Other features"])
+
+
+def _section_amrfinder(tool: Tool, ctx: Context, workdir: Path) -> str:
+    """Resistance classes per genome, as a presence matrix.
+
+    Per-genome tables would mean one section per sample; across a wide set the
+    useful question is which classes appear where.
+    """
+    per_genome: dict[str, dict[str, int]] = {}
+    classes: dict[str, None] = {}
+    for sample in ctx.samples:
+        path = ctx.sample_out(sample, "amrfinder", "amrfinder.tsv")
+        if not path.exists():
+            continue
+        rows = _read_tsv(path)
+        if not rows:
+            continue
+        header = rows[0]
+        try:
+            i_class = header.index("Class")
+        except ValueError:
+            continue
+        counts: dict[str, int] = {}
+        for rec in rows[1:]:
+            if len(rec) > i_class and rec[i_class]:
+                name = rec[i_class]
+                counts[name] = counts.get(name, 0) + 1
+                classes.setdefault(name, None)
+        per_genome[sample] = counts
+
+    if not per_genome:
+        return '<p class="missing">No resistance genes detected.</p>'
+
+    order = sorted(classes)
+    head = "".join(f"<th>{html.escape(c.title())}</th>" for c in order)
+    out = [f"<table><thead><tr><th>Genome</th><th>Total</th>{head}</tr></thead><tbody>"]
+    for sample, counts in per_genome.items():
+        cells = "".join(
+            f'<td class="n">{counts[c]}</td>' if c in counts else '<td class="n">·</td>'
+            for c in order
+        )
+        out.append(
+            f"<tr><td>{html.escape(sample)}</td>"
+            f'<td class="n">{sum(counts.values())}</td>{cells}</tr>'
+        )
+    out.append("</tbody></table>")
+    return "".join(out)
+
+
+def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
+    """Core vs accessory split, derived from the presence/absence matrix."""
+    path = ctx.out("panaroo", "gene_presence_absence.Rtab")
+    if not path.exists():
+        return '<p class="missing">No pangenome.</p>'
+    rows = _read_tsv(path)
+    if len(rows) < 2:
+        return '<p class="missing">No genes.</p>'
+
+    names = rows[0][1:]
+    n = len(names)
+    core = soft = shell_ = cloud = 0
+    per_genome = [0] * n
+    for rec in rows[1:]:
+        present = [i for i, v in enumerate(rec[1:]) if v.strip() == "1"]
+        for i in present:
+            if i < n:
+                per_genome[i] += 1
+        frac = len(present) / n if n else 0
+        if frac >= 0.99:
+            core += 1
+        elif frac >= 0.95:
+            soft += 1
+        elif frac >= 0.15:
+            shell_ += 1
+        else:
+            cloud += 1
+
+    total = core + soft + shell_ + cloud
+    summary = _table(
+        [["Core (≥99%)", f"{core:,}"], ["Soft core (95–99%)", f"{soft:,}"],
+         ["Shell (15–95%)", f"{shell_:,}"], ["Cloud (<15%)", f"{cloud:,}"],
+         ["Total", f"{total:,}"]],
+        header=["Partition", "Genes"],
+    )
+    counts = _table(
+        [[name, f"{per_genome[i]:,}"] for i, name in enumerate(names)],
+        header=["Genome", "Genes in pangenome"],
+    )
+    return (f'<p class="summary">{total:,} gene clusters across {n} genomes.</p>'
+            + summary + counts)
+
+
+def _section_carveme(tool: Tool, ctx: Context, workdir: Path) -> str:
+    """Model size per genome, counted straight out of the SBML.
+
+    Genome-scale metabolic models are the one capability no comparable pipeline
+    offers, so the report should say something about them rather than noting a
+    file exists. Counted by streaming the XML — a 4 MB model per genome is not
+    worth a parser dependency.
+    """
+    rows = []
+    for sample in ctx.samples:
+        path = ctx.sample_out(sample, "carveme", f"{sample}.xml")
+        if not path.exists():
+            continue
+        reactions = species = genes = 0
+        with path.open() as fh:
+            for line in fh:
+                reactions += line.count("<reaction ")
+                species += line.count("<species ")
+                genes += line.count("<fbc:geneProduct ")
+        rows.append([sample, f"{reactions:,}", f"{species:,}", f"{genes:,}"])
+    if not rows:
+        return '<p class="missing">No models.</p>'
+    return (_table(rows, header=["Genome", "Reactions", "Metabolites", "Genes"])
+            + '<p class="summary">Draft models in SBML, ready for flux balance '
+              "analysis. Not gap-filled for a specific medium.</p>")
+
+
 SECTIONS = {
+    "carveme": _section_carveme,
     "seqkit": _section_seqkit,
-    "mashtree": _section_mashtree,
+    "checkm2": _section_checkm2,
+    "bakta": _section_bakta,
+    "amrfinder": _section_amrfinder,
+    "mashtree": _section_tree,
     "mlst": _section_mlst,
     "skani": _section_skani,
+    "panaroo": _section_panaroo,
+    "fasttree": _section_tree,  # same phylogram renderer, its own newick
 }
 
 

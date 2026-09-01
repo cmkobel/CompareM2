@@ -86,6 +86,8 @@ def main(argv: list[str] | None = None) -> int:
                    help="override a tool argument, e.g. --set treecluster--threshold=0.1 "
                         "(v2 spelled this set_treecluster--threshold in config.yaml)")
     p.add_argument("--tui", action="store_true", help="interactive keyboard interface")
+    p.add_argument("--keep-going", action="store_true",
+                   help="keep running independent tools after one fails")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--report-only", action="store_true",
                    help="re-render the report from existing outputs")
@@ -128,6 +130,8 @@ def main(argv: list[str] | None = None) -> int:
             "snakemake", "--snakefile", str(snakefile), "--cores", str(args.cores),
             "--rerun-incomplete",
         ]
+        if args.keep_going:
+            cmd.append("--keep-going")
         if args.dry_run:
             cmd.append("--dry-run")
         result = subprocess.run(cmd)

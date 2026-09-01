@@ -2,11 +2,21 @@
 
 Fourteen tools, selected 2026-09-01. See DESIGN.md for what was dropped and why.
 
-**The command lines here are drafts.** They were written against each tool's
-documented interface but have not been executed — the tools are linux-64 and
-the selection was made on macOS. Every one needs verifying against the real
-binary before this is trusted. Database sizes marked `size=` were measured from
-`content-length`; the rest are `None` and must not be guessed at.
+**Pin minimum versions.** An unpinned bioconda solve will happily pick a
+years-old build to satisfy some other constraint, and the result resolves
+cleanly but crashes at runtime. Both instances found so far were of exactly
+this shape:
+
+- `bakta` unpinned resolved to 1.8.1 (2023), which calls `pyrodigal.OrfFinder`
+  — renamed `GeneFinder` in pyrodigal 3.x.
+- `panaroo` unpinned resolved to 1.1.2 (2020), which imports `Bio.Alphabet`
+  — removed in Biopython 1.78.
+
+Neither is a solver failure. Only running the tool reveals them, which is why
+the verification table in DESIGN.md tracks execution rather than installation.
+
+Database sizes marked `size=` were measured from `content-length`; the rest are
+`None` and must not be guessed at.
 """
 
 from __future__ import annotations
@@ -131,7 +141,7 @@ bakta = Tool(
     name="bakta",
     summary="Structural and functional genome annotation.",
     scope=Scope.GENOME,
-    conda=("bioconda::bakta",),
+    conda=("bioconda::bakta>=1.10",),
     command=lambda c: [
         "bakta", "--db", str(c.databases / "bakta"), "--threads", str(c.threads),
         "--output", str(c.out("bakta")), "--prefix", str(c.sample), *c.args(),
@@ -153,17 +163,19 @@ amrfinder = Tool(
     summary="Antimicrobial resistance and virulence genes.",
     scope=Scope.GENOME,
     conda=("bioconda::ncbi-amrfinderplus",),
-    # Combined nucleotide+protein mode needs Bakta's output, and calls better
-    # than nucleotide alone. Bakta always runs, so the dependency is free.
+    # Protein-only mode, as v2 used. Combined nucleotide+protein mode calls
+    # better in principle, but AMRFinder cross-checks contig identifiers
+    # between the GFF and the FASTA, and Bakta renames contigs to `contig_1`
+    # while the input assembly keeps its original accessions — so combined mode
+    # fails with `GFF contig id "contig_1" is not in the DNA FASTA file`.
+    # The cost is losing point-mutation detection, which needs --organism.
     needs=("bakta",),
     command=lambda c: [
-        "amrfinder", "--nucleotide", str(c.assembly),
-        "--protein", str(c.out("bakta", f"{c.sample}.faa")),
-        "--gff", str(c.out("bakta", f"{c.sample}.gff3")),
-        "--annotation_format", "bakta", "--plus", "--threads", str(c.threads),
-        "-o", str(c.out("amrfinder", "amrfinder.tsv")),
+        "amrfinder", "-p", str(c.out("bakta", f"{c.sample}.faa")),
+        "--plus", "--threads", str(c.threads), *c.args(),
     ],
     outputs=lambda c: [c.out("amrfinder", "amrfinder.tsv")],
+    stdout_to_output=True,
     database=AMRFINDER_DB,
     threads=4,
 )
@@ -233,7 +245,7 @@ panaroo = Tool(
     name="panaroo",
     summary="Core and accessory gene content across the set.",
     scope=Scope.SET,
-    conda=("bioconda::panaroo",),
+    conda=("bioconda::panaroo>=1.5",),
     needs=("bakta",),
     command=lambda c: [
         "panaroo", "--clean-mode", "strict", "-a", "core", "-t", str(c.threads),

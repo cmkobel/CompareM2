@@ -174,14 +174,22 @@ Drafted commands are worthless until executed. Verified means: ran on v2's four
 | skani       | verified   | duplicates at 100.00% ANI                         |
 | mlst        | verified   | ST32 / ST117 / ST78, correct for *E. faecium*     |
 | checkm2     | verified   | 100% complete; `--database_path` wants the .dmnd **file** |
-| bakta       | in progress| needed `--force`, as v2 also passed               |
-| amrfinder   | unverified | needs bakta output and `amrfinder -u`             |
-| panaroo     | unverified | needs bakta output                                |
-| snp-dists   | unverified | needs panaroo                                     |
-| fasttree    | unverified | needs panaroo                                     |
-| carveme     | unverified | needs bakta; also whether it runs at all          |
+| bakta       | verified   | needed `--force` and a pin to >=1.10; db must be v6 |
+| carveme     | verified   | **it does run** — ~1200 reactions/genome, but ~9 min each |
+| amrfinder   | verified   | protein-only, as v2; 7/11/8 genes, incl. 5 glycopeptide in E8202 |
+| panaroo     | verified   | needed pin >=1.5; 3780 clusters, 2091 core        |
+| snp-dists   | verified   | 0 SNPs between the duplicate pair                 |
+| fasttree    | verified   | duplicates at 0.0 branch length                   |
 | gtdbtk      | unverified | needs 141.4 GB; thylakoid has 180 GB free         |
 | sylph       | unverified | GTDB sketch release still unchosen                |
+
+**12 of 14 verified.** The two outstanding both concern taxonomy: GTDB-Tk needs
+the 141.4 GB download, and sylph needs a database release to be chosen.
+
+Cross-checks used throughout: v2's test set contains `116_2.fna` and
+`116_2 duplicate.fna`, the same genome twice. Any tool that treats them
+differently is wrong. Every verified tool agrees — 0.00000 mash distance,
+100.00% ANI, 0 SNPs, identical CDS counts, identical model sizes.
 
 ## Where the install weight actually sits
 
@@ -197,6 +205,30 @@ Drafted commands are worthless until executed. Verified means: ran on v2's four
 The environment is slim. The data is not, and GTDB-Tk is the whole reason.
 Making it opt-in was offered twice and declined twice; it stays in the default
 path. If "easy to install" ever has to be defended, this is the line item.
+
+### 2026-09-02 — Pin a minimum version for every tool
+Two tools were silently resolved to years-old builds that install cleanly and
+crash on first use:
+
+| Tool | Unpinned resolved to | Breaks on |
+| ---- | -------------------- | --------- |
+| bakta | 1.8.1 (2023) | `pyrodigal.OrfFinder`, renamed `GeneFinder` in pyrodigal 3.x |
+| panaroo | 1.1.2 (2020) | `Bio.Alphabet`, removed in Biopython 1.78 |
+
+Neither is a solver failure — the solver did what it was asked. Bioconda keeps
+old builds forever, and an unconstrained `tool = "*"` lets the solver satisfy
+some *other* package's constraint by reaching back years. **`pixi install`
+succeeding says nothing about whether the pipeline works.**
+
+Hence: pin a minimum version in each spec's `conda` field, and treat the
+verification table above as tracking *execution*, never installation.
+
+### 2026-09-02 — CarveMe is real, and it is the slow one
+CarveMe was commented out in v2 and its status was an open question. It runs:
+~4 MB SBML model per genome, all four test genomes. But it takes roughly nine
+minutes per genome single-threaded, which makes it the slowest per-genome tool
+in the set now that InterProScan is gone. For a wide view over hundreds of
+assemblies that matters, and it should probably be opt-in rather than default.
 
 ## Open questions
 - **Taxonomy.** The single largest install cost. GTDB-Tk is authoritative and
