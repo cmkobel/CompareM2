@@ -62,9 +62,13 @@ checkm2 = Tool(
     summary="Completeness and contamination for every genome.",
     scope=Scope.SET,
     conda=("bioconda::checkm2",),
+    # --database_path takes the DIAMOND file itself, not the directory it sits
+    # in; passing a directory fails with IsADirectoryError deep inside CheckM2.
+    # The download step normalises the release's own name to checkm2.dmnd so
+    # this path does not move when upstream renames the file.
     command=lambda c: [
         "checkm2", "predict", "--threads", str(c.threads),
-        "--database_path", str(c.databases / "checkm2"),
+        "--database_path", str(c.databases / "checkm2" / "checkm2.dmnd"),
         "--output-directory", str(c.out("checkm2")),
         "--input", *[str(a) for a in c.assemblies],
     ],

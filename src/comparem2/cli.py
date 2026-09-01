@@ -85,6 +85,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--set", action="append", default=[], metavar="TOOL--FLAG=VALUE",
                    help="override a tool argument, e.g. --set treecluster--threshold=0.1 "
                         "(v2 spelled this set_treecluster--threshold in config.yaml)")
+    p.add_argument("--tui", action="store_true", help="interactive keyboard interface")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--report-only", action="store_true",
                    help="re-render the report from existing outputs")
@@ -105,6 +106,12 @@ def main(argv: list[str] | None = None) -> int:
     if unmeasured:
         size += f" + {len(unmeasured)} database(s) of unknown size"
     print(f"{len(samples)} assemblies, {len(tools)} tools, databases: {size}", file=sys.stderr)
+
+    if args.tui:
+        from .tui import launch
+
+        launch(args.inputs, workdir, args.databases, samples, args.cores)
+        return 0
 
     build = workdir / ".comparem2"
     (build / "envs").mkdir(parents=True, exist_ok=True)

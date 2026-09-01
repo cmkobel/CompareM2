@@ -192,9 +192,25 @@ path. If "easy to install" ever has to be defended, this is the line item.
 - **GTDB-Tk's summary output.** It writes `bac120` and `ar53` summaries
   separately; the declared `gtdbtk.summary.tsv` requires a concatenation step
   that does not exist yet.
-- **TUI against Snakemake.** Needs a spike: drive `snakemake.api` with a custom
-  log handler and confirm the event stream is rich enough for live progress.
-  Forking Snakemake to change the event handler is acceptable if needed.
+- ~~**TUI against Snakemake.**~~ **Resolved 2026-09-01 — no fork needed.**
+  Snakemake 9.26.1 ships a logger plugin system (`LogHandlerBase`, `LogEvent`,
+  `LoggerPluginRegistry`), and events can also be captured in-process by
+  attaching a `logging.Handler` to the `snakemake` logger while driving
+  `SnakemakeApi`. A spike captured 19 events on a two-job run, with structured
+  fields rather than scraped text:
+
+  | Event | Carries |
+  | ----- | ------- |
+  | `run_info` | per-rule job counts and total |
+  | `job_info` | `jobid`, `rule_name` |
+  | `job_started` / `job_finished` | job lifecycle |
+  | `progress` | `done`, `total` |
+  | `shellcmd` | the exact command |
+  | `job_error` / `error` | failures |
+
+  That is everything a live keyboard-driven interface needs. The offer to ship
+  a modified Snakemake stays unused, which is the better outcome — a fork would
+  have to be rebased forever.
 - **Report sections** for all 14 tools have to be written from scratch in
   Python. Note v2 never displayed antismash, interproscan, iqtree, fasttree or
   treecluster — so fasttree and treecluster need genuinely new sections, not
