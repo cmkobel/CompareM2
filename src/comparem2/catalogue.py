@@ -34,6 +34,11 @@ GTDB_DB = Database(
 # v2 used `--type full` (30 GB compressed / 84 GB on disk). v3 uses light.
 # 1.3 GB is Bakta's documented figure, not a content-length measurement,
 # because there is no static URL — `bakta_db download` picks the record.
+#
+# The database version is tied to the Bakta version: 1.12.x requires db 6.x and
+# refuses 5.1 outright. So the download must run from the same environment as
+# the tool, and pinning Bakta without re-fetching the database is a runtime
+# failure rather than a solve failure.
 BAKTA_DB = Database(name="bakta-light", url="bakta_db download --type light", size=None)
 
 # Fetched by `amrfinder -u`; no static URL to measure. Small.
@@ -75,6 +80,13 @@ checkm2 = Tool(
     outputs=lambda c: [c.out("checkm2", "quality_report.tsv")],
     database=CHECKM2_DB,
     threads=8,
+    # CheckM2 pins an old DIAMOND (2.1.x) and cannot co-solve with a current
+    # Bakta, which needs 2.2.x. Verified 2026-09-01: bakta>=1.10 solves with
+    # all thirteen other tools, and fails only when checkm2 is added. Leaving
+    # both unpinned "solves" by silently selecting bakta 1.8.1, which then
+    # crashes on pyrodigal 3.x (OrfFinder was renamed GeneFinder). So this is
+    # the one tool that gets its own environment.
+    isolated=True,
 )
 
 gtdbtk = Tool(
@@ -122,8 +134,12 @@ bakta = Tool(
     conda=("bioconda::bakta",),
     command=lambda c: [
         "bakta", "--db", str(c.databases / "bakta"), "--threads", str(c.threads),
-        "--output", str(c.out("bakta")), "--prefix", str(c.sample), str(c.assembly),
+        "--output", str(c.out("bakta")), "--prefix", str(c.sample), *c.args(),
+        str(c.assembly),
     ],
+    # Rules create their output directory before running, and bakta refuses to
+    # write into an existing one. v2 passed --force for the same reason.
+    params=(("--force", ""),),
     outputs=lambda c: [
         c.out("bakta", f"{c.sample}.gff3"),
         c.out("bakta", f"{c.sample}.faa"),

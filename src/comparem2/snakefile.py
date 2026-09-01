@@ -92,7 +92,8 @@ def _rule(tool: Tool, workdir: Path, databases: Path, samples: tuple[str, ...],
         # v3 targets one solved environment with every tool on PATH, so no
         # conda directive by default. Opt in only to isolate a tool that
         # cannot co-solve — the situation antiSMASH would have created.
-        *([f"    conda: {_q('envs/' + tool.name + '.yaml')}"] if per_rule_conda else []),
+        *([f"    conda: {_q('envs/' + tool.name + '.yaml')}"]
+          if (per_rule_conda or tool.isolated) else []),
         "    shell:",
         f'        """',
         f"        mkdir -p $(dirname {{log}})",

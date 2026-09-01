@@ -57,7 +57,32 @@ the v2 benchmark result (scaling with input count) actually supports.
 Consequence: gtdbtk, antismash, gapseq, interproscan and eggnog are out of the
 default path. That is what makes the next decision possible.
 
-### 2026-09-01 — One conda environment
+### 2026-09-01 — One environment, plus CheckM2 on its own (revised same day)
+**The first version of this decision was wrong, and the way it was wrong is
+worth keeping.** The original solve below succeeded, so "one environment" was
+recorded as settled. It only succeeded because the solver quietly selected
+**bakta 1.8.1** (2023) — the newest Bakta that could co-exist with CheckM2.
+Bakta 1.8.1 then crashes at runtime against pyrodigal 3.x, which renamed
+`OrfFinder` to `GeneFinder`. **A solve is not a working environment**, and only
+running the tool revealed it.
+
+Isolated afterwards, on `linux-64`:
+
+| Combination | Result |
+| ----------- | ------ |
+| bakta ≥1.10 alone | solves — 1.12.1, diamond 2.2.5 |
+| bakta ≥1.10 + checkm2 | **conflict** |
+| bakta ≥1.10 + the other thirteen tools | solves |
+
+CheckM2 pins DIAMOND 2.1.x; current Bakta needs 2.2.x. CheckM2 is too valuable
+to drop (1.7 GB for completeness and contamination), so it is the one tool
+marked `isolated=True` and given its own environment. Thirteen tools share the
+main environment.
+
+Rule: `isolated` is an exception that must carry its reason in the spec.
+v2 reached 25 environments by treating it as the default.
+
+### 2026-09-01 — The original (superseded) single-environment measurement
 Measured with pixi against `linux-64`, not assumed:
 
 | Environment                | Packages | Download |
@@ -148,8 +173,8 @@ Drafted commands are worthless until executed. Verified means: ran on v2's four
 | treecluster | verified   | needed `--threshold`; v2 defaults adopted         |
 | skani       | verified   | duplicates at 100.00% ANI                         |
 | mlst        | verified   | ST32 / ST117 / ST78, correct for *E. faecium*     |
-| checkm2     | unverified | needs its 1.7 GB database                         |
-| bakta       | unverified | needs the light database                          |
+| checkm2     | verified   | 100% complete; `--database_path` wants the .dmnd **file** |
+| bakta       | in progress| needed `--force`, as v2 also passed               |
 | amrfinder   | unverified | needs bakta output and `amrfinder -u`             |
 | panaroo     | unverified | needs bakta output                                |
 | snp-dists   | unverified | needs panaroo                                     |
@@ -164,8 +189,8 @@ Drafted commands are worthless until executed. Verified means: ran on v2's four
 | ---------- | ---------: | -------------------------------- |
 | GTDB-Tk    | 141.4 GB   | measured; 91% of the total       |
 | CheckM2    |    1.7 GB  | measured                         |
-| Bakta light|    1.3 GB  | documented, not measured         |
-| AMRFinder  |  unmeasured| `amrfinder -u`, no static URL    |
+| Bakta light|    1.3 GB  | 3.2 GB on disk, measured          |
+| AMRFinder  |  unmeasured| may be free — Bakta's light DB ships an `amrfinderplus-db` |
 | sylph GTDB |  unmeasured| release not yet chosen           |
 | *software* |    1.58 GB | measured, one environment        |
 

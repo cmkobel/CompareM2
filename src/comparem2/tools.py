@@ -129,6 +129,11 @@ class Tool:
     # Default arguments, overridable per run. Values carried from v2's
     # config.yaml so v3 reproduces v2's behaviour unless told otherwise.
     params: tuple[tuple[str, str], ...] = ()
+    # True when this tool cannot share the main environment and needs its own.
+    # Every one of these is a cost, so each must carry a reason in the spec —
+    # v2 reached 25 environments by making this the default rather than the
+    # exception.
+    isolated: bool = False
     # Some tools write their result to stdout rather than taking an -o flag.
     # Commands stay as argument lists — never hand-built shell strings — so the
     # redirect is declared here and added by whatever runs the command.
