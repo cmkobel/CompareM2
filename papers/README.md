@@ -1,9 +1,15 @@
 # Reference papers for the v3 tool set
 
-24 PDFs, 50.7 MB. Downloaded 2026-09-02. **The PDFs are not tracked; this file,
-`SUMMARIES.md` and `tools.bib` are** (decided 2026-09-02). The DOI tables below
-plus *How these were fetched* are what make the PDFs recoverable, which is the
-reason they can stay out of git history.
+23 papers for the current tool set. Downloaded 2026-09-02. **The PDFs are not
+tracked; this file, `SUMMARIES.md` and `tools.bib` are** (decided 2026-09-02).
+The DOI tables below plus *How these were fetched* are what make the PDFs
+recoverable, which is the reason they can stay out of git history.
+
+A 24th PDF, `sylph - Shaw 2024 - sylph.pdf` (6.5 MB), is still in this directory
+but is no longer part of the set: sylph left the catalogue 2026-09-02 because it
+profiles metagenomic reads rather than assemblies (DECISIONS.md). Its summary
+section and BibTeX entry are gone; the file itself is untracked and can be
+deleted whenever.
 
 `_comparem2 - Kobel 2025 - CompareM2.pdf` is a copy of the PDF already in the
 repo root, which despite its `2024` filename is the version of record
@@ -12,12 +18,13 @@ repo root, which despite its `2024` filename is the version of record
 ## Licences, if these are ever redistributed
 
 Read from each PDF on disk — the text stamp or the embedded `creativecommons.org`
-link, not inferred from the journal. 23 of the 24 could legally ship with
-CompareM2; one could not.
+link, not inferred from the journal. 22 of the 23 could legally ship with
+CompareM2; one could not. (Sylph's paper, checked at the same time, was also
+CC BY 4.0.)
 
 | Licence | n | Papers |
 | ------- | - | ------ |
-| CC BY 4.0 | 17 | comparem2, diamond, gtdb, mash, pyrodigal, snakemake, amrfinder-2021, bakta, carveme, gtdbtk, mashtree, mlst, panaroo, seqkit-2016, skani, sylph, treecluster |
+| CC BY 4.0 | 16 | comparem2, diamond, gtdb, mash, pyrodigal, snakemake, amrfinder-2021, bakta, carveme, gtdbtk, mashtree, mlst, panaroo, seqkit-2016, skani, treecluster |
 | CC BY 3.0 / 2.0 | 2 | cd-hit (`by/3.0`), prodigal (`by/2.0`) |
 | CC BY, version not printed | 2 | fasttree (PLOS ONE 2010), seqkit2 (iMeta/Wiley) |
 | US Government work | 1 | amrfinder-2019 — "not subject to copyright protection in the United States. Foreign copyrights may apply." |
@@ -32,17 +39,17 @@ title, licence, link, and a statement that no changes were made. The published
 *Nature Methods* CheckM2 paper is also not redistributable (Springer Nature
 text-and-data-mining licence, no CC) — only the preprint here is.
 
-`tools.bib` holds 27 BibTeX entries, fetched from Crossref (or DataCite, for the
+`tools.bib` holds 26 BibTeX entries, fetched from Crossref (or DataCite, for the
 Zenodo record) rather than hand-typed. Every PDF was checked with
 `pdftotext -f 1 -l 1` against its expected title, so none is a stray error page.
 
-`SUMMARIES.md` is the long-form reading of all 24 papers (2026-09-02): per tool,
+`SUMMARIES.md` is the long-form reading of all 23 papers (2026-09-02): per tool,
 what it does, how to read each column, caveats, a table of every quantitative
 claim with the verbatim quote it came from, and a *Not established* list of what
 the papers do not answer. The condensed version is `src/comparem2/guidance.py`,
 which is what the report renders — this file is the audit trail behind it.
 
-## The 14 catalogue tools
+## The 13 catalogue tools
 
 Checked against the `CATALOGUE` registry in `src/comparem2/catalogue.py`, not
 against DESIGN.md.
@@ -53,7 +60,6 @@ against DESIGN.md.
 | seqkit | Shen et al. 2024, *iMeta* 3:e191 (SeqKit2) | 10.1002/imt2.191 | yes |
 | checkm2 | Chklovski et al. 2023, *Nat. Methods* 20:1203–1212 | 10.1038/s41592-023-01940-w | preprint (see below) |
 | gtdbtk | Chaumeil et al. 2022, *Bioinformatics* 38:5315–5316 | 10.1093/bioinformatics/btac672 | yes |
-| sylph | Shaw & Yu 2024, *Nat. Biotechnol.* | 10.1038/s41587-024-02412-y | yes |
 | bakta | Schwengers et al. 2021, *Microb. Genom.* 7:000685 | 10.1099/mgen.0.000685 | yes |
 | amrfinder | Feldgarden et al. 2021, *Sci. Rep.* 11:12728 | 10.1038/s41598-021-91456-0 | yes |
 | amrfinder | Feldgarden et al. 2019, *AAC* 63:e00483-19 (validation) | 10.1128/AAC.00483-19 | yes |

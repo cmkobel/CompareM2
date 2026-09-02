@@ -5,14 +5,18 @@ command line in `src/comparem2/catalogue.py` and the columns rendered in
 `src/comparem2/report.py`.
 
 **Every number below was copied verbatim from its paper and verified by
-substring match against `pdftotext` output — 178 of 178 passed.** The condensed
+substring match against `pdftotext` output — 164 of 164 passed.** The condensed
 version of this file is `src/comparem2/guidance.py`, which is what the report
 renders. This file is the long form, and it keeps two things the report drops:
 the full quantitative record, and the *Not established* notes recording what
 could not be determined from the papers. Those notes are the honest limit of
 what the guidance can claim.
 
-Ordering follows the `CATALOGUE` registry.
+Ordering follows the `CATALOGUE` registry. The sylph section was dropped
+2026-09-02 when sylph left the catalogue — it profiles metagenomic reads, not
+assemblies, so the command never had a sample to read (DECISIONS.md). Its 14
+verified numbers went with it, which is why the count above is 164 and not the
+178 originally checked.
 
 ---
 
@@ -368,134 +372,6 @@ beside.
 - The papers do not describe what GTDB-Tk writes when it declines a rank (empty field vs.
   absent rank prefix), so the operational reading of a truncated classification string is
   inferred, not cited.
-
----
-
-## sylph
-*Shaw J & Yu YW 2024, Nature Biotechnology 43:1348–1359, doi:10.1038/s41587-024-02412-y*
-
-Sylph asks, for every genome in a reference collection, "how much of this genome's DNA is
-present in my sample, and at what nucleotide identity?" — and it answers in seconds rather
-than hours, which is why CompareM2 runs it as a provisional taxonomic call while GTDB-Tk is
-still working. It reports a match only when the identity is above the 95% species boundary,
-so a row here is a species-level statement about the nearest thing already in the database.
-
-**How it works.** Sylph subsamples k-mers (k = 31, roughly one in 200) from each reference genome and from
-your sample, then measures what fraction of a reference's k-mers is contained in the sample;
-raising that containment to the power 1/k gives the "naive" containment ANI. Its actual
-contribution is a correction: it models the k-mer counts as a zero-inflated Poisson, infers
-the effective coverage λ, and divides the containment by (1 − e^−λ) before taking the k-th
-root, so that k-mers missing merely because the sample did not cover the genome are not
-mistaken for sequence divergence; `profile` additionally assigns each shared k-mer to
-whichever genome has the highest ANI (winner-take-all), recomputes ANI, and prints only
-genomes above 95%.
-
-### Reading the output
-
-**Genome_file.** The reference genome sylph matched, printed as its filename or accession in the GTDB sketch
-— not a species name. CompareM2's command does not run sylph's optional taxonomy-mapping
-step, so you have to look the accession up. Note also that `profile` assigns each shared
-k-mer to the single highest-ANI genome, so among several near-identical genomes of the same
-species the particular one listed is close to a tie-break: trust the species, not the
-strain.
-
-**Adjusted_ANI vs Naive_ANI.** Naive_ANI is the raw containment raised to 1/31; Adjusted_ANI is the same quantity after
-dividing containment by (1 − e^−λ), i.e. what the identity would have been had the sample
-covered the genome fully. Rows only appear at all above 95% adjusted ANI. The gap between
-the two columns is the size of the coverage correction: on 90%-identity Nanopore reads the
-naive estimate fell below 95% while sylph 'still gave good estimates (>99% median ANI)'. For
-a complete assembly the two should sit close together; a large gap means the correction, not
-the data, is doing the work.
-
-**Eff_cov, Eff_lambda, Median_cov, Mean_cov_geq1.** Effective coverage λ is the depth of the reference's k-mers actually observed after read
-errors and read length are accounted for, so it is lower than true sequencing depth. It is
-what makes low-abundance detection possible: for a genome whose true containment ANI was
-99.26%, sylph recovered >95% ANI from as little as 0.008x effective coverage. The λ
-correction is only applied when the median k-mer multiplicity is ≤3; above that, the
-reported coverage is a robust mean or the median itself.
-
-**ANI_5-95_percentile and Lambda_5-95_percentile.** A 90% interval built by resampling the k-mer multiplicities over 100 iterations and taking
-the 5th and 95th percentiles. A wide ANI interval means λ was poorly determined and the
-point estimate is soft. The authors caution that these intervals are optimistic: 'confidence
-intervals are slightly tight but the coverage probabilities are not less than 70% under
-simulations.'
-
-**Taxonomic_abundance and Sequence_abundance.** Taxonomic abundance is each detected genome's λ divided by the sum of all detected λ (a per-
-organism share); sequence abundance weights each λ by genome length (a per-base share), so
-long genomes take a larger share of it than of the taxonomic column. For a clean single-
-isolate assembly you expect one row near 100 in both. Extra rows carrying real abundance
-mean k-mer content from a second species is present — check that against CheckM2
-contamination before calling it a mixed culture; the paper does not test sylph on assemblies
-for this purpose.
-
-### Caveats
-
-- The command CompareM2 currently runs (`sylph profile <db>.syldb <assembly>.fna ... -o
-  profile.tsv`) passes the assemblies as positional FASTA arguments, which `sylph profile`
-  treats as additional reference genomes rather than as samples; with no FASTQ or .sylsp
-  sample present sylph exits with 'No read files found' and this section will be empty —
-  verified by reading sylph's source (src/contain.rs, src/cmdline.rs), not by running it,
-  and not a point the paper makes.
-
-- Every result in the paper is for shotgun reads, and the zero-inflated Poisson correction
-  is a model of read sampling; an assembly carries each k-mer essentially once, so the
-  coverage columns do not mean what they mean in the paper and Adjusted_ANI should be read
-  alongside Naive_ANI rather than instead of it (this is our reading of the paper's stated
-  filters, not something the paper tests).
-
-- The paper states plainly that sylph 'loses sensitivity when organisms only have database
-  representatives at higher taxonomic ranks', so a genome that is a novel species can
-  produce no sylph row at all while GTDB-Tk still returns a genus or family — silence from
-  sylph is not evidence of a bad assembly.
-
-- Containment ANI is not the quantity GTDB-Tk compares against its species representatives;
-  the paper notes it is biased slightly upward at k = 31 with the bias subsiding only above
-  95% ANI, so small numeric disagreement between sylph's ANI and GTDB-Tk's is expected
-  rather than a sign that one of them is wrong.
-
-### Quantitative record (14 verified)
-
-| Value | Claim | Verbatim quote |
-|---|---|---|
-| `>95%` | Sylph reports only genomes above the species-level containment ANI cutoff | “outputs genomes for which ANI is >95% by default.” |
-| `k = 31` | k-mer length used for sketching | “Sylph first subsamples the k-mers (k = 31) for each genome in a” |
-| `c = 200` | k-mer subsampling rate (roughly one k-mer in c is kept) | “c = 200 by default, effectively speeding up computation and lowering” |
-| `>50` | Minimum number of sampled k-mers before a genome is reported at all | “of FracMinHash k-mers for a genome is >50 by default, although this” |
-| `0.008x` | Lowest effective coverage at which the correction still recovered a >95% ANI call, in the downsampled K. pneumoniae test | “However, beginning at even 0.008×” |
-| `99.26%` | Reference value the correction was aiming at in that test (ANI from the full, undownsampled read set) | “the true containment ANI (99.26% as estimated with all reads)” |
-| `median k-mer multiplicity ≤3` | Condition under which the coverage adjustment is applied at all | “for ANI if the median multiplicity for k-mers X1, …, XN is ≤3” |
-| `100 iterations` | Bootstrap iterations behind the ANI percentile column | “over 100 iterations and performs coverage-adjusted ANI calculations” |
-| `5th and 95th percentile` | Percentiles reported as the ANI interval | “Sylph then takes the 5th and 95th percentile ANI” |
-| `not less than 70%` | How well calibrated those intervals are in simulation | “confidence intervals are slightly tight but the coverage probabilities are not less than 70% under simulations.” |
-| `>99% median ANI` | Median adjusted ANI on error-prone (90% identity) Nanopore reads, where naive ANI dropped below the 95% cutoff | “sylph still gave good estimates (>99% median ANI).” |
-| `92% mean precision, 82% F1` | Species-level precision and F1 on a synthetic community where most organisms had no species-level database representative | “sylph had 92% mean precision and 82% F1” |
-| `>95%` | ANI above which containment ANI stops being noticeably biased upward relative to standard genome-to-genome ANI at k = 31 | “this bias subsides for high ANI (>95%)” |
-| `<4 GB of memory for >25,000 genomes` | Memory footprint and database size in the profiling benchmark, the reason sylph can finish while GTDB-Tk is still running | “time while taking <4 GB of memory for >25,000 genomes.” |
-
-### Not established from the papers (6)
-
-- Which GTDB release the sylph sketch is built from is still undecided in the pipeline
-  (SYLPH_DB is marked url="TBD" in catalogue.py), so a name-level disagreement with GTDB-Tk
-  caused purely by different reference releases cannot be ruled out.
-
-- Whether Adjusted_ANI saturates at 100 when the sample is an assembly rather than reads:
-  the paper's filters (λ adjustment requires ≥3 k-mers in each of the two most-populated
-  multiplicity classes) suggest the adjustment is usually skipped for assemblies, but sylph
-  is not installed in this environment and no run was made to check.
-
-- The paper gives no threshold for when a second sylph row in one sample should be called
-  contamination, and no guidance at all on using assembled genomes as sylph samples.
-
-- The output column names quoted here were read from sylph's source (print_header in
-  src/contain.rs); the paper does not list them, and they were not confirmed against a real
-  profile.tsv.
-
-- The paper contains no benchmark of sylph against GTDB-Tk, so nothing here supports a claim
-  about how often the two agree on isolate genomes.
-
-- CompareM2's report currently renders sylph with the generic fallback table, which shows at
-  most the first 50 lines of profile.tsv (header plus 49 rows) with a 'First 50 rows.' note;
-  with many input genomes the later samples will simply not appear.
 
 ---
 
