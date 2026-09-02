@@ -21,7 +21,7 @@
 git clone https://github.com/cmkobel/CompareM2.git
 cd CompareM2
 pixi install
-pixi run pytest        # 105 unit tests, no databases needed
+pixi run pytest        # 110 unit tests, no databases needed
 ```
 
 !!! note "Moving the directory invalidates the environment"

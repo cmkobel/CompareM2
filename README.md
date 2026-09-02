@@ -29,7 +29,7 @@ That choice is what makes the rest possible:
 | Databases | 7 (incl. 84 GB Bakta full) | **4** (Bakta light) |
 | Report | R, RMarkdown, pandoc | **Python**, one HTML file |
 | Runtime | R + Python | **Python only** |
-| Unit tests | none | **105** |
+| Unit tests | none | **110** |
 
 **Every tool is one declarative spec.** There is no hand-written Snakefile —
 `src/comparem2/catalogue.py` holds the 13 specs and the workflow is generated
@@ -64,7 +64,7 @@ installation — a clean `pixi install` says nothing about whether a tool runs,
 and two tools have resolved to builds that installed cleanly and crashed.
 
 ```bash
-python -m pytest tests/unit -q   # 105 tests, no pixi required
+python -m pytest tests/unit -q   # 110 tests, no pixi required
 
 pixi install                     # linux only
 pixi run test-fast               # 4 genomes, no databases needed

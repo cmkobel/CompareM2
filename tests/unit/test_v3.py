@@ -313,6 +313,8 @@ def _databases_main_used(monkeypatch, tmp_path, argv: list[str]) -> Path:
 
     monkeypatch.setattr(cli_mod, "prepare", fake_prepare)
     monkeypatch.setattr(cli_mod, "render_report", fake_report)
+    # These cases are about the cwd, so pin the other end of the resolution.
+    monkeypatch.delenv("INIT_CWD", raising=False)
     (tmp_path / "a.fna").write_text(">c\nACGT\n")
     assert cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"),
                          "--until", "seqkit", "--report-only", *argv]) == 0
@@ -340,6 +342,69 @@ def test_relative_database_path_is_resolved_absolute(monkeypatch, tmp_path):
     used = _databases_main_used(monkeypatch, tmp_path, ["-d", "rel-db"])
     assert used.is_absolute()
     assert used == (tmp_path / "rel-db").resolve()
+
+
+def test_init_cwd_is_where_relative_paths_resolve(monkeypatch, tmp_path):
+    """`pixi run` executes a task from the manifest root, so `pixi run cm2
+    *.fna` in a subdirectory handed the CLI four names that existed and none
+    that resolved — every one reported missing. Pixi sets $INIT_CWD to the
+    directory the task was launched from."""
+    typed_in = tmp_path / "E._faecium"
+    typed_in.mkdir()
+    monkeypatch.chdir(tmp_path)  # stand-in for the manifest root
+    monkeypatch.setenv("INIT_CWD", str(typed_in))
+    assert cli_mod.invocation_dir() == typed_in
+    assert cli_mod.resolve(Path("116_2.fna"), cli_mod.invocation_dir()) \
+        == (typed_in / "116_2.fna").resolve()
+
+
+def test_invocation_dir_falls_back_to_the_cwd(monkeypatch, tmp_path):
+    """Unset outside pixi, and a stale value pointing at a deleted directory
+    must not win over a cwd that is right."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    assert cli_mod.invocation_dir() == Path.cwd()
+    monkeypatch.setenv("INIT_CWD", str(tmp_path / "gone"))
+    assert cli_mod.invocation_dir() == Path.cwd()
+
+
+def test_absolute_paths_ignore_init_cwd(monkeypatch, tmp_path):
+    """Resolution must be a no-op for anything already absolute."""
+    monkeypatch.setenv("INIT_CWD", str(tmp_path / "elsewhere"))
+    assert cli_mod.resolve(Path("/data/g.fna"), tmp_path) == Path("/data/g.fna")
+
+
+def test_inputs_and_output_resolve_against_init_cwd(monkeypatch, tmp_path):
+    """The whole point, end to end: the run finds the genome and writes the
+    results next to it, not next to the pixi manifest."""
+    typed_in = tmp_path / "E._faecium"
+    typed_in.mkdir()
+    (typed_in / "116_2.fna").write_text(">c\nACGT\n")
+    manifest_root = tmp_path / "comparem2"
+    manifest_root.mkdir()
+    monkeypatch.chdir(manifest_root)
+    monkeypatch.setenv("INIT_CWD", str(typed_in))
+
+    seen: dict[str, Path] = {}
+    monkeypatch.setattr(cli_mod, "prepare", lambda r, s, w, d, *a, **k: seen.setdefault("workdir", w))
+    monkeypatch.setattr(cli_mod, "render_report",
+                        lambda r, s, w, d, *a, **k: w / "report.html")
+
+    assert cli_mod.main(["116_2.fna", "--until", "seqkit", "--report-only"]) == 0
+    assert seen["workdir"] == (typed_in / "results_comparem2").resolve()
+    link = seen["workdir"] / "samples" / "116_2" / "116_2.fna"
+    assert link.resolve() == (typed_in / "116_2.fna").resolve()
+    assert not (manifest_root / "results_comparem2").exists()
+
+
+def test_missing_input_names_the_directory_it_looked_in(monkeypatch, tmp_path):
+    """"no such file: 116_2.fna" is least helpful exactly when the file is
+    sitting in the directory the user is looking at."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    with pytest.raises(SystemExit) as excinfo:
+        cli_mod.main(["116_2.fna"])
+    assert str(tmp_path.resolve() / "116_2.fna") in str(excinfo.value)
 
 
 def test_tools_without_env_export_nothing():

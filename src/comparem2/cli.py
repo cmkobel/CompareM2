@@ -36,6 +36,34 @@ def default_databases() -> Path:
     return Path.home() / ".comparem2" / "databases"
 
 
+def invocation_dir() -> Path:
+    """The directory the command was typed in, which is not always the cwd.
+
+    `pixi run cm2 ...` executes the task from the workspace manifest root, not
+    from the shell's directory, so `pixi run cm2 *.fna` in a subdirectory
+    arrives as relative paths that resolve against the wrong place: every input
+    is reported missing, including ones plainly listed by `ls` in that same
+    shell. Pixi sets `$INIT_CWD` to the directory the task was launched from
+    (verified against pixi 0.78.0), and honouring it makes a relative path mean
+    what it looked like it meant.
+
+    Outside pixi the variable is unset and the cwd is already right.
+    """
+    init = os.environ.get("INIT_CWD")
+    if init and Path(init).is_dir():
+        return Path(init)
+    return Path.cwd()
+
+
+def resolve(path: Path, base: Path) -> Path:
+    """A user-supplied path made absolute, relative to `base`.
+
+    `base / path` leaves an already-absolute path untouched, so this changes
+    nothing except the relative case it exists for.
+    """
+    return (base / path.expanduser()).resolve()
+
+
 def slug(stem: str) -> str:
     """A sample name safe to use as a Snakemake wildcard and a path component.
 
@@ -138,16 +166,24 @@ def main(argv: list[str] | None = None) -> int:
                    help="re-render the report from existing outputs")
     args = p.parse_args(argv)
 
-    missing = [str(i) for i in args.inputs if not i.exists()]
+    # Every path the user typed is relative to where they typed it, which under
+    # `pixi run` is not the cwd — see invocation_dir().
+    base = invocation_dir()
+    inputs = [resolve(i, base) for i in args.inputs]
+
+    # Report the resolved path, not what was typed: "no such file: 116_2.fna"
+    # is unhelpful precisely when the file is sitting there in the directory
+    # the user is looking at, and the absolute form says where we did look.
+    missing = [str(i) for i in inputs if not i.exists()]
     if missing:
         raise SystemExit(f"no such file: {', '.join(missing)}")
 
     # Absolute, because Snakemake is given this as its working directory (see
     # below) and every generated path has to survive that.
-    workdir: Path = args.output.resolve()
+    workdir: Path = resolve(args.output, base)
     workdir.mkdir(parents=True, exist_ok=True)
-    databases: Path = (args.databases or default_databases()).expanduser().resolve()
-    samples = canonicalise(args.inputs, workdir)
+    databases: Path = resolve(args.databases or default_databases(), base)
+    samples = canonicalise(inputs, workdir)
 
     tools = CATALOGUE.closure(args.until)
     print(f"{len(samples)} assemblies, {len(tools)} tools", file=sys.stderr)
@@ -178,7 +214,7 @@ def main(argv: list[str] | None = None) -> int:
                 "the dry run, and it shows the download size too")
         from .tui import launch
 
-        launch(args.inputs, workdir, databases, samples, args.cores,
+        launch(inputs, workdir, databases, samples, args.cores,
                selected=args.until, overrides=overrides, launcher=launcher,
                keep_going=args.keep_going)
         return 0

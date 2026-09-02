@@ -277,6 +277,39 @@ immediately — and the lock's real effect was recurring alert noise. Verified i
 a clean virtualenv: those two floors plus Markdown 3.9, no pymdown-extensions,
 `mkdocs build --strict` clean.
 
+### Relative paths resolve against `$INIT_CWD`, not the cwd
+`pixi run cm2 *.fna --tui`, typed in `tests/E._faecium/`, reported
+`no such file: 116_2 duplicate.fna, 116_2.fna, E8202.fna, SRR24.fna` — all four
+of them sitting in the `ls` directly above it. Not the space in the filename,
+which survives intact: **a pixi task executes from the workspace manifest root,
+not from the shell's directory**, so the four relative names were looked up one
+directory tree away.
+
+Measured against pixi 0.78.0, from `<root>/sub` containing `a b.txt` and
+`c.txt`:
+
+```
+✨ Pixi task (count): python3 -c '...' a b.txt c.txt
+2 ['a b.txt', 'c.txt']      # two arguments, the space intact
+PWD=/private/tmp/pixicwd            # the manifest root
+INIT_CWD=/private/tmp/pixicwd/sub   # where it was typed
+```
+
+So `cli.py` now resolves every user-supplied path — inputs, `--output`,
+`--databases` — against `$INIT_CWD` when it names a real directory, and the cwd
+otherwise. Absolute paths are untouched; `base / path` is a no-op on them.
+
+Rejected: a `cwd` on the task, which is static and cannot mean "wherever the
+user is"; and telling users to type `"$PWD"/*.fna`, which is a workaround
+written in the documentation rather than a fix, and leaves `--output` still
+defaulting to a `results_comparem2` beside the manifest instead of beside the
+genomes.
+
+The error message now names the resolved path. `no such file: 116_2.fna` is
+least useful in exactly the case that produced it — when the file is in the
+directory the user is looking at — and the absolute form says where the lookup
+happened.
+
 ### The remote follows the repository rename
 `origin` now points at `cmkobel/CompareM2`, and the `cmkobel/comparem2` spelling
 is gone from `mkdocs.yml` and the docs. GitHub redirected the old name, so this

@@ -11,6 +11,13 @@ Assemblies are passed as paths, not as a glob string. In v2 this was
 pixi run cm2 genomes/*.fna
 ```
 
+Relative paths mean what they look like they mean, from any directory. A pixi
+task runs from the workspace root rather than from your shell's directory, so
+`pixi run cm2 *.fna` in a subdirectory would otherwise look for the files
+somewhere else entirely; CompareM2 resolves inputs, `--output` and
+`--databases` against `$INIT_CWD`, which pixi sets to where the command was
+typed. Results land next to the genomes.
+
 ## Options
 
 | Option | Default | What it does |
