@@ -345,6 +345,46 @@ cleanly and crash.
 Earlier figure, kept for comparison: 1,142 packages / 1.58 GB, measured with
 sylph still in the set.
 
+### macOS on Apple silicon: three packages missing
+
+Solved 2026-09-02 from the laptop, `pixi lock` probes against conda-forge and
+bioconda for `osx-arm64` — one per tool plus a combined solve, pixi 0.78.0.
+**Nothing was installed and nothing was run**, so this says only what the solver
+can reach; it is the weakest kind of evidence in this file. The project stays
+Linux-only.
+
+| Missing | Exists for | Required by | Consequence |
+| ------- | ---------- | ----------- | ----------- |
+| `intbitset` 3.0.2 | conda-forge: linux-64, osx-64, win-64 | panaroo, **every** version 1.5.0–1.8.0 | panaroo uninstallable — the tool is lost, not downgraded |
+| `pplacer 1.1.alpha19.*` | bioconda: linux-64 only. arm64 has alpha20 and alpha22 | gtdbtk 2.7.0 / 2.7.1 / 2.7.2 | `catalogue.py`'s `gtdbtk>=2.7` is unsatisfiable; the newest arm build is 2.5.2 |
+| `libxcrypt1` 4.4.38 | conda-forge: linux only — it is a glibc crypt library | mlst 2.34.0 and 2.35.0 | mlst falls back to 2.33.1, which does install |
+
+The other ten tools solve. A combined solve of the remaining twelve default-env
+dependencies resolves **422 packages** at versions identical to the `linux-64`
+lock — seqkit 2.13.0, bakta 1.12.1, amrfinder 4.2.7, mashtree 1.4.6, treecluster
+1.0.5, skani 0.3.2, snp-dists 1.2.0, fasttree 2.2.0, carveme 1.6.6 with scip
+10.0.3, snakemake 9.16.3, textual 8.2.8. DIAMOND comes out 2.2.6 against linux's
+2.2.5. The `checkm2` environment solves too, checkm2 1.1.0 with diamond 2.1.11 —
+the same 2.1.x pin that forced the split. These are native arm builds rather
+than repackaged x86: build strings and sizes differ from `osx-64`, e.g. skani
+637,034 B (`h8f6e10a_0`) against 662,636 B (`h82ec203_0`).
+
+**The pins would have to move into `pixi.toml` first.** With `gtdbtk = "*"` as
+the manifest spells it today, the combined `osx-arm64` solve does not fail — it
+resolves **gtdbtk 1.0.2 `py_2`, from 2019**. That is the failure mode the
+manifest's own comment warns about, and on macOS it would install cleanly and be
+junk.
+
+Two things this does not answer: whether gtdbtk 2.5.2 accepts the r232 database
+the catalogue downloads (2.7.2 does, by `COMPATIBLE_REF_DATA_VERSIONS`; 2.5.2 is
+unchecked), and what CarveMe's MILP costs on arm — every solver number in this
+file is from thylakoid.
+
+All three fixes are upstream, none of them local: an `osx-arm64` migration on
+the intbitset feedstock, a bioconda PR relaxing gtdbtk's stale `alpha19` pin to
+the alpha22 that arm already carries, and a report that mlst's *noarch* recipe
+declares a dependency on a Linux-only library.
+
 ## Databases
 
 | Database | Download | On disk | Note |
