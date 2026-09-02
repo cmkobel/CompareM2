@@ -396,3 +396,35 @@ the pre-fix source (checked by stashing `src/` and re-running them).
 Two of the eight need real Snakemake and are skipped where it is absent, which
 is deliberate: the defect was in Snakemake's own field names, and a fake event
 stream would have agreed with whatever the code assumed.
+
+### The default database directory was `./databases`, so it was per-run
+A cwd-relative default meant the same command run from two directories fetched
+a second copy of a set whose measured part is 143.2 GB. Nothing warned, and
+nothing pointed the two runs at each other: the flag existed, so the fix on
+thylakoid was to type `-d /evo/postdoc/cm2-databases` on every invocation and
+write in STATUS.md that forgetting it re-downloads 6.9 GB. A default that has to
+be overridden by hand on every run to avoid wasting 143 GB is the wrong default.
+
+Now `~/.comparem2/databases`, with precedence `-d`, then
+`$COMPAREM2_DATABASES`, then that. Home-relative rather than under `--output`
+because databases outlive any one run's results, and outside any checkout so
+deleting a checkout does not cost a re-download — which is the rationale
+STATUS.md had already recorded for placing them by hand.
+
+`$COMPAREM2_DATABASES` is a deliberate third way to say the same thing, against
+the usual preference for fewer. It is the only one that can be set *once*: `-d`
+has to be retyped, and a home directory is the wrong place for 143 GB on a
+cluster with a quota on it. Without it the shared default is unusable exactly
+where the sharing matters most, and the answer would be back to typing `-d`.
+
+The resolved path is now printed with the download list, because the default is
+no longer somewhere the user can see:
+
+```
+to download: checkm2, gtdb, bakta-light, amrfinder (143.2 GB + 2 of unknown size) -> /evo/postdoc/cm2-databases
+```
+
+Found alongside it: `render_report` was passed the *unresolved* `args.databases`
+while `prepare` and the TUI got the resolved one. Harmless while the default was
+relative to a cwd that had not changed, and a real divergence as soon as it was
+not. A test now asserts the two agree.

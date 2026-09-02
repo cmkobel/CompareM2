@@ -8,6 +8,7 @@ renders the report. `--tui` hands the same arguments to the TUI, which shares
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -15,6 +16,24 @@ from pathlib import Path
 from .catalogue import CATALOGUE
 from .report import render_report
 from .snakefile import prepare
+
+
+def default_databases() -> Path:
+    """Where databases go when `-d` is not given.
+
+    Home-relative, so it is the same location for every run, and outside any
+    checkout so deleting a checkout does not cost a re-download. The default
+    used to be `./databases`, which meant the same command run from two
+    directories silently fetched a second copy of up to 143 GB.
+
+    `$COMPAREM2_DATABASES` exists because home is the wrong place for 143 GB on
+    a cluster with a home quota, and it is the only way to move the location
+    once for every run — `-d` has to be retyped on each invocation.
+    """
+    override = os.environ.get("COMPAREM2_DATABASES")
+    if override:
+        return Path(override).expanduser()
+    return Path.home() / ".comparem2" / "databases"
 
 
 def slug(stem: str) -> str:
@@ -98,7 +117,10 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="comparem2", description="A wide view of a set of assemblies.")
     p.add_argument("inputs", nargs="+", type=Path, help="assembly FASTA files")
     p.add_argument("-o", "--output", type=Path, default=Path("results_comparem2"))
-    p.add_argument("-d", "--databases", type=Path, default=Path("databases"))
+    p.add_argument("-d", "--databases", type=Path, default=None,
+                   help="where databases live; shared across runs (default: "
+                        f"{default_databases()}, overridden for every run by "
+                        "$COMPAREM2_DATABASES)")
     p.add_argument("-t", "--cores", type=int, default=4)
     p.add_argument("--until", nargs="*", default=None, metavar="TOOL",
                    help="run only these tools and their dependencies")
@@ -124,7 +146,7 @@ def main(argv: list[str] | None = None) -> int:
     # below) and every generated path has to survive that.
     workdir: Path = args.output.resolve()
     workdir.mkdir(parents=True, exist_ok=True)
-    databases: Path = args.databases.resolve()
+    databases: Path = (args.databases or default_databases()).expanduser().resolve()
     samples = canonicalise(args.inputs, workdir)
 
     tools = CATALOGUE.closure(args.until)
@@ -142,7 +164,9 @@ def main(argv: list[str] | None = None) -> int:
         if unmeasured:
             size += (" + " if size else "") + f"{len(unmeasured)} of unknown size"
         names = ", ".join(db.name for db in pending)
-        print(f"to download: {names} ({size})", file=sys.stderr)
+        # Say where, because the default is no longer in sight of the cwd and
+        # this is the line that precedes a download of up to 143 GB.
+        print(f"to download: {names} ({size}) -> {databases}", file=sys.stderr)
 
     overrides = parse_overrides(args.set)
     launcher = args.isolated_launcher.split() if args.isolated_launcher else None
@@ -186,7 +210,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.dry_run:
             return 0
 
-    report = render_report(CATALOGUE, args.until, workdir, args.databases, samples)
+    report = render_report(CATALOGUE, args.until, workdir, databases, samples)
     print(f"report: {report}", file=sys.stderr)
     return 0
 

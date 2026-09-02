@@ -101,21 +101,24 @@ Software is 1.58 GB against 143 GB of data, and GTDB-Tk is essentially all of it
 ```bash
 cd /evo/postdoc/comparem2
 export PATH=$HOME/.pixi/bin:$PATH
+export COMPAREM2_DATABASES=/evo/postdoc/cm2-databases
 
-pixi run pytest          # 92 tests, no tools or databases needed
+pixi run pytest          # 105 tests, no tools or databases needed
 pixi run test-fast       # 4 genomes, no databases needed
 
 pixi run cm2 my/*.fna \
   --output results_myrun \
-  -d /evo/postdoc/cm2-databases \
   --cores 24 \
   --isolated-launcher "$HOME/.pixi/bin/pixi run -e {tool}"
 ```
 
-**Two flags are not optional there.** Without `-d`, the 6.9 GB is downloaded
-again. Without an **absolute** launcher path, CheckM2 fails with
-`command not found`, because Snakemake's shell does not inherit an interactive
-PATH.
+**The export belongs in `.bashrc`, and the launcher path must be absolute.**
+The default database directory is `~/.comparem2/databases`, which on thylakoid
+is under `/home` and not the `/evo` volume the existing copy sits on, so
+without `$COMPAREM2_DATABASES` (or `-d`, which has to be retyped every run) the
+6.9 GB is fetched a second time, into home. Without an **absolute**
+launcher path, CheckM2 fails with `command not found`, because Snakemake's
+shell does not inherit an interactive PATH.
 
 To skip the 141 GB:
 

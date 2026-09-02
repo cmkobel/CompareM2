@@ -65,7 +65,7 @@ installation — a clean `pixi install` says nothing about whether a tool runs,
 and two tools have resolved to builds that installed cleanly and crashed.
 
 ```bash
-python -m pytest tests/unit -q   # 92 tests, no pixi required
+python -m pytest tests/unit -q   # 105 tests, no pixi required
 
 pixi install                     # linux only
 pixi run test-fast               # 4 genomes, no databases needed

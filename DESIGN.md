@@ -125,6 +125,10 @@ Each of these exists because something broke. The post-mortems are in
 - **A tool's database location must be reachable.** Some tools take it only
   through the environment, which is what `Tool.env` is for — without it,
   `--databases` was silently ignored for the largest database in the pipeline.
+- **The database directory defaults to a shared, home-relative location**
+  (`~/.comparem2/databases`, or `$COMPAREM2_DATABASES`), never one relative to
+  the cwd or the output directory. Databases outlive any one run's results, and
+  a per-run default silently buys a second copy of 143 GB.
 - **Unit tests are the primary instrument.** The codebase is a generator, and a
   wrong wildcard yields a Snakefile that parses cleanly and builds the wrong
   DAG. An end-to-end run catches that slowly, if at all.

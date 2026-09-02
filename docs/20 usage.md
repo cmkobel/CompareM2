@@ -16,7 +16,7 @@ pixi run cm2 genomes/*.fna
 | Option | Default | What it does |
 |---|---|---|
 | `-o`, `--output` | `results_comparem2` | output directory |
-| `-d`, `--databases` | `databases` | where databases live |
+| `-d`, `--databases` | `~/.comparem2/databases` | where databases live |
 | `-t`, `--cores` | `4` | cores for Snakemake |
 | `--until TOOL...` | *(all)* | run only these tools and their dependencies |
 | `--set TOOL--FLAG=VALUE` | — | override a tool argument; repeatable |
@@ -25,6 +25,39 @@ pixi run cm2 genomes/*.fna
 | `--keep-going` | off | keep running independent tools after a failure |
 | `--dry-run` | off | show what would run |
 | `--report-only` | off | re-render the report from existing outputs |
+
+## Where databases go
+
+Databases are shared across runs, not stored per-run: the default is
+`~/.comparem2/databases`, the same location whatever directory you invoke from
+and outside any checkout, so deleting a checkout does not cost a re-download.
+The full set is 143.2 GB of measured downloads plus two of unmeasured size,
+and 141.4 GB of that is GTDB alone.
+
+A home directory is the wrong place for that on a cluster with a home quota, so
+set the location once:
+
+```bash
+export COMPAREM2_DATABASES=/evo/postdoc/cm2-databases
+```
+
+Precedence is `-d`, then `$COMPAREM2_DATABASES`, then `~/.comparem2/databases`.
+Whichever wins is printed before anything is fetched:
+
+```
+to download: checkm2, gtdb, bakta-light, amrfinder (143.2 GB + 2 of unknown size) -> /evo/postdoc/cm2-databases
+```
+
+Only what is actually missing is listed, so this shrinks to nothing once the
+databases are in place.
+
+Two databases are not under this root, and cannot be:
+
+- **AMRFinder** rejects `-d` on update (`amrfinder -u -d <dir>` exits with *"only
+  operates on the default database directory"*), so its data lands in
+  `$CONDA_PREFIX` and only a marker file is recorded here.
+- **GTDB-Tk** has no flag for its database at all; it is passed
+  `GTDBTK_DATA_PATH=<root>/gtdb` instead.
 
 ## Sample names
 

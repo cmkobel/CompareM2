@@ -20,7 +20,8 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from comparem2.catalogue import CATALOGUE  # noqa: E402
-from comparem2.cli import parse_overrides, slug  # noqa: E402
+from comparem2 import cli as cli_mod  # noqa: E402
+from comparem2.cli import default_databases, parse_overrides, slug  # noqa: E402
 from comparem2.guidance import GUIDANCE, citations  # noqa: E402
 from comparem2.report import (  # noqa: E402
     _PARTITION_VOCABULARY_MINIMUM,
@@ -272,6 +273,73 @@ def test_gtdbtk_gets_its_database_through_the_environment():
     assert "export GTDBTK_DATA_PATH=/db/gtdb" in text
     # and no other tool exports anything it should not
     assert text.count("export ") == 1
+
+
+def test_default_database_location_is_shared_not_cwd_relative(monkeypatch):
+    """The default used to be `./databases`, so running the same command from
+    two directories fetched a second copy of up to 143 GB."""
+    monkeypatch.delenv("COMPAREM2_DATABASES", raising=False)
+    default = default_databases()
+    assert default == Path.home() / ".comparem2" / "databases"
+    assert default.is_absolute()
+
+
+def test_comparem2_databases_env_var_moves_the_default(monkeypatch):
+    """A home quota makes home the wrong place for 143 GB on a cluster, and
+    `-d` cannot be set once for every run."""
+    monkeypatch.setenv("COMPAREM2_DATABASES", "/evo/postdoc/cm2-databases")
+    assert default_databases() == Path("/evo/postdoc/cm2-databases")
+    monkeypatch.setenv("COMPAREM2_DATABASES", "~/scratch/db")
+    assert default_databases() == Path.home() / "scratch" / "db"
+
+
+def _databases_main_used(monkeypatch, tmp_path, argv: list[str]) -> Path:
+    """Run `main` far enough to see which database root it settled on.
+
+    `--report-only` skips Snakemake entirely, so stubbing the two calls that
+    receive the path is enough — and it catches the mismatch that was here
+    before, where `render_report` got the unresolved `args.databases` while
+    everything else got the resolved one.
+    """
+    seen: dict[str, Path] = {}
+
+    def fake_prepare(registry, selected, workdir, databases, *a, **k):
+        seen["prepare"] = databases
+        return tmp_path / "Snakefile"
+
+    def fake_report(registry, selected, workdir, databases, *a, **k):
+        seen["report"] = databases
+        return tmp_path / "report.html"
+
+    monkeypatch.setattr(cli_mod, "prepare", fake_prepare)
+    monkeypatch.setattr(cli_mod, "render_report", fake_report)
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    assert cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"),
+                         "--until", "seqkit", "--report-only", *argv]) == 0
+    assert seen["prepare"] == seen["report"], "the two paths must agree"
+    return seen["report"]
+
+
+def test_explicit_flag_beats_the_env_var(monkeypatch, tmp_path):
+    """Precedence is -d, then $COMPAREM2_DATABASES, then home."""
+    monkeypatch.setenv("COMPAREM2_DATABASES", str(tmp_path / "from-env"))
+    chosen = tmp_path / "from-flag"
+    assert _databases_main_used(monkeypatch, tmp_path,
+                                ["-d", str(chosen)]) == chosen
+
+
+def test_env_var_is_used_when_the_flag_is_absent(monkeypatch, tmp_path):
+    monkeypatch.setenv("COMPAREM2_DATABASES", str(tmp_path / "from-env"))
+    assert _databases_main_used(monkeypatch, tmp_path, []) == tmp_path / "from-env"
+
+
+def test_relative_database_path_is_resolved_absolute(monkeypatch, tmp_path):
+    """Snakemake is handed `--directory <output>`, so a relative database path
+    would resolve against the wrong directory once the run starts."""
+    monkeypatch.chdir(tmp_path)
+    used = _databases_main_used(monkeypatch, tmp_path, ["-d", "rel-db"])
+    assert used.is_absolute()
+    assert used == (tmp_path / "rel-db").resolve()
 
 
 def test_tools_without_env_export_nothing():

@@ -80,7 +80,7 @@ Answers whether a genome is good enough to use, by estimating how much of the or
 Runs once over the whole set · 8 threads · database `checkm2` (1.7 GB) · **own conda environment**
 
 ```
-checkm2 predict --threads 8 --database_path databases/checkm2/checkm2.dmnd --output-directory results_comparem2/checkm2 --input results_comparem2/samples/genome_A/genome_A.fna results_comparem2/samples/genome_B/genome_B.fna
+checkm2 predict --threads 8 --database_path ~/.comparem2/databases/checkm2/checkm2.dmnd --output-directory results_comparem2/checkm2 --input results_comparem2/samples/genome_A/genome_A.fna results_comparem2/samples/genome_B/genome_B.fna
 ```
 
 **Reading the output**
@@ -137,7 +137,7 @@ Works out where the genes are in each assembly and what they are called. The cou
 Runs once per genome · 8 threads · database `bakta-light` (unmeasured)
 
 ```
-bakta --db databases/bakta --threads 8 --output results_comparem2/samples/genome_A/bakta --prefix genome_A --force results_comparem2/samples/genome_A/genome_A.fna
+bakta --db ~/.comparem2/databases/bakta --threads 8 --output results_comparem2/samples/genome_A/bakta --prefix genome_A --force results_comparem2/samples/genome_A/genome_A.fna
 ```
 
 | Parameter | Default |
