@@ -113,32 +113,194 @@ def _raw_table(rows: list[list[str]], header: list[str],
 # Anything without an entry here falls back to a plain table of its output.
 
 
+# Viridis, sampled at nine stops and interpolated. Hardcoded because importing
+# matplotlib to obtain nine colours would cost more than every analysis tool in
+# the pipeline combined.
+VIRIDIS = ["#440154", "#482777", "#3f4a8a", "#31678e", "#26838f",
+           "#1f9d8a", "#6cce5a", "#b6de2b", "#fee825"]
+
+
+def viridis(fraction: float) -> str:
+    """Colour for a value in [0, 1], linearly interpolated between stops."""
+    f = max(0.0, min(1.0, fraction)) * (len(VIRIDIS) - 1)
+    i = min(int(f), len(VIRIDIS) - 2)
+    t = f - i
+    a, b = VIRIDIS[i], VIRIDIS[i + 1]
+    channels = (
+        round(int(a[1 + 2 * k:3 + 2 * k], 16) * (1 - t)
+              + int(b[1 + 2 * k:3 + 2 * k], 16) * t)
+        for k in range(3)
+    )
+    return "#" + "".join(f"{c:02x}" for c in channels)
+
+
+def _bp(value: float) -> str:
+    if value >= 1e6:
+        return f"{value / 1e6:.3g} Mb"
+    if value >= 1e3:
+        return f"{value / 1e3:.3g} kb"
+    return f"{value:.0f}"
+
+
+def _ticks(maximum: float, target: int = 4) -> list[float]:
+    """Round tick positions at or below `maximum`.
+
+    Quartering the largest genome gives labels like `819.114 kb`. Steps are
+    picked from 1/2/2.5/5 x 10^k instead, so the axis reads 0, 1 Mb, 2 Mb, 3 Mb.
+    """
+    if maximum <= 0:
+        return [0.0]
+    import math
+
+    rough = maximum / max(target, 1)
+    magnitude = 10 ** math.floor(math.log10(rough))
+    for multiple in (1, 2, 2.5, 5, 10):
+        step = multiple * magnitude
+        if rough <= step:
+            break
+    out, value = [], 0.0
+    while value <= maximum + step * 1e-9:
+        out.append(value)
+        value += step
+    return out
+
+
+def draw_contigs(rows: list[tuple[str, float, list[tuple[int, float]]]],
+                 width: int = 720, row_h: int = 17) -> str:
+    """Contig sizes per genome, coloured by GC content.
+
+    One row per genome, one rect per fasta record, width proportional to the
+    record's length and fill given by its GC. Ported from v2's
+    `sequence_lengths` figure, which is the fastest way to see a fragmented
+    assembly, an outsized genome, or a contig whose GC does not match its
+    neighbours.
+    """
+    if not rows:
+        return '<p class="missing">No contigs.</p>'
+
+    label_room = 210
+    legend_room = 86
+    span = width - label_room - legend_room
+    longest = max(sum(l for l, _ in contigs) for _, _, contigs in rows) or 1
+    gcs = [gc for _, _, contigs in rows for _, gc in contigs]
+    lo, hi = (min(gcs), max(gcs)) if gcs else (0.0, 1.0)
+    if hi - lo < 1e-9:
+        lo, hi = lo - 1, hi + 1
+
+    axis_h = 30
+    height = len(rows) * row_h + axis_h + 8
+    parts: list[str] = []
+
+    for i, (sample, overall_gc, contigs) in enumerate(rows):
+        y = i * row_h
+        parts.append(
+            f'<text x="{label_room - 8}" y="{y + row_h / 2 + 3.5:.1f}" '
+            f'text-anchor="end" font-size="10.5" fill="currentColor">'
+            f"{html.escape(sample)} ({overall_gc:.1f}%)</text>"
+        )
+        x = float(label_room)
+        for length, gc in contigs:
+            w = span * length / longest
+            parts.append(
+                f'<rect x="{x:.2f}" y="{y + 2}" width="{max(w, 0.4):.2f}" '
+                f'height="{row_h - 4}" fill="{viridis((gc - lo) / (hi - lo))}">'
+                f"<title>{html.escape(sample)}: {length:,} bp, {gc:.1f}% GC</title>"
+                "</rect>"
+            )
+            x += w
+
+    # x axis
+    base = len(rows) * row_h + 4
+    parts.append(
+        f'<line x1="{label_room}" y1="{base}" x2="{label_room + span}" y2="{base}" '
+        'stroke="currentColor" stroke-opacity="0.35"/>'
+    )
+    for value in _ticks(longest):
+        x = label_room + span * value / longest
+        parts.append(
+            f'<line x1="{x:.1f}" y1="{base}" x2="{x:.1f}" y2="{base + 4}" '
+            'stroke="currentColor" stroke-opacity="0.35"/>'
+        )
+        parts.append(
+            f'<text x="{x:.1f}" y="{base + 16}" text-anchor="middle" font-size="10" '
+            f'fill="currentColor" fill-opacity="0.7">{_bp(value)}</text>'
+        )
+
+    # GC legend
+    lx = label_room + span + 26
+    ly = 4
+    lh = min(len(rows) * row_h - 8, 150)
+    parts.append(
+        '<defs><linearGradient id="gc" x1="0" y1="1" x2="0" y2="0">'
+        + "".join(
+            f'<stop offset="{j / (len(VIRIDIS) - 1):.3f}" stop-color="{c}"/>'
+            for j, c in enumerate(VIRIDIS)
+        )
+        + "</linearGradient></defs>"
+    )
+    parts.append(
+        f'<rect x="{lx}" y="{ly}" width="11" height="{lh}" fill="url(#gc)"/>'
+    )
+    for frac, value in ((0.0, lo), (0.5, (lo + hi) / 2), (1.0, hi)):
+        y = ly + lh - lh * frac
+        parts.append(
+            f'<text x="{lx + 15}" y="{y + 3.5:.1f}" font-size="10" '
+            f'fill="currentColor" fill-opacity="0.7">{value:.0f}</text>'
+        )
+    parts.append(
+        f'<text x="{lx}" y="{ly + lh + 14}" font-size="10" fill="currentColor" '
+        'fill-opacity="0.7">GC%</text>'
+    )
+
+    return (f'<svg viewBox="0 0 {width} {height}" width="100%" height="{height}" '
+            f'role="img" aria-label="contig sizes coloured by GC content">'
+            f'{"".join(parts)}</svg>')
+
+
 def _section_seqkit(tool: Tool, ctx: Context, workdir: Path) -> str:
-    """Assembly statistics, derived from the per-contig table."""
+    """Contig sizes coloured by GC, plus the statistics derived from them."""
     rows = [["Genome", "Contigs", "Total length", "Largest", "N50", "GC %"]]
+    figure_rows: list[tuple[str, float, list[tuple[int, float]]]] = []
+
     for sample in ctx.samples:
         path = ctx.sample_out(sample, "seqkit", "contigs.tsv")
         if not path.exists():
             continue
-        lengths, gc = [], []
-        for rec in _read_tsv(path):
-            if len(rec) >= 3 and _numeric(rec[1]):
-                lengths.append(int(float(rec[1])))
-                gc.append(float(rec[2]))
-        if not lengths:
+        # Kept in file order, so the figure shows each fasta record where it
+        # actually sits rather than an ordering the report invented.
+        contigs = [
+            (int(float(rec[1])), float(rec[2]))
+            for rec in _read_tsv(path)
+            if len(rec) >= 3 and _numeric(rec[1]) and _numeric(rec[2])
+        ]
+        if not contigs:
             continue
-        lengths.sort(reverse=True)
-        total = sum(lengths)
+
+        total = sum(length for length, _ in contigs)
+        mean_gc = (sum(gc * length for length, gc in contigs) / total) if total else 0.0
+        figure_rows.append((sample, mean_gc, contigs))
+
+        lengths = sorted((length for length, _ in contigs), reverse=True)
         run, n50 = 0, lengths[-1]
         for length in lengths:
             run += length
             if run >= total / 2:
                 n50 = length
                 break
-        mean_gc = sum(g * n for g, n in zip(gc, lengths)) / total if total else 0
         rows.append([sample, f"{len(lengths)}", f"{total:,}", f"{lengths[0]:,}",
                      f"{n50:,}", f"{mean_gc:.1f}"])
-    return _table(rows[1:], header=rows[0]) if len(rows) > 1 else '<p class="missing">No data.</p>'
+
+    if len(rows) == 1:
+        return '<p class="missing">No data.</p>'
+
+    return (
+        '<p class="summary">Each bar is one genome, each segment one fasta '
+        "record, sized by length and coloured by its GC content. Hover a "
+        "segment for its length.</p>"
+        + draw_contigs(figure_rows)
+        + "<h3>Assembly statistics</h3>"
+        + _table(rows[1:], header=rows[0])
+    )
 
 
 class _Node:
