@@ -15,6 +15,19 @@ Becomes CompareM2 v3 rather than a separate project, so the name, citation and
 docs domain carry over. v2 code is left in place on this branch for reference
 and will be removed in a deliberate, separate step once v3 stands on its own.
 
+**Done 2026-09-02** (`c7e8d91`): 92 files removed — `workflow/`,
+`dynamic_report/`, `profile/`, `resources/`, `config/`, the launcher,
+Dockerfile, environment.yaml, changelog.txt, the Rproj. History keeps all of
+it and `master` still serves it. Deleting it forced rewrites of `pixi.toml`,
+CI, `CLAUDE.md`, `README.md` and `docs/`, which had all been describing v2.
+See CLEANUP.md.
+
+The repository history is **not** rewritten. Purging the 35.4 MB of PDFs
+accidentally committed in `952a7d0` would only be worthwhile alongside the
+157 MB of raw genome FASTA, and that sits below the branch point — so it would
+rewrite `master` and every published SHA of v2 across 10 remote branches. Not
+worth the disk.
+
 ### 2026-09-01 — Python only; R is dropped
 CLI, TUI and report all share one runtime. Removes R, pandoc, rmarkdown,
 tidyverse and r-clusterProfiler from the install path — the heaviest
@@ -317,6 +330,34 @@ improvement over v2 existed in one working tree and could not run in CI. Nothing
 else under `tests/` was caught by it: the directory holds eight tracked input
 zips, a README, and the tests. Replaced with narrow rules for unpacked genomes
 and run output, which is what the blanket rule was presumably meant to catch.
+
+### 2026-09-02 — Two docs pages are generated from the specs
+`docs/30 what analyses does it do.md` and `docs/99 citation.md` are written by
+`docs/generate.py` from `catalogue.py` and `guidance.py`, and CI fails if they
+are stale. v2 hand-maintained both and both drifted: the citation list kept
+dropped tools and missed added ones, and the analyses page documented default
+parameters that no longer matched `config.yaml`.
+
+The analyses page renders each tool's **actual command line** from its spec, so
+it cannot describe something that does not run. That also makes it the quickest
+place to eyeball a command for a mistake, which is worth something given that
+unexecuted command lines are the standing risk here.
+
+### 2026-09-02 — `--set` could not express a single-dash flag
+Found by adding skani's `-c 70`, the first single-dash parameter in the
+catalogue. `parse_overrides` split the setting on its first `--` and prepended
+`--` to whatever followed, so:
+
+| Written | Produced | |
+| ------- | -------- | - |
+| `skani-c=125` | `SystemExit` | rejected outright |
+| `skani--c=125` | `-c 70 --c 125` | default not replaced, and `--c` is not a skani flag |
+
+The flag now keeps whatever dashes it was written with, and the tool is matched
+against the catalogue longest-first so `snp-dists` is not split on its own
+hyphen. Every other tool's parameters happen to use long flags, which is why
+this survived until now — a reminder that the passthrough mechanism only gets
+exercised where a default exists to exercise it.
 
 ## Open questions
 - **Taxonomy.** The single largest install cost. GTDB-Tk is authoritative and

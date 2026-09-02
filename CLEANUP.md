@@ -35,7 +35,25 @@ Everything below is Phase 1 and 2 only — ordinary commits, all reversible.
 
 ---
 
-## Phase 1 — content (ordinary commits, no rewrite, fully reversible)
+## Phase 1 — content — DONE 2026-09-02
+
+Landed as three commits on `v3`: `1d84072` (untrack papers), `cd0c941`
+(guidance + defect fixes + drop sylph), `c7e8d91` (remove v2, rewrite entry
+points and docs). Not pushed — held until Phase 2 passes on linux.
+
+Two things came out differently from the plan below, both recorded in the
+commit messages:
+
+- **`docs/30 what analyses does it do.md` is generated too**, not just the
+  citation page. It renders each tool's real command line from the spec, so it
+  cannot describe something that does not run. `docs/generate.py --check` fails
+  in CI if either page is stale.
+- **`--set` had a defect the skani fix exposed.** `parse_overrides` split on
+  the first `--` and prepended `--` to the rest, so a single-dash flag was
+  inexpressible: `skani-c=125` was rejected and `skani--c=125` produced
+  `-c 70 --c 125`. Fixed, with tests.
+
+<details><summary>The plan as written</summary>
 
 ### 1.1 Land what is already staged
 Currently in the index: `src/comparem2/guidance.py` and `tests/unit/test_v3.py`
@@ -132,6 +150,8 @@ for v2 — which is correct, not a regression.
 `git push origin v3` — an ordinary fast-forward, no force. Held until Phase 2
 passes on linux, since the branch is published.
 
+</details>
+
 ---
 
 ## Phase 2 — verify on linux
@@ -140,13 +160,17 @@ Not done until these pass on thylakoid
 (`/evo/postdoc/cm2v3`, 24 cores):
 
 - [ ] `rm -rf .pixi && pixi install` — the environment still solves without sylph
-- [ ] `pixi run pytest` — 75 tests
+- [ ] `pixi run pytest` — 81 tests
 - [ ] `pixi run cm2 --dry-run` on the four *E. faecium* genomes
 - [ ] **`skani -c 70` actually runs** — added on macOS from the paper, never
       executed; the flag spelling is unverified
 - [ ] `fasttree` still produces a tree at `threads=1`
 - [ ] panaroo section renders the small-N exact-count table on a real run
 - [ ] CI green on GitHub
+- [ ] `mkdocs build --strict` (passes locally)
+- [ ] **`pixi install` solves at all** — pixi.toml was rewritten on macOS
+      against a linux-64-only platform list and has never been solved
+- [ ] then `git push origin v3`
 
 ---
 
