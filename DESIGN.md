@@ -137,8 +137,25 @@ Two decisions worth their reasoning:
   funcscan ships four.
 
 Final environment, measured for `linux-64`: **1142 packages, 1.58 GB, no
-conflicts.** Against v2's 25 environments. (Measured with sylph still in the
-set; removing it can only have reduced this, and it has not been re-measured.)
+conflicts.** Against v2's 25 environments.
+
+**Re-solved 2026-09-02** without sylph and with the rewritten `pixi.toml`
+(`pixi lock` runs on macOS even though installing does not, so this is
+measured, not assumed):
+
+| Environment | Packages | DIAMOND | Notes |
+| ----------- | -------: | ------- | ----- |
+| `default`   |      568 | 2.2.5   | bakta 1.12.1, the other twelve tools |
+| `checkm2`   |      127 | 2.1.11  | checkm2 1.1.0 alone |
+
+Two things this confirms rather than assumes. **The isolation is doing exactly
+what it was for** — the two environments resolve to the two incompatible
+DIAMOND versions, which is the conflict that forced the split. And **both
+minimum-version pins held**: bakta resolved to 1.12.1 and panaroo to 1.8.0, not
+the 1.8.1 and 1.1.2 builds that install cleanly and crash on first use.
+
+Still true that a solve is not a working environment: nothing here has been
+executed.
 
 ### 2026-09-01 — Bakta light, not full
 v2 downloads `--type full` (30 GB compressed, 84 GB on disk). v3 uses `light`

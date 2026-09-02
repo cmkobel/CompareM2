@@ -159,7 +159,10 @@ passes on linux, since the branch is published.
 Not done until these pass on thylakoid
 (`/evo/postdoc/cm2v3`, 24 cores):
 
-- [ ] `rm -rf .pixi && pixi install` — the environment still solves without sylph
+- [x] **the environment solves without sylph** — done 2026-09-02 via `pixi lock`,
+      which runs on macOS. `default` 568 packages / DIAMOND 2.2.5 / bakta
+      1.12.1; `checkm2` 127 packages / DIAMOND 2.1.11. Both pins held.
+- [ ] `rm -rf .pixi && pixi install` — that the solve actually *installs*
 - [ ] `pixi run pytest` — 81 tests
 - [ ] `pixi run cm2 --dry-run` on the four *E. faecium* genomes
 - [ ] **`skani -c 70` actually runs** — added on macOS from the paper, never
@@ -168,8 +171,7 @@ Not done until these pass on thylakoid
 - [ ] panaroo section renders the small-N exact-count table on a real run
 - [ ] CI green on GitHub
 - [ ] `mkdocs build --strict` (passes locally)
-- [ ] **`pixi install` solves at all** — pixi.toml was rewritten on macOS
-      against a linux-64-only platform list and has never been solved
+- [ ] `pixi run cm2 --tui` — textual 8.2.8 resolved, never launched
 - [ ] then `git push origin v3`
 
 ---
