@@ -290,7 +290,8 @@ def test_environment_files_deduplicate_by_content():
 
 
 def test_database_ready_paths_are_distinct_and_under_the_root():
-    paths = [db.ready_path(Path("/db")) for db in CATALOGUE.databases()]
+    paths = [db.ready_path(Path("/db"), Path("/res"))
+             for db in CATALOGUE.databases() if not db.out_of_tree]
     assert len(paths) == len(set(paths))
     for p in paths:
         assert str(p).startswith("/db/")
@@ -710,6 +711,67 @@ def test_use_conda_passes_the_deployment_flags_to_snakemake(monkeypatch, tmp_pat
     assert "--software-deployment-method" in cmd
     assert cmd[cmd.index("--software-deployment-method") + 1] == "conda"
     assert cmd[cmd.index("--conda-prefix") + 1] == str(prefix)
+
+
+def test_amrfinders_marker_lives_with_the_run_not_the_databases(tmp_path):
+    """Its data is in the tool's conda prefix, so a marker under `--databases`
+    outlives it.
+
+    Measured 2026-09-02: a thirteen-tool run failed on `No valid AMRFinder
+    database is found` against a stamp four hours old, because the environment
+    had been rebuilt in between. The download rule was skipped on the strength
+    of a marker describing data that no longer existed.
+    """
+    amr = CATALOGUE["amrfinder"].database
+    assert amr.out_of_tree is True
+    assert amr.ready_path(Path("/db"), Path("/res")) == Path("/res/amrfinder/.updated")
+
+    # Everything that really does live under --databases still does.
+    checkm2 = CATALOGUE["checkm2"].database
+    assert checkm2.ready_path(Path("/db"), Path("/res")) == Path("/db/checkm2/checkm2.dmnd")
+
+    # And the rule writes its stamp where the marker is, not into a shared
+    # directory it does not populate.
+    text = render(CATALOGUE, ["amrfinder"], Path("/res"), Path("/db"), SAMPLES)
+    block = text.split("rule download_amrfinder:")[1].split("\nrule ")[0]
+    assert "/res/amrfinder/.updated" in block
+    assert "/db/amrfinder" not in block
+
+
+def test_a_partial_run_still_renders_its_report(monkeypatch, tmp_path):
+    """`--keep-going` finishes the tools that can finish, and the report is the
+    product. Withholding it because one tool failed is not what it promises.
+
+    A real thirteen-tool run wrote no report at all after amrfinder failed,
+    while twelve tools had produced output. The TUI already got this right.
+    """
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.setattr(cli_mod.shutil, "which", lambda exe: "/usr/bin/seqkit")
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    out = tmp_path / "out"
+
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
+    monkeypatch.setattr(cli_mod, "render_report",
+                        lambda *a, **k: seen.setdefault("report", out / "r.html"))
+    # Snakemake fails, as it does when one rule of many fails.
+    monkeypatch.setattr(cli_mod.subprocess, "run",
+                        lambda cmd, *a, **k: subprocess.CompletedProcess(cmd, 1))
+
+    argv = [str(tmp_path / "a.fna"), "-o", str(out), "--until", "seqkit",
+            "--keep-going"]
+
+    # Nothing produced: no report, and the failure is returned.
+    assert cli_mod.main(argv) == 1
+    assert "report" not in seen
+
+    # One tool's declared outputs present: the report is rendered anyway, and
+    # the exit code still says the run failed.
+    seqkit = out / "samples" / "a" / "seqkit"
+    seqkit.mkdir(parents=True)
+    (seqkit / "contigs.tsv").write_text("c1\t4\t50.0\n")
+    assert cli_mod.main(argv) == 1
+    assert "report" in seen
 
 
 def test_unlock_releases_the_lock_and_does_nothing_else(monkeypatch, tmp_path):
@@ -2040,3 +2102,107 @@ def test_the_shading_legend_uses_the_same_steps_as_the_cells():
     for i in range(_SHADES + 1):
         assert f'class="shade s{i}"' in key
     assert "stop-opacity" not in key
+
+
+# --- carveme's solver wrapper --------------------------------------
+
+def test_carve_scip_runs_as_a_plain_script():
+    """It runs under the *tool's* interpreter, so its own package is not
+    importable — the mirror of steps.py, which runs under ours."""
+    from comparem2 import carve_scip
+
+    source = Path(carve_scip.__file__).read_text()
+    assert "from ." not in source and "import comparem2" not in source
+    # carveme must not be imported at module level either: the catalogue
+    # imports this file to name its path, and CompareM2's own environment is
+    # not required to contain CarveMe.
+    assert "import carveme" not in source.split("def main")[0]
+
+
+def test_carveme_runs_the_wrapper_and_keeps_diamond_out_of_baktas_directory():
+    """`carve` names its DIAMOND output after its input, so an input under
+    bakta/ overwrote bakta/<sample>.tsv — the feature table — with BiGG hits."""
+    from comparem2 import carve_scip
+
+    ctx = Context(Path("res"), Path("db"), 1, ("A",), "A")
+    argv = list(CATALOGUE["carveme"].command(ctx))
+    assert argv[:2] == ["python", carve_scip.__file__]
+    assert argv[argv.index("--faa") + 1] == str(Path("res/samples/A/bakta/A.faa"))
+    assert argv[argv.index("--output") + 1] == str(Path("res/samples/A/carveme/A.xml"))
+    assert "carve" not in argv, "carve is reached through the wrapper, not directly"
+
+    # And the hits are declared, in carveme's directory rather than bakta's.
+    outputs = CATALOGUE["carveme"].outputs(ctx)
+    assert [str(p) for p in outputs] == [
+        str(Path("res/samples/A/carveme/A.xml")),
+        str(Path("res/samples/A/carveme/A.tsv")),
+    ]
+
+
+def test_link_input_points_into_the_output_directory(tmp_path):
+    """The link is what moves the DIAMOND output; it has to be relative, so a
+    results directory can be moved, and replaced, so a re-run cannot inherit a
+    link to a genome that has gone away."""
+    from comparem2.carve_scip import link_input
+
+    faa = tmp_path / "samples" / "A" / "bakta" / "A.faa"
+    faa.parent.mkdir(parents=True)
+    faa.write_text(">g\nMK\n")
+    model = tmp_path / "samples" / "A" / "carveme" / "A.xml"
+
+    link = link_input(faa, model)
+    assert link == model.parent / "A.faa"
+    assert not link.readlink().is_absolute()
+    assert link.resolve() == faa.resolve()
+    # Where `carve` will put its hits, which is the point of the exercise.
+    assert link.with_suffix(".tsv").parent == model.parent
+
+    stale = link_input(faa, model)  # a second run must not fail on the link
+    assert stale.resolve() == faa.resolve()
+
+
+def test_patch_solver_disables_the_presolver_after_carveme_sets_its_limits(monkeypatch):
+    """CarveMe sets limits/time and limits/gap immediately before solving, so a
+    parameter set any earlier is one it overwrites."""
+    from comparem2 import carve_scip
+
+    calls = []
+
+    class FakeProblem:
+        def setParam(self, name, value):
+            calls.append((name, value))
+
+    class FakeSCIPSolver:
+        def __init__(self):
+            self.problem = FakeProblem()
+
+        def solve(self, *args, **kwargs):
+            calls.append(("solved", args))
+            return "solution"
+
+    module = type(sys)("reframed.solvers.scip_solver")
+    module.SCIPSolver = FakeSCIPSolver
+    monkeypatch.setitem(sys.modules, "reframed.solvers.scip_solver", module)
+
+    assert carve_scip.patch_solver() == "presolving/milp/maxrounds=0"
+    assert FakeSCIPSolver().solve() == "solution"
+    assert calls == [("presolving/milp/maxrounds", 0), ("solved", ())]
+
+
+def test_patch_solver_reports_a_missing_backend_rather_than_failing(monkeypatch):
+    """An installation solving with Gurobi or CPLEX has nothing here to patch.
+    This wrapper is a speed fix and must not be why a working run fails."""
+    from comparem2 import carve_scip
+
+    monkeypatch.setitem(sys.modules, "reframed.solvers.scip_solver", None)
+    assert "unavailable" in carve_scip.patch_solver()
+
+
+def test_the_generated_docs_do_not_carry_an_absolute_path():
+    """carveme's command names a file of ours, so it renders as an absolute
+    path — right at runtime, and in a checked-in page it would be this
+    laptop's directory layout and a `--check` failure anywhere else."""
+    page = (Path(__file__).resolve().parents[2]
+            / "docs" / "30 what analyses does it do.md").read_text()
+    assert "python src/comparem2/carve_scip.py" in page
+    assert "/src/comparem2/carve_scip.py" not in page

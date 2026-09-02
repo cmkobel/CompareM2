@@ -60,7 +60,7 @@ def _inputs(ctx: Context, tool: Tool, registry: Registry) -> list[str]:
     files = [str(ctx.assembly)] if tool.scope is Scope.GENOME else [str(a) for a in ctx.assemblies]
 
     if tool.database is not None:
-        files.append(str(tool.database.ready_path(ctx.databases)))
+        files.append(str(tool.database.ready_path(ctx.databases, ctx.workdir)))
 
     # Files the tool declares and `prepare()` writes. Declaring them as inputs
     # is what stops a rule from depending on something invisible: GTDB-Tk's
@@ -149,7 +149,8 @@ def _rule(tool: Tool, workdir: Path, databases: Path, samples: tuple[str, ...],
     return "\n".join(lines)
 
 
-def _download_rule(db, databases: Path, per_rule_conda: bool = False) -> str:
+def _download_rule(db, databases: Path, workdir: Path,
+                   per_rule_conda: bool = False) -> str:
     """One rule per database, whose output is the file that proves it arrived.
 
     Downloads are rules rather than a separate `--download` phase so that they
@@ -162,8 +163,12 @@ def _download_rule(db, databases: Path, per_rule_conda: bool = False) -> str:
     these fetches run a tool binary (`bakta_db`, `amrfinder -u`) that the
     pipeline's own environment does not contain.
     """
-    ready = str(db.ready_path(databases))
-    steps = db.fetch(databases) if db.fetch else []
+    ready = str(db.ready_path(databases, workdir))
+    # The fetch is handed the same root its marker lives under, so an
+    # out-of-tree database writes its stamp beside this run's results rather
+    # than into a shared directory it does not actually populate.
+    root = db.marker_root(databases, workdir)
+    steps = db.fetch(root) if db.fetch else []
     if not steps:
         raise ValueError(f"database {db.name} declares no fetch")
     if per_rule_conda and not db.conda:
@@ -174,7 +179,7 @@ def _download_rule(db, databases: Path, per_rule_conda: bool = False) -> str:
         f"rule download_{db.name.replace('-', '_')}:",
         "    output:",
         f"        {_q(ready)},",
-        f"    log: {_q(str(databases / 'logs' / ('download_' + db.name + '.log')))}",
+        f"    log: {_q(str(db.marker_root(databases, workdir) / 'logs' / ('download_' + db.name + '.log')))}",
         "    threads: 1",
         *([f"    conda: {_q('envs/' + _download_env(db.name))}"] if per_rule_conda else []),
         "    shell:",
@@ -226,7 +231,7 @@ def render(registry: Registry, selected: list[str] | None, workdir: Path,
         *[f"        {_q(t)}," for t in targets],
         "",
     ]
-    body = [_download_rule(db, databases, per_rule_conda)
+    body = [_download_rule(db, databases, workdir, per_rule_conda)
             for db in registry.databases(selected)]
     body += [_rule(t, workdir, databases, samples, registry, per_rule_conda,
                    overrides, launcher)

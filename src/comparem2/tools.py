@@ -70,9 +70,27 @@ class Database:
     # means it does not survive the environment being rebuilt.
     out_of_tree: bool = False
 
-    def ready_path(self, databases: Path) -> Path:
+    def marker_root(self, databases: Path, workdir: Path) -> Path:
+        """Where this database's readiness marker lives.
+
+        Under `--databases` for everything that stores its data there. For an
+        out-of-tree database it is the **run's output directory**, and that is
+        not cosmetic: AMRFinder's data lives in the tool's conda prefix, so a
+        marker under `--databases` outlives the thing it describes. Rebuild the
+        environment and the marker still says ready while the data is gone.
+
+        Verified the hard way 2026-09-02: a thirteen-tool run failed with
+        `No valid AMRFinder database is found` against a four-hour-old stamp,
+        because the environment had been rebuilt in between. Per-run readiness
+        means at most one run can be wrong about it, and a fresh output
+        directory is always right.
+        """
+        return workdir if self.out_of_tree else databases
+
+    def ready_path(self, databases: Path, workdir: Path) -> Path:
         """The file that proves this database is usable."""
-        return databases / (self.ready or f"{self.name}/.fetched")
+        root = self.marker_root(databases, workdir)
+        return root / (self.ready or f"{self.name}/.fetched")
 
     @property
     def human_size(self) -> str:
@@ -192,6 +210,11 @@ class Tool:
     # This is not a licence for arbitrary shell work: a tool needing several of
     # these is a tool whose spec is lying about what it does.
     post: Callable[[Context], Sequence[Sequence[str]]] | None = None
+    # The binary whose absence means this tool is not installed, when that is
+    # not `command`'s first word. Only carveme needs it: its command runs a
+    # wrapper under an interpreter, so the preflight would look for `python`,
+    # find it on every machine ever built, and report nothing missing.
+    executable: str = ""
     # Environment variables the tool needs, given its Context. Some tools take
     # their database location only this way: GTDB-Tk reads GTDBTK_DATA_PATH and
     # has no equivalent flag, so without this its `--databases` value would be

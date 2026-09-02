@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import sys
 
-from . import steps
+from . import carve_scip, steps
 from .tools import Context, Database, Registry, Scope, Tool
 
 # --- Databases -----------------------------------------------------
@@ -486,16 +486,40 @@ carveme = Tool(
     name="carveme",
     summary="Draft genome-scale metabolic model for each genome.",
     scope=Scope.GENOME,
+    # DIAMOND, pyscipopt and scip come with it — checked against the bioconda
+    # 1.6.6 recipe, which matters because `carve` shells out to DIAMOND and an
+    # environment holding only carveme would fail at its first step.
     conda=("bioconda::carveme",),
     needs=("bakta",),
-    # Solves with open-source SCIP (pyscipopt/pulp) — no CPLEX licence needed.
-    # Was commented out of v2's default target; verify it still runs, and check
-    # whether DIAMOND has to be supplied explicitly (v2 shipped a separate env).
+    # Solves with open-source SCIP, so no CPLEX licence — but *not* with the
+    # presolver conda-forge's SCIP ships. Measured 2026-09-02: 601 s in the MILP
+    # and a model missing 253 of its annotated reactions, against 43 s and 45
+    # with `presolving/milp/maxrounds=0`. Neither CarveMe nor ReFramed exposes a
+    # solver parameter, so it is set by a wrapper; carve_scip.py carries the
+    # numbers and the evidence that the presolver is wrong here rather than
+    # slow.
+    #
+    # Run by a bare `python`, deliberately. The wrapper imports carveme, so it
+    # needs the interpreter of the environment *the tool* is in — which under
+    # `--use-conda` is not the one running CompareM2. That is the mirror image
+    # of the `sys.executable` in gtdbtk's post step, which runs our own code.
     command=lambda c: [
-        "carve", str(c.out("bakta", f"{c.sample}.faa")),
+        "python", carve_scip.__file__,
+        "--faa", str(c.out("bakta", f"{c.sample}.faa")),
         "--output", str(c.out("carveme", f"{c.sample}.xml")),
+        *c.args(),
     ],
-    outputs=lambda c: [c.out("carveme", f"{c.sample}.xml")],
+    # Two, because `carve` names its DIAMOND output after its input and the
+    # wrapper gives it an input inside this directory. Undeclared, that file
+    # landed in Bakta's directory instead and silently replaced Bakta's own
+    # `<sample>.tsv` — see carve_scip.py.
+    outputs=lambda c: [
+        c.out("carveme", f"{c.sample}.xml"),
+        c.out("carveme", f"{c.sample}.tsv"),
+    ],
+    # argv[0] is an interpreter now, and the preflight would check `python`,
+    # find it everywhere, and never report carveme missing.
+    executable="carve",
 )
 
 

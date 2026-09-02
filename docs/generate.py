@@ -42,7 +42,11 @@ def _example_command(tool) -> str:
     line = " ".join(parts)
     if tool.stdout_to_output:
         line += f" > {tool.outputs(ctx)[0]}"
-    return line
+    # A command that names one of our own files does so by absolute path, which
+    # is right at runtime and wrong in a checked-in page: it would read as this
+    # laptop's directory layout, and `--check` would fail in CI, where the
+    # checkout is somewhere else. carveme is the one — see carve_scip.py.
+    return line.replace(str(Path(__file__).resolve().parents[1]) + "/", "")
 
 
 # --- 30 what analyses does it do ------------------------------------

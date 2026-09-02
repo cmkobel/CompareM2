@@ -45,6 +45,8 @@ src/comparem2/
   runner.py     drives Snakemake via its API, emits structured events
   tui.py        Textual interface over those events
   report.py     renders the HTML report
+  steps.py      the small steps a rule runs around a command (GTDB-Tk's merge)
+  carve_scip.py the wrapper in front of `carve` — see the solver convention below
 ```
 
 The flow: `cli.py` canonicalises every input to
@@ -93,7 +95,7 @@ move.
 
 ### Testing
 
-`tests/unit/test_v3.py`, 110 tests, ~1.1 s. This is the primary instrument: the
+`tests/unit/test_v3.py`, 167 tests, ~1.3 s. This is the primary instrument: the
 codebase is a generator, and a wrong wildcard produces a Snakefile that parses
 cleanly and builds the wrong DAG, which an end-to-end run catches slowly if at
 all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.
@@ -116,6 +118,13 @@ ANI, 0 SNPs, identical CDS counts.
 - **Commands are argument lists, never shell strings.** A tool that writes to
   stdout declares `stdout_to_output=True` and the redirect is added by whatever
   runs it.
+- **A solver build is part of the pinned surface, and it changes the result.**
+  CarveMe's MILP takes 601 s and returns a model missing 253 of its annotated
+  reactions with the SCIP conda-forge ships (it links PaPILO, which presolves
+  the optimum away), and 9.8 s with the PyPI wheel's, on a byte-identical
+  problem. `carve_scip.py` turns that presolver off; deleting the line costs
+  nine minutes a genome *and* the model. Numbers and evidence are in the
+  wrapper's docstring — re-measure before changing it.
 - **`isolated=True` is an exception that must carry its reason in the spec.**
   Exactly one tool has it (checkm2, which pins DIAMOND 2.1.x against bakta's
   2.2.x). v2 reached 25 environments by making this the default.

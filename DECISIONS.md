@@ -423,6 +423,45 @@ is the one beside the running interpreter.
 
 Under pixi this never surfaced, because `pixi run` activates the environment.
 
+### CarveMe gets a wrapper, because a solver parameter is not reachable
+`carve` spent 601 s of a 609 s run inside SCIP and then returned a model with
+253 of its annotated reactions missing, because conda-forge's SCIP links PaPILO
+and PaPILO presolves this problem's optimum away (see *What went wrong*). One
+SCIP parameter fixes it. Neither CarveMe nor ReFramed exposes one, so
+`src/comparem2/carve_scip.py` sets it and calls CarveMe in-process.
+
+Considered and rejected:
+
+- **Relaxing CarveMe's gap limit.** The cheapest-looking knob, and wrong: at a
+  5% gap the run finishes in 33 s with a *1,160-reaction* model, worse than
+  either. It buys speed by keeping the bad search's first feasible point.
+  Measured, not reasoned about.
+- **Pinning `scip`.** conda-forge has 10.0.2, and it carries PaPILO 3.0.0 and
+  is just as slow. There is no conda-forge SCIP without PaPILO to pin to.
+- **`pyscipopt` from PyPI**, whose wheel bundles a SCIP without PaPILO and
+  solves in 9.8 s. It would mean a pip package shadowing the conda one that
+  bioconda's carveme depends on, in an environment pixi and conda both manage —
+  and nothing like it would work under `--use-conda`.
+- **A rewrite, in Rust or otherwise.** The question that started this. Every
+  line of Python in the path — CarveMe's included — is about 8 s of the 609:
+  DIAMOND 1.8 s, universe model 1.7 s, scoring 4.0 s, SBML out 0.9 s. A perfect
+  rewrite of all of it saves under 2%.
+- **More threads.** SCIP's branch-and-bound here is one core, and CarveMe is
+  per-genome, so the fan-out that matters is Snakemake's and already exists.
+
+The wrapper runs under a bare `python`, which contradicts the rule `steps.py`
+established a few entries above — and has to. `steps.py` is our code and needs
+our interpreter; this imports `carveme` and needs the interpreter of the
+environment the tool is in, which under `--use-conda` is a different one. Both
+import nothing from their own package, for the same reason, and a test enforces
+both halves.
+
+It also earns its keep twice: giving `carve` an input path inside CarveMe's own
+output directory is what stops it overwriting Bakta's feature table.
+`Tool.executable` came with it, because the preflight now sees an interpreter as
+argv[0] and would have looked for `python`, found it, and never reported carveme
+missing.
+
 ---
 
 ## What went wrong
@@ -658,3 +697,72 @@ Found alongside it: `render_report` was passed the *unresolved* `args.databases`
 while `prepare` and the TUI got the resolved one. Harmless while the default was
 relative to a cwd that had not changed, and a real divergence as soon as it was
 not. A test now asserts the two agree.
+
+
+### Nine minutes of CarveMe was a presolver eating the optimum
+Carl asked whether CarveMe could be rewritten to run faster. It could not: the
+Python is 8 s of 609. What the profile did show is that the 601 s in the MILP is
+CarveMe's own hardcoded 600 s limit expiring, so the run was not solving, it was
+giving up — and returning the best point it had found.
+
+Then the same problem solved in 9.8 s, to proven optimality, under a different
+SCIP build on the same machine. Byte-identical problem: the MILP was written out
+from each build and the md5s matched (`fba2ad10…`), same carveme 1.6.6, same
+DIAMOND hits.
+
+| SCIP | MILP | status | model | annotated rx dropped |
+| ---- | ---: | ------ | ----- | -------------------: |
+| conda-forge 10.0.3, as shipped | 601 s | timelimit | 1,193 rx / 750 met | 253 |
+| the same, `presolving/milp/maxrounds=0` | 42.7 s | gaplimit | 1,742 rx / 1,175 met | 44 |
+| PyPI wheel 10.0.2 | 9.8 s | optimal | 1,738 rx / 1,176 met | 45 |
+
+The one structural difference between the builds is PaPILO, which conda-forge
+links and the wheel does not. Two hypotheses tested and rejected on the way: not
+the SCIP version (conda-forge 10.0.2 has PaPILO 3.0.0 and never finished
+either), not symmetry handling (`misc/usesymmetry=0` still hit the limit, at
+907.8 s).
+
+**PaPILO is not slow here, it is wrong.** The shipped run's dual bound descends
+to 934.37 while a point of objective 943.4997 exists, and that same build's own
+feasibility checker accepts the point — largest constraint violation 4.99e-11
+against a `feastol` of 1e-6, integrality 1.0e-6, bounds 1.95e-7. For a
+maximisation an upper bound below a feasible objective is not a preference, it
+is a bound that has cut off the optimum. Which is why turning the presolver off
+is faster *and* better rather than a trade, and why "the models were fine, just
+slow" was never available.
+
+The probable trigger is CarveMe's own conditioning rather than this genome:
+`minmax_reduction` couples every flux to its indicator with bigM=1e3 against
+eps=1e-3, six orders of magnitude apart, which is where presolve reductions stop
+being safe. One experiment that pointed the other way and is worth recording:
+fixing the good solution's binaries to exact 0/1 and re-solving came back
+*infeasible* in the same build that accepts the point as feasible. Rounding at
+the 1e-6 integrality residual is enough to explain it, and it is why the claim
+here is scoped to the bound rather than to PaPILO's reductions in general.
+
+Both genomes tested behave the same way — E8202, 3,185 proteins: 908.1 s and 261
+annotated reactions dropped, against 16.7 s and 45. Both are *E. faecium*, which
+is the limit of what has been checked.
+
+Worth reporting upstream: any conda install of CarveMe has this, and the models
+it produces are quietly smaller than the method asks for. The 4 MB models this
+repository recorded as CarveMe's output on 2026-09-02 are those models.
+
+### `carve` was silently overwriting Bakta's feature table
+Found while tracing the above. `carve` derives its DIAMOND output path from its
+*input* path — `os.path.splitext(inputfile)[0] + '.tsv'`, in `carve.py` — so
+`carve …/bakta/<sample>.faa` writes `…/bakta/<sample>.tsv`. Bakta writes a
+feature table under exactly that name.
+
+In the run of 2026-09-02 morning, `samples/116_2/bakta/116_2.tsv` holds
+12-column DIAMOND hits against BiGG gene ids. Nothing caught it because nothing
+depends on that file: Bakta declares only its GFF3 and its FAA, and the report
+reads the GFF3. So a declared-outputs discipline stopped this from breaking a
+run, and did nothing to stop it happening — the file was wrong for anyone who
+opened it.
+
+The wrapper links the FAA into CarveMe's directory and points `carve` at the
+link, which puts the hits in `carveme/<sample>.tsv` and makes them a declared
+output rather than a stray. `Tool.files` could not have done it: it maps a path
+to *content*, and this content is another rule's output, which does not exist
+when the Snakefile is rendered.

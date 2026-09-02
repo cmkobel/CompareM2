@@ -78,7 +78,8 @@ def missing_executables(selected: list[str] | None, workdir: Path,
     tools, so without this the first thing a new user sees is a Snakemake
     traceback from whichever rule happened to be scheduled first — after
     however long the DAG took to get there. Checking argv[0] up front turns
-    that into one line naming what is missing.
+    that into one line naming what is missing — or `Tool.executable`, where
+    argv[0] is an interpreter rather than the tool.
     """
     missing: list[tuple[str, str]] = []
     # Only argv[0] is read, so any sample name renders a command whose
@@ -87,10 +88,30 @@ def missing_executables(selected: list[str] | None, workdir: Path,
     for tool in CATALOGUE.closure(selected):
         ctx = Context(workdir, databases, tool.threads, samples,
                       stand_in if tool.scope is Scope.GENOME else None)
-        exe = tool.command(ctx)[0]
+        exe = tool.executable or tool.command(ctx)[0]
         if shutil.which(exe) is None:
             missing.append((tool.name, exe))
     return missing
+
+
+def any_outputs_exist(selected: list[str] | None, workdir: Path,
+                      databases: Path, samples: tuple[str, ...]) -> bool:
+    """Did any selected tool leave a complete set of declared outputs?
+
+    The question behind "is there anything to report". Asked of the declared
+    outputs rather than of the exit code, because a run can fail one tool and
+    finish twelve.
+    """
+    for tool in CATALOGUE.closure(selected):
+        contexts = ([Context(workdir, databases, tool.threads, samples, s)
+                     for s in samples]
+                    if tool.scope is Scope.GENOME else
+                    [Context(workdir, databases, tool.threads, samples, None)])
+        for ctx in contexts:
+            outputs = list(tool.outputs(ctx))
+            if outputs and all(Path(o).exists() for o in outputs):
+                return True
+    return False
 
 
 def invocation_dir() -> Path:
@@ -286,7 +307,7 @@ def main(argv: list[str] | None = None) -> int:
     # includes databases already on disk is how "databases: 143.2 GB" came to
     # be printed before a run that downloaded nothing at all.
     pending = [db for db in CATALOGUE.databases(args.until)
-               if not db.ready_path(databases).exists()]
+               if not db.ready_path(databases, workdir).exists()]
     if pending:
         known = sum(db.size for db in pending if db.size is not None)
         unmeasured = [db for db in pending if db.size is None]
@@ -370,14 +391,32 @@ def main(argv: list[str] | None = None) -> int:
         if args.dry_run:
             cmd.append("--dry-run")
         result = subprocess.run(cmd)
-        if result.returncode != 0:
-            return result.returncode
         if args.dry_run:
-            return 0
+            return result.returncode
+        failure = result.returncode
+    else:
+        failure = 0
+
+    # A partial run still has a product. `--keep-going` exists to finish the
+    # tools that can finish, and returning here withheld the report from twelve
+    # tools because a thirteenth failed — measured on a real thirteen-tool run
+    # where amrfinder died and no report was written at all. The TUI already
+    # behaved this way; the CLI did not.
+    #
+    # The one case that stays silent is a run that produced nothing: a report
+    # describing no results is worse than no report, which is the rule the TUI
+    # settled on.
+    if failure and not any_outputs_exist(args.until, workdir, databases, samples):
+        print("nothing ran; no report written", file=sys.stderr)
+        return failure
 
     report = render_report(CATALOGUE, args.until, workdir, databases, samples,
                            command=_invocation())
     print(f"report: {report}", file=sys.stderr)
+    if failure:
+        print("some tools failed — the report covers the ones that did not",
+              file=sys.stderr)
+        return failure
     return 0
 
 

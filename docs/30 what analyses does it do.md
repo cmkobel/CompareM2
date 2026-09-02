@@ -411,7 +411,7 @@ Turns each genome's predicted proteins into a genome-scale metabolic model: a ma
 Runs once per genome · 1 thread · after `bakta`
 
 ```
-carve results_comparem2/samples/genome_A/bakta/genome_A.faa --output results_comparem2/samples/genome_A/carveme/genome_A.xml
+python src/comparem2/carve_scip.py --faa results_comparem2/samples/genome_A/bakta/genome_A.faa --output results_comparem2/samples/genome_A/carveme/genome_A.xml
 ```
 
 **Reading the output**

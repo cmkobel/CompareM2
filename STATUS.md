@@ -25,7 +25,7 @@ correct-looking output. It never means "installed" — see
 | panaroo | 09-02 | 3,780 clusters, 2,091 core; core alignment 1,934,948 bp |
 | snp-dists | 09-02 | 0 SNPs between the duplicate pair, identical gap counts |
 | fasttree | 09-02 | at `threads=1`; duplicates at 0.0 branch length |
-| carveme | 09-02 | 4/4 SBML models, ~4 MB each; ~9 min per genome |
+| carveme | 09-02 | 4/4 SBML models — but the ~9 min per genome was a solver defect and the models were truncated. **50 s and 1,743 reactions** through `carve_scip.py`; see below |
 | gtdbtk | 09-02 | all four *E. faecium* at 99.0–99.2% ANI against a 95.0 radius, `ani_screen`; duplicates identical. Six defects had to be fixed first — see below |
 
 ### GTDB-Tk: six defects, none of which a solve would show
@@ -114,16 +114,130 @@ reality it did not expect cost nothing because columns are read by name.
 Still untested there: an archaeal genome, so the `ar53` half of the merge and
 the two-domain column layout have only ever seen fixtures.
 
-### The report has never covered more than four tools
-Checked 2026-09-02, because "12 of 13 verified" invites the wrong inference.
-Those twelve were verified across *separate* runs, and the largest report on
-thylakoid has four sections — seqkit, checkm2, mlst, skani (31 KB, 12:38);
-another has two, bakta and carveme. No run has produced a report covering the
-catalogue.
+### CarveMe was nine minutes for the wrong reason
+Traced 2026-09-02. Nothing in CarveMe's Python is slow. Of the 609.3 s a genome
+took (116_2, 2,588 proteins, 24 idle cores): DIAMOND 1.8 s, loading the universe
+model 1.7 s, scoring reactions 4.0 s, writing the SBML 0.9 s — and **601 s in
+the MILP**, which is CarveMe's own hardcoded 600 s limit expiring. So no rewrite
+of the pipeline's or CarveMe's Python could have reached 2% of it.
 
-Nothing suggests it would fail. But the report is the product, and a
-genomes-to-report pipeline published without one whole report having been
-produced is the gap least worth defending.
+The MILP is not hard. It is the solver build. Same machine, same interpreter,
+same carveme 1.6.6, and a byte-identical problem — written out from each build,
+md5 `fba2ad10…` both times:
+
+| SCIP | MILP | status | model | annotated rx dropped | total |
+| ---- | ---: | ------ | ----- | -------------------: | ----: |
+| conda-forge 10.0.3, as shipped | 601 s | timelimit | 1,193 rx / 750 met | 253 | 609.3 s |
+| the same, `presolving/milp/maxrounds=0` | 42.7 s | gaplimit | 1,742 rx / 1,175 met | 44 | 50.8 s |
+| PyPI wheel 10.0.2 | 9.8 s | optimal | 1,738 rx / 1,176 met | 45 | 17.6 s |
+
+The wheel does not link PaPILO and the conda-forge builds do
+(`printExternalCodeVersions()`). Not the SCIP version: conda-forge 10.0.2
+carries PaPILO 3.0.0 and never finished either. Not symmetry handling:
+`misc/usesymmetry=0` still hit the limit, at 907.8 s.
+
+**PaPILO is wrong here, not slow.** The shipped run's dual bound descends to
+934.37 while a point of objective 943.4997 exists — and that same build's own
+feasibility checker accepts the point, whose largest constraint violation is
+4.99e-11 against a `feastol` of 1e-6. An upper bound below a feasible objective
+means the optimum was presolved away, which is why the fast path is also the
+better model rather than a trade. The likely trigger is CarveMe's conditioning:
+`minmax_reduction` couples each flux to its indicator with bigM=1e3 against
+eps=1e-3. E8202 (3,185 proteins) repeats all of it: 908.1 s and 261 annotated
+reactions dropped, against 16.7 s and 45.
+
+Fixed by `src/comparem2/carve_scip.py`. **Verified through the pipeline on
+thylakoid at 19:22**, one genome, `--until carveme`: bakta then carveme, 3/3
+steps, exit 0, report written. The carveme rule took **50 s** wall (19:21:21 to
+19:22:11), and the report counts **1,743 reactions / 1,175 metabolites / 728
+genes** for 116_2. The counts in the table above are of distinct SBML reaction
+and species ids and run one reaction lower than the report's own parse.
+
+The log line to grep for when a genome takes nine minutes again is
+`carve_scip: presolving/milp/maxrounds=0`.
+
+Worth reporting upstream — every conda install of CarveMe has this.
+
+### `carve` was overwriting Bakta's feature table
+Found 2026-09-02 while tracing the above, and unrelated to speed. `carve`
+derives its DIAMOND output path from its *input* path, so
+`carve …/bakta/<sample>.faa` wrote `…/bakta/<sample>.tsv`. In the run of that
+morning, `samples/116_2/bakta/116_2.tsv` holds 12-column DIAMOND hits against
+BiGG gene ids, not Bakta annotations.
+
+Nothing caught it because nothing depends on that file: Bakta declares only its
+GFF3 and its FAA, and the report reads the GFF3. The wrapper now links the FAA
+into CarveMe's own directory and points `carve` at the link, so the hits land in
+`carveme/<sample>.tsv`, where they are a declared output. Confirmed in the 19:22
+run: `bakta/116_2.tsv` still opens with `# Annotated with Bakta / # Software:
+v1.12.1`, and the DIAMOND hits are in `carveme/116_2.tsv`.
+
+### The whole product, produced whole
+All thirteen tools in one run over the four *E. faecium* genomes, 19:22 on
+2026-09-02: `CM2_EXIT=0`, **95,879 bytes, thirteen sections plus methods**. It
+had never happened before — the twelve verified tools were verified across
+separate runs and the largest previous report had four sections.
+
+It took two attempts, and the first one is the more useful result. Twelve tools
+produced output, amrfinder failed, and **no report was written at all** — see
+the two defects below. AMRFinder now reports 7, 7, 11 and 8 genes across the
+four genomes, the duplicate pair agreeing.
+
+### Two defects the first full run found
+Neither could surface without running the whole catalogue at once.
+
+**AMRFinder's readiness marker outlived its data.** Its database lives in the
+tool's conda prefix, not under `--databases`, but the marker recording the
+update sat under `--databases` — so rebuilding the environment left a marker
+describing data that no longer existed. The download rule was skipped on the
+strength of it and the tool failed with `No valid AMRFinder database is found`
+against a four-hour-old stamp. An out-of-tree database's marker now lives in
+the **run's** output directory, which makes readiness per-run: at most one run
+can be wrong about it, and a fresh output directory is always right.
+
+**A partial run produced no report.** `--keep-going` finished twelve tools and
+the CLI then returned Snakemake's failure without rendering anything, so the
+product was withheld because a thirteenth tool failed. The TUI had always
+rendered what succeeded; the CLI now does too, still returning the failure
+exit code, and still refusing to write a report for a run that produced
+nothing at all.
+
+### Archaea, and both halves of the merge
+Two *Methanoflorens* MAGs and two *E. faecium* genomes through gtdbtk, 22
+seconds:
+
+| Genome | Domain | Species | ANI |
+| --- | --- | --- | --- |
+| bog_38 | Archaea | *Methanoflorens stordalenmirensis* | 100.0 |
+| fen_3 | Archaea | *Methanoflorens crillii* | 100.0 |
+| 116_2 | Bacteria | *Enterococcus_B faecium* | 99.18 |
+| E8202 | Bacteria | *Enterococcus_B faecium* | 99.13 |
+
+GTDB-Tk wrote `ar53` and `bac120` summaries separately and `merge-tsv`
+combined them into one 5-line, 20-column table — the reason `Tool.post` exists,
+finally exercised. The report showed no shared-lineage line and all seven rank
+columns, which is the two-domain layout that had only ever seen fixtures.
+
+### The conda deployment model, executed
+The thing the whole bioconda package rests on, run for the first time at 19:12
+on 2026-09-02 with a **fresh database root**, because the shared one carries an
+amrfinder marker a new install would not have.
+
+`--use-conda --until seqkit mashtree treecluster skani checkm2`, exit 0, 10 of
+10 steps:
+
+| | |
+| --- | --- |
+| environments built | **6** — five tools and checkm2's curl+tar download env, as predicted |
+| on disk | 5.9 GB in `/evo/postdoc/cm2-conda-envs` |
+| addressing | directories named by content hash, e.g. `7af73674e619f38c500a6b917fa7f67a_` |
+| **CheckM2** | ran in its own environment **with no `--isolated-launcher`** — the isolation the bioconda package needs, working |
+| results | 116_2 and its duplicate both 100.0% complete, 0.47% contaminated; skani 100.00% |
+| report | 40,349 bytes, five sections |
+
+Still untested there: `amrfinder` under `--use-conda`, which is the case the
+content-addressed environment sharing in DESIGN.md is reasoned about but not
+yet demonstrated.
 
 ### The standing cross-check
 The test set contains `116_2.fna` and `116_2 duplicate.fna` — the same genome
@@ -162,8 +276,9 @@ for two strains of one species.
   written, clean exit. And headlessly through `run_test()` with `seqkit` and
   `checkm2`, so the isolated launcher goes through the TUI path too. Five
   defects had to be fixed first, see [DECISIONS.md](DECISIONS.md).
-- 147 unit tests, ~1.6 s — 13 added for the conda-deployment path, 8 for the
-  steps around GTDB-Tk's command, 16 for the report rewrite
+- 167 unit tests, ~1.3 s — 13 added for the conda-deployment path, 8 for the
+  steps around GTDB-Tk's command, 16 for the report rewrite, 6 for CarveMe's
+  solver wrapper
 - CI green on GitHub, 18–22 s per run
 - `mkdocs build --strict`
 - `docs/generate.py --check` — generated pages current
@@ -213,7 +328,7 @@ cd /evo/postdoc/CompareM2
 export PATH=$HOME/.pixi/bin:$PATH
 export COMPAREM2_DATABASES=/evo/postdoc/cm2-databases
 
-pixi run pytest          # 147 tests, no tools or databases needed
+pixi run pytest          # 167 tests, no tools or databases needed
 pixi run test-fast       # 4 genomes, no databases needed
 
 pixi run cm2 my/*.fna \
@@ -251,41 +366,31 @@ The code side of the bioconda package is done; the release is not. What exists:
 | published recipe today | `comparem2` **2.16.2**, `noarch: generic`, maintainer `cmkobel` |
 | version here | `3.0.0.dev0` — the release needs a real one, in three files |
 
-**A conda deployment has never been executed.** The dry run above stops at
-`conda: command not found`, because this laptop has no conda and the tools are
-`linux-64` regardless. That run is thylakoid work, and it is the one thing
-between here and a recipe that can be trusted:
-
-```bash
-pixi run pip install -e .          # or a plain venv
-comparem2 tests/E._faecium/*.fna --until seqkit mashtree \
-  --use-conda --conda-prefix /evo/postdoc/cm2-envs
-```
-
-Two things to watch when it runs: whether AMRFinder's database survives into
-its analysis rules (the shared-environment reasoning in DESIGN.md, untested),
-and how long fourteen solves actually take.
+**A conda deployment has now been executed** — see *The conda deployment
+model, executed* above. Six environments for a five-tool subset, CheckM2
+isolated without a launcher, correct results, report rendered. What remains
+untested there is `amrfinder`, whose database lands inside its deployed
+environment; the content-addressed sharing that should make that work is
+reasoned about in DESIGN.md and not yet demonstrated.
 
 ## Known broken or unfinished
 
-- **gtdbtk has never run.** Needs the download, and `gtdbtk.summary.tsv` needs a
-  concatenation step that does not exist — GTDB-Tk writes `bac120` and `ar53`
-  summaries separately.
-- **The AMRFinder stamp does not survive `pixi install`.** Its data lives in the
-  conda prefix; rebuild the environment and the database is fetched again.
+- **AMRFinder's database still lives in the conda prefix**, so it is refetched
+  whenever the environment is rebuilt. What is fixed is the *lie*: the marker
+  now lives with the run, so a rebuilt environment no longer leaves a stale
+  marker claiming the data is there. The refetch costs about 26 s.
+- **`amrfinder` has not been run under `--use-conda`.** It is the one tool
+  whose database lands inside its deployed environment, which is what the
+  content-addressed environment sharing in DESIGN.md is for.
 - **`--tui` has not been run against a failing workflow interactively.** The
   "Nothing ran / no report" path is covered by unit tests and was reached once
   by accident, but not driven by hand since.
 - **`/evo/postdoc/cm2v3`** is the old rsync scratch directory, now redundant,
   holding an 8.5 GB pixi environment that can be deleted.
-- **No bioconda package**, but the blocker has moved: what remains is a tag, a
-  sha256, the PR, and one verified `--use-conda` run. See *Packaging* above and
-  `recipe/README.md`. **A hand-built container image is no longer planned** —
+- **No bioconda package**, but the blocker has moved again: what remains is a
+  tag, a sha256 and the PR. The `--use-conda` run that was the last technical
+  unknown has been done. See *Packaging* above and `recipe/README.md`. **A hand-built container image is no longer planned** —
   decided 2026-09-02, see [DECISIONS.md](DECISIONS.md).
-- **One unit test is failing in the working tree**, and it is not the packaging
-  work: `test_pangenome_matrix_compresses_identical_patterns` counts `<rect>`
-  elements, while the in-progress `report.py` figure rewrite draws one `<path>`
-  per genome. `HEAD` itself is green at 110 tests.
 - **The thylakoid checkout carries uncommitted `src/` changes**, rsynced from
   the laptop for the GTDB-Tk run rather than pulled. Once the work is committed,
   `git checkout . && git pull` there to get back to a clean tracked state.

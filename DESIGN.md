@@ -88,7 +88,7 @@ stamp can outlive the data it claims.
 
 ## Steps around a command
 
-Twelve of the thirteen tools are one command: arguments in, declared files out.
+Eleven of the thirteen tools are one command: arguments in, declared files out.
 GTDB-Tk is not, and rather than let it become a hand-written rule it gets two
 fields that every tool could use and only it does.
 
@@ -100,6 +100,20 @@ fields that every tool could use and only it does.
 - **`Tool.post`** — argument lists run after the command, for turning what a
   tool writes into what its spec declared. GTDB-Tk writes `bac120` and `ar53`
   summaries separately and the pipeline declares one table.
+
+CarveMe is the other one, and it needs the third shape: a step *in front of*
+the command rather than around it. `carve_scip.py` is the whole of it — it turns
+off one SCIP presolver and hands `carve` an input path inside CarveMe's own
+output directory, then calls CarveMe in-process. Both halves are things only the
+calling process can do: the solver parameter because neither CarveMe nor
+ReFramed exposes one, the input path because `carve` derives its DIAMOND output
+from it and would otherwise overwrite Bakta's feature table.
+
+That wrapper runs under a **bare `python`**, which is the exact opposite of the
+rule below, and for the mirror-image reason: it imports `carveme`, so it needs
+the interpreter of the environment the *tool* is in. `steps.py` is our code and
+needs ours. Both import nothing from their own package, because under
+`--use-conda` neither can count on it being there.
 
 Three properties matter more than the fields:
 
@@ -204,6 +218,14 @@ something already published. The post-mortems are in
   the solver reach back years to satisfy some other package's constraint. Two
   tools resolved to builds that installed cleanly and crashed on first use.
   **`pixi install` succeeding says nothing about whether the pipeline works.**
+- **A solver is part of the pinned surface too, and its output is not just
+  slower or faster — it is different.** CarveMe's MILP took 601 s and returned a
+  model missing 253 of its annotated reactions with the SCIP conda-forge ships,
+  and 10 s with the one the PyPI wheel ships, on a byte-identical problem. The
+  difference is PaPILO, which conda-forge links and which presolves the optimum
+  away here. `carve_scip.py` turns it off; removing that line costs nine minutes
+  a genome *and* the model. Re-measure before touching it — the numbers are in
+  the wrapper's docstring and in [STATUS.md](STATUS.md).
 - **A database version is part of the tool's pin.** Both directions are runtime
   failures that no solve catches: GTDB-Tk 2.7 accepts only r232, Bakta 1.12
   only db 6.x. Moving either one alone is the bug. Which is why the URL, the
@@ -251,9 +273,11 @@ something already published. The post-mortems are in
 - ~~**GTDB-Tk's summary output.**~~ Closed 2026-09-02: `Tool.post` runs
   `comparem2.steps merge-tsv` after the command, and `Tool.files` writes the
   batchfile the rule had only claimed to write. See *Steps around a command*.
-- **CarveMe should probably be opt-in.** It works, but at roughly nine minutes
-  per genome it is by far the slowest per-genome tool, which matters for a wide
-  view over hundreds of assemblies.
+- ~~**CarveMe should probably be opt-in.**~~ Closed 2026-09-02: the nine minutes
+  were a solver defect, not the method. 62 s a genome measured end to end
+  through `carve_scip.py`, on one core, against Bakta's 77 s on eight for the
+  same genome. Whether it should be opt-in anyway is a smaller question than it
+  was, and no longer a performance one.
 - **AMRFinder's database cannot live under `--databases`.** `amrfinder -u`
   rejects `-d`, so its data goes into the conda prefix and all that can be
   recorded is a stamp — which does not survive the environment being rebuilt.
