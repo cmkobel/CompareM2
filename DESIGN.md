@@ -76,8 +76,9 @@ Isolated afterwards, on `linux-64`:
 
 CheckM2 pins DIAMOND 2.1.x; current Bakta needs 2.2.x. CheckM2 is too valuable
 to drop (1.7 GB for completeness and contamination), so it is the one tool
-marked `isolated=True` and given its own environment. Thirteen tools share the
-main environment.
+marked `isolated=True` and given its own environment. The rest share the main
+one — thirteen when this was measured, twelve since sylph was removed on
+2026-09-02.
 
 Rule: `isolated` is an exception that must carry its reason in the spec.
 v2 reached 25 environments by treating it as the default.
@@ -97,18 +98,18 @@ This works *because* the wide decision removed the historical conflict sources;
 re-test before adding any of them back. Note prokka costs roughly twice bakta in
 package weight — it pulls perl and BLAST.
 
-### 2026-09-01 — The tool set: 14 in, 8 out
-Selected tool by tool. v2 had 20; v3 has 14, of which 2 are new.
+### 2026-09-01 — The tool set: 14 in, 8 out (now 13 — sylph removed 2026-09-02)
+Selected tool by tool. v2 had 20; v3 has 13, of which 1 is new.
 
-**Kept** — seqkit, checkm2, gtdbtk, sylph, bakta, amrfinder, mlst, mashtree,
+**Kept** — seqkit, checkm2, gtdbtk, bakta, amrfinder, mlst, mashtree,
 treecluster, skani, panaroo, snp-dists, fasttree, carveme.
 
 **Dropped** — assembly-stats (seqkit covers it), prokka (bakta only; prokka cost
 0.84 GB more in packages, measured), eggnog, dbcan, interproscan, gapseq,
 iqtree, clusterProfiler (an R package, and R is gone).
 
-**New** — sylph (fast provisional taxonomy while GTDB-Tk runs) and skani
-(all-against-all ANI).
+**New** — skani (all-against-all ANI). sylph was also selected here and
+removed on 2026-09-02; see below.
 
 Two decisions worth their reasoning:
 - **carveme in, gapseq out.** Genome-scale metabolic models are the one
@@ -123,7 +124,8 @@ Two decisions worth their reasoning:
   funcscan ships four.
 
 Final environment, measured for `linux-64`: **1142 packages, 1.58 GB, no
-conflicts.** Against v2's 25 environments.
+conflicts.** Against v2's 25 environments. (Measured with sylph still in the
+set; removing it can only have reduced this, and it has not been re-measured.)
 
 ### 2026-09-01 — Bakta light, not full
 v2 downloads `--type full` (30 GB compressed, 84 GB on disk). v3 uses `light`
@@ -181,10 +183,11 @@ Drafted commands are worthless until executed. Verified means: ran on v2's four
 | snp-dists   | verified   | 0 SNPs between the duplicate pair                 |
 | fasttree    | verified   | duplicates at 0.0 branch length                   |
 | gtdbtk      | unverified | needs 141.4 GB; thylakoid has 180 GB free         |
-| sylph       | unverified | GTDB sketch release still unchosen                |
 
-**12 of 14 verified.** The two outstanding both concern taxonomy: GTDB-Tk needs
-the 141.4 GB download, and sylph needs a database release to be chosen.
+**12 of 13 verified.** The one outstanding is GTDB-Tk, which needs the 141.4 GB
+download. Note that skani and fasttree were re-parameterised on 2026-09-02
+after the verification runs above, so their *commands* need re-running even
+though the tools themselves are known to work.
 
 Cross-checks used throughout: v2's test set contains `116_2.fna` and
 `116_2 duplicate.fna`, the same genome twice. Any tool that treats them
@@ -199,7 +202,6 @@ differently is wrong. Every verified tool agrees — 0.00000 mash distance,
 | CheckM2    |    1.7 GB  | measured                         |
 | Bakta light|    1.3 GB  | 3.2 GB on disk, measured          |
 | AMRFinder  |  unmeasured| may be free — Bakta's light DB ships an `amrfinderplus-db` |
-| sylph GTDB |  unmeasured| release not yet chosen           |
 | *software* |    1.58 GB | measured, one environment        |
 
 The environment is slim. The data is not, and GTDB-Tk is the whole reason.
@@ -245,19 +247,88 @@ after any move. Results directories also hold absolute symlinks to the inputs;
 GenomeDK was the alternative and is not reachable non-interactively from here
 (`Permission denied (publickey,keyboard-interactive)`).
 
+### 2026-09-02 — The report explains itself, from the tools' own papers
+The CompareM2 paper claims the report is "accessible to non-bioinformaticians".
+v2 delivered that with hand-written RMarkdown prose per section; v3 had one-line
+`summary` strings and nothing else.
+
+Now every tool carries a `Guidance` value in `src/comparem2/guidance.py`: what
+question it answers, how it works, what each column on screen means, and what it
+cannot tell you — rendered as a collapsed `<details>` block under each heading,
+plus a "Methods and citations" list at the end holding every paper behind the
+tools that actually ran.
+
+Three decisions inside that:
+
+- **Guidance lives outside `catalogue.py`.** A tool's spec there is ~20 lines of
+  command line, which this file calls the largest single risk in the rewrite;
+  burying it under ~30 lines of end-user prose would hide what developers edit.
+  The single-source-of-truth invariant is kept by a test instead —
+  `test_every_tool_has_guidance` asserts `set(GUIDANCE) == {t.name for t in
+  CATALOGUE}`, so a tool added without an explanation fails CI rather than
+  shipping a section nobody can interpret.
+- **Collapsed by default.** An expert should not scroll past a page of prose to
+  reach their data; a non-expert needs it one click away rather than in a manual.
+- **Every number is quoted from the paper and grep-checked against the PDF.**
+  178 quantitative claims were extracted with a verbatim quote each and verified
+  by substring match against `pdftotext` output; all 178 passed. Where a
+  statement is ordinary methodological caution rather than a paper's finding, the
+  sentence says so. Confabulation dressed as insight is the failure mode that
+  reads best, so it gets a deterministic gate rather than a second opinion.
+
+The papers themselves are in `papers/` (untracked, 24 PDFs) with
+`papers/tools.bib` for citations.
+
+### 2026-09-02 — Reading the papers found four defects, all now fixed
+Writing interpretation guidance meant checking each declared command against
+what its paper says the tool actually does. That surfaced four problems no test
+had caught, because every one of them produces a Snakefile that parses and a
+DAG that builds:
+
+| Tool | Defect | Fix |
+| ---- | ------ | --- |
+| sylph | `sylph profile <db>.syldb <assembly>.fna` passes assemblies as *positional FASTA*, which `profile` treats as **reference genomes**, not samples. With no FASTQ or `.sylsp` present it exits `No read files found`. | **removed from the catalogue** |
+| skani | Ran at defaults `k=15, c=125`, described in the paper as tuned for complete, similar genomes. | `-c 70`, the paper's middle preset |
+| panaroo | The report's Soft core (95–99%) and Cloud (<15%) bins are unreachable below 20 and 7 genomes, so all accessory content piled into Shell and two rows always read 0. | exact counts below 20 genomes, conventional bins at or above |
+| fasttree | Declared `threads=4` but invoked plain `FastTree`, which is single-threaded — `FastTreeMP` needs `OMP_NUM_THREADS`, and commands here are argument lists with nowhere to set it. | `threads=1` |
+
+**sylph is removed, not repaired, and the reason is worth keeping.** It profiles
+metagenomic *reads* against a genome database; v3's input is assemblies, which
+is not the question it answers. The broken command line was a symptom of
+selecting a tool by capability blurb rather than by input type. skani already
+covers fast assembly-to-assembly identity, so nothing was lost. Thirteen tools.
+
+**skani's `-c 70` is a passthrough default, not a hard-coded flag** — the paper
+documents `c = 200` for >95% ANI with N50 >10 kb, `c = 70` for ANI ≤95 or
+N50 ≤10 kb, and `c = 30` for N50 ~3 kb. v3 cannot know which it was handed and
+must survive fragmented MAGs, so it takes the middle. Override with
+`--set skani-c=125` for a set of complete isolates. **Unverified against a real
+run** — skani is linux-64 and this was decided on macOS; the flag spelling needs
+confirming on thylakoid.
+
+The panaroo switch-over is pinned by three tests, including one asserting that
+20 is the smallest N at which all four conventional bins can hold a cluster, so
+the guidance sentence describing them cannot drift from the code.
+
+### 2026-09-02 — The unit tests are in the repository now
+`.gitignore` carried a blanket `tests` rule whose only live effect was keeping
+`tests/unit/test_v3.py` out of git — the suite this file presents as v3's main
+improvement over v2 existed in one working tree and could not run in CI. Nothing
+else under `tests/` was caught by it: the directory holds eight tracked input
+zips, a README, and the tests. Replaced with narrow rules for unpacked genomes
+and run output, which is what the blanket rule was presumably meant to catch.
+
 ## Open questions
 - **Taxonomy.** The single largest install cost. GTDB-Tk is authoritative and
-  141.4 GB; sylph/skani/mash-against-GTDB are fast and small but approximate.
-  Candidates not yet measured.
+  141.4 GB; skani/mash-against-GTDB are fast and small but approximate.
+  Candidates not yet measured. Whatever replaces or precedes GTDB-Tk must take
+  *assemblies* — that was the mistake sylph embodied.
 - **Every command line in `catalogue.py` is unverified.** They were written
   against documented interfaces, never executed — the tools are linux-64 and
   the selection was made on macOS. This is the largest single risk in the
   rewrite and should be the next thing closed.
-- **Three database sizes are unmeasured**: bakta-light (documented as 1.3 GB but
-  not measured), amrfinder, and sylph's GTDB sketch. Measure before any total is
-  shown to a user.
-- **sylph's GTDB release** is unchosen, and it should match GTDB-Tk's r226 or
-  the two tools will disagree about taxonomy in confusing ways.
+- **Two database sizes are unmeasured**: bakta-light (documented as 1.3 GB but
+  not measured) and amrfinder. Measure before any total is shown to a user.
 - **CarveMe needs verifying**: that it runs at all (it was disabled in v2), and
   whether DIAMOND must be supplied explicitly — it is absent from CarveMe's
   dependency closure, and v2 shipped a separate `diamond` environment.
@@ -287,3 +358,8 @@ GenomeDK was the alternative and is not reachable non-interactively from here
   Python. Note v2 never displayed antismash, interproscan, iqtree, fasttree or
   treecluster — so fasttree and treecluster need genuinely new sections, not
   ports.
+- **skani should emit aligned fraction, not just ANI.** `triangle
+  --full-matrix` writes ANI alone, but skani reports a value once AF reaches
+  ~15%, so a high identity between a chromosome and a partial MAG is possible
+  and means something quite different. The report says so in the guidance; it
+  would be better to show the number.

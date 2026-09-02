@@ -1,6 +1,8 @@
 """The v3 tool set.
 
-Fourteen tools, selected 2026-09-01. See DESIGN.md for what was dropped and why.
+Thirteen tools. Selected 2026-09-01 as fourteen; sylph was removed 2026-09-02
+when reading its paper showed the command could never have worked. See DESIGN.md
+for what was dropped and why.
 
 **Pin minimum versions.** An unpinned bioconda solve will happily pick a
 years-old build to satisfy some other constraint, and the result resolves
@@ -53,9 +55,6 @@ BAKTA_DB = Database(name="bakta-light", url="bakta_db download --type light", si
 
 # Fetched by `amrfinder -u`; no static URL to measure. Small.
 AMRFINDER_DB = Database(name="amrfinder", url="amrfinder -u", size=None)
-
-# sylph needs a prebuilt GTDB sketch. Which release, and how large, is open.
-SYLPH_DB = Database(name="sylph-gtdb", url="TBD", size=None)
 
 
 # --- Quality and taxonomy ------------------------------------------
@@ -118,21 +117,12 @@ gtdbtk = Tool(
     threads=16,
 )
 
-sylph = Tool(
-    name="sylph",
-    summary="Fast provisional taxonomy, available long before GTDB-Tk finishes.",
-    scope=Scope.SET,
-    conda=("bioconda::sylph",),
-    command=lambda c: [
-        "sylph", "profile", "-t", str(c.threads),
-        str(c.databases / "sylph" / "gtdb.syldb"),
-        *[str(a) for a in c.assemblies],
-        "-o", str(c.out("sylph", "profile.tsv")),
-    ],
-    outputs=lambda c: [c.out("sylph", "profile.tsv")],
-    database=SYLPH_DB,
-    threads=8,
-)
+# sylph was here, and is gone — see DESIGN.md 2026-09-02. It is a read-based
+# metagenome profiler: `sylph profile` reads samples from FASTQ or .sylsp and
+# treats positional FASTA as *reference genomes*, so passing assemblies to it
+# could never have worked. The deeper problem is that v3's input is assemblies,
+# which is not the question sylph answers; skani already covers fast
+# assembly-to-assembly identity.
 
 
 # --- Annotation and screening --------------------------------------
@@ -231,9 +221,19 @@ skani = Tool(
     conda=("bioconda::skani",),
     command=lambda c: [
         "skani", "triangle", "-t", str(c.threads), "--full-matrix",
+        *c.args(),
         *[str(a) for a in c.assemblies],
         "-o", str(c.out("skani", "ani.tsv")),
     ],
+    # skani's default c = 125 is tuned for complete, similar genomes. Its paper
+    # documents three presets: c = 200 for >95% ANI with N50 >10 kb, c = 70 for
+    # ANI <=95 or N50 <=10 kb, and c = 30 for N50 ~3 kb. v3 is a wide view that
+    # has to survive fragmented MAGs, and it cannot know which it was given, so
+    # it takes the middle setting: lowering c costs runtime and index size but
+    # improves both ANI and aligned-fraction accuracy, and skani is fast enough
+    # (>50x FastANI) to absorb it. Override with `--set skani-c=125` for a set
+    # of complete isolate genomes.
+    params=(("-c", "70"),),
     outputs=lambda c: [c.out("skani", "ani.tsv")],
     threads=8,
 )
@@ -284,7 +284,14 @@ fasttree = Tool(
     ],
     outputs=lambda c: [c.out("fasttree", "fasttree.newick")],
     stdout_to_output=True,
-    threads=4,
+    # One thread, honestly. The plain `FastTree` binary is single-threaded;
+    # parallelism needs the separate `FastTreeMP` build, which takes its thread
+    # count from the OMP_NUM_THREADS environment variable rather than an
+    # argument — and commands here are argument lists, not shell strings, so
+    # there is nowhere to set it. Declaring 4 only reserved cores that went
+    # unused. If this becomes the bottleneck, the fix is FastTreeMP plus an
+    # `env` field on Tool, not a larger number here.
+    threads=1,
 )
 
 
@@ -308,7 +315,7 @@ carveme = Tool(
 
 
 CATALOGUE = Registry([
-    seqkit, checkm2, gtdbtk, sylph,
+    seqkit, checkm2, gtdbtk,
     bakta, amrfinder, mlst,
     mashtree, treecluster, skani,
     panaroo, snp_dists, fasttree,

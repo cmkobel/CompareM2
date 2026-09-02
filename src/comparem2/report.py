@@ -21,6 +21,7 @@ import html
 import re
 from pathlib import Path
 
+from .guidance import GUIDANCE, citations
 from .tools import Context, Registry, Scope, Tool
 
 CSS = """
@@ -50,6 +51,31 @@ pre { background: color-mix(in srgb, var(--fg) 5%, transparent); padding: .8rem;
 .missing { color: var(--mut); font-style: italic; }
 footer { margin-top: 4rem; color: var(--mut); font-size: .8rem;
          border-top: 1px solid var(--line); padding-top: 1rem; }
+
+/* The explanatory block. Collapsed by default: someone who already knows the
+   tools should not have to scroll past a page of prose to reach their data,
+   and someone who does not needs it one click away rather than in a manual. */
+details.about { margin: .3rem 0 1.2rem; font-size: .88rem; }
+details.about > summary { cursor: pointer; color: var(--accent); font-size: .82rem;
+    text-transform: uppercase; letter-spacing: .04em; font-weight: 600;
+    list-style: none; padding: .2rem 0; }
+details.about > summary::-webkit-details-marker { display: none; }
+details.about > summary::before { content: "▸ "; }
+details.about[open] > summary::before { content: "▾ "; }
+details.about > div { border-left: 2px solid var(--line); padding: .1rem 0 .1rem 1rem;
+    margin-top: .5rem; }
+details.about p { margin: .55rem 0; }
+details.about .method { color: var(--mut); }
+details.about dl { margin: .55rem 0; }
+details.about dt { font-weight: 600; margin-top: .7rem; font-size: .84rem; }
+details.about dd { margin: .15rem 0 0; color: var(--mut); }
+details.about ul { margin: .35rem 0; padding-left: 1.1rem; color: var(--mut); }
+details.about li { margin: .3rem 0; }
+details.about .cite { font-size: .82rem; color: var(--mut); margin-top: .9rem; }
+a { color: var(--accent); }
+.refs { font-size: .85rem; }
+.refs li { margin: .5rem 0; }
+.refs .note { color: var(--mut); font-style: italic; }
 """
 
 
@@ -697,6 +723,48 @@ def draw_pangenome(names: list[str], patterns: list[tuple[tuple[bool, ...], int]
             f'role="img" aria-label="pangenome presence matrix">{"".join(parts)}</svg>')
 
 
+# Below this many genomes, the conventional pangenome bins are arithmetically
+# unreachable and the table lies by omission. Soft core (95–99%) needs
+# (N−1)/N >= 0.95, i.e. N >= 20; Cloud (<15%) needs 1/N < 0.15, i.e. N >= 7.
+# At 20 all four bins can hold something, so that is the switch-over.
+_PARTITION_VOCABULARY_MINIMUM = 20
+
+
+def _partitions(shared: dict[int, int], n: int, total: int) -> str:
+    """The core/accessory split — exact counts on small sets, bins on large ones.
+
+    The Core/Soft core/Shell/Cloud vocabulary is what the literature uses, but
+    its boundaries are fractions of N, so on a handful of genomes two of the
+    four bins cannot contain anything and every accessory cluster piles into
+    Shell. Printing a structurally-empty row as though it were a measurement is
+    worse than not printing it, so below `_PARTITION_VOCABULARY_MINIMUM` the
+    table shows what was actually counted: clusters against the number of
+    genomes sharing them.
+    """
+    if n >= _PARTITION_VOCABULARY_MINIMUM:
+        bins = [("Core (≥99%)", 0.99, 1.01), ("Soft core (95–99%)", 0.95, 0.99),
+                ("Shell (15–95%)", 0.15, 0.95), ("Cloud (<15%)", 0.0, 0.15)]
+        rows = []
+        for label, low, high in bins:
+            count = sum(c for k, c in shared.items() if low <= k / n < high)
+            rows.append([label, f"{count:,}"])
+        rows.append(["Total", f"{total:,}"])
+        return _table(rows, header=["Partition", "Gene clusters"])
+
+    rows = []
+    for k in range(n, 0, -1):
+        count = shared.get(k, 0)
+        if k == n:
+            label = f"All {n} genomes (core)"
+        elif k == 1:
+            label = "1 genome only"
+        else:
+            label = f"{k} of {n} genomes"
+        rows.append([label, f"{count:,}", f"{100 * count / total:.1f}%" if total else "—"])
+    rows.append(["Total", f"{total:,}", "100.0%"])
+    return _table(rows, header=["Shared by", "Gene clusters", "Share"])
+
+
 def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
     """Pangenome structure: the presence matrix, the overlaps, and the split."""
     path = ctx.out("panaroo", "gene_presence_absence.Rtab")
@@ -713,7 +781,10 @@ def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
 
     tally: dict[tuple[bool, ...], int] = {}
     per_genome = [0] * n
-    core = soft = shell_ = cloud = 0
+    # Clusters counted by how many genomes carry them. This is the raw quantity;
+    # both partition views below are derived from it, so neither can disagree
+    # with the other or with the matrix.
+    shared: dict[int, int] = {}
     for rec in rows[1:]:
         pattern = tuple(v.strip() == "1" for v in rec[1:1 + n])
         if len(pattern) != n:
@@ -722,15 +793,8 @@ def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
         for i, present in enumerate(pattern):
             if present:
                 per_genome[i] += 1
-        frac = sum(pattern) / n
-        if frac >= 0.99:
-            core += 1
-        elif frac >= 0.95:
-            soft += 1
-        elif frac >= 0.15:
-            shell_ += 1
-        else:
-            cloud += 1
+        k = sum(pattern)
+        shared[k] = shared.get(k, 0) + 1
 
     total = sum(tally.values())
     # Most-shared first, so the matrix reads core on the left.
@@ -776,12 +840,7 @@ def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
         overlap_rows, header=["Pattern", "Present in", "Gene clusters", "Share"],
         numeric_columns={2, 3})
 
-    partitions = _table(
-        [["Core (≥99%)", f"{core:,}"], ["Soft core (95–99%)", f"{soft:,}"],
-         ["Shell (15–95%)", f"{shell_:,}"], ["Cloud (<15%)", f"{cloud:,}"],
-         ["Total", f"{total:,}"]],
-        header=["Partition", "Gene clusters"],
-    )
+    partitions = _partitions(shared, n, total)
     counts = _table(
         [[name, f"{per_genome[i]:,}", f"{100 * per_genome[i] / total:.1f}%"]
          for i, name in enumerate(names)],
@@ -795,7 +854,12 @@ def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
         + "<h3>Shared gene content</h3>"
         + f'<p class="summary">Reading order: {legend}</p>'
         + overlaps
-        + "<h3>Pangenome partitions</h3>" + partitions
+        + "<h3>Pangenome partitions</h3>"
+        + ("" if n >= _PARTITION_VOCABULARY_MINIMUM else
+           f'<p class="summary">With {n} genomes the usual Core/Soft core/Shell/Cloud '
+           "bins are fractions that cannot all be reached, so this shows the exact "
+           "count instead. See the notes above.</p>")
+        + partitions
         + "<h3>Genes per genome</h3>" + counts
     )
 
@@ -841,6 +905,70 @@ SECTIONS = {
 }
 
 
+def _about(tool: Tool) -> str:
+    """The explanatory block for one tool, or nothing if it has no guidance.
+
+    Every string here is tool-independent prose from `guidance.py`, but it is
+    escaped anyway: the alternative is a module where some fields may contain
+    markup and some may not, which is the kind of distinction that stops being
+    true the first time someone adds an entry.
+    """
+    entry = GUIDANCE.get(tool.name)
+    if entry is None:
+        return ""
+
+    parts = [
+        f"<p>{html.escape(entry.blurb)}</p>",
+        f'<p class="method">{html.escape(entry.method)}</p>',
+    ]
+
+    if entry.reading:
+        items = "".join(
+            f"<dt>{html.escape(label)}</dt><dd>{html.escape(text)}</dd>"
+            for label, text in entry.reading
+        )
+        parts.append(f"<h3>Reading this section</h3><dl>{items}</dl>")
+
+    if entry.caveats:
+        items = "".join(f"<li>{html.escape(c)}</li>" for c in entry.caveats)
+        parts.append(f"<h3>What this cannot tell you</h3><ul>{items}</ul>")
+
+    papers = [entry.citation, *entry.also]
+    cites = "; ".join(
+        f'{html.escape(c.text)} <a href="{html.escape(c.url)}">doi:{html.escape(c.doi)}</a>'
+        for c in papers
+    )
+    parts.append(f'<p class="cite">{cites}</p>')
+
+    return ('<details class="about"><summary>What this is, and how to read it'
+            f'</summary><div>{"".join(parts)}</div></details>')
+
+
+def _methods(names: list[str]) -> str:
+    """Every paper behind the tools that actually ran.
+
+    At the end rather than the top, and flat rather than per-tool, because its
+    job is to be pasted into a manuscript's methods section — which is also why
+    a tool that produced no output must not appear in it.
+    """
+    papers = citations(names)
+    if not papers:
+        return ""
+    items = []
+    for c in papers:
+        note = f' <span class="note">{html.escape(c.note)}</span>' if c.note else ""
+        items.append(
+            f'<li>{html.escape(c.text)}. '
+            f'<a href="{html.escape(c.url)}">doi:{html.escape(c.doi)}</a>{note}</li>'
+        )
+    return (
+        "<h2>Methods and citations</h2>"
+        '<p class="summary">Every tool that produced output above, and the '
+        "underlying methods it runs. Please cite these alongside CompareM2.</p>"
+        f'<ol class="refs">{"".join(items)}</ol>'
+    )
+
+
 def _fallback(tool: Tool, ctx: Context, workdir: Path) -> str:
     """A plain table of the tool's first output. Every tool gets at least this."""
     outputs = list(tool.outputs(ctx))
@@ -869,6 +997,7 @@ def render_report(registry: Registry, selected: list[str] | None, workdir: Path,
     ]
 
     shown = 0
+    ran: list[str] = []
     for tool in registry.closure(selected):
         ctx = Context(workdir, databases, tool.threads, samples,
                       sample=samples[0] if tool.scope is Scope.GENOME else None)
@@ -882,15 +1011,18 @@ def render_report(registry: Registry, selected: list[str] | None, workdir: Path,
         if not produced:
             continue  # partial runs stay readable
         shown += 1
+        ran.append(tool.name)
         renderer = SECTIONS.get(tool.name, _fallback)
         parts += [
             f"<h2>{html.escape(tool.name)}</h2>",
             f'<p class="summary">{html.escape(tool.summary)}</p>',
+            _about(tool),
             renderer(tool, ctx, workdir),
         ]
 
     if not shown:
         parts.append('<p class="missing">No results yet.</p>')
+    parts.append(_methods(ran))
     parts.append(
         f"<footer>CompareM2 v3 — {shown} of {len(registry.closure(selected))} "
         "tools produced output.</footer></body></html>"

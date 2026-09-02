@@ -4,8 +4,17 @@ results_comparem2
 output_comparem2/
 singularity_images
 databases
-tests
 trash
+
+# Under tests/: the input zips, the README and tests/unit are all tracked.
+# What must not be is anything unpacked from a zip or produced by a run — the
+# blanket `tests` rule that used to sit here caught nothing else and silently
+# kept the v3 unit suite out of the repository.
+tests/**/*.fna
+tests/**/*.fa
+tests/**/*.fasta
+tests/**/*.gff3
+tests/**/*.faa
 
 # Python
 __pycache__/
