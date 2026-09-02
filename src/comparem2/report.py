@@ -107,6 +107,23 @@ table.matrix td:last-child { padding-right: .8rem; }
 thead th { font-weight: 600; color: var(--mut); font-size: .8rem; letter-spacing: .03em; }
 tbody th { font-weight: 500; }
 th.n, td.n { text-align: right; }
+/* Matrix shading. The ramp lives here rather than baked into each cell so the
+   two colour schemes can have different ones — an alpha that reads as a faint
+   tint over white is nothing over #161616. The floor cell used to sit at a
+   contrast ratio of 1.067 against the dark page, where 1.0 is literally
+   indistinguishable; it is 1.115 now, matching light mode's 1.114. Both ramps
+   span the same range (top ~2.3 against the background) and every shade stays
+   above 4.5:1 against the text printed on it — the binding constraint is amber
+   at full shade in dark, which is why the span is .58 and not more. */
+:root { --shade-floor:.08; --shade-span:.50; }
+@media (prefers-color-scheme: dark) { :root { --shade-floor:.13; --shade-span:.58; } }
+.s0{--shade:0} .s1{--shade:.125} .s2{--shade:.25} .s3{--shade:.375} .s4{--shade:.5}
+.s5{--shade:.625} .s6{--shade:.75} .s7{--shade:.875} .s8{--shade:1}
+td.shade { background: rgba(var(--rgb),
+           calc(var(--shade-floor) + var(--shade-span) * var(--shade))); }
+path.shade { fill-opacity: calc(var(--shade-floor) + var(--shade-span) * var(--shade)); }
+stop.shade { stop-opacity: calc(var(--shade-floor) + var(--shade-span) * var(--shade)); }
+
 /* Cells in a table the report did not design: one long value must not set the
    column width for the whole table. Hovering gives the full text. */
 table.clip td, table.clip th { max-width: 28ch; overflow: hidden;
@@ -892,18 +909,18 @@ def _numeric_matrix(names: list[str], matrix: list[list[float | None]],
                     rgb: str, fmt, frac) -> str:
     """The matrix as a shaded table of numbers. Small sets only."""
     head = "".join(f'<th class="n">{html.escape(n)}</th>' for n in names)
-    out = [f'<table class="matrix"><thead><tr><th></th>{head}</tr></thead><tbody>']
+    # The hue is the only part of the shading the markup carries; how dark each
+    # step is belongs to the stylesheet, which is what lets dark mode differ.
+    out = [f'<table class="matrix" style="--rgb:{rgb}">'
+           f"<thead><tr><th></th>{head}</tr></thead><tbody>"]
     for name, row in zip(names, matrix):
         cells = []
         for value in row:
             if value is None:
                 cells.append("<td></td>")
                 continue
-            alpha = 0.08 + 0.5 * _clamp(frac(value), 0.0, 1.0)
-            cells.append(
-                f'<td class="n" style="background:rgba({rgb},{alpha:.2f})">'
-                f"{fmt(value)}</td>"
-            )
+            shade = round(_clamp(frac(value), 0.0, 1.0) * _SHADES)
+            cells.append(f'<td class="n shade s{shade}">{fmt(value)}</td>')
         out.append(f"<tr><th>{html.escape(name)}</th>{''.join(cells)}</tr>")
     out.append("</tbody></table>")
     return _scroll("".join(out))
@@ -980,10 +997,8 @@ def _grid(row_labels: list[str], col_labels: list[str],
             j = k
 
     for b in sorted(buckets):
-        alpha = 0.06 + 0.6 * (b / _SHADES)
         parts.append(
-            f'<path d="{"".join(buckets[b])}" fill="rgb({rgb})" '
-            f'fill-opacity="{alpha:.3f}"/>'
+            f'<path class="shade s{b}" d="{"".join(buckets[b])}" fill="rgb({rgb})"/>'
         )
 
     if cell_values and cell >= 24:
@@ -1019,9 +1034,11 @@ def _grid(row_labels: list[str], col_labels: list[str],
 def _ramp(rgb: str, low_label: str, high_label: str) -> str:
     """A horizontal shade key, so a stretched scale states its own bounds."""
     gid = _gid("ramp")
+    # Same classes as the cells they key, so the legend cannot drift from the
+    # matrix when the ramp changes.
     stops = "".join(
-        f'<stop offset="{i / _SHADES:.3f}" stop-color="rgb({rgb})" '
-        f'stop-opacity="{0.06 + 0.6 * i / _SHADES:.3f}"/>' for i in range(_SHADES + 1)
+        f'<stop class="shade s{i}" offset="{i / _SHADES:.3f}" '
+        f'stop-color="rgb({rgb})"/>' for i in range(_SHADES + 1)
     )
     body = (f'<defs><linearGradient id="{gid}" x1="0" y1="0" x2="1" y2="0">{stops}'
             "</linearGradient></defs>"

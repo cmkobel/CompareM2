@@ -1765,7 +1765,8 @@ def test_snp_dists_is_shaded_and_loses_the_tool_version_header(tmp_path):
                          Path("db"), samples).read_text()
     chunk = body.split('<h2 id="snp-dists">')[1]
     assert "snp-dists 1.2.0" not in chunk
-    assert "412" in chunk and "background:rgba(" in chunk
+    assert "412" in chunk
+    assert 'class="matrix" style="--rgb:' in chunk and 'class="n shade s' in chunk
     assert "shaded darkest at 0" in chunk
 
 
@@ -1923,3 +1924,36 @@ def test_gtdbtk_counts_unnamed_and_unplaced_separately(tmp_path):
     chunk = body.split('<h2 id="gtdbtk">')[1]
     assert "1 genome carries no species name" in chunk
     assert "2 genomes came back with no parseable lineage" in chunk
+
+
+def test_matrix_shading_is_a_class_so_dark_mode_can_differ(tmp_path):
+    """An alpha that reads as a faint tint over white is nothing over #161616.
+
+    Baked into each cell there was one ramp for both schemes, and the floor
+    cell sat at a contrast ratio of 1.067 against the dark page — 1.0 being
+    indistinguishable. The ramp is CSS now, so the media query owns it.
+    """
+    from comparem2.report import CSS, _SHADES, _numeric_matrix
+    out = _numeric_matrix(["A", "B"], [[100.0, 95.0], [95.0, 100.0]],
+                          "43,108,176", lambda v: f"{v:.2f}",
+                          lambda v: (v - 95) / 5)
+    assert 'style="--rgb:43,108,176"' in out
+    assert f'class="n shade s{_SHADES}"' in out   # the 100.0 cells, full shade
+    assert 'class="n shade s0"' in out            # the 95.0 cells, the floor
+    assert "rgba(" not in out, "the ramp must not be baked back into the markup"
+
+    # Every step the emitters can produce has to be defined, in both schemes.
+    for i in range(_SHADES + 1):
+        assert f".s{i}{{--shade:" in CSS.replace(" ", "")
+    dark = CSS.split("prefers-color-scheme: dark")[2]
+    assert "--shade-floor:.13" in dark.replace(" ", "")
+    assert "--shade-span:.58" in dark.replace(" ", "")
+
+
+def test_the_shading_legend_uses_the_same_steps_as_the_cells():
+    """A key drawn from its own copy of the ramp drifts the moment one changes."""
+    from comparem2.report import _ramp, _SHADES
+    key = _ramp("43,108,176", "95%", "100%")
+    for i in range(_SHADES + 1):
+        assert f'class="shade s{i}"' in key
+    assert "stop-opacity" not in key
