@@ -5,6 +5,26 @@
 `recipes/comparem2/meta.yaml`, which already exists — publishing v3 is a
 version bump to a recipe `cmkobel` already maintains, not a new-recipe review.
 
+**The reasoning lives in this file, not in the recipe.** Recipes in
+bioconda-recipes are terse: of forty `noarch: python` recipes sampled from a
+clone, most carry no comments at all and the wordiest had nine lines in
+fifty-three. Anything that needs explaining is explained here.
+
+## Why the autobump bot cannot do this
+
+Bioconda's auto-updater changes the version, the source URL, the checksum and
+the build number. Its own documentation says it "does not yet know how to
+monitor changed dependencies", and it does not touch build scripts or test
+sections. This bump changes all three: `noarch: generic` becomes
+`noarch: python` with a pip install and entry points, the run dependencies are
+replaced wholesale, and the test section is new.
+
+So it needs a hand-written PR — and worse, **the bot is a hazard here**. Tagging
+`v3.0.0` may prompt it to open a routine-looking version bump that keeps v2's
+`snakemake-minimal <8`, `mamba <2` and `noarch: generic`, which would build a
+package that installs nothing usable. Get the real PR in first, or close the
+bot's.
+
 The current published recipe is **2.16.2**, build 0, `noarch: generic`, with run
 dependencies `snakemake-minimal <8`, `pulp <2.8`, `python <3.12`, `mamba <2`,
 `pandas`.
@@ -19,6 +39,7 @@ dependencies `snakemake-minimal <8`, `pulp <2.8`, `python <3.12`, `mamba <2`,
 | python | `<3.12` | `>=3.11` |
 | dropped | `pulp`, `pandas` | neither is imported by v3 |
 | added | | `textual`, the two executor plugins |
+| kept | `run_exports` pinning at major version | the PR template asks for it; semantic versioning, so `max_pin="x"` |
 
 The tool set is *not* in either recipe. v2 deployed 25 environments at run
 time; v3 deploys 14. That is the same model, and it is why a recipe for a
