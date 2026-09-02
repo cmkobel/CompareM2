@@ -154,27 +154,42 @@ passes on linux, since the branch is published.
 
 ---
 
-## Phase 2 — verify on linux
+## Phase 2 — verify on linux — DONE 2026-09-02
 
-Not done until these pass on thylakoid
-(`/evo/postdoc/cm2v3`, 24 cores):
+Run on thylakoid (`/evo/postdoc/cm2v3`, 24 cores) on the four *E. faecium*
+genomes. `cm2v3` is gitignored scratch inside the `postdoc` repo, so the source
+was rsynced rather than pushed.
 
-- [x] **the environment solves without sylph** — done 2026-09-02 via `pixi lock`,
-      which runs on macOS. `default` 568 packages / DIAMOND 2.2.5 / bakta
-      1.12.1; `checkm2` 127 packages / DIAMOND 2.1.11. Both pins held.
-- [ ] `rm -rf .pixi && pixi install` — that the solve actually *installs*
-- [ ] `pixi run pytest` — 81 tests
-- [ ] `pixi run cm2 --dry-run` on the four *E. faecium* genomes
-- [ ] **`skani -c 70` actually runs** — added on macOS from the paper, never
-      executed; the flag spelling is unverified
-- [ ] `fasttree` still produces a tree at `threads=1`
-- [ ] panaroo section renders the small-N exact-count table on a real run
-- [ ] CI green on GitHub
-- [ ] `mkdocs build --strict` (passes locally)
-- [ ] `pixi run cm2 --tui` — textual 8.2.8 resolved, never launched
+- [x] `pixi install` — both environments, from a manifest never installed before
+- [x] all four `pixi run` tasks resolve (`cm2`, `pytest`, `unpack`, `test-fast`)
+- [x] 81 unit tests, 0.89 s
+- [x] `docs/generate.py --check` — pages current
+- [x] `pixi run cm2 --help`
+- [x] `pixi run test-fast` — 8/8 steps, report rendered, 4 guidance blocks
+- [x] **`skani -c 70` runs** — the one flag taken from a paper and never
+      executed. Accepted, logged, duplicates at 100.00% ANI
+- [x] `fasttree` at `threads=1` — duplicates at 0.0 branch length
+- [x] panaroo exact-count table on real data — 2,091 core of 3,780
+- [x] `snp-dists` — 0 between the duplicate pair, over a 1,934,948 bp alignment
+- [x] `bakta` — 4/4 against db v6.0 light
+- [x] `mlst` — ST32/ST32/ST117/ST78
+- [x] **`--isolated-launcher`** — CheckM2 from its own environment, never
+      exercised end to end before
+- [ ] `carveme` — running at the time of writing; ~9 min per genome
+- [ ] `gtdbtk` — never run, needs the 141.4 GB download
+- [ ] **`amrfinder` — cannot run.** Its database is absent and nothing fetches
+      it. See the DESIGN.md entry: `Database.url` is dead code
+- [ ] CI green on GitHub (needs the push)
+- [x] `mkdocs build --strict`
 - [ ] then `git push origin v3`
 
----
+Two problems the run found, both recorded in DESIGN.md and neither fixed:
+
+1. **No database downloads exist.** `Database.url` is declared for all four and
+   read by nothing. `cm2` prints a GB total and then fails inside a tool.
+2. **Snakemake locks the working directory, not `--output`.** Two runs in one
+   checkout collide regardless of output directory, and a killed run leaves a
+   lock the next run cannot clear itself.
 
 ## Not in scope
 

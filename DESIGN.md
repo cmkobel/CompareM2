@@ -203,21 +203,47 @@ Drafted commands are worthless until executed. Verified means: ran on v2's four
 | seqkit      | verified   | per-contig lengths and GC                         |
 | mashtree    | verified   | duplicates at distance 0.00000, as they should be |
 | treecluster | verified   | needed `--threshold`; v2 defaults adopted         |
-| skani       | verified   | duplicates at 100.00% ANI                         |
-| mlst        | verified   | ST32 / ST117 / ST78, correct for *E. faecium*     |
-| checkm2     | verified   | 100% complete; `--database_path` wants the .dmnd **file** |
-| bakta       | verified   | needed `--force` and a pin to >=1.10; db must be v6 |
+| skani       | **re-verified 09-02** | `-c 70` accepted; duplicates at 100.00% ANI; writes an `.af` matrix too |
+| mlst        | **re-verified 09-02** | ST32 / ST32 / ST117 / ST78; duplicates agree      |
+| checkm2     | **re-verified 09-02** | 100% complete all four, via `--isolated-launcher`; `--database_path` wants the .dmnd **file** |
+| bakta       | **re-verified 09-02** | 4/4 genomes against db v6.0 light; `software-min` 1.11 vs bakta 1.12.1 |
 | carveme     | verified   | **it does run** — ~1200 reactions/genome, but ~9 min each |
-| amrfinder   | verified   | protein-only, as v2; 7/11/8 genes, incl. 5 glycopeptide in E8202 |
-| panaroo     | verified   | needed pin >=1.5; 3780 clusters, 2091 core        |
-| snp-dists   | verified   | 0 SNPs between the duplicate pair                 |
-| fasttree    | verified   | duplicates at 0.0 branch length                   |
+| amrfinder   | **regressed** | ran in an earlier session; now fails — its database was never downloaded, see below |
+| panaroo     | **re-verified 09-02** | 3780 clusters, 2091 core; core alignment 1,934,948 bp |
+| snp-dists   | **re-verified 09-02** | 0 SNPs between the duplicate pair, identical gap counts |
+| fasttree    | **re-verified 09-02** | at `threads=1`; duplicates at 0.0 branch length   |
 | gtdbtk      | unverified | needs 141.4 GB; thylakoid has 180 GB free         |
 
-**12 of 13 verified.** The one outstanding is GTDB-Tk, which needs the 141.4 GB
-download. Note that skani and fasttree were re-parameterised on 2026-09-02
-after the verification runs above, so their *commands* need re-running even
-though the tools themselves are known to work.
+**Re-verified 2026-09-02** after the sylph removal and the skani/fasttree
+parameter changes, on the same four *E. faecium* genomes on thylakoid. What the
+run established beyond the individual commands:
+
+- `pixi install` works for both environments, and all four `pixi run` tasks
+  resolve — the manifest was written on macOS and had never been installed.
+- **`--isolated-launcher` works**, which had never been exercised end to end:
+  CheckM2 ran from its own environment via
+  `pixi run -e {tool}` and returned 100% completeness for all four genomes.
+- The 81 unit tests pass on linux in 0.89 s.
+- The panaroo section renders the exact-count table on real data: 2,091 core of
+  3,780 clusters, then 193 / 574 / 922 shared by 3, 2 and 1 genome. Under the
+  old fixed bins that same run would have read `Core 2091 / Soft core 0 /
+  Shell 1689 / Cloud 0` — two structural zeros and every accessory cluster in
+  one bucket. The defect was real on live data, not only in the arithmetic.
+- Divergence sanity: 6,190 SNPs between 116_2 and E8202 over a 1,934,948 bp
+  core alignment is 0.320%, which is the right order for two strains of one
+  species. The duplicate pair is 0.
+
+Two things the run broke:
+
+- **amrfinder regressed to failing** — not from a code change, but because its
+  database is not present and nothing fetches it. See the entry below.
+- **Snakemake locks the working directory, not the output directory.** Two
+  `cm2` runs in one checkout collide even with different `--output`, and a
+  killed run leaves a lock that the next one cannot clear without
+  `--unlock`. Cost one wasted run here. Not fixed.
+
+**11 of 13 currently verified.** GTDB-Tk has never been run (141.4 GB), and
+amrfinder cannot run until something downloads its database.
 
 Cross-checks used throughout: v2's test set contains `116_2.fna` and
 `116_2 duplicate.fna`, the same genome twice. Any tool that treats them
@@ -375,6 +401,47 @@ against the catalogue longest-first so `snp-dists` is not split on its own
 hyphen. Every other tool's parameters happen to use long flags, which is why
 this survived until now — a reminder that the passthrough mechanism only gets
 exercised where a default exists to exercise it.
+
+### 2026-09-02 — Nothing downloads the databases. `Database.url` is dead code.
+Found by running the annotation chain on thylakoid: amrfinder failed with
+`No valid AMRFinder database is found … To download the latest version run:
+amrfinder -u`.
+
+`Database` carries a `url` field for all four databases, and **no code reads
+it** — the only `.url` references in `src/` are `Citation.url` in the report.
+So v3:
+
+  - declares four databases with measured sizes,
+  - prints `databases: 143.2 GB + 2 database(s) of unknown size` before running,
+  - and then never fetches any of them.
+
+That is the worst of the three options. Not having downloads is defensible;
+announcing a total and then failing five minutes later inside a tool with a
+tool-specific error message is not, because the message implies the pipeline
+was going to do something it never intended to. The bakta and CheckM2
+databases on thylakoid were placed there by hand, which is why this went
+unnoticed — the environment was pre-seeded.
+
+The three fetch mechanisms are already recorded in the specs and are not
+uniform, which is presumably why this was deferred:
+
+| Database | Mechanism |
+| -------- | --------- |
+| checkm2 | static URL, tarball, then normalise the release's own filename to `checkm2.dmnd` |
+| gtdb | static URL, 141.4 GB tarball |
+| bakta-light | `bakta_db download --type light`, must run inside bakta's own environment |
+| amrfinder | `amrfinder -u`, writes into the conda prefix, not into `--databases` |
+
+Note the last one: `amrfinder -u` puts its data under
+`$CONDA_PREFIX/share/amrfinderplus/data/latest`, **not** under the
+`--databases` directory. So one of the four does not respect the flag at all,
+and a `Database` with a `url` and a size does not describe it accurately.
+
+Not implemented here — it is a feature, not a fix, and it needs a decision
+about whether downloads are a pipeline step (a Snakemake rule per database,
+which gets resumability and parallelism for free) or a separate `cm2
+--download` subcommand. Until then the honest thing is for `cm2` to say the
+databases must already be present, which it does not yet do either.
 
 ## Open questions
 - **Taxonomy.** The single largest install cost. GTDB-Tk is authoritative and
