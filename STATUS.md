@@ -205,6 +205,29 @@ produced output, amrfinder failed, and **no report was written at all** — see
 the two defects below. AMRFinder now reports 7, 7, 11 and 8 genes across the
 four genomes, the duplicate pair agreeing.
 
+**339 seconds**, wall, for the whole catalogue over four genomes with every
+database already present (19:10:26 to 19:16:05, from the run's Snakemake log —
+this is the earlier attempt of the two, which reached carveme and everything
+else). Per rule, summed across jobs:
+
+| rule | jobs | total | longest job |
+| ---- | ---: | ----: | ----------: |
+| bakta | 4 | 350 s | 100 s |
+| carveme | 4 | 164 s | 66 s |
+| panaroo | 1 | 78 s | 78 s |
+| checkm2 | 1 | 52 s | 52 s |
+| fasttree | 1 | 27 s | 27 s |
+| gtdbtk | 1 | 19 s | 19 s |
+| mlst | 1 | 3 s | 3 s |
+| seqkit, mashtree, skani, treecluster, snp-dists | 8 | <1 s each | — |
+
+The critical path was bakta → panaroo → fasttree, ending at 339 s; the last
+carveme job finished at 300 s, so **carveme is no longer on it**. Before the
+presolver fix it would have been the only thing anyone waited for: its four jobs
+started at 89, 152, 168 and 234 s and would have run ~610 s each, putting the
+end of the run at about 844 s. That figure is arithmetic on this run's observed
+start times and the measured 609.3 s per genome — not a re-run.
+
 ### Two defects the first full run found
 Neither could surface without running the whole catalogue at once.
 
