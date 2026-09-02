@@ -110,9 +110,19 @@ tool's *actual* command line, so it cannot describe something that does not run.
 
 ## Rules that must not be quietly undone
 
-Each of these exists because something broke. The post-mortems are in
+Each of these exists because something broke, or because undoing it would break
+something already published. The post-mortems are in
 [DECISIONS.md](DECISIONS.md#what-went-wrong); the short version:
 
+- **The name stays `CompareM2`, whatever the version number says.** The 2 is not
+  a version, so `CompareM2 v3.0.0` is correct even though it reads oddly, and
+  renaming to match the major version is the obvious-looking move that must not
+  be made. The citation trail is fixed and cannot be renamed with the code: the
+  paper is doi:10.1093/bioinformatics/btaf517, it names CompareM2, and it sends
+  readers to `comparem2.readthedocs.io`. The bioconda package v2 shipped under
+  is the same string. A rename orphans all three and makes a published tool look
+  like a different one — and the repository has already absorbed one rename
+  (`comparem2` → `CompareM2`), which still emits redirect notices.
 - **Pin a minimum version for every tool.** An unconstrained bioconda spec lets
   the solver reach back years to satisfy some other package's constraint. Two
   tools resolved to builds that installed cleanly and crashed on first use.
