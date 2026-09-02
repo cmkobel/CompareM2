@@ -73,6 +73,17 @@ of how quietly they fail:
 4. **Is the merged file the two domains concatenated once**, with one header —
    `merge-tsv`'s own contract, but it has never run on real GTDB-Tk output.
 
+### The report has never covered more than four tools
+Checked 2026-09-02, because "12 of 13 verified" invites the wrong inference.
+Those twelve were verified across *separate* runs, and the largest report on
+thylakoid has four sections — seqkit, checkm2, mlst, skani (31 KB, 12:38);
+another has two, bakta and carveme. No run has produced a report covering the
+catalogue.
+
+Nothing suggests it would fail. But the report is the product, and a
+genomes-to-report pipeline published without one whole report having been
+produced is the gap least worth defending.
+
 ### The standing cross-check
 The test set contains `116_2.fna` and `116_2 duplicate.fna` — the same genome
 twice, and a filename with a space. **Any tool that treats them differently is
