@@ -13,6 +13,7 @@ exactly the same code that yields real paths at report time.
 from __future__ import annotations
 
 import shlex
+from collections.abc import Sequence
 from pathlib import Path
 
 from .tools import Context, Registry, Scope, Tool
@@ -58,11 +59,19 @@ def _inputs(ctx: Context, tool: Tool, registry: Registry) -> list[str]:
 
 def _rule(tool: Tool, workdir: Path, databases: Path, samples: tuple[str, ...],
           registry: Registry, per_rule_conda: bool,
-          overrides: dict[str, tuple[tuple[str, str], ...]] | None = None) -> str:
+          overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
+          launcher: Sequence[str] | None = None) -> str:
     ctx = _ctx(workdir, databases, samples, tool, overrides)
     outputs = [str(o) for o in tool.outputs(ctx)]
 
-    command = " ".join(shlex.quote(a) for a in tool.command(ctx))
+    argv = list(tool.command(ctx))
+    if tool.isolated and launcher:
+        # An isolated tool lives in its own environment, so its command needs a
+        # prefix that enters that environment. Templated on {tool} so the same
+        # mechanism serves pixi (`pixi run -e {tool}`), conda (`conda run -n
+        # {tool}`) or a container runtime.
+        argv = [part.replace("{tool}", tool.name) for part in launcher] + argv
+    command = " ".join(shlex.quote(a) for a in argv)
     if tool.stdout_to_output:
         if len(outputs) != 1:
             raise ValueError(
@@ -121,7 +130,8 @@ def _dirnames(outputs: list[str]) -> list[str]:
 def render(registry: Registry, selected: list[str] | None, workdir: Path,
            databases: Path, samples: tuple[str, ...],
            per_rule_conda: bool = False,
-           overrides: dict[str, tuple[tuple[str, str], ...]] | None = None) -> str:
+           overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
+           launcher: Sequence[str] | None = None) -> str:
     """The whole Snakefile, as text."""
     tools = registry.closure(selected)
 
@@ -144,7 +154,8 @@ def render(registry: Registry, selected: list[str] | None, workdir: Path,
         *[f"        {_q(t)}," for t in targets],
         "",
     ]
-    body = [_rule(t, workdir, databases, samples, registry, per_rule_conda, overrides)
+    body = [_rule(t, workdir, databases, samples, registry, per_rule_conda,
+                  overrides, launcher)
             for t in tools]
     return "\n".join(header) + "\n" + "\n".join(body)
 

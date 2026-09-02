@@ -86,6 +86,9 @@ def main(argv: list[str] | None = None) -> int:
                    help="override a tool argument, e.g. --set treecluster--threshold=0.1 "
                         "(v2 spelled this set_treecluster--threshold in config.yaml)")
     p.add_argument("--tui", action="store_true", help="interactive keyboard interface")
+    p.add_argument("--isolated-launcher", default=None, metavar="CMD",
+                   help="how to enter an isolated tool's environment; {tool} is "
+                        "substituted, e.g. 'pixi run -e {tool}'")
     p.add_argument("--keep-going", action="store_true",
                    help="keep running independent tools after one fails")
     p.add_argument("--dry-run", action="store_true")
@@ -120,7 +123,9 @@ def main(argv: list[str] | None = None) -> int:
     snakefile = build / "Snakefile"
     overrides = parse_overrides(args.set)
     snakefile.write_text(
-        render(CATALOGUE, args.until, workdir, args.databases, samples, overrides=overrides)
+        render(CATALOGUE, args.until, workdir, args.databases, samples,
+               overrides=overrides,
+               launcher=args.isolated_launcher.split() if args.isolated_launcher else None)
     )
     for name, text in render_envs(CATALOGUE, args.until).items():
         (build / "envs" / name).write_text(text)
