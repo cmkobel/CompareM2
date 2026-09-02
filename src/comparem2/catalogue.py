@@ -234,7 +234,13 @@ skani = Tool(
     # (>50x FastANI) to absorb it. Override with `--set skani-c=125` for a set
     # of complete isolate genomes.
     params=(("-c", "70"),),
-    outputs=lambda c: [c.out("skani", "ani.tsv")],
+    # `triangle --full-matrix` writes two files: the ANI matrix at -o, and the
+    # aligned-fraction matrix at that path plus `.af`. Declaring both is not
+    # bookkeeping — an ANI is emitted once alignment covers as little as ~15%
+    # of a genome, so identity without coverage is half the result, and a high
+    # ANI between a chromosome and a partial MAG means something quite
+    # different. Verified from a real run's log 2026-09-02.
+    outputs=lambda c: [c.out("skani", "ani.tsv"), c.out("skani", "ani.tsv.af")],
     threads=8,
 )
 

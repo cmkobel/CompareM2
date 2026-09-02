@@ -504,28 +504,28 @@ def _section_mlst(tool: Tool, ctx: Context, workdir: Path) -> str:
     return _table(rows, header=["Genome", "Scheme", "Sequence type", "Alleles"])
 
 
-def _section_skani(tool: Tool, ctx: Context, workdir: Path) -> str:
-    """ANI as a shaded matrix — the densest wide-view summary in the report."""
-    path = ctx.out("skani", "ani.tsv")
-    if not path.exists():
-        return '<p class="missing">No results.</p>'
-    rows = _read_tsv(path)
-    if len(rows) < 2:
-        return '<p class="missing">Not enough genomes to compare.</p>'
-
-    names, matrix = [], []
-    for rec in rows[1:]:  # first line is the genome count
+def _read_matrix(path: Path, samples: tuple[str, ...]) -> tuple[list[str], list[list[float | None]]]:
+    """A skani triangle matrix: names down the side, floats across."""
+    names: list[str] = []
+    matrix: list[list[float | None]] = []
+    for rec in _read_tsv(path)[1:]:  # first line is the genome count
         if len(rec) < 2:
             continue
-        names.append(_sample_of(rec[0], ctx.samples))
+        names.append(_sample_of(rec[0], samples))
         matrix.append([float(v) if _numeric(v) else None for v in rec[1:]])
+    return names, matrix
 
-    if not names:
-        return '<p class="missing">No comparisons.</p>'
 
+def _shaded_matrix(names: list[str], matrix: list[list[float | None]],
+                   rgb: str) -> tuple[str, float]:
+    """Render a matrix shaded across its own observed range.
+
+    Returns the table and the floor used, so the caller can say what the
+    shading means — a scale stretched to the data is misleading unless its
+    bounds are stated.
+    """
     values = [v for row in matrix for v in row if v is not None and v < 100]
     low = min(values) if values else 95.0
-
     head = "".join(f"<th>{html.escape(n)}</th>" for n in names)
     out = [f"<table><thead><tr><th></th>{head}</tr></thead><tbody>"]
     for name, row in zip(names, matrix):
@@ -539,12 +539,53 @@ def _section_skani(tool: Tool, ctx: Context, workdir: Path) -> str:
             frac = 0.0 if low >= 100 else max(0.0, min(1.0, (value - low) / (100 - low)))
             alpha = 0.08 + 0.5 * frac
             cells.append(
-                f'<td class="n" style="background:rgba(43,108,176,{alpha:.2f})">'
+                f'<td class="n" style="background:rgba({rgb},{alpha:.2f})">'
                 f"{value:.2f}</td>"
             )
         out.append(f"<tr><th>{html.escape(name)}</th>{''.join(cells)}</tr>")
     out.append("</tbody></table>")
-    return f'<p class="summary">Shaded from {low:.2f}% to 100%.</p>' + "".join(out)
+    return "".join(out), low
+
+
+def _section_skani(tool: Tool, ctx: Context, workdir: Path) -> str:
+    """ANI and aligned fraction, as two shaded matrices.
+
+    Both, not just ANI: skani reports an identity once alignment covers as
+    little as ~15% of a genome, so a high ANI between genomes of very different
+    size or completeness can reflect a shared plasmid or conserved core rather
+    than whole-genome relatedness. `triangle --full-matrix` writes the aligned
+    fraction to `<output>.af` and v3 ignored it until 2026-09-02.
+    """
+    path = ctx.out("skani", "ani.tsv")
+    if not path.exists():
+        return '<p class="missing">No results.</p>'
+    names, matrix = _read_matrix(path, ctx.samples)
+    if not names:
+        return '<p class="missing">Not enough genomes to compare.</p>'
+
+    table, low = _shaded_matrix(names, matrix, "43,108,176")
+    parts = [
+        f'<p class="summary">Average nucleotide identity, shaded from '
+        f"{low:.2f}% to 100%.</p>",
+        table,
+    ]
+
+    af_path = ctx.out("skani", "ani.tsv.af")
+    if af_path.exists():
+        af_names, af_matrix = _read_matrix(af_path, ctx.samples)
+        if af_names:
+            af_table, af_low = _shaded_matrix(af_names, af_matrix, "183,121,31")
+            parts += [
+                "<h3>Aligned fraction</h3>",
+                '<p class="summary">How much of the genome in each <em>row</em> '
+                "aligned to the genome in each column — so unlike the matrix "
+                "above, this one is not symmetric. Read it together with the "
+                "ANI: a high identity over a small aligned fraction is not "
+                f"whole-genome relatedness. Shaded from {af_low:.2f}% to 100%.</p>",
+                af_table,
+            ]
+
+    return "".join(parts)
 
 
 def _bar(value: float, colour: str, width: int = 90) -> str:

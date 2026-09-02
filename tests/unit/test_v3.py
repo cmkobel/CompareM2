@@ -335,6 +335,51 @@ def test_citations_deduplicate_shared_methods():
     assert dois.count("10.1038/s41592-021-01101-x") == 1
 
 
+def _skani_report(tmp_path, with_af: bool):
+    d = tmp_path / "skani"
+    d.mkdir(parents=True)
+    # Real shape, taken from a run on thylakoid: 116_2 and its duplicate are
+    # identical, and the AF matrix is asymmetric.
+    (d / "ani.tsv").write_text(
+        "3\nA\t100.00\t100.00\t99.14\nB\t100.00\t100.00\t99.14\n"
+        "C\t99.14\t99.14\t100.00\n")
+    if with_af:
+        (d / "ani.tsv.af").write_text(
+            "3\nA\t100.00\t100.00\t89.86\nB\t100.00\t100.00\t89.86\n"
+            "C\t74.39\t74.39\t100.00\n")
+    return render_report(CATALOGUE, ["skani"], tmp_path, Path("db"),
+                         ("A", "B", "C")).read_text()
+
+
+def test_skani_renders_aligned_fraction_alongside_ani(tmp_path):
+    """ANI alone is half the answer: skani emits an identity once alignment
+    covers ~15% of a genome, so the coverage has to be on screen too."""
+    body = _skani_report(tmp_path, with_af=True)
+    assert "Average nucleotide identity" in body
+    assert "Aligned fraction" in body
+    assert "99.14" in body  # from the ANI matrix
+    assert "74.39" in body  # only in the AF matrix
+    assert "not symmetric" in body
+    # each matrix shades against its own floor, not a shared one
+    assert "shaded from 99.14% to 100%" in body.lower()
+    assert "shaded from 74.39% to 100%" in body.lower()
+
+
+def test_skani_section_survives_a_missing_af_file(tmp_path):
+    """The .af sidecar is skani's, not ours — an older skani, or a partial run,
+    must degrade to the ANI matrix rather than losing the section."""
+    body = _skani_report(tmp_path, with_af=False)
+    assert "Average nucleotide identity" in body
+    assert "99.14" in body
+    assert "Aligned fraction" not in body
+
+
+def test_skani_declares_both_matrices_as_outputs():
+    ctx = Context(Path("res"), Path("db"), 8, ("A", "B"))
+    names = [p.name for p in CATALOGUE["skani"].outputs(ctx)]
+    assert names == ["ani.tsv", "ani.tsv.af"]
+
+
 def _panaroo_report(tmp_path, n, present):
     samples = tuple(f"g{i}" for i in range(n))
     d = tmp_path / "panaroo"

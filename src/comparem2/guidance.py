@@ -583,9 +583,10 @@ GUIDANCE: dict[str, Guidance] = {
                "regions that chain, sequence missing from an incomplete assembly does not "
                "drag ANI down the way it does for pure sketching.",
         reading=(
-            ("Matrix cells",
-             "Estimated percent identity over the regions that could be matched. The matrix "
-             "is symmetric and the value \"does not depend on the order of the inputs\". The "
+            ("Cells of the ANI matrix",
+             "Estimated percent identity over the regions that could be matched. This "
+             "matrix is symmetric — the value \"does not depend on the order of the "
+             "inputs\" — unlike the aligned-fraction matrix below it. The "
              "paper refers to \"the standard 95% ANI species threshold\" as the convention "
              "for calling two genomes the same species, and describes the estimator as "
              "accurate at ANI ≥ ~82% — so this is a within-species and near-species "
@@ -605,23 +606,26 @@ GUIDANCE: dict[str, Guidance] = {
              "and mean absolute error of (0.981, 0.131), so gaps of one or two tenths of an "
              "ANI point are inside the method's own error. On a diverse all-to-all set "
              "spanning lower identities the same statistics were (0.976, 1.279)."),
-            ("Aligned fraction, which is not shown here",
-             "`skani triangle --full-matrix` writes an ANI matrix only, so this table gives "
-             "identity without saying how much of each genome it covers. Since an ANI is "
-             "emitted with AF as low as ~15%, a high value between a full chromosome and a "
-             "small plasmid or partial MAG is possible and means something quite different. "
-             "Check the assembly sizes in the QC section first."),
+            ("The aligned fraction matrix",
+             "The second matrix, and the half of the answer ANI alone does not give: how "
+             "much of each genome the matched regions actually cover. It is not symmetric, "
+             "because the fraction is relative to each genome's own size — a small genome "
+             "fully contained in a larger one reads high in one direction and low in the "
+             "other. skani emits an ANI once this reaches only about 15%, so a high "
+             "identity over a low aligned fraction can be a shared plasmid, prophage or "
+             "conserved core rather than whole-genome relatedness."),
         ),
         caveats=(
-            "ANI without aligned fraction is half the picture, and this report shows no AF "
-            "column: a high identity between genomes of very different size or completeness "
-            "can reflect a shared plasmid, prophage or conserved core rather than "
-            "whole-genome relatedness.",
-            "This runs at defaults (k = 15, c = 125), which the paper describes as tuned for "
-            "similar genomes. For fragmented assemblies the authors recommend c = 70 at ANI "
-            "≤95 or N50 ≤10 kb, and c = 30 near N50 ~3 kb, and report that lowering c "
-            "improves both ANI and aligned-fraction accuracy — so a MAG-heavy set is being "
-            "run at the least accurate of the described settings.",
+            "Neither matrix is a phylogeny and neither resolves anything below species "
+            "level: skani screens out pairs whose putative ANI is under 80% and is accurate "
+            "only at ANI ≥ ~82%, so a blank cell means 'more distant than skani measures' "
+            "and says nothing about how distant.",
+            "This runs at c = 70, the paper's middle preset for genomes with ANI ≤95 or "
+            "N50 ≤10 kb, rather than skani's own default of 125, which is tuned for "
+            "complete similar genomes. Lowering c improves both ANI and aligned-fraction "
+            "accuracy at the cost of runtime and index size. For very fragmented input the "
+            "authors recommend c = 30; for a set of complete isolates, `--set skani-c=125` "
+            "is faster and loses nothing.",
             "The 95% species figure is a convention the paper cites rather than validates, "
             "and skani's debiasing is applied only above 90% putative ANI, so a pair landing "
             "at 94.8 or 95.2 should not settle a species assignment on this table alone "
