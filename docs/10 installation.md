@@ -1,8 +1,8 @@
 # Installation
 
-!!! warning "v3 is in development"
+!!! warning "v3 is pre-release"
     No bioconda package and no container image yet. Both existed for v2 and
-    will return; for now, install from the branch.
+    will return; for now, install from git.
 
 ## Requirements
 
@@ -18,10 +18,10 @@
 ## Install
 
 ```bash
-git clone -b v3 https://github.com/cmkobel/comparem2.git
-cd comparem2
+git clone https://github.com/cmkobel/CompareM2.git
+cd CompareM2
 pixi install
-pixi run pytest        # 75 unit tests, no databases needed
+pixi run pytest        # 105 unit tests, no databases needed
 ```
 
 !!! note "Moving the directory invalidates the environment"
@@ -112,7 +112,7 @@ A clean `pixi install` says nothing about whether the pipeline runs. Both Bakta
 and Panaroo once resolved to years-old builds that installed cleanly and crashed
 on first use, which is why every tool now carries a minimum version.
 
-`DESIGN.md` in the repository tracks which command lines have actually been
+`STATUS.md` in the repository tracks which command lines have actually been
 **executed** on real genomes. At the time of writing, 12 of 13 have; GTDB-Tk is
 outstanding, and two commands changed after their verification runs and need
 re-checking.

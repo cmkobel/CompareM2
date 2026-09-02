@@ -1,7 +1,7 @@
 # Quick start
 
-!!! warning "v3 is in development"
-    There is no released package yet. Install from the `v3` branch.
+!!! warning "v3 is pre-release"
+    There is no released package yet. Install from git.
 
 ## 1) Get it
 
@@ -9,8 +9,8 @@ Linux only — the analysis tools are `linux-64`. With
 [pixi](https://pixi.prefix.dev/latest/#installation):
 
 ```bash
-git clone -b v3 https://github.com/cmkobel/comparem2.git
-cd comparem2
+git clone https://github.com/cmkobel/CompareM2.git
+cd CompareM2
 pixi install
 ```
 

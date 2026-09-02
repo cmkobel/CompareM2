@@ -2,10 +2,10 @@
 
 Guidance for Claude Code working in this repository.
 
-**This branch (`v3`) is a rewrite.** v2 has been removed from it — no
-`workflow/`, no `dynamic_report/`, no R, no 25 conda environments, no
-`./comparem2` launcher, no `config/config.yaml`. If you are looking for any of
-those, they are on `master`. Do not reintroduce v2 patterns here.
+**v3 is a rewrite, and it is what `master` now holds.** v2 has been removed —
+no `workflow/`, no `dynamic_report/`, no R, no 25 conda environments, no
+`./comparem2` launcher, no `config/config.yaml`. Those exist only in history
+before the v3 merge and under the `v2.*` tags. Do not reintroduce v2 patterns.
 
 Three files carry the context, and they are deliberately separate:
 

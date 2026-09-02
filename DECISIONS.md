@@ -223,6 +223,50 @@ so `rm -rf .pixi && pixi install` is required after any move. And GenomeDK was
 the alternative machine and is not reachable non-interactively
 (`Permission denied (publickey,keyboard-interactive)`).
 
+### v3 becomes `master`, and v2 is not preserved on a branch
+Merged as a **fast-forward** — `v3` was 24 commits ahead of `master` and 0
+behind, so no merge commit and no conflict. The default branch on GitHub was
+already `master`, so nothing had to be repointed.
+
+**v2 is deliberately not given a branch.** Carl's call, and worth recording
+because the pre-merge survey argued the other way. Three facts that made the
+argument, all measured:
+
+- `origin/v2` is a 2019-era branch, **2,008 commits** behind the pre-merge
+  `master`. It is *not* what the paper describes, despite an earlier claim in
+  STATUS.md that said so — that claim was wrong and is corrected.
+- The last v2 tag, `v2.9.1`, is **443 commits** behind the pre-merge `master`
+  tip. Those 443 include the Bioinformatics paper, the Snakemake 7→9 migration
+  and the docs rewrite, so no existing tag names the state v2 actually ended in.
+- That tip survives in history and on the `ai-1` branch. Reachable, just not
+  under an obvious name.
+
+The consequence to accept: reconstructing a runnable v2 means finding a SHA, not
+checking out a branch. The v2 *documentation* is unaffected — Read the Docs
+builds `stable` from the newest tag, which is still `v2.9.1`, so
+`/en/stable/` keeps serving v2 while `/en/latest/` follows `master` to v3.
+
+### Docs stop describing v3 as a side branch
+The merge invalidated the framing rather than any code. README and
+`docs/index.md` told the reader to use `master` for the real thing — which is
+now v3 itself — and `docs/05` and `docs/10` both said `git clone -b v3`. All
+reframed to *pre-release*: v3 is the default branch, and what is missing is a
+bioconda package and a container image, not a branch to find it on.
+
+Version stays `3.0.0.dev0`. **Merging is not releasing**, and the release story
+still needs the bioconda recipe, a container, and GTDB-Tk actually executed.
+
+Also corrected here, found while editing: the unit-test count was given as 75 in
+two places and 100 in a third, against 105 collected (103 passing, 2 skipped
+without Snakemake, 1.05 s). And `docs/10` pointed at `DESIGN.md` for the
+execution-status table, which lives in `STATUS.md`.
+
+### The remote follows the repository rename
+`origin` now points at `cmkobel/CompareM2`, and the `cmkobel/comparem2` spelling
+is gone from `mkdocs.yml` and the docs. GitHub redirected the old name, so this
+fixes a notice on every push rather than a breakage. Occurrences inside dated
+entries in this file are left as written — the log records what was true then.
+
 ---
 
 ## What went wrong

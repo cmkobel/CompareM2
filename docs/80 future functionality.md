@@ -50,5 +50,5 @@ Anything added has to declare its database size in bytes and solve into the
 existing environment. Both are hard constraints, not preferences — see
 `DESIGN.md`.
 
-Please [open an issue](https://github.com/cmkobel/comparem2/issues) if you have
+Please [open an issue](https://github.com/cmkobel/CompareM2/issues) if you have
 ideas or requests.

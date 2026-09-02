@@ -20,5 +20,5 @@ markdown_extensions:
   - markdown_include.include:
       base_path: .
   - admonition
-repo_url: https://github.com/cmkobel/comparem2
+repo_url: https://github.com/cmkobel/CompareM2
 

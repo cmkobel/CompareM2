@@ -1,12 +1,11 @@
-# CompareM2 v3 (in development)
+# CompareM2 v3
 
-[![unit tests](https://github.com/cmkobel/comparem2/actions/workflows/unit.yaml/badge.svg?branch=v3)](https://github.com/cmkobel/comparem2/actions/workflows/unit.yaml) [![https://doi.org/10.1093/bioinformatics/btaf517](https://img.shields.io/badge/doi%20%28OUP%29-10.1093%2Fbioinformatics%2Fbtaf517-blue.svg)](https://doi.org/10.1093/bioinformatics/btaf517)
+[![unit tests](https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml/badge.svg)](https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml) [![https://doi.org/10.1093/bioinformatics/btaf517](https://img.shields.io/badge/doi%20%28OUP%29-10.1093%2Fbioinformatics%2Fbtaf517-blue.svg)](https://doi.org/10.1093/bioinformatics/btaf517)
 
-> **This branch is a rewrite and is not released.** For the published, installable
-> version — 30+ analyses, bioconda package, Docker image — use
-> [`master`](https://github.com/cmkobel/comparem2/tree/master) and
-> [comparem2.readthedocs.io](https://comparem2.readthedocs.io). Nothing here is
-> stable yet.
+> **Pre-release.** There is no bioconda package and no container image yet —
+> both existed for v2 and will return; for now install from git, as below. The
+> paper describes v2, whose documentation remains at
+> [comparem2.readthedocs.io/en/stable](https://comparem2.readthedocs.io/en/stable/).
 
 CompareM2 takes microbial genome assemblies — isolates or MAGs — and produces a
 single portable HTML report comparing them. v3 keeps only that philosophy from
@@ -30,7 +29,7 @@ That choice is what makes the rest possible:
 | Databases | 7 (incl. 84 GB Bakta full) | **4** (Bakta light) |
 | Report | R, RMarkdown, pandoc | **Python**, one HTML file |
 | Runtime | R + Python | **Python only** |
-| Unit tests | none | **75** |
+| Unit tests | none | **105** |
 
 **Every tool is one declarative spec.** There is no hand-written Snakefile —
 `src/comparem2/catalogue.py` holds the 13 specs and the workflow is generated
@@ -89,5 +88,6 @@ section lists them for the run you did.
 - **Design**: [`DESIGN.md`](DESIGN.md) — what v3 is and why
 - **Decision log**: [`DECISIONS.md`](DECISIONS.md) — how it got here, including what was reversed and what went wrong
 - **Status**: [`STATUS.md`](STATUS.md) — what has actually been run
-- **v2 documentation**: [comparem2.readthedocs.io](https://comparem2.readthedocs.io)
+- **v3 documentation**: [comparem2.readthedocs.io/en/latest](https://comparem2.readthedocs.io/en/latest/)
+- **v2 documentation**: [comparem2.readthedocs.io/en/stable](https://comparem2.readthedocs.io/en/stable/) — what the paper describes
 - **Issues**: [github.com/cmkobel/CompareM2/issues](https://github.com/cmkobel/CompareM2/issues)

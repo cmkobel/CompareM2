@@ -55,7 +55,7 @@ for two strains of one species.
   written, clean exit. And headlessly through `run_test()` with `seqkit` and
   `checkm2`, so the isolated launcher goes through the TUI path too. Five
   defects had to be fixed first, see [DECISIONS.md](DECISIONS.md).
-- 100 unit tests, ~1.7 s
+- 105 unit tests, ~1.0 s
 - CI green on GitHub, 18–22 s per run
 - `mkdocs build --strict`
 - `docs/generate.py --check` — generated pages current
@@ -94,7 +94,7 @@ Software is 1.58 GB against 143 GB of data, and GTDB-Tk is essentially all of it
 
 | | |
 | --- | --- |
-| checkout | `/evo/postdoc/comparem2` — a real clone of branch `v3` |
+| checkout | `/evo/postdoc/comparem2` — a real clone; still on branch `v3`, switch it to `master` |
 | databases | `/evo/postdoc/cm2-databases` — 6.9 GB, deliberately **outside** any checkout so deleting a checkout does not cost a re-download |
 | pixi | `/home/thylakoid/.pixi/bin/pixi` |
 
@@ -139,16 +139,25 @@ To skip the 141 GB:
   by accident, but not driven by hand since.
 - **`/evo/postdoc/cm2v3`** is the old rsync scratch directory, now redundant,
   holding an 8.5 GB pixi environment that can be deleted.
-- **The git remote points at `cmkobel/comparem2`** while GitHub has renamed the
-  repository to `cmkobel/CompareM2`. It redirects, so nothing is broken, but
-  every push prints a notice.
+- **No bioconda package and no container image.** Both existed for v2. They are
+  what "pre-release" currently means, and the release blockers alongside
+  GTDB-Tk.
+- **The thylakoid checkout is on branch `v3`**, which no longer receives
+  commits. `git checkout master && git pull` there before the next run.
 
 ## Deliberately left alone
 
 - **The 69 MB of test zips in git.** Real input data, in HEAD, referenced by
   `tests/README.md`. If they ever have to go it is a git-lfs or
   external-hosting decision, not a cleanup one.
-- **The `v2` branch.** It is what the paper describes; leave it.
+- **v2 itself.** Not preserved on a branch, deliberately — a decision taken on
+  2026-09-02 when v3 was merged to `master`. `origin/v2` is a 2019-era branch,
+  2,008 commits behind the pre-merge `master`, and is *not* what the paper
+  describes; the paper-era state is the pre-merge `master` tip, in history and
+  on the `ai-1` branch. The `v2.*` tags stop at `v2.9.1`, 443 commits before
+  that tip. Read the docs at
+  [readthedocs `/en/stable/`](https://comparem2.readthedocs.io/en/stable/)
+  rather than trying to reconstruct a v2 checkout.
 - **The 35.4 MB of PDFs in history.** See
   [DECISIONS.md](DECISIONS.md#lives-on-branch-v3-in-cmkobelcomparem2) — purging
   them would mean rewriting `master`.

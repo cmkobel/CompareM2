@@ -3,10 +3,11 @@
 CompareM2 takes microbial genome assemblies — isolates or MAGs, from any
 sequencing technology — and produces one portable HTML report comparing them.
 
-!!! warning "These docs describe v3, which is in development"
-    v3 is a rewrite and is not released. For the published, installable version
-    see the [v2 documentation](https://comparem2.readthedocs.io/en/stable/) or
-    the [`master` branch](https://github.com/cmkobel/comparem2/tree/master).
+!!! warning "These docs describe v3, which is pre-release"
+    v3 is a rewrite and there is no released package for it yet — install from
+    git, see [installation](10 installation.md). The version the paper
+    describes is v2, documented at
+    [comparem2.readthedocs.io/en/stable](https://comparem2.readthedocs.io/en/stable/).
 
 !!! note
     Looking for the original CompareM (AAI and codon usage)? See
