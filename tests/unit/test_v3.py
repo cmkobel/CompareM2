@@ -1718,3 +1718,26 @@ def test_the_first_column_is_never_right_aligned():
     out = _table([["1", "4"], ["2", "9"]], header=["Cluster", "Genomes"])
     assert '<th>Cluster</th><th class="n">Genomes</th>' in out
     assert "<td>1</td>" in out and '<td class="n">4</td>' in out
+
+
+def test_an_undesigned_table_clips_its_cells(tmp_path):
+    """A tool without a renderer can emit anything. GTDB-Tk's summary is twenty
+    columns, four of them a seven-rank taxonomy string, and one long cell set
+    the column width for the whole table: 6,161px inside a 944px scroll strip.
+    Clipping keeps the columns reachable; the value stays in the title."""
+    from comparem2.report import _fallback, _UNDESIGNED_CELL_CHARS
+    tax = "d__Bacteria;p__Bacillota;c__Bacilli;o__Lactobacillales;g__Enterococcus"
+    assert len(tax) > _UNDESIGNED_CELL_CHARS
+    d = tmp_path / "gtdbtk"
+    d.mkdir(parents=True)
+    (d / "gtdbtk.summary.tsv").write_text(
+        f"user_genome\tclassification\nA\t{tax}\n")
+    out = _fallback(CATALOGUE["gtdbtk"], Context(tmp_path, Path("db"), 1, ("A",)),
+                    tmp_path, 1)
+    assert '<table class="clip">' in out
+    assert f'title="{tax}"' in out, "the whole value must survive in the title"
+    assert "Long values are clipped" in out
+    # a table the report did design is not clipped, and says nothing about it
+    from comparem2.report import _table
+    plain = _table([["A", tax]], header=["Genome", "Classification"])
+    assert 'class="clip"' not in plain and "title=" not in plain

@@ -107,6 +107,10 @@ table.matrix td:last-child { padding-right: .8rem; }
 thead th { font-weight: 600; color: var(--mut); font-size: .8rem; letter-spacing: .03em; }
 tbody th { font-weight: 500; }
 th.n, td.n { text-align: right; }
+/* Cells in a table the report did not design: one long value must not set the
+   column width for the whole table. Hovering gives the full text. */
+table.clip td, table.clip th { max-width: 28ch; overflow: hidden;
+                               text-overflow: ellipsis; }
 /* An inline-block inside a nowrap cell gets its own wrapping context, which is
    how the one prose-shaped column in the report (mlst's allele list) wraps
    without letting every numeric column wrap too. */
@@ -173,7 +177,16 @@ def _scroll(table: str) -> str:
     return f'<div class="scroll">{table}</div>'
 
 
-def _table(rows: list[list[str]], header: list[str] | None = None) -> str:
+# How wide a cell may get in a table the report did not design. A tool without
+# a renderer can emit anything: GTDB-Tk's summary is twenty columns, four of
+# them a seven-rank taxonomy string, and one long cell sets its column's width
+# — 6,161px of table inside a 944px scroll strip. Clipping keeps every column
+# reachable and the scroll finite, and the full value stays in the title.
+_UNDESIGNED_CELL_CHARS = 28
+
+
+def _table(rows: list[list[str]], header: list[str] | None = None,
+           clip: bool = False) -> str:
     if not rows:
         return '<p class="missing">No rows.</p>'
     head = header or rows[0]
@@ -190,15 +203,22 @@ def _table(rows: list[list[str]], header: list[str] | None = None) -> str:
         if body and all(_numeric(r[i]) for r in body if len(r) > i and r[i] not in _ABSENT)
         and any(_numeric(r[i]) for r in body if len(r) > i)
     }
+    def full(text: str) -> str:
+        """A title carrying the whole value, for a cell the CSS will clip."""
+        return f' title="{html.escape(text)}"' if clip and len(text) > _UNDESIGNED_CELL_CHARS else ""
+
     cells = "".join(
-        f'<th class="n">{html.escape(c)}</th>' if i in numeric else f"<th>{html.escape(c)}</th>"
+        f'<th class="n"{full(c)}>{html.escape(c)}</th>' if i in numeric
+        else f"<th{full(c)}>{html.escape(c)}</th>"
         for i, c in enumerate(head)
     )
-    out = [f"<table><thead><tr>{cells}</tr></thead><tbody>"]
+    opening = '<table class="clip">' if clip else "<table>"
+    out = [f"{opening}<thead><tr>{cells}</tr></thead><tbody>"]
     for row in body:
         tds = "".join(
-            f'<td class="n">{html.escape(c)}</td>' if i in numeric or (i and _numeric(c))
-            else f"<td>{html.escape(c)}</td>"
+            f'<td class="n"{full(c)}>{html.escape(c)}</td>'
+            if i in numeric or (i and _numeric(c))
+            else f"<td{full(c)}>{html.escape(c)}</td>"
             for i, c in enumerate(row)
         )
         out.append(f"<tr>{tds}</tr>")
@@ -1709,11 +1729,16 @@ def _fallback(tool: Tool, ctx: Context, workdir: Path, samples: int = 0) -> str:
     for path in outputs:
         if path.exists() and path.suffix in {".tsv", ".txt", ".Rtab"}:
             rows = _read_tsv(path, limit=cap + 1)
-            note = ""
+            notes = []
             if len(rows) > cap:
                 rows = rows[:cap]
-                note = f'<p class="note">First {cap - 1:,} rows.</p>'
-            return _table(rows) + note
+                notes.append(f"First {cap - 1:,} rows.")
+            if any(len(c) > _UNDESIGNED_CELL_CHARS for r in rows for c in r):
+                notes.append("Long values are clipped — hover a cell for the "
+                             f"whole text, or read {html.escape(path.name)} "
+                             "for the table itself.")
+            note = f'<p class="note">{" ".join(notes)}</p>' if notes else ""
+            return _table(rows, clip=True) + note
     shown = ", ".join(html.escape(p.name) for p in outputs)
     return f'<p class="missing">Produced {shown}; no table renderer yet.</p>'
 
