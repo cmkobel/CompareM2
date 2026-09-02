@@ -38,5 +38,8 @@ __pycache__/
 # mkdocs
 /site
 
+# Reference papers for the tool set — local working copies, not tracked.
+papers/
+
 # Misc
 *.log
