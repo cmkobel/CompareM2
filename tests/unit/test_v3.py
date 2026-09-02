@@ -961,6 +961,18 @@ def _write_rtab(tmp_path, genomes, rows):
     (d / "gene_presence_absence.Rtab").write_text("\n".join(lines) + "\n")
 
 
+def _subpath_widths(svg: str) -> list[float]:
+    """The width of every filled block, read out of the row paths.
+
+    A row is one `<path>` whose subpaths are that genome's maximal runs, so the
+    horizontal move in each `M...h<w>` is the block width. Reading the `width`
+    attribute instead would match the SVG element's own, which is why the
+    earlier version of this helper passed against a figure drawing nothing.
+    """
+    return [float(w) for d in re.findall(r'<path d="([^"]+)"', svg)
+            for w in re.findall(r"h([0-9.]+)", d)]
+
+
 def test_pangenome_matrix_compresses_identical_patterns(tmp_path):
     """Genes with the same presence pattern collapse into one block.
 
@@ -973,16 +985,38 @@ def test_pangenome_matrix_compresses_identical_patterns(tmp_path):
     patterns = [((True, True, True), 100), ((True, True, False), 10),
                 ((False, False, True), 1)]
     svg = draw_pangenome(genomes, patterns)
-    # 3 + 2 + 1 filled cells
-    assert svg.count("<rect") == 6
+    # One path per genome, not one rect per filled cell: at a hundred genomes
+    # and ten thousand patterns the latter is a million elements.
+    assert svg.count("<path") == len(genomes)
+    # A and B are present in two adjacent patterns, so each is one merged run;
+    # C is present in the core and again at the far right, so it is two.
+    assert len(_subpath_widths(svg)) == 4
     assert svg.count("<text") == len(genomes) + 2  # labels + two axis captions
 
 
 def test_pangenome_rare_patterns_stay_visible(tmp_path):
     from comparem2.report import draw_pangenome
     svg = draw_pangenome(["A", "B"], [((True, True), 100000), ((False, True), 1)])
-    widths = [float(w) for w in __import__("re").findall(r'width="([0-9.]+)"', svg)]
-    assert min(widths) >= 0.6, "a one-gene pattern must not collapse to zero width"
+    assert min(_subpath_widths(svg)) >= 0.5, \
+        "a one-gene pattern must not collapse to zero width"
+
+
+def test_pangenome_figure_stays_inside_its_viewbox(tmp_path):
+    """Regression: blocks had a 0.6px floor and were laid end to end, so a set
+    with thousands of patterns ran several times past the viewBox and every
+    block after the first screenful was drawn where nothing could see it."""
+    from comparem2.report import draw_pangenome, WIDTH
+    n, patterns = 60, []
+    for i in range(4000):  # far more patterns than pixels to draw them in
+        pattern = tuple((j + i) % 7 == 0 for j in range(n))
+        patterns.append((pattern, 1))
+    svg = draw_pangenome([f"g{i}" for i in range(n)], patterns)
+    ends = [float(x) + float(w) for d in re.findall(r'<path d="([^"]+)"', svg)
+            for x, w in re.findall(r"M([0-9.]+),[0-9.]+h([0-9.]+)", d)]
+    assert ends, "the figure drew nothing"
+    assert max(ends) <= WIDTH + 0.01, f"drew out to {max(ends):.1f} of {WIDTH}"
+    # And it stays small: one path per genome, run-merged along the row.
+    assert len(svg) < 400_000, f"{len(svg):,} bytes for a 60-genome figure"
 
 
 @pytest.mark.parametrize("value,expected", [
@@ -1105,3 +1139,245 @@ def test_every_tool_has_a_renderer_or_fallback(tmp_path):
     from comparem2.report import SECTIONS, _fallback
     for tool in CATALOGUE:
         assert SECTIONS.get(tool.name, _fallback) is not None
+
+
+# --- report layout and scale ---------------------------------------
+# Everything below guards a defect found by rendering the report and measuring
+# it in a browser, which is the only way most of them show up: each one
+# produced valid HTML that simply read badly.
+
+
+def _fixture(tmp_path, samples, *, skani=None, snp=None, amr=None,
+             treecluster=None):
+    """A minimal results tree. Each keyword turns on one tool's outputs."""
+    for sample in samples:
+        d = tmp_path / "samples" / sample / "seqkit"
+        d.mkdir(parents=True)
+        (d / "contigs.tsv").write_text("c1\t1000\t40.0\nc2\t400\t38.0\n")
+    if skani is not None:
+        d = tmp_path / "skani"
+        d.mkdir(parents=True)
+        (d / "ani.tsv").write_text(f"{len(skani)}\n" + "".join(
+            f"{a}\t" + "\t".join("100.00" if a == b else "98.50" for b in skani)
+            + "\n" for a in skani))
+    if snp is not None:
+        d = tmp_path / "snp-dists"
+        d.mkdir(parents=True)
+        (d / "snp-dists.tsv").write_text(
+            "snp-dists 1.2.0\t" + "\t".join(snp) + "\n" + "".join(
+                f"{a}\t" + "\t".join("0" if a == b else "412" for b in snp) + "\n"
+                for a in snp))
+    if amr is not None:
+        for sample, classes in amr.items():
+            d = tmp_path / "samples" / sample / "amrfinder"
+            d.mkdir(parents=True)
+            (d / "amrfinder.tsv").write_text(
+                "Protein id\tClass\n" + "".join(f"p\t{c}\n" for c in classes))
+    if treecluster is not None:
+        d = tmp_path / "treecluster"
+        d.mkdir(parents=True)
+        (d / "treecluster.tsv").write_text(
+            "SequenceName\tClusterNumber\n"
+            + "".join(f"{k}\t{v}\n" for k, v in treecluster.items()))
+
+
+def test_glyph_table_never_under_measures_a_label():
+    """`_text_width` decides every gutter in every figure, so a low estimate
+    clips a genome name rather than misaligning it slightly.
+
+    Reference widths measured with `CanvasRenderingContext2D.measureText` at
+    11px in the report's own font stack. The estimate must be at or above each,
+    and not so far above that the gutters waste the column.
+    """
+    from comparem2.report import _text_width
+    measured = {  # string: rendered px at 11px
+        "GCF_900000000.1 (34.7%)": 143.1,
+        "E1007_strain_1 (37.7%)": 119.7,
+        "SRR12001982 (39.5%)": 118.8,
+        "Lincosamide/Macrolide/Streptogramin": 199.2,
+        "116_2_duplicate": 84.6,
+        "WWWWWWWWWW": 107.1,
+        "iiiiiiiiii": 27.8,
+        "0000000000": 69.9,
+        "abcdefghij": 55.0,
+        "ABCDEFGHIJ": 69.2,
+        "GC%": 26.5,
+    }
+    for text, actual in measured.items():
+        estimate = _text_width(text, 11)
+        assert estimate >= actual, f"{text!r}: {estimate:.1f} < {actual:.1f}"
+        assert estimate <= actual * 1.25, f"{text!r}: {estimate:.1f} >> {actual:.1f}"
+
+
+@pytest.mark.parametrize("n", [2, 40, 100])
+def test_contig_figure_keeps_its_labels_inside_the_viewbox(n):
+    """Regression: a constant gutter, then a gutter from an estimate that ran
+    6% low, put the longest genome name two pixels off the left edge."""
+    from comparem2.report import draw_contigs, _text_width, WIDTH
+    rows = [(f"GCF_9{i:08d}.1", 38.0 + i % 5, [(3_000_000 - i, 38.0)])
+            for i in range(n)]
+    svg = draw_contigs(rows)
+    size = float(re.search(r'font-size="(\d+)" fill="currentColor">[^<]*\(', svg).group(1))
+    for x, text in re.findall(
+            r'<text x="([0-9.]+)"[^>]*text-anchor="end"[^>]*>([^<]+)</text>', svg):
+        assert float(x) - _text_width(text, size) >= 0, f"{text!r} runs off the left"
+    for x in re.findall(r'<text x="([0-9.]+)"[^>]*fill-opacity="0.7">GC%', svg):
+        assert float(x) + _text_width("GC%", 10) <= WIDTH, "the GC key runs off the right"
+
+
+def test_tree_gutter_is_measured_not_reserved():
+    """A constant 260-unit label gutter left 30% of a 944-unit tree blank for
+    labels reading `116_2`, and would have clipped a long strain name."""
+    from comparem2.report import draw_tree, parse_newick, WIDTH
+    short = draw_tree(parse_newick("(A:0.1,B:0.2,C:0.3);"))
+    long = draw_tree(parse_newick(
+        "(Enterococcus_faecium_strain_AUS0004_chr:0.1,"
+        "Enterococcus_faecium_strain_DO_chromosome:0.2);"))
+
+    def rightmost_branch(svg):
+        return max(float(x) for x in re.findall(r"H([0-9.]+)", svg))
+
+    assert rightmost_branch(short) > rightmost_branch(long), \
+        "short labels must leave more room for the tree"
+    assert rightmost_branch(short) > WIDTH * 0.8, \
+        "a tree of one-character names should use most of the width"
+
+
+def test_every_section_lists_genomes_in_input_order(tmp_path):
+    """Five different row orders across eleven tables meant no two sections
+    could be read across. Tools emit what suits them; the report does not."""
+    samples = ("zeta", "alpha", "mike")
+    _fixture(tmp_path, samples,
+             skani=["mike", "zeta", "alpha"],          # skani's own order
+             snp=["alpha", "mike", "zeta"],            # snp-dists' own order
+             amr={s: ["TETRACYCLINE"] for s in samples})
+    body = render_report(CATALOGUE, ["seqkit", "skani", "snp-dists", "amrfinder"],
+                         tmp_path, Path("db"), samples).read_text()
+    for section in ("seqkit", "skani", "snp-dists", "amrfinder"):
+        chunk = body.split(f'<h2 id="{section}">')[1].split("<h2 ")[0]
+        seen = [m for m in re.findall(r"\b(zeta|alpha|mike)\b", chunk)]
+        first = []
+        for name in seen:  # first appearance of each
+            if name not in first:
+                first.append(name)
+        assert first == list(samples), f"{section}: {first}"
+
+
+def test_a_genome_a_tool_skipped_is_shown_rather_than_dropped(tmp_path):
+    """It used to vanish, so a four-genome set silently showed three rows."""
+    samples = ("A", "B", "C")
+    _fixture(tmp_path, samples, amr={"A": ["MACROLIDE"], "C": ["MACROLIDE"]})
+    body = render_report(CATALOGUE, ["seqkit", "amrfinder"], tmp_path,
+                         Path("db"), samples).read_text()
+    chunk = body.split('<h2 id="amrfinder">')[1]
+    assert "1 of 3 genomes produced no output" in chunk
+    assert ">B</text>" in chunk, "the skipped genome still needs its row"
+
+
+def test_matrices_become_a_heatmap_before_they_stop_fitting(tmp_path):
+    """A numeric cell needs ~70px, so a table of them stops fitting the column
+    at about a dozen genomes. Past that the same data is drawn."""
+    from comparem2.report import _NUMERIC_MATRIX_MAXIMUM as cap
+    for n, expect_table in ((cap, True), (cap + 1, False)):
+        samples = tuple(f"g{i:03d}" for i in range(n))
+        d = tmp_path / str(n)
+        _fixture(d, samples, skani=list(samples))
+        body = render_report(CATALOGUE, ["seqkit", "skani"], d,
+                             Path("db"), samples).read_text()
+        chunk = body.split('<h2 id="skani">')[1]
+        # Not a bare "98.50": the heatmap's shading key prints the same floor.
+        assert (">98.50</td>" in chunk) is expect_table, f"n={n}"
+        assert ('aria-label="average nucleotide identity"' in chunk) \
+            is not expect_table, f"n={n}"
+
+
+def test_snp_dists_is_shaded_and_loses_the_tool_version_header(tmp_path):
+    """It arrived through the generic fallback, which took snp-dists' own
+    version string out of the corner cell and made it a column heading."""
+    samples = ("A", "B", "C")
+    _fixture(tmp_path, samples, snp=list(samples))
+    body = render_report(CATALOGUE, ["seqkit", "snp-dists"], tmp_path,
+                         Path("db"), samples).read_text()
+    chunk = body.split('<h2 id="snp-dists">')[1]
+    assert "snp-dists 1.2.0" not in chunk
+    assert "412" in chunk and "background:rgba(" in chunk
+    assert "shaded darkest at 0" in chunk
+
+
+def test_treecluster_reports_cluster_sizes_not_a_raw_dump(tmp_path):
+    samples = ("A", "B", "C", "D")
+    _fixture(tmp_path, samples,
+             treecluster={"C": "2", "A": "1", "D": "-1", "B": "1"})
+    body = render_report(CATALOGUE, ["seqkit", "treecluster"], tmp_path,
+                         Path("db"), samples).read_text()
+    chunk = body.split('<h2 id="treecluster">')[1]
+    assert "SequenceName" not in chunk, "the raw column names must not survive"
+    assert "unclustered" in chunk, "TreeCluster's -1 is a result, not a cluster"
+    assert "2 clusters across 4 genomes" in chunk
+    assert "A, B" in chunk
+
+
+def test_data_is_never_uppercased_by_a_stylesheet(tmp_path):
+    """`th { text-transform: uppercase }` turned the row label `116_2_duplicate`
+    into `116_2_DUPLICATE`, a name that no longer matched the same genome three
+    sections earlier."""
+    from comparem2.report import CSS
+    head = CSS.split("thead th")[1].split("}")[0]
+    assert "text-transform" not in head
+    assert "text-transform" not in CSS.split("th, td")[1].split("}")[0]
+
+
+def test_numeric_headers_sit_over_their_numbers(tmp_path):
+    """`CONTIGS` was left-aligned 193px to the left of every value under it."""
+    from comparem2.report import _table
+    out = _table([["A", "1,000"], ["B", "20"]], header=["Genome", "Contigs"])
+    assert '<th>Genome</th><th class="n">Contigs</th>' in out
+    # and one absent row must not un-align the column
+    out = _table([["A", "1,000"], ["B", "—"]], header=["Genome", "Contigs"])
+    assert '<th class="n">Contigs</th>' in out
+
+
+def test_report_has_a_table_of_contents_and_provenance(tmp_path):
+    _fixture(tmp_path, ("A",))
+    body = render_report(CATALOGUE, ["seqkit"], tmp_path, Path("db"), ("A",),
+                         command="cm2 a.fna -o results").read_text()
+    assert '<h2 id="seqkit">' in body
+    assert '<a href="#seqkit">' in body
+    assert '<a href="#methods">' in body
+    assert "CompareM2 " in body.split("<nav")[0]
+    assert "cm2 a.fna -o results" in body
+
+
+def test_prose_is_capped_below_the_column_width(tmp_path):
+    """The body was one 62rem block, which set every sentence at a median of
+    105 characters. Tables and figures still need the whole column."""
+    from comparem2.report import CSS
+    # em, not rem: the cap has to resolve against each element's own font size
+    # or the smallest text gets the longest lines.
+    assert "--measure:40em" in CSS.replace(" ", "")
+    assert "max-width: var(--measure)" in CSS.split("p, dl, ul, ol")[1].split("}")[0]
+
+
+def test_fallback_row_cap_grows_with_the_genome_set(tmp_path):
+    """A fixed 50-row cap silently truncated any per-genome fallback table on
+    a set larger than that."""
+    from comparem2.report import _fallback
+    samples = tuple(f"g{i}" for i in range(100))
+    d = tmp_path / "gtdbtk"
+    d.mkdir(parents=True)
+    (d / "gtdbtk.summary.tsv").write_text(
+        "user_genome\tclassification\n"
+        + "".join(f"{s}\td__Bacteria\n" for s in samples))
+    ctx = Context(tmp_path, Path("db"), 1, samples)
+    out = _fallback(CATALOGUE["gtdbtk"], ctx, tmp_path, len(samples))
+    assert out.count("<tr>") == len(samples) + 1
+    assert "First" not in out
+
+
+def test_the_first_column_is_never_right_aligned():
+    """It holds an identifier in every table here — a genome, a partition, a
+    cluster number — and one that parses as a number is still an identifier."""
+    from comparem2.report import _table
+    out = _table([["1", "4"], ["2", "9"]], header=["Cluster", "Genomes"])
+    assert '<th>Cluster</th><th class="n">Genomes</th>' in out
+    assert "<td>1</td>" in out and '<td class="n">4</td>' in out
