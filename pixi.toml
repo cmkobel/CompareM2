@@ -45,7 +45,7 @@ snakemake = "<10"
 snakemake-executor-plugin-cluster-generic = "*"
 snakemake-executor-plugin-slurm = "*"
 # The TUI. Drives Snakemake through its logger plugin system rather than
-# scraping stdout — see DESIGN.md 2026-09-01.
+# scraping stdout — see DECISIONS.md.
 textual = "*"
 
 # The analysis tools. One environment for all of them except CheckM2, which

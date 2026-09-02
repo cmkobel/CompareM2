@@ -7,10 +7,18 @@ Guidance for Claude Code working in this repository.
 `./comparem2` launcher, no `config/config.yaml`. If you are looking for any of
 those, they are on `master`. Do not reintroduce v2 patterns here.
 
-Read `DESIGN.md` before making a design decision. It is a dated log of what was
-chosen and why, including several decisions that were reversed within a day and
-the reasoning that reversed them. `CLEANUP.md` tracks the in-progress v2 removal
-and what still needs verifying on linux.
+Three files carry the context, and they are deliberately separate:
+
+- **`DESIGN.md`** — what v3 is and why it is shaped this way. No dates. Read
+  this before making a design decision, especially the *Rules that must not be
+  quietly undone* section.
+- **`DECISIONS.md`** — the dated log of how it got here, including decisions
+  reversed within a day and a *What went wrong* section. Read this before
+  undoing one of those rules, or to check whether an idea has already been
+  tried.
+- **`STATUS.md`** — what is currently true of a real run: which tools have
+  actually been executed, measured database sizes, where things live on
+  thylakoid, and what is known broken.
 
 ## What this is
 
@@ -123,8 +131,8 @@ ANI, 0 SNPs, identical CDS counts.
 
 ## Verification status
 
-`DESIGN.md` carries a table of which tool command lines have actually been
-executed. **Treat it as tracking execution, never installation.** Commands
-drafted against documented interfaces and never run are the largest single risk
-in this rewrite — `skani -c 70` and `fasttree` at `threads=1` are both currently
-unverified.
+`STATUS.md` carries the table of which tool command lines have actually been
+executed. **It tracks execution, never installation** — a clean `pixi install`
+says nothing about whether a tool runs. Commands drafted against documented
+interfaces and never executed are the standing risk here; 12 of 13 are now
+verified, and GTDB-Tk is the exception.

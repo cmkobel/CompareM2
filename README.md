@@ -57,15 +57,15 @@ citations list of every paper behind the tools that ran.
 
 Linux-only; the tools are `linux-64`. Unit tests run anywhere.
 
-12 of 13 tool command lines have been executed end to end on real genomes.
-GTDB-Tk is outstanding (it needs a 141 GB download), and `skani -c 70` and
-`fasttree` at `threads=1` were changed after the verification runs and need
-re-checking. See `DESIGN.md` for the current table — it tracks *execution*, not
-installation, because a clean `pixi install` says nothing about whether a tool
-runs.
+**12 of 13** tool command lines have been executed end to end on real genomes.
+GTDB-Tk is the exception, and only because it needs a 141 GB download.
+
+[`STATUS.md`](STATUS.md) has the per-tool table. It tracks *execution*, never
+installation — a clean `pixi install` says nothing about whether a tool runs,
+and two tools have resolved to builds that installed cleanly and crashed.
 
 ```bash
-python -m pytest tests/unit -q   # 75 tests, no pixi required
+python -m pytest tests/unit -q   # 92 tests, no pixi required
 
 pixi install                     # linux only
 pixi run test-fast               # 4 genomes, no databases needed
@@ -86,6 +86,8 @@ section lists them for the run you did.
 
 ## Links
 
-- **Design log**: [`DESIGN.md`](DESIGN.md) — dated decisions, including the ones that were reversed
+- **Design**: [`DESIGN.md`](DESIGN.md) — what v3 is and why
+- **Decision log**: [`DECISIONS.md`](DECISIONS.md) — how it got here, including what was reversed and what went wrong
+- **Status**: [`STATUS.md`](STATUS.md) — what has actually been run
 - **v2 documentation**: [comparem2.readthedocs.io](https://comparem2.readthedocs.io)
 - **Issues**: [github.com/cmkobel/CompareM2/issues](https://github.com/cmkobel/CompareM2/issues)
