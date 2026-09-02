@@ -32,7 +32,7 @@ analysis tools come from.
 git clone https://github.com/cmkobel/CompareM2.git
 cd CompareM2
 pixi install
-pixi run pytest        # 110 unit tests, no databases needed
+pixi run pytest        # 163 unit tests, no databases needed
 ```
 
 !!! note "Moving the directory invalidates the environment"
@@ -155,6 +155,6 @@ and Panaroo once resolved to years-old builds that installed cleanly and crashed
 on first use, which is why every tool now carries a minimum version.
 
 `STATUS.md` in the repository tracks which command lines have actually been
-**executed** on real genomes. At the time of writing, 12 of 13 have; GTDB-Tk is
-outstanding, and two commands changed after their verification runs and need
-re-checking.
+**executed** on real genomes. All 13 now have. GTDB-Tk was the last and the
+most instructive: its rule carried six defects that only running it could
+show, including a database release the installed tool refuses.

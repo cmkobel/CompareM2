@@ -11,6 +11,7 @@ Run with: pixi run pytest tests/unit -q
 from __future__ import annotations
 
 import html
+import os
 import re
 import subprocess
 import sys
@@ -398,7 +399,7 @@ def test_gtdbtk_merges_its_two_domain_summaries(tmp_path):
 
     # After the tool, not before it.
     tool_at = next(i for i, ln in enumerate(lines) if ln.startswith("gtdbtk "))
-    merge_at = next(i for i, ln in enumerate(lines) if "comparem2.steps" in ln)
+    merge_at = next(i for i, ln in enumerate(lines) if "merge-tsv" in ln)
     assert tool_at < merge_at
 
     step = lines[merge_at]
@@ -408,8 +409,15 @@ def test_gtdbtk_merges_its_two_domain_summaries(tmp_path):
     assert "'/res/gtdbtk/*.bac120.summary.tsv'" in step
     assert "'/res/gtdbtk/classify/*.ar53.summary.tsv'" in step
     # Never a bare `python`: under a conda deployment that is the tool's
-    # interpreter, which does not have comparem2 installed.
+    # interpreter, which does not have comparem2 installed. And never `-m`:
+    # that needs the package importable, which under pixi means a relative
+    # PYTHONPATH that does not survive a rule's working directory. A real run
+    # died here with ModuleNotFoundError after a 60.8 GB download.
     assert step.startswith(sys.executable)
+    assert " -m " not in step
+    from comparem2 import steps as steps_mod
+    assert steps_mod.__file__ in step
+    assert Path(steps_mod.__file__).is_absolute()
 
 
 def test_merge_tsv_keeps_one_header_and_tolerates_a_missing_domain(tmp_path):
@@ -450,6 +458,51 @@ def test_merge_tsv_combines_both_domains_and_refuses_nothing(tmp_path):
     assert "no input matched" in str(excinfo.value)
 
 
+def test_merge_tsv_treats_the_patterns_as_one_file_in_two_places(tmp_path):
+    """classify_wf writes the same summary into `--out_dir` *and*
+    `--out_dir/classify`, verified on a real run 2026-09-02.
+
+    Both are passed because the documentation does not say which one it uses,
+    so unioning the matches merged four genomes into an eight-row table. The
+    patterns are candidate locations for one file, not a set of files.
+    """
+    from comparem2.steps import merge_tsv
+
+    header = "user_genome\tclassification\n"
+    both = header + "A\td__Bacteria\nB\td__Bacteria\n"
+    (tmp_path / "gtdbtk.bac120.summary.tsv").write_text(both)
+    (tmp_path / "classify").mkdir()
+    (tmp_path / "classify" / "gtdbtk.bac120.summary.tsv").write_text(both)
+
+    out = tmp_path / "merged.tsv"
+    merge_tsv(out, [str(tmp_path / "*.bac120.summary.tsv"),
+                    str(tmp_path / "classify" / "*.bac120.summary.tsv")])
+    assert [ln.split("\t")[0] for ln in out.read_text().splitlines()] == [
+        "user_genome", "A", "B"]
+
+
+def test_steps_runs_as_a_plain_script(tmp_path):
+    """It is invoked by absolute path, not `-m`, so it must not need its own
+    package importable — under pixi that means a relative `PYTHONPATH=src`
+    which does not resolve from a rule's working directory."""
+    import subprocess as sp
+    from comparem2 import steps as steps_mod
+
+    source = Path(steps_mod.__file__).read_text()
+    assert "from ." not in source and "import comparem2" not in source
+
+    (tmp_path / "x.bac120.summary.tsv").write_text("a\tb\n1\t2\n")
+    out = tmp_path / "merged.tsv"
+    # No PYTHONPATH, and a working directory with no `src` in sight: exactly
+    # the conditions the real failure happened under.
+    done = sp.run([sys.executable, steps_mod.__file__, "merge-tsv",
+                   "--out", str(out), str(tmp_path / "*.summary.tsv")],
+                  cwd=tmp_path, env={"PATH": os.environ.get("PATH", "")},
+                  capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr
+    assert out.read_text() == "a\tb\n1\t2\n"
+
+
 def test_merge_tsv_refuses_mismatched_headers(tmp_path):
     """Two files with different columns are not one table."""
     from comparem2.steps import merge_tsv
@@ -466,7 +519,7 @@ def test_only_gtdbtk_needs_steps_around_its_command():
     assert [t.name for t in CATALOGUE if t.files] == ["gtdbtk"]
     assert [t.name for t in CATALOGUE if t.post] == ["gtdbtk"]
     text = render(CATALOGUE, None, Path("/res"), Path("/db"), SAMPLES)
-    assert text.count("comparem2.steps") == 1
+    assert text.count("merge-tsv") == 1
 
 
 def test_gtdbtk_gets_its_database_through_the_environment():

@@ -6,7 +6,7 @@ need editing because a tool was verified again.
 
 Last updated **2026-09-02**, from runs on thylakoid.
 
-## Tool verification: 12 of 13
+## Tool verification: 13 of 13
 
 **Verified means executed** on the four *E. faecium* test genomes and producing
 correct-looking output. It never means "installed" — see
@@ -26,9 +26,9 @@ correct-looking output. It never means "installed" — see
 | snp-dists | 09-02 | 0 SNPs between the duplicate pair, identical gap counts |
 | fasttree | 09-02 | at `threads=1`; duplicates at 0.0 branch length |
 | carveme | 09-02 | 4/4 SBML models, ~4 MB each; ~9 min per genome |
-| **gtdbtk** | **in progress** | GTDB r232 downloading since 16:21 (60.8 GB, ~5.6 h at the measured 3.0 MB/s), then classify runs unattended. **Three defects fixed first** — see below |
+| gtdbtk | 09-02 | all four *E. faecium* at 99.0–99.2% ANI against a 95.0 radius, `ani_screen`; duplicates identical. Six defects had to be fixed first — see below |
 
-### GTDB-Tk: three defects, none of which a solve would show
+### GTDB-Tk: six defects, none of which a solve would show
 Found 2026-09-02 while making the tool runnable. Each was invisible because the
 rule had never been executed, and the first two were described in comments as
 though they already existed:
@@ -44,34 +44,75 @@ though they already existed:
    `unrecognized arguments` was the only way to find this, short of reading the
    installed tool's `--help` — which is how it was found.
 
-And a fourth, upstream of all of them: **the database was the wrong release.**
-The catalogue pointed at r226; `gtdbtk/config/common.py` in 2.7.2 reads
-`COMPATIBLE_REF_DATA_VERSIONS = ['r232']`, so the tool would have rejected the
-data *after* a 141.4 GB download. r232 is 60.8 GB, less than half, because it
-replaced FastANI's reference genomes with skani sketches.
+4. **The database was the wrong release**, upstream of all of the above. The
+   catalogue pointed at r226; `gtdbtk/config/common.py` in 2.7.2 reads
+   `COMPATIBLE_REF_DATA_VERSIONS = ['r232']`, so the tool would have rejected
+   the data *after* a 141.4 GB download. r232 is 60.8 GB, less than half,
+   because it replaced FastANI's reference genomes with skani sketches.
 
-### The gtdbtk report section is written, against documented columns only
+The last two needed the real run, and both were in the fix for (2):
+
+5. **`python -m comparem2.steps` could not import its own package.** pixi
+   provides it through a relative `PYTHONPATH=src`, and a Snakemake rule runs
+   with the output directory as its working directory, so `src` did not
+   resolve. The classification succeeded and the run then died at the last
+   line with `ModuleNotFoundError`. The step is now named by absolute script
+   path, and `steps.py` imports nothing from its own package so that it can
+   run as a plain script — with a test to keep it that way.
+6. **The merge counted the same file twice.** `classify_wf` writes
+   `gtdbtk.bac120.summary.tsv` into both `--out_dir` and `--out_dir/classify`.
+   Both were passed as candidates because the documentation does not say which
+   it uses, and unioning the matches would have merged four genomes into an
+   eight-row table. The patterns are candidate *locations* for one file, so
+   they now deduplicate by basename.
+
+### GTDB-Tk, end to end
+Completed 18:57 on 2026-09-02, `CM2_EXIT=0`, report written. Classification
+itself took **17 seconds** for four genomes: r232 ships skani sketches, every
+genome cleared the ANI pre-screen, and the identify and align steps were
+skipped entirely. The 60.8 GB download was 100% of the wall time.
+
+| | |
+| --- | --- |
+| all four genomes | `s__Enterococcus_B faecium` — `_B` is GTDB's split genus, not a typo |
+| ANI / radius | 99.18, 99.18, 99.13, 99.03 against 95.0 |
+| aligned fraction | 0.917, 0.917, 0.908, 0.872 |
+| method | `ani_screen` for all four |
+| **the duplicate pair** | **identical on every column** — the cross-check holds for the thirteenth tool |
+
+The four questions this file said to ask, answered against the real file:
+
+1. `closest_genome_reference_radius` **exists** under exactly that name, so the
+   report's ANI colouring is live rather than silently degraded to plain text.
+2. `classification_method` is `ani_screen` — 10 characters, against the
+   51-character synthetic worst case. No column-width problem.
+3. `user_genome` holds the **batchfile's genome id**, so it joins to every
+   other section without translation.
+4. The merged file is one header and four rows. Only `bac120` exists for an
+   all-bacterial set, and `merge-tsv` tolerated the absent `ar53`.
+
+The summary carries **20 columns, not the 18 the documentation lists** —
+`closest_placement_radius` and `translation_table` are extra. Reading columns
+by name rather than by position is why that cost nothing.
+
+### The gtdbtk report section is written, and now validated on real output
 `_section_gtdbtk` exists and renders: the lineage every genome shares stated
 once, then a column per rank where they diverge, ANI coloured against *that
 reference's* species radius rather than a global 95%, and a note when a genome
 carries no species name. Twelve tests, including a real render.
 
-**Every input to those tests is synthetic.** The columns come from GTDB-Tk's
-own documentation, not from a file produced here, so the renderer checks its
-headers and falls back to the generic table if they are not the ones it
-expects. Four things to check against the real `gtdbtk.summary.tsv`, in order
-of how quietly they fail:
+Rendered from the real summary at 18:57: the shared lineage collapsed to
+`Bacteria › Bacillota › Bacilli › Lactobacillales › Enterococcaceae ›
+Enterococcus_B`, one Species column, ANI green against the 95.0 radius. The
+renderer ran; the generic fallback did not.
 
-1. **Does r232 emit `closest_genome_reference_radius` under that exact name?**
-   If not, the ANI colouring degrades to plain text — the correct failure, and
-   invisible unless looked for.
-2. **How long are the real `classification_method` strings?** That column drives
-   the table width; the synthetic worst case was 51 characters.
-3. **Does `user_genome` hold the batchfile's genome id** (the sample name) or a
-   path? `_sample_of` handles both, but only the first joins cleanly to every
-   other section.
-4. **Is the merged file the two domains concatenated once**, with one header —
-   `merge-tsv`'s own contract, but it has never run on real GTDB-Tk output.
+It was written before the tool had ever produced a file, so its own tests are
+still synthetic; what they could not answer is answered above. The header check
+that would have degraded it to the generic table stayed in, and the 20-column
+reality it did not expect cost nothing because columns are read by name.
+
+Still untested there: an archaeal genome, so the `ar53` half of the merge and
+the two-domain column layout have only ever seen fixtures.
 
 ### The report has never covered more than four tools
 Checked 2026-09-02, because "12 of 13 verified" invites the wrong inference.

@@ -10,11 +10,19 @@ A file with content is `Tool.files`, rendered from the Context and written by
 `prepare()`. The reshaping afterwards is `Tool.post`, and it comes here rather
 than into an `awk` invocation because this is testable and that is not.
 
-**Invoked through an absolute `sys.executable`**, never a bare `python`. Under a
-conda deployment the rule's environment holds the tool and its interpreter, not
-CompareM2, so `python -m comparem2.steps` would find the wrong Python. The
-absolute path is the one that generated the workflow, which is the one that has
-this module.
+**Invoked as an absolute script path by an absolute `sys.executable`** — not as
+`python -m comparem2.steps`, and never as a bare `python`.
+
+The interpreter must be absolute because under a conda deployment the rule's
+environment holds the tool and its own Python, not CompareM2. The *script* must
+be absolute because `-m` needs the package importable, and under pixi it is
+reachable only through a relative `PYTHONPATH=src`, which does not resolve from
+a Snakemake rule — rules run with the output directory as their working
+directory. That failed a real run after a 60.8 GB download with
+`ModuleNotFoundError: No module named 'comparem2'`, at the last step.
+
+Which is why this module imports nothing from its own package: it has to run as
+a plain script. A test enforces that.
 """
 
 from __future__ import annotations
@@ -37,7 +45,17 @@ def merge_tsv(out: Path, patterns: list[str]) -> None:
     Matching *nothing at all* is an error: silently writing an empty table
     would let the rule report success for a tool that classified no genomes.
     """
-    paths = sorted({p for pattern in patterns for p in glob.glob(pattern)})
+    # Deduplicated by *basename*, first pattern winning, because the patterns
+    # are candidate locations for one set of files rather than a set of
+    # different files. Verified against a real run 2026-09-02: classify_wf
+    # writes `gtdbtk.bac120.summary.tsv` into both `--out_dir` and
+    # `--out_dir/classify`, so unioning the paths merged the same four genomes
+    # twice into an eight-row table.
+    by_name: dict[str, str] = {}
+    for pattern in patterns:
+        for path in sorted(glob.glob(pattern)):
+            by_name.setdefault(Path(path).name, path)
+    paths = sorted(by_name.values())
     if not paths:
         raise SystemExit(f"merge-tsv: no input matched {' '.join(patterns)}")
 

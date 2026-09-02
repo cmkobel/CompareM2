@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import sys
 
+from . import steps
 from .tools import Context, Database, Registry, Scope, Tool
 
 # --- Databases -----------------------------------------------------
@@ -274,8 +275,11 @@ gtdbtk = Tool(
     # separately, and an all-bacterial set produces no ar53 file at all. Both
     # candidate directories are passed because the documentation does not say
     # which one classify_wf uses, and it has differed between versions.
+    # The step is named by absolute script path, not `-m comparem2.steps`: see
+    # steps.py. `-m` needs the package importable, and pixi provides it through
+    # a relative PYTHONPATH that does not survive a rule's working directory.
     post=lambda c: [
-        [sys.executable, "-m", "comparem2.steps", "merge-tsv",
+        [sys.executable, steps.__file__, "merge-tsv",
          "--out", str(c.out("gtdbtk", "gtdbtk.summary.tsv")),
          str(c.out("gtdbtk", "*.bac120.summary.tsv")),
          str(c.out("gtdbtk", "*.ar53.summary.tsv")),
