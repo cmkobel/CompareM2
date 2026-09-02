@@ -55,8 +55,13 @@ uv.lock
 # mkdocs
 /site
 
-# Reference papers for the tool set — local working copies, not tracked.
-papers/
+# Reference papers for the tool set. The PDFs are local working copies — 50 MB
+# in history forever, and one of them (MAFFT, CC BY-NC 3.0) could not be
+# redistributed anyway. What is tracked is the derived reading: SUMMARIES.md,
+# tools.bib and the README that says where each PDF came from, so they can be
+# fetched again.
+papers/*.pdf
+papers/.pytest_cache/
 
 # Misc
 *.log
