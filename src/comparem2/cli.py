@@ -228,6 +228,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--keep-going", action="store_true",
                    help="keep running independent tools after one fails")
     p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--unlock", action="store_true",
+                   help="release a stale lock left by a killed run, then exit")
     p.add_argument("--report-only", action="store_true",
                    help="re-render the report from existing outputs")
     args = p.parse_args(argv)
@@ -264,10 +266,11 @@ def main(argv: list[str] | None = None) -> int:
     print(f"{len(samples)} assemblies, {len(tools)} tools", file=sys.stderr)
 
     # Say it now rather than mid-DAG. Skipped when the tools are not this run's
-    # problem: --use-conda installs them, --dry-run does not run them, and
-    # --report-only reads output that already exists. A launcher only covers
-    # the isolated tool, so the rest are still checked.
-    if not (args.use_conda or args.dry_run or args.report_only):
+    # problem: --use-conda installs them, --dry-run does not run them,
+    # --report-only reads output that already exists, and --unlock only clears
+    # a lock. A launcher only covers the isolated tool, so the rest are still
+    # checked.
+    if not (args.use_conda or args.dry_run or args.report_only or args.unlock):
         absent = missing_executables(args.until, workdir, databases, samples)
         if args.isolated_launcher:
             absent = [(n, e) for n, e in absent if not CATALOGUE[n].isolated]
@@ -323,6 +326,17 @@ def main(argv: list[str] | None = None) -> int:
     snakefile = prepare(CATALOGUE, args.until, workdir, databases, samples,
                         overrides=overrides, launcher=launcher,
                         per_rule_conda=args.use_conda)
+
+    if args.unlock:
+        # Snakemake locks the output directory, and a run that died without
+        # releasing it — SIGKILL, a lost node, a power cut — leaves the next
+        # one refusing to start. Snakemake's own message names `--unlock`, but
+        # it was not a flag CompareM2 had, so the only way out was to know that
+        # a Snakefile sits in `<output>/.comparem2/` and to invoke Snakemake
+        # against it by hand. Found by killing a 60.8 GB download.
+        return subprocess.run([sys.executable, "-m", "snakemake",
+                               "--snakefile", str(snakefile),
+                               "--directory", str(workdir), "--unlock"]).returncode
 
     if not args.report_only:
         cmd = [

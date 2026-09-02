@@ -659,6 +659,36 @@ def test_use_conda_passes_the_deployment_flags_to_snakemake(monkeypatch, tmp_pat
     assert cmd[cmd.index("--conda-prefix") + 1] == str(prefix)
 
 
+def test_unlock_releases_the_lock_and_does_nothing_else(monkeypatch, tmp_path):
+    """A run killed mid-flight leaves a lock the next one refuses to start on.
+
+    Snakemake's message names `--unlock`, but CompareM2 had no such flag, so
+    the only way out was knowing that a generated Snakefile sits in
+    `<output>/.comparem2/`. Found by killing a 60.8 GB download.
+    """
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    # Tools are irrelevant to clearing a lock, so the preflight must not fire.
+    monkeypatch.setattr(cli_mod.shutil, "which", lambda exe: None)
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+
+    seen: dict[str, object] = {}
+
+    def fake_run(cmd, *a, **k):
+        seen["cmd"] = cmd
+        return subprocess.CompletedProcess(cmd, 0)
+
+    monkeypatch.setattr(cli_mod.subprocess, "run", fake_run)
+    monkeypatch.setattr(cli_mod, "render_report",
+                        lambda *a, **k: seen.setdefault("report", True))
+
+    assert cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"),
+                         "--until", "seqkit", "--unlock"]) == 0
+    cmd = seen["cmd"]
+    assert "--unlock" in cmd and cmd[:3] == [sys.executable, "-m", "snakemake"]
+    assert "--cores" not in cmd, "unlocking is not a run"
+    assert "report" not in seen, "unlocking must not render a report"
+
+
 def test_use_conda_and_isolated_launcher_do_not_combine(tmp_path):
     """Both isolate a tool, and together they would run
     `pixi run -e checkm2 checkm2 ...` inside a Snakemake-built environment."""

@@ -34,6 +34,7 @@ typed. Results land next to the genomes.
 | `--keep-going` | off | keep running independent tools after a failure |
 | `--dry-run` | off | show what would run |
 | `--report-only` | off | re-render the report from existing outputs |
+| `--unlock` | off | release a stale lock left by a killed run |
 | `--version` | | print the version and exit |
 
 `--use-conda` is for a CompareM2 installed without its tools — see
@@ -174,6 +175,25 @@ pixi run cm2 *.fna --report-only
 
 Sections appear only when their outputs exist, so a partial run still gives a
 readable document.
+
+## After a run is killed
+
+Snakemake locks the output directory, so a run that died without releasing it —
+SIGKILL, a lost node, a power cut — leaves the next one refusing to start:
+
+```
+LockException: Directory cannot be locked.
+```
+
+Nothing is wrong with the results. Release the lock and carry on:
+
+```bash
+pixi run cm2 *.fna --unlock
+pixi run cm2 *.fna            # picks up where it stopped
+```
+
+Downloads resume rather than restart: a killed GTDB fetch continues its partial
+tarball instead of fetching 60.8 GB again.
 
 ## Output layout
 

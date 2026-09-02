@@ -74,8 +74,22 @@ CHECKM2_DB = Database(
 # The version coupling runs both ways and is the same shape as bakta's: pinning
 # the tool without moving the database, or the database without moving the pin,
 # is a runtime failure rather than a solve failure.
+#
+# The canonical host, and also the fastest measured from Denmark, which was not
+# the expected result. Single-stream, 2026-09-02, same 60,806,405,195-byte
+# object on all three:
+#
+#   data.gtdb.ecogenomic.org (primary)  9.7 MB/s
+#   data.ace.uq.edu.au                  4.7 MB/s
+#   data.gtdb.aau.ecogenomic.org        3.0 MB/s   <- the Danish mirror
+#
+# The cap is per connection, not per server: three extra streams alongside a
+# running download each still got 3.4 MB/s off Aalborg, 13.2 MB/s in total. So
+# a parallel fetcher would help — but one stream off the primary already
+# reaches 9.7 of the ~14 MB/s this path can carry, which is not worth an aria2
+# dependency for.
 _GTDB_URL = (
-    "https://data.gtdb.aau.ecogenomic.org/releases/release232/232.0/"
+    "https://data.gtdb.ecogenomic.org/releases/release232/232.0/"
     "auxillary_files/gtdbtk_package/full_package/gtdbtk_r232_data.tar.gz"
 )
 
