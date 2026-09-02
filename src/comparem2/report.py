@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import csv
 import html
+import re
 from pathlib import Path
 
 from .tools import Context, Registry, Scope, Tool
@@ -33,6 +34,10 @@ body { font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, 
        max-width: 62rem; }
 h1 { font-size: 1.75rem; margin: 0 0 .25rem; letter-spacing: -.02em; }
 h2 { font-size: 1.15rem; margin: 2.75rem 0 .2rem; letter-spacing: -.01em; }
+h3 { font-size: .82rem; margin: 1.9rem 0 .5rem; color: var(--mut);
+     text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+.dots { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        letter-spacing: .18em; white-space: nowrap; }
 .sub { color: var(--mut); margin: 0 0 2rem; }
 .summary { color: var(--mut); margin: 0 0 .9rem; font-size: .93rem; }
 table { border-collapse: collapse; width: 100%; font-size: .87rem; font-variant-numeric: tabular-nums; }
@@ -71,12 +76,37 @@ def _table(rows: list[list[str]], header: list[str] | None = None) -> str:
     return "".join(out)
 
 
+# What counts as a number *for display purposes* — i.e. what should be
+# right-aligned in a table. `float()` is the wrong test in both directions:
+# it rejects "2,091" (so formatted numbers ended up left-aligned) and accepts
+# "116_2" (Python allows underscores in numeric literals), which right-aligned
+# a sample name as though it were 1162.
+_NUMBER = re.compile(r"^[-+]?(\d{1,3}(,\d{3})+|\d+)(\.\d+)?%?$")
+
+
 def _numeric(value: str) -> bool:
-    try:
-        float(value)
-        return True
-    except ValueError:
-        return False
+    return bool(_NUMBER.match(value.strip()))
+
+
+def _raw_table(rows: list[list[str]], header: list[str],
+               numeric_columns: set[int] | None = None) -> str:
+    """A table whose cells already contain markup.
+
+    `_table` escapes everything, which is right for values read out of a tool's
+    output. This variant is for cells the report itself builds — bars, dots —
+    so callers must escape any tool-derived text they embed.
+    """
+    numeric_columns = numeric_columns or set()
+    cells = "".join(f"<th>{html.escape(c)}</th>" for c in header)
+    out = [f"<table><thead><tr>{cells}</tr></thead><tbody>"]
+    for row in rows:
+        tds = "".join(
+            f'<td class="n">{c}</td>' if i in numeric_columns else f"<td>{c}</td>"
+            for i, c in enumerate(row)
+        )
+        out.append(f"<tr>{tds}</tr>")
+    out.append("</tbody></table>")
+    return "".join(out)
 
 
 # --- Tool-specific sections ----------------------------------------
@@ -546,43 +576,65 @@ def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
 
     matrix = draw_pangenome(names, ordered)
 
-    # The overlaps, as an explicit table. Ordered by how many genes share the
-    # pattern, which is the question "what do these genomes have in common".
+    # Overlaps. The presence pattern is shown as dots in a fixed genome order
+    # rather than a comma-separated name list: the lists grow unreadable past a
+    # handful of genomes, and dots line up column-wise so patterns are
+    # scannable and match the row order of the figure above.
     by_size = sorted(tally.items(), key=lambda kv: -kv[1])
     shown, rest = by_size[:12], by_size[12:]
     overlap_rows = []
     for pattern, count in shown:
+        dots = "".join("●" if p else "·" for p in pattern)
         members = [names[i] for i, p in enumerate(pattern) if p]
-        label = "all genomes" if len(members) == n else ", ".join(members)
+        if len(members) == n:
+            label = "all genomes"
+        elif len(members) == 1:
+            label = f"only {html.escape(members[0])}"
+        else:
+            label = ", ".join(html.escape(m) for m in members)
+        share = 100 * count / total
         overlap_rows.append([
-            label, f"{len(members)}", f"{count:,}", f"{100 * count / total:.1f}%",
+            f'<span class="dots">{dots}</span>', label, f"{count:,}",
+            _bar(share, "#2b6cb0", width=60) + f"{share:.1f}%",
         ])
     if rest:
+        other = sum(c for _, c in rest)
         overlap_rows.append([
-            f"other patterns ({len(rest)})", "–", f"{sum(c for _, c in rest):,}",
-            f"{100 * sum(c for _, c in rest) / total:.1f}%",
+            "", f"{len(rest)} further patterns", f"{other:,}",
+            _bar(100 * other / total, "#2b6cb0", width=60)
+            + f"{100 * other / total:.1f}%",
         ])
 
-    overlaps = _table(
-        overlap_rows, header=["Present in", "Genomes", "Gene clusters", "Share"])
+    legend = " ".join(
+        f'<span class="dots">{"·" * i}●{"·" * (n - i - 1)}</span> {html.escape(name)}'
+        for i, name in enumerate(names)
+    )
 
-    summary = _table(
+    overlaps = _raw_table(
+        overlap_rows, header=["Pattern", "Present in", "Gene clusters", "Share"],
+        numeric_columns={2, 3})
+
+    partitions = _table(
         [["Core (≥99%)", f"{core:,}"], ["Soft core (95–99%)", f"{soft:,}"],
          ["Shell (15–95%)", f"{shell_:,}"], ["Cloud (<15%)", f"{cloud:,}"],
          ["Total", f"{total:,}"]],
-        header=["Partition", "Genes"],
+        header=["Partition", "Gene clusters"],
     )
     counts = _table(
-        [[name, f"{per_genome[i]:,}"] for i, name in enumerate(names)],
-        header=["Genome", "Genes in pangenome"],
+        [[name, f"{per_genome[i]:,}", f"{100 * per_genome[i] / total:.1f}%"]
+         for i, name in enumerate(names)],
+        header=["Genome", "Gene clusters", "Of pangenome"],
     )
     return (
         f'<p class="summary">{total:,} gene clusters across {n} genomes, in '
-        f"{len(tally)} distinct presence patterns. Each block is one pattern, "
-        "its width proportional to the number of genes sharing it.</p>"
+        f"{len(tally)} distinct presence patterns. Each block below is one "
+        "pattern, its width proportional to the number of genes sharing it.</p>"
         + matrix
-        + '<p class="summary">Which genomes share which genes.</p>' + overlaps
-        + summary + counts
+        + "<h3>Shared gene content</h3>"
+        + f'<p class="summary">Reading order: {legend}</p>'
+        + overlaps
+        + "<h3>Pangenome partitions</h3>" + partitions
+        + "<h3>Genes per genome</h3>" + counts
     )
 
 
