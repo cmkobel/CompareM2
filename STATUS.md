@@ -133,8 +133,9 @@ md5 `fba2ad10…` both times:
 
 The wheel does not link PaPILO and the conda-forge builds do
 (`printExternalCodeVersions()`). Not the SCIP version: conda-forge 10.0.2
-carries PaPILO 3.0.0 and never finished either. Not symmetry handling:
-`misc/usesymmetry=0` still hit the limit, at 907.8 s.
+carries PaPILO 3.0.0 and was still in the MILP when it was stopped at 300 s,
+seven times the 43 s the same version takes with the presolver off. Not symmetry
+handling: `misc/usesymmetry=0` ran to the 900 s limit.
 
 **And the shipped run returns a worse model, not just a later one** — 253 of
 1,069 annotated reactions dropped against 45. E8202 (3,185 proteins) repeats

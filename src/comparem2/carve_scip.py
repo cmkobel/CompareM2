@@ -12,9 +12,9 @@ out from each build and the md5s matched — and so is the DIAMOND input:
 
 The difference between the conda-forge build and the wheel is PaPILO, which
 only the former links (`printExternalCodeVersions()`). It is not the SCIP
-version: conda-forge 10.0.2 carries PaPILO 3.0.0 and is equally slow. It is not
-symmetry handling either: `misc/usesymmetry=0` still hit the time limit at
-907.8 s.
+version: conda-forge 10.0.2 carries PaPILO 3.0.0 and was still in the MILP when
+it was stopped at 300 s, against 43 s with the presolver off. It is not symmetry
+handling either: `misc/usesymmetry=0` ran to the 900 s limit.
 
 The shipped run is not only slower, it returns a worse model by CarveMe's own
 objective: it drops **253 of 1069 annotated reactions** where the others drop

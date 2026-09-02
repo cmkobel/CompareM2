@@ -437,7 +437,8 @@ Considered and rejected:
   either. It buys speed by keeping the bad search's first feasible point.
   Measured, not reasoned about.
 - **Pinning `scip`.** conda-forge has 10.0.2, and it carries PaPILO 3.0.0 and
-  is just as slow. There is no conda-forge SCIP without PaPILO to pin to.
+  behaves the same — still in the MILP at 300 s. There is no conda-forge SCIP
+  without PaPILO to pin to.
 - **`pyscipopt` from PyPI**, whose wheel bundles a SCIP without PaPILO and
   solves in 9.8 s. It would mean a pip package shadowing the conda one that
   bioconda's carveme depends on, in an environment pixi and conda both manage —
@@ -718,9 +719,10 @@ DIAMOND hits.
 
 The one structural difference between the builds is PaPILO, which conda-forge
 links and the wheel does not. Two hypotheses tested and rejected on the way: not
-the SCIP version (conda-forge 10.0.2 has PaPILO 3.0.0 and never finished
-either), not symmetry handling (`misc/usesymmetry=0` still hit the limit, at
-907.8 s).
+the SCIP version (conda-forge 10.0.2 has PaPILO 3.0.0 and was still in the
+MILP when it was stopped at 300 s — it was never run to a conclusion, so "just
+as slow" is an inference from that, not a measured end state), not symmetry
+handling (`misc/usesymmetry=0` ran to the 900 s limit).
 
 **The shipped run is also worse, not just later** — 253 of 1,069 annotated
 reactions dropped against 45 — so "the models were fine, just slow" was never
