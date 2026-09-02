@@ -4,7 +4,7 @@ Measured on thylakoid 2026-09-02, one *E. faecium* genome (116_2, 2588
 proteins). The MILP is byte-identical in every row — the problem was written
 out from each build and the md5s matched — and so is the DIAMOND input:
 
-| SCIP build                             | MILP  | status    | model              |
+| SCIP build                             | MILP  | reported  | model              |
 | -------------------------------------- | ----- | --------- | ------------------ |
 | conda-forge 10.0.3, as shipped         | 601 s | timelimit | 1193 rx / 750 met  |
 | the same, `presolving/milp/maxrounds=0`|  43 s | gaplimit  | 1742 rx / 1175 met |
@@ -16,22 +16,26 @@ version: conda-forge 10.0.2 carries PaPILO 3.0.0 and is equally slow. It is not
 symmetry handling either: `misc/usesymmetry=0` still hit the time limit at
 907.8 s.
 
-And PaPILO is not merely slow here, it is wrong. The shipped run's dual bound
-descends to 934.37 while a point with objective 943.4997 exists — a point that
-*this same build's* feasibility checker accepts, with a largest constraint
-violation of 4.99e-11 against `feastol` 1e-6. An upper bound below a feasible
-objective means the optimum was presolved away. So the default build burns
-CarveMe's hardcoded 600 s limit (`carving.py`) and then returns a model that
-drops 253 annotated reactions instead of 45. Turning the presolver off is
-therefore not a speed-for-accuracy trade: it is faster *and* it is the model
-CarveMe was asking for.
+The shipped run is not only slower, it returns a worse model by CarveMe's own
+objective: it drops **253 of 1069 annotated reactions** where the others drop
+45. Four configurations of the *one* conda-forge build, on the same written-out
+problem, report three different objective values — 913.5 as shipped at the time
+limit, 943.5 "optimal" when handed a starting solution, 947.5 "optimal" with
+the presolver off — and its dual bound at 300 s is 935.7, below a point the same
+build accepts as feasible at 947.5.
 
-The likely trigger is CarveMe's own conditioning rather than anything specific
-to this genome: `minmax_reduction` couples each flux to its indicator with
-bigM=1e3 against eps=1e-3, six orders of magnitude apart, which is where
-presolve reductions stop being numerically safe. E8202 (3185 proteins) behaves
-the same way — 908.1 s and 261 annotated reactions dropped, against 16.7 s and
-45 with the presolver off.
+**Which of those is the true optimum is not a question this problem answers, and
+the fix is not framed as recovering it.** CarveMe couples each flux to its
+indicator with bigM=1e3 against eps=1e-3, and every one of those points is
+feasible only to tolerance: 5e-11 on the constraints but exactly 1e-6 on
+integrality, against SCIP's default `feastol` of 1e-6 — and rounding the
+binaries to exact integers makes the remaining LP infeasible in every case. So
+"optimal" here describes the solver's tolerances rather than the network. What
+is solid is the ordering: with this presolver the run is 12–60x slower and keeps
+a quarter fewer of the reactions the annotation supports.
+
+E8202 (3185 proteins) behaves the same way — 908.1 s and 261 annotated reactions
+dropped, against 16.7 s and 45 with the presolver off.
 
 Neither CarveMe nor ReFramed exposes solver parameters, which is why this
 wrapper exists at all.

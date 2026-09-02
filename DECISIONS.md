@@ -722,23 +722,37 @@ the SCIP version (conda-forge 10.0.2 has PaPILO 3.0.0 and never finished
 either), not symmetry handling (`misc/usesymmetry=0` still hit the limit, at
 907.8 s).
 
-**PaPILO is not slow here, it is wrong.** The shipped run's dual bound descends
-to 934.37 while a point of objective 943.4997 exists, and that same build's own
-feasibility checker accepts the point — largest constraint violation 4.99e-11
-against a `feastol` of 1e-6, integrality 1.0e-6, bounds 1.95e-7. For a
-maximisation an upper bound below a feasible objective is not a preference, it
-is a bound that has cut off the optimum. Which is why turning the presolver off
-is faster *and* better rather than a trade, and why "the models were fine, just
-slow" was never available.
+**The shipped run is also worse, not just later** — 253 of 1,069 annotated
+reactions dropped against 45 — so "the models were fine, just slow" was never
+available.
 
-The probable trigger is CarveMe's own conditioning rather than this genome:
-`minmax_reduction` couples every flux to its indicator with bigM=1e3 against
-eps=1e-3, six orders of magnitude apart, which is where presolve reductions stop
-being safe. One experiment that pointed the other way and is worth recording:
-fixing the good solution's binaries to exact 0/1 and re-solving came back
-*infeasible* in the same build that accepts the point as feasible. Rounding at
-the 1e-6 integrality residual is enough to explain it, and it is why the claim
-here is scoped to the bound rather than to PaPILO's reductions in general.
+Reduced to the `scip` command line, one build (conda-forge 10.0.3 / SoPlex
+8.0.3 / PaPILO 3.0.1), one written-out problem, `limits/gap 0.001`:
+
+| run | reported | time | primal | dual |
+| --- | -------- | ---: | -----: | ---: |
+| `read lp; optimize` | time limit | 300.0 s | 913.500 | 935.696 |
+| `read lp; read sol_947; optimize` | gap limit | 4.3 s | 947.500 accepted as feasible | 947.796 |
+| `read lp; read sol_943; optimize` | **optimal** | 5.1 s | 943.500 | 943.500 |
+| `read lp; set presolving milp maxrounds 0; optimize` | **optimal** | 7.5 s | 947.500 | 947.500 |
+
+**This corrects the first reading of the same measurements**, which took the
+943.4997 the PyPI wheel called optimal to be the optimum and PaPILO to be
+straightforwardly unsound. It is not that clean. 947.4997 is feasible too, so
+the wheel's "optimal" was also wrong — and **rounding either point's binaries to
+exact integers leaves an infeasible LP**, checked independently of the solver's
+own checker. Both are feasible only at tolerance: 5e-11 on the constraints,
+exactly 1e-6 on integrality, against a default `feastol` of 1e-6.
+
+So the honest statement is that "optimal" is not well defined on this problem at
+default tolerances, because of CarveMe's conditioning: `minmax_reduction`
+couples every flux to its indicator with bigM=1e3 against eps=1e-3, six orders
+of magnitude apart. A SCIP maintainer would be within their rights to call the
+dual bound a scaling consequence rather than a bug, and the report upstream is
+scoped accordingly — the reproducible, tolerance-independent claim is that one
+build and one file yield three different objective values, two of them labelled
+optimal, and that this presolver costs 12–60x wall time and a quarter of the
+annotated reactions.
 
 Both genomes tested behave the same way — E8202, 3,185 proteins: 908.1 s and 261
 annotated reactions dropped, against 16.7 s and 45. Both are *E. faecium*, which

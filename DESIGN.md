@@ -222,10 +222,13 @@ something already published. The post-mortems are in
   slower or faster — it is different.** CarveMe's MILP took 601 s and returned a
   model missing 253 of its annotated reactions with the SCIP conda-forge ships,
   and 10 s with the one the PyPI wheel ships, on a byte-identical problem. The
-  difference is PaPILO, which conda-forge links and which presolves the optimum
-  away here. `carve_scip.py` turns it off; removing that line costs nine minutes
-  a genome *and* the model. Re-measure before touching it — the numbers are in
-  the wrapper's docstring and in [STATUS.md](STATUS.md).
+  difference is PaPILO, which conda-forge links. Whether that is a presolve bug
+  or a consequence of CarveMe's bigM=1e3-against-eps=1e-3 scaling is unsettled —
+  what is measured is that this presolver costs 12–60x wall time and a quarter
+  of the reactions the annotation supports. `carve_scip.py` turns it off;
+  removing that line costs nine minutes a genome *and* the model. Re-measure
+  before touching it — the numbers are in the wrapper's docstring and in
+  [STATUS.md](STATUS.md).
 - **A database version is part of the tool's pin.** Both directions are runtime
   failures that no solve catches: GTDB-Tk 2.7 accepts only r232, Bakta 1.12
   only db 6.x. Moving either one alone is the bug. Which is why the URL, the

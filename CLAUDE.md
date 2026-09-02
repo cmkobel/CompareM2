@@ -120,11 +120,11 @@ ANI, 0 SNPs, identical CDS counts.
   runs it.
 - **A solver build is part of the pinned surface, and it changes the result.**
   CarveMe's MILP takes 601 s and returns a model missing 253 of its annotated
-  reactions with the SCIP conda-forge ships (it links PaPILO, which presolves
-  the optimum away), and 9.8 s with the PyPI wheel's, on a byte-identical
-  problem. `carve_scip.py` turns that presolver off; deleting the line costs
-  nine minutes a genome *and* the model. Numbers and evidence are in the
-  wrapper's docstring — re-measure before changing it.
+  reactions with the SCIP conda-forge ships (it links PaPILO), and 9.8 s with
+  the PyPI wheel's, on a byte-identical problem. `carve_scip.py` turns that
+  presolver off; deleting the line costs nine minutes a genome *and* the model.
+  Numbers, and the reasons "optimal" is not well defined on this problem, are in
+  the wrapper's docstring — re-measure before changing it.
 - **`isolated=True` is an exception that must carry its reason in the spec.**
   Exactly one tool has it (checkm2, which pins DIAMOND 2.1.x against bakta's
   2.2.x). v2 reached 25 environments by making this the default.
