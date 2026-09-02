@@ -452,8 +452,61 @@ def _section_amrfinder(tool: Tool, ctx: Context, workdir: Path) -> str:
     return "".join(out)
 
 
+def draw_pangenome(names: list[str], patterns: list[tuple[tuple[bool, ...], int]],
+                   width: int = 720, row: int = 22, label_room: int = 150) -> str:
+    """The pangenome presence matrix, as inline SVG.
+
+    Genes sharing a presence pattern are drawn as one block whose width is
+    proportional to how many genes share it. That is lossless — with N genomes
+    there are at most 2**N - 1 patterns — and it keeps the figure small for a
+    set where a per-gene column would mean tens of thousands of rects.
+
+    Blocks run from most to least common, so the core sits on the left and the
+    genome-specific genes on the right.
+    """
+    total = sum(count for _, count in patterns) or 1
+    span = width - label_room
+    height = len(names) * row + 26
+
+    parts: list[str] = []
+    for i, name in enumerate(names):
+        y = i * row
+        parts.append(
+            f'<text x="{label_room - 8}" y="{y + row / 2 + 4:.1f}" text-anchor="end" '
+            f'font-size="12" fill="currentColor">{html.escape(name)}</text>'
+        )
+
+    x = float(label_room)
+    for pattern, count in patterns:
+        w = max(span * count / total, 0.6)  # never let a rare pattern vanish
+        for i, present in enumerate(pattern):
+            if not present:
+                continue
+            y = i * row + 2
+            parts.append(
+                f'<rect x="{x:.2f}" y="{y}" width="{w:.2f}" height="{row - 4}" '
+                f'fill="#2b6cb0" fill-opacity="0.85"/>'
+            )
+        x += w
+
+    parts.append(
+        f'<line x1="{label_room}" y1="{len(names) * row + 2}" x2="{width}" '
+        f'y2="{len(names) * row + 2}" stroke="currentColor" stroke-opacity="0.25"/>'
+    )
+    parts.append(
+        f'<text x="{label_room}" y="{len(names) * row + 18}" font-size="11" '
+        f'fill="currentColor" fill-opacity="0.6">core</text>'
+    )
+    parts.append(
+        f'<text x="{width}" y="{len(names) * row + 18}" text-anchor="end" '
+        f'font-size="11" fill="currentColor" fill-opacity="0.6">genome-specific</text>'
+    )
+    return (f'<svg viewBox="0 0 {width} {height}" width="100%" height="{height}" '
+            f'role="img" aria-label="pangenome presence matrix">{"".join(parts)}</svg>')
+
+
 def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
-    """Core vs accessory split, derived from the presence/absence matrix."""
+    """Pangenome structure: the presence matrix, the overlaps, and the split."""
     path = ctx.out("panaroo", "gene_presence_absence.Rtab")
     if not path.exists():
         return '<p class="missing">No pangenome.</p>'
@@ -463,14 +516,21 @@ def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
 
     names = rows[0][1:]
     n = len(names)
-    core = soft = shell_ = cloud = 0
+    if n == 0:
+        return '<p class="missing">No genomes in the matrix.</p>'
+
+    tally: dict[tuple[bool, ...], int] = {}
     per_genome = [0] * n
+    core = soft = shell_ = cloud = 0
     for rec in rows[1:]:
-        present = [i for i, v in enumerate(rec[1:]) if v.strip() == "1"]
-        for i in present:
-            if i < n:
+        pattern = tuple(v.strip() == "1" for v in rec[1:1 + n])
+        if len(pattern) != n:
+            continue
+        tally[pattern] = tally.get(pattern, 0) + 1
+        for i, present in enumerate(pattern):
+            if present:
                 per_genome[i] += 1
-        frac = len(present) / n if n else 0
+        frac = sum(pattern) / n
         if frac >= 0.99:
             core += 1
         elif frac >= 0.95:
@@ -480,7 +540,32 @@ def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
         else:
             cloud += 1
 
-    total = core + soft + shell_ + cloud
+    total = sum(tally.values())
+    # Most-shared first, so the matrix reads core on the left.
+    ordered = sorted(tally.items(), key=lambda kv: (-sum(kv[0]), -kv[1]))
+
+    matrix = draw_pangenome(names, ordered)
+
+    # The overlaps, as an explicit table. Ordered by how many genes share the
+    # pattern, which is the question "what do these genomes have in common".
+    by_size = sorted(tally.items(), key=lambda kv: -kv[1])
+    shown, rest = by_size[:12], by_size[12:]
+    overlap_rows = []
+    for pattern, count in shown:
+        members = [names[i] for i, p in enumerate(pattern) if p]
+        label = "all genomes" if len(members) == n else ", ".join(members)
+        overlap_rows.append([
+            label, f"{len(members)}", f"{count:,}", f"{100 * count / total:.1f}%",
+        ])
+    if rest:
+        overlap_rows.append([
+            f"other patterns ({len(rest)})", "–", f"{sum(c for _, c in rest):,}",
+            f"{100 * sum(c for _, c in rest) / total:.1f}%",
+        ])
+
+    overlaps = _table(
+        overlap_rows, header=["Present in", "Genomes", "Gene clusters", "Share"])
+
     summary = _table(
         [["Core (≥99%)", f"{core:,}"], ["Soft core (95–99%)", f"{soft:,}"],
          ["Shell (15–95%)", f"{shell_:,}"], ["Cloud (<15%)", f"{cloud:,}"],
@@ -491,8 +576,14 @@ def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
         [[name, f"{per_genome[i]:,}"] for i, name in enumerate(names)],
         header=["Genome", "Genes in pangenome"],
     )
-    return (f'<p class="summary">{total:,} gene clusters across {n} genomes.</p>'
-            + summary + counts)
+    return (
+        f'<p class="summary">{total:,} gene clusters across {n} genomes, in '
+        f"{len(tally)} distinct presence patterns. Each block is one pattern, "
+        "its width proportional to the number of genes sharing it.</p>"
+        + matrix
+        + '<p class="summary">Which genomes share which genes.</p>' + overlaps
+        + summary + counts
+    )
 
 
 def _section_carveme(tool: Tool, ctx: Context, workdir: Path) -> str:

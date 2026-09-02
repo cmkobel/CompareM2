@@ -68,7 +68,15 @@ def canonicalise(inputs: list[Path], workdir: Path) -> tuple[str, ...]:
             )
         target = workdir / "samples" / sample / f"{sample}.fna"
         target.parent.mkdir(parents=True, exist_ok=True)
+        # A stale link is not the same as a missing one: `exists()` follows the
+        # link and reports False when it dangles, so a plain `symlink_to` would
+        # then raise FileExistsError. This happens whenever a results directory
+        # outlives a move of the inputs.
+        if target.is_symlink() and target.resolve() != path.resolve():
+            target.unlink()
         if not target.exists():
+            if target.is_symlink():
+                target.unlink()
             target.symlink_to(path.resolve())
         samples.append(sample)
     return tuple(samples)

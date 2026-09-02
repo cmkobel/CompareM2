@@ -230,6 +230,21 @@ minutes per genome single-threaded, which makes it the slowest per-genome tool
 in the set now that InterProScan is gone. For a wide view over hundreds of
 assemblies that matters, and it should probably be opt-in rather than default.
 
+### 2026-09-02 — Working checkout lives on thylakoid
+`/evo/postdoc/cm2v3` (reachable as `~/postdoc/cm2v3`). 24 cores, 125 GB RAM.
+Databases are in `databases/`; `pixi run cm2 …` is the entry point, and
+isolated tools need `--isolated-launcher "/home/thylakoid/.pixi/bin/pixi run
+-e {tool}"` with an absolute path, because Snakemake's shell does not inherit
+an interactive PATH.
+
+Moving a pixi project invalidates its environments — conda bakes the absolute
+prefix into shebangs and RPATHs — so `rm -rf .pixi && pixi install` is required
+after any move. Results directories also hold absolute symlinks to the inputs;
+`canonicalise()` now repairs dangling ones rather than raising.
+
+GenomeDK was the alternative and is not reachable non-interactively from here
+(`Permission denied (publickey,keyboard-interactive)`).
+
 ## Open questions
 - **Taxonomy.** The single largest install cost. GTDB-Tk is authoritative and
   141.4 GB; sylph/skani/mash-against-GTDB are fast and small but approximate.
