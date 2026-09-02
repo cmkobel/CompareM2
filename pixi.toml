@@ -34,9 +34,10 @@ rm -rf cm2_test-fast && python -m comparem2.cli \
 """, depends-on = ["unpack"] }
 
 [activation.env]
-# `python -m comparem2.cli` without an install step. An editable install would
-# need a build backend and a pyproject; this is a workflow application, not a
-# distributable package.
+# `python -m comparem2.cli` without an install step. `pyproject.toml` exists
+# now — it is what the bioconda package is built from — but the pixi path
+# deliberately does not install anything: the tools are already on PATH here,
+# and running from `src` means an edit takes effect without a reinstall.
 PYTHONPATH = "src"
 
 [dependencies]

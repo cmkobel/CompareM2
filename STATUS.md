@@ -26,7 +26,29 @@ correct-looking output. It never means "installed" — see
 | snp-dists | 09-02 | 0 SNPs between the duplicate pair, identical gap counts |
 | fasttree | 09-02 | at `threads=1`; duplicates at 0.0 branch length |
 | carveme | 09-02 | 4/4 SBML models, ~4 MB each; ~9 min per genome |
-| **gtdbtk** | **never** | needs the 141.4 GB download. Its command would also have failed with the database present, until `GTDBTK_DATA_PATH` was wired up |
+| **gtdbtk** | **in progress** | GTDB r232 downloading since 16:21 (60.8 GB, ~5.6 h at the measured 3.0 MB/s), then classify runs unattended. **Three defects fixed first** — see below |
+
+### GTDB-Tk: three defects, none of which a solve would show
+Found 2026-09-02 while making the tool runnable. Each was invisible because the
+rule had never been executed, and the first two were described in comments as
+though they already existed:
+
+1. **The batchfile was never written.** `--batchfile` named a path no rule
+   created, so the command would have died on its first line. Now `Tool.files`.
+2. **The summaries were never merged.** GTDB-Tk writes `bac120` and `ar53`
+   separately, so the declared `gtdbtk.summary.tsv` could not appear and the
+   job would have failed on a missing output even with a working command. Now
+   `Tool.post`.
+3. **`--skip_ani_screen` does not exist in 2.7.2.** It belonged to the versions
+   that screened with Mash; 2.7 screens with skani and dropped the flag.
+   `unrecognized arguments` was the only way to find this, short of reading the
+   installed tool's `--help` — which is how it was found.
+
+And a fourth, upstream of all of them: **the database was the wrong release.**
+The catalogue pointed at r226; `gtdbtk/config/common.py` in 2.7.2 reads
+`COMPATIBLE_REF_DATA_VERSIONS = ['r232']`, so the tool would have rejected the
+data *after* a 141.4 GB download. r232 is 60.8 GB, less than half, because it
+replaced FastANI's reference genomes with skani sketches.
 
 ### The standing cross-check
 The test set contains `116_2.fna` and `116_2 duplicate.fna` — the same genome
@@ -50,12 +72,23 @@ for two strains of one species.
 - Automatic database download — `download_amrfinder` fetched database
   `2026-08-07.1` in 26 s as a workflow step
 - Snakemake lock now lives in the output directory
+- **The package builds and installs.** `pip install --no-deps .` into a bare
+  venv (Python 3.14, macOS): both entry points present, `comparem2 --version`
+  and `cm2 --version` print `CompareM2 3.0.0.dev0`, and the metadata carries
+  `License-Expression: GPL-3.0-or-later`.
+- **The PATH preflight fires.** The same installed package, no tools on PATH:
+  `not on PATH: seqkit (seqkit), mashtree (mashtree)` and exit 1, before any
+  Snakemake call.
+- **`--use-conda` reaches Snakemake with the right flags** — Snakemake 9.26.1
+  echoed `--software-deployment-method conda --conda-prefix …` and began
+  building the DAG. See below for where that run stops.
 - **`--tui`, end to end** — `--until mashtree treecluster --tui` under a real
   terminal: two tools selected from the command line, both `done`, report
   written, clean exit. And headlessly through `run_test()` with `seqkit` and
   `checkm2`, so the isolated launcher goes through the TUI path too. Five
   defects had to be fixed first, see [DECISIONS.md](DECISIONS.md).
-- 110 unit tests, ~1.1 s
+- 147 unit tests, ~1.6 s — 13 added for the conda-deployment path, 8 for the
+  steps around GTDB-Tk's command, 16 for the report rewrite
 - CI green on GitHub, 18–22 s per run
 - `mkdocs build --strict`
 - `docs/generate.py --check` — generated pages current
@@ -81,29 +114,31 @@ sylph still in the set.
 
 | Database | Download | On disk | Note |
 | -------- | -------: | ------: | ---- |
-| GTDB r226 | 141.4 GB | — | measured; 91% of the total, never downloaded |
+| GTDB r232 | 60.8 GB | — | measured; 97% of the measured total. **r226 was wrong**: gtdbtk 2.7.2 accepts only r232 |
 | CheckM2 | 1.7 GB | 2.9 GB | measured |
 | Bakta light | 1.3 GB | 4.0 GB | download figure is Bakta's documented one; on-disk measured |
 | AMRFinder | unmeasured | — | version `2026-08-07.1`, 26 s to fetch. Lands in `$CONDA_PREFIX`, **not** under `--databases` |
 
-Software is 1.58 GB against 143 GB of data, and GTDB-Tk is essentially all of it.
+Software is 1.58 GB against 62.5 GB of measured data, and GTDB-Tk is 60.8 GB
+of it. It was 143 GB until the release changed.
 
 ## Where things live on thylakoid
 
-24 cores, 125 GB RAM, 931 GB free on `/evo`.
+24 cores, 125 GB RAM, 914 GB free on `/evo` (measured 2026-09-02, before the
+60.8 GB download).
 
 | | |
 | --- | --- |
-| checkout | `/evo/postdoc/comparem2` — a real clone; still on branch `v3`, switch it to `master` |
+| checkout | `/evo/postdoc/CompareM2` — a real clone, on `master`. **The path followed the repository rename**; the old lowercase path does not exist |
 | databases | `/evo/postdoc/cm2-databases` — 6.9 GB, deliberately **outside** any checkout so deleting a checkout does not cost a re-download |
 | pixi | `/home/thylakoid/.pixi/bin/pixi` |
 
 ```bash
-cd /evo/postdoc/comparem2
+cd /evo/postdoc/CompareM2
 export PATH=$HOME/.pixi/bin:$PATH
 export COMPAREM2_DATABASES=/evo/postdoc/cm2-databases
 
-pixi run pytest          # 110 tests, no tools or databases needed
+pixi run pytest          # 147 tests, no tools or databases needed
 pixi run test-fast       # 4 genomes, no databases needed
 
 pixi run cm2 my/*.fna \
@@ -120,12 +155,41 @@ without `$COMPAREM2_DATABASES` (or `-d`, which has to be retyped every run) the
 launcher path, CheckM2 fails with `command not found`, because Snakemake's
 shell does not inherit an interactive PATH.
 
-To skip the 141 GB:
+To skip the 60.8 GB:
 
 ```bash
 --until seqkit checkm2 bakta amrfinder mlst mashtree treecluster skani \
         panaroo snp-dists fasttree carveme
 ```
+
+## Packaging
+
+The code side of the bioconda package is done; the release is not. What exists:
+`pyproject.toml`, the `comparem2`/`cm2` entry points, `--use-conda` and
+`--conda-prefix` through both execution paths, and a draft recipe in
+`recipe/`. The model is *pipeline only* — see
+[DESIGN.md](DESIGN.md#two-deployment-models).
+
+| | |
+| --- | --- |
+| environments a full conda run builds | **14** (17 rules needing one, deduplicated by content) |
+| published recipe today | `comparem2` **2.16.2**, `noarch: generic`, maintainer `cmkobel` |
+| version here | `3.0.0.dev0` — the release needs a real one, in three files |
+
+**A conda deployment has never been executed.** The dry run above stops at
+`conda: command not found`, because this laptop has no conda and the tools are
+`linux-64` regardless. That run is thylakoid work, and it is the one thing
+between here and a recipe that can be trusted:
+
+```bash
+pixi run pip install -e .          # or a plain venv
+comparem2 tests/E._faecium/*.fna --until seqkit mashtree \
+  --use-conda --conda-prefix /evo/postdoc/cm2-envs
+```
+
+Two things to watch when it runs: whether AMRFinder's database survives into
+its analysis rules (the shared-environment reasoning in DESIGN.md, untested),
+and how long fourteen solves actually take.
 
 ## Known broken or unfinished
 
@@ -139,11 +203,17 @@ To skip the 141 GB:
   by accident, but not driven by hand since.
 - **`/evo/postdoc/cm2v3`** is the old rsync scratch directory, now redundant,
   holding an 8.5 GB pixi environment that can be deleted.
-- **No bioconda package and no container image.** Both existed for v2. They are
-  what "pre-release" currently means, and the release blockers alongside
-  GTDB-Tk.
-- **The thylakoid checkout is on branch `v3`**, which no longer receives
-  commits. `git checkout master && git pull` there before the next run.
+- **No bioconda package**, but the blocker has moved: what remains is a tag, a
+  sha256, the PR, and one verified `--use-conda` run. See *Packaging* above and
+  `recipe/README.md`. **A hand-built container image is no longer planned** —
+  decided 2026-09-02, see [DECISIONS.md](DECISIONS.md).
+- **One unit test is failing in the working tree**, and it is not the packaging
+  work: `test_pangenome_matrix_compresses_identical_patterns` counts `<rect>`
+  elements, while the in-progress `report.py` figure rewrite draws one `<path>`
+  per genome. `HEAD` itself is green at 110 tests.
+- **The thylakoid checkout carries uncommitted `src/` changes**, rsynced from
+  the laptop for the GTDB-Tk run rather than pulled. Once the work is committed,
+  `git checkout . && git pull` there to get back to a clean tracked state.
 
 ## Deliberately left alone
 
@@ -154,8 +224,11 @@ To skip the 141 GB:
   2026-09-02 when v3 was merged to `master`. `origin/v2` is a 2019-era branch,
   2,008 commits behind the pre-merge `master`, and is *not* what the paper
   describes; the paper-era state is the pre-merge `master` tip, in history and
-  on the `ai-1` branch. The `v2.*` tags stop at `v2.9.1`, 443 commits before
-  that tip. Read the docs at
+  on the `ai-1` branch. It is also **tagged**: `origin` carries 39 tags up to
+  `v2.16.2` (`ad352f2`), which is what bioconda's published recipe builds from.
+  An earlier version of this line said the `v2.*` tags stopped at `v2.9.1` —
+  that was this checkout's stale tag list, not the remote's; `git fetch --tags`
+  brings the rest. Read the docs at
   [readthedocs `/en/stable/`](https://comparem2.readthedocs.io/en/stable/)
   rather than trying to reconstruct a v2 checkout.
 - **The 35.4 MB of PDFs in history.** See

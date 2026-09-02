@@ -42,11 +42,12 @@ CompareM2 prints what it is about to do, including how much database it needs to
 download, before downloading anything:
 
 ```
-4 assemblies, 13 tools, databases: 143.2 GB + 2 database(s) of unknown size
+4 assemblies, 13 tools
+to download: checkm2, gtdb, bakta-light, amrfinder (62.5 GB + 2 of unknown size) -> ~/.comparem2/databases
 ```
 
-**143 GB is not a typo, and 141 GB of it is GTDB-Tk.** If you do not need
-taxonomic assignment, skip it and the download collapses to under 2 GB:
+**60.8 GB of that 62.5 GB is GTDB-Tk.** If you do not need taxonomic
+assignment, skip it and the download collapses to under 2 GB:
 
 ```bash
 pixi run cm2 *.fna --until seqkit checkm2 bakta amrfinder mlst \

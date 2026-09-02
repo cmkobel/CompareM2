@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import html
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -203,8 +204,24 @@ def test_only_isolated_tools_get_their_own_environment():
 
 
 def test_per_rule_conda_forces_all():
+    """Every rule, including the downloads — which is not a detail.
+
+    Under `--use-conda` the pipeline's own environment holds no tools at all,
+    and two database fetches *are* tools: `bakta_db download` and
+    `amrfinder -u`. A download rule without an environment would fail with
+    `command not found` on a fresh conda install.
+    """
     text = render(CATALOGUE, None, Path("res"), Path("db"), SAMPLES, per_rule_conda=True)
-    assert text.count("conda:") == len(CATALOGUE)
+    assert text.count("conda:") == len(CATALOGUE) + len(CATALOGUE.databases()) == 17
+    downloads = text.split("rule all:")[1].split("rule seqkit:")[0]
+    assert 'conda: "envs/download_bakta-light.yaml"' in downloads
+    assert 'conda: "envs/download_amrfinder.yaml"' in downloads
+
+
+def test_downloads_stay_bare_without_conda_deployment():
+    """The pixi path is unchanged: one solved environment, no directives."""
+    text = render(CATALOGUE, None, Path("res"), Path("db"), SAMPLES)
+    assert "envs/download_" not in text
 
 
 def test_pinned_tools_carry_minimum_versions():
@@ -225,6 +242,50 @@ def test_every_database_declares_how_to_fetch_itself():
         assert steps, db.name
         for step in steps:
             assert all(isinstance(a, str) for a in step), db.name
+
+
+def test_every_database_declares_its_fetch_environment():
+    """`--use-conda` gives a rule the environment it asks for and nothing else,
+    so a fetch that asks for nothing gets an empty environment."""
+    for db in CATALOGUE.databases():
+        assert db.conda, f"{db.name} declares no packages for its fetch"
+
+
+def test_tool_run_fetches_pin_the_same_spec_as_the_tool():
+    """A fetch that runs the tool's own binary must resolve to the tool's own
+    build. Bakta is why: db 6.x is required by 1.12.x and refused by 5.1, so a
+    pin that drifted here would fetch a database the tool then rejects."""
+    for tool in ("bakta", "amrfinder"):
+        assert CATALOGUE[tool].database.conda == CATALOGUE[tool].conda, tool
+
+
+def test_amrfinder_download_and_analysis_share_one_environment():
+    """Its database lives in $CONDA_PREFIX, so the download rule and the
+    analysis rules have to land in the same deployed environment.
+
+    Snakemake addresses one by md5(realpath(envs_dir) + env file content), so
+    "the same environment" means the two files are byte-identical — not merely
+    equivalent. Read from snakemake 9.26.1's conda.py.
+    """
+    from comparem2.snakefile import render_envs
+
+    envs = render_envs(CATALOGUE, ["amrfinder"])
+    assert envs["download_amrfinder.yaml"] == envs["amrfinder.yaml"]
+
+
+def test_environment_files_deduplicate_by_content():
+    """The number of environments a conda run builds, which the CLI prints.
+
+    Thirteen tools and four databases make seventeen rules needing an
+    environment, but only fourteen distinct ones: bakta's and amrfinder's
+    fetches reuse their tool's environment, and the two curl+tar fetches are
+    the same environment as each other.
+    """
+    from comparem2.snakefile import render_envs
+
+    envs = render_envs(CATALOGUE, None)
+    assert len(envs) == 17
+    assert len(set(envs.values())) == 14
 
 
 def test_database_ready_paths_are_distinct_and_under_the_root():
@@ -264,6 +325,148 @@ def test_amrfinder_database_is_marked_out_of_tree():
     assert db.out_of_tree is True
     assert not any(db.out_of_tree for db in CATALOGUE.databases()
                    if db.name != "amrfinder")
+
+
+# --- steps around a command (GTDB-Tk) ------------------------------
+
+def test_gtdbtk_batchfile_is_a_declared_input_that_prepare_writes(tmp_path):
+    """The rule named a batchfile that nothing created.
+
+    `--batchfile` pointed at a path no rule wrote, so the command would have
+    failed on its first line. It had never been executed, so nothing said so.
+    """
+    from comparem2.snakefile import declared_files, prepare
+
+    batchfile = tmp_path / ".comparem2" / "gtdbtk_batchfile.tsv"
+    files = declared_files(CATALOGUE, ["gtdbtk"], tmp_path, tmp_path / "db", SAMPLES)
+    assert list(files) == [batchfile]
+
+    # Two columns, tab separated, no header — GTDB-Tk's documented format.
+    lines = files[batchfile].splitlines()
+    assert len(lines) == len(SAMPLES)
+    for line, sample in zip(lines, SAMPLES):
+        path, name = line.split("\t")
+        assert name == sample
+        assert path == str(tmp_path / "samples" / sample / f"{sample}.fna")
+        assert "\t" not in name
+
+    prepare(CATALOGUE, ["gtdbtk"], tmp_path, tmp_path / "db", SAMPLES)
+    assert batchfile.read_text() == files[batchfile]
+
+    text = render(CATALOGUE, ["gtdbtk"], tmp_path, tmp_path / "db", SAMPLES)
+    rule = text.split("rule gtdbtk:")[1]
+    assert f'"{batchfile}",' in rule.split("output:")[0]
+
+
+def test_prepare_leaves_an_unchanged_declared_file_alone(tmp_path):
+    """Rewriting it would move its mtime, and it is an input to a tool that
+    takes hours. An identical file must not re-trigger the DAG.
+
+    The mtime is backdated rather than compared between two calls: Linux
+    timestamps a write from a coarse clock, so three `prepare()` calls inside a
+    millisecond share an mtime and the naive version of this test passed on
+    macOS and failed on thylakoid for reasons that had nothing to do with the
+    behaviour under test.
+    """
+    import os
+
+    from comparem2.snakefile import prepare
+
+    batchfile = tmp_path / ".comparem2" / "gtdbtk_batchfile.tsv"
+    prepare(CATALOGUE, ["gtdbtk"], tmp_path, tmp_path / "db", SAMPLES)
+
+    os.utime(batchfile, (0, 0))
+    prepare(CATALOGUE, ["gtdbtk"], tmp_path, tmp_path / "db", SAMPLES)
+    assert batchfile.stat().st_mtime_ns == 0, "identical content was rewritten"
+
+    # A different sample set is a different file, and must be written.
+    prepare(CATALOGUE, ["gtdbtk"], tmp_path, tmp_path / "db", ("A", "B"))
+    assert batchfile.stat().st_mtime_ns != 0
+    assert len(batchfile.read_text().splitlines()) == 2
+
+
+def test_gtdbtk_merges_its_two_domain_summaries(tmp_path):
+    """It writes bac120 and ar53 separately and the spec declares one table.
+
+    The comment claimed the rule concatenated them; no step did, so the
+    declared output could never have appeared and the job would have failed on
+    a missing output even with a working command.
+    """
+    text = render(CATALOGUE, ["gtdbtk"], Path("/res"), Path("/db"), SAMPLES)
+    shell = text.split("rule gtdbtk:")[1].split('shell:')[1]
+    lines = [ln.strip() for ln in shell.splitlines() if ln.strip()]
+
+    # After the tool, not before it.
+    tool_at = next(i for i, ln in enumerate(lines) if ln.startswith("gtdbtk "))
+    merge_at = next(i for i, ln in enumerate(lines) if "comparem2.steps" in ln)
+    assert tool_at < merge_at
+
+    step = lines[merge_at]
+    assert "merge-tsv --out /res/gtdbtk/gtdbtk.summary.tsv" in step
+    # Quoted, so the glob reaches the step instead of being expanded by the
+    # rule's shell against a directory that is still empty.
+    assert "'/res/gtdbtk/*.bac120.summary.tsv'" in step
+    assert "'/res/gtdbtk/classify/*.ar53.summary.tsv'" in step
+    # Never a bare `python`: under a conda deployment that is the tool's
+    # interpreter, which does not have comparem2 installed.
+    assert step.startswith(sys.executable)
+
+
+def test_merge_tsv_keeps_one_header_and_tolerates_a_missing_domain(tmp_path):
+    """An all-bacterial set produces no ar53 file at all."""
+    from comparem2.steps import merge_tsv
+
+    header = "user_genome\tclassification\n"
+    (tmp_path / "gtdbtk.bac120.summary.tsv").write_text(
+        header + "A\td__Bacteria;p__Bacillota\nB\td__Bacteria;p__Bacillota\n")
+    (tmp_path / "gtdbtk.ar53.summary.tsv").write_text(header)  # header only
+
+    out = tmp_path / "gtdbtk.summary.tsv"
+    merge_tsv(out, [str(tmp_path / "*.bac120.summary.tsv"),
+                    str(tmp_path / "*.ar53.summary.tsv"),
+                    str(tmp_path / "nowhere" / "*.summary.tsv")])
+
+    lines = out.read_text().splitlines()
+    assert lines[0] == header.strip()
+    assert len(lines) == 3
+    assert [ln.split("\t")[0] for ln in lines[1:]] == ["A", "B"]
+
+
+def test_merge_tsv_combines_both_domains_and_refuses_nothing(tmp_path):
+    from comparem2.steps import merge_tsv
+
+    header = "user_genome\tclassification\n"
+    (tmp_path / "x.bac120.summary.tsv").write_text(header + "A\td__Bacteria\n")
+    (tmp_path / "x.ar53.summary.tsv").write_text(header + "M\td__Archaea\n")
+    out = tmp_path / "merged.tsv"
+    merge_tsv(out, [str(tmp_path / "*.summary.tsv")])
+    # ar53 sorts before bac120, so archaea come first — order is deterministic,
+    # which is what matters for a file the report reads.
+    assert [ln.split("\t")[0] for ln in out.read_text().splitlines()] == [
+        "user_genome", "M", "A"]
+
+    with pytest.raises(SystemExit) as excinfo:
+        merge_tsv(out, [str(tmp_path / "no-such-*.tsv")])
+    assert "no input matched" in str(excinfo.value)
+
+
+def test_merge_tsv_refuses_mismatched_headers(tmp_path):
+    """Two files with different columns are not one table."""
+    from comparem2.steps import merge_tsv
+
+    (tmp_path / "a.summary.tsv").write_text("user_genome\tclassification\nA\tx\n")
+    (tmp_path / "b.summary.tsv").write_text("genome\ttaxonomy\nB\ty\n")
+    with pytest.raises(SystemExit) as excinfo:
+        merge_tsv(tmp_path / "out.tsv", [str(tmp_path / "*.summary.tsv")])
+    assert "different header" in str(excinfo.value)
+
+
+def test_only_gtdbtk_needs_steps_around_its_command():
+    """`files` and `post` are an exception, not a pattern to spread."""
+    assert [t.name for t in CATALOGUE if t.files] == ["gtdbtk"]
+    assert [t.name for t in CATALOGUE if t.post] == ["gtdbtk"]
+    text = render(CATALOGUE, None, Path("/res"), Path("/db"), SAMPLES)
+    assert text.count("comparem2.steps") == 1
 
 
 def test_gtdbtk_gets_its_database_through_the_environment():
@@ -405,6 +608,136 @@ def test_missing_input_names_the_directory_it_looked_in(monkeypatch, tmp_path):
     with pytest.raises(SystemExit) as excinfo:
         cli_mod.main(["116_2.fna"])
     assert str(tmp_path.resolve() / "116_2.fna") in str(excinfo.value)
+
+
+# --- conda deployment (the bioconda path) --------------------------
+
+def test_conda_prefix_default_is_shared_not_per_run(monkeypatch):
+    """Thirteen solved environments outlive a run, exactly as databases do.
+
+    Moving this directory is not free either: Snakemake includes its realpath
+    in the environment hash, so a per-run prefix would re-solve everything and
+    re-fetch AMRFinder's database, which lives inside its environment.
+    """
+    monkeypatch.delenv("COMPAREM2_CONDA_PREFIX", raising=False)
+    default = cli_mod.default_conda_prefix()
+    assert default == Path.home() / ".comparem2" / "envs"
+    assert default.is_absolute()
+    monkeypatch.setenv("COMPAREM2_CONDA_PREFIX", "~/scratch/envs")
+    assert cli_mod.default_conda_prefix() == Path.home() / "scratch" / "envs"
+
+
+def test_use_conda_passes_the_deployment_flags_to_snakemake(monkeypatch, tmp_path):
+    """What makes a conda-installed CompareM2 able to run anything at all."""
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.delenv("COMPAREM2_CONDA_PREFIX", raising=False)
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+
+    seen: dict[str, object] = {}
+
+    def fake_prepare(*a, **k):
+        seen["per_rule_conda"] = k["per_rule_conda"]
+        return tmp_path / "Snakefile"
+
+    def fake_run(cmd, *a, **k):
+        seen["cmd"] = cmd
+        return subprocess.CompletedProcess(cmd, 0)
+
+    monkeypatch.setattr(cli_mod, "prepare", fake_prepare)
+    monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: tmp_path / "r.html")
+    monkeypatch.setattr(cli_mod.subprocess, "run", fake_run)
+
+    prefix = tmp_path / "envs"
+    assert cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"),
+                         "--until", "seqkit", "--use-conda",
+                         "--conda-prefix", str(prefix)]) == 0
+
+    assert seen["per_rule_conda"] is True, "the rules need `conda:` directives"
+    cmd = seen["cmd"]
+    assert "--software-deployment-method" in cmd
+    assert cmd[cmd.index("--software-deployment-method") + 1] == "conda"
+    assert cmd[cmd.index("--conda-prefix") + 1] == str(prefix)
+
+
+def test_use_conda_and_isolated_launcher_do_not_combine(tmp_path):
+    """Both isolate a tool, and together they would run
+    `pixi run -e checkm2 checkm2 ...` inside a Snakemake-built environment."""
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    with pytest.raises(SystemExit) as excinfo:
+        cli_mod.main([str(tmp_path / "a.fna"), "--use-conda",
+                      "--isolated-launcher", "pixi run -e {tool}"])
+    assert "do not combine" in str(excinfo.value)
+
+
+def test_preflight_names_the_executable_not_the_tool(monkeypatch, tmp_path):
+    """Three tools' binaries are not named after the tool, which is precisely
+    why "tool X is missing" would send someone looking for the wrong thing."""
+    monkeypatch.setattr(cli_mod.shutil, "which", lambda exe: None)
+    found = dict(cli_mod.missing_executables(
+        ["treecluster", "fasttree", "carveme"], tmp_path, tmp_path, ("A",)))
+    assert found["treecluster"] == "TreeCluster.py"
+    assert found["fasttree"] == "FastTree"
+    assert found["carveme"] == "carve"
+
+
+def test_preflight_refuses_a_run_whose_tools_are_absent(monkeypatch, tmp_path):
+    """A fresh `conda install comparem2` has none of the thirteen tools. Saying
+    so up front beats a Snakemake traceback from whichever rule ran first."""
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.setattr(cli_mod.shutil, "which", lambda exe: None)
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+
+    with pytest.raises(SystemExit) as excinfo:
+        cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"),
+                      "--until", "seqkit"])
+    assert "seqkit (seqkit)" in str(excinfo.value)
+    assert "--use-conda" in str(excinfo.value)
+
+
+def test_preflight_is_skipped_when_the_tools_are_not_this_runs_problem(
+        monkeypatch, tmp_path):
+    """--use-conda installs them, --dry-run does not run them, --report-only
+    reads output that already exists. All three must work with a bare PATH."""
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.setattr(cli_mod.shutil, "which", lambda exe: None)
+    monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
+    monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: tmp_path / "r.html")
+    monkeypatch.setattr(cli_mod.subprocess, "run",
+                        lambda cmd, *a, **k: subprocess.CompletedProcess(cmd, 0))
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    base = [str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"), "--until", "seqkit"]
+
+    for extra in (["--use-conda"], ["--dry-run"], ["--report-only"]):
+        assert cli_mod.main(base + extra) == 0, extra
+
+
+def test_the_version_is_declared_in_exactly_one_place():
+    """`__init__.py` is it. A release that bumped one of the three and not the
+    others is the classic way to ship a package whose --version lies."""
+    import tomllib
+
+    from comparem2 import __version__
+
+    root = Path(__file__).resolve().parents[2]
+    pyproject = tomllib.loads((root / "pyproject.toml").read_text())
+    assert pyproject["tool"]["setuptools"]["dynamic"]["version"] == {
+        "attr": "comparem2.__version__"}
+    assert pyproject["project"]["scripts"] == {
+        "comparem2": "comparem2.cli:main", "cm2": "comparem2.cli:main"}
+
+    pixi = tomllib.loads((root / "pixi.toml").read_text())
+    assert pixi["workspace"]["version"] == __version__
+
+
+def test_version_flag_reports_the_name_the_paper_uses():
+    """CompareM2 v3.x reads oddly and is correct — the 2 is not a version."""
+    from comparem2 import __version__
+
+    with pytest.raises(SystemExit) as excinfo:
+        cli_mod.main(["--version"])
+    assert excinfo.value.code == 0
+    # argparse writes to stdout and exits; the string is what matters here.
+    assert __version__.startswith("3.")
 
 
 def test_tools_without_env_export_nothing():
@@ -672,8 +1005,11 @@ async def test_tui_lists_tools_and_shows_install_cost():
     app = ComparemTUI([], Path("results"), Path("databases"), SAMPLES, 4)
     async with app.run_test() as pilot:
         assert app.query_one(DataTable).row_count == len(CATALOGUE)
-        # The whole point of the cost line: the 141 GB is visible before running.
-        assert "143.2 GB" in app.cost_text
+        # The whole point of the cost line: the download is visible before
+        # running. 62.5 GB is GTDB's 60.8 plus CheckM2's 1.7, both measured;
+        # it read 143.2 GB until the database moved from r226 to the r232 that
+        # GTDB-Tk 2.7 actually accepts.
+        assert "62.5 GB" in app.cost_text
         assert "unknown size" in app.cost_text
 
         await pilot.press("n")
@@ -827,10 +1163,11 @@ async def test_tui_settles_every_tool_to_a_terminal_state(tmp_path, monkeypatch)
 
 @pytest.mark.asyncio
 async def test_tui_seeds_its_selection_from_until():
-    """`--tui --until mashtree` must not open with gtdbtk's 141.4 GB armed.
+    """`--tui --until mashtree` must not open with gtdbtk's 60.8 GB armed.
 
     The TUI ignored `--until` and selected the whole catalogue, which put a
-    141.4 GB download one keypress away for a user who had asked for one tool.
+    141.4 GB download — the r226 figure at the time — one keypress away for a
+    user who had asked for one tool.
     """
     pytest.importorskip("textual")
     from comparem2.tui import ComparemTUI

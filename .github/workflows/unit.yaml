@@ -67,3 +67,15 @@ jobs:
           assert 'What this is, and how to read it' in body, 'guidance missing'
           print(f'{p}: {len(body)} bytes')
           "
+
+      - name: Install the package the way the recipe does
+        # `--no-deps` is what bioconda's build script uses, and it keeps this to
+        # a few seconds. A pyproject that does not install, or an entry point
+        # that does not resolve, is the one packaging failure no unit test can
+        # see. Last, so no earlier step imports from site-packages rather than
+        # from src/.
+        if: matrix.python == '3.13'
+        run: |
+          python -m pip install --quiet --no-deps .
+          comparem2 --version
+          cm2 --help > /dev/null

@@ -316,6 +316,113 @@ is gone from `mkdocs.yml` and the docs. GitHub redirected the old name, so this
 fixes a notice on every push rather than a breakage. Occurrences inside dated
 entries in this file are left as written — the log records what was true then.
 
+### The bioconda package ships the pipeline, not the tools
+The choice was between two recipes, and Carl took the first:
+
+**A. Pipeline only.** Run dependencies are `python`, `snakemake-minimal`,
+`textual`, the two executor plugins, and `conda`. Every analysis tool arrives
+through `--software-deployment-method conda`, deployed from the `envs/*.yaml`
+that `prepare()` already writes.
+
+**B. The tools as run dependencies.** Rejected. It cannot include all thirteen —
+CheckM2 pins DIAMOND 2.1.x against Bakta's 2.2.x — so it would ship twelve and
+handle the thirteenth some other way, put a thirteen-tool solve inside
+bioconda's CI, and break whenever any of the thirteen changed upstream.
+
+This is the model v2 used too (25 environments deployed at run time, against
+v3's 14), and it is why the recipe for a thirteen-tool pipeline is 60 lines.
+
+What it cost in code:
+
+- `pyproject.toml`, which did not exist. `pixi.toml` said outright that this
+  was "a workflow application, not a distributable package" — that sentence was
+  the blocker. setuptools, `dynamic` version read from `__init__.py`, and two
+  entry points (`comparem2`, `cm2`).
+- `--use-conda` and `--conda-prefix`, wired through both execution paths: the
+  CLI's Snakemake subprocess and the TUI's `SnakemakeApi` call, which needed
+  `DeploymentSettings(deployment_method={DeploymentMethod.CONDA})`.
+- `Database.conda`. A download rule is a rule and needs an environment like any
+  other, and two of the four fetches run a tool binary rather than curl.
+- A PATH preflight. A fresh `conda install comparem2` has none of the thirteen
+  tools, and without this the first thing a new user saw was a Snakemake
+  traceback from whichever rule was scheduled first.
+
+Version stays `3.0.0.dev0`; `recipe/README.md` holds the release steps.
+
+### Two fields for the steps around a command
+GTDB-Tk needs a file written before it runs and its output reshaped after, and
+neither is an argument list. Rather than let one tool become a hand-written
+rule, `Tool` gained two fields:
+
+- **`files`** — path-to-content, rendered from the `Context`, written by
+  `prepare()` and declared as a rule input. GTDB-Tk's two-column `--batchfile`,
+  which exists because canonicalisation puts each genome in its own directory
+  and `--genome_dir` therefore cannot be used.
+- **`post`** — argument lists run after the command. The `bac120`/`ar53` merge.
+
+Considered and rejected:
+
+- **`awk`/`printf` in the rule.** Untestable, and the quoting of a tab-separated
+  format inside a generated shell block is exactly the kind of thing that looks
+  right and is not.
+- **A pre-step symmetrical to `post`.** Unnecessary: the batchfile's content
+  depends only on the sample list, which is known before anything runs, so it is
+  data rather than a step. Fewer moving parts, and it becomes a declared input,
+  which a shell step never could.
+- **Declaring GTDB-Tk's real outputs instead of merging.** An all-bacterial set
+  writes no `ar53` file, so a declared output would fail on most real input.
+
+Two details that took a moment to see. The step runs through an absolute
+`sys.executable`, because under `--use-conda` the rule's environment holds the
+tool and not CompareM2. And a declared file is written **only when its content
+changes** — it is a rule input, so rewriting an identical one moves its mtime
+and re-runs GTDB-Tk, hours of work triggered by a four-line file.
+
+A test asserts GTDB-Tk is the only tool using either field. `post` is not a
+licence for shell work.
+
+### No container image
+Dropped as a release blocker, on Carl's call: pixi and conda have both got good
+enough that a hand-built image would be a third installation path to keep in
+step with the other two, for a case neither of them already covers badly.
+
+Bioconda builds a BioContainer for the package automatically, so an image will
+exist regardless — it just contains the pipeline and no analysis tools, which
+is honest about what the package is. A thirteen-tool image was never going to
+be one environment anyway (CheckM2's DIAMOND 2.1.x against Bakta's 2.2.x), so
+it would have been two environments in one image, built and verified by hand.
+
+v2 had one. This reverses "both existed for v2 and will return", which was
+written in the README and in STATUS.md as recently as this morning.
+
+### Environments are addressed by content, which AMRFinder needs
+Read from Snakemake 9.26.1's `deployment/conda.py`: a deployed environment's
+directory is `md5(realpath(envs_dir) + env file content)`, deliberately
+excluding the env file's own path. Two consequences that are not cosmetic.
+
+**It is what makes AMRFinder work at all under `--use-conda`.** `amrfinder -u`
+refuses `-d` and writes into `$CONDA_PREFIX`, so the download rule and the
+analysis rules have to end up in the *same* deployed environment — which means
+their env files must be byte-identical, not merely equivalent. Hence
+`_AMRFINDER_SPEC` as a shared constant, and a test asserting the two rendered
+files are equal.
+
+**It is why `--conda-prefix` defaults to a shared `~/.comparem2/envs`.** Moving
+the prefix changes every hash, so all 14 environments re-solve and AMRFinder's
+database is fetched again. Same reasoning as the database directory, one step
+sharper.
+
+### Snakemake by name, not by module
+Found by running the installed package: `comparem2 ... --use-conda --dry-run`
+from `/tmp/cm2venv/bin/comparem2`, without the environment activated, died with
+`FileNotFoundError: 'snakemake'` out of `subprocess.run` — three lines after
+printing what it was about to do. The CLI shelled out to a bare `snakemake`,
+which is only on PATH when the environment happens to be active. It is now
+`sys.executable -m snakemake`: this package's own dependency, so the right copy
+is the one beside the running interpreter.
+
+Under pixi this never surfaced, because `pixi run` activates the environment.
+
 ---
 
 ## What went wrong
@@ -427,6 +534,36 @@ It matters because skani emits an ANI once alignment covers as little as ~15% of
 a genome, so identity alone cannot distinguish whole-genome relatedness from a
 shared plasmid or conserved core. The four test genomes show it: 116_2 against
 E8202 reads 99.14% ANI on an aligned fraction of 74–90%, depending on direction.
+
+### GTDB-Tk's rule was wrong in four ways, and its comments said otherwise
+The last unexecuted tool, taken apart before spending six hours downloading its
+database. Every one of these would have surfaced only at runtime:
+
+1. **The batchfile was never written.** `--batchfile` named a path no rule
+   created. The comment above the command read "the rule writes a batchfile
+   first".
+2. **The summaries were never merged.** The declared `gtdbtk.summary.tsv` is not
+   a name GTDB-Tk writes; it emits `bac120` and `ar53` separately. The comment
+   read "the rule concatenates them".
+3. **`--skip_ani_screen` does not exist in 2.7.2.** It was real in the versions
+   whose ANI screen used Mash and needed either `--mash_db` or permission to
+   skip. 2.7 screens with skani from the reference package and removed the flag,
+   so the command would have exited on `unrecognized arguments`.
+4. **The database was the wrong release.** The catalogue pointed at r226;
+   `gtdbtk/config/common.py` in 2.7.2 reads
+   `COMPATIBLE_REF_DATA_VERSIONS = ['r232']`. The tool would have refused the
+   data after downloading 141.4 GB of it.
+
+The pattern is the one this section keeps recording, in its purest form: two
+comments describing steps that did not exist, in a rule nobody had run, plus
+two facts about an installed tool that were never checked against the installed
+tool. `gtdbtk --help` and one `grep` in the package answered both, in a minute.
+
+Worth the note: (4) made things *better*. r232 is 60.8 GB against r226's
+141.4 GB, because it dropped FastANI's reference genomes for skani sketches —
+so the pipeline's largest cost more than halved, and the fix propagated to about
+twenty numbers across the docs. `gtdbtk` is now pinned `>=2.7`, since the pin
+and the database release are one decision, not two.
 
 ### A comment that was simply wrong
 `pixi.toml` claimed the test genomes are listed rather than globbed because a

@@ -1,8 +1,19 @@
 # Installation
 
 !!! warning "v3 is pre-release"
-    No bioconda package and no container image yet. Both existed for v2 and
-    will return; for now, install from git.
+    The bioconda package is not published yet — the recipe is written and the
+    code path works, but `conda install comparem2` still gives you v2. For now,
+    install from git.
+
+There are two ways to install CompareM2, and they differ in where the thirteen
+analysis tools come from.
+
+| | pixi, from git | conda *(not yet published)* |
+| --- | --- | --- |
+| the tools | one solved environment, all on PATH | deployed per rule on first run |
+| first run | starts immediately | solves 14 environments |
+| needs network at run time | only for databases | for databases and environments |
+| good for | development, HPC, anything repeated | trying it once, or a shared install |
 
 ## Requirements
 
@@ -11,7 +22,7 @@
   - **[pixi](https://pixi.prefix.dev/latest/#installation)** for the
     environment.
   - **Disk.** 1.58 GB of software, plus databases — see below. GTDB-Tk alone is
-    141.4 GB.
+    60.8 GB.
   - **RAM.** GTDB-Tk's classify step is the peak; its own paper reports under
     55 GB for the v2 divide-and-conquer placement. Without GTDB-Tk, far less.
 
@@ -27,6 +38,34 @@ pixi run pytest        # 110 unit tests, no databases needed
 !!! note "Moving the directory invalidates the environment"
     Conda bakes the absolute prefix into shebangs and RPATHs, so after moving
     the checkout you need `rm -rf .pixi && pixi install`.
+
+## With conda, once published
+
+The package will contain **the pipeline and none of the thirteen tools**.
+Snakemake deploys each tool's own environment the first time it is needed:
+
+```bash
+conda install -c conda-forge -c bioconda comparem2
+comparem2 *.fna --use-conda
+```
+
+`--use-conda` is the whole difference. Without it, CompareM2 expects the tools
+on PATH and says so before doing any work:
+
+```
+not on PATH: seqkit (seqkit), mashtree (mashtree)
+Either run inside an environment that has them (`pixi run cm2 ...`), or add
+--use-conda to let Snakemake deploy each tool's own environment.
+```
+
+Environments go to `~/.comparem2/envs`, shared across runs, moved with
+`--conda-prefix` or `$COMPAREM2_CONDA_PREFIX`. **Keep that path stable.**
+Snakemake includes it in each environment's identity, so moving it re-solves all
+fourteen — and re-fetches AMRFinder's database, which lives inside one of them.
+
+Why the tools are not simply dependencies of the package: no single environment
+can hold all thirteen. CheckM2 pins DIAMOND 2.1.x and current Bakta needs
+2.2.x, so a package that listed them would have to leave one out.
 
 ## Environments
 
@@ -56,7 +95,7 @@ Sizes are measured from `content-length`, not estimated:
 
 | Database | Size | Needed by |
 |---|---|---|
-| GTDB r226 | **141.4 GB** | `gtdbtk` |
+| GTDB r232 | **60.8 GB** | `gtdbtk` |
 | CheckM2 | 1.7 GB | `checkm2` |
 | Bakta light | ~1.3 GB (documented, unmeasured) | `bakta` |
 | AMRFinder | unmeasured | `amrfinder` |
@@ -78,9 +117,12 @@ to download: amrfinder (1 of unknown size)
     environment. Rebuild the environment and AMRFinder's database is fetched
     again.
 
-**GTDB-Tk is 91% of the total.** It stays in the default path because it is the
-authoritative answer to "what is this genome", but if you do not need taxonomy,
-leaving it out is the single biggest saving available:
+**GTDB-Tk is 97% of the measured total**, and the release matters: 2.7 accepts
+only r232 and refuses r226, which is also why the figure is 60.8 GB rather than
+the 141.4 GB it was until r232 replaced FastANI's reference genomes with skani
+sketches. It stays in the default path because it is the authoritative answer
+to "what is this genome", but if you do not need taxonomy, leaving it out is
+still the single biggest saving available:
 
 ```bash
 pixi run cm2 *.fna --until seqkit checkm2 bakta amrfinder mlst \

@@ -85,7 +85,8 @@ class _Capture(logging.Handler):
 
 def run(snakefile: Path, cores: int, workdir: Path | None = None,
         dry_run: bool = False, keep_going: bool = False,
-        rerun_incomplete: bool = True) -> Iterator[Event]:
+        rerun_incomplete: bool = True, use_conda: bool = False,
+        conda_prefix: Path | None = None) -> Iterator[Event]:
     """Execute the workflow, yielding events as they happen.
 
     Snakemake runs on a worker thread so the caller — a TUI, usually — keeps
@@ -95,6 +96,12 @@ def run(snakefile: Path, cores: int, workdir: Path | None = None,
     directory rather than its output paths, so leaving it unset makes every run
     in one checkout share `./.snakemake`, and a killed run leaves a lock the
     next cannot clear. The CLI passes `--directory` for the same reason.
+
+    `use_conda` is what a conda-installed CompareM2 runs with: the package
+    ships the pipeline only, and each rule's tools are deployed from the env
+    files `prepare()` wrote. `conda_prefix` decides where those environments
+    land, and it wants to be the same directory on every run — see
+    `cli.default_conda_prefix()`.
     """
     events: queue.Queue[Event | None] = queue.Queue()
     handler = _Capture(events.put)
@@ -107,14 +114,26 @@ def run(snakefile: Path, cores: int, workdir: Path | None = None,
             from snakemake.api import SnakemakeApi
             from snakemake.settings.types import (
                 DAGSettings,
+                DeploymentSettings,
                 ExecutionSettings,
                 OutputSettings,
                 ResourceSettings,
             )
+            # Not a snakemake.settings export: the enum lives in the executor
+            # plugin interface package, which settings/types.py imports it from.
+            from snakemake_interface_executor_plugins.settings import DeploymentMethod
+
+            deployment = None
+            if use_conda:
+                deployment = DeploymentSettings(
+                    deployment_method={DeploymentMethod.CONDA},
+                    conda_prefix=conda_prefix,
+                )
 
             with SnakemakeApi(OutputSettings(printshellcmds=False, quiet={"all"})) as api:
                 workflow = api.workflow(
                     resource_settings=ResourceSettings(cores=cores),
+                    deployment_settings=deployment,
                     snakefile=snakefile,
                     workdir=workdir,
                 )

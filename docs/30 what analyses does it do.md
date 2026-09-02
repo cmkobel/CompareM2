@@ -27,7 +27,7 @@ cm2 *.fna --until fasttree
 |---|---|---|---|
 | [`seqkit`](#seqkit) | per genome | — | — |
 | [`checkm2`](#checkm2) | per set | — | checkm2 (1.7 GB) |
-| [`gtdbtk`](#gtdbtk) | per set | — | gtdb (141.4 GB) |
+| [`gtdbtk`](#gtdbtk) | per set | — | gtdb (60.8 GB) |
 | [`bakta`](#bakta) | per genome | — | bakta-light (unmeasured) |
 | [`amrfinder`](#amrfinder) | per genome | `bakta` | amrfinder (unmeasured) |
 | [`mlst`](#mlst) | per set | — | — |
@@ -39,7 +39,7 @@ cm2 *.fna --until fasttree
 | [`fasttree`](#fasttree) | per set | `panaroo` | — |
 | [`carveme`](#carveme) | per genome | `bakta` | — |
 
-Running everything downloads **143.2 GB** of databases, plus 2 of unknown size. `cm2` prints the total before downloading anything.
+Running everything downloads **62.5 GB** of databases, plus 2 of unknown size. `cm2` prints the total before downloading anything.
 
 ---
 
@@ -105,10 +105,10 @@ Gives each assembly a seven-rank name, domain down to species, by placing it in 
 
 **How it works.** Marker genes (120 bacterial, 122 archaeal) are extracted and aligned, and the genome is placed with pplacer into a backbone tree and then a class-level subtree; disagreement resolves to the lowest common ancestor. ANI to a species representative decides the species, and relative evolutionary divergence decides the ranks above it.
 
-Runs once over the whole set · 16 threads · database `gtdb` (141.4 GB)
+Runs once over the whole set · 16 threads · database `gtdb` (60.8 GB)
 
 ```
-gtdbtk classify_wf --cpus 16 --skip_ani_screen --batchfile results_comparem2/gtdbtk/batchfile.tsv --out_dir results_comparem2/gtdbtk
+gtdbtk classify_wf --cpus 16 --batchfile results_comparem2/.comparem2/gtdbtk_batchfile.tsv --out_dir results_comparem2/gtdbtk
 ```
 
 **Reading the output**

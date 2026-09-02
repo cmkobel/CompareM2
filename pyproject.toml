@@ -1,0 +1,65 @@
+# Packaging metadata, for the one thing pixi cannot do: install CompareM2 as a
+# package someone else can `conda install`.
+#
+# pixi.toml stays the development and HPC path — one solved environment with
+# every tool on PATH, entered with `pixi run cm2`. This file is what makes the
+# bioconda package possible, and the two describe different things: the conda
+# package ships *only* the pipeline, and Snakemake deploys each tool's own
+# environment at run time (`--use-conda`). See DESIGN.md, "Two deployment
+# models".
+#
+# Dependencies here are therefore the pipeline's own, not the thirteen tools'.
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "comparem2"
+dynamic = ["version"]
+description = "A genomes-to-report pipeline for comparing microbial genomes"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Carl M. Kobel" }]
+keywords = ["bioinformatics", "genomics", "snakemake", "pipeline"]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Programming Language :: Python :: 3",
+]
+
+dependencies = [
+    # Snakemake 9 is what the runner reads structured log events from; 10 has
+    # not been tried. The floor is not cosmetic — `get_event()` and the
+    # `job_info` record fields the TUI depends on are 9-era API.
+    "snakemake>=9,<10",
+    "textual",
+    # Advertised in the docs, so they ship with the package rather than being
+    # something a cluster user has to discover.
+    "snakemake-executor-plugin-slurm",
+    "snakemake-executor-plugin-cluster-generic",
+]
+
+[project.scripts]
+# `comparem2` is the name the paper, the docs and the v2 bioconda package all
+# use, so it is the one that must exist. `cm2` matches the pixi task.
+comparem2 = "comparem2.cli:main"
+cm2 = "comparem2.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/cmkobel/CompareM2"
+Documentation = "https://comparem2.readthedocs.io"
+Source = "https://github.com/cmkobel/CompareM2"
+
+[tool.setuptools.dynamic]
+# One source of truth for the version. A test asserts pixi.toml agrees.
+version = { attr = "comparem2.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+asyncio_mode = "strict"

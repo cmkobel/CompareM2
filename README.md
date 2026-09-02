@@ -2,9 +2,10 @@
 
 [![unit tests](https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml/badge.svg)](https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml) [![https://doi.org/10.1093/bioinformatics/btaf517](https://img.shields.io/badge/doi%20%28OUP%29-10.1093%2Fbioinformatics%2Fbtaf517-blue.svg)](https://doi.org/10.1093/bioinformatics/btaf517)
 
-> **Pre-release.** There is no bioconda package and no container image yet —
-> both existed for v2 and will return; for now install from git, as below. The
-> paper describes v2, whose documentation remains at
+> **Pre-release.** The bioconda package is not published yet — `conda install
+> comparem2` still gives you v2. The recipe is written (`recipe/`) and the code
+> path is in place; for now install from git, as below. The paper describes v2,
+> whose documentation remains at
 > [comparem2.readthedocs.io/en/stable](https://comparem2.readthedocs.io/en/stable/).
 
 CompareM2 takes microbial genome assemblies — isolates or MAGs — and produces a
@@ -24,12 +25,12 @@ That choice is what makes the rest possible:
 | | v2 | v3 |
 | --- | --- | --- |
 | Analyses | 30+ | **13** |
-| Conda environments | 25 | **1**, plus CheckM2 isolated |
+| Conda environments | 25 | **1**, plus CheckM2 isolated (14 when conda deploys them) |
 | Software download | — | **1.58 GB** measured |
 | Databases | 7 (incl. 84 GB Bakta full) | **4** (Bakta light) |
 | Report | R, RMarkdown, pandoc | **Python**, one HTML file |
 | Runtime | R + Python | **Python only** |
-| Unit tests | none | **110** |
+| Unit tests | none | **123** |
 
 **Every tool is one declarative spec.** There is no hand-written Snakefile —
 `src/comparem2/catalogue.py` holds the 13 specs and the workflow is generated
@@ -57,7 +58,8 @@ citations list of every paper behind the tools that ran.
 Linux-only; the tools are `linux-64`. Unit tests run anywhere.
 
 **12 of 13** tool command lines have been executed end to end on real genomes.
-GTDB-Tk is the exception, and only because it needs a 141 GB download.
+GTDB-Tk is the exception; its 60.8 GB database is downloading as this is
+written, and three defects in its rule were found and fixed on the way.
 
 [`STATUS.md`](STATUS.md) has the per-tool table. It tracks *execution*, never
 installation — a clean `pixi install` says nothing about whether a tool runs,

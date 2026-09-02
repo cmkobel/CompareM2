@@ -44,7 +44,7 @@ time.
 **Snakemake is kept, as an executor rather than a framework.** The DAG was never
 the hard part — *cluster execution* is: sbatch generation, dependency chains,
 `squeue` polling, partial-failure recovery, retries. Snakemake's SLURM executor
-plugin already solves it, and it is tens of MB against 141 GB of databases.
+plugin already solves it, and it is tens of MB against 62.5 GB of databases.
 
 **Python only.** CLI, TUI and report share one runtime. R, pandoc, rmarkdown and
 tidyverse are gone — they were the heaviest non-database dependency in v2.
@@ -61,9 +61,15 @@ unmeasured and is reported as such — a total that silently omits an unknown is
 worse than no total.
 
 The environment is slim; the data is not, and GTDB-Tk is the whole reason. At
-141.4 GB it is 91% of the install. Making it opt-in was offered twice and
-declined twice; it stays in the default path. If "easy to install" ever has to
-be defended, that is the line item.
+60.8 GB it is 97% of the 62.5 GB the pipeline measures. Making it opt-in was
+offered twice and declined twice; it stays in the default path. If "easy to
+install" ever has to be defended, that is the line item.
+
+It was 141.4 GB until 2026-09-02, and the reduction was not a choice: GTDB-Tk
+2.7 requires r232 and refuses r226, and r232 dropped FastANI's reference
+genomes in favour of skani sketches. **A tool's database version is part of its
+pin.** The catalogue had been carrying an r226 URL that the installed tool
+would have rejected — after the download.
 
 **One environment, plus CheckM2 on its own.** CheckM2 pins DIAMOND 2.1.x while
 current Bakta needs 2.2.x, so they cannot co-solve. CheckM2 is the single tool
@@ -79,6 +85,77 @@ have reimplemented all of it.
 
 `ready` is a real file the tool needs wherever possible, not a stamp, because a
 stamp can outlive the data it claims.
+
+## Steps around a command
+
+Twelve of the thirteen tools are one command: arguments in, declared files out.
+GTDB-Tk is not, and rather than let it become a hand-written rule it gets two
+fields that every tool could use and only it does.
+
+- **`Tool.files`** — input files the tool needs that are nobody's output, as a
+  mapping of path to content rendered from the `Context`. `prepare()` writes
+  them and the rule declares them as inputs. GTDB-Tk needs a two-column
+  `--batchfile` because canonicalisation puts each genome in its own directory,
+  so `--genome_dir` cannot be used.
+- **`Tool.post`** — argument lists run after the command, for turning what a
+  tool writes into what its spec declared. GTDB-Tk writes `bac120` and `ar53`
+  summaries separately and the pipeline declares one table.
+
+Three properties matter more than the fields:
+
+**They are declared, not hidden in a shell string.** The batchfile is a rule
+input, so the DAG knows about it. Before this, the rule named a batchfile that
+nothing created and declared an output the tool never writes — both described
+in comments as though they existed, in a rule that had never been executed.
+
+**Written only when changed.** A declared file is a rule input, so rewriting an
+identical one moves its mtime and re-runs the tool that reads it. For GTDB-Tk
+that is hours of work triggered by a four-line file.
+
+**The step runs through an absolute `sys.executable`.** Under a conda
+deployment the rule's environment holds the tool, not CompareM2, so a bare
+`python -m comparem2.steps` would find the wrong interpreter.
+
+`Tool.post` is not a licence for shell work: a tool needing several steps is a
+tool whose spec is lying about what it does, and a test asserts that GTDB-Tk is
+the only tool using either field.
+
+## Two deployment models
+
+The same pipeline is installed two ways, and they answer different questions.
+
+**pixi — development and HPC.** `pixi install` solves *one* environment holding
+twelve of the thirteen tools, plus a second for CheckM2. Every tool is on PATH,
+no rule carries a `conda:` directive except the isolated one, and a run starts
+instantly because nothing is deployed at run time. This is what `pixi.toml`
+describes and what every verification run on thylakoid used.
+
+**conda/bioconda — distribution.** The published package ships **the pipeline
+and none of the thirteen tools**, and Snakemake deploys each rule's environment
+from the generated `envs/*.yaml` on first use (`--use-conda`). This is not a
+concession, it is the only thing that can work: a single environment containing
+all thirteen does not exist, because CheckM2 pins DIAMOND 2.1.x against Bakta's
+2.2.x. A recipe that listed the tools as run dependencies would have to leave
+one of them out, and would break whenever any of the thirteen changed upstream.
+
+So per-rule environments are the *distribution* model and a single environment
+is the *development* model, and neither replaces the other. That is not the same
+as v2's 25 environments, which were 25 in every mode, by default, for reasons
+that turned out to be one real conflict and twenty-four defaults.
+
+Three consequences worth knowing:
+
+- **Environments are addressed by content, not by rule.** Snakemake deploys to
+  `md5(realpath(conda_prefix) + env file content)`, so identical env files are
+  one directory on disk: the full catalogue's seventeen rules-needing-an-env
+  deploy as **14** environments.
+- **AMRFinder depends on that.** `amrfinder -u` writes into `$CONDA_PREFIX`, so
+  its download rule and its analysis rules must land in the same deployed
+  environment. They do, because both declare the same spec string — which is
+  why the spec is a shared constant in `catalogue.py` rather than typed twice.
+- **A database fetch is a rule and needs an environment too.** Two of the four
+  run a tool binary rather than curl (`bakta_db download`, `amrfinder -u`), so
+  `Database` declares `conda` exactly as `Tool` does.
 
 ## The report is the product
 
@@ -127,6 +204,10 @@ something already published. The post-mortems are in
   the solver reach back years to satisfy some other package's constraint. Two
   tools resolved to builds that installed cleanly and crashed on first use.
   **`pixi install` succeeding says nothing about whether the pipeline works.**
+- **A database version is part of the tool's pin.** Both directions are runtime
+  failures that no solve catches: GTDB-Tk 2.7 accepts only r232, Bakta 1.12
+  only db 6.x. Moving either one alone is the bug. Which is why the URL, the
+  size and the `>=` pin sit in the same spec.
 - **Commands are argument lists, never shell strings.** A tool that writes to
   stdout declares `stdout_to_output=True`; the redirect is added by whatever
   runs it. The same discipline applies to database `fetch` steps.
@@ -139,6 +220,18 @@ something already published. The post-mortems are in
   (`~/.comparem2/databases`, or `$COMPAREM2_DATABASES`), never one relative to
   the cwd or the output directory. Databases outlive any one run's results, and
   a per-run default silently buys a second copy of 143 GB.
+- **The conda prefix defaults the same way** (`~/.comparem2/envs`, or
+  `$COMPAREM2_CONDA_PREFIX`), for a sharper version of the same reason:
+  Snakemake includes the prefix's realpath in each environment's hash, so
+  moving it re-solves all 14 environments *and* re-fetches AMRFinder's
+  database, which lives inside one of them.
+- **The bioconda package must not grow tool dependencies.** It ships the
+  pipeline; the tools arrive through `--use-conda`. Adding them to the recipe
+  would require dropping CheckM2 or Bakta — see *Two deployment models*.
+- **Snakemake is invoked as `sys.executable -m snakemake`**, never as a bare
+  `snakemake`. It is this package's own dependency, so the correct one is the
+  one beside the running interpreter; by name it was simply not found when a
+  packaged `comparem2` was invoked by absolute path.
 - **Unit tests are the primary instrument.** The codebase is a generator, and a
   wrong wildcard yields a Snakefile that parses cleanly and builds the wrong
   DAG. An end-to-end run catches that slowly, if at all.
@@ -151,12 +244,13 @@ something already published. The post-mortems are in
 ## Open questions
 
 - **Taxonomy.** The single largest install cost. GTDB-Tk is authoritative and
-  141.4 GB; skani or mash against GTDB are fast and small but approximate.
+  60.8 GB; skani or mash against GTDB are fast and small but approximate.
   Candidates not yet measured. Whatever replaces or precedes GTDB-Tk **must take
-  assemblies** — that was the mistake sylph embodied.
-- **GTDB-Tk's summary output.** It writes `bac120` and `ar53` summaries
-  separately; the declared `gtdbtk.summary.tsv` needs a concatenation step that
-  does not exist yet. GTDB-Tk has also never been run.
+  assemblies** — that was the mistake sylph embodied. Less pressing than it was:
+  r232 more than halved the download.
+- ~~**GTDB-Tk's summary output.**~~ Closed 2026-09-02: `Tool.post` runs
+  `comparem2.steps merge-tsv` after the command, and `Tool.files` writes the
+  batchfile the rule had only claimed to write. See *Steps around a command*.
 - **CarveMe should probably be opt-in.** It works, but at roughly nine minutes
   per genome it is by far the slowest per-genome tool, which matters for a wide
   view over hundreds of assemblies.

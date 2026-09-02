@@ -39,7 +39,7 @@ Bakta calls Prodigal, Panaroo aligns with MAFFT.
 
   - Chaumeil P-A, Mussig AJ, Hugenholtz P, Parks DH (2022) GTDB-Tk v2: memory friendly classification with the Genome Taxonomy Database. Bioinformatics 38:5315–5316. [doi:10.1093/bioinformatics/btac672](https://doi.org/10.1093/bioinformatics/btac672)
   - Parks DH, Chuvochina M, Rinke C, Mussig AJ, Chaumeil P-A, Hugenholtz P (2022) GTDB: an ongoing census of bacterial and archaeal diversity through a phylogenetically consistent, rank normalized and complete genome-based taxonomy. Nucleic Acids Research 50:D785–D794. [doi:10.1093/nar/gkab776](https://doi.org/10.1093/nar/gkab776)
-    <br>*Cite alongside GTDB-Tk, and record the release — this run used r226.*
+    <br>*Cite alongside GTDB-Tk, and record the release — this run used r232.*
 
 ### bakta
 

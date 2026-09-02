@@ -1,0 +1,81 @@
+{% set name = "comparem2" %}
+{% set version = "3.0.0" %}
+
+# Draft of the bioconda recipe. The authoritative copy is
+# bioconda-recipes/recipes/comparem2/meta.yaml, which already exists at 2.16.2
+# — this is a version bump, not a new recipe. See recipe/README.md for the
+# steps and for what changed from v2.
+#
+# The package ships the pipeline and none of the thirteen tools. Snakemake
+# deploys each tool's own environment at run time, which is why `conda` is a
+# run dependency and the tools are not. DESIGN.md, "Two deployment models".
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://github.com/cmkobel/CompareM2/archive/refs/tags/v{{ version }}.tar.gz
+  # curl -sL <url> | shasum -a 256
+  sha256: 0000000000000000000000000000000000000000000000000000000000000000
+
+build:
+  number: 0
+  # Pure Python. The tools it drives are linux-64, but the package itself is
+  # not: on macOS it renders reports and runs `--dry-run`.
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  entry_points:
+    # `comparem2` is the name the paper and the v2 package use, so it is the
+    # one that must not change. `cm2` matches the pixi task.
+    - comparem2 = comparem2.cli:main
+    - cm2 = comparem2.cli:main
+
+requirements:
+  host:
+    - python >=3.11
+    - pip
+    # PEP 639 license metadata (`license = "GPL-3.0-or-later"`) needs this floor.
+    - setuptools >=77
+  run:
+    - python >=3.11
+    # Snakemake 9: the runner reads structured log events (`get_event`, the
+    # `job_info` record fields) that are 9-era API. 10 has not been tried.
+    - snakemake-minimal >=9,<10
+    - snakemake-executor-plugin-slurm
+    - snakemake-executor-plugin-cluster-generic
+    - textual
+    # Not optional, and not the same choice v2 made. Every analysis tool
+    # arrives through `--software-deployment-method conda`, and Snakemake 9
+    # needs the `conda` binary itself: it shells out to `conda info --json`
+    # while building the DAG, and it deprecated alternative frontends, so v2's
+    # `mamba <2` is no longer the right dependency.
+    - conda
+
+test:
+  imports:
+    - comparem2
+  commands:
+    - comparem2 --version
+    - comparem2 --help
+    - cm2 --help
+
+about:
+  home: https://github.com/cmkobel/CompareM2
+  license: GPL-3.0-or-later
+  license_family: GPL3
+  license_file: LICENSE
+  summary: A genomes-to-report pipeline for comparing microbial genomes
+  description: |
+    CompareM2 runs thirteen analysis tools over a set of microbial assemblies
+    and renders one self-contained HTML report: assembly statistics,
+    completeness, taxonomy, annotation, AMR genes, sequence types, ANI, a
+    pangenome, phylogenies and draft metabolic models.
+  doc_url: https://comparem2.readthedocs.io
+  dev_url: https://github.com/cmkobel/CompareM2
+
+extra:
+  recipe-maintainers:
+    - cmkobel
+  identifiers:
+    - doi:10.1093/bioinformatics/btaf517

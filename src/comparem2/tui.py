@@ -57,7 +57,9 @@ class ComparemTUI(App):
                  selected: list[str] | None = None,
                  overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
                  launcher: Sequence[str] | None = None,
-                 keep_going: bool = False) -> None:
+                 keep_going: bool = False, use_conda: bool = False,
+                 conda_prefix: Path | None = None,
+                 command: str | None = None) -> None:
         super().__init__()
         self.inputs = inputs
         self.workdir = workdir
@@ -67,8 +69,13 @@ class ComparemTUI(App):
         self.overrides = overrides
         self.launcher = launcher
         self.keep_going = keep_going
+        self.use_conda = use_conda
+        self.conda_prefix = conda_prefix
+        # Passed in rather than read from sys.argv here: the CLI already
+        # renders it, and the TUI's job is to display what it was given.
+        self.command = command
         # Seeded from `--until` when given. Selecting everything by default
-        # puts gtdbtk's 141.4 GB one keypress away, so a user who named the
+        # puts gtdbtk's 60.8 GB one keypress away, so a user who named the
         # tools they want on the command line gets exactly those.
         self.selected: set[str] = set(selected) if selected else {t.name for t in CATALOGUE}
         self.state: dict[str, str] = {t.name: PENDING for t in CATALOGUE}
@@ -169,12 +176,21 @@ class ComparemTUI(App):
         log = self.query_one(RichLog)
         snakefile = prepare(CATALOGUE, chosen, self.workdir, self.databases,
                             self.samples, overrides=self.overrides,
-                            launcher=self.launcher)
+                            launcher=self.launcher,
+                            per_rule_conda=self.use_conda)
         names = [t.name for t in CATALOGUE.closure(chosen)]
 
         self.call_from_thread(log.write, f"[bold]Running {len(names)} tools[/]")
+        if self.use_conda:
+            # Snakemake's own "Creating conda environment" lines are quietened
+            # in the API path, so a first run would otherwise look hung while
+            # thirteen environments solve.
+            self.call_from_thread(
+                log.write, f"[dim]deploying conda environments in {self.conda_prefix}"
+                           " — first run only[/]")
         for event in run(snakefile, self.cores, workdir=self.workdir,
-                         keep_going=self.keep_going):
+                         keep_going=self.keep_going, use_conda=self.use_conda,
+                         conda_prefix=self.conda_prefix):
             self.call_from_thread(self.apply_event, event)
 
         # Safe to read self.state here: call_from_thread blocks until the UI
@@ -194,7 +210,8 @@ class ComparemTUI(App):
                     log.write,
                     f"[yellow]{len(failed)} of {len(names)} failed:[/] {', '.join(failed)}")
             report = render_report(CATALOGUE, chosen, self.workdir,
-                                   self.databases, self.samples)
+                                   self.databases, self.samples,
+                                   command=self.command)
             self.call_from_thread(log.write, f"[bold green]Report:[/] {report}")
         self.running = False
 
@@ -251,6 +268,8 @@ def launch(inputs: list[Path], workdir: Path, databases: Path,
            selected: list[str] | None = None,
            overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
            launcher: Sequence[str] | None = None,
-           keep_going: bool = False) -> None:
+           keep_going: bool = False, use_conda: bool = False,
+           conda_prefix: Path | None = None, command: str | None = None) -> None:
     ComparemTUI(inputs, workdir, databases, samples, cores, selected,
-                overrides, launcher, keep_going).run()
+                overrides, launcher, keep_going, use_conda, conda_prefix,
+                command).run()

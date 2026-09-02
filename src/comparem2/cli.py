@@ -9,13 +9,27 @@ from __future__ import annotations
 
 import argparse
 import os
+import shlex
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+from . import __version__
 from .catalogue import CATALOGUE
 from .report import render_report
-from .snakefile import prepare
+from .snakefile import prepare, render_envs
+from .tools import Context, Scope
+
+
+def _invocation() -> str:
+    """The command that produced this run, for the report's provenance line.
+
+    Quoted, so a path with a space round-trips into something a reader can
+    paste back. `sys.argv[0]` is an absolute interpreter path under pixi and
+    tells the reader nothing, so it is reduced to the program name.
+    """
+    return shlex.join([Path(sys.argv[0]).name, *sys.argv[1:]])
 
 
 def default_databases() -> Path:
@@ -34,6 +48,49 @@ def default_databases() -> Path:
     if override:
         return Path(override).expanduser()
     return Path.home() / ".comparem2" / "databases"
+
+
+def default_conda_prefix() -> Path:
+    """Where `--use-conda` deploys the tools' environments.
+
+    Shared and home-relative, for the same reason the database default is:
+    thirteen solved environments outlive any one run, and a per-run default
+    would re-solve and re-download all of them for every set of genomes.
+
+    It is more load-bearing than it looks. Snakemake addresses a deployed
+    environment by md5(realpath(envs_dir) + env file content), so moving this
+    directory invalidates every environment — and with them AMRFinder's
+    database, which lives inside its environment rather than under
+    `--databases`.
+    """
+    override = os.environ.get("COMPAREM2_CONDA_PREFIX")
+    if override:
+        return Path(override).expanduser()
+    return Path.home() / ".comparem2" / "envs"
+
+
+def missing_executables(selected: list[str] | None, workdir: Path,
+                        databases: Path,
+                        samples: tuple[str, ...]) -> list[tuple[str, str]]:
+    """(tool, executable) for every selected tool not found on PATH.
+
+    A conda-installed CompareM2 ships the pipeline and none of the thirteen
+    tools, so without this the first thing a new user sees is a Snakemake
+    traceback from whichever rule happened to be scheduled first — after
+    however long the DAG took to get there. Checking argv[0] up front turns
+    that into one line naming what is missing.
+    """
+    missing: list[tuple[str, str]] = []
+    # Only argv[0] is read, so any sample name renders a command whose
+    # executable is the right one.
+    stand_in = samples[0] if samples else "sample"
+    for tool in CATALOGUE.closure(selected):
+        ctx = Context(workdir, databases, tool.threads, samples,
+                      stand_in if tool.scope is Scope.GENOME else None)
+        exe = tool.command(ctx)[0]
+        if shutil.which(exe) is None:
+            missing.append((tool.name, exe))
+    return missing
 
 
 def invocation_dir() -> Path:
@@ -156,6 +213,15 @@ def main(argv: list[str] | None = None) -> int:
                    help="override a tool argument, e.g. --set treecluster--threshold=0.1 "
                         "(v2 spelled this set_treecluster--threshold in config.yaml)")
     p.add_argument("--tui", action="store_true", help="interactive keyboard interface")
+    p.add_argument("--version", action="version", version=f"CompareM2 {__version__}")
+    p.add_argument("--use-conda", action="store_true",
+                   help="let Snakemake deploy each tool's own conda environment "
+                        "instead of expecting the tools on PATH; this is how a "
+                        "conda-installed CompareM2 runs")
+    p.add_argument("--conda-prefix", type=Path, default=None,
+                   help="where --use-conda puts those environments; shared "
+                        f"across runs (default: {default_conda_prefix()}, "
+                        "overridden for every run by $COMPAREM2_CONDA_PREFIX)")
     p.add_argument("--isolated-launcher", default=None, metavar="CMD",
                    help="how to enter an isolated tool's environment; {tool} is "
                         "substituted, e.g. 'pixi run -e {tool}'")
@@ -165,6 +231,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--report-only", action="store_true",
                    help="re-render the report from existing outputs")
     args = p.parse_args(argv)
+
+    # Two ways of isolating one tool, applied at once, would run
+    # `pixi run -e checkm2 checkm2 ...` inside a Snakemake-built environment.
+    if args.use_conda and args.isolated_launcher:
+        raise SystemExit(
+            "--use-conda and --isolated-launcher do not combine: --use-conda "
+            "already gives every tool its own environment, which is what the "
+            "launcher exists to do for the isolated one")
 
     # Every path the user typed is relative to where they typed it, which under
     # `pixi run` is not the cwd — see invocation_dir().
@@ -183,10 +257,27 @@ def main(argv: list[str] | None = None) -> int:
     workdir: Path = resolve(args.output, base)
     workdir.mkdir(parents=True, exist_ok=True)
     databases: Path = resolve(args.databases or default_databases(), base)
+    conda_prefix: Path = resolve(args.conda_prefix or default_conda_prefix(), base)
     samples = canonicalise(inputs, workdir)
 
     tools = CATALOGUE.closure(args.until)
     print(f"{len(samples)} assemblies, {len(tools)} tools", file=sys.stderr)
+
+    # Say it now rather than mid-DAG. Skipped when the tools are not this run's
+    # problem: --use-conda installs them, --dry-run does not run them, and
+    # --report-only reads output that already exists. A launcher only covers
+    # the isolated tool, so the rest are still checked.
+    if not (args.use_conda or args.dry_run or args.report_only):
+        absent = missing_executables(args.until, workdir, databases, samples)
+        if args.isolated_launcher:
+            absent = [(n, e) for n, e in absent if not CATALOGUE[n].isolated]
+        if absent:
+            raise SystemExit(
+                "not on PATH: "
+                + ", ".join(f"{n} ({e})" for n, e in absent) + "\n"
+                "Either run inside an environment that has them (`pixi run cm2 "
+                "...`), or add --use-conda to let Snakemake deploy each tool's "
+                "own environment.")
 
     # Only report what is actually going to be fetched. Announcing a total that
     # includes databases already on disk is how "databases: 143.2 GB" came to
@@ -204,6 +295,15 @@ def main(argv: list[str] | None = None) -> int:
         # this is the line that precedes a download of up to 143 GB.
         print(f"to download: {names} ({size}) -> {databases}", file=sys.stderr)
 
+    # Environments are deduplicated by content, not by rule, so this is the
+    # number Snakemake will actually build — amrfinder's download rule and its
+    # analysis rules share one, and so does every other repeated spec.
+    if args.use_conda:
+        envs = len(set(render_envs(CATALOGUE, args.until).values()))
+        print(f"conda deployment: {envs} environments in {conda_prefix}"
+              + ("" if conda_prefix.exists() else " (none built yet)"),
+              file=sys.stderr)
+
     overrides = parse_overrides(args.set)
     launcher = args.isolated_launcher.split() if args.isolated_launcher else None
 
@@ -216,15 +316,25 @@ def main(argv: list[str] | None = None) -> int:
 
         launch(inputs, workdir, databases, samples, args.cores,
                selected=args.until, overrides=overrides, launcher=launcher,
-               keep_going=args.keep_going)
+               keep_going=args.keep_going, use_conda=args.use_conda,
+               conda_prefix=conda_prefix, command=_invocation())
         return 0
 
     snakefile = prepare(CATALOGUE, args.until, workdir, databases, samples,
-                        overrides=overrides, launcher=launcher)
+                        overrides=overrides, launcher=launcher,
+                        per_rule_conda=args.use_conda)
 
     if not args.report_only:
         cmd = [
-            "snakemake", "--snakefile", str(snakefile), "--cores", str(args.cores),
+            # `sys.executable -m`, not a bare `snakemake`: Snakemake is this
+            # package's own dependency, so the right one is the one installed
+            # beside the interpreter that is running. Calling it by name found
+            # nothing at all when a conda-installed `comparem2` was invoked by
+            # absolute path without its environment activated — a
+            # FileNotFoundError traceback out of subprocess, three lines after
+            # announcing what it was about to do.
+            sys.executable, "-m", "snakemake",
+            "--snakefile", str(snakefile), "--cores", str(args.cores),
             "--rerun-incomplete",
             # Snakemake locks its working directory, not its output paths, so
             # without this every run in one checkout shares `./.snakemake` —
@@ -236,6 +346,11 @@ def main(argv: list[str] | None = None) -> int:
             # an absolute path above.
             "--directory", str(workdir),
         ]
+        if args.use_conda:
+            # `--software-deployment-method` is the Snakemake 8+ spelling;
+            # `--use-conda` survives as a deprecated alias and is not used here.
+            cmd += ["--software-deployment-method", "conda",
+                    "--conda-prefix", str(conda_prefix)]
         if args.keep_going:
             cmd.append("--keep-going")
         if args.dry_run:
@@ -246,7 +361,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.dry_run:
             return 0
 
-    report = render_report(CATALOGUE, args.until, workdir, databases, samples)
+    report = render_report(CATALOGUE, args.until, workdir, databases, samples,
+                           command=_invocation())
     print(f"report: {report}", file=sys.stderr)
     return 0
 

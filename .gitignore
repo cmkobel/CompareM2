@@ -23,6 +23,14 @@ __pycache__/
 *.egg-info/
 *.egg
 
+# Build artefacts from `pip install .` / `python -m build`. The package is
+# built from pyproject.toml by bioconda, never from a tree here.
+build/
+dist/
+# `uv run` writes this when it resolves pyproject.toml for a throwaway test
+# environment. The project's lock is pixi.lock.
+uv.lock
+
 # R
 .Rproj.user
 .Rhistory

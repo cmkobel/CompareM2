@@ -11,7 +11,7 @@ skipped), progress reporting, and the report's knowledge of what to render.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -43,9 +43,21 @@ class Database:
     url: str  # or the command that fetches it, when there is no static URL
     size: int | None = None  # bytes; None means not yet measured — never guess
     sha256: str | None = None
+    # Whichever digest the source publishes, recorded rather than computed. The
+    # fetch does not check it: hashing 141.4 GB costs minutes, and this exists
+    # to tell a truncated download from a corrupt one after something failed.
+    md5: str | None = None
     # How to fetch it, given the database root. Returns steps, each an argv
     # list — same discipline as `Tool.command`, and for the same reason.
     fetch: Callable[[Path], Sequence[Sequence[str]]] | None = None
+    # What the fetch itself needs installed. A download step is a rule like any
+    # other, and under `--use-conda` it gets an environment like any other —
+    # which it must, because two of these fetches run a tool binary rather than
+    # curl: `bakta_db download` and `amrfinder -u`. Under the pixi model every
+    # tool is already on PATH and this is unused; under a conda deployment,
+    # omitting it means the download rule runs in the pipeline's own
+    # environment, where neither binary exists.
+    conda: tuple[str, ...] = ()
     # Path relative to the database root whose presence means "ready". This is
     # the download rule's declared output, so Snakemake skips a database that
     # is already complete and re-runs one that is half-finished. Prefer a real
@@ -162,6 +174,24 @@ class Tool:
     # Commands stay as argument lists — never hand-built shell strings — so the
     # redirect is declared here and added by whatever runs the command.
     stdout_to_output: bool = False
+    # Input files this tool needs that are not another tool's output: a mapping
+    # of path to content, rendered from the Context. `prepare()` writes them and
+    # the generated rule declares them as inputs, so they are part of the DAG
+    # rather than something a shell step has to remember to create.
+    #
+    # GTDB-Tk is the only user: once inputs are canonicalised each genome sits
+    # in its own directory, so `--genome_dir` cannot be used and it takes a
+    # two-column `--batchfile` instead. Writing that from the Context is exact —
+    # the sample list is already known before anything runs.
+    files: Callable[[Context], Mapping[Path, str]] | None = None
+    # Steps to run after the command, each an argument list, same discipline as
+    # `Database.fetch`. For turning what a tool actually writes into what the
+    # spec declared — GTDB-Tk emits `bac120` and `ar53` summaries separately and
+    # the pipeline declares one table.
+    #
+    # This is not a licence for arbitrary shell work: a tool needing several of
+    # these is a tool whose spec is lying about what it does.
+    post: Callable[[Context], Sequence[Sequence[str]]] | None = None
     # Environment variables the tool needs, given its Context. Some tools take
     # their database location only this way: GTDB-Tk reads GTDBTK_DATA_PATH and
     # has no equivalent flag, so without this its `--databases` value would be

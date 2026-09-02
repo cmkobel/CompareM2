@@ -22,6 +22,16 @@ WILDCARD = "{sample}"
 THREADS = "{threads}"
 
 
+def _download_env(db_name: str) -> str:
+    """The env file for a database's download rule.
+
+    Prefixed, because a database and a tool can share a name — `checkm2` is
+    both — and their environments are not the same thing: the tool needs
+    CheckM2, the download needs curl.
+    """
+    return f"download_{db_name}.yaml"
+
+
 def _ctx(workdir: Path, databases: Path, samples: tuple[str, ...], tool: Tool,
          overrides: dict[str, tuple[tuple[str, str], ...]] | None = None) -> Context:
     """A Context that renders wildcard paths for per-genome tools."""
@@ -51,6 +61,12 @@ def _inputs(ctx: Context, tool: Tool, registry: Registry) -> list[str]:
 
     if tool.database is not None:
         files.append(str(tool.database.ready_path(ctx.databases)))
+
+    # Files the tool declares and `prepare()` writes. Declaring them as inputs
+    # is what stops a rule from depending on something invisible: GTDB-Tk's
+    # batchfile was named on its command line by a rule that never created it.
+    if tool.files is not None:
+        files += [str(p) for p in tool.files(ctx)]
 
     for dep_name in tool.needs:
         dep = registry[dep_name]
@@ -86,9 +102,17 @@ def _rule(tool: Tool, workdir: Path, databases: Path, samples: tuple[str, ...],
             )
         command += f" > {shlex.quote(outputs[0])}"
 
+    # Steps that run after the tool, to turn what it writes into what the spec
+    # declared. Quoted the same way, so a glob reaches the step as a literal
+    # rather than being expanded by the rule's shell against the pre-run
+    # directory — which is empty of the files it is meant to match.
+    post = [" ".join(shlex.quote(a) for a in step)
+            for step in (tool.post(ctx) if tool.post else ())]
+
     # shlex.quote escapes the braces of {sample}; unescape so Snakemake sees it.
     for token in (WILDCARD, THREADS):
         command = command.replace(f"'{token}'", token)
+        post = [p.replace(f"'{token}'", token) for p in post]
 
     log = str(ctx.out("logs", f"{tool.name}.log"))
 
@@ -118,30 +142,41 @@ def _rule(tool: Tool, workdir: Path, databases: Path, samples: tuple[str, ...],
           for name, value in (tool.env(ctx) if tool.env else ())],
         f"        mkdir -p {shellify(' '.join(_dirnames(outputs)))}",
         f"        {shellify(command)}",
+        *[f"        {shellify(step)}" for step in post],
         f'        """',
         "",
     ]
     return "\n".join(lines)
 
 
-def _download_rule(db, databases: Path) -> str:
+def _download_rule(db, databases: Path, per_rule_conda: bool = False) -> str:
     """One rule per database, whose output is the file that proves it arrived.
 
     Downloads are rules rather than a separate `--download` phase so that they
     inherit what Snakemake already does well: a database that is present is
     skipped, a half-finished one is redone, and fetching runs alongside work
     that does not depend on it.
+
+    Being a rule has a second consequence, which only shows up under
+    `--use-conda`: a download needs an environment of its own, because two of
+    these fetches run a tool binary (`bakta_db`, `amrfinder -u`) that the
+    pipeline's own environment does not contain.
     """
     ready = str(db.ready_path(databases))
     steps = db.fetch(databases) if db.fetch else []
     if not steps:
         raise ValueError(f"database {db.name} declares no fetch")
+    if per_rule_conda and not db.conda:
+        raise ValueError(
+            f"database {db.name} declares no conda packages, so its download "
+            "rule cannot be given an environment")
     return "\n".join([
         f"rule download_{db.name.replace('-', '_')}:",
         "    output:",
         f"        {_q(ready)},",
         f"    log: {_q(str(databases / 'logs' / ('download_' + db.name + '.log')))}",
         "    threads: 1",
+        *([f"    conda: {_q('envs/' + _download_env(db.name))}"] if per_rule_conda else []),
         "    shell:",
         '        """',
         "        mkdir -p $(dirname {log})",
@@ -191,33 +226,70 @@ def render(registry: Registry, selected: list[str] | None, workdir: Path,
         *[f"        {_q(t)}," for t in targets],
         "",
     ]
-    body = [_download_rule(db, databases) for db in registry.databases(selected)]
+    body = [_download_rule(db, databases, per_rule_conda)
+            for db in registry.databases(selected)]
     body += [_rule(t, workdir, databases, samples, registry, per_rule_conda,
                    overrides, launcher)
              for t in tools]
     return "\n".join(header) + "\n" + "\n".join(body)
 
 
-def render_envs(registry: Registry, selected: list[str] | None) -> dict[str, str]:
-    """One conda environment file per tool.
+def declared_files(registry: Registry, selected: list[str] | None, workdir: Path,
+                   databases: Path, samples: tuple[str, ...]) -> dict[Path, str]:
+    """Every `Tool.files` entry, with real paths rather than wildcards.
 
-    v3 targets a single solved environment, but Snakemake wants a file per rule
-    and writing them per tool keeps the option of splitting one out later —
-    which is exactly what antiSMASH would have needed.
+    The rule's `input:` gets these as `{sample}` templates from the same
+    callable; this is the concrete side of that, one entry per sample for a
+    per-genome tool.
+    """
+    out: dict[Path, str] = {}
+    for tool in registry.closure(selected):
+        if tool.files is None:
+            continue
+        contexts = ([Context(workdir, databases, tool.threads, samples, s)
+                     for s in samples]
+                    if tool.scope is Scope.GENOME else
+                    [Context(workdir, databases, tool.threads, samples, None)])
+        for ctx in contexts:
+            out.update(tool.files(ctx))
+    return out
+
+
+def _env_file(packages: Sequence[str]) -> str:
+    """A conda environment file, as text.
+
+    Byte-for-byte stability matters beyond tidiness: Snakemake addresses a
+    deployed environment by md5(realpath(envs_dir) + this content), so two rules
+    whose env files are identical share one environment on disk — which is how
+    amrfinder's download rule and its analysis rules end up looking at the same
+    $CONDA_PREFIX, and how the same environment is reused across runs.
+    """
+    return ("channels:\n  - conda-forge\n  - bioconda\ndependencies:\n"
+            + "\n".join(f"  - {p}" for p in packages) + "\n")
+
+
+def render_envs(registry: Registry, selected: list[str] | None) -> dict[str, str]:
+    """One conda environment file per tool, and one per database download.
+
+    Under the pixi model only the isolated tool's file is ever read, but they
+    are all written: `--use-conda` needs one per rule, and a `conda:` directive
+    pointing at a file that does not exist kills the whole workflow rather than
+    the job — see `prepare()`.
     """
     envs = {}
     for tool in registry.closure(selected):
-        packages = "\n".join(f"  - {p}" for p in tool.conda)
-        envs[f"{tool.name}.yaml"] = (
-            "channels:\n  - conda-forge\n  - bioconda\ndependencies:\n" + packages + "\n"
-        )
+        envs[f"{tool.name}.yaml"] = _env_file(tool.conda)
+    for db in registry.databases(selected):
+        if db.conda:
+            envs[_download_env(db.name)] = _env_file(db.conda)
     return envs
 
 
 def prepare(registry: Registry, selected: list[str] | None, workdir: Path,
             databases: Path, samples: tuple[str, ...],
             overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
-            launcher: Sequence[str] | None = None) -> Path:
+            launcher: Sequence[str] | None = None,
+            per_rule_conda: bool = False) -> Path:
     """Write the Snakefile and its env files; return the Snakefile path.
 
     Every entry point goes through here. They did not once: the TUI wrote the
@@ -227,10 +299,21 @@ def prepare(registry: Registry, selected: list[str] | None, workdir: Path,
     the workflow rather than the job, so twelve tools with no relation to
     checkm2 never started. A missing 200-byte file killed a 13-tool run.
     """
+    for path, text in declared_files(registry, selected, workdir, databases,
+                                     samples).items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        # Only when it changed. These are rule *inputs*, so rewriting an
+        # identical file would move its mtime and re-run the tool that reads it
+        # on every invocation — for GTDB-Tk, a re-run measured in hours because
+        # a four-line file was touched.
+        if not path.exists() or path.read_text() != text:
+            path.write_text(text)
+
     build = workdir / ".comparem2"
     (build / "envs").mkdir(parents=True, exist_ok=True)
     snakefile = build / "Snakefile"
     snakefile.write_text(render(registry, selected, workdir, databases, samples,
+                                per_rule_conda=per_rule_conda,
                                 overrides=overrides, launcher=launcher))
     for name, text in render_envs(registry, selected).items():
         (build / "envs" / name).write_text(text)

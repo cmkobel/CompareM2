@@ -23,10 +23,25 @@ Database sizes marked `size=` were measured from `content-length`; the rest are
 
 from __future__ import annotations
 
+import sys
+
 from .tools import Context, Database, Registry, Scope, Tool
 
 # --- Databases -----------------------------------------------------
 # Sizes are measured, not estimated. `None` means nobody has measured it yet.
+
+# Two tool specs are named here because their *database* fetch runs the tool's
+# own binary, so the spec has to be one string used in both places. Bakta is the
+# case that makes this mandatory rather than tidy: db 6.x is required by bakta
+# 1.12.x and refused by nothing else, so a pin that drifted between the tool and
+# its download would fetch a database the tool then rejects at runtime.
+_BAKTA_SPEC = "bioconda::bakta>=1.10"
+_AMRFINDER_SPEC = "bioconda::ncbi-amrfinderplus"
+
+# What a plain URL fetch needs. Present in the pixi environment and on any
+# Linux; declared because under `--use-conda` a download rule gets exactly the
+# environment it asks for and nothing else.
+_FETCH_TOOLS = ("conda-forge::curl", "conda-forge::tar")
 
 _CHECKM2_URL = "https://zenodo.org/records/14897628/files/checkm2_database.tar.gz?download=1"
 
@@ -47,33 +62,64 @@ CHECKM2_DB = Database(
          str(db / "checkm2" / "checkm2.dmnd")],
         ["rm", "-f", str(db / "checkm2" / "db.tar.gz")],
     ],
+    conda=_FETCH_TOOLS,
     ready="checkm2/checkm2.dmnd",
 )
 
+# r232, because that is what the tool demands — not a preference. GTDB-Tk
+# 2.7.2's `config/common.py` reads `COMPATIBLE_REF_DATA_VERSIONS = ['r232']`,
+# so it refuses anything else outright. This was r226 for a day, which the
+# installed tool would have rejected after a 141.4 GB download.
+#
+# The version coupling runs both ways and is the same shape as bakta's: pinning
+# the tool without moving the database, or the database without moving the pin,
+# is a runtime failure rather than a solve failure.
 _GTDB_URL = (
-    "https://data.gtdb.aau.ecogenomic.org/releases/release226/226.0/"
-    "auxillary_files/gtdbtk_package/full_package/gtdbtk_r226_data.tar.gz"
+    "https://data.gtdb.aau.ecogenomic.org/releases/release232/232.0/"
+    "auxillary_files/gtdbtk_package/full_package/gtdbtk_r232_data.tar.gz"
 )
 
 GTDB_DB = Database(
     name="gtdb",
     url=_GTDB_URL,
-    size=141_442_235_198,  # measured 2026-09-01 — 91% of the whole install
-    # --strip-components=1 drops the tarball's own `release226/` wrapper so
+    # 60.8 GB, measured from content-length 2026-09-02 — less than half of
+    # r226's 141.4 GB. GTDB-Tk 2.7 replaced FastANI and Mash with skani, so the
+    # package no longer carries the reference genomes that dominated it; the
+    # first directory in the tarball is now `skani/database/sketches.db`.
+    size=60_806_405_195,
+    # Published by the mirror at `<release>/MD5SUM.txt`. Not checked by the
+    # fetch — hashing 60.8 GB takes minutes — but it is the way to tell a
+    # truncated download from a corrupt one when the extraction fails.
+    md5="25a59e0352b1fd150c589f56559767d4",
+    # --strip-components=1 drops the tarball's own `release232/` wrapper so
     # GTDBTK_DATA_PATH can be the directory we chose rather than a name that
-    # changes every release.
+    # changes every release. Verified 2026-09-02 by listing the first entries
+    # of the stream — `curl -r 0-3000000 <url> | tar -tzf -` — rather than by
+    # downloading 60.8 GB to find out.
     #
-    # UNVERIFIED: 141.4 GB has never been downloaded, so neither the wrapper
-    # directory nor anything inside it has been seen. The stamp is used
-    # precisely because no interior filename can be asserted.
+    # The stamp remains the `ready` file: the wrapper is known now, but no
+    # interior filename is, and a stamp is honest about that.
+    # `-C -` because this is a six-hour transfer at the 3.0 MB/s measured from
+    # thylakoid, and `--retry` alone does not resume: measured 2026-09-02, a
+    # retried transfer truncated the file and restarted from byte 0. The mirror
+    # sends `accept-ranges: bytes`, and a re-run of this rule now continues a
+    # partial tarball instead of re-fetching 60.8 GB.
+    #
+    # The cost is one narrow case: if the tarball is *complete* but the
+    # extraction failed, `-C -` asks for a range past the end and the mirror
+    # answers 416, so curl exits 22 and the rule fails until the tarball is
+    # deleted by hand. That is loud and costs one `rm`; the alternative was
+    # silent and cost thirteen hours.
     fetch=lambda db: [
         ["mkdir", "-p", str(db / "gtdb")],
-        ["curl", "-fSL", "--retry", "3", "-o", str(db / "gtdb" / "db.tar.gz"), _GTDB_URL],
+        ["curl", "-fSL", "--retry", "3", "-C", "-",
+         "-o", str(db / "gtdb" / "db.tar.gz"), _GTDB_URL],
         ["tar", "-xzf", str(db / "gtdb" / "db.tar.gz"), "-C", str(db / "gtdb"),
          "--strip-components=1"],
         ["rm", "-f", str(db / "gtdb" / "db.tar.gz")],
         ["touch", str(db / "gtdb" / ".fetched")],
     ],
+    conda=_FETCH_TOOLS,
 )
 
 # v2 used `--type full` (30 GB compressed / 84 GB on disk). v3 uses light.
@@ -98,6 +144,8 @@ BAKTA_DB = Database(
         ["mv", str(db / ".bakta_dl" / "db-light"), str(db / "bakta")],
         ["rm", "-rf", str(db / ".bakta_dl")],
     ],
+    # `bakta_db` is Bakta's own script, so this fetch needs Bakta itself.
+    conda=(_BAKTA_SPEC,),
     ready="bakta/version.json",  # verified to exist in a real db v6.0 light
 )
 
@@ -115,6 +163,14 @@ AMRFINDER_DB = Database(
         ["mkdir", "-p", str(db / "amrfinder")],
         ["touch", str(db / "amrfinder" / ".updated")],
     ],
+    # The fetch *is* the tool, so under `--use-conda` the data lands in the
+    # environment Snakemake built for *this rule* — and the analysis rules have
+    # to end up in that same environment or they will not find it. They do,
+    # because Snakemake addresses a deployed environment by
+    # md5(realpath(envs_dir) + env file content) (read from conda.py in 9.26.1),
+    # so byte-identical env files under one --conda-prefix are one directory on
+    # disk. Sharing the spec string is what keeps them byte-identical.
+    conda=(_AMRFINDER_SPEC,),
     ready="amrfinder/.updated",
     out_of_tree=True,
 )
@@ -165,15 +221,52 @@ gtdbtk = Tool(
     name="gtdbtk",
     summary="Taxonomic assignment against the GTDB reference tree.",
     scope=Scope.SET,
-    conda=("bioconda::gtdbtk",),
+    # Pinned because the database is: only 2.7+ accepts r232, and the URL above
+    # is r232. An older build would install cleanly and refuse the data.
+    conda=("bioconda::gtdbtk>=2.7",),
     # Each genome lives in its own directory once inputs are canonicalised, so
-    # --genome_dir cannot be used; the rule writes a batchfile first.
-    # GTDB-Tk also emits bac120 and ar53 summaries separately, and the rule
-    # concatenates them so archaea and bacteria appear in one table.
+    # --genome_dir cannot be used and GTDB-Tk takes a --batchfile instead.
+    #
+    # Both of the steps around this command were described in a comment here
+    # for a day without existing, which is worse than not having them: the rule
+    # named a batchfile nothing created, so the command would have failed on its
+    # first line, and it declared a summary file the tool never writes under
+    # that name, so the job would have failed on a missing output even if the
+    # command had worked. Neither had ever been executed, so neither showed up.
+    # No `--skip_ani_screen`: that flag does not exist in 2.7.2. It belonged to
+    # the versions whose ANI screen used Mash and needed either `--mash_db` or
+    # permission to skip it; 2.7 screens with skani from the reference package
+    # and the flag is gone. Checked against the installed tool's own `--help`,
+    # which is the only place this was discoverable — the drafted command would
+    # have died on `unrecognized arguments`.
     command=lambda c: [
-        "gtdbtk", "classify_wf", "--cpus", str(c.threads), "--skip_ani_screen",
-        "--batchfile", str(c.out("gtdbtk", "batchfile.tsv")),
+        "gtdbtk", "classify_wf", "--cpus", str(c.threads),
+        "--batchfile", str(c.workdir / ".comparem2" / "gtdbtk_batchfile.tsv"),
         "--out_dir", str(c.out("gtdbtk")),
+    ],
+    # Two columns, tab separated, no header: FASTA path, then the genome id.
+    # The id is the sample name, which is already wildcard-safe, and which is
+    # what makes the summary joinable to every other tool's output.
+    #
+    # Kept in `.comparem2/` beside the Snakefile rather than in the tool's own
+    # output directory: it is a generated file of the same kind, and putting a
+    # rule's input inside the directory the tool writes to invites the tool to
+    # remove it.
+    files=lambda c: {
+        c.workdir / ".comparem2" / "gtdbtk_batchfile.tsv": "".join(
+            f"{c.sample_out(s, f'{s}.fna')}\t{s}\n" for s in c.samples),
+    },
+    # GTDB-Tk writes `<prefix>.bac120.summary.tsv` and `<prefix>.ar53.summary.tsv`
+    # separately, and an all-bacterial set produces no ar53 file at all. Both
+    # candidate directories are passed because the documentation does not say
+    # which one classify_wf uses, and it has differed between versions.
+    post=lambda c: [
+        [sys.executable, "-m", "comparem2.steps", "merge-tsv",
+         "--out", str(c.out("gtdbtk", "gtdbtk.summary.tsv")),
+         str(c.out("gtdbtk", "*.bac120.summary.tsv")),
+         str(c.out("gtdbtk", "*.ar53.summary.tsv")),
+         str(c.out("gtdbtk", "classify", "*.bac120.summary.tsv")),
+         str(c.out("gtdbtk", "classify", "*.ar53.summary.tsv"))],
     ],
     outputs=lambda c: [c.out("gtdbtk", "gtdbtk.summary.tsv")],
     # GTDB-Tk takes its database location *only* from the environment; there is
@@ -199,7 +292,7 @@ bakta = Tool(
     name="bakta",
     summary="Structural and functional genome annotation.",
     scope=Scope.GENOME,
-    conda=("bioconda::bakta>=1.10",),
+    conda=(_BAKTA_SPEC,),
     command=lambda c: [
         "bakta", "--db", str(c.databases / "bakta"), "--threads", str(c.threads),
         "--output", str(c.out("bakta")), "--prefix", str(c.sample), *c.args(),
@@ -220,7 +313,7 @@ amrfinder = Tool(
     name="amrfinder",
     summary="Antimicrobial resistance and virulence genes.",
     scope=Scope.GENOME,
-    conda=("bioconda::ncbi-amrfinderplus",),
+    conda=(_AMRFINDER_SPEC,),
     # Protein-only mode, as v2 used. Combined nucleotide+protein mode calls
     # better in principle, but AMRFinder cross-checks contig identifiers
     # between the GFF and the FASTA, and Bakta renames contigs to `contig_1`

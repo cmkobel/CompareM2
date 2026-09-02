@@ -28,18 +28,25 @@ typed. Results land next to the genomes.
 | `--until TOOL...` | *(all)* | run only these tools and their dependencies |
 | `--set TOOL--FLAG=VALUE` | — | override a tool argument; repeatable |
 | `--tui` | off | interactive keyboard interface |
+| `--use-conda` | off | let Snakemake deploy each tool's environment |
+| `--conda-prefix DIR` | `~/.comparem2/envs` | where those environments go |
 | `--isolated-launcher CMD` | — | how to enter an isolated tool's environment |
 | `--keep-going` | off | keep running independent tools after a failure |
 | `--dry-run` | off | show what would run |
 | `--report-only` | off | re-render the report from existing outputs |
+| `--version` | | print the version and exit |
+
+`--use-conda` is for a CompareM2 installed without its tools — see
+[Installation](10 installation.md). It does not combine with
+`--isolated-launcher`, which is the same job done by hand for one tool.
 
 ## Where databases go
 
 Databases are shared across runs, not stored per-run: the default is
 `~/.comparem2/databases`, the same location whatever directory you invoke from
 and outside any checkout, so deleting a checkout does not cost a re-download.
-The full set is 143.2 GB of measured downloads plus two of unmeasured size,
-and 141.4 GB of that is GTDB alone.
+The full set is 62.5 GB of measured downloads plus two of unmeasured size,
+and 60.8 GB of that is GTDB alone.
 
 A home directory is the wrong place for that on a cluster with a home quota, so
 set the location once:
@@ -52,7 +59,7 @@ Precedence is `-d`, then `$COMPAREM2_DATABASES`, then `~/.comparem2/databases`.
 Whichever wins is printed before anything is fetched:
 
 ```
-to download: checkm2, gtdb, bakta-light, amrfinder (143.2 GB + 2 of unknown size) -> /evo/postdoc/cm2-databases
+to download: checkm2, gtdb, bakta-light, amrfinder (62.5 GB + 2 of unknown size) -> /evo/postdoc/cm2-databases
 ```
 
 Only what is actually missing is listed, so this shrinks to nothing once the
@@ -96,7 +103,7 @@ follow. Some useful combinations:
 # Fast, no databases at all
 --until seqkit mashtree treecluster skani
 
-# Everything except the 141 GB GTDB download
+# Everything except the 60.8 GB GTDB download
 --until seqkit checkm2 bakta amrfinder mlst mashtree treecluster skani \
         panaroo snp-dists fasttree carveme
 ```
@@ -150,7 +157,7 @@ the selection, and `--set`, `--keep-going` and `-d` are all honoured:
 pixi run cm2 *.fna --tui --until mashtree treecluster
 ```
 
-Without `--until` everything is selected, which includes GTDB-Tk and its 141.4
+Without `--until` everything is selected, which includes GTDB-Tk and its 60.8
 GB. Read the size on the second line before pressing `r`.
 
 `--dry-run` is refused with `--tui`, because the tool list is already the dry
@@ -178,7 +185,8 @@ results_comparem2/
 ├── <tool>/…                       whole-set results
 └── .comparem2/
     ├── Snakefile                  generated from the tool specs
-    ├── envs/                      generated conda envs for isolated tools
+    ├── envs/                      one generated conda env per tool and download
+    ├── gtdbtk_batchfile.tsv       generated input: genome path, genome id
     └── log/                       one log per step
 ```
 

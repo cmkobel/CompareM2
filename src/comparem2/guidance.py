@@ -84,7 +84,7 @@ GTDB = Citation("Parks DH, Chuvochina M, Rinke C, Mussig AJ, Chaumeil P-A, Hugen
                 "through a phylogenetically consistent, rank normalized and complete "
                 "genome-based taxonomy. Nucleic Acids Research 50:D785–D794",
                 "10.1093/nar/gkab776",
-                note="Cite alongside GTDB-Tk, and record the release — this run used r226.")
+                note="Cite alongside GTDB-Tk, and record the release — this run used r232.")
 BAKTA = Citation("Schwengers O, Jelonek L, Dieckmann MA, Beyvers S, Blom J, Goesmann A "
                  "(2021) Bakta: rapid and standardized annotation of bacterial genomes "
                  "via alignment-free sequence identification. Microbial Genomics 7:000685",

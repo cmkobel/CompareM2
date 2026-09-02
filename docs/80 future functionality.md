@@ -25,8 +25,9 @@ gapseq, antiSMASH, IQ-TREE, clusterProfiler and Prokka.
 
 Genuinely wanted, not yet in:
 
-  - **A faster provisional taxonomy** than GTDB-Tk, whose 141.4 GB database is
-    91% of the entire install. The requirement is that it takes *assemblies* —
+  - **A faster provisional taxonomy** than GTDB-Tk, whose 60.8 GB database is
+    97% of the measured database total. Less pressing since r232 more than
+    halved it. The requirement is that it takes *assemblies* —
     sylph was tried and removed because it profiles metagenomic reads, which is
     not the question being asked here.
   - **Aligned fraction alongside ANI.** skani computes it, but `triangle
