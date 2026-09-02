@@ -33,16 +33,27 @@ def parse_overrides(settings: list[str]) -> dict[str, tuple[tuple[str, str], ...
     Overrides are merged onto the tool's defaults: naming one flag replaces
     only that flag, which is what v2's config-file passthrough did. A flag with
     an empty value is passed bare.
+
+    The flag keeps whatever dashes it was written with, so both `skani-c=125`
+    and `treecluster--threshold=0.1` work. An earlier version split on the
+    first `--` and prepended `--` to whatever followed, which could not express
+    a single-dash flag at all: `skani-c=125` was rejected outright, and
+    `skani--c=125` silently produced `-c 70 --c 125` — failing to replace the
+    default *and* inventing a flag skani does not have.
+
+    Tool names may themselves contain a dash (`snp-dists`), so the tool is
+    matched against the catalogue longest-first rather than found by splitting.
     """
+    known = sorted((t.name for t in CATALOGUE), key=len, reverse=True)
     merged: dict[str, dict[str, str]] = {}
     for setting in settings:
-        if "--" not in setting:
-            raise SystemExit(f"--set needs TOOL--FLAG=VALUE, got {setting!r}")
-        tool, _, rest = setting.partition("--")
-        flag, sep, value = rest.partition("=")
-        if tool not in CATALOGUE:
-            raise SystemExit(f"--set names unknown tool {tool!r}")
-        merged.setdefault(tool, dict(CATALOGUE[tool].params))["--" + flag] = value if sep else ""
+        tool = next((n for n in known if setting.startswith(n + "-")), None)
+        if tool is None:
+            raise SystemExit(
+                f"--set needs TOOL-FLAG=VALUE with a known tool, got {setting!r}"
+            )
+        flag, sep, value = setting[len(tool):].partition("=")
+        merged.setdefault(tool, dict(CATALOGUE[tool].params))[flag] = value if sep else ""
 
     return {
         tool: tuple(flags.items())

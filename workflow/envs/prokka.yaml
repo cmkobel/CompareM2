@@ -1,9 +1,0 @@
-name: prokka
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - prokka =1
-  - openjdk <=17.0.2
-  
-

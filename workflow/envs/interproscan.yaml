@@ -1,9 +1,0 @@
-name: interproscan
-channels: 
-  - conda-forge
-  - bioconda
-dependencies:
-  - interproscan =5
-
-# conda install -c bioconda interproscan 
-

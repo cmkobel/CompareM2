@@ -1,51 +1,62 @@
 # CompareM2
 
-CompareM2 is a genomes-to-report pipeline for comparing microbial genomes. Given bacterial or archaeal genome assemblies — isolates or MAGs — it runs 30+ analysis tools and produces a portable HTML report with publication-ready graphics.
+CompareM2 takes microbial genome assemblies — isolates or MAGs, from any
+sequencing technology — and produces one portable HTML report comparing them.
+
+!!! warning "These docs describe v3, which is in development"
+    v3 is a rewrite and is not released. For the published, installable version
+    see the [v2 documentation](https://comparem2.readthedocs.io/en/stable/) or
+    the [`master` branch](https://github.com/cmkobel/comparem2/tree/master).
 
 !!! note
-    If you're looking for the original CompareM (AAI and codon usage), see [github.com/donovan-h-parks/CompareM](https://github.com/donovan-h-parks/CompareM).
+    Looking for the original CompareM (AAI and codon usage)? See
+    [github.com/donovan-h-parks/CompareM](https://github.com/donovan-h-parks/CompareM).
+
+## A wide view, not a deep one
+
+v3 is triage across many assemblies rather than a deep dive into each. Deep
+functional and metabolic analysis is where DRAM2 and nf-core/funcscan are
+already strong; a fast, wide sweep over a large set is not well served, and it
+is what CompareM2's benchmark result — near-linear scaling with input count —
+actually supports.
+
+Narrowing the scope is what pays for everything else: **13 tools instead of
+30+, one conda environment instead of 25, 1.58 GB of software.**
 
 ## What it does
 
-- **Quality control** — assembly statistics, completeness and contamination (CheckM2)
-- **Annotation** — Bakta or Prokka, with functional annotation via eggNOG, InterProScan, dbCAN, and antiSMASH
-- **Resistance and virulence** — AMRFinderPlus, MLST
-- **Phylogenetics and taxonomy** — Mashtree, FastTree, IQ-TREE, GTDB-Tk, SNP distances
-- **Pan/core genomes** — Panaroo
-- **Metabolic modeling** — gapseq, KEGG pathway enrichment
+  - **Quality** — contig lengths, GC and N50 (SeqKit); completeness and
+    contamination (CheckM2)
+  - **Taxonomy** — GTDB-Tk against the Genome Taxonomy Database
+  - **Annotation** — Bakta
+  - **Screening** — antimicrobial resistance and virulence (AMRFinderPlus),
+    sequence typing (MLST)
+  - **Relatedness** — alignment-free tree (Mashtree), clusters (TreeCluster),
+    all-against-all ANI (skani)
+  - **Pangenome** — core and accessory gene content (Panaroo), SNP distances,
+    core-genome tree (FastTree)
+  - **Metabolism** — draft genome-scale metabolic models (CarveMe)
 
-See the [full list of analyses](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/).
+See [what analyses does it do](30 what analyses does it do.md) for the full
+reference, generated from the tool specs themselves.
 
-## Get started
+## The report explains itself
 
-```bash
-# Install
-pixi global install -c conda-forge -c bioconda comparem2
+Every section says what the tool does, how to read the specific columns on
+screen, and what the result *cannot* tell you — with the numbers quoted from
+each tool's own paper and checked against it. The report ends with a *Methods
+and citations* list covering exactly the tools that ran, which is the thing you
+paste into a manuscript.
 
-# Run fast analyses
-comparem2 --config input_genomes="*.fna" --until fast
+That matters more than it sounds. A completeness of 92% and one of 94% are not
+meaningfully different — CheckM2's own mean absolute error is 2.1±2.9% — and a
+report that prints both without saying so invites a conclusion the data will
+not support.
 
-# Run everything
-comparem2
-```
+## Where to start
 
-See the [quick start guide](https://comparem2.readthedocs.io/en/latest/05%20quick%20start/) or [installation instructions](https://comparem2.readthedocs.io/en/latest/10%20installation/) for details.
-
-## How it works
-
-CompareM2 is a Snakemake pipeline. It automatically selects which analyses to run based on the number of input genomes, manages all software dependencies via conda environments or a pre-built Docker/Apptainer image, and collects results into a single HTML report.
-
-It is **assembly-agnostic** — it works strictly downstream of assembly and binning. Bring genomes from any sequencing technology or source, and CompareM2 handles the rest. This is a deliberate design choice: read mapping, assembly, and binning are highly dependent on sequencing technology and are best handled by specialized tools. CompareM2 focuses on what comes after.
-
-The dynamic report only includes sections for analyses that completed, so it adapts to partial runs. It is designed to be interpretable by non-bioinformaticians, with explanatory text and figures alongside the results.
-
-Benchmarking showed that CompareM2 scales approximately linearly with input size thanks to Snakemake's parallel job scheduling, and is significantly faster than comparable tools like Tormes and Bactopia ([Kobel et al. 2025](https://doi.org/10.1093/bioinformatics/btaf517)).
-
-## Links
-
-- **Documentation**: [comparem2.readthedocs.io](https://comparem2.readthedocs.io)
-- **Source code**: [github.com/cmkobel/CompareM2](https://github.com/cmkobel/CompareM2)
-- **Issues and questions**: [github.com/cmkobel/CompareM2/issues](https://github.com/cmkobel/CompareM2/issues)
-- **Citation**: Kobel et al. *Bioinformatics* 41, btaf517 (2025). [doi:10.1093/bioinformatics/btaf517](https://doi.org/10.1093/bioinformatics/btaf517)
-
-{!resources/footer.md!}
+  - [Quick start](05 quick start.md) — install and run
+  - [Installation](10 installation.md) — pixi, databases, HPC
+  - [Usage](20 usage.md) — the CLI, the TUI, passthrough parameters
+  - [What analyses does it do](30 what analyses does it do.md) — the 13 tools
+  - [Citing](99 citation.md) — CompareM2 and every tool it runs

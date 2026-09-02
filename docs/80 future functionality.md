@@ -1,24 +1,54 @@
-
-
 # Future functionality
 
-Tools we may integrate into CompareM2 when time allows.
+## What v3 deliberately does not do
 
-**Per-genome analyses**
+v3 is a wide view over many assemblies, not a deep view into each one. Some
+things are out of scope by choice rather than for lack of time, and knowing
+which is which saves everyone an issue:
 
-  - [AlphaFold](https://github.com/google-deepmind/alphafold) — Neural network protein structure prediction.
-  - [DRAM](https://github.com/WrightonLabCSU/DRAM) — Metabolic interpretation via distilled genome annotations.
-  - [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html) — Replication origin identification in chromids.
-  - [RFplasmid](https://github.com/aldertzomer/RFPlasmid) — Plasmid identification using pentamer random forests.
-  - [distillR](https://github.com/anttonalberdi/distillR) — Graph-based metabolic capacity indices from functional annotations.
+  - **Deep functional and metabolic interpretation** — this is where
+    [DRAM2](https://github.com/WrightonLabCSU/DRAM) and
+    [nf-core/funcscan](https://nf-co.re/funcscan) are already strong. v3 will
+    not compete with them.
+  - **Read-level processing** — mapping, assembly and binning are highly
+    dependent on sequencing technology. CompareM2 works strictly downstream of
+    them, which is what makes it technology-independent.
+  - **Biosynthetic gene clusters** — antiSMASH was selected for v3 and then
+    dropped: it pins `biopython 1.78` and `diamond 2.1.11` against the newer
+    versions CheckM2, Bakta and GTDB-Tk need, and one solved environment was
+    judged worth more than one BGC caller. funcscan ships four.
 
-**Cross-genome analyses**
+Dropped from v2 for the same reason: eggNOG-mapper, InterProScan, dbCAN,
+gapseq, antiSMASH, IQ-TREE, clusterProfiler and Prokka.
 
-  - GC3-profiling — Synonymous GC-content distribution fingerprinting.
-  - Recombination detection in core genome using Bruen's PHI statistic or ClonalFrameML.
-  - Identification of horizontally transferred genes.
+## Candidates
 
-Please [open an issue](https://github.com/cmkobel/comparem2/issues) if you have ideas or requests.
+Genuinely wanted, not yet in:
 
+  - **A faster provisional taxonomy** than GTDB-Tk, whose 141.4 GB database is
+    91% of the entire install. The requirement is that it takes *assemblies* —
+    sylph was tried and removed because it profiles metagenomic reads, which is
+    not the question being asked here.
+  - **Aligned fraction alongside ANI.** skani computes it, but `triangle
+    --full-matrix` emits identity only, and an ANI is reported once alignment
+    covers as little as ~15% of a genome. Identity without coverage is half the
+    picture.
+  - **Recombination detection** in the core genome — Bruen's PHI statistic or
+    ClonalFrameML. The core-genome tree currently assumes one shared history for
+    all genes, which recombination breaks.
+  - **Plasmid identification** — [RFplasmid](https://github.com/aldertzomer/RFPlasmid)
+    or similar. Panaroo's `--clean-mode strict` can remove rare plasmids, so
+    this is partly a correction.
+  - **Replication origin identification** —
+    [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html).
+  - **GC3 profiling** — synonymous GC-content fingerprinting.
+  - **Horizontally transferred gene identification.** The pangenome section can
+    already point at candidates: a gene pattern shared by genomes that are not
+    neighbours in the tree.
 
-{!resources/footer.md!}
+Anything added has to declare its database size in bytes and solve into the
+existing environment. Both are hard constraints, not preferences — see
+`DESIGN.md`.
+
+Please [open an issue](https://github.com/cmkobel/comparem2/issues) if you have
+ideas or requests.

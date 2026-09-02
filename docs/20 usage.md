@@ -1,265 +1,130 @@
 # Usage
 
-CompareM2 is built on top of Snakemake. Pipeline parameters are passed via `--config`, and all [Snakemake command-line options](https://snakemake.readthedocs.io/en/stable/executing/cli.html) are available.
-
-```txt
-comparem2 [ --config KEY=VALUE [KEY2=VALUE]... ]
-  [ --until RULE [RULE2]... ]
-  [ --forcerun RULE [RULE2]... ]
-  [ --downloads ]
-  [ --printshellcmds ]
-  [ --dry-run ]
-  [ --status ]
-  [ --version ]  [ --help ]  [ --cite ]
+```bash
+pixi run cm2 <assemblies>... [options]
 ```
 
-
-## Examples
-
-Run all analyses on all genome files (`*.fna *.fa *.fasta *.fas`) in the current directory:
+Assemblies are passed as paths, not as a glob string. In v2 this was
+`--config input_genomes="*.fna"`; now the shell expands it:
 
 ```bash
-comparem2
+pixi run cm2 genomes/*.fna
 ```
 
-Run only the fast analyses:
+## Options
 
-```bash
-comparem2 --until fast
-```
-
-Specify input and output paths:
-
-```bash
-comparem2 --config input_genomes="path/to/genomes_*.fna" output_directory="my_analysis"
-```
-
-Use a file-of-filenames (fofn):
-
-```bash
-ls path/to/*.fna > my_fofn.txt
-comparem2 --config fofn="my_fofn.txt"
-```
-
-Dry run (preview what will run without executing):
-
-```bash
-comparem2 --config input_genomes="path/to/genomes_*.fna" --dry-run
-```
-
-Analyze NCBI reference genomes by accession:
-
-```bash
-comparem2 --config add_ncbi="GCF_009734005.1,GCF_029023785.1"
-```
-
-Use Prokka instead of the default Bakta annotator:
-
-```bash
-comparem2 --config annotator="prokka"
-```
-
-Combine options — run fast analyses plus panaroo with Bakta annotation:
-
-```bash
-comparem2 --config input_genomes="path/to/genomes_*.fna" --until fast panaroo
-```
-
-Pass a parameter directly to an underlying tool:
-
-```bash
-comparem2 --config set_panaroo--threshold=0.95 --until fast panaroo
-```
-
-
-## Configuration reference
-
-### Input genomes (`input_genomes`)
-
-A glob pattern specifying which genome files to analyze. The default picks up all common FASTA extensions in the current directory:
-
-  - `input_genomes="*.fna *.fa *.fasta *.fas"` (default)
-  - `input_genomes="path/to/my/genomes*.fna"`
-  - `input_genomes="path/genome1.fna path/genome2.fna"`
-
-### File of file names (`fofn`)
-
-For larger sets of genomes, list paths in a text file (one per line). When set, `fofn` overrides `input_genomes`:
-
-```bash
-ls *.fna > fofn.txt
-comparem2 --config fofn="fofn.txt"
-```
-
-### Pre-annotated NCBI reference genomes (`add_ncbi`)
-
-Add reference genomes from [NCBI/GenBank](https://www.ncbi.nlm.nih.gov/datasets/genome/) by accession. Genomes and their [PGAP](https://www.ncbi.nlm.nih.gov/ncbi/annotation_prok/process/) annotations are downloaded automatically via [NCBI Datasets](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/command-line-tools/download-and-install/). Multiple accessions are comma-separated:
-
-```bash
-comparem2 --config add_ncbi="GCF_029023785.1,GCF_009734005.1"
-```
-
-### Output directory (`output_directory`)
-
-Where results are written. Default: `results_comparem2`.
-
-```bash
-comparem2 --config output_directory="my_results"
-```
-
-### Annotation tool (`annotator`)
-
-CompareM2 ships with two annotators:
-
-  - **`bakta`** (default) — recommended for bacteria
-  - **`prokka`** — also supports archaea
-
-The choice of annotator affects many downstream analyses, as tools like panaroo, eggnog, and interproscan consume its output.
-
-```bash
-comparem2 --config annotator="prokka"
-```
-
-### Report title (`title`)
-
-Custom title for the HTML report. Defaults to the name of the current working directory.
-
-
-## Passthrough arguments
-
-CompareM2 can forward arbitrary command-line arguments to any underlying tool using a `set_` prefix in the config. The syntax is:
-
-```
-set_<rule><option>=<value>
-```
-
-Where `<rule>` is the Snakemake rule name, `<option>` is the tool's command-line flag (including dashes), and `<value>` is the parameter value.
-
-**Example:** Set Prokka's `--kingdom` flag to `archaea`:
-
-```bash
-comparem2 --config set_prokka--kingdom=archaea
-```
-
-**Flag-only arguments** (no value) use an empty string:
-
-```bash
-comparem2 --config set_prokka--rfam=""
-```
-
-**Multiple passthrough arguments** can be combined:
-
-```bash
-comparem2 --config set_prokka--kingdom=archaea set_panaroo--threshold=0.95 --until panaroo fast
-```
-
-The [default passthrough arguments](https://github.com/cmkobel/CompareM2/blob/master/config/config.yaml) can be overridden by specifying the same key on the command line.
-
-### Validating passthrough arguments
-
-Use `-p --dry-run` to preview the generated shell commands and verify that your arguments are being passed correctly:
-
-```bash
-comparem2 --config set_panaroo--threshold=0.99 --until panaroo -p --dry-run
-#> [...]
-#>    panaroo \
-#>        -o results_comparem2/panaroo \
-#>        -t 16 \
-#>        --clean-mode sensitive \
-#>        --core_threshold 0.95 \
-#>        --threshold 0.99 \
-#> [...]
-```
-
-
-## Snakemake options
-
-### `--until RULE [RULE2]...`
-
-Run only the specified rule(s) and their dependencies. Multiple rules can be listed. Available rules:
-
-`abricate` `amrfinder` `annotate` `antismash` `assembly_stats` `bakta` `bootstrap_mashtree` `carveme` `checkm2` `copy` `dbcan` `eggnog` `fasttree` `gapseq_find` `gapseq_fill` `gtdbtk` `interproscan` `iqtree` `kegg_pathway` `mashtree` `mlst` `panaroo` `prokka` `sequence_lengths` `snp_dists` `treecluster`
-
-Download rules: `antismash_download` `bakta_download` `checkm2_download` `dbcan_download` `eggnog_download` `gtdb_download`
-
-### Pseudo-rules
-
-Pseudo-rules are shortcuts that run a curated set of analyses:
-
-| Pseudo-rule | Description | Included analyses |
+| Option | Default | What it does |
 |---|---|---|
-| `fast` | Completes in seconds; useful for testing | sequence_lengths, assembly-stats, mashtree |
-| `meta` | Analyses relevant for MAGs | annotation, assembly-stats, sequence_lengths, checkm2, eggnog, kegg_pathway, dbcan, interproscan, gtdbtk, mashtree |
-| `isolate` | Analyses relevant for clinical isolates | annotation, assembly-stats, sequence_lengths, eggnog, kegg_pathway, gtdbtk, mlst, amrfinder, panaroo, fasttree, snp-dists, mashtree |
-| `downloads` | Download and set up all databases | All database download rules |
-| `report` | Re-render the report only | Report generation |
+| `-o`, `--output` | `results_comparem2` | output directory |
+| `-d`, `--databases` | `databases` | where databases live |
+| `-t`, `--cores` | `4` | cores for Snakemake |
+| `--until TOOL...` | *(all)* | run only these tools and their dependencies |
+| `--set TOOL--FLAG=VALUE` | — | override a tool argument; repeatable |
+| `--tui` | off | interactive keyboard interface |
+| `--isolated-launcher CMD` | — | how to enter an isolated tool's environment |
+| `--keep-going` | off | keep running independent tools after a failure |
+| `--dry-run` | off | show what would run |
+| `--report-only` | off | re-render the report from existing outputs |
 
-Usage: `comparem2 --until meta` or `comparem2 --until isolate`
+## Sample names
 
-### `--forcerun RULE [RULE2]...`
+Every input is linked to `<output>/samples/<name>/<name>.fna`, and that is what
+every tool reads. The name comes from the filename stem with anything outside
+`[A-Za-z0-9._-]` replaced by `_`, because a space in a filename otherwise
+produces a silently broken workflow rule. CompareM2 tells you when it renames:
 
-Force re-execution of completed rules. Necessary when changing config parameters for a rule that has already run.
-
-### `--printshellcmds`, `-p`
-
-Print the generated shell command for each rule.
-
-### `--dry-run`
-
-Show what would run without executing anything.
-
-
-## CompareM2-specific options
-
-These options do not invoke the Snakemake pipeline.
-
-| Option | Description |
-|---|---|
-| `--downloads` | Download all databases without running analyses |
-| `--status` | Show completion status of each rule in the current project directory |
-| `--version`, `-v` | Show version |
-| `--help`, `-h` | Show help |
-| `--cite` | Show citation information |
-
-
-## Output structure
-
-CompareM2 writes all results to the output directory (default: `results_comparem2/`). Per-sample results are in `samples/<sample>/`, and cross-sample results are in the root.
-
-The report is named `report_<title>.html`, where `<title>` defaults to the current working directory name.
-
-```txt
-results_comparem2/
-├── amrfinder/
-├── assembly-stats/
-├── benchmarks/
-├── checkm2/
-├── fasttree/
-├── gtdbtk/
-├── iqtree/
-├── kegg_pathway/
-├── mashtree/
-├── metadata.tsv
-├── mlst/
-├── panaroo/
-├── report_<title>.html
-├── samples/
-│  └── <sample>/
-│     ├── <sample>.fna
-│     ├── antismash/
-│     ├── bakta/
-│     ├── dbcan/
-│     ├── eggnog/
-│     ├── gapseq/
-│     ├── interproscan/
-│     ├── prokka/
-│     └── sequence_lengths/
-├── snp-dists/
-├── visuals/
-├── treecluster/
-└── version_info.txt
+```
+note: '116_2 duplicate.fna' -> sample '116_2_duplicate'
 ```
 
-For per-tool file details, consult the respective tool's documentation.
+Two inputs that reduce to the same name is an error, not a silent overwrite.
 
-{!resources/footer.md!}
+## Running a subset
+
+`--until` takes tool names and pulls in whatever they need:
+
+```bash
+pixi run cm2 *.fna --until fasttree     # runs bakta, panaroo, fasttree
+pixi run cm2 *.fna --until seqkit skani # runs just those two
+```
+
+There are no fixed pseudo-targets like v2's `fast` and `isolate`. The
+dependency closure replaces them: name what you want and the prerequisites
+follow. Some useful combinations:
+
+```bash
+# Fast, no databases at all
+--until seqkit mashtree treecluster skani
+
+# Everything except the 141 GB GTDB download
+--until seqkit checkm2 bakta amrfinder mlst mashtree treecluster skani \
+        panaroo snp-dists fasttree carveme
+```
+
+## Passthrough parameters
+
+Any argument can be forwarded to any tool:
+
+```bash
+pixi run cm2 *.fna \
+  --set treecluster--threshold=0.1 \
+  --set skani-c=125 \
+  --set bakta--gram=+
+```
+
+Naming one flag replaces only that flag — the tool's other defaults stay. A flag
+with no value is passed bare: `--set bakta--force=`.
+
+Every tool's defaults are listed on
+[what analyses does it do](30 what analyses does it do.md), generated from the
+specs so they cannot drift from what actually runs.
+
+!!! note "Two things worth overriding"
+    `--set skani-c=125` if all your genomes are complete isolates — the default
+    of 70 is the more accurate setting for fragmented MAGs but costs runtime.
+
+    `--set treecluster--threshold=…` if the clusters look wrong. The threshold
+    dominates the answer: TreeCluster's own paper moved from 181,574 clusters to
+    10,112 by sweeping it, so re-run at a couple of nearby values before
+    reporting a grouping.
+
+## The TUI
+
+```bash
+pixi run cm2 *.fna --tui
+```
+
+A keyboard interface over the same run: per-tool progress, the exact command
+each step is running, and failures as they happen. It drives Snakemake through
+its logger plugin system rather than scraping stdout, so the events are
+structured.
+
+## Re-rendering the report
+
+The report is regenerated on every run, but you can rebuild it alone — useful
+after a partial run, or when only the report code changed:
+
+```bash
+pixi run cm2 *.fna --report-only
+```
+
+Sections appear only when their outputs exist, so a partial run still gives a
+readable document.
+
+## Output layout
+
+```
+results_comparem2/
+├── report.html                    the product; self-contained
+├── samples/<name>/<name>.fna      canonical link to your input
+├── samples/<name>/<tool>/…        per-genome results
+├── <tool>/…                       whole-set results
+└── .comparem2/
+    ├── Snakefile                  generated from the tool specs
+    ├── envs/                      generated conda envs for isolated tools
+    └── log/                       one log per step
+```
+
+The generated `Snakefile` is a normal Snakemake workflow. If something fails,
+that file plus the matching log in `.comparem2/log/` is where to look — and you
+can run Snakemake against it directly with any profile you already use.

@@ -1,9 +1,0 @@
-name: r-clusterProfiler
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - bioconductor-clusterprofiler =4
-  - r-tidyverse
-  - r-jsonlite
-

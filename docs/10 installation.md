@@ -1,89 +1,102 @@
-
 # Installation
 
-## Install with pixi (recommended)
+!!! warning "v3 is in development"
+    No bioconda package and no container image yet. Both existed for v2 and
+    will return; for now, install from the branch.
 
-<img width="150" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/5b06b511-75c4-48cb-8ab8-f29b212ef6df">
+## Requirements
 
-It is recommended to have [Apptainer](https://Apptainer.org/docs/user/main/quick_start.html#installation-request) on your system. It allows CompareM2 to use a pre-built Docker image, which speeds up installation significantly.
+  - **Linux.** The analysis tools are `linux-64` only. On macOS you can run the
+    unit tests and render reports, but not the pipeline.
+  - **[pixi](https://pixi.prefix.dev/latest/#installation)** for the
+    environment.
+  - **Disk.** 1.58 GB of software, plus databases — see below. GTDB-Tk alone is
+    141.4 GB.
+  - **RAM.** GTDB-Tk's classify step is the peak; its own paper reports under
+    55 GB for the v2 divide-and-conquer placement. Without GTDB-Tk, far less.
 
-<img width="150" align="right" src="https://raw.githubusercontent.com/cmkobel/CompareM2/refs/heads/master/resources/pixi-logo.svg">
-
-First, install [pixi](https://pixi.prefix.dev/latest/#installation) — a fast package manager for conda-forge and bioconda packages.
-
-Then install CompareM2 globally:
-
-```bash
-pixi global install -c conda-forge -c bioconda comparem2
-```
-
-This creates an isolated environment and makes the `comparem2` command available on your PATH.
-
-!!! note
-    If you want to develop new rules in the CompareM2 pipeline, you should consider following [the development version installation instructions](https://github.com/cmkobel/comparem2/blob/master/readme-development.md). The development version contains the full git repository and is purely conda-based so you can affect the next version of the Apptainer-compatible Docker image.
-
-## Alternative: Install with mamba
-
-If you prefer conda/mamba, install CompareM2 with [Miniforge](https://github.com/conda-forge/miniforge#install):
+## Install
 
 ```bash
-mamba create -c conda-forge -c bioconda -n comparem2 comparem2
+git clone -b v3 https://github.com/cmkobel/comparem2.git
+cd comparem2
+pixi install
+pixi run pytest        # 75 unit tests, no databases needed
 ```
 
-Activate the environment before each use:
+!!! note "Moving the directory invalidates the environment"
+    Conda bakes the absolute prefix into shebangs and RPATHs, so after moving
+    the checkout you need `rm -rf .pixi && pixi install`.
+
+## Environments
+
+v3 solves **one** environment holding twelve of the thirteen tools. v2 shipped
+25.
+
+The exception is **CheckM2**, which pins DIAMOND 2.1.x while current Bakta needs
+2.2.x — they cannot co-solve. CheckM2 gets its own environment, and because
+Snakemake's shell does not inherit an interactive PATH, it needs an absolute
+launcher:
 
 ```bash
-mamba activate comparem2
+pixi run cm2 *.fna \
+  --isolated-launcher "$HOME/.pixi/bin/pixi run -e {tool}"
 ```
 
+`{tool}` is substituted with the tool name. Without this, the CheckM2 step fails
+with `command not found`.
 
-## Testing the installation
+## Databases
 
-After installation, verify everything works using the bundled test data:
+Downloaded on first use into `databases/` (change with `-d`). Sizes are measured
+from `content-length`, not estimated:
+
+| Database | Size | Needed by |
+|---|---|---|
+| GTDB r226 | **141.4 GB** | `gtdbtk` |
+| CheckM2 | 1.7 GB | `checkm2` |
+| Bakta light | ~1.3 GB (documented, unmeasured) | `bakta` |
+| AMRFinder | unmeasured | `amrfinder` |
+
+**GTDB-Tk is 91% of the total.** It stays in the default path because it is the
+authoritative answer to "what is this genome", but if you do not need taxonomy,
+leaving it out is the single biggest saving available:
 
 ```bash
-# Create a fresh working directory
-mkdir test_comparem2_install
-cd test_comparem2_install
-
-# Extract test genomes from the installation
-unzip $CONDA_PREFIX/share/comparem2-latest/tests/E._faecium/fna.zip
-
-# Run the fast pseudo-rule (should complete in about a minute)
-comparem2 --until fast
-
-# Open the generated report
-# open results_comparem2/report_test_comparem2_install.html
-
-# Download all databases (~200 GB)
-comparem2 --until downloads
-
-# Run the full pipeline (~1 cpu-hour per genome)
-comparem2
+pixi run cm2 *.fna --until seqkit checkm2 bakta amrfinder mlst \
+                           mashtree treecluster skani panaroo snp-dists fasttree
 ```
 
+CompareM2 prints the total it is about to download before it starts, and says
+explicitly when a database's size is unknown rather than silently omitting it
+from the sum.
 
-## Advanced configuration
+Bakta uses the **light** database (~1.3 GB / 3.9 GB on disk) rather than v2's
+full one (30 GB / 84 GB). That saves 29 GB for less specific functional
+annotation, which a wide view can absorb — but note the Bakta paper's
+annotation-quality figures are measured on the full database and do not
+transfer.
 
-### Shared database directory
+## HPC
 
-On shared systems (lab workstations, HPC clusters), multiple users can share a single database directory to avoid redundant downloads. Set the `COMPAREM2_DATABASES` environment variable to a shared path with group read/write permissions:
+Snakemake's SLURM executor plugin is installed. Point CompareM2 at more cores
+and let Snakemake submit:
 
 ```bash
-export COMPAREM2_DATABASES="/absolute/path/to/shared_databases/comparem2_db"
+pixi run cm2 *.fna --cores 64
 ```
 
-Add this to your `~/.bashrc` to make it persistent. System administrators can set it globally in `/etc/bash.bashrc`.
+Job submission is Snakemake's business, not CompareM2's — the generated
+Snakefile lives at `<output>/.comparem2/Snakefile` and takes any Snakemake
+profile you already use.
 
-### HPC profiles for Snakemake
+## Verification status
 
-If you work on a high-performance computing (HPC) cluster, you can use or customize the cluster profiles in the `profiles/` directory. Set the `COMPAREM2_PROFILE` environment variable to point to your profile:
+A clean `pixi install` says nothing about whether the pipeline runs. Both Bakta
+and Panaroo once resolved to years-old builds that installed cleanly and crashed
+on first use, which is why every tool now carries a minimum version.
 
-```bash
-export COMPAREM2_PROFILE=${COMPAREM2_BASE}/profiles/apptainer/slurm-sigma2-saga
-```
-
-See the [Snakemake profiles documentation](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles) or browse [community profiles](https://github.com/snakemake-profiles).
-
-
-{!resources/footer.md!}
+`DESIGN.md` in the repository tracks which command lines have actually been
+**executed** on real genomes. At the time of writing, 12 of 13 have; GTDB-Tk is
+outstanding, and two commands changed after their verification runs and need
+re-checking.

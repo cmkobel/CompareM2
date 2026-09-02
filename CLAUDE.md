@@ -1,126 +1,130 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code working in this repository.
 
-## Project Overview
+**This branch (`v3`) is a rewrite.** v2 has been removed from it — no
+`workflow/`, no `dynamic_report/`, no R, no 25 conda environments, no
+`./comparem2` launcher, no `config/config.yaml`. If you are looking for any of
+those, they are on `master`. Do not reintroduce v2 patterns here.
 
-CompareM2 is a Snakemake-based bioinformatics pipeline for comparing microbial genomes (bacteria and archaea, including MAGs). It is **not** a Python package — it is a workflow application with a Python launcher script. It only runs on Linux. It runs 30+ analysis tools and produces a publication-ready HTML report.
+Read `DESIGN.md` before making a design decision. It is a dated log of what was
+chosen and why, including several decisions that were reversed within a day and
+the reasoning that reversed them. `CLEANUP.md` tracks the in-progress v2 removal
+and what still needs verifying on linux.
 
-**Publication:** Kobel et al. "CompareM2 is a genomes-to-report pipeline for comparing microbial genomes." *Bioinformatics* 41(9), btaf517 (2025). doi:10.1093/bioinformatics/btaf517. Open Access (CC-BY 4.0).
+## What this is
 
-**Authors:** Carl M. Kobel (NMBU, Norway — corresponding), Velma T.E. Aho (NMBU), Ove Øyås (NMBU), Niels Nørskov-Lauritsen (Univ. Southern Denmark), Ben J. Woodcroft (QUT, Australia), Phillip B. Pope (NMBU & QUT).
+CompareM2 v3: a Snakemake-driven pipeline that runs 13 analysis tools over a set
+of microbial assemblies and produces one self-contained HTML report.
+**Linux-only** — the tools are `linux-64`, so `pixi install` will not work on
+macOS. Unit tests are pure Python and run anywhere.
 
-**Key claims from the paper:**
-- Assembly-agnostic: works strictly downstream of assembly/binning, technology-independent
-- Benchmarked significantly faster than Tormes (sequential scheduling) and Bactopia (reads-based, generates artificial reads for assembly-only input)
-- Running time scales approximately linearly with input count, even beyond available CPU cores, thanks to Snakemake's parallel job scheduling
-- Dynamic report is adaptive — only includes sections for analyses that completed, can be rendered independently
-- Designed to be accessible to non-bioinformaticians: report includes explanatory text and figures
-- Scalable from single genomes to hundreds
-
-**Funding:** Novo Nordisk Foundation (0054575-SuPAcow), EU Horizon 2020 (101000213), Australian Research Council Future Fellowship (FT230100560).
-
-User-facing documentation (installation, quick start, usage, analyses) is hosted at https://comparem2.readthedocs.io/ and built from Markdown files in `docs/`.
+**Publication (describes v2):** Kobel et al. "CompareM2 is a genomes-to-report
+pipeline for comparing microbial genomes." *Bioinformatics* 41(9), btaf517
+(2025). doi:10.1093/bioinformatics/btaf517.
 
 ## Architecture
 
-Three-layer design:
-1. **Launcher** (`./comparem2`) — Python script that sets environment variables (`COMPAREM2_BASE`, `COMPAREM2_PROFILE`, `COMPAREM2_DATABASES`), auto-detects Apptainer vs Conda, parses CLI args, and invokes Snakemake
-2. **Snakemake pipeline** (`workflow/Snakefile` + `workflow/rules/*.smk`) — 11 rule files organized as `sample_*.smk` (per-genome) and `batch_*.smk` (cross-genome), plus `downloads.smk` and `gather.smk`
-3. **Dynamic report** (`dynamic_report/`) — separate sub-pipeline generating the final HTML report
+Declarative specs, generated workflow. There is no hand-written Snakefile.
 
-Key config: `config/config.yaml`. Passthrough parameters use `set_` prefix to forward tool-specific arguments (e.g., `set_iqtree--boot: 100`).
+```
+src/comparem2/
+  tools.py      the contract: Tool, Database, Context, Registry, Scope
+  catalogue.py  the 13 Tool specs — command lines and outputs. THE source of truth.
+  guidance.py   what each tool does and how to read its output, for the report
+  snakefile.py  generates a Snakefile (and envs/*.yaml) from the specs
+  cli.py        argument parsing, input canonicalisation, hands off to Snakemake
+  runner.py     drives Snakemake via its API, emits structured events
+  tui.py        Textual interface over those events
+  report.py     renders the HTML report
+```
 
-**N-dependent output selection:** `generate_final_output(N)` in the Snakefile conditionally selects which analyses to run based on number of input genomes:
-- N=0: database downloads only
-- N≥1: singular analyses (annotation, QC, functional annotation)
-- N≥2: pairwise comparisons (panaroo, SNP-dists, mashtree, treecluster)
-- N≥3: phylogenetics (fasttree, IQtree, bootstrap mashtree)
+The flow: `cli.py` canonicalises every input to
+`<workdir>/samples/<sample>/<sample>.fna`, `snakefile.py` renders a Snakefile
+from `CATALOGUE`, Snakemake executes it, `report.py` renders the result.
 
-**Dynamic report trigger:** Every successful rule appends a timestamp to `{output_directory}/.comparem2_void_report.flag`. The launcher runs the report sub-pipeline after the main pipeline, and the report checks this flag's modification time to decide whether to rebuild. Report sections are individual RMarkdown files (`dynamic_report/workflow/section_*.rmd`).
+**Adding or changing a tool means editing `catalogue.py` and `guidance.py`.**
+Nothing else should need to know a tool exists. A test enforces that the two
+stay in step.
 
-Conda environments for each tool live in `workflow/envs/*.yaml` (25 YAML files). Execution profiles (conda vs apptainer, local vs HPC) are in `profile/`.
+### Two things that follow from the design
 
-**Execution modes:** Local conda, HPC (SLURM/PBS profiles in `profile/`), or containerized (Docker/Apptainer).
+- **Wildcard rendering.** A `Context` built with `sample="{sample}"` and
+  `threads="{threads}"` makes every path and command come out templated, which
+  is how the same code renders both a real command and a Snakemake rule. Inside
+  a `shell:` block, wildcards are `{wildcards.sample}`, not `{sample}` — the
+  bare form parses fine and fails at runtime.
+- **Declared outputs.** A tool declares its outputs rather than writing wherever
+  it likes. That is what buys resumability, progress reporting, and the report's
+  knowledge of what to render.
 
-**Local rules** (run on login node, not compute): `get_ncbi`, `metadata`, `annotate`, download rules, `report`, `report_env`, `bakta_env`.
-
-## Development Setup
-
-Install CompareM2 and its dependencies using pixi (`pixi.toml`):
+## Development
 
 ```bash
-cd ~/comparem2
+# Unit tests — pure Python, no pixi needed, runs on macOS
+python -m pytest tests/unit -q          # or: pixi run pytest
+
+# On linux, with the tool environment
 pixi install
-pixi shell
+pixi run cm2 --help
+pixi run test-fast                      # 4 genomes, no databases required
+pixi run cm2 <assemblies>... --dry-run
 ```
 
-Once inside the pixi shell, run CompareM2 directly with the `comparem2` command.
-
-When making bigger changes, run `pixi run test-fast` to validate before committing.
-
-## Common Commands
+Isolated tools need an absolute launcher, because Snakemake's shell does not
+inherit an interactive PATH:
 
 ```bash
-# Development testing
-comparem2 --config input_genomes="tests/E._faecium/*.fna" --until fast
-
-# Dry run (validate pipeline structure)
-comparem2 --config input_genomes="*.fna" --dry-run
-
-# Run up to a specific rule
-comparem2 --until <rule_name>
-
-# Show pipeline status
-comparem2 --status
-
-# Download databases
-comparem2 --downloads
-
-# Generate DAG visualization
-pixi add graphviz
-comparem2 --forceall --rulegraph | dot -Tpng > dag.png
-
-# Update Dockerfile
-touch dummy1.fa dummy2.fa dummy3.fa
-comparem2 --config add_ncbi=GCF2987 --containerize | grep -A 10000 "FROM condaforge" | grep -B 10000 "mamba clean --all -y" > Dockerfile
+pixi run cm2 <assemblies>... \
+  --isolated-launcher "/home/thylakoid/.pixi/bin/pixi run -e {tool}"
 ```
 
-## Versioning
+Moving a pixi project invalidates its environments — conda bakes the absolute
+prefix into shebangs and RPATHs — so `rm -rf .pixi && pixi install` after any
+move.
 
-Version must be bumped in three places simultaneously:
-1. `comparem2` (line ~7, `__version__`)
-2. `workflow/Snakefile` (version variable)
-3. `changelog.txt`
+### Testing
 
-Docker image is pinned to minor version (e.g., `docker://cmkobel/comparem2:v2.16`). Database directory is also namespaced by minor version (`cm2_v2.16/`).
+`tests/unit/test_v3.py`, 75 tests, ~0.7 s. This is the primary instrument: the
+codebase is a generator, and a wrong wildcard produces a Snakefile that parses
+cleanly and builds the wrong DAG, which an end-to-end run catches slowly if at
+all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.
 
-## Testing & CI/CD
+Test genomes are shipped zipped under `tests/`; `pixi run unpack` extracts them.
+Unpacked `.fna` files are gitignored on purpose.
 
-No unit test framework — testing is done via CI/CD (`.github/workflows/`) running the pipeline on test datasets in `tests/`. Key workflows:
-- `latest-dry-run.yaml` — dry-run validation
-- `latest-fast.yaml` — weekly fast test (conda)
-- `latest-full.yaml` — full test suite
-- `stable-conda.yaml`, `stable-apptainer_A/B.yaml` — stability/release tests
+`tests/E._faecium/` contains `116_2.fna` and `116_2 duplicate.fna` — the same
+genome twice, and a filename with a space. Any tool that treats them differently
+is wrong, and it is the standing cross-check: 0.00000 mash distance, 100.00%
+ANI, 0 SNPs, identical CDS counts.
 
-Test datasets: `tests/E._faecium/`, `tests/E._faecium_plasmids/`, `tests/MAGs/`, `tests/Methanoflorens/`, `tests/strachan_campylo/`, `tests/nocore/`
+## Conventions that matter
 
-## Key Design Patterns
+- **Pin a minimum version for every tool.** An unconstrained bioconda spec lets
+  the solver reach back years to satisfy some other package's constraint. Both
+  bakta and panaroo resolved to builds that installed cleanly and crashed on
+  first use. **`pixi install` succeeding says nothing about whether the pipeline
+  works.**
+- **Commands are argument lists, never shell strings.** A tool that writes to
+  stdout declares `stdout_to_output=True` and the redirect is added by whatever
+  runs it.
+- **`isolated=True` is an exception that must carry its reason in the spec.**
+  Exactly one tool has it (checkm2, which pins DIAMOND 2.1.x against bakta's
+  2.2.x). v2 reached 25 environments by making this the default.
+- **Databases declare a measured size**, taken from `content-length`. `None`
+  means unmeasured — never guess, and say "unmeasured" when totalling.
+- **Passthrough parameters**: `--set tool--flag=value` on the CLI, `params` on
+  the spec. v2 spelled this `set_tool--flag: value` in `config.yaml`.
+- **Report guidance is quoted from papers and checked.** Numbers in
+  `guidance.py` were copied from the tool's own paper and verified against the
+  PDF text. If you add a number there, it needs the same treatment; if a claim
+  is methodological caution rather than a paper's finding, say so in the
+  sentence.
 
-- **Annotator selection**: `bakta` (default) or `prokka`, configured via `annotator` in config. NCBI-sourced genomes automatically use their bundled annotation. Downstream rules consume whichever annotation via symlinked `.annotation/` directory.
-- **NCBI integration**: Reference genomes can be added via `add_ncbi` config parameter (comma-separated accessions). Downloads are cached in `.ncbi_cache/`.
-- **Passthrough parameters**: Any tool parameter can be forwarded using `set_<tool><flag>: <value>` in config. Flag-only arguments use empty string.
-- **Origin tracking**: Local genomes vs NCBI accessions follow different processing paths but merge for downstream analysis.
-- **Metadata**: Managed via pandas DataFrames in the Snakefile for sample tracking and status reporting.
+## Verification status
 
-## Configuration
-
-Main config: `config/config.yaml`. Key settings:
-- `input_genomes` — glob pattern for input files
-- `fofn` — file-of-filenames (alternative to glob)
-- `annotator` — "bakta" (default) or "prokka"
-- `output_directory` — default "results_comparem2"
-- ~28 default `set_<tool>` passthrough parameters (users can add more)
-- `title` — custom report title (defaults to working directory name)
-
-**Pseudo targets** (use with `--until`): `fast`, `meta`, `isolate`, `downloads`, `report`
+`DESIGN.md` carries a table of which tool command lines have actually been
+executed. **Treat it as tracking execution, never installation.** Commands
+drafted against documented interfaces and never run are the largest single risk
+in this rewrite — `skani -c 70` and `fasttree` at `threads=1` are both currently
+unverified.

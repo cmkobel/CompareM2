@@ -1,70 +1,84 @@
 # Quick start
 
-If you have bacterial or archaeal genomes — isolates or MAGs — that you want to analyze and compare, CompareM2 is the tool for you.
+!!! warning "v3 is in development"
+    There is no released package yet. Install from the `v3` branch.
 
-## 1) Install
+## 1) Get it
 
-With [pixi](https://pixi.prefix.dev/latest/#installation) on a Linux machine:
-
-```bash
-pixi global install -c conda-forge -c bioconda comparem2
-```
-
-## 2) Run
-
-CompareM2 includes many analysis tools ([full list](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/)). To run only the fast ones:
+Linux only — the analysis tools are `linux-64`. With
+[pixi](https://pixi.prefix.dev/latest/#installation):
 
 ```bash
-comparem2 --config input_genomes="path/to/my/genomes_*.fna" --until fast
+git clone -b v3 https://github.com/cmkobel/comparem2.git
+cd comparem2
+pixi install
 ```
 
-## 3) Explore
+## 2) Check it works
 
-When CompareM2 finishes, open the report in your browser:
-
-```
-results_comparem2/report_<title>.html
-```
-
-This dynamic HTML report summarizes the most important results from each analysis. See a [demo report](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report).
-
-The full results are organized in `results_comparem2/`:
+No databases and no tools needed for this — the unit tests are pure Python:
 
 ```bash
-tree results_comparem2/ -L 1
-#> results_comparem2/
-#> ├── amrfinder/
-#> ├── assembly-stats/
-#> ├── benchmarks/
-#> ├── checkm2/
-#> ├── fasttree/
-#> ├── gtdbtk/
-#> ├── iqtree/
-#> ├── kegg_pathway/
-#> ├── mashtree/
-#> ├── metadata.tsv
-#> ├── mlst/
-#> ├── panaroo/
-#> ├── report_<title>.html
-#> ├── samples/
-#> │  └── <sample>/
-#> │     ├── antismash/
-#> │     ├── bakta/
-#> │     ├── dbcan/
-#> │     ├── eggnog/
-#> │     ├── <sample>.fna
-#> │     ├── interproscan/
-#> │     ├── prokka/
-#> │     └── sequence_lengths/
-#> ├── snp-dists/
-#> ├── visuals/
-#> ├── treecluster/
-#> └── version_info.txt
+pixi run pytest
 ```
 
-To run the [full pipeline](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/), simply omit the `--until` parameter.
+Then a real run over four *Enterococcus faecium* genomes shipped with the
+repository. This needs no databases either, because none of the four tools it
+runs has one:
 
-If you have any problems, please file an issue: [github.com/cmkobel/CompareM2/issues](https://github.com/cmkobel/CompareM2/issues).
+```bash
+pixi run test-fast
+```
 
+That produces `cm2_test-fast/report.html`. Open it.
 
-{!resources/footer.md!}
+## 3) Run it on your own genomes
+
+```bash
+pixi run cm2 path/to/*.fna
+```
+
+CompareM2 prints what it is about to do, including how much database it needs to
+download, before downloading anything:
+
+```
+4 assemblies, 13 tools, databases: 143.2 GB + 2 database(s) of unknown size
+```
+
+**143 GB is not a typo, and 141 GB of it is GTDB-Tk.** If you do not need
+taxonomic assignment, skip it and the download collapses to under 2 GB:
+
+```bash
+pixi run cm2 *.fna --until seqkit checkm2 bakta amrfinder mlst \
+                           mashtree treecluster skani panaroo snp-dists fasttree
+```
+
+## 4) Read the report
+
+`results_comparem2/report.html` — one self-contained file with no external
+assets, so it survives being emailed or copied off a cluster.
+
+Each section has a **"What this is, and how to read it"** block, collapsed by
+default. Open it before drawing a conclusion from the numbers: it says what the
+columns mean, what the tool's own error is, and what the result cannot show.
+
+## Useful next steps
+
+```bash
+# What would run, without running it
+pixi run cm2 *.fna --dry-run
+
+# Only one analysis and its dependencies
+pixi run cm2 *.fna --until fasttree
+
+# Change a tool's argument
+pixi run cm2 *.fna --set treecluster--threshold=0.1
+
+# Interactive interface
+pixi run cm2 *.fna --tui
+
+# More cores
+pixi run cm2 *.fna --cores 24
+```
+
+See [usage](20 usage.md) for the rest.

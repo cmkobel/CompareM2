@@ -1,8 +1,0 @@
-name: treecluster
-channels: 
-  - conda-forge
-  - bioconda
-dependencies:
-  - pip:
-    - treecluster
-    

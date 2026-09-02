@@ -1,42 +1,91 @@
-# CompareM2
+# CompareM2 v3 (in development)
 
-[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/cmkobel/comparem2/latest-fast.yaml)](https://github.com/cmkobel/CompareM2/actions) [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/comparem2?label=Bioconda%20downloads&color=%2300CC00)](https://comparem2.readthedocs.io/en/latest/10%20installation/) [![Docker Pulls](https://img.shields.io/docker/pulls/cmkobel/comparem2?label=docker%20pulls)](https://comparem2.readthedocs.io/en/latest/10%20installation/) [![Documentation Status](https://readthedocs.org/projects/comparem2/badge/?version=latest)](https://comparem2.readthedocs.io/en/latest/?badge=latest) [![Conda Version](https://img.shields.io/conda/v/bioconda/comparem2)](https://anaconda.org/bioconda/comparem2) [![https://doi.org/10.1093/bioinformatics/btaf517](https://img.shields.io/badge/doi%20%28OUP%29-10.1093%2Fbioinformatics%2Fbtaf517-blue.svg)](https://doi.org/10.1093/bioinformatics/btaf517)
+[![unit tests](https://github.com/cmkobel/comparem2/actions/workflows/unit.yaml/badge.svg?branch=v3)](https://github.com/cmkobel/comparem2/actions/workflows/unit.yaml) [![https://doi.org/10.1093/bioinformatics/btaf517](https://img.shields.io/badge/doi%20%28OUP%29-10.1093%2Fbioinformatics%2Fbtaf517-blue.svg)](https://doi.org/10.1093/bioinformatics/btaf517)
 
-> **Note:** Looking for the original CompareM (AAI and codon usage)? See [github.com/donovan-h-parks/CompareM](https://github.com/donovan-h-parks/CompareM).
+> **This branch is a rewrite and is not released.** For the published, installable
+> version — 30+ analyses, bioconda package, Docker image — use
+> [`master`](https://github.com/cmkobel/comparem2/tree/master) and
+> [comparem2.readthedocs.io](https://comparem2.readthedocs.io). Nothing here is
+> stable yet.
 
-CompareM2 is a genomes-to-report pipeline for comparative analysis of bacterial and archaeal genomes. It takes genome assemblies — isolates or MAGs — and runs 30+ analysis tools, producing a portable HTML report with publication-ready graphics.
+CompareM2 takes microbial genome assemblies — isolates or MAGs — and produces a
+single portable HTML report comparing them. v3 keeps only that philosophy from
+v2: **easy to install, easy to run, easy to interpret.**
 
-<a href="https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report"><img width="220" style="width: 220px" alt="report document logo" align="right" src="https://github.com/cmkobel/comparem2/assets/5913696/e5f9b72c-2137-4850-8779-a5528d8ccbaf"></a>
+## What is different in v3
 
-## Features
+**A wide view, not a deep one.** v3 is triage across many assemblies rather than
+a deep dive into each. Deep functional and metabolic analysis is where DRAM2 and
+nf-core/funcscan are already strong; a fast wide sweep is not well served, and
+it is what v2's benchmark result — near-linear scaling with input count —
+actually supports.
 
-- **30+ integrated analyses** — quality control, annotation, functional annotation, phylogenetics, pan/core genomes, AMR profiling, metabolic modeling, and more. [Full list](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/).
-- **Dynamic HTML report** — collects central results into a single portable file with interpretable figures and text. Adapts to partial runs — only includes sections for completed analyses. [See examples](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/#rendered-report).
-- **Assembly-agnostic** — works strictly downstream of assembly and binning. Accepts genomes from any sequencing technology or source.
-- **Scalable** — runs on local workstations (recommended >= 64 GiB RAM) or HPC clusters (SLURM/PBS). Scales approximately linearly with input size thanks to Snakemake's parallel job scheduling.
-- **Easy to install** — single command via pixi or mamba. All dependencies are managed via conda environments or a pre-built Docker/Apptainer image.
-- **Configurable** — [passthrough arguments](https://comparem2.readthedocs.io/en/latest/20%20usage/#passthrough-arguments) forward any parameter to any underlying tool. Add NCBI reference genomes by accession.
+That choice is what makes the rest possible:
 
-## Quick start
+| | v2 | v3 |
+| --- | --- | --- |
+| Analyses | 30+ | **13** |
+| Conda environments | 25 | **1**, plus CheckM2 isolated |
+| Software download | — | **1.58 GB** measured |
+| Databases | 7 (incl. 84 GB Bakta full) | **4** (Bakta light) |
+| Report | R, RMarkdown, pandoc | **Python**, one HTML file |
+| Runtime | R + Python | **Python only** |
+| Unit tests | none | **75** |
+
+**Every tool is one declarative spec.** There is no hand-written Snakefile —
+`src/comparem2/catalogue.py` holds the 13 specs and the workflow is generated
+from them, so the CLI, the TUI and the report all read the same source of truth.
+
+**The report explains itself.** Each section carries what the tool does, how to
+read the specific columns on screen, and what the result cannot tell you — every
+number quoted from the tool's own paper and checked against it — plus a
+citations list of every paper behind the tools that ran.
+
+## The 13 tools
+
+| | |
+| --- | --- |
+| **Quality** | SeqKit (contig lengths, GC, N50), CheckM2 (completeness, contamination) |
+| **Taxonomy** | GTDB-Tk |
+| **Annotation** | Bakta |
+| **Screening** | AMRFinderPlus, MLST |
+| **Relatedness** | Mashtree, TreeCluster, skani (all-against-all ANI) |
+| **Pangenome** | Panaroo, snp-dists, FastTree |
+| **Metabolism** | CarveMe (genome-scale metabolic models) |
+
+## Status
+
+Linux-only; the tools are `linux-64`. Unit tests run anywhere.
+
+12 of 13 tool command lines have been executed end to end on real genomes.
+GTDB-Tk is outstanding (it needs a 141 GB download), and `skani -c 70` and
+`fasttree` at `threads=1` were changed after the verification runs and need
+re-checking. See `DESIGN.md` for the current table — it tracks *execution*, not
+installation, because a clean `pixi install` says nothing about whether a tool
+runs.
 
 ```bash
-# Install
-pixi global install -c conda-forge -c bioconda comparem2
+python -m pytest tests/unit -q   # 75 tests, no pixi required
 
-# Run fast analyses on your genomes
-comparem2 --config input_genomes="*.fna" --until fast
-
-# Run the full pipeline
-comparem2
+pixi install                     # linux only
+pixi run test-fast               # 4 genomes, no databases needed
+pixi run cm2 --help
 ```
-
-See the [documentation](https://comparem2.readthedocs.io) for installation options, usage details, and the full list of analyses.
 
 ## Citation
 
-Kobel C.M., Aho V.T.E., Øyås O., Nørskov-Lauritsen N., Woodcroft B.J., Pope P.B. CompareM2 is a genomes-to-report pipeline for comparing microbial genomes. *Bioinformatics* 41(9), btaf517 (2025). [doi:10.1093/bioinformatics/btaf517](https://doi.org/10.1093/bioinformatics/btaf517)
+The paper describes v2:
+
+Kobel C.M., Aho V.T.E., Øyås O., Nørskov-Lauritsen N., Woodcroft B.J., Pope P.B.
+CompareM2 is a genomes-to-report pipeline for comparing microbial genomes.
+*Bioinformatics* 41(9), btaf517 (2025).
+[doi:10.1093/bioinformatics/btaf517](https://doi.org/10.1093/bioinformatics/btaf517)
+
+Please also cite the tools you used. The report's own "Methods and citations"
+section lists them for the run you did.
 
 ## Links
 
-- **Documentation**: [comparem2.readthedocs.io](https://comparem2.readthedocs.io)
-- **Issues and questions**: [github.com/cmkobel/CompareM2/issues](https://github.com/cmkobel/CompareM2/issues)
+- **Design log**: [`DESIGN.md`](DESIGN.md) — dated decisions, including the ones that were reversed
+- **v2 documentation**: [comparem2.readthedocs.io](https://comparem2.readthedocs.io)
+- **Issues**: [github.com/cmkobel/CompareM2/issues](https://github.com/cmkobel/CompareM2/issues)

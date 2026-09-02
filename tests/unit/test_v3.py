@@ -20,7 +20,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from comparem2.catalogue import CATALOGUE  # noqa: E402
-from comparem2.cli import slug  # noqa: E402
+from comparem2.cli import parse_overrides, slug  # noqa: E402
 from comparem2.guidance import GUIDANCE, citations  # noqa: E402
 from comparem2.report import (  # noqa: E402
     _PARTITION_VOCABULARY_MINIMUM,
@@ -60,6 +60,41 @@ def test_catalogue_is_the_agreed_set():
     # Removed 2026-09-02: a read-based metagenome profiler cannot take
     # assemblies, so its command could never have produced output.
     assert "sylph" not in CATALOGUE
+
+
+@pytest.mark.parametrize("setting,tool,expected", [
+    # A single-dash flag has to work: skani's compression factor is `-c`, and
+    # an earlier parser prepended "--" to whatever followed the first "--",
+    # which rejected `skani-c=125` and turned `skani--c=125` into
+    # `-c 70 --c 125` — neither replacing the default nor naming a real flag.
+    ("skani-c=125", "skani", ("-c", "125")),
+    ("treecluster--threshold=0.1", "treecluster", ("--threshold", "0.1")),
+    # A tool name containing a dash must not be split on it.
+    ("snp-dists--x=1", "snp-dists", ("--x", "1")),
+    # An empty value is passed as a bare flag.
+    ("bakta--force=", "bakta", ("--force", "")),
+])
+def test_overrides_keep_the_flag_spelling(setting, tool, expected):
+    result = parse_overrides([setting])
+    assert tool in result
+    assert expected in result[tool]
+
+
+def test_override_replaces_rather_than_appends():
+    """Naming a flag replaces that flag and leaves the tool's others alone."""
+    before = dict(CATALOGUE["mashtree"].params)
+    after = dict(parse_overrides(["mashtree--kmerlength=17"])["mashtree"])
+    assert after["--kmerlength"] == "17"
+    assert before["--kmerlength"] != "17"
+    # every other default survives, and no flag is duplicated
+    assert set(after) == set(before)
+    assert after["--genomesize"] == before["--genomesize"]
+
+
+def test_override_rejects_unknown_tool_and_malformed_input():
+    for bad in ["nope--x=1", "skani", "--threshold=1", ""]:
+        with pytest.raises(SystemExit):
+            parse_overrides([bad])
 
 
 def test_closure_pulls_dependencies():

@@ -2,14 +2,73 @@
 channels = ["conda-forge", "bioconda"]
 name = "comparem2"
 platforms = ["linux-64"]
-version = "0.1.0"
+version = "3.0.0.dev0"
 
 [tasks]
-test-fast = "rm -rf cm2_test-fast; ./comparem2 --config output_directory='cm2_test-fast' input_genomes='tests/E._faecium/*.fna' --until fast"
+# The entry point. `pixi run cm2 <assemblies>...` — see `pixi run cm2 --help`.
+cm2 = "python -m comparem2.cli"
+
+pytest = "pytest tests/unit -q"
+
+# Unpack the test genomes. They are shipped zipped and stay untracked once
+# unpacked, which is what the tests/**/*.fna ignore rule is for.
+unpack = "unzip -o -q tests/E._faecium/fna.zip -d tests/E._faecium"
+
+# A real run over four genomes, no databases needed. Paths are listed rather
+# than globbed on purpose: the set contains `116_2 duplicate.fna`, a shell
+# glob would split it into two arguments, and it is exactly the case
+# canonicalise() and slug() exist to handle.
+test-fast = { cmd = """
+rm -rf cm2_test-fast && python -m comparem2.cli \
+  "tests/E._faecium/116_2.fna" \
+  "tests/E._faecium/116_2 duplicate.fna" \
+  "tests/E._faecium/E8202.fna" \
+  "tests/E._faecium/SRR24.fna" \
+  --output cm2_test-fast --until seqkit mashtree treecluster skani
+""", depends-on = ["unpack"] }
+
+[activation.env]
+# `python -m comparem2.cli` without an install step. An editable install would
+# need a build backend and a pyproject; this is a workflow application, not a
+# distributable package.
+PYTHONPATH = "src"
 
 [dependencies]
+python = ">=3.11"
 snakemake = "<10"
 snakemake-executor-plugin-cluster-generic = "*"
-mamba = "*"
-conda = "*"
-pandas = "*"
+snakemake-executor-plugin-slurm = "*"
+# The TUI. Drives Snakemake through its logger plugin system rather than
+# scraping stdout — see DESIGN.md 2026-09-01.
+textual = "*"
+
+# The analysis tools. One environment for all of them except CheckM2, which
+# pins DIAMOND 2.1.x and cannot co-solve with a current Bakta; it gets the
+# `checkm2` feature below. Minimum versions are mandatory: an unconstrained
+# spec lets the solver satisfy some other package's constraint by reaching
+# years back, and both bakta and panaroo resolved to builds that install
+# cleanly and crash on first use.
+seqkit = "*"
+gtdbtk = "*"
+bakta = ">=1.10"
+ncbi-amrfinderplus = "*"
+mlst = "*"
+mashtree = "*"
+treecluster = "*"
+skani = "*"
+panaroo = ">=1.5"
+snp-dists = "*"
+fasttree = "*"
+carveme = "*"
+
+[feature.checkm2.dependencies]
+checkm2 = "*"
+
+[feature.dev.dependencies]
+pytest = "*"
+pytest-asyncio = "*"
+
+[environments]
+default = { features = ["dev"] }
+# Entered via --isolated-launcher; nothing else may depend on this.
+checkm2 = { features = ["checkm2"], no-default-feature = true }

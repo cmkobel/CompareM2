@@ -1,0 +1,69 @@
+name: unit tests
+
+# The v3 unit suite is pure Python — no bioinformatics tools, no databases, no
+# test genomes — so it runs on a bare runner in under a second. That is the
+# whole point of it: v2 validated only by running the pipeline in CI, which is
+# the wrong instrument for a generator, because a wrong wildcard produces a
+# Snakefile that parses cleanly and builds the wrong DAG.
+#
+# Deliberately does NOT use pixi. The pixi environment pulls all thirteen
+# analysis tools from bioconda (1.58 GB, linux-64 only), and none of them is
+# needed to test rule generation, name sanitisation or report rendering.
+# Depending on that solve here would make a green tick contingent on bioconda
+# being up, and turn a 1-second check into a multi-minute one.
+
+on:
+  push:
+    branches: [v3, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor is set by the codebase: `X | None` unions and the
+        # match/dataclass usage in tools.py need 3.11+.
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install test dependencies
+        # textual is imported by tui.py, which two tests exercise. Everything
+        # else under test is standard library.
+        run: python -m pip install --quiet pytest pytest-asyncio textual
+
+      - name: Run unit tests
+        run: python -m pytest tests/unit -q
+
+      - name: Check the generated docs are current
+        # Two docs pages are derived from the tool specs. If a tool changes and
+        # the pages are not regenerated, the docs silently describe something
+        # that no longer runs — which is how v2's citation list drifted.
+        if: matrix.python == '3.13'
+        run: python docs/generate.py --check
+
+      - name: Render a report end to end
+        # Cheap smoke test that the report renders from real files rather than
+        # only from fixtures the tests construct.
+        run: |
+          mkdir -p /tmp/smoke/samples/A/seqkit
+          printf 'c1\t1000\t38.1\nc2\t500\t39.0\n' \
+            > /tmp/smoke/samples/A/seqkit/contigs.tsv
+          PYTHONPATH=src python -c "
+          from pathlib import Path
+          from comparem2.catalogue import CATALOGUE
+          from comparem2.report import render_report
+          p = render_report(CATALOGUE, ['seqkit'], Path('/tmp/smoke'),
+                            Path('db'), ('A',))
+          body = p.read_text()
+          assert 'Methods and citations' in body, 'citations section missing'
+          assert 'What this is, and how to read it' in body, 'guidance missing'
+          print(f'{p}: {len(body)} bytes')
+          "
