@@ -119,22 +119,34 @@ def main(argv: list[str] | None = None) -> int:
     if missing:
         raise SystemExit(f"no such file: {', '.join(missing)}")
 
-    workdir: Path = args.output
+    # Absolute, because Snakemake is given this as its working directory (see
+    # below) and every generated path has to survive that.
+    workdir: Path = args.output.resolve()
     workdir.mkdir(parents=True, exist_ok=True)
+    databases: Path = args.databases.resolve()
     samples = canonicalise(args.inputs, workdir)
 
     tools = CATALOGUE.closure(args.until)
-    unmeasured = CATALOGUE.unmeasured(args.until)
-    known = CATALOGUE.install_size(args.until)
-    size = f"{known / 1e9:.1f} GB" if known else "0 GB"
-    if unmeasured:
-        size += f" + {len(unmeasured)} database(s) of unknown size"
-    print(f"{len(samples)} assemblies, {len(tools)} tools, databases: {size}", file=sys.stderr)
+    print(f"{len(samples)} assemblies, {len(tools)} tools", file=sys.stderr)
+
+    # Only report what is actually going to be fetched. Announcing a total that
+    # includes databases already on disk is how "databases: 143.2 GB" came to
+    # be printed before a run that downloaded nothing at all.
+    pending = [db for db in CATALOGUE.databases(args.until)
+               if not db.ready_path(databases).exists()]
+    if pending:
+        known = sum(db.size for db in pending if db.size is not None)
+        unmeasured = [db for db in pending if db.size is None]
+        size = f"{known / 1e9:.1f} GB" if known else ""
+        if unmeasured:
+            size += (" + " if size else "") + f"{len(unmeasured)} of unknown size"
+        names = ", ".join(db.name for db in pending)
+        print(f"to download: {names} ({size})", file=sys.stderr)
 
     if args.tui:
         from .tui import launch
 
-        launch(args.inputs, workdir, args.databases, samples, args.cores)
+        launch(args.inputs, workdir, databases, samples, args.cores)
         return 0
 
     build = workdir / ".comparem2"
@@ -142,7 +154,7 @@ def main(argv: list[str] | None = None) -> int:
     snakefile = build / "Snakefile"
     overrides = parse_overrides(args.set)
     snakefile.write_text(
-        render(CATALOGUE, args.until, workdir, args.databases, samples,
+        render(CATALOGUE, args.until, workdir, databases, samples,
                overrides=overrides,
                launcher=args.isolated_launcher.split() if args.isolated_launcher else None)
     )
@@ -153,6 +165,15 @@ def main(argv: list[str] | None = None) -> int:
         cmd = [
             "snakemake", "--snakefile", str(snakefile), "--cores", str(args.cores),
             "--rerun-incomplete",
+            # Snakemake locks its working directory, not its output paths, so
+            # without this every run in one checkout shares `./.snakemake` —
+            # two runs collided even with different --output, and a killed run
+            # left a lock the next could not clear. Pointing it at the output
+            # directory makes the lock mean what it should: runs writing to
+            # different places are independent, runs writing to the same place
+            # correctly refuse to overlap. This is why workdir is resolved to
+            # an absolute path above.
+            "--directory", str(workdir),
         ]
         if args.keep_going:
             cmd.append("--keep-going")

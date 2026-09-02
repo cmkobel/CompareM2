@@ -42,8 +42,15 @@ def _inputs(ctx: Context, tool: Tool, registry: Registry) -> list[str]:
     A per-genome tool depends on its own sample's copy of an upstream output.
     A set-scope tool that depends on a per-genome tool needs *every* sample's
     copy, so the wildcard is expanded here rather than left to Snakemake.
+
+    A tool's database is an input too, which is what makes downloads part of
+    the DAG rather than a separate phase: Snakemake fetches it once, in
+    parallel with unrelated work, and skips it when it is already there.
     """
     files = [str(ctx.assembly)] if tool.scope is Scope.GENOME else [str(a) for a in ctx.assemblies]
+
+    if tool.database is not None:
+        files.append(str(tool.database.ready_path(ctx.databases)))
 
     for dep_name in tool.needs:
         dep = registry[dep_name]
@@ -107,12 +114,42 @@ def _rule(tool: Tool, workdir: Path, databases: Path, samples: tuple[str, ...],
         f'        """',
         f"        mkdir -p $(dirname {{log}})",
         f"        exec > {{log}} 2>&1",
+        *[f"        export {name}={shlex.quote(value)}"
+          for name, value in (tool.env(ctx) if tool.env else ())],
         f"        mkdir -p {shellify(' '.join(_dirnames(outputs)))}",
         f"        {shellify(command)}",
         f'        """',
         "",
     ]
     return "\n".join(lines)
+
+
+def _download_rule(db, databases: Path) -> str:
+    """One rule per database, whose output is the file that proves it arrived.
+
+    Downloads are rules rather than a separate `--download` phase so that they
+    inherit what Snakemake already does well: a database that is present is
+    skipped, a half-finished one is redone, and fetching runs alongside work
+    that does not depend on it.
+    """
+    ready = str(db.ready_path(databases))
+    steps = db.fetch(databases) if db.fetch else []
+    if not steps:
+        raise ValueError(f"database {db.name} declares no fetch")
+    return "\n".join([
+        f"rule download_{db.name.replace('-', '_')}:",
+        "    output:",
+        f"        {_q(ready)},",
+        f"    log: {_q(str(databases / 'logs' / ('download_' + db.name + '.log')))}",
+        "    threads: 1",
+        "    shell:",
+        '        """',
+        "        mkdir -p $(dirname {log})",
+        "        exec > {log} 2>&1",
+        *[f"        {' '.join(shlex.quote(a) for a in step)}" for step in steps],
+        '        """',
+        "",
+    ])
 
 
 def _q(path: str) -> str:
@@ -154,9 +191,10 @@ def render(registry: Registry, selected: list[str] | None, workdir: Path,
         *[f"        {_q(t)}," for t in targets],
         "",
     ]
-    body = [_rule(t, workdir, databases, samples, registry, per_rule_conda,
-                  overrides, launcher)
-            for t in tools]
+    body = [_download_rule(db, databases) for db in registry.databases(selected)]
+    body += [_rule(t, workdir, databases, samples, registry, per_rule_conda,
+                   overrides, launcher)
+             for t in tools]
     return "\n".join(header) + "\n" + "\n".join(body)
 
 

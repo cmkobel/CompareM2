@@ -28,19 +28,52 @@ from .tools import Context, Database, Registry, Scope, Tool
 # --- Databases -----------------------------------------------------
 # Sizes are measured, not estimated. `None` means nobody has measured it yet.
 
+_CHECKM2_URL = "https://zenodo.org/records/14897628/files/checkm2_database.tar.gz?download=1"
+
 CHECKM2_DB = Database(
     name="checkm2",
-    url="https://zenodo.org/records/14897628/files/checkm2_database.tar.gz?download=1",
+    url=_CHECKM2_URL,
     size=1_735_095_710,  # measured 2026-09-01
+    # The URL pins a Zenodo record, so the layout inside the tarball is pinned
+    # with it: `CheckM2_database/uniref100.KO.1.dmnd`. Verified against an
+    # existing extracted copy 2026-09-02. Linking it to a stable name means
+    # catalogue.py's path does not move if a later record renames the file —
+    # but if that happens, this link target has to change too.
+    fetch=lambda db: [
+        ["mkdir", "-p", str(db / "checkm2")],
+        ["curl", "-fSL", "--retry", "3", "-o", str(db / "checkm2" / "db.tar.gz"), _CHECKM2_URL],
+        ["tar", "-xzf", str(db / "checkm2" / "db.tar.gz"), "-C", str(db / "checkm2")],
+        ["ln", "-sf", "CheckM2_database/uniref100.KO.1.dmnd",
+         str(db / "checkm2" / "checkm2.dmnd")],
+        ["rm", "-f", str(db / "checkm2" / "db.tar.gz")],
+    ],
+    ready="checkm2/checkm2.dmnd",
+)
+
+_GTDB_URL = (
+    "https://data.gtdb.aau.ecogenomic.org/releases/release226/226.0/"
+    "auxillary_files/gtdbtk_package/full_package/gtdbtk_r226_data.tar.gz"
 )
 
 GTDB_DB = Database(
     name="gtdb",
-    url=(
-        "https://data.gtdb.aau.ecogenomic.org/releases/release226/226.0/"
-        "auxillary_files/gtdbtk_package/full_package/gtdbtk_r226_data.tar.gz"
-    ),
+    url=_GTDB_URL,
     size=141_442_235_198,  # measured 2026-09-01 — 91% of the whole install
+    # --strip-components=1 drops the tarball's own `release226/` wrapper so
+    # GTDBTK_DATA_PATH can be the directory we chose rather than a name that
+    # changes every release.
+    #
+    # UNVERIFIED: 141.4 GB has never been downloaded, so neither the wrapper
+    # directory nor anything inside it has been seen. The stamp is used
+    # precisely because no interior filename can be asserted.
+    fetch=lambda db: [
+        ["mkdir", "-p", str(db / "gtdb")],
+        ["curl", "-fSL", "--retry", "3", "-o", str(db / "gtdb" / "db.tar.gz"), _GTDB_URL],
+        ["tar", "-xzf", str(db / "gtdb" / "db.tar.gz"), "-C", str(db / "gtdb"),
+         "--strip-components=1"],
+        ["rm", "-f", str(db / "gtdb" / "db.tar.gz")],
+        ["touch", str(db / "gtdb" / ".fetched")],
+    ],
 )
 
 # v2 used `--type full` (30 GB compressed / 84 GB on disk). v3 uses light.
@@ -51,10 +84,40 @@ GTDB_DB = Database(
 # refuses 5.1 outright. So the download must run from the same environment as
 # the tool, and pinning Bakta without re-fetching the database is a runtime
 # failure rather than a solve failure.
-BAKTA_DB = Database(name="bakta-light", url="bakta_db download --type light", size=None)
+BAKTA_DB = Database(
+    name="bakta-light",
+    url="bakta_db download --type light",
+    size=None,
+    # `bakta_db download` insists on creating its own `db-light` subdirectory,
+    # so it is fetched into a scratch directory and moved to where the tool
+    # expects it. Note the database name and the directory differ, which is why
+    # `ready` is relative to the database root rather than derived from `name`.
+    fetch=lambda db: [
+        ["bakta_db", "download", "--output", str(db / ".bakta_dl"), "--type", "light"],
+        ["rm", "-rf", str(db / "bakta")],
+        ["mv", str(db / ".bakta_dl" / "db-light"), str(db / "bakta")],
+        ["rm", "-rf", str(db / ".bakta_dl")],
+    ],
+    ready="bakta/version.json",  # verified to exist in a real db v6.0 light
+)
 
-# Fetched by `amrfinder -u`; no static URL to measure. Small.
-AMRFINDER_DB = Database(name="amrfinder", url="amrfinder -u", size=None)
+AMRFINDER_DB = Database(
+    name="amrfinder",
+    url="amrfinder -u",
+    size=None,
+    # This one cannot go under --databases. `amrfinder -u -d <dir>` exits with
+    # "AMRFinder update option (-u/--update) only operates on the default
+    # database directory. The -d/--database option is not permitted" —
+    # verified 2026-09-02. So the data lands in $CONDA_PREFIX and all we can
+    # record here is that the update ran.
+    fetch=lambda db: [
+        ["amrfinder", "-u"],
+        ["mkdir", "-p", str(db / "amrfinder")],
+        ["touch", str(db / "amrfinder" / ".updated")],
+    ],
+    ready="amrfinder/.updated",
+    out_of_tree=True,
+)
 
 
 # --- Quality and taxonomy ------------------------------------------
@@ -113,6 +176,11 @@ gtdbtk = Tool(
         "--out_dir", str(c.out("gtdbtk")),
     ],
     outputs=lambda c: [c.out("gtdbtk", "gtdbtk.summary.tsv")],
+    # GTDB-Tk takes its database location *only* from the environment; there is
+    # no flag for it. Without this the `--databases` value was silently ignored
+    # and the tool would have used whatever GTDBTK_DATA_PATH happened to hold,
+    # or failed. Found 2026-09-02 while wiring up the downloads.
+    env=lambda c: [("GTDBTK_DATA_PATH", str(c.databases / "gtdb"))],
     database=GTDB_DB,
     threads=16,
 )

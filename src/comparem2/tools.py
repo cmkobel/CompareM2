@@ -31,12 +31,36 @@ class Database:
     `size` is measured, never estimated: it is the `content-length` of `url`.
     The total across selected tools is shown to the user before anything is
     downloaded, because install weight is the constraint v3 exists to respect.
+
+    `fetch` is what makes that promise real. Until 2026-09-02 this class carried
+    a `url` that no code read: the total was announced and then nothing
+    downloaded anything, so a run failed minutes later inside a tool with a
+    tool-specific error. Declaring a size without a way to satisfy it is worse
+    than declaring neither.
     """
 
     name: str
     url: str  # or the command that fetches it, when there is no static URL
     size: int | None = None  # bytes; None means not yet measured — never guess
     sha256: str | None = None
+    # How to fetch it, given the database root. Returns steps, each an argv
+    # list — same discipline as `Tool.command`, and for the same reason.
+    fetch: Callable[[Path], Sequence[Sequence[str]]] | None = None
+    # Path relative to the database root whose presence means "ready". This is
+    # the download rule's declared output, so Snakemake skips a database that
+    # is already complete and re-runs one that is half-finished. Prefer a real
+    # file the tool itself needs over a stamp: a stamp can outlive the data.
+    ready: str = ""
+    # Set when the fetch cannot write under the database root because the tool
+    # forbids it. amrfinder is the only one — `amrfinder -u` rejects `-d` with
+    # "only operates on the default database directory", verified 2026-09-02 —
+    # so its data lands in the conda prefix and `ready` is only a stamp. Which
+    # means it does not survive the environment being rebuilt.
+    out_of_tree: bool = False
+
+    def ready_path(self, databases: Path) -> Path:
+        """The file that proves this database is usable."""
+        return databases / (self.ready or f"{self.name}/.fetched")
 
     @property
     def human_size(self) -> str:
@@ -138,6 +162,12 @@ class Tool:
     # Commands stay as argument lists — never hand-built shell strings — so the
     # redirect is declared here and added by whatever runs the command.
     stdout_to_output: bool = False
+    # Environment variables the tool needs, given its Context. Some tools take
+    # their database location only this way: GTDB-Tk reads GTDBTK_DATA_PATH and
+    # has no equivalent flag, so without this its `--databases` value would be
+    # silently ignored. Also the route to FastTreeMP, which takes its thread
+    # count from OMP_NUM_THREADS rather than an argument.
+    env: Callable[[Context], Sequence[tuple[str, str]]] | None = None
 
     def __post_init__(self) -> None:
         if not self.summary:

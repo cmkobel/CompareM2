@@ -48,8 +48,11 @@ with `command not found`.
 
 ## Databases
 
-Downloaded on first use into `databases/` (change with `-d`). Sizes are measured
-from `content-length`, not estimated:
+**Downloaded automatically.** Each database is a step in the workflow, so it is
+fetched once, skipped if already present, and re-fetched if a previous attempt
+was interrupted. Nothing needs to be placed by hand.
+
+Sizes are measured from `content-length`, not estimated:
 
 | Database | Size | Needed by |
 |---|---|---|
@@ -57,6 +60,23 @@ from `content-length`, not estimated:
 | CheckM2 | 1.7 GB | `checkm2` |
 | Bakta light | ~1.3 GB (documented, unmeasured) | `bakta` |
 | AMRFinder | unmeasured | `amrfinder` |
+
+They go under `databases/` unless you pass `-d`. Before running, CompareM2
+prints what is actually missing — not a total that includes what you already
+have:
+
+```
+2 assemblies, 5 tools
+to download: amrfinder (1 of unknown size)
+```
+
+!!! warning "AMRFinder ignores `-d`"
+    `amrfinder -u` refuses the `--database` option — *"only operates on the
+    default database directory"* — so its data goes into the conda environment
+    rather than your `--databases` directory. CompareM2 records that the update
+    ran, but that record does not survive `pixi install` rebuilding the
+    environment. Rebuild the environment and AMRFinder's database is fetched
+    again.
 
 **GTDB-Tk is 91% of the total.** It stays in the default path because it is the
 authoritative answer to "what is this genome", but if you do not need taxonomy,
@@ -66,10 +86,6 @@ leaving it out is the single biggest saving available:
 pixi run cm2 *.fna --until seqkit checkm2 bakta amrfinder mlst \
                            mashtree treecluster skani panaroo snp-dists fasttree
 ```
-
-CompareM2 prints the total it is about to download before it starts, and says
-explicitly when a database's size is unknown rather than silently omitting it
-from the sum.
 
 Bakta uses the **light** database (~1.3 GB / 3.9 GB on disk) rather than v2's
 full one (30 GB / 84 GB). That saves 29 GB for less specific functional

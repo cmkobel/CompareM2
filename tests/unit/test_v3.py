@@ -213,11 +213,88 @@ def test_pinned_tools_carry_minimum_versions():
     assert any(p.startswith("panaroo") for p in pinned)
 
 
+# --- database downloads -------------------------------------------
+
+def test_every_database_declares_how_to_fetch_itself():
+    """A declared size with no fetch is the bug this replaced: cm2 announced
+    143.2 GB and then downloaded nothing, failing later inside a tool."""
+    for db in CATALOGUE.databases():
+        assert db.fetch is not None, f"{db.name} declares no fetch"
+        steps = db.fetch(Path("/db"))
+        assert steps, db.name
+        for step in steps:
+            assert all(isinstance(a, str) for a in step), db.name
+
+
+def test_database_ready_paths_are_distinct_and_under_the_root():
+    paths = [db.ready_path(Path("/db")) for db in CATALOGUE.databases()]
+    assert len(paths) == len(set(paths))
+    for p in paths:
+        assert str(p).startswith("/db/")
+
+
+def test_download_rules_are_generated_and_wired_as_inputs():
+    text = render(CATALOGUE, ["checkm2"], Path("/res"), Path("/db"), SAMPLES)
+    assert "rule download_checkm2:" in text
+    # the tool waits on the database, which is what puts fetching in the DAG
+    checkm2 = text.split("rule checkm2:")[1]
+    assert '"/db/checkm2/checkm2.dmnd",' in checkm2.split("output:")[0]
+
+
+def test_download_rule_has_no_inputs_and_one_output():
+    text = render(CATALOGUE, ["checkm2"], Path("/res"), Path("/db"), SAMPLES)
+    block = text.split("rule download_checkm2:")[1].split("\nrule ")[0]
+    assert "input:" not in block
+    assert block.count('"/db/checkm2/checkm2.dmnd",') == 1
+
+
+def test_only_selected_databases_get_download_rules():
+    """--until seqkit needs nothing, so nothing should be fetched."""
+    text = render(CATALOGUE, ["seqkit"], Path("/res"), Path("/db"), SAMPLES)
+    assert "download_" not in text
+    text = render(CATALOGUE, ["mashtree", "skani"], Path("/res"), Path("/db"), SAMPLES)
+    assert "download_" not in text
+
+
+def test_amrfinder_database_is_marked_out_of_tree():
+    """`amrfinder -u` rejects -d, so its data cannot live under --databases.
+    Recording that is the difference between a known limitation and a lie."""
+    db = CATALOGUE["amrfinder"].database
+    assert db.out_of_tree is True
+    assert not any(db.out_of_tree for db in CATALOGUE.databases()
+                   if db.name != "amrfinder")
+
+
+def test_gtdbtk_gets_its_database_through_the_environment():
+    """GTDB-Tk has no flag for its database — without the env var, --databases
+    was silently ignored for the largest database in the pipeline."""
+    text = render(CATALOGUE, ["gtdbtk"], Path("/res"), Path("/db"), SAMPLES)
+    assert "export GTDBTK_DATA_PATH=/db/gtdb" in text
+    # and no other tool exports anything it should not
+    assert text.count("export ") == 1
+
+
+def test_tools_without_env_export_nothing():
+    text = render(CATALOGUE, ["seqkit", "mashtree"], Path("/res"), Path("/db"), SAMPLES)
+    assert "export " not in text
+
+
 def test_generated_snakefile_parses_as_python_free_text():
-    # Every rule block should have input/output/shell in order.
+    """Directives appear in order in every rule.
+
+    Download rules have no `input:` — a fetch depends on nothing — so only the
+    directives a rule actually declares are ordered.
+    """
     text = render(CATALOGUE, None, Path("res"), Path("db"), SAMPLES)
     for block in text.split("\nrule ")[2:]:
-        assert block.index("input:") < block.index("output:") < block.index("shell:")
+        name = block.split(":")[0]
+        present = [d for d in ("input:", "output:", "shell:") if d in block]
+        if name.startswith("download_"):
+            assert "input:" not in block, name
+            assert present == ["output:", "shell:"], name
+        else:
+            assert present == ["input:", "output:", "shell:"], name
+        assert [block.index(d) for d in present] == sorted(block.index(d) for d in present)
 
 
 # --- report --------------------------------------------------------

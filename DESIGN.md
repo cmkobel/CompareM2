@@ -207,8 +207,8 @@ Drafted commands are worthless until executed. Verified means: ran on v2's four
 | mlst        | **re-verified 09-02** | ST32 / ST32 / ST117 / ST78; duplicates agree      |
 | checkm2     | **re-verified 09-02** | 100% complete all four, via `--isolated-launcher`; `--database_path` wants the .dmnd **file** |
 | bakta       | **re-verified 09-02** | 4/4 genomes against db v6.0 light; `software-min` 1.11 vs bakta 1.12.1 |
-| carveme     | verified   | **it does run** — ~1200 reactions/genome, but ~9 min each |
-| amrfinder   | **regressed** | ran in an earlier session; now fails — its database was never downloaded, see below |
+| carveme     | **re-verified 09-02** | 4/4 SBML models, ~4 MB each; still ~9 min per genome |
+| amrfinder   | **re-verified 09-02** | 7 and 11 genes; database now fetched by the pipeline itself |
 | panaroo     | **re-verified 09-02** | 3780 clusters, 2091 core; core alignment 1,934,948 bp |
 | snp-dists   | **re-verified 09-02** | 0 SNPs between the duplicate pair, identical gap counts |
 | fasttree    | **re-verified 09-02** | at `threads=1`; duplicates at 0.0 branch length   |
@@ -233,17 +233,21 @@ run established beyond the individual commands:
   core alignment is 0.320%, which is the right order for two strains of one
   species. The duplicate pair is 0.
 
-Two things the run broke:
+Three defects the run found, all since fixed:
 
-- **amrfinder regressed to failing** — not from a code change, but because its
-  database is not present and nothing fetches it. See the entry below.
-- **Snakemake locks the working directory, not the output directory.** Two
-  `cm2` runs in one checkout collide even with different `--output`, and a
-  killed run leaves a lock that the next one cannot clear without
-  `--unlock`. Cost one wasted run here. Not fixed.
+- **amrfinder failed** — not from a code change, but because nothing fetched
+  its database. `Database.url` was dead code.
+- **GTDB-Tk's database was unreachable** through `--databases` at all.
+- **Snakemake locked the working directory**, not the output directory, so two
+  runs in one checkout collided regardless of `--output`. Cost one wasted run.
 
-**11 of 13 currently verified.** GTDB-Tk has never been run (141.4 GB), and
-amrfinder cannot run until something downloads its database.
+Confirmed afterwards on the same machine: `download_amrfinder` fetches database
+version 2026-08-07.1 in 26 s as a workflow step, amrfinder then finds it, and
+the Snakemake lock now lives in the output directory.
+
+**12 of 13 verified.** Only GTDB-Tk is outstanding, and only because it needs
+the 141.4 GB download. Its command is also the one that would have failed even
+with the database present, until `GTDBTK_DATA_PATH` was wired up.
 
 Cross-checks used throughout: v2's test set contains `116_2.fna` and
 `116_2 duplicate.fna`, the same genome twice. Any tool that treats them
@@ -402,46 +406,84 @@ hyphen. Every other tool's parameters happen to use long flags, which is why
 this survived until now — a reminder that the passthrough mechanism only gets
 exercised where a default exists to exercise it.
 
-### 2026-09-02 — Nothing downloads the databases. `Database.url` is dead code.
+### 2026-09-02 — Databases download themselves, as Snakemake rules
 Found by running the annotation chain on thylakoid: amrfinder failed with
-`No valid AMRFinder database is found … To download the latest version run:
-amrfinder -u`.
+`No valid AMRFinder database is found`. `Database` carried a `url` for all four
+and **no code read it** — the only `.url` in `src/` was `Citation.url`. So v3
+declared four databases with measured sizes, printed
+`databases: 143.2 GB + 2 of unknown size`, and then never fetched anything.
+That is the worst of the three options: not having downloads is defensible,
+announcing a total and failing minutes later inside a tool is not. It went
+unnoticed because thylakoid's databases had been placed by hand.
 
-`Database` carries a `url` field for all four databases, and **no code reads
-it** — the only `.url` references in `src/` are `Citation.url` in the report.
-So v3:
+**Downloads are rules, not a separate phase.** `Database` now carries a `fetch`
+returning argv steps and a `ready` path, and `snakefile.py` generates a
+`download_<name>` rule whose output is that path. Every tool takes its
+database's `ready` path as an input. This buys, for free, exactly what
+Snakemake is good at: a present database is skipped, a half-finished one is
+redone, fetching runs alongside unrelated work, and the ordering is the DAG's
+problem rather than ours. A `cm2 --download` subcommand would have
+reimplemented all of it.
 
-  - declares four databases with measured sizes,
-  - prints `databases: 143.2 GB + 2 database(s) of unknown size` before running,
-  - and then never fetches any of them.
+`ready` is a real file the tool needs wherever possible, not a stamp, because a
+stamp can outlive the data it claims:
 
-That is the worst of the three options. Not having downloads is defensible;
-announcing a total and then failing five minutes later inside a tool with a
-tool-specific error message is not, because the message implies the pipeline
-was going to do something it never intended to. The bakta and CheckM2
-databases on thylakoid were placed there by hand, which is why this went
-unnoticed — the environment was pre-seeded.
+| Database | Fetch | Ready |
+| -------- | ----- | ----- |
+| checkm2 | curl + tar, then link the release's own `.dmnd` to a stable name | `checkm2/checkm2.dmnd` |
+| bakta-light | `bakta_db download`, then move its `db-light` into place | `bakta/version.json` |
+| gtdb | curl + tar `--strip-components=1` | `gtdb/.fetched` — stamp, see below |
+| amrfinder | `amrfinder -u` | `amrfinder/.updated` — stamp, see below |
 
-The three fetch mechanisms are already recorded in the specs and are not
-uniform, which is presumably why this was deferred:
+Two honest limitations, both measured rather than assumed:
 
-| Database | Mechanism |
-| -------- | --------- |
-| checkm2 | static URL, tarball, then normalise the release's own filename to `checkm2.dmnd` |
-| gtdb | static URL, 141.4 GB tarball |
-| bakta-light | `bakta_db download --type light`, must run inside bakta's own environment |
-| amrfinder | `amrfinder -u`, writes into the conda prefix, not into `--databases` |
+- **amrfinder's database cannot live under `--databases`.**
+  `amrfinder -u -d <dir>` exits with *"AMRFinder update option (-u/--update)
+  only operates on the default database directory. The -d/--database option is
+  not permitted"*. So its data goes into `$CONDA_PREFIX` and the only thing
+  recordable under `--databases` is that the update ran. Consequence: the stamp
+  does not survive the environment being rebuilt, and `Database.out_of_tree`
+  exists to say so rather than let the spec imply otherwise.
+- **gtdb uses a stamp because nothing inside it has ever been seen.** 141.4 GB
+  has not been downloaded, so no interior filename can be asserted. Using a
+  stamp is the alternative to inventing one.
 
-Note the last one: `amrfinder -u` puts its data under
-`$CONDA_PREFIX/share/amrfinderplus/data/latest`, **not** under the
-`--databases` directory. So one of the four does not respect the flag at all,
-and a `Database` with a `url` and a size does not describe it accurately.
+`cm2` now reports only what is actually missing — `to download: amrfinder
+(1 of unknown size)` — instead of a total that included databases already on
+disk.
 
-Not implemented here — it is a feature, not a fix, and it needs a decision
-about whether downloads are a pipeline step (a Snakemake rule per database,
-which gets resumability and parallelism for free) or a separate `cm2
---download` subcommand. Until then the honest thing is for `cm2` to say the
-databases must already be present, which it does not yet do either.
+### 2026-09-02 — GTDB-Tk's database was reachable only through the environment
+Found while wiring the above. GTDB-Tk has no flag for its database; it reads
+`GTDBTK_DATA_PATH`. The generated rule set that variable nowhere, so the
+`--databases` value was **silently ignored for the largest database in the
+pipeline** — 91% of the install weight, pointed wherever the ambient
+environment happened to point.
+
+`Tool` now has an `env` field, a callable returning name/value pairs, and the
+generator exports them in the shell block. gtdbtk is the only user today. It is
+also the route to FastTreeMP, which takes its thread count from
+`OMP_NUM_THREADS` rather than an argument — the reason fasttree is currently
+pinned to `threads=1`.
+
+### 2026-09-02 — Snakemake locks the working directory, so give it the output one
+Two `cm2` runs in one checkout collided even with different `--output`, and a
+killed run left a lock the next could not clear. The cause is that Snakemake
+locks its *working directory* — `./.snakemake/locks` — and `cli.py` ran it from
+the checkout root while pointing `--snakefile` into the output directory. So
+the lock was per-checkout when it should have been per-output.
+
+Fixed by resolving `--output` to an absolute path and passing it as
+`--directory`. `.snakemake` then lives inside the output directory, which makes
+the lock mean what it should: runs writing to different places are independent,
+runs writing to the same place correctly refuse to overlap, and a stale lock is
+cleared by removing one output directory rather than the whole checkout.
+
+Cost, accepted: the generated Snakefile now holds absolute paths, so a results
+directory cannot be moved and resumed. That was already true — `canonicalise()`
+writes absolute symlinks, and repairs dangling ones after a move.
+
+Rejected: `--nolock`, which removes the guard entirely and would let two
+concurrent runs on one output silently clobber each other.
 
 ## Open questions
 - **Taxonomy.** The single largest install cost. GTDB-Tk is authoritative and
