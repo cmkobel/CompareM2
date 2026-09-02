@@ -1348,9 +1348,14 @@ def _section_gtdbtk(tool: Tool, ctx: Context, workdir: Path) -> str:
     for name, lineage in lineages.items():
         if lineage is None:
             # Unparseable, so nothing is dropped: the raw value goes in the
-            # first rank column and the rest are marked absent.
-            ranks = [f'<span title="{html.escape(found[name]["raw"])}">'
-                     f'{html.escape(found[name]["raw"])}</span>']
+            # first rank column and the rest are marked absent. Marked as
+            # missing rather than set like the others, because that column has
+            # a rank for its heading and GTDB-Tk's `Unclassified Bacteria` is a
+            # domain-level failure — under a `Species` heading, in the same
+            # type as `Enterococcus faecium` above it, it reads as a species.
+            raw = html.escape(found[name]["raw"]) or "—"
+            ranks = [f'<span class="missing" title="GTDB-Tk returned no '
+                     f'parseable lineage for this genome">{raw}</span>']
             ranks += ["—"] * (len(shown) - 1)
         else:
             ranks = [html.escape(lineage[i]) or "—" for i in shown]
@@ -1384,15 +1389,26 @@ def _section_gtdbtk(tool: Tool, ctx: Context, workdir: Path) -> str:
         "identity over a small aligned fraction is not evidence of one "
         "species.</p>")
 
+    # Two different outcomes, counted separately. A blank species is a genome
+    # GTDB-Tk placed but would not name; an unparseable classification is one
+    # it did not place. Folding them into one count made the note account for
+    # half the empty-looking cells in the column.
+    tail = []
     unnamed = sum(1 for lineage in parsed if not lineage[-1])
-    tail = ""
     if unnamed:
         word = "genome carries" if unnamed == 1 else "genomes carry"
-        tail = (f'<p class="note">{unnamed} {word} no species name. GTDB-Tk '
-                "found no reference within the species radius, which says the "
-                "genome is novel relative to this release — not that the "
-                "assignment failed.</p>")
-    return ("".join(notes) + body + tail
+        tail.append(f'<p class="note">{unnamed} {word} no species name. GTDB-Tk '
+                    "found no reference within the species radius, which says the "
+                    "genome is novel relative to this release — not that the "
+                    "assignment failed.</p>")
+    unplaced = sum(1 for lineage in lineages.values() if lineage is None)
+    if unplaced:
+        word = "genome" if unplaced == 1 else "genomes"
+        tail.append(f'<p class="note">{unplaced} {word} came back with no '
+                    "parseable lineage at all, shown in italic where a rank "
+                    "would be. That is not the same as a missing species: "
+                    "GTDB-Tk placed no lineage for it.</p>")
+    return ("".join(notes) + body + "".join(tail)
             + _absent_note(absent, len(ctx.samples)))
 
 

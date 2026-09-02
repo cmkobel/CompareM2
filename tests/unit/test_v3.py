@@ -1869,3 +1869,57 @@ def test_an_undesigned_table_clips_its_cells(tmp_path):
     from comparem2.report import _table
     plain = _table([["A", tax]], header=["Genome", "Classification"])
     assert 'class="clip"' not in plain and "title=" not in plain
+
+
+def _gtdbtk_fixture(tmp_path, classifications):
+    """A gtdbtk summary with the columns the renderer reads."""
+    cols = ["user_genome", "classification", "closest_genome_reference_radius",
+            "closest_genome_ani", "closest_genome_af", "classification_method"]
+    d = tmp_path / "gtdbtk"
+    d.mkdir(parents=True, exist_ok=True)
+    lines = ["\t".join(cols)]
+    for name, classification in classifications.items():
+        lines.append("\t".join([name, classification, "95.20", "97.10", "0.82",
+                                "topology and ANI"]))
+    (d / "gtdbtk.summary.tsv").write_text("\n".join(lines) + "\n")
+    return tuple(classifications)
+
+
+_EF = ("d__Bacteria;p__Bacillota;c__Bacilli;o__Lactobacillales;"
+       "f__Enterococcaceae;g__Enterococcus;s__Enterococcus faecium")
+
+
+def test_gtdbtk_does_not_dress_a_failure_as_a_species(tmp_path):
+    """GTDB-Tk writes a bare `Unclassified Bacteria` in some failure modes.
+
+    When every placed genome is one species the only rank column shown is
+    Species, so that string landed under a `Species` heading in the same type
+    as a real binomial and read as one. It has to be marked as not-a-rank.
+    """
+    samples = _gtdbtk_fixture(tmp_path, {
+        "A": _EF, "B": _EF, "C": "Unclassified Bacteria"})
+    body = render_report(CATALOGUE, ["gtdbtk"], tmp_path, Path("db"),
+                         samples).read_text()
+    chunk = body.split('<h2 id="gtdbtk">')[1]
+    assert "<th>Species</th>" in chunk
+    row = re.search(r"<tr><td>C</td>(.*?)</tr>", chunk).group(1)
+    assert 'class="missing"' in row, "a failure string must not be set as a rank"
+    assert "no parseable lineage" in row
+    assert "came back with no parseable lineage" in chunk
+
+
+def test_gtdbtk_counts_unnamed_and_unplaced_separately(tmp_path):
+    """A genome GTDB-Tk placed but would not name, and one it did not place,
+    are different results. Counting them together made the note account for
+    half the empty-looking cells in the column."""
+    samples = _gtdbtk_fixture(tmp_path, {
+        "A": _EF,
+        "B": _EF.rsplit(";", 1)[0] + ";s__",   # placed, unnamed
+        "C": "Unclassified Bacteria",          # not placed
+        "D": "Unclassified Bacteria",
+    })
+    body = render_report(CATALOGUE, ["gtdbtk"], tmp_path, Path("db"),
+                         samples).read_text()
+    chunk = body.split('<h2 id="gtdbtk">')[1]
+    assert "1 genome carries no species name" in chunk
+    assert "2 genomes came back with no parseable lineage" in chunk
