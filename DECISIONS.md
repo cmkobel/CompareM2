@@ -261,6 +261,22 @@ two places and 100 in a third, against 105 collected (103 passing, 2 skipped
 without Snakemake, 1.05 s). And `docs/10` pointed at `DESIGN.md` for the
 execution-status table, which lives in `STATUS.md`.
 
+### The docs requirements are floors, not a lock
+Publishing v3 to `master` moved four open Dependabot alerts onto the default
+branch — 1 high, 2 moderate, 1 low, all in `docs/requirements.txt`, which was a
+full transitive lock compiled in 2022 against Python 3.10 and never revisited.
+
+Three of the four came from `pymdown-extensions`, pulled in only by
+`mkdocstrings[python]`, which nothing used: `mkdocs.yml` loads the `search`
+plugin alone and no page has a `:::` autodoc directive. Removed rather than
+bumped. The fourth was `Markdown` 3.3.7, which floors resolve to 3.9.
+
+Replaced the lock with `mkdocs>=1.6` and `markdown-include>=0.8`. A docs build
+is not what a lock buys much for — `mkdocs build --strict` fails loudly and
+immediately — and the lock's real effect was recurring alert noise. Verified in
+a clean virtualenv: those two floors plus Markdown 3.9, no pymdown-extensions,
+`mkdocs build --strict` clean.
+
 ### The remote follows the repository rename
 `origin` now points at `cmkobel/CompareM2`, and the `cmkobel/comparem2` spelling
 is gone from `mkdocs.yml` and the docs. GitHub redirected the old name, so this
