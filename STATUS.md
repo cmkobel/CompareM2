@@ -59,8 +59,19 @@ carries no species name. Twelve tests, including a real render.
 **Every input to those tests is synthetic.** The columns come from GTDB-Tk's
 own documentation, not from a file produced here, so the renderer checks its
 headers and falls back to the generic table if they are not the ones it
-expects. Validate it against the real `gtdbtk.summary.tsv` when the run lands —
-that is the point of this paragraph.
+expects. Four things to check against the real `gtdbtk.summary.tsv`, in order
+of how quietly they fail:
+
+1. **Does r232 emit `closest_genome_reference_radius` under that exact name?**
+   If not, the ANI colouring degrades to plain text — the correct failure, and
+   invisible unless looked for.
+2. **How long are the real `classification_method` strings?** That column drives
+   the table width; the synthetic worst case was 51 characters.
+3. **Does `user_genome` hold the batchfile's genome id** (the sample name) or a
+   path? `_sample_of` handles both, but only the first joins cleanly to every
+   other section.
+4. **Is the merged file the two domains concatenated once**, with one header —
+   `merge-tsv`'s own contract, but it has never run on real GTDB-Tk output.
 
 ### The standing cross-check
 The test set contains `116_2.fna` and `116_2 duplicate.fna` — the same genome
