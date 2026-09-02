@@ -1236,6 +1236,166 @@ def _section_checkm2(tool: Tool, ctx: Context, workdir: Path) -> str:
             + body + _absent_note(absent, len(ctx.samples)))
 
 
+# GTDB's seven ranks, in order, keyed by the one-letter prefix its
+# classification strings use: `d__Bacteria;p__Bacillota;…;s__Enterococcus faecium`.
+_GTDB_RANKS = (("d", "Domain"), ("p", "Phylum"), ("c", "Class"), ("o", "Order"),
+               ("f", "Family"), ("g", "Genus"), ("s", "Species"))
+
+
+def _gtdb_ranks(classification: str) -> list[str] | None:
+    """Split a classification into seven values, blanks included.
+
+    `None` for anything carrying no `x__` prefix at all: GTDB-Tk writes a bare
+    `Unclassified Bacteria` in some failure modes, and that is a value to
+    display, not a lineage to parse.
+
+    A rank that is present but *empty* stays empty on purpose. A bare `s__`
+    means GTDB-Tk would not commit to a species, which guidance.py explains is
+    a result rather than a failure — so it has to survive parsing to be shown.
+    """
+    tags = [tag for tag, _ in _GTDB_RANKS]
+    values = [""] * len(_GTDB_RANKS)
+    found = False
+    for part in classification.split(";"):
+        tag, sep, value = part.strip().partition("__")
+        if not sep or tag not in tags:
+            continue
+        values[tags.index(tag)] = value.strip()
+        found = True
+    return values if found else None
+
+
+def _gtdb_shared_depth(lineages: list[list[str]]) -> int:
+    """How many leading ranks every genome agrees on, ignoring blanks.
+
+    A set of one species shares all seven; a set spanning two phyla shares one.
+    The shared part is stated once above the table so the columns can show only
+    where the genomes actually differ — the same reason the pangenome figure
+    collapses identical presence patterns.
+    """
+    depth = 0
+    for rank in range(len(_GTDB_RANKS)):
+        values = {lineage[rank] for lineage in lineages}
+        if len(values) != 1 or not lineages[0][rank]:
+            break
+        depth += 1
+    return depth
+
+
+def _gtdb_ani(ani: str, radius: str) -> str:
+    """ANI to the closest reference, judged against *that reference's* radius.
+
+    Which is the point guidance.py makes: the species cut-off is per-reference,
+    not a global 95%, so the comparison worth drawing is against the radius the
+    tool reported next to it.
+    """
+    if not _numeric(ani):
+        return "—"
+    value = float(ani)
+    if not _numeric(radius):
+        return f"{value:.2f}%"
+    limit = float(radius)
+    colour = "#2f855a" if value >= limit else "#b7791f"
+    return (f'<span style="color:{colour}" title="species radius {limit:.2f}%">'
+            f"{value:.2f}%</span>")
+
+
+def _section_gtdbtk(tool: Tool, ctx: Context, workdir: Path) -> str:
+    """Where each genome sits in GTDB, and how far down the name is trustworthy.
+
+    Reads the merged summary that `Tool.post` writes from GTDB-Tk's separate
+    `bac120` and `ar53` files, so archaea and bacteria arrive in one table.
+    """
+    path = ctx.out("gtdbtk", "gtdbtk.summary.tsv")
+    if not path.exists():
+        return '<p class="missing">No results.</p>'
+    rows = _read_tsv(path)
+    if len(rows) < 2:
+        return '<p class="missing">No genomes classified.</p>'
+
+    at = {name.strip(): i for i, name in enumerate(rows[0])}
+    if "user_genome" not in at or "classification" not in at:
+        # Not the summary this was written against. Show the file rather than
+        # guess at it: the columns are documented, but this one has never been
+        # seen here and GTDB-Tk has changed its output between major versions.
+        return _table(rows, clip=True)
+
+    def value(rec: list[str], column: str) -> str:
+        i = at.get(column)
+        return rec[i].strip() if i is not None and len(rec) > i else ""
+
+    found: dict[str, dict[str, str]] = {}
+    lineages: dict[str, list[str] | None] = {}
+    for rec in rows[1:]:
+        name = _sample_of(value(rec, "user_genome"), ctx.samples)
+        lineages[name] = _gtdb_ranks(value(rec, "classification"))
+        found[name] = {
+            "raw": value(rec, "classification"),
+            "ani": _gtdb_ani(value(rec, "closest_genome_ani"),
+                             value(rec, "closest_genome_reference_radius")),
+            "af": value(rec, "closest_genome_af") or "—",
+            "method": value(rec, "classification_method") or "—",
+        }
+
+    parsed = [lineage for lineage in lineages.values() if lineage is not None]
+    shared = _gtdb_shared_depth(parsed) if parsed else 0
+    # Never show no ranks at all: a set of one species agrees on all seven, and
+    # the species is the column a reader came for.
+    start = min(shared, len(_GTDB_RANKS) - 1)
+    shown = list(range(start, len(_GTDB_RANKS)))
+
+    cells: dict[str, list[str]] = {}
+    for name, lineage in lineages.items():
+        if lineage is None:
+            # Unparseable, so nothing is dropped: the raw value goes in the
+            # first rank column and the rest are marked absent.
+            ranks = [f'<span title="{html.escape(found[name]["raw"])}">'
+                     f'{html.escape(found[name]["raw"])}</span>']
+            ranks += ["—"] * (len(shown) - 1)
+        else:
+            ranks = [html.escape(lineage[i]) or "—" for i in shown]
+        cells[name] = [html.escape(name), *ranks, found[name]["ani"],
+                       html.escape(found[name]["af"]), html.escape(found[name]["method"])]
+
+    columns = 1 + len(shown) + 3
+    rows_out, absent = _in_sample_order(cells, ctx.samples, columns)
+    body = _raw_table(
+        rows_out,
+        header=["Genome", *[label for _, label in
+                            (_GTDB_RANKS[i] for i in shown)], "ANI", "AF", "Method"],
+        numeric_columns={columns - 3, columns - 2},
+    )
+
+    notes = []
+    if start:
+        # `start`, not `shared`: when every genome is one species all seven
+        # ranks are shared, and naming the species here as well as in the
+        # column below it says the same thing twice.
+        lineage = " › ".join(parsed[0][:start])
+        word = "genome" if len(parsed) == 1 else "genomes"
+        notes.append(
+            f'<p class="summary">All {len(parsed)} classified {word} share '
+            f"<strong>{html.escape(lineage)}</strong>. The columns below start "
+            "where they diverge.</p>")
+    notes.append(
+        '<p class="summary">ANI is identity to the closest reference, green '
+        "when it clears <em>that reference's own</em> species radius rather "
+        "than a global 95% — hover for the radius. Read it with AF: a high "
+        "identity over a small aligned fraction is not evidence of one "
+        "species.</p>")
+
+    unnamed = sum(1 for lineage in parsed if not lineage[-1])
+    tail = ""
+    if unnamed:
+        word = "genome carries" if unnamed == 1 else "genomes carry"
+        tail = (f'<p class="note">{unnamed} {word} no species name. GTDB-Tk '
+                "found no reference within the species radius, which says the "
+                "genome is novel relative to this release — not that the "
+                "assignment failed.</p>")
+    return ("".join(notes) + body + tail
+            + _absent_note(absent, len(ctx.samples)))
+
+
 def _section_bakta(tool: Tool, ctx: Context, workdir: Path) -> str:
     """Feature counts per genome, read straight from the GFF3."""
     found: dict[str, list[str]] = {}
@@ -1644,6 +1804,7 @@ SECTIONS = {
     "carveme": _section_carveme,
     "seqkit": _section_seqkit,
     "checkm2": _section_checkm2,
+    "gtdbtk": _section_gtdbtk,
     "bakta": _section_bakta,
     "amrfinder": _section_amrfinder,
     "mashtree": _section_tree,

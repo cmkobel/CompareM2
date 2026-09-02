@@ -1470,6 +1470,134 @@ def test_malformed_newick_degrades_to_text(tmp_path):
     assert "mashtree" in body  # section survives
 
 
+# --- gtdbtk section ------------------------------------------------
+# Written against GTDB-Tk's documented summary columns before the tool had ever
+# been run here, so every one of these is about degrading rather than guessing.
+
+_GTDB_HEADER = ("user_genome\tclassification\tclosest_genome_reference\t"
+                "closest_genome_reference_radius\tclosest_genome_ani\t"
+                "closest_genome_af\tclassification_method\n")
+_FAECIUM = ("d__Bacteria;p__Bacillota;c__Bacilli;o__Lactobacillales;"
+            "f__Enterococcaceae;g__Enterococcus;s__Enterococcus faecium")
+
+
+def _gtdb_fixture(tmp_path, body: str, header: str = _GTDB_HEADER) -> None:
+    out = tmp_path / "gtdbtk"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "gtdbtk.summary.tsv").write_text(header + body)
+
+
+def _gtdb_html(tmp_path, samples) -> str:
+    from comparem2.report import SECTIONS
+    from comparem2.tools import Context
+
+    ctx = Context(tmp_path, tmp_path / "db", 1, samples, None)
+    return SECTIONS["gtdbtk"](CATALOGUE["gtdbtk"], ctx, tmp_path)
+
+
+def test_gtdbtk_ranks_split_and_keep_an_empty_species():
+    """A bare `s__` is GTDB-Tk declining to name a species, which the report
+    has to be able to show. Dropping it would turn a result into a blank."""
+    from comparem2.report import _gtdb_ranks
+
+    assert _gtdb_ranks(_FAECIUM)[:2] == ["Bacteria", "Bacillota"]
+    assert _gtdb_ranks(_FAECIUM)[-1] == "Enterococcus faecium"
+
+    novel = _gtdb_ranks("d__Bacteria;p__Bacillota;c__;o__;f__;g__;s__")
+    assert novel[0] == "Bacteria" and novel[-1] == ""
+
+    # No prefixes at all is a value, not a lineage: GTDB-Tk writes this.
+    assert _gtdb_ranks("Unclassified Bacteria") is None
+
+
+def test_gtdbtk_states_the_shared_lineage_once(tmp_path):
+    """Four genomes of one species should not repeat six identical ranks.
+
+    The shared prefix is stated above the table and the columns start where the
+    genomes diverge — with the species column always kept, or a single-species
+    set would produce a table of no ranks at all.
+    """
+    samples = ("A", "B")
+    _gtdb_fixture(tmp_path,
+                  f"A\t{_FAECIUM}\tGCF_1\t95.0\t99.1\t0.94\tani_screen\n"
+                  f"B\t{_FAECIUM}\tGCF_1\t95.0\t98.7\t0.91\tani_screen\n")
+    html_out = _gtdb_html(tmp_path, samples)
+
+    assert "share <strong>Bacteria › Bacillota › Bacilli › Lactobacillales › "\
+        "Enterococcaceae › Enterococcus</strong>" in html_out
+    assert ">Species<" in html_out
+    assert ">Phylum<" not in html_out, "a shared rank became a column"
+    assert html_out.count("Enterococcus faecium") == 2
+
+
+def test_gtdbtk_shows_the_ranks_where_genomes_differ(tmp_path):
+    """A set spanning two domains shares nothing, so every rank is a column."""
+    samples = ("A", "M")
+    _gtdb_fixture(tmp_path,
+                  f"A\t{_FAECIUM}\tGCF_1\t95.0\t99.1\t0.94\tani_screen\n"
+                  "M\td__Archaea;p__Methanobacteriota;c__Methanobacteria;"
+                  "o__Methanobacteriales;f__Methanobacteriaceae;"
+                  "g__Methanobrevibacter;s__\tGCA_2\t95.0\t89.4\t0.62\t"
+                  "taxonomic_classification\n")
+    html_out = _gtdb_html(tmp_path, samples)
+
+    assert "share <strong>" not in html_out, "nothing is shared across domains"
+    assert ">Domain<" in html_out and ">Species<" in html_out
+    assert "Archaea" in html_out and "Bacteria" in html_out
+    # The archaeon has no species name, which is a result and gets said.
+    assert "1 genome carries no species name" in html_out
+
+
+def test_gtdbtk_judges_ani_against_the_reference_radius(tmp_path):
+    """Not against a global 95%. guidance.py is explicit that the radius is
+    per-reference, so the colour has to come from the reported radius."""
+    samples = ("clears", "under")
+    _gtdb_fixture(tmp_path,
+                  f"clears\t{_FAECIUM}\tGCF_1\t96.5\t97.0\t0.93\tani_screen\n"
+                  f"under\t{_FAECIUM}\tGCF_1\t96.5\t95.4\t0.90\tani_screen\n")
+    html_out = _gtdb_html(tmp_path, samples)
+
+    assert 'title="species radius 96.50%"' in html_out
+    assert "#2f855a" in html_out, "97.0 clears a 96.5 radius"
+    assert "#b7791f" in html_out, "95.4 does not, even though it is above 95"
+
+
+def test_gtdbtk_falls_back_when_the_columns_are_not_the_documented_ones(tmp_path):
+    """This renderer was written before the tool had ever run here. If the file
+    is not the summary it expects, it shows the file instead of guessing."""
+    _gtdb_fixture(tmp_path, "A\td__Bacteria\n", header="genome\ttaxonomy\n")
+    html_out = _gtdb_html(tmp_path, ("A",))
+
+    assert "<table" in html_out and "taxonomy" in html_out
+    assert "share <strong>" not in html_out
+    assert "ANI is identity" not in html_out
+
+
+def test_gtdbtk_marks_a_genome_it_classified_nothing_for(tmp_path):
+    """A genome missing from the summary must still have a row: GTDB-Tk drops
+    genomes that fail the marker threshold, and a silently shorter table is how
+    a reader loses one."""
+    _gtdb_fixture(tmp_path, f"A\t{_FAECIUM}\tGCF_1\t95.0\t99.1\t0.94\tani_screen\n")
+    html_out = _gtdb_html(tmp_path, ("A", "B", "C"))
+
+    assert ">B<" in html_out and ">C<" in html_out
+    assert "2 of 3 genomes produced no output" in html_out
+
+
+def test_gtdbtk_keeps_an_unparseable_classification_visible(tmp_path):
+    """`Unclassified Bacteria` is not a lineage and must not be dropped."""
+    _gtdb_fixture(tmp_path, "A\tUnclassified Bacteria\t\t\t\t\tANI\n")
+    html_out = _gtdb_html(tmp_path, ("A",))
+    assert "Unclassified Bacteria" in html_out
+
+
+def test_gtdbtk_section_survives_an_absent_or_empty_file(tmp_path):
+    (tmp_path / "gtdbtk").mkdir(parents=True)
+    assert "No results" in _gtdb_html(tmp_path, ("A",))
+    _gtdb_fixture(tmp_path, "")
+    assert "No genomes classified" in _gtdb_html(tmp_path, ("A",))
+
+
 def test_every_tool_has_a_renderer_or_fallback(tmp_path):
     # The fallback must cover anything without a specific section, so that no
     # tool can run and display nothing — v2's failure with 5 tools.

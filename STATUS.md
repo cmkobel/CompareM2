@@ -50,6 +50,18 @@ The catalogue pointed at r226; `gtdbtk/config/common.py` in 2.7.2 reads
 data *after* a 141.4 GB download. r232 is 60.8 GB, less than half, because it
 replaced FastANI's reference genomes with skani sketches.
 
+### The gtdbtk report section is written, against documented columns only
+`_section_gtdbtk` exists and renders: the lineage every genome shares stated
+once, then a column per rank where they diverge, ANI coloured against *that
+reference's* species radius rather than a global 95%, and a note when a genome
+carries no species name. Twelve tests, including a real render.
+
+**Every input to those tests is synthetic.** The columns come from GTDB-Tk's
+own documentation, not from a file produced here, so the renderer checks its
+headers and falls back to the generic table if they are not the ones it
+expects. Validate it against the real `gtdbtk.summary.tsv` when the run lands —
+that is the point of this paragraph.
+
 ### The standing cross-check
 The test set contains `116_2.fna` and `116_2 duplicate.fna` — the same genome
 twice, and a filename with a space. **Any tool that treats them differently is
