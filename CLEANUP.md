@@ -175,21 +175,46 @@ was rsynced rather than pushed.
 - [x] `mlst` — ST32/ST32/ST117/ST78
 - [x] **`--isolated-launcher`** — CheckM2 from its own environment, never
       exercised end to end before
-- [ ] `carveme` — running at the time of writing; ~9 min per genome
-- [ ] `gtdbtk` — never run, needs the 141.4 GB download
-- [ ] **`amrfinder` — cannot run.** Its database is absent and nothing fetches
-      it. See the DESIGN.md entry: `Database.url` is dead code
-- [ ] CI green on GitHub (needs the push)
+- [x] `carveme` — 4 SBML models, ~4 MB each; ~9 min per genome
+- [x] **`amrfinder`** — after the download mechanism landed: database
+      `2026-08-07.1` fetched in 26 s as a workflow step, then 7 and 11 genes
 - [x] `mkdocs build --strict`
-- [ ] then `git push origin v3`
+- [x] CI green — 20 s and 22 s on the two pushes
+- [x] `git push origin v3` — `b6a5f3b`
+- [x] **clean clone works** — cloned to `/evo/postdoc/comparem2`, both
+      environments installed, 92 tests, `test-fast` 8/8, and the runbook
+      command with `-d` and `--isolated-launcher` ran 8/8 including CheckM2
+- [ ] `gtdbtk` — never run, needs the 141.4 GB download
 
-Two problems the run found, both recorded in DESIGN.md and neither fixed:
+Three defects the run found, all fixed and recorded in DESIGN.md:
 
-1. **No database downloads exist.** `Database.url` is declared for all four and
-   read by nothing. `cm2` prints a GB total and then fails inside a tool.
-2. **Snakemake locks the working directory, not `--output`.** Two runs in one
-   checkout collide regardless of output directory, and a killed run leaves a
-   lock the next run cannot clear itself.
+1. **No database downloads existed.** `Database.url` was read by nothing.
+   Downloads are now Snakemake rules.
+2. **GTDB-Tk's database was unreachable** — it reads `GTDBTK_DATA_PATH` and
+   nothing set it, so `--databases` was ignored for 91% of the install weight.
+3. **Snakemake locked the working directory, not `--output`.** Fixed with
+   `--directory`.
+
+## Where things live on thylakoid
+
+- checkout: `/evo/postdoc/comparem2` (branch `v3`, a real clone)
+- databases: `/evo/postdoc/cm2-databases` — 6.9 GB, deliberately outside any
+  checkout so deleting a checkout does not cost a re-download. Pass it with
+  `-d`.
+- `/evo/postdoc/cm2v3` is the old rsync scratch directory and is now redundant;
+  it holds an 8.5 GB pixi environment that can go.
+
+Two flags are not optional there:
+
+```bash
+pixi run cm2 <assemblies>... \
+  -d /evo/postdoc/cm2-databases \
+  --isolated-launcher "$HOME/.pixi/bin/pixi run -e {tool}"
+```
+
+Without `-d`, the 6.9 GB is downloaded again. Without an **absolute** launcher
+path, CheckM2 fails with `command not found`, because Snakemake's shell does
+not inherit an interactive PATH.
 
 ## Not in scope
 

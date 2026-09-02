@@ -14,10 +14,16 @@ pytest = "pytest tests/unit -q"
 # unpacked, which is what the tests/**/*.fna ignore rule is for.
 unpack = "unzip -o -q tests/E._faecium/fna.zip -d tests/E._faecium"
 
-# A real run over four genomes, no databases needed. Paths are listed rather
-# than globbed on purpose: the set contains `116_2 duplicate.fna`, a shell
-# glob would split it into two arguments, and it is exactly the case
-# canonicalise() and slug() exist to handle.
+# A real run over four genomes, no databases needed.
+#
+# Paths are listed rather than globbed only so the task is deterministic about
+# which four it runs. A glob would also be safe: `tests/E._faecium/*.fna`
+# expands correctly even though the set contains `116_2 duplicate.fna`, because
+# glob results are not word-split — verified 2026-09-02. An earlier version of
+# this comment claimed the opposite.
+#
+# The space still matters, just not here: it is the case canonicalise() and
+# slug() exist to handle, and it becomes sample `116_2_duplicate`.
 test-fast = { cmd = """
 rm -rf cm2_test-fast && python -m comparem2.cli \
   "tests/E._faecium/116_2.fna" \
