@@ -145,6 +145,11 @@ That is everything a live keyboard-driven interface needs. The offer to ship a
 modified Snakemake stays unused, which is the better outcome — a fork would have
 to be rebased forever.
 
+**Amended 2026-09-02.** The spike counted events and did not read their fields.
+`job_finished` turned out to carry neither `rule_name` nor `jobid` — it carries
+`job_id`, with an underscore — so "the events exist" was true and "the events
+say which rule finished" was not. See *The first `--tui` run* below.
+
 ---
 
 ## 2026-09-02
@@ -339,3 +344,55 @@ a real run expanded `tests/E._faecium/*.fna` to four correct paths.
 Kept as an entry because it is the same failure mode as the rest of this
 section, applied to prose instead of code: a plausible mechanism asserted
 without being tested.
+
+### The first `--tui` run found five defects
+Launched for the first time on thylakoid over the four *E. faecium* genomes.
+checkm2 failed, and then the whole 13-tool run stopped: twelve tools that had
+nothing to do with checkm2 stayed at `pending`, and a green `Report:` line was
+printed for a run that had produced no output.
+
+All five had one cause. `tui.execute()` duplicated `cli.py` instead of sharing
+it, and drifted:
+
+1. **The env files were never written.** `cli.py` called `render_envs()`; the
+   TUI did not. checkm2's rule carries a `conda:` directive, so Snakemake ran
+   the job and then failed *recording metadata* for it with a `WorkflowError`
+   — which aborts the workflow, not the job. A missing 200-byte file killed a
+   13-tool run.
+2. **`--isolated-launcher` was dropped**, so `checkm2: command not found`.
+3. **The Snakemake lock went back to the checkout**, because `runner.run()` was
+   called without `workdir=`. Exactly the defect *Snakemake locks the working
+   directory* records as fixed — fixed in the CLI, reintroduced beside it.
+4. **`--until`, `--set`, `--keep-going` and `--dry-run` were ignored.** The TUI
+   opened with all 13 tools selected regardless, putting GTDB-Tk's 141.4 GB one
+   keypress away for a user who had asked for one tool.
+5. **`runner.run(dry_run=True)` could not work.** `ExecutionSettings(dryrun=…)`
+   raises `TypeError` — dry run is an executor plugin, not a setting — and the
+   broad `except Exception` reported that as a failed workflow.
+
+The fix is `snakefile.prepare()`, which writes the Snakefile *and* the env files
+and is now the only way either entry point builds a workflow. The rest is
+argument threading.
+
+Two more surfaced while verifying the fix, both older than the run:
+
+- **No tool could ever have been marked `done`.** `job_finished` carries
+  `job_id`, and the runner read `jobid`, which is what `job_info` uses. Every
+  finish event arrived with no rule attached and the TUI dropped it. A run that
+  completed 6 of 6 steps reported that nothing had run. Only `job_info` carries
+  `rule_name`, so the runner now remembers the mapping. Invisible before,
+  because the report was rendered unconditionally — making the failure path
+  honest is what exposed it.
+- **The selection column was blank.** The marks were `[x]`, `[+]` and `[ ]`,
+  and a `DataTable` cell given a `str` is parsed as Rich markup: `[x]` is a tag,
+  not text. An interface for choosing tools showed no choices.
+
+The lesson is the one this file keeps relearning, in a new place: **a second
+implementation of a path that already works is where the bugs go.** The unit
+tests were no help — 92 of them passed throughout, because not one of them
+called `execute()`. There are now 100, and all 8 of the new ones fail against
+the pre-fix source (checked by stashing `src/` and re-running them).
+
+Two of the eight need real Snakemake and are skipped where it is absent, which
+is deliberate: the defect was in Snakemake's own field names, and a fake event
+stream would have agreed with whatever the code assumed.

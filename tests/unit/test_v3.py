@@ -581,6 +581,181 @@ def test_tui_does_not_override_textual_reserved_names():
         assert hasattr(App, "on_event")
 
 
+def test_tui_selection_marks_are_not_rich_markup():
+    """Regression: the marks were `[x]`, `[+]` and `[ ]`, and drew as nothing.
+
+    A DataTable cell given a `str` is parsed as Rich markup, and `[x]` is a tag
+    rather than text. The selection column was blank — in an interface whose
+    whole job is showing what is selected.
+    """
+    from comparem2.tui import MARK_DEP, MARK_OFF, MARK_ON
+
+    marks = (MARK_ON, MARK_DEP, MARK_OFF)
+    for mark in marks:
+        assert "[" not in mark and "]" not in mark, f"{mark!r} parses as markup"
+    assert len(set(marks)) == 3, "the three states must be distinguishable"
+
+
+@pytest.mark.asyncio
+async def test_tui_rows_reflect_the_seeded_selection_at_startup():
+    """`on_mount` refreshed the cost line but not the rows.
+
+    With the selection seeded from `--until`, eleven rows claimed to be
+    `pending` when they were not selected at all.
+    """
+    pytest.importorskip("textual")
+    from textual.widgets import DataTable
+
+    from comparem2.tui import MARK_OFF, MARK_ON, ComparemTUI
+
+    app = ComparemTUI([], Path("results"), Path("databases"), SAMPLES, 4,
+                      selected=["mashtree"])
+    async with app.run_test():
+        table = app.query_one(DataTable)
+        assert table.get_cell("mashtree", "sel") == MARK_ON
+        assert table.get_cell("gtdbtk", "sel") == MARK_OFF
+        assert table.get_cell("gtdbtk", "status") == "not selected"
+
+
+def test_prepare_writes_the_snakefile_and_every_env_file(tmp_path):
+    """One entry point for both the CLI and the TUI.
+
+    Writing the Snakefile without the env files is a silent failure: the
+    Snakefile parses, the DAG builds, the job runs, and Snakemake dies
+    afterwards inside its metadata bookkeeping.
+    """
+    from comparem2.snakefile import prepare, render_envs
+
+    snakefile = prepare(CATALOGUE, ["checkm2"], tmp_path, tmp_path / "db", SAMPLES)
+
+    assert snakefile == tmp_path / ".comparem2" / "Snakefile"
+    assert "rule checkm2:" in snakefile.read_text()
+    written = {p.name for p in (tmp_path / ".comparem2" / "envs").iterdir()}
+    assert written == set(render_envs(CATALOGUE, ["checkm2"]))
+    # checkm2 is the one isolated tool, so its rule carries a `conda:`
+    # directive and this file is not optional.
+    assert "checkm2.yaml" in written
+
+
+@pytest.mark.asyncio
+async def test_tui_writes_envs_and_withholds_the_report_when_nothing_ran(
+        tmp_path, monkeypatch):
+    """Regression, found on thylakoid: two defects in one run.
+
+    The TUI built the Snakefile itself instead of calling prepare(), so no env
+    file was written and checkm2's `conda:` directive pointed at nothing —
+    Snakemake aborted the whole workflow, not the job. It then printed a green
+    "Report:" line for a run that had produced no output at all.
+    """
+    pytest.importorskip("textual")
+    from comparem2 import tui as tui_mod
+
+    reports: list[object] = []
+    monkeypatch.setattr(tui_mod, "run", lambda *a, **k: iter(
+        [tui_mod.Event("job_error", rule="checkm2", message="boom")]))
+    monkeypatch.setattr(tui_mod, "render_report",
+                        lambda *a, **k: reports.append(a) or Path("report.html"))
+
+    app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                              selected=["checkm2"])
+    async with app.run_test() as pilot:
+        await pilot.press("r")
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+        assert app.state["checkm2"] == tui_mod.FAILED
+
+    assert (tmp_path / ".comparem2" / "envs" / "checkm2.yaml").exists()
+    assert reports == [], "a run that produced nothing must not claim a report"
+
+
+@pytest.mark.asyncio
+async def test_tui_settles_every_tool_to_a_terminal_state(tmp_path, monkeypatch):
+    """A tool that never started is `not run`, not `pending` for ever.
+
+    Twelve rows reading `pending` after the workflow had already aborted made
+    total failure look like a run still in progress.
+    """
+    pytest.importorskip("textual")
+    from comparem2 import tui as tui_mod
+
+    monkeypatch.setattr(tui_mod, "run", lambda *a, **k: iter(
+        [tui_mod.Event("job_finished", rule="mashtree")]))
+    monkeypatch.setattr(tui_mod, "render_report", lambda *a, **k: Path("report.html"))
+
+    app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                              selected=["mashtree", "treecluster"])
+    async with app.run_test() as pilot:
+        await pilot.press("r")
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+        assert app.state["mashtree"] == tui_mod.DONE
+        assert app.state["treecluster"] == tui_mod.NOT_RUN
+
+
+@pytest.mark.asyncio
+async def test_tui_seeds_its_selection_from_until():
+    """`--tui --until mashtree` must not open with gtdbtk's 141.4 GB armed.
+
+    The TUI ignored `--until` and selected the whole catalogue, which put a
+    141.4 GB download one keypress away for a user who had asked for one tool.
+    """
+    pytest.importorskip("textual")
+    from comparem2.tui import ComparemTUI
+
+    app = ComparemTUI([], Path("results"), Path("databases"), SAMPLES, 4,
+                      selected=["mashtree"])
+    async with app.run_test():
+        assert app.selected == {"mashtree"}
+        assert "1 tools selected" in app.cost_text
+        assert "no databases" in app.cost_text
+
+
+def test_runner_names_the_rule_that_finished(tmp_path):
+    """Regression: `job_finished` carries `job_id`, not `jobid`, and no rule.
+
+    `job_info` is the only record carrying `rule_name`, so the runner has to
+    remember the mapping. Without it every finish event arrived unattributable,
+    the TUI dropped them all, and a workflow that completed 6 of 6 steps on
+    thylakoid reported that nothing had run.
+
+    This one needs real Snakemake: the defect was in the field names, which a
+    fake event stream would simply have agreed with.
+    """
+    pytest.importorskip("snakemake")
+    from comparem2.runner import run
+
+    snakefile = tmp_path / "Snakefile"
+    snakefile.write_text(
+        'rule all:\n    input: "a.txt"\n\n'
+        'rule a:\n    output: "a.txt"\n    shell: "touch {output}"\n')
+
+    events = list(run(snakefile, 1, workdir=tmp_path))
+
+    finished = {e.rule for e in events if e.kind == "job_finished"}
+    assert "a" in finished, f"unnamed job_finished among {[e.kind for e in events]}"
+    assert (tmp_path / "a.txt").exists()
+
+
+def test_runner_dry_run_selects_the_dryrun_executor(tmp_path):
+    """`ExecutionSettings(dryrun=True)` raises TypeError — it is not a field.
+
+    The broad `except Exception` in run() turned that into an `error` event, so
+    a dry run reported itself as a failed workflow rather than as a bug.
+    """
+    pytest.importorskip("snakemake")
+    from comparem2.runner import run
+
+    target = tmp_path / "done.txt"
+    snakefile = tmp_path / "Snakefile"
+    snakefile.write_text(
+        f'rule all:\n    output: "{target}"\n    shell: "touch {{output}}"\n')
+
+    kinds = [e.kind for e in run(snakefile, 1, workdir=tmp_path, dry_run=True)]
+
+    assert "done" in kinds and "error" not in kinds
+    assert not target.exists(), "a dry run must not execute the rule"
+
+
 # --- contig figure -------------------------------------------------
 
 def test_viridis_endpoints_and_monotonic():

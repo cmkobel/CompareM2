@@ -94,10 +94,27 @@ specs so they cannot drift from what actually runs.
 pixi run cm2 *.fna --tui
 ```
 
-A keyboard interface over the same run: per-tool progress, the exact command
-each step is running, and failures as they happen. It drives Snakemake through
-its logger plugin system rather than scraping stdout, so the events are
+A keyboard interface over the same run: per-tool progress, the download size
+before anything is fetched, and failures as they happen. It drives Snakemake
+through its logger plugin system rather than scraping stdout, so the events are
 structured.
+
+`space` selects and deselects the tool under the cursor, `a` and `n` select all
+and none, `r` runs, `q` quits. `▣` is chosen, `▨` is pulled in as a dependency
+of something chosen, `▢` is off.
+
+Every other flag works the same way with `--tui` as without it — `--until` seeds
+the selection, and `--set`, `--keep-going` and `-d` are all honoured:
+
+```bash
+pixi run cm2 *.fna --tui --until mashtree treecluster
+```
+
+Without `--until` everything is selected, which includes GTDB-Tk and its 141.4
+GB. Read the size on the second line before pressing `r`.
+
+`--dry-run` is refused with `--tui`, because the tool list is already the dry
+run and it shows the download size too.
 
 ## Re-rendering the report
 

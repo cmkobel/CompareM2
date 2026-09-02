@@ -10,6 +10,7 @@ module knows nothing about Snakemake and nothing about which tools exist.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 
 from textual.app import App, ComposeResult
@@ -19,11 +20,16 @@ from textual.widgets import DataTable, Footer, Header, ProgressBar, RichLog, Sta
 from .catalogue import CATALOGUE
 from .report import render_report
 from .runner import Event, run
-from .snakefile import render
+from .snakefile import prepare
 
-PENDING, RUNNING, DONE, FAILED, SKIPPED = "·", "▸", "✓", "✗", "–"
+PENDING, RUNNING, DONE, FAILED, SKIPPED, NOT_RUN = "·", "▸", "✓", "✗", "–", "○"
 LABEL = {PENDING: "pending", RUNNING: "running", DONE: "done",
-         FAILED: "failed", SKIPPED: "not selected"}
+         FAILED: "failed", SKIPPED: "not selected", NOT_RUN: "not run"}
+
+# The selection column. These were `[x]`, `[+]` and `[ ]` and rendered as
+# nothing at all: a DataTable cell given a `str` is parsed as Rich markup, and
+# `[x]` is a tag, not text. The selection UI had no visible selection.
+MARK_ON, MARK_DEP, MARK_OFF = "▣", "▨", "▢"
 
 
 class ComparemTUI(App):
@@ -47,14 +53,24 @@ class ComparemTUI(App):
     ]
 
     def __init__(self, inputs: list[Path], workdir: Path, databases: Path,
-                 samples: tuple[str, ...], cores: int) -> None:
+                 samples: tuple[str, ...], cores: int,
+                 selected: list[str] | None = None,
+                 overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
+                 launcher: Sequence[str] | None = None,
+                 keep_going: bool = False) -> None:
         super().__init__()
         self.inputs = inputs
         self.workdir = workdir
         self.databases = databases
         self.samples = samples
         self.cores = cores
-        self.selected: set[str] = {t.name for t in CATALOGUE}
+        self.overrides = overrides
+        self.launcher = launcher
+        self.keep_going = keep_going
+        # Seeded from `--until` when given. Selecting everything by default
+        # puts gtdbtk's 141.4 GB one keypress away, so a user who named the
+        # tools they want on the command line gets exactly those.
+        self.selected: set[str] = set(selected) if selected else {t.name for t in CATALOGUE}
         self.state: dict[str, str] = {t.name: PENDING for t in CATALOGUE}
         self.running = False
         self.cost_text = ""
@@ -79,8 +95,11 @@ class ComparemTUI(App):
         table.add_column("Status", key="status", width=13)
         table.add_column("What it does", key="summary")
         for tool in CATALOGUE:
-            table.add_row("[x]", tool.name, LABEL[PENDING], tool.summary, key=tool.name)
-        self.refresh_cost()
+            table.add_row(MARK_ON, tool.name, LABEL[PENDING], tool.summary, key=tool.name)
+        # Not refresh_cost(): the selection can differ from "everything" before
+        # a key has been pressed, because `--until` seeds it, and the rows have
+        # to say so.
+        self.sync_table()
         self.query_one(RichLog).write(
             "[dim]space[/] select · [dim]r[/] run · [dim]q[/] quit")
 
@@ -127,8 +146,8 @@ class ComparemTUI(App):
         table = self.query_one(DataTable)
         closure = {t.name for t in CATALOGUE.closure(sorted(self.selected))} if self.selected else set()
         for tool in CATALOGUE:
-            mark = "[x]" if tool.name in self.selected else (
-                "[+]" if tool.name in closure else "[ ]")
+            mark = MARK_ON if tool.name in self.selected else (
+                MARK_DEP if tool.name in closure else MARK_OFF)
             table.update_cell(tool.name, "sel", mark)
             if not self.running:
                 state = self.state[tool.name] if tool.name in closure else SKIPPED
@@ -148,19 +167,52 @@ class ComparemTUI(App):
 
     async def execute(self, chosen: list[str]) -> None:
         log = self.query_one(RichLog)
-        build = self.workdir / ".comparem2"
-        (build / "envs").mkdir(parents=True, exist_ok=True)
-        snakefile = build / "Snakefile"
-        snakefile.write_text(
-            render(CATALOGUE, chosen, self.workdir, self.databases, self.samples))
+        snakefile = prepare(CATALOGUE, chosen, self.workdir, self.databases,
+                            self.samples, overrides=self.overrides,
+                            launcher=self.launcher)
+        names = [t.name for t in CATALOGUE.closure(chosen)]
 
-        self.call_from_thread(log.write, f"[bold]Running {len(chosen)} tools[/]")
-        for event in run(snakefile, self.cores):
+        self.call_from_thread(log.write, f"[bold]Running {len(names)} tools[/]")
+        for event in run(snakefile, self.cores, workdir=self.workdir,
+                         keep_going=self.keep_going):
             self.call_from_thread(self.apply_event, event)
 
-        report = render_report(CATALOGUE, chosen, self.workdir, self.databases, self.samples)
-        self.call_from_thread(log.write, f"[bold green]Report:[/] {report}")
+        # Safe to read self.state here: call_from_thread blocks until the UI
+        # thread has applied the update, so every event above has landed.
+        self.call_from_thread(self.settle, names)
+        done = [n for n in names if self.state[n] == DONE]
+        failed = [n for n in names if self.state[n] == FAILED]
+
+        if not done:
+            reason = f" Failed: {', '.join(failed)}." if failed else ""
+            self.call_from_thread(
+                log.write,
+                f"[bold red]Nothing ran.[/]{reason} No report written.")
+        else:
+            if failed:
+                self.call_from_thread(
+                    log.write,
+                    f"[yellow]{len(failed)} of {len(names)} failed:[/] {', '.join(failed)}")
+            report = render_report(CATALOGUE, chosen, self.workdir,
+                                   self.databases, self.samples)
+            self.call_from_thread(log.write, f"[bold green]Report:[/] {report}")
         self.running = False
+
+    def settle(self, names: list[str]) -> None:
+        """Once the run is over, a tool that never started reads `not run`.
+
+        Leaving twelve rows at `pending` after the workflow had aborted was how
+        a total failure came to look like a run still in progress.
+
+        A row still marked `running` is left alone: that job did start, and the
+        stream ended before saying how it went. Calling that `not run` would be
+        a false statement rather than an unknown one.
+        """
+        table = self.query_one(DataTable)
+        for name in names:
+            if self.state[name] == PENDING:
+                self.state[name] = NOT_RUN
+                table.update_cell(name, "status", LABEL[NOT_RUN])
 
     # NB: not `on_event` — Textual reserves that for its own event dispatch,
     # and overriding it swallows every framework message.
@@ -195,5 +247,10 @@ class ComparemTUI(App):
 
 
 def launch(inputs: list[Path], workdir: Path, databases: Path,
-           samples: tuple[str, ...], cores: int) -> None:
-    ComparemTUI(inputs, workdir, databases, samples, cores).run()
+           samples: tuple[str, ...], cores: int,
+           selected: list[str] | None = None,
+           overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
+           launcher: Sequence[str] | None = None,
+           keep_going: bool = False) -> None:
+    ComparemTUI(inputs, workdir, databases, samples, cores, selected,
+                overrides, launcher, keep_going).run()

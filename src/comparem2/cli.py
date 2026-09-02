@@ -1,7 +1,8 @@
 """Command-line entry point.
 
 Canonicalises inputs, generates the workflow, hands off to Snakemake, and
-renders the report. The TUI will drive the same functions.
+renders the report. `--tui` hands the same arguments to the TUI, which shares
+`snakefile.prepare()` with this path rather than building the workflow itself.
 """
 
 from __future__ import annotations
@@ -13,7 +14,7 @@ from pathlib import Path
 
 from .catalogue import CATALOGUE
 from .report import render_report
-from .snakefile import render, render_envs
+from .snakefile import prepare
 
 
 def slug(stem: str) -> str:
@@ -143,23 +144,23 @@ def main(argv: list[str] | None = None) -> int:
         names = ", ".join(db.name for db in pending)
         print(f"to download: {names} ({size})", file=sys.stderr)
 
+    overrides = parse_overrides(args.set)
+    launcher = args.isolated_launcher.split() if args.isolated_launcher else None
+
     if args.tui:
+        if args.dry_run:
+            raise SystemExit(
+                "--dry-run and --tui do not combine: the tool list is already "
+                "the dry run, and it shows the download size too")
         from .tui import launch
 
-        launch(args.inputs, workdir, databases, samples, args.cores)
+        launch(args.inputs, workdir, databases, samples, args.cores,
+               selected=args.until, overrides=overrides, launcher=launcher,
+               keep_going=args.keep_going)
         return 0
 
-    build = workdir / ".comparem2"
-    (build / "envs").mkdir(parents=True, exist_ok=True)
-    snakefile = build / "Snakefile"
-    overrides = parse_overrides(args.set)
-    snakefile.write_text(
-        render(CATALOGUE, args.until, workdir, databases, samples,
-               overrides=overrides,
-               launcher=args.isolated_launcher.split() if args.isolated_launcher else None)
-    )
-    for name, text in render_envs(CATALOGUE, args.until).items():
-        (build / "envs" / name).write_text(text)
+    snakefile = prepare(CATALOGUE, args.until, workdir, databases, samples,
+                        overrides=overrides, launcher=launcher)
 
     if not args.report_only:
         cmd = [

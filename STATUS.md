@@ -50,7 +50,12 @@ for two strains of one species.
 - Automatic database download — `download_amrfinder` fetched database
   `2026-08-07.1` in 26 s as a workflow step
 - Snakemake lock now lives in the output directory
-- 92 unit tests, ~0.8 s
+- **`--tui`, end to end** — `--until mashtree treecluster --tui` under a real
+  terminal: two tools selected from the command line, both `done`, report
+  written, clean exit. And headlessly through `run_test()` with `seqkit` and
+  `checkm2`, so the isolated launcher goes through the TUI path too. Five
+  defects had to be fixed first, see [DECISIONS.md](DECISIONS.md).
+- 100 unit tests, ~1.7 s
 - CI green on GitHub, 18–22 s per run
 - `mkdocs build --strict`
 - `docs/generate.py --check` — generated pages current
@@ -126,8 +131,9 @@ To skip the 141 GB:
   summaries separately.
 - **The AMRFinder stamp does not survive `pixi install`.** Its data lives in the
   conda prefix; rebuild the environment and the database is fetched again.
-- **`--tui` has never been launched.** textual 8.2.8 resolves and two tests
-  exercise the widget names, but the interface has not been run.
+- **`--tui` has not been run against a failing workflow interactively.** The
+  "Nothing ran / no report" path is covered by unit tests and was reached once
+  by accident, but not driven by hand since.
 - **`/evo/postdoc/cm2v3`** is the old rsync scratch directory, now redundant,
   holding an 8.5 GB pixi environment that can be deleted.
 - **The git remote points at `cmkobel/comparem2`** while GitHub has renamed the

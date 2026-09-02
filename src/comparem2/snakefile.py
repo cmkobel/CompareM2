@@ -212,3 +212,26 @@ def render_envs(registry: Registry, selected: list[str] | None) -> dict[str, str
             "channels:\n  - conda-forge\n  - bioconda\ndependencies:\n" + packages + "\n"
         )
     return envs
+
+
+def prepare(registry: Registry, selected: list[str] | None, workdir: Path,
+            databases: Path, samples: tuple[str, ...],
+            overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
+            launcher: Sequence[str] | None = None) -> Path:
+    """Write the Snakefile and its env files; return the Snakefile path.
+
+    Every entry point goes through here. They did not once: the TUI wrote the
+    Snakefile itself and skipped the env files, so the `conda:` directive on
+    checkm2's rule pointed at a file that did not exist. Snakemake ran the job,
+    then failed *recording metadata* for it with a WorkflowError — which aborts
+    the workflow rather than the job, so twelve tools with no relation to
+    checkm2 never started. A missing 200-byte file killed a 13-tool run.
+    """
+    build = workdir / ".comparem2"
+    (build / "envs").mkdir(parents=True, exist_ok=True)
+    snakefile = build / "Snakefile"
+    snakefile.write_text(render(registry, selected, workdir, databases, samples,
+                                overrides=overrides, launcher=launcher))
+    for name, text in render_envs(registry, selected).items():
+        (build / "envs" / name).write_text(text)
+    return snakefile

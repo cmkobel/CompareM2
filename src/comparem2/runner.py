@@ -32,11 +32,24 @@ class Event:
 
 
 class _Capture(logging.Handler):
-    """Turns Snakemake log records into `Event`s on a queue."""
+    """Turns Snakemake log records into `Event`s on a queue.
+
+    Snakemake does not spell a job the same way twice, verified against 9.26.1
+    by dumping the records: `job_info` carries `jobid` and `rule_name`,
+    `job_finished` carries `job_id` — with an underscore — and no rule name at
+    all, and `job_started` carries only a list of ids. So `job_info` is the one
+    place a rule name can be had, and the mapping is remembered here to give
+    the finish event its name back.
+
+    Reading `jobid` on a `job_finished` record therefore yielded None, the TUI
+    dropped every finish event as unattributable, and a workflow that completed
+    6 of 6 steps reported that nothing had run.
+    """
 
     def __init__(self, sink: Callable[[Event], None]) -> None:
         super().__init__()
         self.sink = sink
+        self.rules: dict[int, str] = {}
 
     def emit(self, record: logging.LogRecord) -> None:
         try:
@@ -50,12 +63,16 @@ class _Capture(logging.Handler):
 
         name = getattr(event, "value", str(event))
         data = record.__dict__
-        rule = data.get("rule_name")
         jobid = data.get("jobid")
+        if jobid is None:
+            jobid = data.get("job_id")
+        rule = data.get("rule_name") or self.rules.get(jobid)
 
         if name == "workflow_started":
             self.sink(Event("started"))
         elif name == "job_info":
+            if jobid is not None and rule:
+                self.rules[jobid] = rule
             self.sink(Event("job_started", rule=rule, jobid=jobid))
         elif name == "job_finished":
             self.sink(Event("job_finished", rule=rule, jobid=jobid))
@@ -67,11 +84,17 @@ class _Capture(logging.Handler):
 
 
 def run(snakefile: Path, cores: int, workdir: Path | None = None,
-        dry_run: bool = False) -> Iterator[Event]:
+        dry_run: bool = False, keep_going: bool = False,
+        rerun_incomplete: bool = True) -> Iterator[Event]:
     """Execute the workflow, yielding events as they happen.
 
     Snakemake runs on a worker thread so the caller — a TUI, usually — keeps
     its own loop responsive.
+
+    `workdir` is not optional in practice: Snakemake locks its working
+    directory rather than its output paths, so leaving it unset makes every run
+    in one checkout share `./.snakemake`, and a killed run leaves a lock the
+    next cannot clear. The CLI passes `--directory` for the same reason.
     """
     events: queue.Queue[Event | None] = queue.Queue()
     handler = _Capture(events.put)
@@ -95,12 +118,15 @@ def run(snakefile: Path, cores: int, workdir: Path | None = None,
                     snakefile=snakefile,
                     workdir=workdir,
                 )
-                dag = workflow.dag(dag_settings=DAGSettings())
-                if dry_run:
-                    dag.execute_workflow(
-                        execution_settings=ExecutionSettings(dryrun=True))
-                else:
-                    dag.execute_workflow()
+                dag = workflow.dag(
+                    dag_settings=DAGSettings(force_incomplete=rerun_incomplete))
+                # A dry run is an executor plugin, not a setting: passing
+                # `dryrun=True` to ExecutionSettings raises TypeError, which
+                # the handler below would have reported as a failed run.
+                dag.execute_workflow(
+                    executor="dryrun" if dry_run else "local",
+                    execution_settings=ExecutionSettings(keep_going=keep_going),
+                )
             events.put(Event("done"))
         except Exception as exc:  # surfaced to the user, not swallowed
             events.put(Event("error", message=f"{type(exc).__name__}: {exc}"))
