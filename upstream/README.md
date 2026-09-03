@@ -8,6 +8,7 @@ sent.** Each file says what it is, where it goes, and what it still needs.
 | ----- | ----------- | ------ |
 | [carveme-205-comment.md](carveme-205-comment.md) | comment on [cdanielmachado/carveme#205](https://github.com/cdanielmachado/carveme/issues/205) | unsent |
 | [scip-question.md](scip-question.md) | issue or discussion on [scipopt/scip](https://github.com/scipopt/scip) | unsent |
+| [panaroo-intbitset-note.md](panaroo-intbitset-note.md) | issue or discussion on [gtonkinhill/panaroo](https://github.com/gtonkinhill/panaroo) | unsent, and incomplete on purpose — see its last section |
 
 The finding behind both is in [../STATUS.md](../STATUS.md) (*CarveMe was nine
 minutes for the wrong reason*), [../DECISIONS.md](../DECISIONS.md) and
