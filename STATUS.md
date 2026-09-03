@@ -4,10 +4,9 @@ What is currently true of a real run. This file changes whenever something is
 re-run, which is why it is not in [DESIGN.md](DESIGN.md) — decisions should not
 need editing because a tool was verified again.
 
-Last updated **2026-09-03**. Everything below is from runs on thylakoid except
-the `biosynthesis` row, which is noted where it differs.
+Last updated **2026-09-03**, from runs on thylakoid.
 
-## Tool verification: 14 of 14, thirteen of them through Snakemake
+## Tool verification: 14 of 14
 
 **Verified means executed** on the four *E. faecium* test genomes and producing
 correct-looking output. It never means "installed" — see
@@ -28,7 +27,7 @@ correct-looking output. It never means "installed" — see
 | fasttree | 09-02 | at `threads=1`; duplicates at 0.0 branch length. `threads=1` is now measured, not assumed — FastTreeMP buys nothing here; see below |
 | carveme | 09-02 | 4/4 SBML models — but the ~9 min per genome was a solver defect and the models were truncated. **50 s and 1,743 reactions** through `carve_scip.py`; see below |
 | gtdbtk | 09-02 | all four *E. faecium* at 99.0–99.2% ANI against a 95.0 radius, `ani_screen`; duplicates identical. Six defects had to be fixed first — see below |
-| biosynthesis | 09-03 | 11 real models including all four *E. faecium*, plus the curated `iML1515` as a control: **31 of 32 de novo**, 1.2–1.8 s a genome, duplicate pair identical. **Run directly, not yet through Snakemake, and on macOS against PyPI reframed 1.6.0 + SCIP** — see below |
+| biosynthesis | 09-03 | 13-step Snakemake run, `--until biosynthesis`, exit 0. **3 s a genome**, duplicate pair identical, and byte-identical to the same probe run against the PyPI wheel on macOS. The curated `iML1515` control returns **31 of 32 de novo** — see below |
 
 ### GTDB-Tk: six defects, none of which a solve would show
 Found 2026-09-02 while making the tool runnable. Each was invisible because the
@@ -213,18 +212,34 @@ The one non-de-novo verdict on `iML1515` is adenosylcobalamin, which *E. coli*
 genuinely cannot synthesise de novo. Every other call on the curated model is
 the described answer, which is the calibration for the section.
 
-**Not yet executed:** the rule, through Snakemake, on thylakoid, in the pixi
-environment. Three things are therefore unverified — that `python` in that
-rule's environment is CarveMe's; that `reframed` there is the conda build rather
-than the PyPI wheel this ran against; and that `load_cbmodel(..., flavor="bigg")`
-behaves the same across those builds. reframed 1.6.0 here reports only the
-`scip` backend, so the solver family matches even though the build does not.
-None of that is a hypothesis worth defending — run it.
+### biosynthesis through Snakemake, 13:51–14:03 on 2026-09-03
+`--until biosynthesis` over the four *E. faecium* genomes: bakta, carveme and
+biosynthesis, **13 of 13 steps, exit 0**, report written. The rule takes **3 s**
+a genome (14:02:09 → 14:02:12 and the same for the other three) against carveme's
+30–70 s, on a machine carrying load 27 from unrelated work.
 
-Note also that this ran on **macOS**, which the pipeline itself does not
-support, and only because `reframed` and `pyscipopt` have arm64 wheels on PyPI
-where the analysis tools have no `osx-arm64` conda builds. It is a way to
-execute this one program's logic, not a change to the platform support.
+**The conda build and the PyPI wheel agree exactly.** All four panel tables and
+all four media tables are byte-identical to the ones produced on macOS against
+`reframed 1.6.0` from PyPI. The conda `reframed` is 1.6.0 too and also reports
+only the `scip` backend. The three things that were unverified — that the rule's
+`python` is CarveMe's, that conda's ReFramed reads a BiGG-flavoured SBML the same
+way, and that `load_cbmodel(..., flavor="bigg")` behaves the same across builds —
+are all now answered.
+
+Carving ran fresh rather than reusing the 09-02 models, so this also re-checks
+CarveMe: the new `116_2` model has the **same 1,743 reactions, 1,175 metabolites
+and 728 genes** as the old one and the same reaction id set, and `E8202` the same
+1,813 / 1,221 / 784. The SBML md5s differ and the content does not.
+
+Run from a **fresh clone at `/evo/postdoc/cm2-biosynth-check`**, reusing
+`/evo/postdoc/CompareM2/.pixi/envs/default` on PATH rather than solving a second
+8.5 GB environment, because the main checkout still carries the pre-commit rsync
+state described under *Known broken*.
+
+The 09-03 numbers above were first obtained on **macOS**, which the pipeline
+does not support, and only because `reframed` and `pyscipopt` have arm64 wheels
+on PyPI where the analysis tools have no `osx-arm64` conda builds. That was a way
+to execute this one program's logic early; the Snakemake run is the verification.
 
 ### The whole product, produced whole
 All thirteen tools in one run over the four *E. faecium* genomes, 19:22 on
@@ -532,7 +547,8 @@ of it. It was 143 GB until the release changed.
 
 | | |
 | --- | --- |
-| checkout | `/evo/postdoc/CompareM2` — a real clone, on `master`. **The path followed the repository rename**; the old lowercase path does not exist |
+| checkout | `/evo/postdoc/CompareM2` — a real clone, on `master`. **The path followed the repository rename**; the old lowercase path does not exist. Currently at `6311685` with the pre-commit rsync state — see *Known broken* |
+| scratch clone | `/evo/postdoc/cm2-biosynth-check` — current `master`, no `.pixi` of its own; the biosynthesis verification ran here |
 | databases | `/evo/postdoc/cm2-databases` — 6.9 GB, deliberately **outside** any checkout so deleting a checkout does not cost a re-download |
 | pixi | `/home/thylakoid/.pixi/bin/pixi` |
 
@@ -595,12 +611,6 @@ reasoned about in DESIGN.md and not yet demonstrated.
 - **`amrfinder` has not been run under `--use-conda`.** It is the one tool
   whose database lands inside its deployed environment, which is what the
   content-addressed environment sharing in DESIGN.md is for.
-- **`biosynthesis` has not been run through Snakemake.** The program is
-  verified against 11 real models and a curated control; the *rule* is not. What
-  that leaves untested is whether the rule's `python` is CarveMe's, and whether
-  conda's `reframed` reads a BiGG-flavoured SBML the same way as the PyPI wheel
-  it was executed against. One `--until carveme biosynthesis` run on thylakoid
-  settles it. See *biosynthesis, executed 2026-09-03* above.
 - **`--tui` has not been run against a failing workflow interactively.** The
   "Nothing ran / no report" path is covered by unit tests and was reached once
   by accident, but not driven by hand since.
@@ -610,9 +620,21 @@ reasoned about in DESIGN.md and not yet demonstrated.
   tag, a sha256 and the PR. The `--use-conda` run that was the last technical
   unknown has been done. See *Packaging* above and `recipe/README.md`. **A hand-built container image is no longer planned** —
   decided 2026-09-02, see [DECISIONS.md](DECISIONS.md).
-- **The thylakoid checkout carries uncommitted `src/` changes**, rsynced from
-  the laptop for the GTDB-Tk run rather than pulled. Once the work is committed,
-  `git checkout . && git pull` there to get back to a clean tracked state.
+- **The thylakoid checkout is still the pre-commit rsync snapshot**, at
+  `6311685` with modified tracked files under `src/` and `tests/`. Checked
+  2026-09-03 against `origin/master`: every one of the 19 lines it has and
+  master does not is an *older* version of something now committed — the
+  pre-FastTreeMP comment, the `thirteen` strings, the old test counts — and the
+  only untracked source file that differs, `carve_scip.py`, differs in one
+  docstring table header that a later commit refined. **Nothing there would be
+  lost**, so `git checkout -- src tests && rm -f src/comparem2/carve_scip.py
+  src/comparem2/steps.py pyproject.toml && git merge --ff-only origin/master`
+  brings it current. Not done here because it discards files on a remote
+  machine, which is Carl's call to make.
+- **`/evo/postdoc/cm2-biosynth-check`** is the clone the biosynthesis
+  verification ran from, with `results_biosynth/` inside it. It has no `.pixi`
+  of its own — it borrows the main checkout's environment through PATH — so it
+  is cheap to delete once the main checkout is current.
 
 ## Deliberately left alone
 
