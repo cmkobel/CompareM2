@@ -284,7 +284,24 @@ something already published. The post-mortems are in
 - **AMRFinder's database cannot live under `--databases`.** `amrfinder -u`
   rejects `-d`, so its data goes into the conda prefix and all that can be
   recorded is a stamp — which does not survive the environment being rebuilt.
-- **FastTree runs single-threaded.** Parallelism needs the `FastTreeMP` build
-  plus `OMP_NUM_THREADS`; `Tool.env` now makes that possible but it is not done.
+- ~~**FastTree runs single-threaded.**~~ Closed 2026-09-03: `FastTreeMP` and
+  `Tool.env` would make the switch reachable, and it was measured to be worth
+  nothing — **including at hundreds of genomes**, which was the obvious
+  objection and the reason the measurement went to 400 taxa. At 4 taxa MP is
+  2.3% slower; at 7 every thread count lands inside the plain binary's own
+  run-to-run spread. The speedup from 8 threads then does not grow with taxon
+  count: **1.13x at 25, 1.15x at 100, 1.09x at 400**, for 40–65% more CPU and 8
+  cores Snakemake would reserve. `threads=1` is a measurement now, not an
+  assumption.
+- **The support phase is most of FastTree's runtime at the shape this pipeline
+  actually runs, and the report discards it.** SH-like support costs 141.9 s of
+  239.96 s at 7 taxa x 2.07 Mbp (59%) and 8.5 s of 21.46 s at 4 taxa (40%) —
+  but only 19.3 s of 545.6 s at 400 taxa x 100 kbp (3.5%), because it scales
+  with alignment length where the ML search scales with taxon count. Few genomes
+  over a megabase alignment is the pipeline's normal case, so the 59% is the
+  figure that matters. `-nosupport` leaves topology and branch lengths
+  byte-identical, and `draw_tree` labels leaves only, so the values never reach
+  the page. Either drop them or render them — but `fasttree.newick` is a
+  user-facing artifact too, so dropping them is a trade, not a free win.
 - **Report sections** still to write from scratch: v2 never displayed fasttree or
   treecluster, so those are new rather than ports.

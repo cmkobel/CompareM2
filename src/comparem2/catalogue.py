@@ -469,13 +469,17 @@ fasttree = Tool(
     ],
     outputs=lambda c: [c.out("fasttree", "fasttree.newick")],
     stdout_to_output=True,
-    # One thread, honestly. The plain `FastTree` binary is single-threaded;
-    # parallelism needs the separate `FastTreeMP` build, which takes its thread
-    # count from the OMP_NUM_THREADS environment variable rather than an
-    # argument — and commands here are argument lists, not shell strings, so
-    # there is nowhere to set it. Declaring 4 only reserved cores that went
-    # unused. If this becomes the bottleneck, the fix is FastTreeMP plus an
-    # `env` field on Tool, not a larger number here.
+    # One thread, and measured rather than assumed. `bioconda::fasttree` ships
+    # both `FastTree` and `FastTreeMP`, and `Tool.env` could hand the latter its
+    # OMP_NUM_THREADS — so the switch is reachable. It just does not pay: on a
+    # real 7-taxon x 2,066,459 bp core alignment, plain took 242.3 s and 209.4 s
+    # on two reps, and FastTreeMP took 251.7 / 278.5 / 254.6 / 204.3 / 208.2 s
+    # at 1 / 2 / 4 / 8 / 16 threads — every one inside the spread of the plain
+    # binary against itself. On the 4-taxon test set MP is 2.3% slower.
+    # Nor does that change with more genomes, which is the obvious objection:
+    # 8 threads bought 1.13x at a simulated 25 taxa, 1.15x at 100 and 1.09x at
+    # 400, for 40-65% more CPU and 8 cores Snakemake would reserve. Numbers in
+    # DECISIONS.md, 2026-09-03. Re-measure before changing this.
     threads=1,
 )
 

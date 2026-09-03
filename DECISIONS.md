@@ -465,6 +465,110 @@ missing.
 
 ---
 
+## 2026-09-03
+
+### FastTreeMP was reachable, measured, and rejected
+The spec's comment claimed `threads=1` because there was "nowhere to set"
+`OMP_NUM_THREADS` — commands are argument lists, not shell strings. That reason
+had already expired: `Tool.env` was added for GTDB-Tk's `GTDBTK_DATA_PATH` and
+`snakefile.py` emits an `export` line for it, and `bioconda::fasttree` ships
+`FastTreeMP` in the same package as `FastTree`. The switch was a two-line change.
+
+**Measured** on thylakoid, `fasttree 2.2.0` build `h7b50bb2_1` — the build in
+`pixi.lock` — with the catalogue's own flags, `-nt -gtr`.
+
+A real panaroo core alignment, 7 taxa x 2,066,459 bp:
+
+| binary | threads | wall s |
+| --- | ---: | ---: |
+| FastTree | 1 | 242.3, 209.4 (two reps) |
+| FastTreeMP | 1 | 251.7 |
+| FastTreeMP | 2 | 278.5 |
+| FastTreeMP | 4 | 254.6, 200.2 |
+| FastTreeMP | 8 | 204.3 |
+| FastTreeMP | 16 | 208.2 |
+
+Two reps of the *same single-threaded binary* differ by 33 s, 14% — wider than
+any plain-against-MP gap in the table, and the machine was carrying load 5–9
+from other work throughout. On the quiet 4-taxon case (`tests/E._faecium`,
+1,935,176 bp) the variance is small and the sign is consistent: 22.67 s plain
+against 23.19 s at 4 threads and 23.23 s at 8, so MP is 2.3–2.5% **slower**.
+
+Simulated alignments were needed to vary the one axis real data here cannot —
+every core alignment on the machine has 4 or 7 taxa. 100 kbp, ~0.5% divergence
+per branch:
+
+| taxa | plain | MP x8 | speedup | CPU s, plain → MP |
+| ---: | ---: | ---: | ---: | --- |
+| 25 | 25.13 | 22.31 | 1.13x | 25.1 → 35.9 |
+| 100 | 132.54 | 115.67 | 1.15x | 132.5 → 181.9 |
+| 400 | 597.47 | 546.18 | 1.09x | 597.5 → 854.9 |
+
+**The speedup does not grow with taxon count.** That was the obvious objection —
+four taxa give FastTree one internal split to spread across threads, so of
+course OpenMP does nothing; hundreds of genomes should be different. They are
+not. From 25 to 400 taxa the payoff sits between 1.09x and 1.15x, for 40–65%
+more CPU and 8 cores Snakemake would have reserved.
+
+The 25- and 100-taxon runs are single measurements on a quiet machine (load
+1.2–2.0). The 400-taxon row is the mean of two runs each, ordered
+plain/MP/MP/plain so that drift in machine load cancels: the machine was busy
+with other sessions and load fell monotonically across the four runs, 10.29 →
+9.70 → 8.63 → 6.28 sampled during each. The plain runs therefore averaged load
+8.29 against the MP runs' 9.17, which biases *against* MP — 1.09x is a floor,
+not a ceiling.
+
+**A first pass at 400 taxa was thrown away, and it is worth saying why.** It
+reported MP at 580.9 s and 589.1 s against a plain baseline of 545.6 s, i.e. MP
+slower, and that was an artifact: load was sampled once before each run rather
+than throughout, and the baseline happened to start at load 1.10 while the MP
+runs started at 7.11 and 9.99. Re-running the plain binary under realistic load
+gave 615.1 s for the same work — a 13% penalty that had been credited to
+FastTreeMP. The conclusion did not change, but the number did, and an
+unbalanced benchmark on a shared machine is how you get a right answer for a
+wrong reason.
+
+Wall time equalled user+sys in every plain run. Every MP run exceeded it by
+1.5–2.0x, whether given 2 threads or 16 — that is the average number of cores
+actually kept busy, and it is what caps the speedup. It is not Amdahl on the
+support phase either: with `-nosupport` removing that stage entirely, MP at 16
+threads was still slower than one thread (619.0 s against 526.2 s).
+
+One side effect, had it been adopted: at 7 taxa MP changes branch lengths in the
+sixth decimal — `0.003849049` against `0.003847998` — from floating-point
+summation order. Topology and support values are identical, MP is deterministic
+across thread counts, and at 4 taxa the output is byte-identical.
+
+### 59% of FastTree's runtime is support values nothing reads
+Found while reading the phase log for the above. At 7 taxa the run reaches
+"Optimize all lengths" at 99.25 s and reports `Total time: 239.96` — everything
+after is SH-like support, 1000 resamples. Confirmed by running the flag:
+
+| input | default | `-nosupport` | saved |
+| --- | ---: | ---: | ---: |
+| 7 taxa x 2.07 Mbp | 239.96 s | 98.03 s | 141.9 s, 59% |
+| 4 taxa x 1.94 Mbp | 21.46 s | 12.93 s | 8.5 s, 40% |
+| 400 taxa x 100 kbp | 545.58 s | 526.24 s | 19.3 s, 3.5% |
+
+The fraction is a property of the shape, not of FastTree: support cost scales
+with alignment length, the ML search with taxon count. Few genomes over a
+megabase core alignment is the pipeline's normal case, so 59% is the figure
+that applies here.
+
+Topology and branch lengths come out byte-identical; only the `1.000` internal
+labels drop. And `report.py`'s `draw_tree` writes text in an `elif node.name`
+hanging off `if node.children`, so it labels leaves only — FastTree's support
+values are parsed into `_Node.name` and never drawn. At the 4-taxon test-set
+shape they do not even reach the newick: with 3 unique sequences of 4 there is
+no non-trivial split to label, and `n4_plain.newick` and `n4_nosup.newick` are
+byte-identical, so those 8.5 s produce nothing at all.
+
+Not acted on, because `fasttree.newick` is a product in its own right and
+someone opening it in iTOL at larger taxon counts would lose real information.
+The choice is to drop the values or to render them, not to leave both.
+
+---
+
 ## What went wrong
 
 Each of these produced a rule in DESIGN.md. They are collected here so the

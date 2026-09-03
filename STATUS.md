@@ -296,6 +296,37 @@ A report whose numbers cannot be checked is not a result. 6,190 SNPs between
 116_2 and E8202 over a 1,934,948 bp core alignment is 0.320% — the right order
 for two strains of one species.
 
+### FastTree's `threads=1` is measured
+Checked 2026-09-03, `fasttree 2.2.0` build `h7b50bb2_1` — the build in
+`pixi.lock` — with the catalogue's flags, `-nt -gtr`. `bioconda::fasttree` ships
+`FastTreeMP` beside `FastTree`, and `Tool.env` can hand it `OMP_NUM_THREADS`, so
+the switch was available and was rejected on the numbers.
+
+| input | plain | FastTreeMP | verdict |
+| --- | ---: | --- | --- |
+| 4 taxa x 1,935,176 bp (test set) | 22.67 s | 23.19 s (x4), 23.23 s (x8) | 2.3–2.5% **slower** |
+| 7 taxa x 2,066,459 bp (real run) | 242.3 s, 209.4 s | 251.7 / 278.5 / 254.6 / 204.3 / 208.2 s at 1 / 2 / 4 / 8 / 16 | inside the plain binary's own 14% spread |
+| 25 taxa x 100 kbp (simulated) | 25.13 s | 22.31 s (x8) | 1.13x |
+| 100 taxa x 100 kbp (simulated) | 132.54 s | 115.67 s (x8) | 1.15x |
+| 400 taxa x 100 kbp (simulated) | 597.47 s | 546.18 s (x8) | 1.09x |
+
+The 400-taxon row is two runs of each, ordered plain/MP/MP/plain against a busy
+machine. **The payoff does not grow with genome count** — that was the objection
+worth testing, and it did not survive. Full numbers and the discarded first pass
+are in [DECISIONS.md](DECISIONS.md), 2026-09-03.
+
+Two things that fell out of it, neither acted on:
+
+- **59% of the 7-taxon run is SH-like support** (141.9 s of 239.96 s; 8.5 s of
+  21.46 s at 4 taxa), and `report.py`'s `draw_tree` labels leaves only, so those
+  values never reach the page. `-nosupport` leaves topology and branch lengths
+  byte-identical. At the 4-taxon shape it changes the newick not at all — 3
+  unique sequences of 4 leave no non-trivial split to label.
+- **FastTreeMP would have shifted branch lengths** in the sixth decimal at 7
+  taxa (`0.003849049` → `0.003847998`), from floating-point summation order.
+  Topology and support identical, deterministic across thread counts, and at 4
+  taxa byte-identical.
+
 ## Also verified
 
 - `pixi install` — both environments, from a manifest that had never been
