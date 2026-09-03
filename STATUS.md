@@ -681,10 +681,25 @@ conda deployment model.**
   the discard the earlier version of this bullet proposed:
   `git stash push -m "pre-v3 rsync snapshot 2026-09-03" -- src tests`, the three
   untracked source files moved to `.rsync-snapshot-backup/`, then
-  `git merge --ff-only origin/master`. Now at `e792d5a` with only run outputs
-  and that backup directory untracked. The snapshot is recoverable with
-  `git stash pop`; it was verified redundant before being set aside, so
-  **dropping the stash and `.rsync-snapshot-backup/` is safe whenever**.
+  `git merge --ff-only origin/master`. Now at `12bf984` with only run outputs
+  and that backup directory untracked, and the snapshot recoverable with
+  `git stash pop`.
+
+  Re-checked against `e792d5a` after the fact, because the earlier version of
+  this bullet undersold one file. The tracked nine hold **zero non-blank lines
+  master does not have** (`git diff stash@{0} e792d5a -- src tests` is 1,397
+  insertions against 19 deletions, and all 19 are blank) — fully redundant. Of
+  the three untracked, `steps.py` and `pyproject.toml` are byte-identical to
+  master. `carve_scip.py` is **not**, and the claim that it "differs in one
+  docstring table header" was wrong: its whole docstring is an earlier
+  measurement round — dual bound 934.37 against a feasible 943.4997, and
+  `usesymmetry=0` at 907.8 s — where master carries the fuller one, 935.7 at
+  300 s against 947.5, the four-configuration comparison, and 253 of 1069
+  annotated reactions. Master's is the superset in substance and the more
+  careful claim; the backup's prose says the optimum "was presolved away", which
+  master retracts as not answerable on this problem. The only precision lost is
+  `907.8 s`, which master rounds to the 900 s limit. **Dropping the stash and
+  `.rsync-snapshot-backup/` is safe.**
 - **`/evo/postdoc/cm2-biosynth-check`** is the clone the biosynthesis
   verification ran from, with `results_biosynth/` inside it. It has no `.pixi`
   of its own — it borrows the main checkout's environment through PATH — and the
