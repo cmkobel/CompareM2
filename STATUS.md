@@ -711,6 +711,73 @@ recipe: panaroo is `noarch: python` and prokka `noarch: generic`, so
 `additional-platforms` is meaningless for both. What is missing is the
 dependency closure.
 
+### Both changes are now written, built and proven sufficient
+
+Measured 2026-09-03 on the laptop, later the same day. Drafts and the prepared
+branch: [upstream/intbitset-feedstock-pr.md](upstream/intbitset-feedstock-pr.md)
+and [upstream/bioconda-panaroo-pr.md](upstream/bioconda-panaroo-pr.md).
+**Neither PR has been sent.**
+
+*The cascade is three tools, not one.* Worth stating because the sections above
+do not: `snp-dists` and `fasttree` both take
+`panaroo/core_gene_alignment.aln` as input (`catalogue.py:512,526`), so
+intbitset costs the whole pangenome branch. macOS without these two fixes is
+**10 of 14 tools**, not 13.
+
+*The bioconda target moved.* The section above proposed deleting
+`tbl2asn-forever` from **prokka's** run deps. That is the wrong recipe: prokka
+1.15.6 really does shell out to the binary (`bin/prokka:1429`), so the result
+would install and then fail. The change is to **panaroo's** recipe instead —
+delete `prokka`. Verified in v1.8.0's source: panaroo's own `setup.py`
+`install_requires` never listed prokka, `panaroo/prokka.py` is a GFF parser
+with no `subprocess`, and only the separate `run_prokka` console script shells
+out. All eight of bioconda's own `test: commands:`, `run_prokka --help`
+included, exit 0 with no prokka on PATH.
+
+*The intbitset recipe builds on arm.* `provider: osx_arm64: default` still
+emits `osx_arm64_python3.{11,12,13,14}` under conda-smithy **2026.9.1** with
+pinning 2026.09.03.11.37.26 — so the finding above holds against current
+tooling, and current conda-forge docs confirm `provider`, not `build_platform`,
+is the knob. All four configs then build with conda-build 26.7.1, exit 0, real
+`.conda` artifacts, peak RSS 228.1 MB. **py3.13 included** — the config the
+bot's stale PR #20 fails on. Why #20 fails is *not* known; its logs have
+expired (HTTP 410).
+
+*Sufficient, not just necessary.* With those four artifacts in a local channel
+and panaroo's recipe carrying the one-line change, the catalogue's own specs
+`panaroo>=1.5`, `snp-dists>=1.2.0` and `fasttree>=2.2.0` solve on `osx-arm64`
+**from conda alone** — 278 packages, no pip, no `--no-deps`. panaroo 1.8.0
+`py_1`, intbitset 4.1.2 `py313h2f2c7d1_0`, **python 3.13.15**, zero prokka.
+That python version is the other half of the prize: intbitset 4.1.2 lifts the
+cap holding the Linux environment at 3.11.16.
+
+*And it runs.* Installed and executed, because a solve says nothing:
+
+| | pip env (141 pkgs) | conda-only (278 pkgs) |
+| --- | --- | --- |
+| panaroo wall clock | 180.96 s | 213.27 s |
+| gene clusters | 3,569 | 3,569 |
+| core (99–100%) | 2,146 | 2,146 |
+| shell (15–95%) | 1,423 | 1,423 |
+| duplicate pair, clusters differing | **0 of 3,569** | **0 of 3,569** |
+| `snp-dists` duplicate pair | **0** (4,111 to E8202) | **0** (4,111 to E8202) |
+| `FastTree -nt -gtr` duplicate pair | branch length 0.0 | branch length 0.0 |
+
+`gene_presence_absence.Rtab` is **byte-identical between the two
+environments** (sha256 `0d0bebcc…`). `core_gene_alignment.aln` is not, and that
+is the record-order nondeterminism panaroo already shows against itself — the
+snp-dists distances off both are identical, which is the invariant that
+matters. mafft is v7.526 in both, so the 32 s is not the aligner; it is laptop
+variation and is not worth a cause.
+
+FastTree had never been run on arm before this. Input is prodigal, not bakta,
+so **gene counts still are not comparable to thylakoid** — a bakta-annotated
+arm run needs the 1.3 GB light database and has not been done.
+
+Working material, outside git because it holds a `conda-bld` tree:
+`~/postdoc/cm2-macos/` — the prepared feedstock branch, the four `.conda`
+artifacts, the applied panaroo patch, and both runs.
+
 ## Databases
 
 | Database | Download | On disk | Note |
