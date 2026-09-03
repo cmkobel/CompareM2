@@ -42,7 +42,7 @@ CompareM2 prints what it is about to do, including how much database it needs to
 download, before downloading anything:
 
 ```
-4 assemblies, 13 tools
+4 assemblies, 14 tools
 to download: checkm2, gtdb, bakta-light, amrfinder (62.5 GB + 2 of unknown size) -> ~/.comparem2/databases
 ```
 

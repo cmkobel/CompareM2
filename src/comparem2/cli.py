@@ -54,7 +54,7 @@ def default_conda_prefix() -> Path:
     """Where `--use-conda` deploys the tools' environments.
 
     Shared and home-relative, for the same reason the database default is:
-    thirteen solved environments outlive any one run, and a per-run default
+    fourteen solved environments outlive any one run, and a per-run default
     would re-solve and re-download all of them for every set of genomes.
 
     It is more load-bearing than it looks. Snakemake addresses a deployed
@@ -74,7 +74,7 @@ def missing_executables(selected: list[str] | None, workdir: Path,
                         samples: tuple[str, ...]) -> list[tuple[str, str]]:
     """(tool, executable) for every selected tool not found on PATH.
 
-    A conda-installed CompareM2 ships the pipeline and none of the thirteen
+    A conda-installed CompareM2 ships the pipeline and none of the fourteen
     tools, so without this the first thing a new user sees is a Snakemake
     traceback from whichever rule happened to be scheduled first — after
     however long the DAG took to get there. Checking argv[0] up front turns

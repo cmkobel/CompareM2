@@ -567,6 +567,127 @@ Not acted on, because `fasttree.newick` is a product in its own right and
 someone opening it in iTOL at larger taxon counts would lose real information.
 The choice is to drop the values or to render them, not to leave both.
 
+### A fourteenth tool, and the niche-media idea that did not survive measurement
+The ask was to make `carveme` more useful: simulate growth on media standing in
+for ecological niches, score each genome on them, and get a high-level view of
+its metabolism. The idea is right and the implementation it implies does not
+work. What shipped instead is `biosynthesis`, per-compound rather than
+per-medium.
+
+**No draft grows on any defined medium.** Eleven real CarveMe models — four
+*E. faecium* from `results_full13`, seven *S. aureus* from the `verify` run —
+against CarveMe's own media, applied exclusively (every exchange to 0, then the
+medium's compounds to −10 mmol/gDW/h, which is the paper's phenotype-array
+protocol):
+
+| medium | growing, of 11 |
+| --- | ---: |
+| M9 | 0 |
+| M9[-O2] | 0 |
+| M9[glyc] | 0 |
+| LB | 0 |
+| LB[-O2] | 0 |
+| complete, every exchange at −10 | 11, at 9.9–21.1 h⁻¹ |
+
+Cross-checked in two libraries — cobrapy 0.32.1 with GLPK and reframed 1.6.0
+with SCIP — which disagree on the complete-medium *rate* and agree on every
+zero. The rates differ because cobrapy's SBML reader adds exchange reactions for
+`boundaryCondition="true"` species, of which CarveMe marks every extracellular
+metabolite, so it solves a model with six more exchanges than CarveMe wrote.
+ReFramed reads what is there, which is why the tool uses it.
+
+**Growth is one bit that a single metabolite destroys.** Adding a demand
+reaction per biomass precursor: on LB, `116_2` can produce 52 of its 53
+precursors and fails on menaquinol-8. `COL` fails on asparagine, alone. Per
+compound, 52 bits survive what kills the one — which is the whole argument for
+the shape the tool ended up with.
+
+**A plain M9 producibility scan cascades**, so it cannot be the readout either:
+`116_2` comes out with 26 of 53 precursors unreachable, but no folate means no
+purines means no ATP, and reading 26 as 26 auxotrophies is wrong. Hence three
+verdicts — `de_novo` from M9 alone, `upstream` from M9 plus the rest of the
+panel, `none` from neither.
+
+**The background may not be the complete medium.** With every exchange open,
+`COL` looks able to make asparagine: it imports the Gly-Asn dipeptide and
+hydrolyses it. Salvage is not synthesis, and the panel background excludes
+peptides by construction because they are not on the panel.
+
+Two other framings were built and rejected on the way:
+
+- *Greedy medium reduction* — close each non-M9 exchange in turn, keep it closed
+  while growth survives. Fast (211 LPs, 1.4 s) and it separates the species
+  cleanly, but it is order-dependent and says so out loud: it reports `116_2` as
+  requiring L-methionine *S*-oxide (because `met__L` sorts first and was closed
+  first), the tripeptide Pro-His-Glu, and benzoate. Nobody can act on that.
+- *A Biolog-style carbon-source scan*, the one framing with published
+  validation. It works — 196 substrates, 3 s a genome, and it recovers real
+  biology: the *E. faecium* drafts use sugars and no TCA intermediates, which is
+  correct for an organism without a complete TCA cycle, and the *S. aureus*
+  drafts use αKG, succinate, fumarate and malate. But it is not comparable
+  across genomes. It needs a background found by search, and `E8202` returned 11
+  usable substrates against 53 and 67 for its two conspecifics purely because
+  its background leaks 0.0154 h⁻¹ against their 0.0064 — the score tracks the
+  background, not the metabolism. The panel size varies too, by 40–60 substrates
+  between strains of one species, because a model only carries exchanges for
+  what carving kept.
+
+### The biosynthesis probe target is the pathway's product, not the vitamin
+Three targets were tried and rejected, each against `iML1515` — *E. coli* K-12,
+manually curated — where the answer is known:
+
+| probed | verdict on iML1515 | why it is the wrong target |
+| --- | --- | --- |
+| `fol` | no route | de novo synthesis runs dihydropteroate → dihydrofolate → THF; folate is not an intermediate. It also called *S. aureus* unable to make the compound sulfonamides work by blocking. Use `thf` |
+| `thm` | no route | free thiamine is a salvage substrate; synthesis ends at thiamine phosphate → ThDP. It called *E. coli* a thiamine auxotroph. Use `thmpp` |
+| `lipoate` | no route | the de novo product is protein-bound lipoyl, not free lipoate. Returned "cannot make" for all eleven drafts, and would for any organism. Dropped |
+
+`nad` replaced `nac` for the same reason in reverse: with both on the panel each
+rescued the other, so the pair measured a kinase. The rule that came out of it —
+one member per nutrient family, probed in the form the pathway ends at — is in
+DESIGN.md and has a test.
+
+With those fixed, **iML1515 returns 31 of 32 de novo**. The exception is
+adenosylcobalamin, which *E. coli* genuinely cannot synthesise de novo. That is
+the calibration for the whole section.
+
+**The family rule was then checked empirically rather than argued.** Leave one
+compound out of the panel, recompute, and see whether any *other* compound's
+verdict moves, over five models. 2 of 32 move, and both are real precursor
+relationships rather than interconvertible forms:
+
+- dropping `met__L` flips `ile__L` from `upstream` to `none` in `116_2` and
+  `E8202` — isoleucine via 2-oxobutanoate from methionine, an alternative to the
+  threonine route.
+- dropping `thr__L` flips `gly` the same way in the same two — glycine from
+  threonine by threonine aldolase, alongside the serine route.
+
+Which is exactly what `upstream` is for. It also settled the one family the unit
+test got wrong on first writing: protoheme and siroheme are separate branch
+products of uroporphyrinogen III, not forms of one nutrient, and dropping either
+changes no verdict in any of the five models.
+
+### What the panel does and does not recover
+Measured on the eleven drafts. `none` in all four *E. faecium*: leucine,
+methionine, threonine, tryptophan, valine, riboflavin, pantothenate, NAD,
+biotin, and both quinones — with arginine and histidine in three of the four,
+`E8202` having them as `upstream`. `none` in all seven *S. aureus*: thiamine
+diphosphate, NAD, biotin — and asparagine.
+
+The B-vitamin requirements are right; enterococci were the assay organisms for
+those vitamins historically. Thiamine and nicotinate are in the described
+chemically defined medium for *S. aureus*. Menaquinone-8 comes out de novo in
+four *S. aureus* and unreachable in every *E. faecium*, and ubiquinone-8 in
+neither — correct for Firmicutes.
+
+**Asparagine in all seven *S. aureus* is a false call**, and it is left in the
+report rather than special-cased: a uniform column is flagged as carrying no
+comparative information, which is the general form of the warning, and a panel
+member removed because one clade gets it wrong stops being comparable.
+
+The duplicate pair is identical on both tables, which is the standing
+cross-check.
+
 ---
 
 ## What went wrong

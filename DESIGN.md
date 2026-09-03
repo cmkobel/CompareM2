@@ -14,20 +14,20 @@ and metabolic analysis is where DRAM2 and nf-core/funcscan are already strong; a
 fast wide sweep is not well served, and it is what v2's benchmark result —
 near-linear scaling with input count — actually supports.
 
-Every other decision follows from that one. Thirteen tools instead of 30+, one
+Every other decision follows from that one. Fourteen tools instead of 30+, one
 conda environment instead of 25, one runtime instead of two.
 
 ## The shape
 
 **Tools are declared once; the workflow is derived.** There is no hand-written
-Snakefile. `catalogue.py` holds thirteen `Tool` specs and `snakefile.py`
+Snakefile. `catalogue.py` holds fourteen `Tool` specs and `snakefile.py`
 generates a Snakefile from them, so adding a tool cannot mean editing a
 workflow.
 
 ```
 src/comparem2/
   tools.py      the contract: Tool, Database, Context, Registry, Scope
-  catalogue.py  the thirteen specs — command lines and outputs
+  catalogue.py  the fourteen specs — command lines and outputs
   guidance.py   what each tool does and how to read it, for the report
   snakefile.py  generates the Snakefile and per-tool env files
   cli.py        arguments, input canonicalisation, hands off to Snakemake
@@ -88,7 +88,7 @@ stamp can outlive the data it claims.
 
 ## Steps around a command
 
-Eleven of the thirteen tools are one command: arguments in, declared files out.
+Eleven of the fourteen tools are one command: arguments in, declared files out.
 GTDB-Tk is not, and rather than let it become a hand-written rule it gets two
 fields that every tool could use and only it does.
 
@@ -101,19 +101,29 @@ fields that every tool could use and only it does.
   tool writes into what its spec declared. GTDB-Tk writes `bac120` and `ar53`
   summaries separately and the pipeline declares one table.
 
-CarveMe is the other one, and it needs the third shape: a step *in front of*
-the command rather than around it. `carve_scip.py` is the whole of it — it turns
-off one SCIP presolver and hands `carve` an input path inside CarveMe's own
-output directory, then calls CarveMe in-process. Both halves are things only the
-calling process can do: the solver parameter because neither CarveMe nor
-ReFramed exposes one, the input path because `carve` derives its DIAMOND output
-from it and would otherwise overwrite Bakta's feature table.
+CarveMe needs the third shape: a step *in front of* the command rather than
+around it. `carve_scip.py` is the whole of it — it turns off one SCIP presolver
+and hands `carve` an input path inside CarveMe's own output directory, then
+calls CarveMe in-process. Both halves are things only the calling process can
+do: the solver parameter because neither CarveMe nor ReFramed exposes one, the
+input path because `carve` derives its DIAMOND output from it and would
+otherwise overwrite Bakta's feature table.
 
-That wrapper runs under a **bare `python`**, which is the exact opposite of the
-rule below, and for the mirror-image reason: it imports `carveme`, so it needs
-the interpreter of the environment the *tool* is in. `steps.py` is our code and
-needs ours. Both import nothing from their own package, because under
-`--use-conda` neither can count on it being there.
+`biosynthesis` is the fourth shape and the only tool here that *is* ours:
+`biosynthesis.py` is the program, not a wrapper around one. It reads CarveMe's
+model with ReFramed and answers, per compound, whether the network has a route
+to it. That it is a tool rather than a report section is deliberate — it has a
+declared output, so it is resumable, it appears in `--until`, and the report
+reads a file instead of running a solver.
+
+Both run under a **bare `python`**, which is the exact opposite of the rule
+below, and for the mirror-image reason: they import `carveme` and `reframed`, so
+they need the interpreter of the environment the *tool* is in. `steps.py` is our
+code and needs ours. All three import nothing from their own package, because
+under `--use-conda` none of them can count on it being there — and
+`biosynthesis.py` additionally keeps its `reframed` imports inside the functions
+that solve, so `report.py` can read the compound panel from it in a process
+that has no solver.
 
 Three properties matter more than the fields:
 
@@ -139,18 +149,18 @@ the only tool using either field.
 The same pipeline is installed two ways, and they answer different questions.
 
 **pixi — development and HPC.** `pixi install` solves *one* environment holding
-twelve of the thirteen tools, plus a second for CheckM2. Every tool is on PATH,
+thirteen of the fourteen tools, plus a second for CheckM2. Every tool is on PATH,
 no rule carries a `conda:` directive except the isolated one, and a run starts
 instantly because nothing is deployed at run time. This is what `pixi.toml`
 describes and what every verification run on thylakoid used.
 
 **conda/bioconda — distribution.** The published package ships **the pipeline
-and none of the thirteen tools**, and Snakemake deploys each rule's environment
+and none of the fourteen tools**, and Snakemake deploys each rule's environment
 from the generated `envs/*.yaml` on first use (`--use-conda`). This is not a
 concession, it is the only thing that can work: a single environment containing
-all thirteen does not exist, because CheckM2 pins DIAMOND 2.1.x against Bakta's
+all fourteen does not exist, because CheckM2 pins DIAMOND 2.1.x against Bakta's
 2.2.x. A recipe that listed the tools as run dependencies would have to leave
-one of them out, and would break whenever any of the thirteen changed upstream.
+one of them out, and would break whenever any of the fourteen changed upstream.
 
 So per-rule environments are the *distribution* model and a single environment
 is the *development* model, and neither replaces the other. That is not the same
@@ -262,9 +272,21 @@ something already published. The post-mortems are in
   DAG. An end-to-end run catches that slowly, if at all.
 - **Verification tracks execution, never installation.** A drafted command line
   is worthless until it has been run on real genomes.
-- **Numbers in `guidance.py` are quoted from the paper and checked against it.**
-  Confabulation dressed as insight is the failure mode that reads best, so it
-  gets a deterministic gate rather than a second opinion.
+- **Numbers in `guidance.py` are quoted from the paper and checked against it**,
+  or, where a number is a measurement of this pipeline rather than a published
+  result, the sentence says so. Confabulation dressed as insight is the failure
+  mode that reads best, so it gets a deterministic gate rather than a second
+  opinion.
+- **A compound on the biosynthesis panel is probed in the form its pathway ends
+  at, and no two members may come from one nutrient family.** Free thiamine,
+  folate and lipoate are salvage substrates rather than biosynthetic products:
+  probing `thm` called *E. coli* a thiamine auxotroph, probing `fol` called
+  *S. aureus* unable to make the compound sulfonamides work by blocking, and
+  probing `lipoate` returns "cannot make" for every organism there is. Two
+  members of one family — `nac` and `nad`, say — rescue each other in the second
+  test and the pair then reports a kinase rather than a pathway. Both rules are
+  enforced by tests, and the calibration is `iML1515`: 31 of 32 de novo, the
+  exception being the one compound *E. coli* genuinely cannot synthesise.
 
 ## Open questions
 
@@ -303,5 +325,22 @@ something already published. The post-mortems are in
   byte-identical, and `draw_tree` labels leaves only, so the values never reach
   the page. Either drop them or render them — but `fasttree.newick` is a
   user-facing artifact too, so dropping them is a trade, not a free win.
+- **Gap-filling per medium, parked 2026-09-03.** The idea that started
+  `biosynthesis` was scoring genomes by growth on media standing in for
+  ecological niches. That failed on measurement — no draft grows on any defined
+  medium — and the salvage of it was to gap-fill each model on each medium and
+  score by *how many reactions had to be added*. Parked rather than dropped: it
+  is a MILP per medium per genome on top of carving, so the cost is unmeasured
+  and the SCIP presolver defect applies to it as well, and the CarveMe paper has
+  already measured that the count confounds annotation quality with biology —
+  gap-fill count against genome size, Pearson r = −0.29, P = 0.0055. Whoever
+  picks it up should normalise against each genome's own minimum across media,
+  and time one gap-fill on thylakoid before building anything.
+- **Ecological niche media are not shipped, and that is not an oversight.** The
+  compound sets for a gut, a rumen or a soil have no source that is both
+  BiGG-mapped and checkable, and an invented one produces a figure nobody can
+  audit. What ships instead is the panel and its compound classes; the
+  aggregation that would name niches sits on top of per-compound calls, so it
+  can be added when a citable source is.
 - **Report sections** still to write from scratch: v2 never displayed fasttree or
   treecluster, so those are new rather than ports.

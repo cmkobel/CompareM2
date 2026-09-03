@@ -56,10 +56,14 @@ def test_slug_output_is_wildcard_safe():
 # --- the contract --------------------------------------------------
 
 def test_catalogue_is_the_agreed_set():
-    assert len(CATALOGUE) == 13
+    assert len(CATALOGUE) == 14
     assert "antismash" not in CATALOGUE  # dropped: breaks the single env
     assert "gapseq" not in CATALOGUE  # dropped in favour of carveme
     assert "carveme" in CATALOGUE  # the one capability no competitor has
+    # The fourteenth, added 2026-09-03: a model is not a result, so this reads
+    # a phenotype off it. The only tool here whose program is ours.
+    assert "biosynthesis" in CATALOGUE
+    assert CATALOGUE["biosynthesis"].needs == ("carveme",)
     # Removed 2026-09-02: a read-based metagenome profiler cannot take
     # assemblies, so its command could never have produced output.
     assert "sylph" not in CATALOGUE
@@ -213,7 +217,7 @@ def test_per_rule_conda_forces_all():
     `command not found` on a fresh conda install.
     """
     text = render(CATALOGUE, None, Path("res"), Path("db"), SAMPLES, per_rule_conda=True)
-    assert text.count("conda:") == len(CATALOGUE) + len(CATALOGUE.databases()) == 17
+    assert text.count("conda:") == len(CATALOGUE) + len(CATALOGUE.databases()) == 18
     downloads = text.split("rule all:")[1].split("rule seqkit:")[0]
     assert 'conda: "envs/download_bakta-light.yaml"' in downloads
     assert 'conda: "envs/download_amrfinder.yaml"' in downloads
@@ -277,16 +281,29 @@ def test_amrfinder_download_and_analysis_share_one_environment():
 def test_environment_files_deduplicate_by_content():
     """The number of environments a conda run builds, which the CLI prints.
 
-    Thirteen tools and four databases make seventeen rules needing an
+    Fourteen tools and four databases make eighteen rules needing an
     environment, but only fourteen distinct ones: bakta's and amrfinder's
-    fetches reuse their tool's environment, and the two curl+tar fetches are
-    the same environment as each other.
+    fetches reuse their tool's environment, the two curl+tar fetches are the
+    same environment as each other, and biosynthesis reuses carveme's.
     """
     from comparem2.snakefile import render_envs
 
     envs = render_envs(CATALOGUE, None)
-    assert len(envs) == 17
+    assert len(envs) == 18
     assert len(set(envs.values())) == 14
+
+
+def test_biosynthesis_shares_carvemes_environment():
+    """Byte-identical env files, because that is the whole mechanism: Snakemake
+    addresses a deployed environment by md5 of the file's content, so a drifted
+    spec string would solve and build CarveMe twice for no benefit."""
+    from comparem2.snakefile import render_envs
+
+    envs = render_envs(CATALOGUE, ["biosynthesis"])
+    assert envs["biosynthesis.yaml"] == envs["carveme.yaml"]
+    # And it is CarveMe that is asked for, because ReFramed is what the wrapper
+    # imports and it arrives with CarveMe rather than on its own.
+    assert "carveme" in envs["biosynthesis.yaml"]
 
 
 def test_database_ready_paths_are_distinct_and_under_the_root():
@@ -2204,5 +2221,263 @@ def test_the_generated_docs_do_not_carry_an_absolute_path():
     laptop's directory layout and a `--check` failure anywhere else."""
     page = (Path(__file__).resolve().parents[2]
             / "docs" / "30 what analyses does it do.md").read_text()
-    assert "python src/comparem2/carve_scip.py" in page
-    assert "/src/comparem2/carve_scip.py" not in page
+    for script in ("carve_scip", "biosynthesis"):
+        assert f"python src/comparem2/{script}.py" in page
+        assert f"/src/comparem2/{script}.py" not in page
+
+
+# --- biosynthesis --------------------------------------------------
+
+def test_biosynthesis_runs_as_a_plain_script():
+    """Same rule as carve_scip: the tool's interpreter, so its own package is
+    not importable. And `reframed` stays out of the module level, because
+    report.py imports the panel from here in a process with no solver."""
+    from comparem2 import biosynthesis
+
+    source = Path(biosynthesis.__file__).read_text()
+    assert "from ." not in source and "import comparem2" not in source
+    # Unindented import lines only — the docstring names reframed, and has to.
+    top = [line for line in source.splitlines()
+           if re.match(r"^(import|from)\s", line)]
+    assert top and not any("reframed" in line for line in top), top
+
+
+def test_biosynthesis_reads_the_model_and_writes_two_tables():
+    from comparem2 import biosynthesis
+
+    ctx = Context(Path("res"), Path("db"), 1, ("A",), "A")
+    argv = list(CATALOGUE["biosynthesis"].command(ctx))
+    assert argv[:2] == ["python", biosynthesis.__file__]
+    assert argv[argv.index("--model") + 1] == str(Path("res/samples/A/carveme/A.xml"))
+    # Its own directory, never carveme's: an undeclared file in another tool's
+    # output directory is what overwrote Bakta's feature table once already.
+    assert [str(p) for p in CATALOGUE["biosynthesis"].outputs(ctx)] == [
+        str(Path("res/samples/A/biosynthesis/A.tsv")),
+        str(Path("res/samples/A/biosynthesis/A.media.tsv")),
+    ]
+    # argv[0] is an interpreter, so the preflight needs telling what to look for.
+    assert CATALOGUE["biosynthesis"].executable == "carve"
+
+
+def test_the_panel_avoids_salvage_only_probe_targets():
+    """Three targets were tried and rejected against a curated model, because
+    the compound on the vitamin bottle is not the one the pathway ends at:
+    free thiamine, folate and lipoate are salvage substrates. Probing `thm`
+    called E. coli a thiamine auxotroph."""
+    from comparem2.biosynthesis import PANEL
+
+    ids = {c.bigg for c in PANEL}
+    assert {"thm", "fol", "lipoate"}.isdisjoint(ids)
+    assert {"thmpp", "thf"} <= ids
+
+
+@pytest.mark.parametrize("family", [
+    {"thm", "thmmp", "thmpp"},                          # thiamine
+    {"nac", "ncam", "nmn", "nad", "nadp", "nadh"},       # niacin and NAD
+    {"fol", "dhf", "thf", "5mthf", "10fthf", "mlthf"},   # folate
+    {"ribflv", "fmn", "fad"},                            # riboflavin
+    {"pnto__R", "coa", "dpcoa", "pan4p"},                # pantothenate
+    {"pydx", "pydxn", "pydam", "pydx5p", "pydxn5p"},     # B6
+    {"cbl1", "cbl2", "cbi", "adocbl"},                   # cobalamin
+    # Protoheme and siroheme are separate branch products of uroporphyrinogen
+    # III, not forms of one nutrient, so both are on the panel. Checked rather
+    # than argued: dropping either from the panel changes no verdict in any of
+    # five models, and the leave-one-out result is in DECISIONS.md.
+    {"pheme", "ppp9", "hemeO", "cpppg3"},                # protoheme branch
+    {"sheme", "scl", "dscl"},                            # siroheme branch
+])
+def test_no_two_panel_members_come_from_one_nutrient_family(family):
+    """Two members of one family rescue each other, so the pair would report a
+    kinase rather than a pathway — the background for the second test is the
+    minimal medium plus every *other* panel compound."""
+    from comparem2.biosynthesis import PANEL
+
+    shared = family & {c.bigg for c in PANEL}
+    assert len(shared) <= 1, f"{shared} are interconvertible forms of one nutrient"
+
+
+def test_the_panel_is_unique_and_fully_grouped():
+    from comparem2.biosynthesis import (AMINO_ACID, COFACTOR, PANEL, QUINONE)
+
+    ids = [c.bigg for c in PANEL]
+    assert len(ids) == len(set(ids)) == 32
+    assert sum(1 for c in PANEL if c.group == AMINO_ACID) == 20
+    assert {c.group for c in PANEL} == {AMINO_ACID, COFACTOR, QUINONE}
+    for compound in PANEL:
+        assert compound.name and not compound.name.startswith("M_")
+
+
+def test_the_anaerobic_media_are_derived_rather_than_repeated():
+    """media_db defines them as the aerobic medium minus oxygen, so deriving
+    them is both shorter and the only way they cannot drift apart."""
+    from comparem2.biosynthesis import AEROBE, LB, M9
+
+    for medium in (M9, LB):
+        assert AEROBE in medium
+        assert len(medium) == len(set(medium))
+    assert "glc__D" in M9  # the carbon source; without it M9 is salts
+
+
+# --- what the solver is actually asked ------------------------------
+# `medium_constraints` is a pure function precisely so this can be checked
+# without a solver: a medium that leaves one exchange open returns a plausible
+# number and the wrong answer.
+
+_BY_COMPOUND = {"glc__D": "R_EX_glc__D_e", "o2": "R_EX_o2_e", "trp__L": "R_EX_trp__L_e"}
+_UPPER = {"R_EX_glc__D_e": 1000.0, "R_EX_o2_e": 1000.0, "R_EX_trp__L_e": 999.0}
+_DRAIN_UB = {"R_CM2_DM_trp__L": None, "R_CM2_DM_gly": 1000.0}
+
+
+def _constraints(compounds, open_drain=None):
+    from comparem2.biosynthesis import medium_constraints
+
+    return medium_constraints(_BY_COMPOUND, _UPPER, _DRAIN_UB, compounds,
+                              max_uptake=10.0, open_drain=open_drain)
+
+
+def test_medium_opens_only_the_named_compounds():
+    c = _constraints(["glc__D"])
+    assert c["R_EX_glc__D_e"] == (-10.0, 1000.0)
+    assert c["R_EX_o2_e"] == (0.0, 1000.0)
+    assert c["R_EX_trp__L_e"] == (0.0, 999.0)
+
+
+def test_medium_keeps_each_reactions_own_upper_bound():
+    """This decides what is available for uptake. Secretion is not ours to
+    re-decide, and a hardcoded 1000 would silently widen a bound the model set."""
+    c = _constraints(["trp__L"])
+    assert c["R_EX_trp__L_e"] == (-10.0, 999.0)
+
+
+def test_every_drain_is_pinned_shut_and_at_most_one_reopened():
+    """A drain left open is a free sink, and a free sink can relieve a
+    steady-state constraint elsewhere — which would let one compound's probe
+    change another's answer, and let the media table report growth the model
+    cannot achieve."""
+    shut = _constraints(["glc__D"])
+    assert shut["R_CM2_DM_trp__L"] == (0.0, 0.0)
+    assert shut["R_CM2_DM_gly"] == (0.0, 0.0)
+
+    one = _constraints(["glc__D"], open_drain="R_CM2_DM_trp__L")
+    assert one["R_CM2_DM_trp__L"] == (0.0, None)  # its own bound, unbounded here
+    assert one["R_CM2_DM_gly"] == (0.0, 0.0)
+
+
+def test_a_medium_compound_the_model_cannot_transport_is_skipped():
+    """18 of LB's 65 compounds have no exchange in the drafts measured. Asking
+    for one must not raise, and must not silently open something else."""
+    c = _constraints(["glc__D", "cbl1", "pydx"])
+    assert c["R_EX_glc__D_e"] == (-10.0, 1000.0)
+    assert set(c) == set(_UPPER) | set(_DRAIN_UB)
+
+
+# --- the report section --------------------------------------------
+
+def _biosynthesis_fixture(tmp_path, verdicts, media=None):
+    """`verdicts` maps sample to {compound: verdict}; anything unnamed is de_novo."""
+    from comparem2.biosynthesis import (DE_NOVO, MEDIA_HEADER, PANEL,
+                                        PANEL_HEADER, write_tsv)
+
+    for sample, overrides in verdicts.items():
+        d = tmp_path / "samples" / sample / "biosynthesis"
+        write_tsv(d / f"{sample}.tsv", PANEL_HEADER,
+                  [(c.bigg, c.name, c.group, overrides.get(c.bigg, DE_NOVO))
+                   for c in PANEL])
+        if media is not None:
+            write_tsv(d / f"{sample}.media.tsv", MEDIA_HEADER,
+                      [(name, "20", "18", value)
+                       for name, value in media[sample].items()])
+
+
+def test_biosynthesis_section_summarises_and_draws_the_grid(tmp_path):
+    _biosynthesis_fixture(tmp_path, {
+        "A": {"trp__L": "none", "val__L": "none", "met__L": "upstream",
+              "adocbl": "absent"},
+        "B": {"adocbl": "absent"},
+    })
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A", "B")).read_text()
+    assert "building blocks each genome can make" in body  # the figure
+    assert "<h3>Growth on the reference media</h3>" not in body  # no media file
+    # A: 32 - 2 none - 1 upstream - 1 absent = 28 de novo.
+    assert ">28</td>" in body and ">2</td>" in body
+    # The differing columns are named while the list is short enough to read.
+    assert "L-Tryptophan" in body and "L-Methionine" in body
+
+
+def test_biosynthesis_section_reports_that_nothing_grows(tmp_path):
+    """The check CarveMe's own guidance says to make. Every draft measured so
+    far grows only on the complete medium, and a reader about to run FBA on one
+    has to be told."""
+    zero = dict.fromkeys(("M9", "M9[-O2]", "LB", "LB[-O2]"), "0.0000")
+    _biosynthesis_fixture(
+        tmp_path, {"A": {}, "B": {}},
+        media={"A": {**zero, "complete": "18.1086"},
+               "B": {**zero, "complete": "21.0601"}})
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A", "B")).read_text()
+    assert "0 of 2 genomes grow on any defined medium" in body
+    assert "18.1086" in body
+    assert "Not a growth rate to quote" in body
+
+
+def test_biosynthesis_section_marks_a_genome_with_no_table(tmp_path):
+    """A row that is simply absent from the grid reads as a genome that makes
+    everything, which is the opposite of what happened."""
+    _biosynthesis_fixture(tmp_path, {"A": {"trp__L": "none"}})
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A", "B")).read_text()
+    assert "1 of 2 genomes produced no output for this tool" in body
+    assert "differ between these" not in body  # one genome has nothing to compare
+
+
+def test_the_four_verdicts_are_four_distinguishable_cells():
+    """"Makes it itself" and "was never in the network" are the last pair of
+    meanings that may look alike, and `de_novo` at the shade floor was almost
+    the unshaded blank that means absent. Every verdict is covered, in both
+    channels."""
+    from comparem2.biosynthesis import ABSENT, DE_NOVO, NO_ROUTE, UPSTREAM
+    from comparem2.report import _GLYPH_BY_VERDICT, _SHADE_BY_VERDICT
+
+    every = {DE_NOVO, UPSTREAM, NO_ROUTE, ABSENT}
+    assert set(_GLYPH_BY_VERDICT) == every
+    assert len(set(_GLYPH_BY_VERDICT.values())) == 4
+    # Absent is the one with no shade at all, so it is the unshaded cell.
+    assert set(_SHADE_BY_VERDICT) == every - {ABSENT}
+    assert _SHADE_BY_VERDICT[DE_NOVO] > 0
+    assert (_SHADE_BY_VERDICT[DE_NOVO] < _SHADE_BY_VERDICT[UPSTREAM]
+            < _SHADE_BY_VERDICT[NO_ROUTE])
+    # And one shade step apart at least, given _grid quantises to 8 buckets.
+    steps = sorted(round(v * 8) for v in _SHADE_BY_VERDICT.values())
+    assert all(b - a >= 2 for a, b in zip(steps, steps[1:])), steps
+
+
+def test_biosynthesis_section_survives_a_half_written_media_table(tmp_path):
+    """The report is meant to produce a readable document from a partial run,
+    and these files can be read while a rule is writing them."""
+    _biosynthesis_fixture(tmp_path, {"A": {}})
+    d = tmp_path / "samples" / "A" / "biosynthesis"
+    (d / "A.media.tsv").write_text("medium\tcompounds\tpresent\tgrowth\nM9\t20\t18\n")
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A",)).read_text()
+    assert "<h3>Growth on the reference media</h3>" in body
+    assert "0 of 1 genomes grow on any defined medium" in body
+
+
+def test_the_note_names_whichever_set_of_compounds_is_shorter():
+    """Which columns to look at is the point of the sentence. Within one species
+    most of the panel varies and the short list is the uniform one."""
+    from comparem2.report import _BIOSYNTHESIS_NAME_BUDGET, _biosynthesis_naming
+    from comparem2.biosynthesis import PANEL
+
+    few = list(PANEL[:3])
+    assert _biosynthesis_naming(few).startswith(": L-Alanine")
+
+    many = list(PANEL[:len(PANEL) - 4])
+    text = _biosynthesis_naming(many)
+    assert "The same in every genome" in text
+    assert text.count(",") == 3  # the four that did not vary
+
+    half = list(PANEL[:_BIOSYNTHESIS_NAME_BUDGET + 1])
+    assert _biosynthesis_naming(half) == "."  # neither set is short
+    assert _biosynthesis_naming([]) == "."

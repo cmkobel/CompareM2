@@ -95,9 +95,17 @@ Bakta calls Prodigal, Panaroo aligns with MAFFT.
   - Machado D, Andrejev S, Tramontano M, Patil KR (2018) Fast automated reconstruction of genome-scale metabolic models for microbial species and communities. Nucleic Acids Research 46:7542–7553. [doi:10.1093/nar/gky537](https://doi.org/10.1093/nar/gky537)
   - Buchfink B, Reuter K, Drost H-G (2021) Sensitive protein alignments at tree-of-life scale using DIAMOND. Nature Methods 18:366–368. [doi:10.1038/s41592-021-01101-x](https://doi.org/10.1038/s41592-021-01101-x)
 
+### biosynthesis
+
+  - Machado D, Andrejev S, Tramontano M, Patil KR (2018) Fast automated reconstruction of genome-scale metabolic models for microbial species and communities. Nucleic Acids Research 46:7542–7553. [doi:10.1093/nar/gky537](https://doi.org/10.1093/nar/gky537)
+  - Orth JD, Thiele I, Palsson BØ (2010) What is flux balance analysis? Nature Biotechnology 28:245–248. [doi:10.1038/nbt.1614](https://doi.org/10.1038/nbt.1614)
+    <br>*The method behind the biosynthesis section — a linear program over a steady-state stoichiometric network. Not a CompareM2 contribution.*
+  - Monk JM, Lloyd CJ, Brunk E, et al. (2017) iML1515, a knowledgebase that computes Escherichia coli traits. Nature Biotechnology 35:904–908. [doi:10.1038/nbt.3956](https://doi.org/10.1038/nbt.3956)
+    <br>*Not run by the pipeline. It is the manually curated model the biosynthesis probe was validated against, and the reason the 31-of-32 figure in that section can be checked.*
+
 ## BibTeX
 
-All 22 distinct references are in `papers/tools.bib` in the repository, fetched from Crossref rather than hand-typed.
+All 24 distinct references are in `papers/tools.bib` in the repository, fetched from Crossref rather than hand-typed.
 
 ## Tools with no publication
 

@@ -41,7 +41,7 @@ read the specific columns on screen, and what the result cannot tell you — eve
 number quoted from the tool's own paper and checked against it — plus a
 citations list of every paper behind the tools that ran.
 
-## The 13 tools
+## The 14 tools
 
 | | |
 | --- | --- |
@@ -51,23 +51,25 @@ citations list of every paper behind the tools that ran.
 | **Screening** | AMRFinderPlus, MLST |
 | **Relatedness** | Mashtree, TreeCluster, skani (all-against-all ANI) |
 | **Pangenome** | Panaroo, snp-dists, FastTree |
-| **Metabolism** | CarveMe (genome-scale metabolic models) |
+| **Metabolism** | CarveMe (genome-scale metabolic models), biosynthesis (which building blocks each genome can make) |
 
 ## Status
 
 Linux-only; the tools are `linux-64`. Unit tests run anywhere.
 
-**13 of 13** tool command lines have been executed end to end on real genomes.
-GTDB-Tk was the last, and it took six defects and a database release change to
-get there — its rule had never been run, and two of its steps were described in
-comments that were not true.
+**13 of 14** tool command lines have been executed end to end on real genomes.
+GTDB-Tk was the last of those, and it took six defects and a database release
+change to get there — its rule had never been run, and two of its steps were
+described in comments that were not true. The fourteenth, `biosynthesis`, has
+been executed against eleven real models and a curated control, but not yet
+through Snakemake.
 
 [`STATUS.md`](STATUS.md) has the per-tool table. It tracks *execution*, never
 installation — a clean `pixi install` says nothing about whether a tool runs,
 and two tools have resolved to builds that installed cleanly and crashed.
 
 ```bash
-python -m pytest tests/unit -q   # 163 tests, no pixi required
+python -m pytest tests/unit -q   # 196 tests, no pixi required
 
 pixi install                     # linux only
 pixi run test-fast               # 4 genomes, no databases needed

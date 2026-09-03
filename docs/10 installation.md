@@ -5,7 +5,7 @@
     code path works, but `conda install comparem2` still gives you v2. For now,
     install from git.
 
-There are two ways to install CompareM2, and they differ in where the thirteen
+There are two ways to install CompareM2, and they differ in where the fourteen
 analysis tools come from.
 
 | | pixi, from git | conda *(not yet published)* |
@@ -41,7 +41,7 @@ pixi run pytest        # 163 unit tests, no databases needed
 
 ## With conda, once published
 
-The package will contain **the pipeline and none of the thirteen tools**.
+The package will contain **the pipeline and none of the fourteen tools**.
 Snakemake deploys each tool's own environment the first time it is needed:
 
 ```bash
@@ -64,12 +64,12 @@ Snakemake includes it in each environment's identity, so moving it re-solves all
 fourteen — and re-fetches AMRFinder's database, which lives inside one of them.
 
 Why the tools are not simply dependencies of the package: no single environment
-can hold all thirteen. CheckM2 pins DIAMOND 2.1.x and current Bakta needs
+can hold all fourteen. CheckM2 pins DIAMOND 2.1.x and current Bakta needs
 2.2.x, so a package that listed them would have to leave one out.
 
 ## Environments
 
-v3 solves **one** environment holding twelve of the thirteen tools. v2 shipped
+v3 solves **one** environment holding thirteen of the fourteen tools. v2 shipped
 25.
 
 The exception is **CheckM2**, which pins DIAMOND 2.1.x while current Bakta needs

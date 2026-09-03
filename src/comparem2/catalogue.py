@@ -25,6 +25,11 @@ from __future__ import annotations
 
 import sys
 
+# Aliased because the tool below is also called `biosynthesis`, and a spec that
+# shadows the module it names its own script from is a trap waiting for the next
+# edit. `carve_scip`/`carveme` avoids this by accident; this one does it on
+# purpose.
+from . import biosynthesis as biosynthesis_script
 from . import carve_scip, steps
 from .tools import Context, Database, Registry, Scope, Tool
 
@@ -38,6 +43,14 @@ from .tools import Context, Database, Registry, Scope, Tool
 # its download would fetch a database the tool then rejects at runtime.
 _BAKTA_SPEC = "bioconda::bakta>=1.10"
 _AMRFINDER_SPEC = "bioconda::ncbi-amrfinderplus"
+
+# Named for a third reason: two *tools* share this environment. `biosynthesis`
+# reads CarveMe's model with ReFramed, which comes with CarveMe and not with
+# CompareM2, so it declares the same package — and because `render_envs` writes
+# one file per tool and Snakemake addresses a deployed environment by the md5 of
+# that file's content, an identical spec string means one environment on disk
+# rather than two. A drifted string would silently solve CarveMe twice.
+_CARVEME_SPEC = "bioconda::carveme"
 
 # What a plain URL fetch needs. Present in the pixi environment and on any
 # Linux; declared because under `--use-conda` a download rule gets exactly the
@@ -493,7 +506,7 @@ carveme = Tool(
     # DIAMOND, pyscipopt and scip come with it — checked against the bioconda
     # 1.6.6 recipe, which matters because `carve` shells out to DIAMOND and an
     # environment holding only carveme would fail at its first step.
-    conda=("bioconda::carveme",),
+    conda=(_CARVEME_SPEC,),
     needs=("bakta",),
     # Solves with open-source SCIP, so no CPLEX licence — but *not* with the
     # presolver conda-forge's SCIP ships. Measured 2026-09-02: 601 s in the MILP
@@ -526,13 +539,54 @@ carveme = Tool(
     executable="carve",
 )
 
+biosynthesis = Tool(
+    name="biosynthesis",
+    summary="Which building blocks each genome can make, and which it must acquire.",
+    scope=Scope.GENOME,
+    # CarveMe's own environment, for ReFramed — which is where the SBML reader
+    # and the LP solver are. See `_CARVEME_SPEC` for why the string is shared
+    # rather than repeated.
+    conda=(_CARVEME_SPEC,),
+    needs=("carveme",),
+    # The one tool here whose program is ours. It exists because a model is not
+    # a result: `carveme` produces a network, and the question a reader has is
+    # what the network implies. Answered per compound rather than by simulating
+    # growth on a medium, because growth is a single bit that one unreachable
+    # metabolite destroys — measured, and none of eleven real drafts grows on
+    # M9 or LB. biosynthesis.py carries the numbers and the validation against
+    # a curated model.
+    #
+    # A bare `python` for the same reason as carveme's: the wrapper imports
+    # `reframed`, so it needs the interpreter of the environment the tool is
+    # in, which under `--use-conda` is not ours.
+    command=lambda c: [
+        "python", biosynthesis_script.__file__,
+        "--model", str(c.out("carveme", f"{c.sample}.xml")),
+        "--output", str(c.out("biosynthesis", f"{c.sample}.tsv")),
+        "--media", str(c.out("biosynthesis", f"{c.sample}.media.tsv")),
+        *c.args(),
+    ],
+    # The media table is a declared output rather than a log line because it is
+    # the check the report has to make before it says anything quantitative:
+    # every one of these models grows only on the complete medium, and a reader
+    # about to run FBA needs to be told so.
+    outputs=lambda c: [
+        c.out("biosynthesis", f"{c.sample}.tsv"),
+        c.out("biosynthesis", f"{c.sample}.media.tsv"),
+    ],
+    # `carve`, not `python`, and not a ReFramed module either: the preflight
+    # looks for a binary on PATH, and carve's presence is what proves this
+    # environment is CarveMe's and therefore has ReFramed in it.
+    executable="carve",
+)
+
 
 CATALOGUE = Registry([
     seqkit, checkm2, gtdbtk,
     bakta, amrfinder, mlst,
     mashtree, treecluster, skani,
     panaroo, snp_dists, fasttree,
-    carveme,
+    carveme, biosynthesis,
 ])
 
 __all__ = ["CATALOGUE", "Context", "Database", "Scope", "Tool"]

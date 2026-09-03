@@ -38,6 +38,10 @@ from itertools import count
 from pathlib import Path
 
 from . import __version__
+# The panel is data the wrapper and the report have to agree on, so it lives in
+# one place. Importable from here because `biosynthesis.py` keeps its `reframed`
+# imports inside the functions that solve — this process has no solver.
+from .biosynthesis import ABSENT, DE_NOVO, LB, NO_ROUTE, PANEL, UPSTREAM
 from .guidance import GUIDANCE, citations
 from .tools import Context, Registry, Scope, Tool
 
@@ -1833,8 +1837,163 @@ def _section_carveme(tool: Tool, ctx: Context, workdir: Path) -> str:
             + _absent_note(absent, len(ctx.samples)))
 
 
+# Dark is a dependency, not an ability: the cells worth looking at are the ones
+# a genome has to be given. Reversing this put nine tenths of a prototrophic
+# genome's row at full shade and made the two interesting cells invisible.
+#
+# `de_novo` is one step up from the floor rather than on it, because a cell at
+# the floor is nearly indistinguishable from the unshaded blank that means "not
+# in this model" — and "makes it itself" against "was never in the network" is
+# the last pair of meanings that should be allowed to look alike.
+_SHADE_BY_VERDICT = {DE_NOVO: 0.12, UPSTREAM: 0.55, NO_ROUTE: 1.0}
+# A glyph as well as a shade, so the grid survives being printed, and a reader
+# who cannot separate two ambers still gets the four states apart. `·` for
+# absent is the same mark the tables use for a cell a tool produced nothing for.
+_GLYPH_BY_VERDICT = {DE_NOVO: "", UPSTREAM: "~", NO_ROUTE: "×", ABSENT: "·"}
+
+_MEDIA_COLUMNS = (("M9", "M9"), ("M9[-O2]", "M9 anaerobic"),
+                  ("LB", "LB"), ("LB[-O2]", "LB anaerobic"),
+                  ("complete", "Complete"))
+
+# How many compound names are worth spelling out in a note. Past this the
+# sentence is longer than the grid it describes.
+_BIOSYNTHESIS_NAME_BUDGET = 12
+
+
+def _biosynthesis_naming(varying: list) -> str:
+    """Name whichever of the two sets is short enough to be useful.
+
+    Which columns to look at is the point of the sentence. At one species most
+    of the panel varies and the short list is the *uniform* one; across phyla it
+    is the other way round; at a hundred genomes neither is worth printing.
+    """
+    if not varying:
+        return "."
+    if len(varying) <= _BIOSYNTHESIS_NAME_BUDGET:
+        return ": " + ", ".join(c.name for c in varying) + "."
+    same = [c for c in PANEL if c not in varying]
+    if len(same) <= _BIOSYNTHESIS_NAME_BUDGET:
+        return ". The same in every genome: " + ", ".join(c.name for c in same) + "."
+    return "."
+
+
+def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
+    """What each genome can build, and what it has to be given.
+
+    Three states per compound rather than two, and a grid rather than a table:
+    32 compounds is more columns than a table holds, and the comparison a
+    reader wants is down a column — which genome differs from the others.
+    """
+    verdicts: dict[str, dict[str, str]] = {}
+    media: dict[str, dict[str, list[str]]] = {}
+    for sample in ctx.samples:
+        panel = ctx.sample_out(sample, "biosynthesis", f"{sample}.tsv")
+        if panel.exists():
+            verdicts[sample] = {r[0]: r[3] for r in _read_tsv(panel)[1:] if len(r) > 3}
+        table = ctx.sample_out(sample, "biosynthesis", f"{sample}.media.tsv")
+        if table.exists():
+            media[sample] = {r[0]: r for r in _read_tsv(table)[1:] if len(r) > 3}
+    if not verdicts:
+        return '<p class="missing">No capability tables.</p>'
+
+    counts: dict[str, list[str]] = {}
+    for sample, found in verdicts.items():
+        tally = {k: 0 for k in (DE_NOVO, UPSTREAM, NO_ROUTE, ABSENT)}
+        for verdict in found.values():
+            if verdict in tally:
+                tally[verdict] += 1
+        counts[sample] = [sample, str(tally[DE_NOVO]), str(tally[UPSTREAM]),
+                          str(tally[NO_ROUTE]), str(tally[ABSENT])]
+    rows, absent = _in_sample_order(counts, ctx.samples, 5)
+
+    # Only the genomes that produced a table get a grid row, and the summary
+    # above already says which did not — a blank grid row would read as a
+    # genome that makes everything.
+    named = [s for s in ctx.samples if s in verdicts]
+    fracs, cells, notes = [], [], []
+    for sample in named:
+        found = verdicts[sample]
+        fracs.append([_SHADE_BY_VERDICT.get(found.get(c.bigg, ABSENT)) for c in PANEL])
+        cells.append([_GLYPH_BY_VERDICT.get(found.get(c.bigg, ABSENT), "") for c in PANEL])
+        notes.append(str(sum(1 for c in PANEL if found.get(c.bigg) == NO_ROUTE)))
+
+    varying = [c for c in PANEL
+               if len({verdicts[s].get(c.bigg, ABSENT) for s in named}) > 1]
+
+    parts = [
+        f'<p class="summary">{len(PANEL)} building blocks per genome. '
+        "<em>De novo</em> is a complete route from a minimal medium; "
+        "<em>upstream</em> means the route is there but another compound on the "
+        "list is what is missing; <em>no route</em> is what the genome has to be "
+        "given. These describe the draft model, not the organism — see the notes "
+        "above.</p>",
+        _table(rows, header=["Genome", "De novo", "Upstream", "No route",
+                             "Not in model"]),
+        _absent_note(absent, len(ctx.samples)),
+        "<h3>Building blocks per genome</h3>",
+        '<p class="summary">Darkest is <em>no route</em> (×), mid is '
+        "<em>upstream</em> (~), lightest is <em>de novo</em>, and an unshaded "
+        "cell (·) is a compound this model does not contain. The glyphs appear "
+        "where the grid is wide enough for them. The figure after each row is "
+        "the genome's <em>no route</em> count.</p>",
+        _grid(named, [c.name for c in PANEL], fracs, "183,121,31",
+              row_notes=notes, cell_values=cells,
+              label="building blocks each genome can make"),
+    ]
+    if len(named) > 1:
+        parts.append(
+            f'<p class="note">{len(varying)} of {len(PANEL)} compounds differ '
+            f"between these {len(named)} genomes"
+            + _biosynthesis_naming(varying)
+            + " A column that is the same everywhere carries no comparative "
+            "information, and can be a real lineage character as easily as a gap "
+            "in the reaction database.</p>")
+
+    if media:
+        # Parsed defensively: the report is meant to survive a partial run, and
+        # these files can be read while a rule is still writing them.
+        def cell(sample: str, medium: str, column: int) -> float | None:
+            row = media.get(sample, {}).get(medium)
+            if row is None or len(row) <= column:
+                return None
+            try:
+                return float(row[column])
+            except ValueError:
+                return None
+
+        grew = [s for s in named
+                if any((cell(s, m, 3) or 0.0) > 0 for m, _ in _MEDIA_COLUMNS[:4])]
+        present = [int(v) for v in (cell(s, "LB", 2) for s in media) if v is not None]
+        mrows = {}
+        for sample in media:
+            mrows[sample] = [sample] + [media[sample].get(key, ["", "", "", "—"])[3]
+                                        for key, _ in _MEDIA_COLUMNS]
+        ordered, missing = _in_sample_order(mrows, ctx.samples, 6)
+        parts += [
+            "<h3>Growth on the reference media</h3>",
+            '<p class="summary">The feasibility check to make before running flux '
+            "balance analysis on these models, in h⁻¹, with every compound capped "
+            "at 10 mmol/gDW/h. Not a growth rate to quote — the cap applies to "
+            f"oxygen too. {len(grew)} of {len(named)} genomes grow on any defined "
+            "medium here; the complete medium is the control that the model is "
+            "feasible at all.</p>",
+            _table(ordered, header=["Genome", *[label for _, label in _MEDIA_COLUMNS]]),
+            _absent_note(missing, len(ctx.samples)),
+        ]
+        if present:
+            lo, hi = min(present), max(present)
+            span = f"{lo}" if lo == hi else f"{lo}–{hi}"
+            parts.append(
+                '<p class="note">A zero on a rich medium is usually missing '
+                "transport, not missing metabolism: these models carry exchange "
+                f"reactions for {span} of LB's {len(LB)} compounds.</p>")
+
+    return "".join(parts)
+
+
 SECTIONS = {
     "carveme": _section_carveme,
+    "biosynthesis": _section_biosynthesis,
     "seqkit": _section_seqkit,
     "checkm2": _section_checkm2,
     "gtdbtk": _section_gtdbtk,

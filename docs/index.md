@@ -21,7 +21,7 @@ already strong; a fast, wide sweep over a large set is not well served, and it
 is what CompareM2's benchmark result — near-linear scaling with input count —
 actually supports.
 
-Narrowing the scope is what pays for everything else: **13 tools instead of
+Narrowing the scope is what pays for everything else: **14 tools instead of
 30+, one conda environment instead of 25, 1.58 GB of software.**
 
 ## What it does
@@ -59,5 +59,5 @@ not support.
   - [Quick start](05 quick start.md) — install and run
   - [Installation](10 installation.md) — pixi, databases, HPC
   - [Usage](20 usage.md) — the CLI, the TUI, passthrough parameters
-  - [What analyses does it do](30 what analyses does it do.md) — the 13 tools
+  - [What analyses does it do](30 what analyses does it do.md) — the 14 tools
   - [Citing](99 citation.md) — CompareM2 and every tool it runs

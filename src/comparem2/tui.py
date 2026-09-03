@@ -184,7 +184,7 @@ class ComparemTUI(App):
         if self.use_conda:
             # Snakemake's own "Creating conda environment" lines are quietened
             # in the API path, so a first run would otherwise look hung while
-            # thirteen environments solve.
+            # fourteen environments solve.
             self.call_from_thread(
                 log.write, f"[dim]deploying conda environments in {self.conda_prefix}"
                            " — first run only[/]")

@@ -4,9 +4,10 @@ What is currently true of a real run. This file changes whenever something is
 re-run, which is why it is not in [DESIGN.md](DESIGN.md) — decisions should not
 need editing because a tool was verified again.
 
-Last updated **2026-09-02**, from runs on thylakoid.
+Last updated **2026-09-03**. Everything below is from runs on thylakoid except
+the `biosynthesis` row, which is noted where it differs.
 
-## Tool verification: 13 of 13
+## Tool verification: 14 of 14, thirteen of them through Snakemake
 
 **Verified means executed** on the four *E. faecium* test genomes and producing
 correct-looking output. It never means "installed" — see
@@ -27,6 +28,7 @@ correct-looking output. It never means "installed" — see
 | fasttree | 09-02 | at `threads=1`; duplicates at 0.0 branch length. `threads=1` is now measured, not assumed — FastTreeMP buys nothing here; see below |
 | carveme | 09-02 | 4/4 SBML models — but the ~9 min per genome was a solver defect and the models were truncated. **50 s and 1,743 reactions** through `carve_scip.py`; see below |
 | gtdbtk | 09-02 | all four *E. faecium* at 99.0–99.2% ANI against a 95.0 radius, `ani_screen`; duplicates identical. Six defects had to be fixed first — see below |
+| biosynthesis | 09-03 | 11 real models including all four *E. faecium*, plus the curated `iML1515` as a control: **31 of 32 de novo**, 1.2–1.8 s a genome, duplicate pair identical. **Run directly, not yet through Snakemake, and on macOS against PyPI reframed 1.6.0 + SCIP** — see below |
 
 ### GTDB-Tk: six defects, none of which a solve would show
 Found 2026-09-02 while making the tool runnable. Each was invisible because the
@@ -194,6 +196,36 @@ into CarveMe's own directory and points `carve` at the link, so the hits land in
 run: `bakta/116_2.tsv` still opens with `# Annotated with Bakta / # Software:
 v1.12.1`, and the DIAMOND hits are in `carveme/116_2.tsv`.
 
+### biosynthesis, executed 2026-09-03 — and what has *not* been executed
+`biosynthesis.py` was run directly, against 11 real CarveMe models on this
+machine: the four *E. faecium* from `results_full13` and the seven *S. aureus*
+from the `verify` run, plus `iML1515` as an external control. 1.2–1.8 s a
+genome — negligible against the 50 s `carve` takes — and the `116_2` /
+`116_2 duplicate` pair produces byte-identical tables.
+
+| model set | de novo | upstream | no route | absent |
+| --- | ---: | ---: | ---: | ---: |
+| `iML1515`, curated *E. coli* | **31** | 0 | 1 | 0 |
+| 4x *E. faecium* draft | 10–11 | 6–9 | 11–13 | 2 |
+| 7x *S. aureus* draft | 25–26 | 0 | 4–5 | 1–3 |
+
+The one non-de-novo verdict on `iML1515` is adenosylcobalamin, which *E. coli*
+genuinely cannot synthesise de novo. Every other call on the curated model is
+the described answer, which is the calibration for the section.
+
+**Not yet executed:** the rule, through Snakemake, on thylakoid, in the pixi
+environment. Three things are therefore unverified — that `python` in that
+rule's environment is CarveMe's; that `reframed` there is the conda build rather
+than the PyPI wheel this ran against; and that `load_cbmodel(..., flavor="bigg")`
+behaves the same across those builds. reframed 1.6.0 here reports only the
+`scip` backend, so the solver family matches even though the build does not.
+None of that is a hypothesis worth defending — run it.
+
+Note also that this ran on **macOS**, which the pipeline itself does not
+support, and only because `reframed` and `pyscipopt` have arm64 wheels on PyPI
+where the analysis tools have no `osx-arm64` conda builds. It is a way to
+execute this one program's logic, not a change to the platform support.
+
 ### The whole product, produced whole
 All thirteen tools in one run over the four *E. faecium* genomes, 19:22 on
 2026-09-02: `CM2_EXIT=0`, **95,879 bytes, thirteen sections plus methods**. It
@@ -352,9 +384,9 @@ Two things that fell out of it, neither acted on:
   written, clean exit. And headlessly through `run_test()` with `seqkit` and
   `checkm2`, so the isolated launcher goes through the TUI path too. Five
   defects had to be fixed first, see [DECISIONS.md](DECISIONS.md).
-- 167 unit tests, ~1.3 s — 13 added for the conda-deployment path, 8 for the
+- 196 unit tests, ~1.3 s — 13 added for the conda-deployment path, 8 for the
   steps around GTDB-Tk's command, 16 for the report rewrite, 6 for CarveMe's
-  solver wrapper
+  solver wrapper, 23 for `biosynthesis`
 - CI green on GitHub, 18–22 s per run
 - `mkdocs build --strict`
 - `docs/generate.py --check` — generated pages current
@@ -509,7 +541,7 @@ cd /evo/postdoc/CompareM2
 export PATH=$HOME/.pixi/bin:$PATH
 export COMPAREM2_DATABASES=/evo/postdoc/cm2-databases
 
-pixi run pytest          # 167 tests, no tools or databases needed
+pixi run pytest          # 196 tests, no tools or databases needed
 pixi run test-fast       # 4 genomes, no databases needed
 
 pixi run cm2 my/*.fna \
@@ -530,7 +562,7 @@ To skip the 60.8 GB:
 
 ```bash
 --until seqkit checkm2 bakta amrfinder mlst mashtree treecluster skani \
-        panaroo snp-dists fasttree carveme
+        panaroo snp-dists fasttree carveme biosynthesis
 ```
 
 ## Packaging
@@ -543,7 +575,7 @@ The code side of the bioconda package is done; the release is not. What exists:
 
 | | |
 | --- | --- |
-| environments a full conda run builds | **14** (17 rules needing one, deduplicated by content) |
+| environments a full conda run builds | **14** (18 rules needing one, deduplicated by content — `biosynthesis` shares CarveMe's) |
 | published recipe today | `comparem2` **2.16.2**, `noarch: generic`, maintainer `cmkobel` |
 | version here | `3.0.0.dev0` — the release needs a real one, in three files |
 
@@ -563,6 +595,12 @@ reasoned about in DESIGN.md and not yet demonstrated.
 - **`amrfinder` has not been run under `--use-conda`.** It is the one tool
   whose database lands inside its deployed environment, which is what the
   content-addressed environment sharing in DESIGN.md is for.
+- **`biosynthesis` has not been run through Snakemake.** The program is
+  verified against 11 real models and a curated control; the *rule* is not. What
+  that leaves untested is whether the rule's `python` is CarveMe's, and whether
+  conda's `reframed` reads a BiGG-flavoured SBML the same way as the PyPI wheel
+  it was executed against. One `--until carveme biosynthesis` run on thylakoid
+  settles it. See *biosynthesis, executed 2026-09-03* above.
 - **`--tui` has not been run against a failing workflow interactively.** The
   "Nothing ran / no report" path is covered by unit tests and was reached once
   by accident, but not driven by hand since.

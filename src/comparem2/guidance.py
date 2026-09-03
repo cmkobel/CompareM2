@@ -153,6 +153,17 @@ CARVEME = Citation("Machado D, Andrejev S, Tramontano M, Patil KR (2018) Fast au
                    "reconstruction of genome-scale metabolic models for microbial species "
                    "and communities. Nucleic Acids Research 46:7542–7553",
                    "10.1093/nar/gky537")
+FBA = Citation("Orth JD, Thiele I, Palsson BØ (2010) What is flux balance analysis? "
+               "Nature Biotechnology 28:245–248",
+               "10.1038/nbt.1614",
+               note="The method behind the biosynthesis section — a linear program over "
+                    "a steady-state stoichiometric network. Not a CompareM2 contribution.")
+IML1515 = Citation("Monk JM, Lloyd CJ, Brunk E, et al. (2017) iML1515, a knowledgebase "
+                   "that computes Escherichia coli traits. Nature Biotechnology 35:904–908",
+                   "10.1038/nbt.3956",
+                   note="Not run by the pipeline. It is the manually curated model the "
+                        "biosynthesis probe was validated against, and the reason the "
+                        "31-of-32 figure in that section can be checked.")
 
 
 GUIDANCE: dict[str, Guidance] = {
@@ -877,6 +888,102 @@ GUIDANCE: dict[str, Guidance] = {
         ),
         citation=CARVEME,
         also=(DIAMOND,),
+    ),
+
+    "biosynthesis": Guidance(
+        blurb="Reads a high-level phenotype off each metabolic model: of 32 building "
+              "blocks — the twenty amino acids, ten vitamins and cofactors, two "
+              "quinones — which can this genome build for itself, and which must it "
+              "take from its surroundings? A genome that makes everything can live "
+              "alone; one that must acquire eleven of them is telling you about a "
+              "host, a community or a rich medium.",
+        method="Flux balance analysis on the CarveMe model. A drain reaction is added "
+               "for each compound and maximised on M9 minimal medium — salts, glucose, "
+               "ammonium, phosphate, sulfate, oxygen — with every compound capped at "
+               "10 mmol/gDW/h, which is the uptake rate CarveMe's own phenotype-array "
+               "protocol specifies. A compound that cannot be reached that way is "
+               "tried again on M9 plus every other panel compound, which separates "
+               "'no route exists' from 'the route exists but something else on this "
+               "list is missing'. The background is never the complete medium: with "
+               "every exchange open, one draft appeared able to make asparagine "
+               "because it can import the Gly-Asn dipeptide and hydrolyse it, and "
+               "salvage is not synthesis.",
+        reading=(
+            ("De novo",
+             "A complete, connected route from the minimal medium. On the manually "
+             "curated Escherichia coli model iML1515 this probe returns 31 of the 32 "
+             "compounds as de novo, the single exception being adenosylcobalamin — "
+             "which E. coli genuinely cannot synthesise, only salvage. That is the "
+             "calibration for how much weight the column carries."),
+            ("Blocked upstream",
+             "The pathway to this compound is present, but it cannot run from the "
+             "minimal medium because another compound on the panel is unavailable. "
+             "This is why a plain producibility scan overstates auxotrophy: without "
+             "folate there are no purines, without purines no ATP, and everything "
+             "downstream reads as missing. Four E. faecium drafts return 6 to 9 "
+             "compounds here, and reading them as requirements would double the count."),
+            ("No route",
+             "Unreachable even with every other panel compound supplied, so the draft "
+             "model has no path to it at all. Measured on real drafts this recovers "
+             "described requirements: all four E. faecium models return no route to "
+             "leucine, methionine, threonine, tryptophan, valine, riboflavin, "
+             "pantothenate, NAD and biotin, and all seven S. aureus models to thiamine "
+             "diphosphate, NAD and biotin. Treat it as a statement about the model "
+             "rather than the organism: the same seven also return no route to "
+             "asparagine, which is not a described S. aureus requirement."),
+            ("Not in the model",
+             "The compound is not in this network at all, so there is nothing to ask. "
+             "Usually the whole pathway was dropped during carving — adenosylcobalamin "
+             "is absent from every Gram-positive draft measured — and it is not "
+             "evidence either way about the organism."),
+            ("The compound grid",
+             "Shaded by dependency, so the dark cells are what a genome has to be given. "
+             "A column that is the same in every genome carries no comparative "
+             "information and is flagged: in a set of one species that is most of the "
+             "panel, and the interesting columns are the ones that differ. Ubiquinone-8 "
+             "is the worked example — unreachable or unrepresented in all eleven "
+             "Firmicute drafts, de novo in E. coli — so a uniform column can be a real "
+             "lineage character rather than a defect."),
+            ("Growth on the reference media",
+             "The check CarveMe's own section says to make before reporting anything "
+             "quantitative, and it fails: none of eleven real drafts grows on M9, M9 "
+             "anaerobic, LB or LB anaerobic, and every one grows only on the complete "
+             "medium. `Present` is why — those drafts carry exchange reactions for 48 "
+             "to 51 of LB's 65 compounds against iML1515's 62, and the missing ones are "
+             "the vitamins and nucleosides. Growth is a single number that one "
+             "unreachable metabolite sets to zero, which is the reason this section "
+             "reports 32 compounds instead."),
+        ),
+        caveats=(
+            "This is a property of the draft model, not of the organism. The CarveMe "
+            "authors say their models \"should still be considered as drafts subject to "
+            "further refinement, as they might require organism-specific curation to "
+            "reproduce certain phenotypes\", and every verdict here inherits that.",
+            "A missing route is more likely than a spurious one. Transport is the "
+            "weakest part of these models — the paper attributes poorer "
+            "substrate-utilisation performance to \"the lack of annotated "
+            "transporters\" — and a pathway with one unannotated step reads as no "
+            "route, so the count of dependencies is an upper bound.",
+            "The growth column is not a growth rate to quote. Every compound is capped "
+            "at 10 mmol/gDW/h including oxygen, which is the paper's protocol and not a "
+            "physiological condition: iML1515 comes out at 0.53 h⁻¹ on M9 glucose that "
+            "way, against the ~0.88 h⁻¹ it is usually simulated at with oxygen "
+            "unconstrained. Use it as a feasibility check, which is what it is for.",
+            "Nothing here is a habitat prediction. The number of dependencies is a "
+            "statement about biosynthetic autonomy, and while host-associated and "
+            "community-embedded lineages tend to have more of them, this pipeline does "
+            "not test that and a high count is not evidence of where an organism lives "
+            "(methodological caution, not a finding of any paper cited here).",
+            "The probe target is the metabolite the cell needs, which is not always the "
+            "one on the vitamin bottle: thiamine diphosphate rather than thiamine, "
+            "tetrahydrofolate rather than folate, NAD rather than nicotinate. Free "
+            "thiamine, folate and lipoate are salvage substrates rather than "
+            "biosynthetic products, and probing them called E. coli a thiamine "
+            "auxotroph. A compound added to this panel needs its BiGG representation "
+            "checked the same way.",
+        ),
+        citation=CARVEME,
+        also=(FBA, IML1515),
     ),
 }
 

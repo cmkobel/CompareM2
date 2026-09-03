@@ -22,7 +22,7 @@ Three files carry the context, and they are deliberately separate:
 
 ## What this is
 
-CompareM2 v3: a Snakemake-driven pipeline that runs 13 analysis tools over a set
+CompareM2 v3: a Snakemake-driven pipeline that runs 14 analysis tools over a set
 of microbial assemblies and produces one self-contained HTML report.
 **Linux-only** — the tools are `linux-64`, so `pixi install` will not work on
 macOS. Unit tests are pure Python and run anywhere.
@@ -38,7 +38,7 @@ Declarative specs, generated workflow. There is no hand-written Snakefile.
 ```
 src/comparem2/
   tools.py      the contract: Tool, Database, Context, Registry, Scope
-  catalogue.py  the 13 Tool specs — command lines and outputs. THE source of truth.
+  catalogue.py  the 14 Tool specs — command lines and outputs. THE source of truth.
   guidance.py   what each tool does and how to read its output, for the report
   snakefile.py  generates a Snakefile (and envs/*.yaml) from the specs
   cli.py        argument parsing, input canonicalisation, hands off to Snakemake
@@ -47,6 +47,8 @@ src/comparem2/
   report.py     renders the HTML report
   steps.py      the small steps a rule runs around a command (GTDB-Tk's merge)
   carve_scip.py the wrapper in front of `carve` — see the solver convention below
+  biosynthesis.py  the one tool that is ours: what each model can build, and
+                   the 32-compound panel the report reads from
 ```
 
 The flow: `cli.py` canonicalises every input to
@@ -95,7 +97,7 @@ move.
 
 ### Testing
 
-`tests/unit/test_v3.py`, 167 tests, ~1.3 s. This is the primary instrument: the
+`tests/unit/test_v3.py`, 196 tests, ~1.3 s. This is the primary instrument: the
 codebase is a generator, and a wrong wildcard produces a Snakefile that parses
 cleanly and builds the wrong DAG, which an end-to-end run catches slowly if at
 all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.
@@ -136,7 +138,14 @@ ANI, 0 SNPs, identical CDS counts.
   `guidance.py` were copied from the tool's own paper and verified against the
   PDF text. If you add a number there, it needs the same treatment; if a claim
   is methodological caution rather than a paper's finding, say so in the
-  sentence.
+  sentence, and if it is a measurement of this pipeline, say which run.
+- **The biosynthesis panel probes the form a pathway ends at, one member per
+  nutrient family.** `thmpp` not `thm`, `thf` not `fol`, and no `lipoate` at
+  all — free thiamine, folate and lipoate are salvage substrates, and probing
+  them called *E. coli* a thiamine auxotroph. Two members of one family rescue
+  each other and the pair then reports a kinase. Tests enforce both; the
+  calibration is `iML1515` at 31 of 32 de novo. Adding a compound means
+  checking its BiGG representation the same way.
 
 ## Verification status
 
