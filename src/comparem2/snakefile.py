@@ -22,16 +22,6 @@ WILDCARD = "{sample}"
 THREADS = "{threads}"
 
 
-def _download_env(db_name: str) -> str:
-    """The env file for a database's download rule.
-
-    Prefixed, because a database and a tool can share a name — `checkm2` is
-    both — and their environments are not the same thing: the tool needs
-    CheckM2, the download needs curl.
-    """
-    return f"download_{db_name}.yaml"
-
-
 def _ctx(workdir: Path, databases: Path, samples: tuple[str, ...], tool: Tool,
          overrides: dict[str, tuple[tuple[str, str], ...]] | None = None) -> Context:
     """A Context that renders wildcard paths for per-genome tools."""
@@ -81,20 +71,12 @@ def _inputs(ctx: Context, tool: Tool, registry: Registry) -> list[str]:
 
 
 def _rule(tool: Tool, workdir: Path, databases: Path, samples: tuple[str, ...],
-          registry: Registry, per_rule_conda: bool,
-          overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
-          launcher: Sequence[str] | None = None) -> str:
+          registry: Registry,
+          overrides: dict[str, tuple[tuple[str, str], ...]] | None = None) -> str:
     ctx = _ctx(workdir, databases, samples, tool, overrides)
     outputs = [str(o) for o in tool.outputs(ctx)]
 
-    argv = list(tool.command(ctx))
-    if tool.isolated and launcher:
-        # An isolated tool lives in its own environment, so its command needs a
-        # prefix that enters that environment. Templated on {tool} so the same
-        # mechanism serves pixi (`pixi run -e {tool}`), conda (`conda run -n
-        # {tool}`) or a container runtime.
-        argv = [part.replace("{tool}", tool.name) for part in launcher] + argv
-    command = " ".join(shlex.quote(a) for a in argv)
+    command = " ".join(shlex.quote(a) for a in tool.command(ctx))
     if tool.stdout_to_output:
         if len(outputs) != 1:
             raise ValueError(
@@ -129,11 +111,11 @@ def _rule(tool: Tool, workdir: Path, databases: Path, samples: tuple[str, ...],
         *[f"        {_q(o)}," for o in outputs],
         f"    log: {_q(log)}",
         f"    threads: {tool.threads}",
-        # v3 targets one solved environment with every tool on PATH, so no
-        # conda directive by default. Opt in only to isolate a tool that
-        # cannot co-solve — the situation antiSMASH would have created.
-        *([f"    conda: {_q('envs/' + tool.name + '.yaml')}"]
-          if (per_rule_conda or tool.isolated) else []),
+        # Unconditional: Snakemake deploying the tool is the only way a tool
+        # arrives. There is no mode in which the pipeline expects one on PATH.
+        # Named by *environment*, not by tool — thirteen rules point at the same
+        # file, which is what makes them one environment on disk.
+        f"    conda: {_q('envs/' + tool.environment + '.yaml')}",
         "    shell:",
         f'        """',
         f"        mkdir -p $(dirname {{log}})",
@@ -149,8 +131,7 @@ def _rule(tool: Tool, workdir: Path, databases: Path, samples: tuple[str, ...],
     return "\n".join(lines)
 
 
-def _download_rule(db, databases: Path, workdir: Path,
-                   per_rule_conda: bool = False) -> str:
+def _download_rule(db, databases: Path, workdir: Path) -> str:
     """One rule per database, whose output is the file that proves it arrived.
 
     Downloads are rules rather than a separate `--download` phase so that they
@@ -158,10 +139,10 @@ def _download_rule(db, databases: Path, workdir: Path,
     skipped, a half-finished one is redone, and fetching runs alongside work
     that does not depend on it.
 
-    Being a rule has a second consequence, which only shows up under
-    `--use-conda`: a download needs an environment of its own, because two of
-    these fetches run a tool binary (`bakta_db`, `amrfinder -u`) that the
-    pipeline's own environment does not contain.
+    Being a rule has a second consequence: a download needs an environment of
+    its own, because two of these fetches run a tool binary (`bakta_db`,
+    `amrfinder -u`) that the pipeline's own environment does not contain, and
+    the other two need curl and tar, which nothing guarantees either.
     """
     ready = str(db.ready_path(databases, workdir))
     # The fetch is handed the same root its marker lives under, so an
@@ -171,7 +152,7 @@ def _download_rule(db, databases: Path, workdir: Path,
     steps = db.fetch(root) if db.fetch else []
     if not steps:
         raise ValueError(f"database {db.name} declares no fetch")
-    if per_rule_conda and not db.conda:
+    if not db.conda:
         raise ValueError(
             f"database {db.name} declares no conda packages, so its download "
             "rule cannot be given an environment")
@@ -181,7 +162,7 @@ def _download_rule(db, databases: Path, workdir: Path,
         f"        {_q(ready)},",
         f"    log: {_q(str(db.marker_root(databases, workdir) / 'logs' / ('download_' + db.name + '.log')))}",
         "    threads: 1",
-        *([f"    conda: {_q('envs/' + _download_env(db.name))}"] if per_rule_conda else []),
+        f"    conda: {_q('envs/' + db.environment + '.yaml')}",
         "    shell:",
         '        """',
         "        mkdir -p $(dirname {log})",
@@ -206,9 +187,7 @@ def _dirnames(outputs: list[str]) -> list[str]:
 
 def render(registry: Registry, selected: list[str] | None, workdir: Path,
            databases: Path, samples: tuple[str, ...],
-           per_rule_conda: bool = False,
-           overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
-           launcher: Sequence[str] | None = None) -> str:
+           overrides: dict[str, tuple[tuple[str, str], ...]] | None = None) -> str:
     """The whole Snakefile, as text."""
     tools = registry.closure(selected)
 
@@ -231,10 +210,9 @@ def render(registry: Registry, selected: list[str] | None, workdir: Path,
         *[f"        {_q(t)}," for t in targets],
         "",
     ]
-    body = [_download_rule(db, databases, workdir, per_rule_conda)
+    body = [_download_rule(db, databases, workdir)
             for db in registry.databases(selected)]
-    body += [_rule(t, workdir, databases, samples, registry, per_rule_conda,
-                   overrides, launcher)
+    body += [_rule(t, workdir, databases, samples, registry, overrides)
              for t in tools]
     return "\n".join(header) + "\n" + "\n".join(body)
 
@@ -274,27 +252,40 @@ def _env_file(packages: Sequence[str]) -> str:
 
 
 def render_envs(registry: Registry, selected: list[str] | None) -> dict[str, str]:
-    """One conda environment file per tool, and one per database download.
+    """One conda environment file per *environment*, not per rule.
 
-    Under the pixi model only the isolated tool's file is ever read, but they
-    are all written: `--use-conda` needs one per rule, and a `conda:` directive
-    pointing at a file that does not exist kills the whole workflow rather than
-    the job — see `prepare()`.
+    So `len()` of this is the number of environments the user pays for — two for
+    the full catalogue — rather than the number of rules that need one, which is
+    eighteen. Content addressing would deduplicate identical files anyway; naming
+    them by environment means the count is visible in the directory rather than
+    inferred from md5s.
+
+    A name carrying two different package lists is a bug, not a merge: one file
+    would be written twice and whichever rule rendered last would silently
+    decide what the other one ran in. Raised here rather than tested for,
+    because this is the only place that could notice.
     """
-    envs = {}
+    envs: dict[str, str] = {}
+
+    def add(name: str, packages: Sequence[str], owner: str) -> None:
+        text = _env_file(packages)
+        if name in envs and envs[name] != text:
+            raise ValueError(
+                f"environment {name!r} is declared with two different package "
+                f"lists; {owner} disagrees with an earlier rule")
+        envs[name] = text
+
     for tool in registry.closure(selected):
-        envs[f"{tool.name}.yaml"] = _env_file(tool.conda)
+        add(f"{tool.environment}.yaml", tool.conda, tool.name)
     for db in registry.databases(selected):
         if db.conda:
-            envs[_download_env(db.name)] = _env_file(db.conda)
+            add(f"{db.environment}.yaml", db.conda, f"database {db.name}")
     return envs
 
 
 def prepare(registry: Registry, selected: list[str] | None, workdir: Path,
             databases: Path, samples: tuple[str, ...],
-            overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
-            launcher: Sequence[str] | None = None,
-            per_rule_conda: bool = False) -> Path:
+            overrides: dict[str, tuple[tuple[str, str], ...]] | None = None) -> Path:
     """Write the Snakefile and its env files; return the Snakefile path.
 
     Every entry point goes through here. They did not once: the TUI wrote the
@@ -318,8 +309,7 @@ def prepare(registry: Registry, selected: list[str] | None, workdir: Path,
     (build / "envs").mkdir(parents=True, exist_ok=True)
     snakefile = build / "Snakefile"
     snakefile.write_text(render(registry, selected, workdir, databases, samples,
-                                per_rule_conda=per_rule_conda,
-                                overrides=overrides, launcher=launcher))
+                                overrides=overrides))
     for name, text in render_envs(registry, selected).items():
         (build / "envs" / name).write_text(text)
     return snakefile

@@ -51,11 +51,11 @@ def default_databases() -> Path:
 
 
 def default_conda_prefix() -> Path:
-    """Where `--use-conda` deploys the tools' environments.
+    """Where Snakemake deploys the tools' environments.
 
     Shared and home-relative, for the same reason the database default is:
-    fourteen solved environments outlive any one run, and a per-run default
-    would re-solve and re-download all of them for every set of genomes.
+    solved environments outlive any one run, and a per-run default would
+    re-solve and re-download them for every set of genomes.
 
     It is more load-bearing than it looks. Snakemake addresses a deployed
     environment by md5(realpath(envs_dir) + env file content), so moving this
@@ -69,29 +69,21 @@ def default_conda_prefix() -> Path:
     return Path.home() / ".comparem2" / "envs"
 
 
-def missing_executables(selected: list[str] | None, workdir: Path,
-                        databases: Path,
-                        samples: tuple[str, ...]) -> list[tuple[str, str]]:
-    """(tool, executable) for every selected tool not found on PATH.
+def missing_conda() -> str | None:
+    """The one preflight left, and the one that actually fires.
 
-    A conda-installed CompareM2 ships the pipeline and none of the fourteen
-    tools, so without this the first thing a new user sees is a Snakemake
-    traceback from whichever rule happened to be scheduled first — after
-    however long the DAG took to get there. Checking argv[0] up front turns
-    that into one line naming what is missing — or `Tool.executable`, where
-    argv[0] is an interpreter rather than the tool.
+    Snakemake deploys every tool, so nothing checks for tools on PATH any more
+    — but that hands the whole job to `conda`, which Snakemake looks up by name
+    and reports as `Error running conda info` from inside DAG construction,
+    naming neither PATH nor what the caller should do. Cost a failed run on
+    2026-09-03, where conda existed but was a pixi global outside the
+    environment's PATH.
+
+    Strictly `conda`, not mamba or micromamba: Snakemake shells out to
+    `conda info --json` regardless of which one solves, so accepting a
+    micromamba-only machine here would pass the check and fail the run.
     """
-    missing: list[tuple[str, str]] = []
-    # Only argv[0] is read, so any sample name renders a command whose
-    # executable is the right one.
-    stand_in = samples[0] if samples else "sample"
-    for tool in CATALOGUE.closure(selected):
-        ctx = Context(workdir, databases, tool.threads, samples,
-                      stand_in if tool.scope is Scope.GENOME else None)
-        exe = tool.executable or tool.command(ctx)[0]
-        if shutil.which(exe) is None:
-            missing.append((tool.name, exe))
-    return missing
+    return None if shutil.which("conda") else "conda"
 
 
 def any_outputs_exist(selected: list[str] | None, workdir: Path,
@@ -235,17 +227,10 @@ def main(argv: list[str] | None = None) -> int:
                         "(v2 spelled this set_treecluster--threshold in config.yaml)")
     p.add_argument("--tui", action="store_true", help="interactive keyboard interface")
     p.add_argument("--version", action="version", version=f"CompareM2 {__version__}")
-    p.add_argument("--use-conda", action="store_true",
-                   help="let Snakemake deploy each tool's own conda environment "
-                        "instead of expecting the tools on PATH; this is how a "
-                        "conda-installed CompareM2 runs")
     p.add_argument("--conda-prefix", type=Path, default=None,
-                   help="where --use-conda puts those environments; shared "
+                   help="where the tools' environments are deployed; shared "
                         f"across runs (default: {default_conda_prefix()}, "
                         "overridden for every run by $COMPAREM2_CONDA_PREFIX)")
-    p.add_argument("--isolated-launcher", default=None, metavar="CMD",
-                   help="how to enter an isolated tool's environment; {tool} is "
-                        "substituted, e.g. 'pixi run -e {tool}'")
     p.add_argument("--keep-going", action="store_true",
                    help="keep running independent tools after one fails")
     p.add_argument("--dry-run", action="store_true")
@@ -254,14 +239,6 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--report-only", action="store_true",
                    help="re-render the report from existing outputs")
     args = p.parse_args(argv)
-
-    # Two ways of isolating one tool, applied at once, would run
-    # `pixi run -e checkm2 checkm2 ...` inside a Snakemake-built environment.
-    if args.use_conda and args.isolated_launcher:
-        raise SystemExit(
-            "--use-conda and --isolated-launcher do not combine: --use-conda "
-            "already gives every tool its own environment, which is what the "
-            "launcher exists to do for the isolated one")
 
     # Every path the user typed is relative to where they typed it, which under
     # `pixi run` is not the cwd — see invocation_dir().
@@ -286,22 +263,16 @@ def main(argv: list[str] | None = None) -> int:
     tools = CATALOGUE.closure(args.until)
     print(f"{len(samples)} assemblies, {len(tools)} tools", file=sys.stderr)
 
-    # Say it now rather than mid-DAG. Skipped when the tools are not this run's
-    # problem: --use-conda installs them, --dry-run does not run them,
-    # --report-only reads output that already exists, and --unlock only clears
-    # a lock. A launcher only covers the isolated tool, so the rest are still
-    # checked.
-    if not (args.use_conda or args.dry_run or args.report_only or args.unlock):
-        absent = missing_executables(args.until, workdir, databases, samples)
-        if args.isolated_launcher:
-            absent = [(n, e) for n, e in absent if not CATALOGUE[n].isolated]
-        if absent:
-            raise SystemExit(
-                "not on PATH: "
-                + ", ".join(f"{n} ({e})" for n, e in absent) + "\n"
-                "Either run inside an environment that has them (`pixi run cm2 "
-                "...`), or add --use-conda to let Snakemake deploy each tool's "
-                "own environment.")
+    # Say it now rather than from inside DAG construction. Skipped where nothing
+    # will be deployed: --report-only reads output that already exists and
+    # --unlock only clears a lock. A --dry-run *is* checked, because Snakemake
+    # queries conda while building the DAG.
+    if not (args.report_only or args.unlock) and missing_conda():
+        raise SystemExit(
+            "not on PATH: conda\n"
+            "CompareM2 runs each tool in an environment Snakemake deploys, so "
+            "conda has to be available. Install it, or add its directory to "
+            "PATH — a pixi global lives in ~/.pixi/bin.")
 
     # Only report what is actually going to be fetched. Announcing a total that
     # includes databases already on disk is how "databases: 143.2 GB" came to
@@ -319,17 +290,15 @@ def main(argv: list[str] | None = None) -> int:
         # this is the line that precedes a download of up to 143 GB.
         print(f"to download: {names} ({size}) -> {databases}", file=sys.stderr)
 
-    # Environments are deduplicated by content, not by rule, so this is the
-    # number Snakemake will actually build — amrfinder's download rule and its
-    # analysis rules share one, and so does every other repeated spec.
-    if args.use_conda:
-        envs = len(set(render_envs(CATALOGUE, args.until).values()))
-        print(f"conda deployment: {envs} environments in {conda_prefix}"
-              + ("" if conda_prefix.exists() else " (none built yet)"),
-              file=sys.stderr)
+    # One file per environment, so this is the number Snakemake will build: two
+    # for the full catalogue. Worth saying because the first run pays for both
+    # solves and every later run pays for neither.
+    envs = len(render_envs(CATALOGUE, args.until))
+    print(f"tool environments: {envs} in {conda_prefix}"
+          + ("" if conda_prefix.exists() else " (none built yet)"),
+          file=sys.stderr)
 
     overrides = parse_overrides(args.set)
-    launcher = args.isolated_launcher.split() if args.isolated_launcher else None
 
     if args.tui:
         if args.dry_run:
@@ -339,14 +308,13 @@ def main(argv: list[str] | None = None) -> int:
         from .tui import launch
 
         launch(inputs, workdir, databases, samples, args.cores,
-               selected=args.until, overrides=overrides, launcher=launcher,
-               keep_going=args.keep_going, use_conda=args.use_conda,
+               selected=args.until, overrides=overrides,
+               keep_going=args.keep_going,
                conda_prefix=conda_prefix, command=_invocation())
         return 0
 
     snakefile = prepare(CATALOGUE, args.until, workdir, databases, samples,
-                        overrides=overrides, launcher=launcher,
-                        per_rule_conda=args.use_conda)
+                        overrides=overrides)
 
     if args.unlock:
         # Snakemake locks the output directory, and a run that died without
@@ -380,12 +348,12 @@ def main(argv: list[str] | None = None) -> int:
             # correctly refuse to overlap. This is why workdir is resolved to
             # an absolute path above.
             "--directory", str(workdir),
-        ]
-        if args.use_conda:
             # `--software-deployment-method` is the Snakemake 8+ spelling;
             # `--use-conda` survives as a deprecated alias and is not used here.
-            cmd += ["--software-deployment-method", "conda",
-                    "--conda-prefix", str(conda_prefix)]
+            # Unconditional: this is the only way a tool arrives.
+            "--software-deployment-method", "conda",
+            "--conda-prefix", str(conda_prefix),
+        ]
         if args.keep_going:
             cmd.append("--keep-going")
         if args.dry_run:

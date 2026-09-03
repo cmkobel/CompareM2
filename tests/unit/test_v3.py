@@ -15,6 +15,7 @@ import os
 import re
 import subprocess
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -29,7 +30,7 @@ from comparem2.report import (  # noqa: E402
     _PARTITION_VOCABULARY_MINIMUM,
     render_report,
 )
-from comparem2.snakefile import render  # noqa: E402
+from comparem2.snakefile import render, render_envs  # noqa: E402
 from comparem2.tools import Context, Registry, Scope, Tool  # noqa: E402
 
 SAMPLES = ("A", "B", "C")
@@ -193,47 +194,63 @@ def test_all_targets_cover_every_sample():
         assert f'"res/samples/{sample}/seqkit/contigs.tsv"' in head
 
 
-def test_only_isolated_tools_get_their_own_environment():
-    """Shared environment is the default; isolation is the documented exception.
-
-    checkm2 pins DIAMOND 2.1.x and cannot co-solve with a current Bakta, so it
-    is the single isolated tool. v2 reached 25 environments by inverting this.
-    """
-    isolated = [t.name for t in CATALOGUE if t.isolated]
-    assert isolated == ["checkm2"]
-
-    text = render(CATALOGUE, None, Path("res"), Path("db"), SAMPLES)
-    assert text.count("conda:") == len(isolated)
-    assert "conda:" in text.split("rule checkm2:")[1].split("rule ")[0]
-    assert "conda:" not in text.split("rule bakta:")[1].split("rule ")[0]
-
-
-def test_per_rule_conda_forces_all():
+def test_every_rule_gets_an_environment():
     """Every rule, including the downloads — which is not a detail.
 
-    Under `--use-conda` the pipeline's own environment holds no tools at all,
-    and two database fetches *are* tools: `bakta_db download` and
-    `amrfinder -u`. A download rule without an environment would fail with
-    `command not found` on a fresh conda install.
+    The pipeline's own environment holds no tools at all, and two database
+    fetches *are* tools: `bakta_db download` and `amrfinder -u`. A download
+    rule without an environment fails with `command not found`.
     """
-    text = render(CATALOGUE, None, Path("res"), Path("db"), SAMPLES, per_rule_conda=True)
+    text = render(CATALOGUE, None, Path("res"), Path("db"), SAMPLES)
     assert text.count("conda:") == len(CATALOGUE) + len(CATALOGUE.databases()) == 18
     downloads = text.split("rule all:")[1].split("rule seqkit:")[0]
-    assert 'conda: "envs/download_bakta-light.yaml"' in downloads
-    assert 'conda: "envs/download_amrfinder.yaml"' in downloads
+    assert downloads.count("conda:") == len(CATALOGUE.databases())
 
 
-def test_downloads_stay_bare_without_conda_deployment():
-    """The pixi path is unchanged: one solved environment, no directives."""
+def test_eighteen_rules_share_two_environments():
+    """The count the user pays for is environments, not rules.
+
+    Thirteen tools co-solve; checkm2 cannot, because it pins DIAMOND 2.1.x
+    against bakta's 2.2.x. An environment per tool is what content addressing
+    makes easy and it is the wrong default — v2's mistake in another form.
+    """
+    envs = render_envs(CATALOGUE, None)
+    assert sorted(envs) == ["checkm2.yaml", "main.yaml"]
+
     text = render(CATALOGUE, None, Path("res"), Path("db"), SAMPLES)
-    assert "envs/download_" not in text
+    checkm2 = text.split("rule checkm2:")[1].split("rule ")[0]
+    bakta = text.split("rule bakta:")[1].split("rule ")[0]
+    assert 'conda: "envs/checkm2.yaml"' in checkm2
+    assert 'conda: "envs/main.yaml"' in bakta
+    # checkm2 alone must not drag the thirteen in with it.
+    assert "bakta" not in envs["checkm2.yaml"]
 
 
-def test_pinned_tools_carry_minimum_versions():
-    """Unpinned bioconda solves silently select years-old broken builds."""
-    pinned = {spec.split("::")[1] for t in CATALOGUE for spec in t.conda if ">=" in spec}
-    assert any(p.startswith("bakta") for p in pinned)
-    assert any(p.startswith("panaroo") for p in pinned)
+def test_environment_names_are_unambiguous():
+    """One name, one package list. Otherwise the file is written twice and
+    whichever rule rendered last decides what the other one ran in."""
+    from comparem2.tools import Registry
+
+    a = replace(CATALOGUE["seqkit"], conda=("bioconda::seqkit",))
+    with pytest.raises(ValueError, match="two different package lists"):
+        render_envs(Registry([a, CATALOGUE["mlst"]]), None)
+
+
+def test_every_tool_carries_a_minimum_version():
+    """Unpinned bioconda solves silently select years-old broken builds, and a
+    thirteen-way co-solve exposes all thirteen to that at once.
+
+    Both instances found so far installed cleanly and crashed on first use:
+    bakta 1.8.1 calls the pyrodigal 3.x-renamed `OrfFinder`, panaroo 1.1.2
+    imports the Biopython-1.78-removed `Bio.Alphabet`.
+    """
+    for tool in CATALOGUE:
+        for spec in tool.conda:
+            # curl and tar are the exception: they are ubiquitous, versionless
+            # in practice, and needed only to fetch a URL.
+            if spec.startswith("conda-forge::"):
+                continue
+            assert ">=" in spec, f"{tool.name}: {spec} has no minimum version"
 
 
 # --- database downloads -------------------------------------------
@@ -272,38 +289,23 @@ def test_amrfinder_download_and_analysis_share_one_environment():
     "the same environment" means the two files are byte-identical — not merely
     equivalent. Read from snakemake 9.26.1's conda.py.
     """
-    from comparem2.snakefile import render_envs
-
-    envs = render_envs(CATALOGUE, ["amrfinder"])
-    assert envs["download_amrfinder.yaml"] == envs["amrfinder.yaml"]
-
-
-def test_environment_files_deduplicate_by_content():
-    """The number of environments a conda run builds, which the CLI prints.
-
-    Fourteen tools and four databases make eighteen rules needing an
-    environment, but only fourteen distinct ones: bakta's and amrfinder's
-    fetches reuse their tool's environment, the two curl+tar fetches are the
-    same environment as each other, and biosynthesis reuses carveme's.
-    """
-    from comparem2.snakefile import render_envs
-
-    envs = render_envs(CATALOGUE, None)
-    assert len(envs) == 18
-    assert len(set(envs.values())) == 14
+    assert CATALOGUE["amrfinder"].database.environment == \
+        CATALOGUE["amrfinder"].environment == "main"
+    # One name, one file, so they cannot differ — but the packages have to
+    # agree too, or `render_envs` would refuse to name them the same thing.
+    assert CATALOGUE["amrfinder"].database.conda == CATALOGUE["amrfinder"].conda
+    assert list(render_envs(CATALOGUE, ["amrfinder"])) == ["main.yaml"]
 
 
 def test_biosynthesis_shares_carvemes_environment():
     """Byte-identical env files, because that is the whole mechanism: Snakemake
     addresses a deployed environment by md5 of the file's content, so a drifted
     spec string would solve and build CarveMe twice for no benefit."""
-    from comparem2.snakefile import render_envs
-
-    envs = render_envs(CATALOGUE, ["biosynthesis"])
-    assert envs["biosynthesis.yaml"] == envs["carveme.yaml"]
+    assert CATALOGUE["biosynthesis"].environment == \
+        CATALOGUE["carveme"].environment == "main"
     # And it is CarveMe that is asked for, because ReFramed is what the wrapper
     # imports and it arrives with CarveMe rather than on its own.
-    assert "carveme" in envs["biosynthesis.yaml"]
+    assert "carveme" in render_envs(CATALOGUE, ["biosynthesis"])["main.yaml"]
 
 
 def test_database_ready_paths_are_distinct_and_under_the_root():
@@ -698,36 +700,47 @@ def test_conda_prefix_default_is_shared_not_per_run(monkeypatch):
     assert cli_mod.default_conda_prefix() == Path.home() / "scratch" / "envs"
 
 
-def test_use_conda_passes_the_deployment_flags_to_snakemake(monkeypatch, tmp_path):
-    """What makes a conda-installed CompareM2 able to run anything at all."""
+def test_deployment_flags_go_to_snakemake_unconditionally(monkeypatch, tmp_path):
+    """What makes CompareM2 able to run anything at all.
+
+    No flag turns this on. It used to need `--use-conda`, which meant every
+    conda-installed user hit `not on PATH: seqkit ...` on their first run and
+    then had to remember an incantation forever.
+    """
     monkeypatch.delenv("INIT_CWD", raising=False)
     monkeypatch.delenv("COMPAREM2_CONDA_PREFIX", raising=False)
+    monkeypatch.setattr(cli_mod, "missing_conda", lambda: None)
     (tmp_path / "a.fna").write_text(">c\nACGT\n")
 
     seen: dict[str, object] = {}
-
-    def fake_prepare(*a, **k):
-        seen["per_rule_conda"] = k["per_rule_conda"]
-        return tmp_path / "Snakefile"
 
     def fake_run(cmd, *a, **k):
         seen["cmd"] = cmd
         return subprocess.CompletedProcess(cmd, 0)
 
-    monkeypatch.setattr(cli_mod, "prepare", fake_prepare)
+    monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
     monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: tmp_path / "r.html")
     monkeypatch.setattr(cli_mod.subprocess, "run", fake_run)
 
     prefix = tmp_path / "envs"
     assert cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"),
-                         "--until", "seqkit", "--use-conda",
+                         "--until", "seqkit",
                          "--conda-prefix", str(prefix)]) == 0
 
-    assert seen["per_rule_conda"] is True, "the rules need `conda:` directives"
     cmd = seen["cmd"]
     assert "--software-deployment-method" in cmd
     assert cmd[cmd.index("--software-deployment-method") + 1] == "conda"
     assert cmd[cmd.index("--conda-prefix") + 1] == str(prefix)
+
+
+def test_use_conda_and_isolated_launcher_are_gone(tmp_path):
+    """Both flags described a choice that should not exist. Accepting them
+    silently would let an old command line look like it still worked."""
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    for flag in ("--use-conda", "--isolated-launcher"):
+        with pytest.raises(SystemExit) as excinfo:
+            cli_mod.main([str(tmp_path / "a.fna"), flag])
+        assert excinfo.value.code == 2, flag
 
 
 def test_amrfinders_marker_lives_with_the_run_not_the_databases(tmp_path):
@@ -821,30 +834,14 @@ def test_unlock_releases_the_lock_and_does_nothing_else(monkeypatch, tmp_path):
     assert "report" not in seen, "unlocking must not render a report"
 
 
-def test_use_conda_and_isolated_launcher_do_not_combine(tmp_path):
-    """Both isolate a tool, and together they would run
-    `pixi run -e checkm2 checkm2 ...` inside a Snakemake-built environment."""
-    (tmp_path / "a.fna").write_text(">c\nACGT\n")
-    with pytest.raises(SystemExit) as excinfo:
-        cli_mod.main([str(tmp_path / "a.fna"), "--use-conda",
-                      "--isolated-launcher", "pixi run -e {tool}"])
-    assert "do not combine" in str(excinfo.value)
+def test_preflight_refuses_a_run_with_no_conda(monkeypatch, tmp_path):
+    """The only preflight left, and the one that actually fires.
 
-
-def test_preflight_names_the_executable_not_the_tool(monkeypatch, tmp_path):
-    """Three tools' binaries are not named after the tool, which is precisely
-    why "tool X is missing" would send someone looking for the wrong thing."""
-    monkeypatch.setattr(cli_mod.shutil, "which", lambda exe: None)
-    found = dict(cli_mod.missing_executables(
-        ["treecluster", "fasttree", "carveme"], tmp_path, tmp_path, ("A",)))
-    assert found["treecluster"] == "TreeCluster.py"
-    assert found["fasttree"] == "FastTree"
-    assert found["carveme"] == "carve"
-
-
-def test_preflight_refuses_a_run_whose_tools_are_absent(monkeypatch, tmp_path):
-    """A fresh `conda install comparem2` has none of the thirteen tools. Saying
-    so up front beats a Snakemake traceback from whichever rule ran first."""
+    Snakemake reports a missing conda as `Error running conda info` from inside
+    DAG construction, naming neither PATH nor what to do about it. It cost a
+    failed run on 2026-09-03, where conda existed but was a pixi global outside
+    the environment's PATH.
+    """
     monkeypatch.delenv("INIT_CWD", raising=False)
     monkeypatch.setattr(cli_mod.shutil, "which", lambda exe: None)
     (tmp_path / "a.fna").write_text(">c\nACGT\n")
@@ -852,14 +849,23 @@ def test_preflight_refuses_a_run_whose_tools_are_absent(monkeypatch, tmp_path):
     with pytest.raises(SystemExit) as excinfo:
         cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"),
                       "--until", "seqkit"])
-    assert "seqkit (seqkit)" in str(excinfo.value)
-    assert "--use-conda" in str(excinfo.value)
+    assert "not on PATH: conda" in str(excinfo.value)
 
 
-def test_preflight_is_skipped_when_the_tools_are_not_this_runs_problem(
-        monkeypatch, tmp_path):
-    """--use-conda installs them, --dry-run does not run them, --report-only
-    reads output that already exists. All three must work with a bare PATH."""
+def test_conda_preflight_accepts_only_conda(monkeypatch):
+    """Not mamba, not micromamba: Snakemake shells out to `conda info --json`
+    whichever one solves, so accepting either would pass and then fail."""
+    for present, expected in (("conda", None), ("mamba", "conda"),
+                              ("micromamba", "conda")):
+        monkeypatch.setattr(cli_mod.shutil, "which",
+                            lambda exe, p=present: "/usr/bin/" + exe if exe == p else None)
+        assert cli_mod.missing_conda() == expected, present
+
+
+def test_conda_preflight_is_skipped_where_nothing_deploys(monkeypatch, tmp_path):
+    """--report-only reads output that already exists and --unlock clears a
+    lock. A --dry-run is *not* skipped: Snakemake queries conda to build the
+    DAG, so it fails there too."""
     monkeypatch.delenv("INIT_CWD", raising=False)
     monkeypatch.setattr(cli_mod.shutil, "which", lambda exe: None)
     monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
@@ -869,8 +875,9 @@ def test_preflight_is_skipped_when_the_tools_are_not_this_runs_problem(
     (tmp_path / "a.fna").write_text(">c\nACGT\n")
     base = [str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"), "--until", "seqkit"]
 
-    for extra in (["--use-conda"], ["--dry-run"], ["--report-only"]):
-        assert cli_mod.main(base + extra) == 0, extra
+    assert cli_mod.main(base + ["--report-only"]) == 0
+    with pytest.raises(SystemExit):
+        cli_mod.main(base + ["--dry-run"])
 
 
 def test_the_version_is_declared_in_exactly_one_place():
@@ -1361,7 +1368,9 @@ def test_runner_names_the_rule_that_finished(tmp_path):
         'rule all:\n    input: "a.txt"\n\n'
         'rule a:\n    output: "a.txt"\n    shell: "touch {output}"\n')
 
-    events = list(run(snakefile, 1, workdir=tmp_path))
+    # deploy=False: this Snakefile has no `conda:` directives, and enabling
+    # deployment would make Snakemake require conda, which CI has none of.
+    events = list(run(snakefile, 1, workdir=tmp_path, deploy=False))
 
     finished = {e.rule for e in events if e.kind == "job_finished"}
     assert "a" in finished, f"unnamed job_finished among {[e.kind for e in events]}"
@@ -2255,8 +2264,6 @@ def test_biosynthesis_reads_the_model_and_writes_two_tables():
         str(Path("res/samples/A/biosynthesis/A.tsv")),
         str(Path("res/samples/A/biosynthesis/A.media.tsv")),
     ]
-    # argv[0] is an interpreter, so the preflight needs telling what to look for.
-    assert CATALOGUE["biosynthesis"].executable == "carve"
 
 
 def test_the_panel_avoids_salvage_only_probe_targets():

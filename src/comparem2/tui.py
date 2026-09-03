@@ -10,11 +10,10 @@ module knows nothing about Snakemake and nothing about which tools exist.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from pathlib import Path
 
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal
 from textual.widgets import DataTable, Footer, Header, ProgressBar, RichLog, Static
 
 from .catalogue import CATALOGUE
@@ -56,8 +55,7 @@ class ComparemTUI(App):
                  samples: tuple[str, ...], cores: int,
                  selected: list[str] | None = None,
                  overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
-                 launcher: Sequence[str] | None = None,
-                 keep_going: bool = False, use_conda: bool = False,
+                 keep_going: bool = False,
                  conda_prefix: Path | None = None,
                  command: str | None = None) -> None:
         super().__init__()
@@ -67,9 +65,7 @@ class ComparemTUI(App):
         self.samples = samples
         self.cores = cores
         self.overrides = overrides
-        self.launcher = launcher
         self.keep_going = keep_going
-        self.use_conda = use_conda
         self.conda_prefix = conda_prefix
         # Passed in rather than read from sys.argv here: the CLI already
         # renders it, and the TUI's job is to display what it was given.
@@ -175,21 +171,18 @@ class ComparemTUI(App):
     async def execute(self, chosen: list[str]) -> None:
         log = self.query_one(RichLog)
         snakefile = prepare(CATALOGUE, chosen, self.workdir, self.databases,
-                            self.samples, overrides=self.overrides,
-                            launcher=self.launcher,
-                            per_rule_conda=self.use_conda)
+                            self.samples, overrides=self.overrides)
         names = [t.name for t in CATALOGUE.closure(chosen)]
 
         self.call_from_thread(log.write, f"[bold]Running {len(names)} tools[/]")
-        if self.use_conda:
-            # Snakemake's own "Creating conda environment" lines are quietened
-            # in the API path, so a first run would otherwise look hung while
-            # fourteen environments solve.
-            self.call_from_thread(
-                log.write, f"[dim]deploying conda environments in {self.conda_prefix}"
-                           " — first run only[/]")
+        # Snakemake's own "Creating conda environment" lines are quietened in
+        # the API path, so a first run would otherwise look hung while the
+        # environments solve.
+        self.call_from_thread(
+            log.write, f"[dim]deploying tool environments in {self.conda_prefix}"
+                       " — first run only[/]")
         for event in run(snakefile, self.cores, workdir=self.workdir,
-                         keep_going=self.keep_going, use_conda=self.use_conda,
+                         keep_going=self.keep_going,
                          conda_prefix=self.conda_prefix):
             self.call_from_thread(self.apply_event, event)
 
@@ -267,9 +260,7 @@ def launch(inputs: list[Path], workdir: Path, databases: Path,
            samples: tuple[str, ...], cores: int,
            selected: list[str] | None = None,
            overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
-           launcher: Sequence[str] | None = None,
-           keep_going: bool = False, use_conda: bool = False,
+           keep_going: bool = False,
            conda_prefix: Path | None = None, command: str | None = None) -> None:
     ComparemTUI(inputs, workdir, databases, samples, cores, selected,
-                overrides, launcher, keep_going, use_conda, conda_prefix,
-                command).run()
+                overrides, keep_going, conda_prefix, command).run()

@@ -76,20 +76,19 @@ stay in step.
 # Unit tests — pure Python, no pixi needed, runs on macOS
 python -m pytest tests/unit -q          # or: pixi run pytest
 
-# On linux, with the tool environment
+# On linux. pixi installs the *pipeline*, never the tools.
 pixi install
 pixi run cm2 --help
 pixi run test-fast                      # 4 genomes, no databases required
 pixi run cm2 <assemblies>... --dry-run
 ```
 
-Isolated tools need an absolute launcher, because Snakemake's shell does not
-inherit an interactive PATH:
-
-```bash
-pixi run cm2 <assemblies>... \
-  --isolated-launcher "/home/thylakoid/.pixi/bin/pixi run -e {tool}"
-```
+Snakemake deploys the tools on first use, into `--conda-prefix` (default
+`~/.comparem2/envs`, or `$COMPAREM2_CONDA_PREFIX`). There is **no flag for
+this** and no mode without it. `conda` is a declared pixi dependency for that
+reason — it used to be reached through a pixi global at `~/.pixi/bin/conda`,
+which is not on PATH inside `pixi run`, and a run died at DAG construction with
+`Error running conda info` on a machine that plainly had conda.
 
 Moving a pixi project invalidates its environments — conda bakes the absolute
 prefix into shebangs and RPATHs — so `rm -rf .pixi && pixi install` after any
@@ -97,7 +96,7 @@ move.
 
 ### Testing
 
-`tests/unit/test_v3.py`, 196 tests, ~1.3 s. This is the primary instrument: the
+`tests/unit/test_v3.py`, 195 tests, ~2.3 s. This is the primary instrument: the
 codebase is a generator, and a wrong wildcard produces a Snakefile that parses
 cleanly and builds the wrong DAG, which an end-to-end run catches slowly if at
 all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.
@@ -127,9 +126,13 @@ ANI, 0 SNPs, identical CDS counts.
   presolver off; deleting the line costs nine minutes a genome *and* the model.
   Numbers, and the reasons "optimal" is not well defined on this problem, are in
   the wrapper's docstring — re-measure before changing it.
-- **`isolated=True` is an exception that must carry its reason in the spec.**
-  Exactly one tool has it (checkm2, which pins DIAMOND 2.1.x against bakta's
-  2.2.x). v2 reached 25 environments by making this the default.
+- **Two conda environments, and adding a third needs a reason in
+  `catalogue.py`.** `MAIN_ENV` holds thirteen tools plus curl and tar;
+  `CHECKM2_ENV` exists because checkm2 pins DIAMOND 2.1.x against bakta's
+  2.2.x. Eighteen rules point at those two. An environment per tool is v2's 25
+  in a cheaper disguise — and because thirteen tools co-solve, **every spec
+  needs a `>=` floor**, not just the three that used to have one. A test
+  enforces it.
 - **Databases declare a measured size**, taken from `content-length`. `None`
   means unmeasured — never guess, and say "unmeasured" when totalling.
 - **Passthrough parameters**: `--set tool--flag=value` on the CLI, `params` on

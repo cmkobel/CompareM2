@@ -71,9 +71,9 @@ genomes in favour of skani sketches. **A tool's database version is part of its
 pin.** The catalogue had been carrying an r226 URL that the installed tool
 would have rejected — after the download.
 
-**One environment, plus CheckM2 on its own.** CheckM2 pins DIAMOND 2.1.x while
-current Bakta needs 2.2.x, so they cannot co-solve. CheckM2 is the single tool
-marked `isolated=True`. Everything else shares one environment.
+**Two environments, and CheckM2 is why there are two.** It pins DIAMOND 2.1.x
+while current Bakta needs 2.2.x, so they cannot co-solve. Everything else shares
+`main`. Snakemake deploys both; nothing expects a tool on PATH.
 
 **Databases fetch themselves, as workflow rules.** Each `Database` declares a
 `fetch` and a `ready` path, and a `download_<name>` rule is generated whose
@@ -120,7 +120,7 @@ Both run under a **bare `python`**, which is the exact opposite of the rule
 below, and for the mirror-image reason: they import `carveme` and `reframed`, so
 they need the interpreter of the environment the *tool* is in. `steps.py` is our
 code and needs ours. All three import nothing from their own package, because
-under `--use-conda` none of them can count on it being there — and
+none of them run in an environment that has it — and
 `biosynthesis.py` additionally keeps its `reframed` imports inside the functions
 that solve, so `report.py` can read the compound panel from it in a process
 that has no solver.
@@ -144,45 +144,60 @@ deployment the rule's environment holds the tool, not CompareM2, so a bare
 tool whose spec is lying about what it does, and a test asserts that GTDB-Tk is
 the only tool using either field.
 
-## Two deployment models
+## One deployment model, and two environments
 
-The same pipeline is installed two ways, and they answer different questions.
+**Snakemake installs the tools. That is the only way a tool arrives.** There is
+no flag, no fallback, and no mode in which the pipeline expects a tool on PATH.
+`pixi` is how a developer gets *the pipeline* — python, Snakemake, textual,
+pytest, conda — and it is deliberately not how anyone gets the tools.
 
-**pixi — development and HPC.** `pixi install` solves *one* environment holding
-thirteen of the fourteen tools, plus a second for CheckM2. Every tool is on PATH,
-no rule carries a `conda:` directive except the isolated one, and a run starts
-instantly because nothing is deployed at run time. This is what `pixi.toml`
-describes and what every verification run on thylakoid used.
+This replaced a two-model design on 2026-09-03, in which pixi solved one
+environment holding thirteen tools and `--use-conda` switched to per-rule
+deployment. Two models meant the tool set was pinned in two files that could
+drift, and they had: `gtdbtk>=2.7` was pinned in `catalogue.py` and left
+unconstrained in `pixi.toml`. It also meant a conda-installed user's first run
+ended in `not on PATH: seqkit ...` and an incantation to remember. Both are
+gone; see DECISIONS.md.
 
-**conda/bioconda — distribution.** The published package ships **the pipeline
-and none of the fourteen tools**, and Snakemake deploys each rule's environment
-from the generated `envs/*.yaml` on first use (`--use-conda`). This is not a
-concession, it is the only thing that can work: a single environment containing
-all fourteen does not exist, because CheckM2 pins DIAMOND 2.1.x against Bakta's
-2.2.x. A recipe that listed the tools as run dependencies would have to leave
-one of them out, and would break whenever any of the fourteen changed upstream.
+**Eighteen rules, two environments.** `catalogue.py` declares them:
 
-So per-rule environments are the *distribution* model and a single environment
-is the *development* model, and neither replaces the other. That is not the same
-as v2's 25 environments, which were 25 in every mode, by default, for reasons
-that turned out to be one real conflict and twenty-four defaults.
+- `main` — thirteen tools plus curl and tar, used by thirteen tool rules and
+  all four database fetches.
+- `checkm2` — one tool, for one reason. CheckM2 pins DIAMOND 2.1.x and a
+  current Bakta needs 2.2.x, so an environment holding all fourteen does not
+  exist. Verified 2026-09-01: `bakta>=1.10` solves with all thirteen others and
+  fails only when checkm2 joins.
 
-Three consequences worth knowing:
+Two rather than fourteen is deliberate. An environment per tool is what content
+addressing makes easy, and it is v2's 25 environments in another form: fourteen
+solves cost fourteen copies of DIAMOND, python and numpy, and the user pays on
+first run. Two rather than one is not a preference — it is the DIAMOND conflict,
+and it is the whole reason per-rule deployment is the only distribution model
+that can work. A recipe listing the tools as run dependencies would have to drop
+one of them.
+
+Four consequences worth knowing:
 
 - **Environments are addressed by content, not by rule.** Snakemake deploys to
-  `md5(realpath(conda_prefix) + env file content)`, so identical env files are
-  one directory on disk: the full catalogue's seventeen rules-needing-an-env
-  deploy as **14** environments.
-- **AMRFinder depends on that.** `amrfinder -u` writes into `$CONDA_PREFIX`, so
-  its download rule and its analysis rules must land in the same deployed
-  environment. They do, because both declare the same spec string — which is
-  why the spec is a shared constant in `catalogue.py` rather than typed twice.
-  **Executed 2026-09-03**: five rules, one directory, the database inside it,
-  and AMRFinder's own log naming that directory as both its software and its
-  database path. See STATUS.md, *amrfinder under `--use-conda`*.
+  `md5(realpath(conda_prefix) + env file content)`, so `render_envs` writes one
+  file per *environment* and eighteen rules point at two of them.
+- **Co-solving thirteen tools is not a new risk, but the pins are load-bearing.**
+  It is the same solve `pixi.toml` used to carry, and what every verification run
+  on thylakoid ran on — 422 packages, seqkit 2.13.0, bakta 1.12.1, panaroo 1.8.0,
+  gtdbtk 2.7.2, DIAMOND 2.2.5. What a thirteen-way solve does change is the blast
+  radius of an unconstrained spec, so **every tool carries a minimum version**,
+  floored at the build verified on linux-64, and a test enforces it.
+- **AMRFinder depends on the sharing.** `amrfinder -u` writes into
+  `$CONDA_PREFIX`, so its download rule and its analysis rules must land in the
+  same deployed environment. They do — both name `main`. **Executed
+  2026-09-03**, when they were still separate single-tool environments sharing a
+  spec string: five rules, one directory, the database inside it, and
+  AMRFinder's own log naming that directory as both its software and its
+  database path. See STATUS.md.
 - **A database fetch is a rule and needs an environment too.** Two of the four
-  run a tool binary rather than curl (`bakta_db download`, `amrfinder -u`), so
-  `Database` declares `conda` exactly as `Tool` does.
+  run a tool binary rather than curl (`bakta_db download`, `amrfinder -u`) and
+  the other two need curl and tar, so `Database` declares `conda` and
+  `environment` exactly as `Tool` does.
 
 ## The report is the product
 
@@ -249,8 +264,10 @@ something already published. The post-mortems are in
 - **Commands are argument lists, never shell strings.** A tool that writes to
   stdout declares `stdout_to_output=True`; the redirect is added by whatever
   runs it. The same discipline applies to database `fetch` steps.
-- **`isolated=True` is an exception that must carry its reason in the spec.**
-  v2 reached 25 environments by making it the default.
+- **A second environment must carry its reason in `catalogue.py`.** There is
+  exactly one, and the DIAMOND conflict is written above its spec. v2 reached
+  25 environments by making isolation the default rather than the exception,
+  and an environment per tool is the same mistake in a cheaper disguise.
 - **A tool's database location must be reachable.** Some tools take it only
   through the environment, which is what `Tool.env` is for — without it,
   `--databases` was silently ignored for the largest database in the pipeline.
@@ -261,11 +278,13 @@ something already published. The post-mortems are in
 - **The conda prefix defaults the same way** (`~/.comparem2/envs`, or
   `$COMPAREM2_CONDA_PREFIX`), for a sharper version of the same reason:
   Snakemake includes the prefix's realpath in each environment's hash, so
-  moving it re-solves all 14 environments *and* re-fetches AMRFinder's
+  moving it re-solves both environments *and* re-fetches AMRFinder's
   database, which lives inside one of them.
 - **The bioconda package must not grow tool dependencies.** It ships the
-  pipeline; the tools arrive through `--use-conda`. Adding them to the recipe
-  would require dropping CheckM2 or Bakta — see *Two deployment models*.
+  pipeline; Snakemake deploys the tools. Adding them to the recipe would
+  require dropping CheckM2 or Bakta — see *One deployment model*. The same
+  rule applies to `pixi.toml`, which listed them until 2026-09-03 and drifted
+  from `catalogue.py` while it did.
 - **Snakemake is invoked as `sys.executable -m snakemake`**, never as a bare
   `snakemake`. It is this package's own dependency, so the correct one is the
   one beside the running interpreter; by name it was simply not found when a

@@ -25,7 +25,7 @@ That choice is what makes the rest possible:
 | | v2 | v3 |
 | --- | --- | --- |
 | Analyses | 30+ | **13** |
-| Conda environments | 25 | **1**, plus CheckM2 isolated (14 when conda deploys them) |
+| Conda environments | 25 | **2** — thirteen tools co-solve, CheckM2 cannot |
 | Software download | — | **1.58 GB** measured |
 | Databases | 7 (incl. 84 GB Bakta full) | **4** (Bakta light) |
 | Report | R, RMarkdown, pandoc | **Python**, one HTML file |

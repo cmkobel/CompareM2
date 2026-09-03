@@ -85,8 +85,9 @@ class _Capture(logging.Handler):
 
 def run(snakefile: Path, cores: int, workdir: Path | None = None,
         dry_run: bool = False, keep_going: bool = False,
-        rerun_incomplete: bool = True, use_conda: bool = False,
-        conda_prefix: Path | None = None) -> Iterator[Event]:
+        rerun_incomplete: bool = True,
+        conda_prefix: Path | None = None,
+        deploy: bool = True) -> Iterator[Event]:
     """Execute the workflow, yielding events as they happen.
 
     Snakemake runs on a worker thread so the caller — a TUI, usually — keeps
@@ -97,11 +98,18 @@ def run(snakefile: Path, cores: int, workdir: Path | None = None,
     in one checkout share `./.snakemake`, and a killed run leaves a lock the
     next cannot clear. The CLI passes `--directory` for the same reason.
 
-    `use_conda` is what a conda-installed CompareM2 runs with: the package
-    ships the pipeline only, and each rule's tools are deployed from the env
+    Conda deployment is on by default and nothing in the pipeline turns it off:
+    the package ships the pipeline only, and each rule's tools come from the env
     files `prepare()` wrote. `conda_prefix` decides where those environments
     land, and it wants to be the same directory on every run — see
     `cli.default_conda_prefix()`.
+
+    `deploy=False` exists for one caller: the test that drives a hand-written
+    Snakefile with no `conda:` directives, to check the runner's event field
+    names against real Snakemake. Enabling deployment makes Snakemake require
+    conda even when no rule asks for an environment, and CI has no conda. No
+    production path passes it, and a generated Snakefile has a directive on
+    every rule.
     """
     events: queue.Queue[Event | None] = queue.Queue()
     handler = _Capture(events.put)
@@ -123,12 +131,10 @@ def run(snakefile: Path, cores: int, workdir: Path | None = None,
             # plugin interface package, which settings/types.py imports it from.
             from snakemake_interface_executor_plugins.settings import DeploymentMethod
 
-            deployment = None
-            if use_conda:
-                deployment = DeploymentSettings(
-                    deployment_method={DeploymentMethod.CONDA},
-                    conda_prefix=conda_prefix,
-                )
+            deployment = DeploymentSettings(
+                deployment_method={DeploymentMethod.CONDA},
+                conda_prefix=conda_prefix,
+            ) if deploy else None
 
             with SnakemakeApi(OutputSettings(printshellcmds=False, quiet={"all"})) as api:
                 workflow = api.workflow(

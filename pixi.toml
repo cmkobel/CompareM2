@@ -40,36 +40,27 @@ rm -rf cm2_test-fast && python -m comparem2.cli \
 # and running from `src` means an edit takes effect without a reinstall.
 PYTHONPATH = "src"
 
+# The pipeline's own dependencies, and nothing else. **The fourteen analysis
+# tools are deliberately absent**: Snakemake deploys them per rule from the env
+# files `catalogue.py` declares, which is the only way they arrive — for a
+# bioconda install and for this one alike. Listing them here would create a
+# second, untested way for a tool to be present, and would mean the same tool
+# set was pinned in two files that could drift. It already had: `gtdbtk>=2.7`
+# was pinned in catalogue.py and unpinned here.
+#
+# `conda` is a dependency, not an assumption. It used to be reached through a
+# pixi *global* at ~/.pixi/bin/conda, which is not on PATH inside `pixi run` —
+# so `--use-conda` died at DAG construction with "Error running conda info" on
+# a machine that plainly had conda. Declaring it here removes the trap.
 [dependencies]
 python = ">=3.11"
 snakemake = "<10"
 snakemake-executor-plugin-cluster-generic = "*"
 snakemake-executor-plugin-slurm = "*"
+conda = "*"
 # The TUI. Drives Snakemake through its logger plugin system rather than
 # scraping stdout — see DECISIONS.md.
 textual = "*"
-
-# The analysis tools. One environment for all of them except CheckM2, which
-# pins DIAMOND 2.1.x and cannot co-solve with a current Bakta; it gets the
-# `checkm2` feature below. Minimum versions are mandatory: an unconstrained
-# spec lets the solver satisfy some other package's constraint by reaching
-# years back, and both bakta and panaroo resolved to builds that install
-# cleanly and crash on first use.
-seqkit = "*"
-gtdbtk = "*"
-bakta = ">=1.10"
-ncbi-amrfinderplus = "*"
-mlst = "*"
-mashtree = "*"
-treecluster = "*"
-skani = "*"
-panaroo = ">=1.5"
-snp-dists = "*"
-fasttree = "*"
-carveme = "*"
-
-[feature.checkm2.dependencies]
-checkm2 = "*"
 
 [feature.dev.dependencies]
 pytest = "*"
@@ -77,5 +68,3 @@ pytest-asyncio = "*"
 
 [environments]
 default = { features = ["dev"] }
-# Entered via --isolated-launcher; nothing else may depend on this.
-checkm2 = { features = ["checkm2"], no-default-feature = true }

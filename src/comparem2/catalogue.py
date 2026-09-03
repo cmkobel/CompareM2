@@ -33,29 +33,72 @@ from . import biosynthesis as biosynthesis_script
 from . import carve_scip, steps
 from .tools import Context, Database, Registry, Scope, Tool
 
+# --- Environments --------------------------------------------------
+# Two, and the second exists for exactly one reason. Every rule runs in one of
+# them: Snakemake deploys the tools, and there is no mode in which the pipeline
+# expects a tool on PATH.
+#
+# **Why two and not fourteen.** An environment per tool is what content
+# addressing makes easy and it is the wrong default — it was v2's mistake in
+# another form. Fourteen solves cost fourteen copies of DIAMOND, python, numpy
+# and the rest: eight environments measured 8.6 GB on thylakoid, where the
+# thirteen-tool solve measures 8.7 GB *including* python and Snakemake. So the
+# saving is real without being dramatic, and the cost of the split is paid every
+# time on first run.
+#
+# **Why two and not one.** CheckM2 pins DIAMOND 2.1.x and a current Bakta needs
+# 2.2.x. Verified 2026-09-01: bakta>=1.10 solves with all thirteen other tools
+# and fails only when checkm2 is added. So one environment holding all fourteen
+# does not exist, and this is not a preference.
+#
+# **Why co-solving thirteen is safe to claim.** Because it is not a new solve.
+# `pixi.toml`'s default environment is these same thirteen, and it is what every
+# verification run on thylakoid used — 422 packages, seqkit 2.13.0, bakta
+# 1.12.1, panaroo 1.8.0, gtdbtk 2.7.2, DIAMOND 2.2.5. What the split would buy
+# is insurance against a *future* upstream change silently downgrading one tool
+# to satisfy another, which is why every spec below carries a floor.
+#
+# **Floors are mandatory, and here they are load-bearing.** An unconstrained
+# bioconda spec lets the solver reach back years to satisfy some other package's
+# constraint; both bakta and panaroo have resolved to builds that installed
+# cleanly and crashed on first use. In a thirteen-way co-solve that risk applies
+# to all thirteen at once. Each floor below is the version actually verified on
+# linux-64, read from `pixi.lock` — a floor cannot block an upgrade, only a
+# silent reach backwards.
+MAIN_ENV = (
+    "bioconda::seqkit>=2.13.0",
+    # 2.7+ is required by the database: only it accepts r232, and an older
+    # build installs cleanly and then refuses the data.
+    "bioconda::gtdbtk>=2.7",
+    # db 6.x is required by bakta 1.12.x and refused by nothing else, so a
+    # drifted pin would fetch a database the tool then rejects at runtime.
+    "bioconda::bakta>=1.10",
+    "bioconda::ncbi-amrfinderplus>=4.2.7",
+    # Floored below the verified 2.35.0: mlst 2.34/2.35 need libxcrypt1, which
+    # conda-forge ships for linux only, so 2.33.1 is what a non-linux
+    # exploration resolves to. linux-64 is the supported platform and gets
+    # 2.35.0; the lower floor keeps the macOS finding in STATUS.md reproducible.
+    "bioconda::mlst>=2.33",
+    "bioconda::mashtree>=1.4.6",
+    "bioconda::treecluster>=1.0.5",
+    "bioconda::skani>=0.3.2",
+    "bioconda::panaroo>=1.5",
+    "bioconda::snp-dists>=1.2.0",
+    "bioconda::fasttree>=2.2.0",
+    # Carries `biosynthesis` too, which reads CarveMe's model with ReFramed —
+    # ReFramed comes with CarveMe and not with CompareM2.
+    "bioconda::carveme>=1.6.6",
+    # For the two database fetches that are a plain URL. Present on any Linux,
+    # declared because a rule gets exactly the environment it asks for.
+    "conda-forge::curl",
+    "conda-forge::tar",
+)
+
+# The one tool that cannot join the above, for the DIAMOND reason.
+CHECKM2_ENV = ("bioconda::checkm2>=1.1.0",)
+
 # --- Databases -----------------------------------------------------
 # Sizes are measured, not estimated. `None` means nobody has measured it yet.
-
-# Two tool specs are named here because their *database* fetch runs the tool's
-# own binary, so the spec has to be one string used in both places. Bakta is the
-# case that makes this mandatory rather than tidy: db 6.x is required by bakta
-# 1.12.x and refused by nothing else, so a pin that drifted between the tool and
-# its download would fetch a database the tool then rejects at runtime.
-_BAKTA_SPEC = "bioconda::bakta>=1.10"
-_AMRFINDER_SPEC = "bioconda::ncbi-amrfinderplus"
-
-# Named for a third reason: two *tools* share this environment. `biosynthesis`
-# reads CarveMe's model with ReFramed, which comes with CarveMe and not with
-# CompareM2, so it declares the same package — and because `render_envs` writes
-# one file per tool and Snakemake addresses a deployed environment by the md5 of
-# that file's content, an identical spec string means one environment on disk
-# rather than two. A drifted string would silently solve CarveMe twice.
-_CARVEME_SPEC = "bioconda::carveme"
-
-# What a plain URL fetch needs. Present in the pixi environment and on any
-# Linux; declared because under `--use-conda` a download rule gets exactly the
-# environment it asks for and nothing else.
-_FETCH_TOOLS = ("conda-forge::curl", "conda-forge::tar")
 
 _CHECKM2_URL = "https://zenodo.org/records/14897628/files/checkm2_database.tar.gz?download=1"
 
@@ -76,7 +119,7 @@ CHECKM2_DB = Database(
          str(db / "checkm2" / "checkm2.dmnd")],
         ["rm", "-f", str(db / "checkm2" / "db.tar.gz")],
     ],
-    conda=_FETCH_TOOLS,
+    conda=MAIN_ENV,
     ready="checkm2/checkm2.dmnd",
 )
 
@@ -147,7 +190,7 @@ GTDB_DB = Database(
         ["rm", "-f", str(db / "gtdb" / "db.tar.gz")],
         ["touch", str(db / "gtdb" / ".fetched")],
     ],
-    conda=_FETCH_TOOLS,
+    conda=MAIN_ENV,
 )
 
 # v2 used `--type full` (30 GB compressed / 84 GB on disk). v3 uses light.
@@ -173,7 +216,7 @@ BAKTA_DB = Database(
         ["rm", "-rf", str(db / ".bakta_dl")],
     ],
     # `bakta_db` is Bakta's own script, so this fetch needs Bakta itself.
-    conda=(_BAKTA_SPEC,),
+    conda=MAIN_ENV,
     ready="bakta/version.json",  # verified to exist in a real db v6.0 light
 )
 
@@ -198,7 +241,7 @@ AMRFINDER_DB = Database(
     # md5(realpath(envs_dir) + env file content) (read from conda.py in 9.26.1),
     # so byte-identical env files under one --conda-prefix are one directory on
     # disk. Sharing the spec string is what keeps them byte-identical.
-    conda=(_AMRFINDER_SPEC,),
+    conda=MAIN_ENV,
     ready="amrfinder/.updated",
     out_of_tree=True,
 )
@@ -210,7 +253,7 @@ seqkit = Tool(
     name="seqkit",
     summary="Per-contig lengths and GC, and the assembly statistics derived from them.",
     scope=Scope.GENOME,
-    conda=("bioconda::seqkit",),
+    conda=MAIN_ENV,
     command=lambda c: [
         "seqkit", "fx2tab", "--name", "--length", "--gc",
         str(c.assembly), "-o", str(c.out("seqkit", "contigs.tsv")),
@@ -222,7 +265,8 @@ checkm2 = Tool(
     name="checkm2",
     summary="Completeness and contamination for every genome.",
     scope=Scope.SET,
-    conda=("bioconda::checkm2",),
+    conda=CHECKM2_ENV,
+    environment="checkm2",
     # --database_path takes the DIAMOND file itself, not the directory it sits
     # in; passing a directory fails with IsADirectoryError deep inside CheckM2.
     # The download step normalises the release's own name to checkm2.dmnd so
@@ -236,13 +280,14 @@ checkm2 = Tool(
     outputs=lambda c: [c.out("checkm2", "quality_report.tsv")],
     database=CHECKM2_DB,
     threads=8,
-    # CheckM2 pins an old DIAMOND (2.1.x) and cannot co-solve with a current
+    # CheckM2 is why every rule gets its own environment rather than sharing
+    # one. It pins an old DIAMOND (2.1.x) and cannot co-solve with a current
     # Bakta, which needs 2.2.x. Verified 2026-09-01: bakta>=1.10 solves with
     # all thirteen other tools, and fails only when checkm2 is added. Leaving
     # both unpinned "solves" by silently selecting bakta 1.8.1, which then
-    # crashes on pyrodigal 3.x (OrfFinder was renamed GeneFinder). So this is
-    # the one tool that gets its own environment.
-    isolated=True,
+    # crashes on pyrodigal 3.x (OrfFinder was renamed GeneFinder). A single
+    # environment holding all fourteen therefore does not exist, which is what
+    # makes per-rule deployment the only model — see DESIGN.md.
 )
 
 gtdbtk = Tool(
@@ -251,7 +296,7 @@ gtdbtk = Tool(
     scope=Scope.SET,
     # Pinned because the database is: only 2.7+ accepts r232, and the URL above
     # is r232. An older build would install cleanly and refuse the data.
-    conda=("bioconda::gtdbtk>=2.7",),
+    conda=MAIN_ENV,
     # Each genome lives in its own directory once inputs are canonicalised, so
     # --genome_dir cannot be used and GTDB-Tk takes a --batchfile instead.
     #
@@ -323,7 +368,7 @@ bakta = Tool(
     name="bakta",
     summary="Structural and functional genome annotation.",
     scope=Scope.GENOME,
-    conda=(_BAKTA_SPEC,),
+    conda=MAIN_ENV,
     command=lambda c: [
         "bakta", "--db", str(c.databases / "bakta"), "--threads", str(c.threads),
         "--output", str(c.out("bakta")), "--prefix", str(c.sample), *c.args(),
@@ -344,7 +389,7 @@ amrfinder = Tool(
     name="amrfinder",
     summary="Antimicrobial resistance and virulence genes.",
     scope=Scope.GENOME,
-    conda=(_AMRFINDER_SPEC,),
+    conda=MAIN_ENV,
     # Protein-only mode, as v2 used. Combined nucleotide+protein mode calls
     # better in principle, but AMRFinder cross-checks contig identifiers
     # between the GFF and the FASTA, and Bakta renames contigs to `contig_1`
@@ -366,7 +411,7 @@ mlst = Tool(
     name="mlst",
     summary="Multi-locus sequence types against PubMLST.",
     scope=Scope.SET,
-    conda=("bioconda::mlst",),
+    conda=MAIN_ENV,
     command=lambda c: ["mlst", *[str(a) for a in c.assemblies]],
     outputs=lambda c: [c.out("mlst", "mlst.tsv")],
     stdout_to_output=True,
@@ -379,7 +424,7 @@ mashtree = Tool(
     name="mashtree",
     summary="Alignment-free tree of the whole set, built from mash distances.",
     scope=Scope.SET,
-    conda=("bioconda::mashtree",),
+    conda=MAIN_ENV,
     command=lambda c: [
         "mashtree", "--numcpus", str(c.threads), *c.args(),
         *[str(a) for a in c.assemblies],
@@ -395,7 +440,7 @@ treecluster = Tool(
     name="treecluster",
     summary="Cluster assignments cut from the mashtree.",
     scope=Scope.SET,
-    conda=("bioconda::treecluster",),
+    conda=MAIN_ENV,
     needs=("mashtree",),
     command=lambda c: [
         "TreeCluster.py", "-i", str(c.out("mashtree", "mashtree.newick")),
@@ -410,7 +455,7 @@ skani = Tool(
     name="skani",
     summary="All-against-all average nucleotide identity.",
     scope=Scope.SET,
-    conda=("bioconda::skani",),
+    conda=MAIN_ENV,
     command=lambda c: [
         "skani", "triangle", "-t", str(c.threads), "--full-matrix",
         *c.args(),
@@ -443,7 +488,7 @@ panaroo = Tool(
     name="panaroo",
     summary="Core and accessory gene content across the set.",
     scope=Scope.SET,
-    conda=("bioconda::panaroo>=1.5",),
+    conda=MAIN_ENV,
     needs=("bakta",),
     command=lambda c: [
         "panaroo", "--clean-mode", "strict", "-a", "core", "-t", str(c.threads),
@@ -461,7 +506,7 @@ snp_dists = Tool(
     name="snp-dists",
     summary="Pairwise SNP distances across the core genome.",
     scope=Scope.SET,
-    conda=("bioconda::snp-dists",),
+    conda=MAIN_ENV,
     needs=("panaroo",),
     command=lambda c: [
         "snp-dists", str(c.out("panaroo", "core_gene_alignment.aln")),
@@ -474,7 +519,7 @@ fasttree = Tool(
     name="fasttree",
     summary="Approximate maximum-likelihood tree from the core genome alignment.",
     scope=Scope.SET,
-    conda=("bioconda::fasttree",),
+    conda=MAIN_ENV,
     needs=("panaroo",),
     command=lambda c: [
         "FastTree", "-nt", "-gtr",
@@ -506,7 +551,7 @@ carveme = Tool(
     # DIAMOND, pyscipopt and scip come with it — checked against the bioconda
     # 1.6.6 recipe, which matters because `carve` shells out to DIAMOND and an
     # environment holding only carveme would fail at its first step.
-    conda=(_CARVEME_SPEC,),
+    conda=MAIN_ENV,
     needs=("bakta",),
     # Solves with open-source SCIP, so no CPLEX licence — but *not* with the
     # presolver conda-forge's SCIP ships. Measured 2026-09-02: 601 s in the MILP
@@ -534,19 +579,15 @@ carveme = Tool(
         c.out("carveme", f"{c.sample}.xml"),
         c.out("carveme", f"{c.sample}.tsv"),
     ],
-    # argv[0] is an interpreter now, and the preflight would check `python`,
-    # find it everywhere, and never report carveme missing.
-    executable="carve",
 )
 
 biosynthesis = Tool(
     name="biosynthesis",
     summary="Which building blocks each genome can make, and which it must acquire.",
     scope=Scope.GENOME,
-    # CarveMe's own environment, for ReFramed — which is where the SBML reader
-    # and the LP solver are. See `_CARVEME_SPEC` for why the string is shared
-    # rather than repeated.
-    conda=(_CARVEME_SPEC,),
+    # Needs ReFramed, which is where the SBML reader and the LP solver are, and
+    # which arrives with CarveMe rather than with CompareM2 — see MAIN_ENV.
+    conda=MAIN_ENV,
     needs=("carveme",),
     # The one tool here whose program is ours. It exists because a model is not
     # a result: `carveme` produces a network, and the question a reader has is
@@ -574,10 +615,6 @@ biosynthesis = Tool(
         c.out("biosynthesis", f"{c.sample}.tsv"),
         c.out("biosynthesis", f"{c.sample}.media.tsv"),
     ],
-    # `carve`, not `python`, and not a ReFramed module either: the preflight
-    # looks for a binary on PATH, and carve's presence is what proves this
-    # environment is CarveMe's and therefore has ReFramed in it.
-    executable="carve",
 )
 
 

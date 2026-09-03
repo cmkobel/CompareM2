@@ -51,13 +51,16 @@ class Database:
     # list — same discipline as `Tool.command`, and for the same reason.
     fetch: Callable[[Path], Sequence[Sequence[str]]] | None = None
     # What the fetch itself needs installed. A download step is a rule like any
-    # other, and under `--use-conda` it gets an environment like any other —
-    # which it must, because two of these fetches run a tool binary rather than
-    # curl: `bakta_db download` and `amrfinder -u`. Under the pixi model every
-    # tool is already on PATH and this is unused; under a conda deployment,
-    # omitting it means the download rule runs in the pipeline's own
-    # environment, where neither binary exists.
+    # other, so it gets an environment like any other — which it must, because
+    # two of these fetches run a tool binary rather than curl (`bakta_db
+    # download`, `amrfinder -u`) and the other two need curl and tar. Omitting
+    # it means the download rule runs in the pipeline's own environment, where
+    # none of those exist.
     conda: tuple[str, ...] = ()
+    # Which named environment those packages constitute. Same contract as
+    # `Tool.environment`: the name selects the file, the packages are its
+    # content, and a name used twice must mean the same packages both times.
+    environment: str = "main"
     # Path relative to the database root whose presence means "ready". This is
     # the download rule's declared output, so Snakemake skips a database that
     # is already complete and re-runs one that is half-finished. Prefer a real
@@ -174,7 +177,11 @@ class Tool:
     name: str
     summary: str  # one line; shown in the TUI and above the report section
     scope: Scope
-    conda: tuple[str, ...]  # conda package specs, e.g. ("bioconda::checkm2=1.1.0",)
+    # The full package list of the environment this tool runs in — not just its
+    # own package. Several tools share one list, which is the point: Snakemake
+    # deploys by content, so rules whose env files are identical are one
+    # environment on disk.
+    conda: tuple[str, ...]
     command: Callable[[Context], Sequence[str]]
     outputs: Callable[[Context], Sequence[Path]]
     needs: tuple[str, ...] = ()  # names of tools that must finish first
@@ -183,11 +190,13 @@ class Tool:
     # Default arguments, overridable per run. Values carried from v2's
     # config.yaml so v3 reproduces v2's behaviour unless told otherwise.
     params: tuple[tuple[str, str], ...] = ()
-    # True when this tool cannot share the main environment and needs its own.
-    # Every one of these is a cost, so each must carry a reason in the spec —
-    # v2 reached 25 environments by making this the default rather than the
-    # exception.
-    isolated: bool = False
+    # Which named environment `conda` constitutes. This is what the rule's
+    # `conda:` directive points at, so it is also the count the user pays for:
+    # two names means two solves and two copies on disk. A name used twice must
+    # carry the same packages both times, and a test enforces that — otherwise
+    # one file would be written twice with different content and whichever rule
+    # rendered last would silently decide what the other one ran in.
+    environment: str = "main"
     # Some tools write their result to stdout rather than taking an -o flag.
     # Commands stay as argument lists — never hand-built shell strings — so the
     # redirect is declared here and added by whatever runs the command.
@@ -210,11 +219,6 @@ class Tool:
     # This is not a licence for arbitrary shell work: a tool needing several of
     # these is a tool whose spec is lying about what it does.
     post: Callable[[Context], Sequence[Sequence[str]]] | None = None
-    # The binary whose absence means this tool is not installed, when that is
-    # not `command`'s first word. Only carveme needs it: its command runs a
-    # wrapper under an interpreter, so the preflight would look for `python`,
-    # find it on every machine ever built, and report nothing missing.
-    executable: str = ""
     # Environment variables the tool needs, given its Context. Some tools take
     # their database location only this way: GTDB-Tk reads GTDBTK_DATA_PATH and
     # has no equivalent flag, so without this its `--databases` value would be
