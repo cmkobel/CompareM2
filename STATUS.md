@@ -12,10 +12,16 @@ Last updated **2026-09-03**, from runs on thylakoid.
 correct-looking output. It never means "installed" — see
 [DECISIONS.md](DECISIONS.md#a-solve-is-not-a-working-environment).
 
+**All fourteen have now been executed under conda deployment**, which since
+2026-09-03 is the only way a tool arrives — the dates below are the first
+execution of each command line, mostly under the pixi environment that no longer
+carries the tools. See *Two environments, every tool deployed* below for the run
+that closed that gap.
+
 | Tool | Verified | Evidence |
 | ---- | -------- | -------- |
 | seqkit | 09-02 | per-contig lengths and GC; identical stats for the duplicate pair |
-| checkm2 | 09-02 | 100% complete all four, via `--isolated-launcher`; `--database_path` wants the `.dmnd` **file**, not its directory |
+| checkm2 | 09-02, 09-03 | 100% complete all four, 0.47% contamination for the duplicate pair; `--database_path` wants the `.dmnd` **file**, not its directory. First run via the since-deleted `--isolated-launcher`; now the one tool with its own deployed environment |
 | bakta | 09-02 | 4/4 against db v6.0 light; db `software-min` 1.11 against bakta 1.12.1 |
 | amrfinder | 09-02, again 09-03 | 7 / 7 / 11 / 8 genes; database fetched by the pipeline itself. Re-run under `--use-conda` on 09-03 — byte-identical output, and the fetch and analysis rules shared one deployed environment; see below |
 | mlst | 09-02 | ST32 / ST32 / ST117 / ST78 — duplicates agree |
@@ -311,6 +317,12 @@ finally exercised. The report showed no shared-lineage line and all seven rank
 columns, which is the two-domain layout that had only ever seen fixtures.
 
 ### The conda deployment model, executed
+Both this section and the next describe runs made when `--use-conda` was a flag
+and per-rule deployment was one of two models. **The flag was deleted on
+2026-09-03 and there are now two environments rather than fourteen** — see *Two
+environments, every tool deployed* below. What these two runs established still
+holds; the command lines no longer parse.
+
 The thing the whole bioconda package rests on, run for the first time at 19:12
 on 2026-09-02 with a **fresh database root**, because the shared one carries an
 amrfinder marker a new install would not have.
@@ -383,6 +395,52 @@ real bioconda install, where conda is by definition present.
 Script: `/evo/postdoc/cm2-amrfinder-conda.sh`, log
 `/evo/postdoc/cm2-amrfinder-conda.log`.
 
+### Two environments, every tool deployed
+All fourteen tools with Snakemake installing every one of them, into a **fresh
+`--conda-prefix`** so the number is what a new install pays. Run 20:32:27–20:42:01
+on 2026-09-03 from `/evo/postdoc/CompareM2` at `b351d3f`, `--cores 16`, exit 0,
+**31 of 31 steps**. No `--use-conda` and no `--isolated-launcher`: both had been
+deleted, and needing either would have meant the change was wrong.
+
+| | |
+| --- | --- |
+| environments | **2**, as the CLI predicted before starting (`tool environments: 2`) |
+| rules → environments | 30 rule activations: **29 → `main`**, **1 → `checkm2`**. The one is checkm2's own rule |
+| on disk | **7.7 GB** — `main` 6.0 GB, `checkm2` 1.8 GB. For contrast the old per-tool prefix is 8.6 GB for **8 of the 14** |
+| both solves | **76 s** total (20:32:27 → 20:33:43), main ~49 s and checkm2 ~26 s. **Warm cache** — `~/conda_pkgs_dir` holds 44 GB from earlier runs, so this is not a cold-download figure and should not be quoted as one |
+| analysis | 8 min 18 s for four genomes, 14 tools |
+| pixi environment | **8.8 GB → 843 MB** once the thirteen tools left `pixi.toml`. It now holds the pipeline, pytest and conda |
+| report | 121,912 bytes, **all fourteen tool sections** plus methods |
+
+**The seven tools that had never run this way all did.** Before this, conda
+deployment had been executed for seqkit, mashtree, treecluster, skani, checkm2,
+bakta and amrfinder. It had not for gtdbtk, mlst, panaroo, snp-dists, fasttree,
+carveme or biosynthesis — and two of those were the interesting ones, because
+`gtdbtk`'s post step runs our own code through an absolute `sys.executable`
+while `carve_scip.py` runs under a bare `python` from the tool's environment.
+Both were reasoned about in `catalogue.py` for the conda case without ever
+having been executed in it. Both work.
+
+Results agree with the pixi run in `results_full13`, and where they differ the
+difference is not in a number:
+
+| | |
+| --- | --- |
+| byte-identical | seqkit (4/4), amrfinder (4/4), checkm2, gtdbtk, mashtree, treecluster |
+| identical but for the embedded absolute path | mlst (ST32/ST32/ST117/ST78), skani (100.00 / 100.00 / 99.14 / 98.91) |
+| identical values, different row order | snp-dists — 0 for the duplicate pair, 6,190 to E8202, 8,193 to SRR24, 8,907 E8202↔SRR24. The order comes from panaroo's alignment, which is not deterministic |
+| same topology, sixth-decimal branch lengths | fasttree — `((116_2,116_2_duplicate),E8202,SRR24)`, duplicate pair at 0.0, `0.001594939` against `0.001594545` |
+| same counts, different cluster names | panaroo — **3,780 clusters, 2,091 core**, matching exactly |
+| byte-identical to the 09-03 biosynthesis run | biosynthesis 116_2 — 11 de novo, 6 upstream, 13 none, 2 absent |
+
+The standing cross-check passes on every tool: 116_2 and its duplicate give
+2,588 CDS each, 7 AMR genes each, ST32 each, 0 SNPs, 0.0 branch length, 100.0%
+complete at 0.47% contamination, identical biosynthesis verdicts, and CarveMe
+models 30 bytes apart — 5,602,009 against 5,602,039, which is the sample name
+inside the SBML.
+
+Script: `/evo/postdoc/cm2-two-envs.sh`, log `/evo/postdoc/cm2-two-envs.log`.
+
 ### The standing cross-check
 The test set contains `116_2.fna` and `116_2 duplicate.fna` — the same genome
 twice, and a filename with a space. **Any tool that treats them differently is
@@ -428,44 +486,49 @@ Two things that fell out of it, neither acted on:
 
 ## Also verified
 
-- `pixi install` — both environments, from a manifest that had never been
-  installed
-- **clean clone** — cloned fresh, both environments built, tests pass,
-  `test-fast` 8/8
-- `--isolated-launcher` — CheckM2 from its own environment
+- `pixi install` — re-solved 2026-09-03 without the thirteen tools, 8.8 GB
+  down to 843 MB, one environment instead of two
+- **clean clone** — cloned fresh, environments built, tests pass,
+  `test-fast` 8/8 (before the tools left `pixi.toml`)
 - Automatic database download — `download_amrfinder` fetched database
-  `2026-08-07.1` in 26 s as a workflow step
+  `2026-08-07.1` in 26 s as a workflow step, and again in 27 s from inside a
+  deployed environment
 - Snakemake lock now lives in the output directory
 - **The package builds and installs.** `pip install --no-deps .` into a bare
   venv (Python 3.14, macOS): both entry points present, `comparem2 --version`
   and `cm2 --version` print `CompareM2 3.0.0.dev0`, and the metadata carries
   `License-Expression: GPL-3.0-or-later`.
-- **The PATH preflight fires.** The same installed package, no tools on PATH:
-  `not on PATH: seqkit (seqkit), mashtree (mashtree)` and exit 1, before any
-  Snakemake call.
-- **`--use-conda` reaches Snakemake with the right flags** — Snakemake 9.26.1
-  echoed `--software-deployment-method conda --conda-prefix …` and began
-  building the DAG. See below for where that run stops.
+- **The PATH preflight fired**, on the same installed package with no tools on
+  PATH: `not on PATH: seqkit (seqkit), mashtree (mashtree)` and exit 1, before
+  any Snakemake call. **That preflight is gone as of 2026-09-03** — nothing is
+  expected on PATH any more — and what replaced it is a single check for
+  `conda`, which is the failure that actually fires.
+- **The deployment flags reach Snakemake unconditionally** — 9.26.1 echoed
+  `--software-deployment-method conda --conda-prefix …` and built the DAG. First
+  seen under the `--use-conda` flag; now on every run, with no flag.
 - **`--tui`, end to end** — `--until mashtree treecluster --tui` under a real
   terminal: two tools selected from the command line, both `done`, report
   written, clean exit. And headlessly through `run_test()` with `seqkit` and
   `checkm2`, so the isolated launcher goes through the TUI path too. Five
-  defects had to be fixed first, see [DECISIONS.md](DECISIONS.md).
-- 196 unit tests, ~1.3 s — 13 added for the conda-deployment path, 8 for the
-  steps around GTDB-Tk's command, 16 for the report rewrite, 6 for CarveMe's
-  solver wrapper, 23 for `biosynthesis`
+  defects had to be fixed first, see [DECISIONS.md](DECISIONS.md). The
+  isolated-launcher half of that no longer applies.
+- 195 unit tests, ~2.3 s — 8 for the steps around GTDB-Tk's command, 16 for the
+  report rewrite, 6 for CarveMe's solver wrapper, 23 for `biosynthesis`, and
+  the conda-deployment set rewritten when the flag was deleted
 - CI green on GitHub, 18–22 s per run
 - `mkdocs build --strict`
 - `docs/generate.py --check` — generated pages current
 
 ## Environments
 
-Re-solved after sylph was removed. Measured, `linux-64`:
+**These are the two Snakemake deploys**, measured on `linux-64`. Until
+2026-09-03 the same two shapes were a pixi manifest instead; the tool set and
+the DIAMOND split are unchanged, which is why the co-solve was not a new risk.
 
 | Environment | Packages | DIAMOND | Contents |
 | ----------- | -------: | ------- | -------- |
-| `default` | 568 | 2.2.5 | bakta 1.12.1 and eleven other tools |
-| `checkm2` | 127 | 2.1.11 | checkm2 1.1.0 alone |
+| `main` | 568 | 2.2.5 | bakta 1.12.1 and twelve other tools, plus curl and tar. 6.0 GB deployed |
+| `checkm2` | 127 | 2.1.11 | checkm2 1.1.0 alone. 1.8 GB deployed |
 
 The two DIAMOND versions are the conflict that forced the split, so this is the
 isolation working rather than an accident. Both minimum-version pins held —
@@ -499,11 +562,15 @@ the same 2.1.x pin that forced the split. These are native arm builds rather
 than repackaged x86: build strings and sizes differ from `osx-64`, e.g. skani
 637,034 B (`h8f6e10a_0`) against 662,636 B (`h82ec203_0`).
 
-**The pins would have to move into `pixi.toml` first.** With `gtdbtk = "*"` as
-the manifest spells it today, the combined `osx-arm64` solve does not fail — it
-resolves **gtdbtk 1.0.2 `py_2`, from 2019**. That is the failure mode the
-manifest's own comment warns about, and on macOS it would install cleanly and be
-junk.
+**This probe is what settled the pinning question, and it has since been acted
+on.** The solve above used `pixi.toml`'s specs, where `gtdbtk = "*"`; the
+combined `osx-arm64` solve did not fail on that, it resolved **gtdbtk 1.0.2
+`py_2`, from 2019** — a build that installs cleanly and is junk. That was the
+concrete case for floors on every tool rather than three. On 2026-09-03 the
+tools left `pixi.toml` entirely and `catalogue.py` became the only place they
+are declared, with a `>=` floor on each and a test enforcing it. The probe is
+not repeatable as written, because the manifest it probed no longer lists a
+tool.
 
 Two things this does not answer: whether gtdbtk 2.5.2 accepts the r232 database
 the catalogue downloads (2.7.2 does, by `COMPATIBLE_REF_DATA_VERSIONS`; 2.5.2 is
@@ -599,10 +666,10 @@ of it. It was 143 GB until the release changed.
 
 | | |
 | --- | --- |
-| checkout | `/evo/postdoc/CompareM2` — a real clone, at `e792d5a` = `origin/master` as of 2026-09-03, and **the only one with a `.pixi`**. **The path followed the repository rename**; the old lowercase path does not exist |
+| checkout | `/evo/postdoc/CompareM2` — a real clone, current with `origin/master` as of 2026-09-03, and **the only one with a `.pixi`** (843 MB now that the tools are Snakemake's job, down from 8.8 GB). **The path followed the repository rename**; the old lowercase path does not exist |
 | scratch clone | `/evo/postdoc/cm2-biosynth-check` — at `e5b181a`, one behind, no `.pixi` of its own; the biosynthesis verification ran here, and it is now deletable |
 | databases | `/evo/postdoc/cm2-databases` — 6.9 GB, deliberately **outside** any checkout so deleting a checkout does not cost a re-download |
-| conda prefix | `/evo/postdoc/cm2-conda-envs` — 8.6 GB, 8 environments, shared across `--use-conda` runs |
+| conda prefix | `/evo/postdoc/cm2-envs-two` — 7.7 GB, **2** environments (`main` 6.0 GB, `checkm2` 1.8 GB). The older `cm2-conda-envs` (8.6 GB, 8 single-tool environments) is orphaned and deletable |
 | pixi | `/home/thylakoid/.pixi/bin/pixi`, and **`conda` is a pixi global** at `/home/thylakoid/.pixi/bin/conda` — `--use-conda` needs that directory on `PATH` |
 
 ```bash
@@ -610,16 +677,20 @@ cd /evo/postdoc/CompareM2
 export PATH=$HOME/.pixi/bin:$PATH
 export COMPAREM2_DATABASES=/evo/postdoc/cm2-databases
 
-pixi run pytest          # 196 tests, no tools or databases needed
+pixi run pytest          # 195 tests, no tools or databases needed
 pixi run test-fast       # 4 genomes, no databases needed
 
 pixi run cm2 my/*.fna \
   --output results_myrun \
-  --cores 24 \
-  --isolated-launcher "$HOME/.pixi/bin/pixi run -e {tool}"
+  --cores 24
 ```
 
-**The export belongs in `.bashrc`, and the launcher path must be absolute.**
+**No `--isolated-launcher` and no `--use-conda`** — both were deleted on
+2026-09-03. Snakemake deploys the tools into `--conda-prefix` (default
+`~/.comparem2/envs`), which on thylakoid wants `$COMPAREM2_CONDA_PREFIX` set for
+the same reason the database directory does.
+
+**The export belongs in `.bashrc`.**
 The default database directory is `~/.comparem2/databases`, which on thylakoid
 is under `/home` and not the `/evo` volume the existing copy sits on, so
 without `$COMPAREM2_DATABASES` (or `-d`, which has to be retyped every run) the
@@ -637,25 +708,22 @@ To skip the 60.8 GB:
 ## Packaging
 
 The code side of the bioconda package is done; the release is not. What exists:
-`pyproject.toml`, the `comparem2`/`cm2` entry points, `--use-conda` and
-`--conda-prefix` through both execution paths, and a draft recipe in
-`recipe/`. The model is *pipeline only* — see
-[DESIGN.md](DESIGN.md#two-deployment-models).
+`pyproject.toml`, the `comparem2`/`cm2` entry points, `--conda-prefix`, and a
+draft recipe in `recipe/`. The model is *pipeline only*, and since 2026-09-03 it
+is the *only* model — see [DESIGN.md](DESIGN.md#one-deployment-model-and-two-environments).
 
 | | |
 | --- | --- |
-| environments a full conda run builds | **14** (18 rules needing one, deduplicated by content — `biosynthesis` shares CarveMe's) |
+| environments a full run builds | **2** — 18 rules, `main` (13 tools + curl + tar) and `checkm2`. Measured at 7.7 GB, built in 76 s warm |
+| flags the user needs for any of this | **none.** `--use-conda` and `--isolated-launcher` were deleted |
 | published recipe today | `comparem2` **2.16.2**, `noarch: generic`, maintainer `cmkobel` |
 | version here | `3.0.0.dev0` — the release needs a real one, in three files |
 
-**A conda deployment has now been executed** — see *The conda deployment
-model, executed* above. Six environments for a five-tool subset, CheckM2
-isolated without a launcher, correct results, report rendered. **And
-`amrfinder` with it**, the one tool whose database lands inside its deployed
-environment: the fetch rule and the four analysis rules share one
-content-addressed directory, results byte-identical to the pixi run — see
-*amrfinder under `--use-conda`* above. **There is no untested case left in the
-conda deployment model.**
+**The deployment model has been executed whole**: all fourteen tools, both
+environments, 31 of 31 steps, correct results, report rendered — see *Two
+environments, every tool deployed* above. **There is no untested case left in
+it.** The recipe's `run` requirements are already the right shape: the pipeline,
+its Snakemake plugins, and `conda`, with the tools deliberately absent.
 
 ## Known broken or unfinished
 
@@ -665,16 +733,28 @@ conda deployment model.**
   marker claiming the data is there. The refetch was **measured at 27 s** on
   2026-09-03, and the 241 MB it writes sits inside the deployed environment
   rather than under `--databases`. This is a cost, not a defect — see
-  *amrfinder under `--use-conda`*.
+  *amrfinder under `--use-conda`*. Now shared: the database sits inside `main`,
+  which every other tool also uses, so rebuilding it for any reason costs the
+  refetch.
 - **`--tui` has not been run against a failing workflow interactively.** The
   "Nothing ran / no report" path is covered by unit tests and was reached once
   by accident, but not driven by hand since.
 - **`/evo/postdoc/cm2v3`** is the old rsync scratch directory, now redundant,
   holding an 8.5 GB pixi environment that can be deleted.
-- **No bioconda package**, but the blocker has moved again: what remains is a
-  tag, a sha256 and the PR. The `--use-conda` run that was the last technical
-  unknown has been done. See *Packaging* above and `recipe/README.md`. **A hand-built container image is no longer planned** —
-  decided 2026-09-02, see [DECISIONS.md](DECISIONS.md).
+- **No bioconda package**, and this is now the only thing left: a tag, a
+  sha256 and the PR. Every technical unknown in the deployment model has been
+  executed — all fourteen tools, two environments, 31 of 31 steps, 2026-09-03.
+  See *Packaging* above and `recipe/README.md`. **A hand-built container image
+  is no longer planned** — decided 2026-09-02, see
+  [DECISIONS.md](DECISIONS.md).
+- **The old per-tool conda prefix `/evo/postdoc/cm2-conda-envs` is orphaned.**
+  8.6 GB, 8 single-tool environments, addressed by env-file content that no
+  longer renders — the two-environment change gives every rule a different hash.
+  Deletable. `/evo/postdoc/cm2-envs-two` (7.7 GB) is the live one.
+- **`--conda-prefix` is not defaulted usefully on thylakoid.** It falls back to
+  `~/.comparem2/envs`, which is under `/home` rather than the `/evo` volume, the
+  same trap `$COMPAREM2_DATABASES` exists for. `$COMPAREM2_CONDA_PREFIX` should
+  go in `.bashrc` beside it; it has not been.
 - **The thylakoid checkout is current**, fixed on 2026-09-03 before the
   amrfinder run, because that run needed master's `catalogue.py` and the main
   checkout is the only one with a `.pixi`. Carl chose the reversible route over
@@ -705,6 +785,9 @@ conda deployment model.**
   of its own — it borrows the main checkout's environment through PATH — and the
   main checkout is now current, so it is **cheap to delete**. It is also one
   commit behind (`e5b181a`), which is why the amrfinder run did not use it.
+  Its `results_biosynth/` is still the baseline the 2026-09-03 two-environment
+  run's biosynthesis output was compared against, so delete the clone and keep
+  nothing else in mind.
 
 ## Deliberately left alone
 

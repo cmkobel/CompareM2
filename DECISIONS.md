@@ -1053,3 +1053,87 @@ load-bearing for a reason that had nothing to do with finding `pixi` itself.
 Not a code defect: a bioconda install has conda by definition. Recorded because
 it costs a failed run to rediscover, and the error message points at the
 machine rather than at `PATH`.
+
+### Snakemake installs the tools, and the flag that said so is gone
+`--use-conda` was a flag, defaulting off, and the pixi environment carried all
+thirteen co-solvable tools. Two models: pixi for development and HPC, per-rule
+conda deployment for distribution.
+
+Carl's call, and it is the right one: **pixi is how you install a development
+environment, not a deployment model.** Snakemake can install the tools, so it
+should, always. Deleted rather than automated — an earlier proposal in the same
+conversation was a tri-state `--use-conda auto` that would guess from whether
+the tools were on PATH, which is a heuristic standing in for a choice that
+should not exist.
+
+What went with the flag: `--isolated-launcher`, `Tool.isolated`,
+`Tool.executable`, the `per_rule_conda` and `launcher` parameters threaded
+through three modules, `missing_executables()`, and the thirteen tool
+dependencies in `pixi.toml`. 417 insertions against 403 deletions across eleven
+files, and the net effect is that a user types `cm2 *.fna`.
+
+Two things this fixed that were not the point:
+
+- **The tool set had been pinned in two files, and they had drifted.**
+  `gtdbtk>=2.7` in `catalogue.py`, `gtdbtk = "*"` in `pixi.toml` — and the
+  `osx-arm64` probe recorded in STATUS.md had already shown what the unpinned
+  spec resolves to: gtdbtk 1.0.2 from 2019. `catalogue.py` is now the only
+  place a tool is named.
+- **`CheckM2` stopped being special.** `isolated=True` existed to give one tool
+  a `conda:` directive when the others had none. Every rule has one now, so the
+  DIAMOND 2.1.x-against-2.2.x conflict needs no mechanism — only a second
+  environment, and a comment saying why.
+
+The preflight shrank from fourteen checks to one. Nothing is expected on PATH,
+so what is left to check is `conda` itself — which is the failure that actually
+fires, and did, an hour earlier the same day.
+
+### Two environments, not fourteen
+Content addressing makes an environment per tool nearly free to write, and that
+is the trap: fourteen solves cost fourteen copies of DIAMOND, python and numpy,
+paid on first run. Eight single-tool environments had already measured 8.6 GB.
+It is v2's 25 environments in a cheaper disguise.
+
+So environments are **named** rather than derived per rule. `Tool.environment`
+and `Database.environment` select a file; `Tool.conda` is the whole package list
+of that environment, not the tool's own package. Eighteen rules, two names.
+`render_envs` raises if one name is ever given two different package lists,
+because that would write one file twice and let whichever rule rendered last
+decide what the other one ran in.
+
+**Measured 2026-09-03**, fresh prefix, all fourteen tools: 7.7 GB — `main`
+6.0 GB, `checkm2` 1.8 GB — against 8.6 GB for eight of them separately. Both
+solves took 76 s with a warm package cache, and 29 of the 30 rule activations
+went to `main`.
+
+Two rather than one is the DIAMOND conflict and nothing else. Verified
+2026-09-01: `bakta>=1.10` co-solves with all thirteen others and fails only when
+checkm2 joins.
+
+**The thirteen-way co-solve was not a new risk.** It is the same solve
+`pixi.toml` carried and every verification run used — 422 packages, seqkit
+2.13.0, bakta 1.12.1, panaroo 1.8.0, gtdbtk 2.7.2, DIAMOND 2.2.5. What it does
+change is the blast radius of an unconstrained spec: in a thirteen-way solve any
+one tool can be reached backwards to satisfy another. So **every tool now
+carries a `>=` floor**, at the build verified on linux-64, and a test enforces
+it. Three had one before. `mlst` is floored at 2.33 rather than its verified
+2.35.0, because 2.34+ need the Linux-only `libxcrypt1` and the lower floor keeps
+the macOS finding in STATUS.md reproducible.
+
+### The seven tools that had never been deployed
+Making conda deployment the only model meant the seven tools never executed that
+way had no verified route at all: gtdbtk, mlst, panaroo, snp-dists, fasttree,
+carveme, biosynthesis. Two were the ones worth worrying about, because both
+depend on *which interpreter a rule's shell gets* — `gtdbtk`'s post step runs
+our own code through an absolute `sys.executable`, and `carve_scip.py` runs
+under a bare `python` from the tool's environment, the mirror image. Both were
+reasoned about in `catalogue.py` for exactly this case and neither had been run
+in it.
+
+Executed the same day: 31 of 31 steps, exit 0, all fourteen sections in the
+report. Results agree with the pixi run — byte-identical for seqkit, amrfinder,
+checkm2, gtdbtk, mashtree and treecluster; identical but for an embedded
+absolute path for mlst and skani; identical values in a different row order for
+snp-dists, whose order comes from panaroo's non-deterministic alignment; same
+topology with sixth-decimal branch lengths for fasttree; same 3,780 clusters and
+2,091 core for panaroo. Numbers in STATUS.md.
