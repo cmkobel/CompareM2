@@ -453,6 +453,7 @@ at which someone kills it. `--setup` asks for the same work deliberately.
 | against an existing prefix | **1.97 s**, builds nothing |
 | assemblies needed | **none** — a 26-byte stub FASTA is written to a temp directory to close the DAG, and deleted afterwards. Nothing reads it because nothing runs |
 | databases needed | **none** — `-d` pointed at a directory that does not exist, and it was still not created. Every database path in the DAG is some rule's output, so the graph closes |
+| what must match a later run | **`--conda-prefix` only**, however it is set. Its realpath is in the hash; the databases location is not in the env file at all, so `$COMPAREM2_DATABASES` need not be set before `--setup` and may change afterwards. Shown by the acceptance run below, which set up against a nonexistent `-d` and then ran against the real one, reusing the environment |
 | tool outputs produced | **zero**, via Snakemake's own `--conda-create-envs-only` |
 | scratch left behind | none; `/tmp/comparem2-setup-*` is removed in a `finally` |
 
@@ -473,6 +474,13 @@ One byte-identical `main.yaml` deployed to three prefixes on 2026-09-03:
 The other half was measured too: two runs with **different `--output`** and one
 prefix, and the second built nothing. That is what lets `--setup` work in a
 temp directory it then deletes.
+
+Two footguns that follow. A **relative `--conda-prefix` resolves against
+`$INIT_CWD`**, so the same relative path typed from two directories is two
+prefixes and two 7.5 GB builds — the shape of the old `./databases` default
+bug; the home-relative default is safe, only an explicit relative path bites.
+And **`--setup` is one-time per catalogue, not per machine**: bumping any spec
+changes `main.yaml`, which changes the hash, which rebuilds all thirteen.
 
 **Which is also why the bioconda recipe cannot do this at install time.** The
 prefix is a *runtime* choice — `--conda-prefix`, or `$COMPAREM2_CONDA_PREFIX`,
