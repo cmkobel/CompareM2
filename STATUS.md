@@ -875,6 +875,67 @@ environments, every tool deployed* above. **There is no untested case left in
 it.** The recipe's `run` requirements are already the right shape: the pipeline,
 its Snakemake plugins, and `conda`, with the tools deliberately absent.
 
+### The package was built and installed, 2026-09-03
+
+Run in a directory that did not exist beforehand, `/evo/postdoc/cm2-install-test`
+on thylakoid, from a `git clone` of `origin/master` at `f9ab013` turned into a
+tarball with `git archive --prefix=CompareM2-3.0.0/ HEAD`. That is the same
+construction GitHub serves for a tag, so nothing uncommitted in a working tree
+could leak into what was tested. **No pixi anywhere in this.**
+
+| step | result |
+| --- | --- |
+| `conda create` of the recipe's `run` deps + `pip`/`setuptools` | 17.6 s. python 3.12.14, snakemake 9.26.1, textual 8.2.8, setuptools 84.0.0, conda 26.7.1 |
+| `python -m pip install . --no-deps --no-build-isolation` — the recipe's build script verbatim | wheel built, `comparem2-3.0.0.dev0-py3-none-any.whl`, 118,589 bytes |
+| the recipe's four test commands | all exit 0: `import comparem2`, `comparem2 --version`, `comparem2 --help`, `cm2 --help` |
+| `comparem2 --dry-run`, all fourteen tools | **31 of 31 steps** in the DAG, exit 0; the three database rules correctly seen as satisfied |
+| `comparem2 --setup` into an empty `--conda-prefix` | **60.9 s**, both environments built. Warm package cache — not a cold-download figure |
+| `comparem2 ... --until seqkit mashtree treecluster skani` | 8 of 8 steps, exit 0, **7.4 s**, `report.html` written |
+| `conda-build recipe/` | **2m48.9 s**, `comparem2-3.0.0-py_0.conda`, 117,314 bytes, test section passed |
+| `conda create ... comparem2` from that package | 16.3 s; `bin/cm2` and `bin/comparem2` both present and working |
+| the same four-tool run from the *package* install | 8 of 8, exit 0, **4.9 s**, seqkit output md5-identical to the pip-installed run |
+
+The standing cross-check holds through both installs: mashtree distance 0.00000
+and skani 100.00% for the duplicate pair, identical seqkit tables
+(`1b7a857b4009c7ee69d822b904e33b4f` from both).
+
+**The one blocker is the version.** The built package is labelled `3.0.0` by
+`meta.yaml` while the wheel inside it is `comparem2-3.0.0.dev0.dist-info` and
+`comparem2 --version` prints `CompareM2 3.0.0.dev0`. Release step 1 in
+[recipe/README.md](recipe/README.md) already covers it; this is what it looks
+like if it is skipped.
+
+Four things this answered that a solve could not:
+
+- **`noarch: python` ships no `bin/` files.** `info/files` lists only
+  `site-packages/…`; the two entry-point scripts are generated at install time
+  from `info/link.json`. Confirmed by installing the built package rather than
+  by reading the file list.
+- **A read-only package prefix is fine.** `prepare()` writes the Snakefile and
+  the env files under `<output>/.comparem2/`, never beside the installed
+  module, and both real runs did exactly that. `src/comparem2/` holds no
+  non-Python files, so there is no package-data declaration missing either.
+- **`conda` as a run dependency works as intended.** Activating the environment
+  puts `conda` on PATH and Snakemake finds it; the deployed environments landed
+  in the prefix given by `$COMPAREM2_CONDA_PREFIX`.
+- **The recorded `depends` are exactly the five plus python**: `conda`,
+  `python >=3.11`, `snakemake-executor-plugin-cluster-generic`,
+  `snakemake-executor-plugin-slurm`, `snakemake-minimal >=9,<10`, `textual`.
+  License lands as `GPL-3.0-or-later` with `LICENSE` in
+  `dist-info/licenses/`.
+
+conda-build emitted two warnings, both benign: the missing source hash (the
+source was a local file by design) and its generic "Number of parsed outputs
+does not match detected raw metadata blocks", which the two `{% set %}` lines
+provoke in recipes that have no `outputs:` at all.
+
+The source tarball is **30 MB, 29 MB of it `tests/`** (the zipped genomes).
+Bioconda downloads that on every build. Not a blocker, and not worth splitting
+the test data out over.
+
+`/evo/postdoc/cm2-install-test` is **9.8 GB**, 7.7 GB of it a second copy of the
+two tool environments in its own prefix. Deletable once this is written down.
+
 ## Known broken or unfinished
 
 - **AMRFinder's database still lives in the conda prefix**, so it is refetched
