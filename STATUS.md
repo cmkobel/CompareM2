@@ -715,52 +715,71 @@ dependency closure.
 
 | Database | Download | On disk | Note |
 | -------- | -------: | ------: | ---- |
-| GTDB r232 | 60.8 GB | — | measured; 97% of the measured total. **r226 was wrong**: gtdbtk 2.7.2 accepts only r232 |
+| GTDB r232 | 60.8 GB | **94 GB** | download measured; on-disk measured 2026-09-03 when the root was moved. 97% of the measured download total. **r226 was wrong**: gtdbtk 2.7.2 accepts only r232 |
 | CheckM2 | 1.7 GB | 2.9 GB | measured |
 | Bakta light | 1.3 GB | 4.0 GB | download figure is Bakta's documented one; on-disk measured |
 | AMRFinder | unmeasured | — | version `2026-08-07.1`, 26 s to fetch. Lands in `$CONDA_PREFIX`, **not** under `--databases` |
 
-Software is 1.58 GB against 62.5 GB of measured data, and GTDB-Tk is 60.8 GB
-of it. It was 143 GB until the release changed.
+Software is 1.58 GB against 62.5 GB of measured downloads, and GTDB-Tk is
+60.8 GB of it. It was 143 GB until the release changed. **On disk the root is
+101 GB** (107,812,346,055 bytes, measured when it was moved to `/midifiler`) —
+extraction inflates GTDB from 60.8 to 94 GB, which is the figure to plan a
+volume around rather than the download size.
 
 ## Where things live on thylakoid
 
-24 cores, 125 GB RAM, 914 GB free on `/evo` (measured 2026-09-02, before the
+24 cores, 125 GB RAM. `/evo` is NVMe, 1.8 T with 785 G free; `/midifiler` is
+spinning (`/dev/sda`, `rotational=1`), 13 T with 3.0 T free; `/home` sits on the
+other NVMe with 101 G free, which is why neither default location is used.
+Measured 2026-09-03. Earlier note: 914 GB free on `/evo` (2026-09-02, before the
 60.8 GB download).
 
 | | |
 | --- | --- |
 | checkout | `/evo/postdoc/CompareM2` — a real clone, current with `origin/master` as of 2026-09-03, and **the only one with a `.pixi`** (843 MB now that the tools are Snakemake's job, down from 8.8 GB). **The path followed the repository rename**; the old lowercase path does not exist |
 | scratch clone | `/evo/postdoc/cm2-biosynth-check` — at `e5b181a`, one behind, no `.pixi` of its own; the biosynthesis verification ran here, and it is now deletable |
-| databases | `/evo/postdoc/cm2-databases` — 6.9 GB, deliberately **outside** any checkout so deleting a checkout does not cost a re-download |
+| databases | `/midifiler/carl/cm2_db_v3` — **101 GB** (94 of it GTDB r232), deliberately **outside** any checkout so deleting a checkout does not cost a re-download. Moved off `/evo` on 2026-09-03 at Carl's call: `/midifiler` is 13 T where `/evo` had 785 G free. 12m23s at 138 MB/s, verified byte-identical at 107,812,346,055 |
 | conda prefix | `/evo/postdoc/cm2-envs-two` — 7.7 GB, **2** environments (`main` 6.0 GB, `checkm2` 1.8 GB). The older `cm2-conda-envs` (8.6 GB, 8 single-tool environments) is orphaned and deletable |
-| pixi | `/home/thylakoid/.pixi/bin/pixi`, and **`conda` is a pixi global** at `/home/thylakoid/.pixi/bin/conda` — `--use-conda` needs that directory on `PATH` |
+| pixi | `/home/thylakoid/.pixi/bin/pixi`. `conda` now comes from the pixi *environment* (a declared dependency, 26.7.1); the pixi **global** at `~/.pixi/bin/conda` is what the 09-03 failure was about and is no longer relied on |
 
 ```bash
 cd /evo/postdoc/CompareM2
-export PATH=$HOME/.pixi/bin:$PATH
-export COMPAREM2_DATABASES=/evo/postdoc/cm2-databases
 
 pixi run pytest          # 200 tests, no tools or databases needed
 pixi run test-fast       # 4 genomes, no databases needed
 
+pixi run cm2 --setup     # deploy the two environments, once
 pixi run cm2 my/*.fna \
   --output results_myrun \
   --cores 24
 ```
 
-**No `--isolated-launcher` and no `--use-conda`** — both were deleted on
-2026-09-03. Snakemake deploys the tools into `--conda-prefix` (default
-`~/.comparem2/envs`), which on thylakoid wants `$COMPAREM2_CONDA_PREFIX` set for
-the same reason the database directory does.
+**No path flags needed, as of 2026-09-03.** Both variables are now in
+`.bashrc` and a run with neither `-d` nor `--conda-prefix` was verified to pick
+them up:
 
-**The export belongs in `.bashrc`.**
-The default database directory is `~/.comparem2/databases`, which on thylakoid
-is under `/home` and not the `/evo` volume the existing copy sits on, so
-without `$COMPAREM2_DATABASES` (or `-d`, which has to be retyped every run) the
-6.9 GB is fetched a second time, into home. Without an **absolute**
-launcher path, CheckM2 fails with `command not found`, because Snakemake's
-shell does not inherit an interactive PATH.
+```bash
+export COMPAREM2_DATABASES=/midifiler/carl/cm2_db_v3     # 13 T, spinning
+export COMPAREM2_CONDA_PREFIX=/evo/postdoc/cm2-envs-two  # NVMe
+```
+
+**The split is deliberate.** Databases are 101 GB and mostly GTDB read
+sequentially, so they belong on the big spinning volume; the environments are
+only 7.5 GB, so moving them would not help, they are tens of thousands of small
+files activated by every rule, and moving the prefix **invalidates every
+environment** because its realpath is in Snakemake's hash.
+
+**Both exports are load-bearing, and one was actively wrong before this.**
+`.bashrc` had three stacked v2-era `COMPAREM2_DATABASES` lines, the last
+winning: `/midifiler/carl/comparem2_databases`, which holds 480 GB of *v2* data
+and **none of v3's ready markers**. So a `cm2` run without `-d` would have seen
+four databases as absent and refetched 62.5 GB into it. Every v3 verification
+run passed `-d` explicitly, which is why it never bit. The v2 lines are now
+commented; a v2 run needs its path passed. `COMPAREM2_PROFILE` is left alone —
+v3 never reads it.
+
+**No `--isolated-launcher` and no `--use-conda`** — both were deleted on
+2026-09-03.
 
 To skip the 60.8 GB:
 
@@ -815,10 +834,12 @@ its Snakemake plugins, and `conda`, with the tools deliberately absent.
   8.6 GB, 8 single-tool environments, addressed by env-file content that no
   longer renders — the two-environment change gives every rule a different hash.
   Deletable. `/evo/postdoc/cm2-envs-two` (7.7 GB) is the live one.
-- **`--conda-prefix` is not defaulted usefully on thylakoid.** It falls back to
-  `~/.comparem2/envs`, which is under `/home` rather than the `/evo` volume, the
-  same trap `$COMPAREM2_DATABASES` exists for. `$COMPAREM2_CONDA_PREFIX` should
-  go in `.bashrc` beside it; it has not been.
+- **The `/evo/postdoc/cm2-databases` copy is still there**, 101 GB, now
+  redundant: the live root is `/midifiler/carl/cm2_db_v3`, verified
+  byte-identical and exercised by a real checkm2 run and by a run with no path
+  flags at all. Deleting it frees 101 GB on the smaller volume, which was the
+  point of the move — **not done here because it is 101 GB and GTDB alone is a
+  1.7 h refetch**, so it is Carl's call.
 - **The thylakoid checkout is current**, fixed on 2026-09-03 before the
   amrfinder run, because that run needed master's `catalogue.py` and the main
   checkout is the only one with a `.pixi`. Carl chose the reversible route over

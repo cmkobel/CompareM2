@@ -1183,3 +1183,57 @@ reuses it, and a `--until seqkit skani` run activated the same
 
 `inputs` had to become `nargs="*"`, which means argparse no longer catches a
 bare `cm2` — so that case now raises its own message naming `--setup`.
+
+### Databases to /midifiler, environments to /evo
+Carl's call, correcting a proposal of mine that put both on `/evo`: "the evo
+drive is not very large." Measured — `/evo` is NVMe with 785 G free, and the
+database root is 101 GB on disk. `/midifiler` is 13 T with 3.0 T free.
+
+So the two variables now point at different volumes on purpose:
+
+    COMPAREM2_DATABASES=/midifiler/carl/cm2_db_v3      13 T, spinning
+    COMPAREM2_CONDA_PREFIX=/evo/postdoc/cm2-envs-two   NVMe
+
+Databases are 94 GB of GTDB read sequentially, which is what a spinning volume
+is good at. The environments stay on NVMe for three reasons: 7.5 GB does not
+help the space problem, a conda environment is tens of thousands of small files
+and every rule activates one, and **moving the prefix invalidates every
+environment** because `realpath(conda_prefix)` is in Snakemake's hash. The
+database path is in no hash at all, which is what made the move safe — verified
+the same day, when `--setup` against a nonexistent `-d` and a real run against
+the true one shared an environment.
+
+Moved with `rsync -a` rather than `mv`: cross-filesystem, so `mv` is a
+copy-then-unlink with no resumability and no verification. 101 GB in 12m23s at
+138 MB/s, then `rsync -ani --delete` returned nothing and both roots measured
+107,812,346,055 bytes. `bakta` is a *relative* symlink to `bakta_dl/db-light`
+and survived. Proven working before anything was deleted: a full dry-run listed
+only `amrfinder` to fetch — its marker is per-run by design — and a real
+checkm2 run completed against the 2.9 GB database at the new path.
+
+### `.bashrc` was pointing v3 at v2's databases
+Found while checking whether the defaults were reasonable. Three stacked
+`COMPAREM2_DATABASES` exports, v2-era, last one winning:
+`/midifiler/carl/comparem2_databases`. It exists, holds 480 GB of v2 data
+(`cm2_v2.15`, `cm2_v2.16`, `gtdb_sketch_release226`), and carries **none** of
+v3's ready markers — no `bakta/version.json`, no `checkm2/checkm2.dmnd`, no
+`gtdb/metadata/metadata.txt`.
+
+So an interactive `cm2 <genomes>` with no `-d` would have seen all four
+databases as absent and started refetching **62.5 GB**, including GTDB's
+60.8 GB, into v2's directory. `/midifiler` has 3.0 T free, so it would have
+succeeded — silently, slowly, and in the wrong place.
+
+It never bit because every v3 verification run passed `-d` explicitly. That is
+the shape of the problem: a default that is only ever exercised by people who
+are not testing. The v2 lines are commented rather than deleted, since the
+variable name is shared and a v2 run may still want them; `COMPAREM2_PROFILE`
+is left alone because v3 never reads it. Backup at `~/.bashrc.bak-2026-09-03`.
+
+**The defaults themselves are the right shape and the wrong place.** Both fall
+back to `~/.comparem2/`, which is shared across runs and outside any checkout —
+that shape was a fix, since the database default was once `./databases` and two
+runs from different directories fetched up to 143 GB twice. But home here has
+101 G free against ~108 GB of databases and environments, so the defaults would
+just fit and be a bad idea; on a cluster with a quota they fail partway through
+a 60.8 GB download. Which is the whole reason both variables exist.
