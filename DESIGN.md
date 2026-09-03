@@ -181,6 +181,20 @@ Four consequences worth knowing:
 - **Environments are addressed by content, not by rule.** Snakemake deploys to
   `md5(realpath(conda_prefix) + env file content)`, so `render_envs` writes one
   file per *environment* and eighteen rules point at two of them.
+- **The prefix is in the identity, and the workdir is not.** One `main.yaml`
+  deployed to three prefixes gets three directories, so `--conda-prefix` is the
+  one argument a later run has to match; but `--output` may differ freely,
+  which is what makes `--setup` able to build in a temp directory that it then
+  deletes. Both halves measured 2026-09-03.
+- **`--setup` exists because the build happens before the first job**, not
+  lazily per rule — so a first run is silent for as long as the solves take,
+  which on a cluster is when someone kills it. `cm2 --setup` asks for the same
+  work on purpose, and needs neither assemblies nor databases: a stub FASTA
+  closes the DAG, and every database path in it is some rule's output.
+  **It cannot be done at install time**, which was asked and answered: the
+  prefix is a *runtime* choice, so a package that deployed to the default
+  location would have built the wrong directory for anyone using
+  `$COMPAREM2_CONDA_PREFIX` — on a cluster, everyone.
 - **Co-solving thirteen tools is not a new risk, but the pins are load-bearing.**
   It is the same solve `pixi.toml` used to carry, and what every verification run
   on thylakoid ran on — 422 packages, seqkit 2.13.0, bakta 1.12.1, panaroo 1.8.0,

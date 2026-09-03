@@ -441,6 +441,62 @@ inside the SBML.
 
 Script: `/evo/postdoc/cm2-two-envs.sh`, log `/evo/postdoc/cm2-two-envs.log`.
 
+### `cm2 --setup`, and why installation cannot do it
+Added and measured 2026-09-03. Snakemake builds a missing environment during
+**DAG construction, before the first job**, so a first run is silent for as long
+as the solves take — 76 s on the run above, and on a cluster that is the point
+at which someone kills it. `--setup` asks for the same work deliberately.
+
+| | |
+| --- | --- |
+| cold, fresh prefix | **61.7 s**, both environments, **7.5 GB** |
+| against an existing prefix | **1.97 s**, builds nothing |
+| assemblies needed | **none** — a 26-byte stub FASTA is written to a temp directory to close the DAG, and deleted afterwards. Nothing reads it because nothing runs |
+| databases needed | **none** — `-d` pointed at a directory that does not exist, and it was still not created. Every database path in the DAG is some rule's output, so the graph closes |
+| tool outputs produced | **zero**, via Snakemake's own `--conda-create-envs-only` |
+| scratch left behind | none; `/tmp/comparem2-setup-*` is removed in a `finally` |
+
+**The acceptance test is that a later run reuses it**, and it does: a real
+`--until seqkit skani` run against the setup-built prefix activated
+`efd5ffa1fbfe3b0c3288c33676aaf20a_` — the same directory `--setup` created —
+and finished 4 of 4 steps in **3.5 s** with no environment creation.
+
+**The prefix is in the environment's identity; the output directory is not.**
+One byte-identical `main.yaml` deployed to three prefixes on 2026-09-03:
+
+| prefix | directory |
+| --- | --- |
+| `/evo/postdoc/cm2-envs-two` | `f35bbb1ff167437785dcb4a2729c2beb_` |
+| `/evo/tmp/cm2_setup/envs` | `00dbdb482cad56de8230df17a6e17d7c_` |
+| `/evo/tmp/cm2_setup_cold/envs` | `efd5ffa1fbfe3b0c3288c33676aaf20a_` |
+
+The other half was measured too: two runs with **different `--output`** and one
+prefix, and the second built nothing. That is what lets `--setup` work in a
+temp directory it then deletes.
+
+**Which is also why the bioconda recipe cannot do this at install time.** The
+prefix is a *runtime* choice — `--conda-prefix`, or `$COMPAREM2_CONDA_PREFIX`,
+which on a cluster is set by everyone because home has a quota — so a package
+that deployed into `~/.comparem2/envs` during `conda install` would have built
+a directory that the hash makes unusable for exactly those users. Two further
+reasons, neither measured here and both worth checking before anyone tries:
+the only hook is `post-link.sh`, which runs *inside* the conda transaction
+installing CompareM2 and would be invoking conda recursively against the same
+package cache; and bioconda discourages post-link scripts, expecting them to be
+fast, offline-safe and prefix-local. A 7.5 GB, 62 s post-link is none of those.
+
+Where the property *is* available: `cm2 --setup` in a `Dockerfile` layer or a
+cluster module's build script. Snakemake also has `--containerize`, which
+prints a Dockerfile with the environments baked in — a different thing from the
+hand-maintained image rejected on 2026-09-02.
+
+**One cost of having only two environments shows up here.** `Tool.conda` is the
+environment's package list rather than the tool's own, so `--until seqkit`
+renders the same `main.yaml` as everything: a subset does not get a smaller
+environment, it gets the whole 6.0 GB one. `--setup --until <subset>` is
+therefore not a cheaper setup. A test records this so it is a known trade rather
+than a surprise.
+
 ### The standing cross-check
 The test set contains `116_2.fna` and `116_2 duplicate.fna` — the same genome
 twice, and a filename with a space. **Any tool that treats them differently is
@@ -512,7 +568,7 @@ Two things that fell out of it, neither acted on:
   `checkm2`, so the isolated launcher goes through the TUI path too. Five
   defects had to be fixed first, see [DECISIONS.md](DECISIONS.md). The
   isolated-launcher half of that no longer applies.
-- 195 unit tests, ~2.3 s — 8 for the steps around GTDB-Tk's command, 16 for the
+- 200 unit tests, ~2.5 s — 8 for the steps around GTDB-Tk's command, 16 for the
   report rewrite, 6 for CarveMe's solver wrapper, 23 for `biosynthesis`, and
   the conda-deployment set rewritten when the flag was deleted
 - CI green on GitHub, 18–22 s per run
@@ -677,7 +733,7 @@ cd /evo/postdoc/CompareM2
 export PATH=$HOME/.pixi/bin:$PATH
 export COMPAREM2_DATABASES=/evo/postdoc/cm2-databases
 
-pixi run pytest          # 195 tests, no tools or databases needed
+pixi run pytest          # 200 tests, no tools or databases needed
 pixi run test-fast       # 4 genomes, no databases needed
 
 pixi run cm2 my/*.fna \
@@ -715,7 +771,7 @@ is the *only* model — see [DESIGN.md](DESIGN.md#one-deployment-model-and-two-e
 | | |
 | --- | --- |
 | environments a full run builds | **2** — 18 rules, `main` (13 tools + curl + tar) and `checkm2`. Measured at 7.7 GB, built in 76 s warm |
-| flags the user needs for any of this | **none.** `--use-conda` and `--isolated-launcher` were deleted |
+| flags the user needs for any of this | **none.** `--use-conda` and `--isolated-launcher` were deleted. `cm2 --setup` is available to do the build up front |
 | published recipe today | `comparem2` **2.16.2**, `noarch: generic`, maintainer `cmkobel` |
 | version here | `3.0.0.dev0` — the release needs a real one, in three files |
 

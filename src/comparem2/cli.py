@@ -13,6 +13,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from . import __version__
@@ -211,9 +212,64 @@ def canonicalise(inputs: list[Path], workdir: Path) -> tuple[str, ...]:
     return tuple(samples)
 
 
+def setup_environments(selected: list[str] | None, databases: Path,
+                       conda_prefix: Path) -> int:
+    """Deploy the tool environments now, so the first real run does not.
+
+    Snakemake builds a missing environment during DAG construction, before the
+    first job — so a first run sits silent for as long as the solves take, and
+    on a cluster that is the point at which someone kills it. This is the same
+    work, asked for on purpose.
+
+    `--conda-create-envs-only` is Snakemake's own mode, so this creates exactly
+    what a run would and nothing else. Two things make it usable as a *setup*
+    step, both measured 2026-09-03:
+
+    - **It needs no real data.** A DAG has to be constructible, which means the
+      per-sample FASTA at the bottom of it must exist — so a 26-byte stub is
+      written and thrown away. Nothing reads it, because nothing runs.
+    - **It needs no databases.** Every database path in the DAG is some rule's
+      output, so the graph closes with `--databases` pointing at a directory
+      that does not exist. Setup therefore works before any of the 62.5 GB
+      has been fetched.
+
+    The workdir is temporary and that is safe, because Snakemake hashes a
+    deployed environment from the **conda prefix** and the env file's content,
+    not from where the env file sits: verified by pointing two runs with
+    different `--output` at one prefix and watching the second build nothing.
+    `--conda-prefix` is the one argument here that has to match what later runs
+    use, since its realpath *is* in the hash.
+    """
+    envs = render_envs(CATALOGUE, selected)
+    print(f"deploying {len(envs)} tool environments in {conda_prefix}",
+          file=sys.stderr)
+
+    scratch = Path(tempfile.mkdtemp(prefix="comparem2-setup-"))
+    try:
+        stub = scratch / "stub.fna"
+        stub.write_text(">c1\nACGTACGTACGTACGTACGTAAGCTT\n")
+        workdir = scratch / "workdir"
+        workdir.mkdir()
+        samples = canonicalise([stub], workdir)
+        snakefile = prepare(CATALOGUE, selected, workdir, databases, samples)
+        return subprocess.run([
+            sys.executable, "-m", "snakemake",
+            "--snakefile", str(snakefile),
+            "--directory", str(workdir),
+            "--cores", "1",
+            "--software-deployment-method", "conda",
+            "--conda-prefix", str(conda_prefix),
+            "--conda-create-envs-only",
+        ]).returncode
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="comparem2", description="A wide view of a set of assemblies.")
-    p.add_argument("inputs", nargs="+", type=Path, help="assembly FASTA files")
+    # `*` rather than `+` because --setup takes none. A bare invocation is
+    # checked below and still says what is missing.
+    p.add_argument("inputs", nargs="*", type=Path, help="assembly FASTA files")
     p.add_argument("-o", "--output", type=Path, default=Path("results_comparem2"))
     p.add_argument("-d", "--databases", type=Path, default=None,
                    help="where databases live; shared across runs (default: "
@@ -231,6 +287,10 @@ def main(argv: list[str] | None = None) -> int:
                    help="where the tools' environments are deployed; shared "
                         f"across runs (default: {default_conda_prefix()}, "
                         "overridden for every run by $COMPAREM2_CONDA_PREFIX)")
+    p.add_argument("--setup", action="store_true",
+                   help="deploy the tool environments and exit, so the first "
+                        "real run does not pay for them; takes no assemblies, "
+                        "and needs no databases")
     p.add_argument("--keep-going", action="store_true",
                    help="keep running independent tools after one fails")
     p.add_argument("--dry-run", action="store_true")
@@ -243,6 +303,31 @@ def main(argv: list[str] | None = None) -> int:
     # Every path the user typed is relative to where they typed it, which under
     # `pixi run` is not the cwd — see invocation_dir().
     base = invocation_dir()
+
+    if args.setup:
+        # Rejected rather than ignored: a command naming genomes that are never
+        # read should not look like it analysed them.
+        if args.inputs:
+            raise SystemExit("--setup takes no assemblies: it deploys the tool "
+                             "environments and exits")
+        if args.dry_run or args.tui or args.report_only or args.unlock:
+            raise SystemExit("--setup does not combine with --dry-run, --tui, "
+                             "--report-only or --unlock")
+        if missing_conda():
+            raise SystemExit(
+                "not on PATH: conda\n"
+                "--setup deploys the tool environments with conda, so conda "
+                "has to be available. Install it, or add its directory to "
+                "PATH — a pixi global lives in ~/.pixi/bin.")
+        return setup_environments(
+            args.until,
+            resolve(args.databases or default_databases(), base),
+            resolve(args.conda_prefix or default_conda_prefix(), base))
+
+    if not args.inputs:
+        raise SystemExit("no assemblies given — pass one or more FASTA files, "
+                         "or --setup to deploy the tool environments")
+
     inputs = [resolve(i, base) for i in args.inputs]
 
     # Report the resolved path, not what was typed: "no such file: 116_2.fna"

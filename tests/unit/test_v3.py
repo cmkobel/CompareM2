@@ -834,6 +834,90 @@ def test_unlock_releases_the_lock_and_does_nothing_else(monkeypatch, tmp_path):
     assert "report" not in seen, "unlocking must not render a report"
 
 
+def test_setup_deploys_the_environments_and_runs_nothing(monkeypatch, tmp_path):
+    """`--setup` is the first run's environment build, asked for on purpose.
+
+    Snakemake builds a missing environment during DAG construction, before the
+    first job, so a first run sits silent for as long as the solves take.
+    Measured 2026-09-03: 67 s for both from cold, 1.76 s when they exist.
+    """
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.setattr(cli_mod, "missing_conda", lambda: None)
+
+    seen: dict[str, object] = {}
+
+    def fake_run(cmd, *a, **k):
+        seen["cmd"] = cmd
+        # The scratch workdir has to still exist while Snakemake would run.
+        i = cmd.index("--directory")
+        seen["workdir_exists"] = Path(cmd[i + 1]).is_dir()
+        seen["snakefile_exists"] = Path(cmd[cmd.index("--snakefile") + 1]).is_file()
+        return subprocess.CompletedProcess(cmd, 0)
+
+    monkeypatch.setattr(cli_mod.subprocess, "run", fake_run)
+
+    prefix = tmp_path / "envs"
+    assert cli_mod.main(["--setup", "--conda-prefix", str(prefix)]) == 0
+
+    cmd = seen["cmd"]
+    assert "--conda-create-envs-only" in cmd, "setup must not execute any tool"
+    assert cmd[cmd.index("--conda-prefix") + 1] == str(prefix)
+    assert cmd[cmd.index("--software-deployment-method") + 1] == "conda"
+    assert seen["workdir_exists"] and seen["snakefile_exists"]
+
+    # And the scratch directory does not outlive the call.
+    assert not Path(cmd[cmd.index("--directory") + 1]).exists()
+
+
+def test_setup_needs_neither_assemblies_nor_databases(monkeypatch, tmp_path):
+    """Both measured 2026-09-03: a 26-byte stub closes the DAG, and every
+    database path in it is some rule's output, so `--databases` may point at a
+    directory that does not exist."""
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.setattr(cli_mod, "missing_conda", lambda: None)
+    monkeypatch.setattr(cli_mod.subprocess, "run",
+                        lambda cmd, *a, **k: subprocess.CompletedProcess(cmd, 0))
+
+    absent = tmp_path / "no-such-databases"
+    assert cli_mod.main(["--setup", "-d", str(absent),
+                         "--conda-prefix", str(tmp_path / "envs")]) == 0
+    assert not absent.exists(), "setup must not create the database root"
+
+
+def test_setup_refuses_assemblies_and_the_run_modes(tmp_path):
+    """A command naming genomes it never reads should not look like it analysed
+    them, and the other four modes each assume a real run."""
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    with pytest.raises(SystemExit) as excinfo:
+        cli_mod.main(["--setup", str(tmp_path / "a.fna")])
+    assert "takes no assemblies" in str(excinfo.value)
+
+    for flag in ("--dry-run", "--tui", "--report-only", "--unlock"):
+        with pytest.raises(SystemExit) as excinfo:
+            cli_mod.main(["--setup", flag])
+        assert "does not combine" in str(excinfo.value), flag
+
+
+def test_a_bare_invocation_says_what_is_missing():
+    """`inputs` is nargs="*" so --setup can take none, which means argparse no
+    longer catches an empty command line."""
+    with pytest.raises(SystemExit) as excinfo:
+        cli_mod.main([])
+    assert "no assemblies given" in str(excinfo.value)
+    assert "--setup" in str(excinfo.value)
+
+
+def test_a_tool_subset_shares_the_environments_of_a_full_run(tmp_path):
+    """`--until seqkit` renders the same `main.yaml` as everything, because
+    `Tool.conda` is the environment's package list rather than the tool's own
+    package. So `--setup --until <subset>` is not a cheaper subset — it builds
+    the whole environment, which is the cost side of having only two."""
+    full = render_envs(CATALOGUE, None)
+    subset = render_envs(CATALOGUE, ["seqkit"])
+    assert list(subset) == ["main.yaml"]
+    assert subset["main.yaml"] == full["main.yaml"]
+
+
 def test_preflight_refuses_a_run_with_no_conda(monkeypatch, tmp_path):
     """The only preflight left, and the one that actually fires.
 

@@ -1137,3 +1137,49 @@ absolute path for mlst and skani; identical values in a different row order for
 snp-dists, whose order comes from panaroo's non-deterministic alignment; same
 topology with sixth-decimal branch lengths for fasttree; same 3,780 clusters and
 2,091 core for panaroo. Numbers in STATUS.md.
+
+### `cm2 --setup`, and the install-time version that is not possible
+The first run pays for the environment build, and it pays *before the first
+job* — Snakemake deploys during DAG construction, so the run is silent for the
+duration and looks hung. Carl asked what it would take for the installation to
+have done it already.
+
+**It cannot be the installation, and the reason is measured rather than
+policy.** Snakemake addresses a deployed environment by
+`md5(realpath(conda_prefix) + env file content)`, so the prefix is part of the
+environment's identity. One byte-identical `main.yaml` went to three prefixes
+and got three directories: `f35bbb1f…`, `00dbdb48…`, `efd5ffa1…`. The prefix is
+a runtime choice — `--conda-prefix`, or `$COMPAREM2_CONDA_PREFIX`, which on a
+cluster is set by everyone because home has a quota. A package deploying into
+the default location at install time would therefore have built the wrong
+directory for precisely the users who need it most.
+
+Two further reasons, **not verified here** and flagged as such: `post-link.sh`
+is the only hook and it runs inside the conda transaction that is installing
+CompareM2, so it would be driving conda recursively against the same package
+cache; and bioconda discourages post-link scripts, expecting them fast,
+offline-safe and prefix-local. A 7.5 GB, 62 s post-link is none of those.
+
+So it is an explicit step instead, and Snakemake already had the mode:
+`--conda-create-envs-only`. Two properties make it usable as *setup* rather
+than as a first run in disguise, both measured before the code was written:
+
+- **No assemblies.** The DAG needs the per-sample FASTA at the bottom of it to
+  exist, so a 26-byte stub goes into a temp directory and is deleted. Nothing
+  reads it, because nothing runs.
+- **No databases.** `-d` pointed at a directory that does not exist and the DAG
+  still closed, because every database path in it is some rule's output. Setup
+  works before any of the 62.5 GB has been fetched — which is the whole point,
+  since otherwise "set up first" would mean "download 60.8 GB of GTDB first".
+
+The temp workdir is safe because the *output* directory is not in the hash —
+also measured: two runs with different `--output` against one prefix, and the
+second built nothing.
+
+Numbers: 61.7 s cold for both environments, 1.97 s when they exist, zero tool
+outputs, no scratch left behind. The acceptance test is that a later real run
+reuses it, and a `--until seqkit skani` run activated the same
+`efd5ffa1fbfe3b0c3288c33676aaf20a_` and finished in 3.5 s.
+
+`inputs` had to become `nargs="*"`, which means argparse no longer catches a
+bare `cm2` — so that case now raises its own message naming `--setup`.

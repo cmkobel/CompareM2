@@ -85,7 +85,8 @@ pixi run cm2 <assemblies>... --dry-run
 
 Snakemake deploys the tools on first use, into `--conda-prefix` (default
 `~/.comparem2/envs`, or `$COMPAREM2_CONDA_PREFIX`). There is **no flag for
-this** and no mode without it. `conda` is a declared pixi dependency for that
+this** and no mode without it. `cm2 --setup` does that build up front — no
+assemblies, no databases needed — so the first real run does not pay for it. `conda` is a declared pixi dependency for that
 reason — it used to be reached through a pixi global at `~/.pixi/bin/conda`,
 which is not on PATH inside `pixi run`, and a run died at DAG construction with
 `Error running conda info` on a machine that plainly had conda.
@@ -96,7 +97,7 @@ move.
 
 ### Testing
 
-`tests/unit/test_v3.py`, 195 tests, ~2.3 s. This is the primary instrument: the
+`tests/unit/test_v3.py`, 200 tests, ~2.5 s. This is the primary instrument: the
 codebase is a generator, and a wrong wildcard produces a Snakefile that parses
 cleanly and builds the wrong DAG, which an end-to-end run catches slowly if at
 all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.
