@@ -1007,3 +1007,49 @@ link, which puts the hits in `carveme/<sample>.tsv` and makes them a declared
 output rather than a stray. `Tool.files` could not have done it: it maps a path
 to *content*, and this content is another rule's output, which does not exist
 when the Snakefile is rendered.
+
+### The content-addressed environment sharing was executed, not just argued
+`catalogue.py` had a paragraph explaining why AMRFinder's fetch rule and its
+analysis rules end up in the same deployed environment — necessary, because
+`amrfinder -u -d <dir>` refuses any directory but the default, so the database
+can only live inside `$CONDA_PREFIX`. The argument was read out of Snakemake's
+`conda.py` and never run: the 09-02 `--use-conda` run stopped at
+`--until seqkit mashtree treecluster skani checkm2`.
+
+Run today. **Measured**: 6 → 8 environments in the shared prefix, five rules
+(one fetch, four analysis) into one directory
+`68e8563502afe8a0983c6c2bb5b459c1_`, because the two rendered env files are
+byte-identical at md5 `cb5de824e5b0359eeb580a51570bd742`. The fetch rule built
+the environment and the analysis rules joined it, so the sharing does not
+depend on ordering — which was the specific way it might have "worked by
+accident". Output byte-identical to the pixi run for all four genomes.
+
+The evidence that matters is not exit 0. The pixi environment also carries
+amrfinder 4.2.7 *and* database 2026-08-07.1, so correct output would not
+distinguish the deployed binary from pixi's. AMRFinder prints its own software
+and database directories on every run, and the per-sample log names the
+deployed environment for both. Tools that report their own paths are worth more
+than tools that do not, when the question is which copy ran.
+
+### The stale thylakoid checkout was stashed, not discarded
+STATUS.md had recorded the exact commands to bring `/evo/postdoc/CompareM2`
+current and had verified nothing in its rsync snapshot was unique. The
+amrfinder run forced the issue — it needs master's `catalogue.py`, and the main
+checkout is the only one with a `.pixi`, so the other clones were not an option.
+
+Carl's call was `git stash push -- src tests` plus a `.rsync-snapshot-backup/`
+directory for the three untracked files, rather than the `git checkout --` and
+`rm -f` the earlier plan proposed. Same end state, recoverable. The general
+form: when a cleanup on a remote machine is believed safe but the belief has
+not been tested by needing the files back, the reversible route costs nothing.
+
+### `--use-conda` needs conda on `PATH`, and on thylakoid that is not obvious
+The first attempt died at DAG construction with `Error running conda info. Is
+conda installed and accessible?`. `conda` is not in `.bashrc`, not in the pixi
+environment, and not in `pixi.toml` — it is a pixi **global** tool at
+`~/.pixi/bin/conda`. The 09-02 script's `export PATH=$HOME/.pixi/bin:$PATH` was
+load-bearing for a reason that had nothing to do with finding `pixi` itself.
+
+Not a code defect: a bioconda install has conda by definition. Recorded because
+it costs a failed run to rediscover, and the error message points at the
+machine rather than at `PATH`.

@@ -17,7 +17,7 @@ correct-looking output. It never means "installed" — see
 | seqkit | 09-02 | per-contig lengths and GC; identical stats for the duplicate pair |
 | checkm2 | 09-02 | 100% complete all four, via `--isolated-launcher`; `--database_path` wants the `.dmnd` **file**, not its directory |
 | bakta | 09-02 | 4/4 against db v6.0 light; db `software-min` 1.11 against bakta 1.12.1 |
-| amrfinder | 09-02 | 7 and 11 genes; database fetched by the pipeline itself |
+| amrfinder | 09-02, again 09-03 | 7 / 7 / 11 / 8 genes; database fetched by the pipeline itself. Re-run under `--use-conda` on 09-03 — byte-identical output, and the fetch and analysis rules shared one deployed environment; see below |
 | mlst | 09-02 | ST32 / ST32 / ST117 / ST78 — duplicates agree |
 | mashtree | 09-02 | duplicate pair at distance 0.00000 |
 | treecluster | 09-02 | needed `--threshold`; v2's defaults adopted |
@@ -327,9 +327,61 @@ amrfinder marker a new install would not have.
 | results | 116_2 and its duplicate both 100.0% complete, 0.47% contaminated; skani 100.00% |
 | report | 40,349 bytes, five sections |
 
-Still untested there: `amrfinder` under `--use-conda`, which is the case the
-content-addressed environment sharing in DESIGN.md is reasoned about but not
-yet demonstrated.
+That run stopped short of `amrfinder` — the one case the content-addressed
+environment sharing actually has to carry. It has now been executed too; see
+below.
+
+### amrfinder under `--use-conda`: the environment sharing is real
+Run 15:02:33–15:08:40 on 2026-09-03 from `/evo/postdoc/CompareM2` at `e792d5a`,
+exit 0, 10 of 10 steps: `download_amrfinder`, 4 × `bakta`, 4 × `amrfinder`.
+Four genomes from `tests/E._faecium/`, `--cores 8`, a **fresh `--output`**
+(`results_amrfinder_conda`) so the `out_of_tree=True` marker could not
+short-circuit the fetch, into the **existing** `--conda-prefix
+/evo/postdoc/cm2-conda-envs`. No `--isolated-launcher`.
+
+The claim in `catalogue.py` — that byte-identical env files under one
+`--conda-prefix` deploy to one directory, which is what lets the fetch rule and
+the analysis rule share a database that can only live inside the environment —
+holds, and the log says so rather than the results implying it:
+
+| | |
+| --- | --- |
+| environments in the prefix | 6 → **8**. Exactly two new: bakta's `e75d6f17a18c7e1351ea2993fbe52345_` and amrfinder's `68e8563502afe8a0983c6c2bb5b459c1_` |
+| rules → directories | **4 rules, 2 directories.** `download_amrfinder` and all four `amrfinder` jobs logged `Activating conda environment: ../../cm2-conda-envs/68e8563502afe8a0983c6c2bb5b459c1_` |
+| why | the rendered `download_amrfinder.yaml` and `amrfinder.yaml` are byte-identical, md5 `cb5de824e5b0359eeb580a51570bd742` (bakta's pair likewise, `19bdc5c050823a8ef26cbcbd681efcb1`) — the shared `_AMRFINDER_SPEC` doing its job |
+| which direction | the **fetch** rule built the environment and the analysis rules reused it, so the sharing does not depend on the analysis rule going first |
+| database | 241 MB at `<env>/share/amrfinderplus/data/2026-08-07.1`, `latest` symlinked to it. Version **2026-08-07.1**, as amrfinder prints it — the same version the pixi path fetched |
+| fetch cost | **27 s** (25 s download + 2 s `amrfinder_index`), matching the ~26 s estimate |
+| amrfinder itself | 7 s per genome, 14 s for four |
+| on disk | 8.6 GB in the prefix; amrfinder's environment 1.3 GB of which 241 MB is the database (1010 MB without it), bakta's 1.5 GB |
+| marker | `results_amrfinder_conda/amrfinder/.updated`, 0 bytes, 15:08 |
+| report | 25,248 bytes, two sections; the AMR section is populated — an SVG heatmap, *10 resistance classes across 4 genomes*, totals 7 / 7 / 11 / 8 |
+
+**The binary that ran came from the deployed environment, not from pixi.** This
+needed checking because the pixi environment has amrfinder 4.2.7 *and* database
+2026-08-07.1, so identical output would not discriminate. AMRFinder prints its
+own paths, and `samples/116_2/logs/amrfinder.log` says
+`Software directory: /evo/postdoc/cm2-conda-envs/68e8563502afe8a0983c6c2bb5b459c1_/bin/`
+and `Database directory: .../68e8563502afe8a0983c6c2bb5b459c1_/share/amrfinderplus/data/2026-08-07.1`.
+Not `/evo/postdoc/CompareM2/.pixi/envs/default/...`, which is what the same
+binary reports when run outside an activated environment. The fetch log is the
+matching half: `amrfinder_update -d <that same env>/share/amrfinderplus/data`.
+
+Results are **byte-identical to the pixi run** in `results_full13` for all four
+genomes — 7, 7, 11, 8 hits. The standing cross-check passes: `116_2` and
+`116_2 duplicate` are identical in every column but the protein id, which
+carries the sample name.
+
+One operational note that is not about conda-sharing at all: `--use-conda`
+needs `conda` on `PATH`, and on thylakoid it is a pixi **global** tool at
+`~/.pixi/bin/conda` — nowhere in `.bashrc` or the pixi environment. Without
+`export PATH=$HOME/.pixi/bin:$PATH` the run dies at DAG construction with
+`Error running conda info. Is conda installed and accessible?`. The 09-02
+script had that line; it is load-bearing on this machine and irrelevant to a
+real bioconda install, where conda is by definition present.
+
+Script: `/evo/postdoc/cm2-amrfinder-conda.sh`, log
+`/evo/postdoc/cm2-amrfinder-conda.log`.
 
 ### The standing cross-check
 The test set contains `116_2.fna` and `116_2 duplicate.fna` — the same genome
@@ -547,10 +599,11 @@ of it. It was 143 GB until the release changed.
 
 | | |
 | --- | --- |
-| checkout | `/evo/postdoc/CompareM2` — a real clone, on `master`. **The path followed the repository rename**; the old lowercase path does not exist. Currently at `6311685` with the pre-commit rsync state — see *Known broken* |
-| scratch clone | `/evo/postdoc/cm2-biosynth-check` — current `master`, no `.pixi` of its own; the biosynthesis verification ran here |
+| checkout | `/evo/postdoc/CompareM2` — a real clone, at `e792d5a` = `origin/master` as of 2026-09-03, and **the only one with a `.pixi`**. **The path followed the repository rename**; the old lowercase path does not exist |
+| scratch clone | `/evo/postdoc/cm2-biosynth-check` — at `e5b181a`, one behind, no `.pixi` of its own; the biosynthesis verification ran here, and it is now deletable |
 | databases | `/evo/postdoc/cm2-databases` — 6.9 GB, deliberately **outside** any checkout so deleting a checkout does not cost a re-download |
-| pixi | `/home/thylakoid/.pixi/bin/pixi` |
+| conda prefix | `/evo/postdoc/cm2-conda-envs` — 8.6 GB, 8 environments, shared across `--use-conda` runs |
+| pixi | `/home/thylakoid/.pixi/bin/pixi`, and **`conda` is a pixi global** at `/home/thylakoid/.pixi/bin/conda` — `--use-conda` needs that directory on `PATH` |
 
 ```bash
 cd /evo/postdoc/CompareM2
@@ -597,20 +650,22 @@ The code side of the bioconda package is done; the release is not. What exists:
 
 **A conda deployment has now been executed** — see *The conda deployment
 model, executed* above. Six environments for a five-tool subset, CheckM2
-isolated without a launcher, correct results, report rendered. What remains
-untested there is `amrfinder`, whose database lands inside its deployed
-environment; the content-addressed sharing that should make that work is
-reasoned about in DESIGN.md and not yet demonstrated.
+isolated without a launcher, correct results, report rendered. **And
+`amrfinder` with it**, the one tool whose database lands inside its deployed
+environment: the fetch rule and the four analysis rules share one
+content-addressed directory, results byte-identical to the pixi run — see
+*amrfinder under `--use-conda`* above. **There is no untested case left in the
+conda deployment model.**
 
 ## Known broken or unfinished
 
 - **AMRFinder's database still lives in the conda prefix**, so it is refetched
   whenever the environment is rebuilt. What is fixed is the *lie*: the marker
   now lives with the run, so a rebuilt environment no longer leaves a stale
-  marker claiming the data is there. The refetch costs about 26 s.
-- **`amrfinder` has not been run under `--use-conda`.** It is the one tool
-  whose database lands inside its deployed environment, which is what the
-  content-addressed environment sharing in DESIGN.md is for.
+  marker claiming the data is there. The refetch was **measured at 27 s** on
+  2026-09-03, and the 241 MB it writes sits inside the deployed environment
+  rather than under `--databases`. This is a cost, not a defect — see
+  *amrfinder under `--use-conda`*.
 - **`--tui` has not been run against a failing workflow interactively.** The
   "Nothing ran / no report" path is covered by unit tests and was reached once
   by accident, but not driven by hand since.
@@ -620,21 +675,21 @@ reasoned about in DESIGN.md and not yet demonstrated.
   tag, a sha256 and the PR. The `--use-conda` run that was the last technical
   unknown has been done. See *Packaging* above and `recipe/README.md`. **A hand-built container image is no longer planned** —
   decided 2026-09-02, see [DECISIONS.md](DECISIONS.md).
-- **The thylakoid checkout is still the pre-commit rsync snapshot**, at
-  `6311685` with modified tracked files under `src/` and `tests/`. Checked
-  2026-09-03 against `origin/master`: every one of the 19 lines it has and
-  master does not is an *older* version of something now committed — the
-  pre-FastTreeMP comment, the `thirteen` strings, the old test counts — and the
-  only untracked source file that differs, `carve_scip.py`, differs in one
-  docstring table header that a later commit refined. **Nothing there would be
-  lost**, so `git checkout -- src tests && rm -f src/comparem2/carve_scip.py
-  src/comparem2/steps.py pyproject.toml && git merge --ff-only origin/master`
-  brings it current. Not done here because it discards files on a remote
-  machine, which is Carl's call to make.
+- **The thylakoid checkout is current**, fixed on 2026-09-03 before the
+  amrfinder run, because that run needed master's `catalogue.py` and the main
+  checkout is the only one with a `.pixi`. Carl chose the reversible route over
+  the discard the earlier version of this bullet proposed:
+  `git stash push -m "pre-v3 rsync snapshot 2026-09-03" -- src tests`, the three
+  untracked source files moved to `.rsync-snapshot-backup/`, then
+  `git merge --ff-only origin/master`. Now at `e792d5a` with only run outputs
+  and that backup directory untracked. The snapshot is recoverable with
+  `git stash pop`; it was verified redundant before being set aside, so
+  **dropping the stash and `.rsync-snapshot-backup/` is safe whenever**.
 - **`/evo/postdoc/cm2-biosynth-check`** is the clone the biosynthesis
   verification ran from, with `results_biosynth/` inside it. It has no `.pixi`
-  of its own — it borrows the main checkout's environment through PATH — so it
-  is cheap to delete once the main checkout is current.
+  of its own — it borrows the main checkout's environment through PATH — and the
+  main checkout is now current, so it is **cheap to delete**. It is also one
+  commit behind (`e5b181a`), which is why the amrfinder run did not use it.
 
 ## Deliberately left alone
 

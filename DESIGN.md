@@ -177,6 +177,9 @@ Three consequences worth knowing:
   its download rule and its analysis rules must land in the same deployed
   environment. They do, because both declare the same spec string — which is
   why the spec is a shared constant in `catalogue.py` rather than typed twice.
+  **Executed 2026-09-03**: five rules, one directory, the database inside it,
+  and AMRFinder's own log naming that directory as both its software and its
+  database path. See STATUS.md, *amrfinder under `--use-conda`*.
 - **A database fetch is a rule and needs an environment too.** Two of the four
   run a tool binary rather than curl (`bakta_db download`, `amrfinder -u`), so
   `Database` declares `conda` exactly as `Tool` does.
