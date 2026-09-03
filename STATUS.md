@@ -24,7 +24,7 @@ correct-looking output. It never means "installed" — see
 | skani | 09-02 | `-c 70` accepted; duplicates at 100.00% ANI; also writes an `.af` matrix |
 | panaroo | 09-02 | 3,780 clusters, 2,091 core; core alignment 1,934,948 bp |
 | snp-dists | 09-02 | 0 SNPs between the duplicate pair, identical gap counts |
-| fasttree | 09-02 | at `threads=1`; duplicates at 0.0 branch length |
+| fasttree | 09-02 | at `threads=1`; duplicates at 0.0 branch length. `threads=1` is now measured, not assumed — FastTreeMP buys nothing here; see below |
 | carveme | 09-02 | 4/4 SBML models — but the ~9 min per genome was a solver defect and the models were truncated. **50 s and 1,743 reactions** through `carve_scip.py`; see below |
 | gtdbtk | 09-02 | all four *E. faecium* at 99.0–99.2% ANI against a 95.0 radius, `ani_screen`; duplicates identical. Six defects had to be fixed first — see below |
 
@@ -380,10 +380,75 @@ the catalogue downloads (2.7.2 does, by `COMPATIBLE_REF_DATA_VERSIONS`; 2.5.2 is
 unchecked), and what CarveMe's MILP costs on arm — every solver number in this
 file is from thylakoid.
 
-All three fixes are upstream, none of them local: an `osx-arm64` migration on
-the intbitset feedstock, a bioconda PR relaxing gtdbtk's stale `alpha19` pin to
-the alpha22 that arm already carries, and a report that mlst's *noarch* recipe
-declares a dependency on a Linux-only library.
+All three fixes are upstream, none of them local: an `osx-arm64` build on the
+intbitset feedstock, a bioconda PR relaxing gtdbtk's stale `alpha19` pin to the
+alpha22 that arm already carries, and a report that mlst's *noarch* recipe
+declares a dependency on a Linux-only library. **The intbitset one is necessary
+but not sufficient** — see below.
+
+### panaroo on arm: intbitset is not the only blocker
+
+Measured 2026-09-03 on the laptop. Unlike the section above, panaroo was built,
+installed and **run** here; everything else in this file is from thylakoid.
+
+*intbitset is a packaging gap, not a port.* The source is architecture-neutral —
+the only machine-specific construct is `__builtin_popcountll`
+(`intbitset_impl.c:157`), and `setup.py` sets `extra_compile_args = []`. Built
+from the sdist with conda-forge's arm64 clang: 3.0.2 on py3.11 and 4.1.2 on
+py3.13 both compile to `Mach-O 64-bit bundle arm64` and pass **13,930 tests**
+(5.93 s, 7.07 s).
+
+The feedstock simply never opted in: `conda-forge.yml` carries no `provider` or
+`build_platform` entry for `osx_arm64`, so no rerender will ever emit arm
+configs — the bot's newest PR (#20, 4.1.2, 2026-04-28) rerendered and produced
+zero. Adding
+
+```yaml
+provider:
+  osx_arm64: default
+```
+
+plus a build-number bump and `conda smithy rerender` emits
+`osx_arm64_python3.{11,12,13,14}` — verified against a local clone. The PR has
+to carry the version bump too: **3.0.2 fails to compile on py3.12**, while 4.1.2
+built as a real `.conda` for arm at py3.11/3.12/3.13/3.14. The changelog from
+3.1.0 to 4.1.2 is Python-version support and regenerated C only, no API change,
+and panaroo uses the constructor, `|=`, `&`, `len` and iteration.
+
+The feedstock is stalled rather than hostile: last human merge 2023-09-19, seven
+open bot PRs, sole maintainer `gtonkinhill` — who also wrote panaroo. This costs
+us on Linux today: `python 3.12` + panaroo is unsatisfiable because intbitset
+has no py3.12 build, which is what holds the default environment at python
+3.11.16.
+
+*The second blocker is prokka, and it cannot be fixed.* With a locally built arm
+intbitset in a channel, `panaroo>=1.5` still does not solve: prokka requires
+`tbl2asn-forever >=25.7` (linux-64, linux-aarch64, osx-64), which repackages
+NCBI's **prebuilt** tbl2asn binary; there is no macOS-arm build of it, and
+`table2asn` has none either. prokka 1.15.6 still shells out to it
+(`bin/prokka:1429`), and its release notes (2025-12-14) call it the last
+release, recommending bakta. Drop prokka and the set solves: **128 packages** on
+`osx-arm64`.
+
+panaroo never invokes the prokka binary — `panaroo/prokka.py` is a GFF parser;
+only `run_prokka.py:119` shells out, and `run_prokka --help` still exits 0
+without it. So the bioconda ask is one deleted line in `requirements: run:`, and
+that recipe lists no `recipe-maintainers`, so it is not gated on upstream.
+
+*Executed, not just solved.* panaroo 1.8.0 pip-installed `--no-deps` into that
+128-package arm environment; input GFFs from prodigal 2.6.3 over
+`tests/E._faecium` (2,587 / 2,587 / 3,192 CDS). `panaroo --clean-mode strict -a
+core -t 4 --remove-invalid-genes` exited 0 in **3 min 0 s**: 3,569 clusters,
+2,146 core, the duplicate pair differing in **0 of 3,569**. Core alignment
+1,952,790 columns; snp-dists 1.2.0 on arm gives **0 SNPs** for the duplicate
+pair and 4,111 to E8202. Caveats: prodigal, not bakta, so gene counts are not
+comparable to the thylakoid run, and `--remove-invalid-genes` was needed for
+prodigal's partial genes (E8202 3,192 → 3,128).
+
+So arm panaroo needs two upstream changes, not one, and neither is a per-arch
+recipe: panaroo is `noarch: python` and prokka `noarch: generic`, so
+`additional-platforms` is meaningless for both. What is missing is the
+dependency closure.
 
 ## Databases
 
