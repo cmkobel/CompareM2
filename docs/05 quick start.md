@@ -1,48 +1,44 @@
 # Quick start
 
-!!! warning "v3 is pre-release"
-    There is no released package yet. Install from git.
-
 ## 1) Get it
 
-Linux only — the analysis tools are `linux-64`. With
-[pixi](https://pixi.prefix.dev/latest/#installation):
+Linux only — the analysis tools are `linux-64`.
 
 ```bash
-git clone https://github.com/cmkobel/CompareM2.git
-cd CompareM2
-pixi install
+conda install -c conda-forge -c bioconda comparem2=3.0.0
 ```
+
+Ask for the version. A bare `conda install comparem2` may still resolve to a v2
+build until the channel settles, and v2 is a different program.
+
+To work on CompareM2 rather than just use it, install from git with
+[pixi](https://pixi.prefix.dev/latest/#installation) instead — see
+[installation](10 installation.md). Every `cm2` below becomes `pixi run cm2`.
 
 ## 2) Check it works
 
-No databases and no tools needed for this — the unit tests are pure Python:
+A real run over four *Enterococcus faecium* genomes, which needs no databases
+because none of the four tools it runs has one:
 
 ```bash
-pixi run pytest
+cm2 tests/E._faecium/*.fna --until seqkit mashtree treecluster skani
 ```
 
-Then a real run over four *Enterococcus faecium* genomes shipped with the
-repository. This needs no databases, because none of the four tools it runs has
-one:
-
-```bash
-pixi run test-fast
-```
-
-That produces `cm2_test-fast/report.html`. Open it.
+That writes `results_comparem2/report.html`. Open it. From a git checkout,
+`pixi run test-fast` does the same thing with the genomes already unpacked, and
+`pixi run pytest` runs the 200 unit tests — pure Python, no tools or databases.
 
 !!! note "The first run builds the tool environments"
-    The fourteen tools are not in the pixi environment — Snakemake deploys them
+    The fourteen tools do not come with the package — Snakemake deploys them
     into two conda environments, 7.7 GB, the first time they are needed. That
     happens before any job starts, so the first run is quiet for about a minute
-    while it works. `pixi run cm2 --setup` does it deliberately and takes no
-    assemblies; see [installation](10 installation.md).
+    while it works. `cm2 --setup` does it deliberately and takes no assemblies;
+    see [installation](10 installation.md).
 
 ## 3) Run it on your own genomes
 
 ```bash
-pixi run cm2 path/to/*.fna
+cm2 path/to/*.fna
 ```
 
 CompareM2 prints what it is about to do, including how much database it needs to
@@ -57,8 +53,8 @@ to download: checkm2, gtdb, bakta-light, amrfinder (62.5 GB + 2 of unknown size)
 assignment, skip it and the download collapses to under 2 GB:
 
 ```bash
-pixi run cm2 *.fna --until seqkit checkm2 bakta amrfinder mlst \
-                           mashtree treecluster skani panaroo snp-dists fasttree
+cm2 *.fna --until seqkit checkm2 bakta amrfinder mlst \
+                  mashtree treecluster skani panaroo snp-dists fasttree
 ```
 
 ## 4) Read the report
@@ -74,19 +70,19 @@ columns mean, what the tool's own error is, and what the result cannot show.
 
 ```bash
 # What would run, without running it
-pixi run cm2 *.fna --dry-run
+cm2 *.fna --dry-run
 
 # Only one analysis and its dependencies
-pixi run cm2 *.fna --until fasttree
+cm2 *.fna --until fasttree
 
 # Change a tool's argument
-pixi run cm2 *.fna --set treecluster--threshold=0.1
+cm2 *.fna --set treecluster--threshold=0.1
 
 # Interactive interface
-pixi run cm2 *.fna --tui
+cm2 *.fna --tui
 
 # More cores
-pixi run cm2 *.fna --cores 24
+cm2 *.fna --cores 24
 ```
 
 See [usage](20 usage.md) for the rest.

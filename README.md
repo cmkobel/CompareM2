@@ -2,10 +2,14 @@
 
 [![unit tests](https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml/badge.svg)](https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml) [![https://doi.org/10.1093/bioinformatics/btaf517](https://img.shields.io/badge/doi%20%28OUP%29-10.1093%2Fbioinformatics%2Fbtaf517-blue.svg)](https://doi.org/10.1093/bioinformatics/btaf517)
 
-> **Pre-release.** The bioconda package is not published yet — `conda install
-> comparem2` still gives you v2. The recipe is written (`recipe/`) and the code
-> path is in place; for now install from git, as below. The paper describes v2,
-> whose documentation remains at
+```bash
+conda install -c conda-forge -c bioconda comparem2=3.0.0
+comparem2 *.fna
+```
+
+> v3.0.0 is on bioconda as of 2026-09-04. Pin the version for now: `conda
+> install comparem2` without one may still resolve to v2 until the channel
+> settles. The paper describes v2, whose documentation remains at
 > [comparem2.readthedocs.io/en/stable](https://comparem2.readthedocs.io/en/stable/).
 
 CompareM2 takes microbial genome assemblies — isolates or MAGs — and produces a
@@ -66,6 +70,8 @@ comments that were not true.
 [`STATUS.md`](STATUS.md) has the per-tool table. It tracks *execution*, never
 installation — a clean `pixi install` says nothing about whether a tool runs,
 and two tools have resolved to builds that installed cleanly and crashed.
+
+For development, from a checkout rather than the package:
 
 ```bash
 python -m pytest tests/unit -q   # 200 tests, no pixi required

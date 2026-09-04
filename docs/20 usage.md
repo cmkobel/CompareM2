@@ -6,14 +6,14 @@ pixi run cm2 <assemblies>... [options]   # from a git checkout
 ```
 
 `cm2` is a second entry point for the same program, so `comparem2` and `cm2`
-are interchangeable. The examples below use the pixi form; drop `pixi run` and
-they are the conda form.
+are interchangeable. The examples below use the plain form; from a git checkout
+prefix them with `pixi run`.
 
 Assemblies are passed as paths, not as a glob string. In v2 this was
 `--config input_genomes="*.fna"`; now the shell expands it:
 
 ```bash
-pixi run cm2 genomes/*.fna
+cm2 genomes/*.fna
 ```
 
 Relative paths mean what they look like they mean, from any directory. A pixi
@@ -97,8 +97,8 @@ Two inputs that reduce to the same name is an error, not a silent overwrite.
 `--until` takes tool names and pulls in whatever they need:
 
 ```bash
-pixi run cm2 *.fna --until fasttree     # runs bakta, panaroo, fasttree
-pixi run cm2 *.fna --until seqkit skani # runs just those two
+cm2 *.fna --until fasttree     # runs bakta, panaroo, fasttree
+cm2 *.fna --until seqkit skani # runs just those two
 ```
 
 There are no fixed pseudo-targets like v2's `fast` and `isolate`. The
@@ -119,7 +119,7 @@ follow. Some useful combinations:
 Any argument can be forwarded to any tool:
 
 ```bash
-pixi run cm2 *.fna \
+cm2 *.fna \
   --set treecluster--threshold=0.1 \
   --set skani-c=125 \
   --set bakta--gram=+
@@ -144,7 +144,7 @@ specs so they cannot drift from what actually runs.
 ## The TUI
 
 ```bash
-pixi run cm2 *.fna --tui
+cm2 *.fna --tui
 ```
 
 A keyboard interface over the same run: per-tool progress, the download size
@@ -160,7 +160,7 @@ Every other flag works the same way with `--tui` as without it — `--until` see
 the selection, and `--set`, `--keep-going` and `-d` are all honoured:
 
 ```bash
-pixi run cm2 *.fna --tui --until mashtree treecluster
+cm2 *.fna --tui --until mashtree treecluster
 ```
 
 Without `--until` everything is selected, which includes GTDB-Tk and its 60.8
@@ -175,7 +175,7 @@ The report is regenerated on every run, but you can rebuild it alone — useful
 after a partial run, or when only the report code changed:
 
 ```bash
-pixi run cm2 *.fna --report-only
+cm2 *.fna --report-only
 ```
 
 Sections appear only when their outputs exist, so a partial run still gives a
@@ -193,8 +193,8 @@ LockException: Directory cannot be locked.
 Nothing is wrong with the results. Release the lock and carry on:
 
 ```bash
-pixi run cm2 *.fna --unlock
-pixi run cm2 *.fna            # picks up where it stopped
+cm2 *.fna --unlock
+cm2 *.fna            # picks up where it stopped
 ```
 
 Downloads resume rather than restart: a killed GTDB fetch continues its partial

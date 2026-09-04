@@ -1,16 +1,17 @@
 # Installation
 
-!!! warning "v3 is pre-release"
-    The bioconda package is not published yet — the recipe is written and the
-    code path is built and tested, but `conda install comparem2` still gives
-    you v2. Until the recipe lands, install from git with pixi.
+!!! tip "Pin the version"
+    v3.0.0 reached bioconda on 2026-09-04. Ask for it by version —
+    `comparem2=3.0.0` — because a bare `conda install comparem2` may still
+    resolve to a v2 build until the channel settles, and v2 is a different
+    program with a different interface.
 
 There are two ways to install CompareM2, and they differ only in how *the
 pipeline* arrives. **The fourteen analysis tools arrive the same way in both**:
 Snakemake deploys them into two conda environments the first time they are
 needed.
 
-| | conda *(not yet published)* | pixi, from git |
+| | conda | pixi, from git |
 | --- | --- | --- |
 | what it installs | the pipeline and its Snakemake plugins | the same, plus the test tooling |
 | the tools | two environments, deployed on first use | two environments, deployed on first use |
@@ -33,17 +34,23 @@ model, and there is no flag for it.
   - **RAM.** GTDB-Tk's classify step is the peak; its own paper reports under
     55 GB for the v2 divide-and-conquer placement. Without GTDB-Tk, far less.
 
-## With conda, once published
+## With conda
 
 ```bash
-conda install -c conda-forge -c bioconda comparem2
+conda install -c conda-forge -c bioconda comparem2=3.0.0
 comparem2 *.fna
 ```
 
-The package contains **the pipeline and none of the fourteen tools**. The first
-run builds the two tool environments before any job starts, which takes about a
-minute on a warm package cache and longer on a machine that has to download
-them.
+The package is `noarch: python`, published as
+`comparem2-3.0.0-pyhdfd78af_0.conda`, and contains **the pipeline and none of
+the fourteen tools**. Its only dependencies are Python, Snakemake and its two
+executor plugins, Textual, and `conda` itself — that last one because Snakemake
+shells out to it to build the tool environments.
+
+The first run builds those two environments before any job starts, which takes
+about a minute on a warm package cache and longer on a machine that has to
+download them. `comparem2 --setup` does it deliberately, with no assemblies and
+no databases needed, so the first real run does not pay for it.
 
 ## From git, with pixi
 

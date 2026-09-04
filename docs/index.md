@@ -3,10 +3,13 @@
 CompareM2 takes microbial genome assemblies — isolates or MAGs, from any
 sequencing technology — and produces one portable HTML report comparing them.
 
-!!! warning "These docs describe v3, which is pre-release"
-    v3 is a rewrite and there is no released package for it yet — install from
-    git, see [installation](10 installation.md). The version the paper
-    describes is v2, documented at
+!!! info "These docs describe v3"
+    ```bash
+    conda install -c conda-forge -c bioconda comparem2=3.0.0
+    ```
+    v3 is a rewrite, on bioconda since 2026-09-04. Ask for the version — a
+    bare `conda install comparem2` may still resolve to a v2 build until the
+    channel settles. The version the paper describes is v2, documented at
     [comparem2.readthedocs.io/en/stable](https://comparem2.readthedocs.io/en/stable/).
 
 !!! note
@@ -57,7 +60,7 @@ not support.
 ## Where to start
 
   - [Quick start](05 quick start.md) — install and run
-  - [Installation](10 installation.md) — pixi, databases, HPC
+  - [Installation](10 installation.md) — conda, pixi, databases, HPC
   - [Usage](20 usage.md) — the CLI, the TUI, passthrough parameters
   - [What analyses does it do](30 what analyses does it do.md) — the 14 tools
   - [Citing](99 citation.md) — CompareM2 and every tool it runs
