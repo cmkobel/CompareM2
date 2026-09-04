@@ -1120,6 +1120,27 @@ a version-only bump — it neither drops v2's `build.sh` nor sets
 `noarch: python`, so merging it would undo the recipe #68805 landed. It is on a
 branch in the bioconda org, so only bioconda can close it; asked on the PR.
 
+### `cm2 --demo` has been run
+Measured on thylakoid 2026-09-04 at `7c98aa9`, against an existing
+`--conda-prefix`: **11 of 11 steps, about 3 s** (20:15:08 → 20:15:11), report
+**39,716 bytes**. The six bundled plasmids extracted to
+`out/demo_assemblies/`, and the seventh input — `116_2 duplicate.fna` —
+canonicalised to sample `116_2_duplicate`, space and all.
+
+The pair it exists to demonstrate comes out right in all four analyses:
+
+| analysis | the pair | verdict |
+| --- | --- | --- |
+| skani | **100.00%** ANI, and identical rows against all five others (93.26 / 95.13 / 92.13 / 93.95 / 94.34) | correct |
+| mashtree | **0.00000** branch length | correct |
+| treecluster | both in cluster 1 | correct |
+| seqkit | `contigs.tsv` md5 `e2ec2407…` for both | correct |
+
+The set is not only a smoke test: `Dallas_55` and `ISMMS_VRE_1` come out at
+**99.38%** ANI and share a TreeCluster cluster, while `EF_VRE` sits at 92.13%
+against `116_2` — so the ANI matrix and the tree have real structure to read,
+which is what makes it worth putting in front of a first-time user.
+
 ## Known broken or unfinished
 
 - **AMRFinder's database still lives in the conda prefix**, so it is refetched
