@@ -1277,3 +1277,35 @@ A commercial solver is not a candidate for a pipeline other people install.
 Still undone, and separate: a truncated model reaches the report and
 `biosynthesis` indistinguishable from a converged one. The status is not yet a
 declared output, so nothing downstream can refuse or flag it.
+
+### The CarveMe timeout is the instance, not the solver build — both candidates are dead
+Measured 2026-09-04, numbers in STATUS.md. The entry above proposed two
+branches, chosen by the gap at cut-off. The gap turned out to be 1.0–2.1%, and
+**both branches are ruled out**:
+
+- Relaxing `limits/gap` fails for the reason the small gap suggested it would
+  work. At 2% the solver would stop *earlier*, on an incumbent just as sparse.
+  The gap being small is not evidence that the answer is nearly right.
+- The PyPI SCIP wheel fails outright: the same three genomes hit the same 600 s
+  ceiling with the same ~1,245 reactions, PaPILO absent. The presolver fix was
+  real on 116_2 and does not generalise, so **the slow instances are a property
+  of the genome, not of the build.**
+
+The number that reframes it: MRSA252's 1,251-reaction incumbent scores 920.4
+where NCTC8325's *converged* model scores 907.1 with 1,629 reactions. CarveMe's
+objective does not reward reaction count, so a third of the network can come or
+go inside 1.5% of objective. Which model you get depends on the search path.
+That is the formulation — bigM 1e3 against eps 1e-3, integrality feasible only
+at `feastol` — and not something a solver swap or a longer clock addresses.
+
+**So this stops being a fix to find and becomes a limitation to disclose**, and
+the disclosure work that was filed as secondary is now the whole of it: the
+solve status has to become a declared output, the report has to show it, and
+`biosynthesis` must not read a truncated model as though it were converged.
+Reversal is deliberate — the earlier entry named the wheel as the likely
+answer and it is measured not to be.
+
+One measurement would still change the severity, and has never been made:
+whether the sparse models drop reactions the annotation supports. That column
+is what convicted the shipped build on 116_2 (253 against 44) and is unknown
+for these three. Small is not the same as wrong.

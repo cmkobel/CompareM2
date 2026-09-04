@@ -31,7 +31,7 @@ that closed that gap.
 | panaroo | 09-02 | 3,780 clusters, 2,091 core; core alignment 1,934,948 bp |
 | snp-dists | 09-02 | 0 SNPs between the duplicate pair, identical gap counts |
 | fasttree | 09-02 | at `threads=1`; duplicates at 0.0 branch length. `threads=1` is now measured, not assumed — FastTreeMP buys nothing here; see below |
-| carveme | 09-02 | 4/4 SBML models — but the ~9 min per genome was a solver defect and the models were truncated. **50 s and 1,743 reactions** through `carve_scip.py`; see below |
+| carveme | 09-02, again 09-04 | 4/4 SBML models. `carve_scip.py` took one *E. faecium* genome from ~9 min and a truncated model to **50 s and 1,743 reactions** — but that fix **does not generalise**: measured 09-04, three of seven *S. aureus* genomes still hit the 600 s ceiling under both SCIP builds, at 1,236–1,263 reactions against 1,609–1,636. See below, twice |
 | gtdbtk | 09-02 | all four *E. faecium* at 99.0–99.2% ANI against a 95.0 radius, `ani_screen`; duplicates identical. Six defects had to be fixed first — see below |
 | biosynthesis | 09-03 | 13-step Snakemake run, `--until biosynthesis`, exit 0. **3 s a genome**, duplicate pair identical, and byte-identical to the same probe run against the PyPI wheel on macOS. The curated `iML1515` control returns **31 of 32 de novo** — see below |
 
@@ -186,6 +186,74 @@ The log line to grep for when a genome takes nine minutes again is
 `carve_scip: presolving/milp/maxrounds=0`.
 
 Worth reporting upstream — every conda install of CarveMe has this.
+
+### And it does not generalise: the slow instances are the genomes, not the build
+Measured 2026-09-04 on thylakoid, four solves in parallel on 24 cores, through
+`carve_scip.py` exactly as the rule invokes it, against the Bakta proteins the
+09-02 seven-genome *S. aureus* run had already produced. `cdcdbc7` now prints
+SCIP's own account of each solve, which is where these numbers come from.
+
+conda-forge SCIP 10.0 / pyscipopt 6.2.1, PaPILO linked, presolver off — the
+shipped configuration:
+
+| genome | status | gap | MILP | model |
+| ------ | ------ | --: | ---: | ----- |
+| NCTC8325 | **optimal** | 0 | 10.3 s | 1,609 rx / 1,097 met |
+| N315 | timelimit | 1.475% | 600.0 s | 1,246 rx / 833 met |
+| MRSA252 | timelimit | 1.430% | 600.0 s | 1,263 rx / 844 met |
+| GCF_026920295.1 (draft) | timelimit | 1.482% | 600.0 s | 1,236 rx / 823 met |
+
+PyPI wheel, same pyscipopt and SCIP versions, **no PaPILO** among its external
+libraries (SoPlex 8.0.2, CppAD, ZLIB, TinyCThread, AMPL/MP, Nauty, sassy,
+Ipopt) — the build the section above proposes as the alternative fix:
+
+| genome | status | gap | MILP | model |
+| ------ | ------ | --: | ---: | ----- |
+| NCTC8325 | gaplimit | 0.033% | 11.5 s | 1,629 rx / 1,107 met |
+| N315 | timelimit | 1.042% | 600.0 s | 1,245 rx / 834 met |
+| MRSA252 | timelimit | 2.064% | 600.0 s | 1,251 rx / 828 met |
+| GCF_026920295.1 (draft) | timelimit | 1.881% | 600.0 s | 1,242 rx / 828 met |
+
+Five things follow, and four of them close a door:
+
+1. **The A/B is clean.** The conda-forge column reproduces 09-02 exactly — the
+   same 1,609 / 1,246 / 1,263 / 1,236 reactions and the same metabolite counts,
+   two days later on a fresh invocation. This problem is deterministic.
+2. **The wheel does not fix it.** The same three genomes time out, at the same
+   ~1,240–1,251 reactions. PaPILO was the whole story on 116_2 and is not the
+   story here: **the split is by genome, not by solver build.**
+3. **Relaxing `limits/gap` would make it worse.** The gap at cut-off is
+   1.0–2.1%, so a 2% tolerance would stop *sooner* on an equally sparse
+   incumbent. This looked like the cheap fix before the number existed.
+4. **More time is already ruled out** — N315 at 3,600 s (09-02) still returned
+   `timelimit`, with 7 reactions fewer than the 600 s run.
+5. **The objective barely moves while the model changes by a third.**
+   MRSA252's incumbent scores 920.4 against NCTC8325's *converged* 907.1 on the
+   wheel — higher — with 1,251 reactions against 1,629. CarveMe's objective does
+   not reward reaction count, so its near-optimal region holds networks of very
+   different size and which one comes back depends on the search path. That is
+   the formulation, not SCIP. Even the converged genome is build-dependent:
+   1,609 rx at objective 916.3 under conda-forge, 1,629 at 907.1 under the wheel.
+
+So the reaction deficit is **not** a solver-build artefact, is not bought off
+with time, and is not a gap tolerance away. What is left is disclosure — the
+status has to reach the report and `biosynthesis`, and does not yet — plus a
+question about degenerate optima that belongs upstream.
+
+**Not measured, and it decides how bad this is:** whether the sparse models drop
+reactions the annotation supports. The `annotated rx dropped` column above (253
+against 44) is what convicted the shipped build on 116_2; the equivalent has
+never been computed for these three. Until it is, "1,236 rx against 1,609" says
+the models differ, not that the small ones are wrong.
+
+### `presolving/milp/maxrounds` does not exist without PaPILO
+Found 2026-09-04 while building the wheel environment for the A/B above, and
+fixed in `b6ad30d`. `setParam` raises `KeyError('Not a valid parameter name')`
+on a SCIP that does not link PaPILO, so `carve_scip.py` died at the first solve
+— exit 1, no model, four for four. The wrapper's own docstring says it "must not
+be the reason a run fails", and it had made the build it recommends unusable.
+The parameter is now set inside a `try`, and its absence is reported as what it
+is: nothing to disable.
 
 ### `carve` was overwriting Bakta's feature table
 Found 2026-09-02 while tracing the above, and unrelated to speed. `carve`
