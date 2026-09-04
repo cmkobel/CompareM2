@@ -2299,6 +2299,77 @@ def test_patch_solver_disables_the_presolver_after_carveme_sets_its_limits(monke
     assert calls == [("presolving/milp/maxrounds", 0), ("solved", ())]
 
 
+def test_describe_solve_names_the_status_that_reframed_throws_away():
+    """`timelimit` and `gaplimit` both reach CarveMe as Status.SUBOPTIMAL, and
+    `allow_suboptimal=True` accepts either, so this line is the only place a
+    truncated solve can be told from a converged one."""
+    from comparem2.carve_scip import describe_solve
+
+    class Truncated:
+        getStatus = staticmethod(lambda: "timelimit")
+        getGap = staticmethod(lambda: 0.0413)
+        getPrimalbound = staticmethod(lambda: 913.5)
+        getDualbound = staticmethod(lambda: 951.8)
+        getSolvingTime = staticmethod(lambda: 600.4)
+        getNSols = staticmethod(lambda: 3)
+
+    line = describe_solve(Truncated())
+    assert line == ("status=timelimit gap=0.0413 primal=913.5 dual=951.8 "
+                    "seconds=600.4 solutions=3")
+    # The distinction the whole line exists for.
+    assert "status=timelimit" in line and "gaplimit" not in line
+
+
+def test_describe_solve_survives_a_getter_that_is_missing_or_raises():
+    """It runs after a solve that has already produced its model. A field it
+    cannot fetch must cost that field only, never the reconstruction."""
+    from comparem2.carve_scip import describe_solve
+
+    class Awkward:
+        getStatus = staticmethod(lambda: "optimal")
+
+        @staticmethod
+        def getGap():
+            raise RuntimeError("no bound")
+
+    line = describe_solve(Awkward())
+    assert "status=optimal" in line
+    assert "gap=unavailable(RuntimeError)" in line
+    # getPrimalbound and the rest are absent entirely, not raising.
+    assert "primal=unavailable(AttributeError)" in line
+    assert len(line.split()) == 6
+
+
+def test_patch_solver_logs_every_solve_it_wraps(monkeypatch, capsys):
+    """The report has to come from inside the patch: CarveMe hands back a
+    ReFramed Solution, by which point the SCIP status is gone."""
+    from comparem2 import carve_scip
+
+    class FakeProblem:
+        def setParam(self, name, value):
+            pass
+
+        getStatus = staticmethod(lambda: "gaplimit")
+        getSolvingTime = staticmethod(lambda: 43.2)
+
+    class FakeSCIPSolver:
+        def __init__(self):
+            self.problem = FakeProblem()
+
+        def solve(self, *args, **kwargs):
+            return "solution"
+
+    module = type(sys)("reframed.solvers.scip_solver")
+    module.SCIPSolver = FakeSCIPSolver
+    monkeypatch.setitem(sys.modules, "reframed.solvers.scip_solver", module)
+    carve_scip.patch_solver()
+
+    assert FakeSCIPSolver().solve() == "solution"
+    err = capsys.readouterr().err
+    assert "carve_scip: solve status=gaplimit" in err
+    assert "seconds=43.2" in err
+
+
 def test_patch_solver_reports_a_missing_backend_rather_than_failing(monkeypatch):
     """An installation solving with Gurobi or CPLEX has nothing here to patch.
     This wrapper is a speed fix and must not be why a working run fails."""

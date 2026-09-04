@@ -40,6 +40,20 @@ dropped, against 16.7 s and 45 with the presolver off.
 Neither CarveMe nor ReFramed exposes solver parameters, which is why this
 wrapper exists at all.
 
+**It also prints what SCIP says about each solve, because nothing else does.**
+CarveMe caps the MILP at 600 s (`carving.py:181`, paired with `limits/gap=0.001`
+so a healthy instance stops on the gap rather than the clock) and then accepts
+whatever it holds: ReFramed maps `timelimit` and `gaplimit` alike to
+`Status.SUBOPTIMAL`, and `allow_suboptimal=True` returns the incumbent either
+way. A model truncated at the clock is therefore indistinguishable from a
+converged one — in the seven-genome *S. aureus* run of 2026-09-02, three genomes
+came back 22–24% short of the reaction count the other four reached (1,236–1,263
+against 1,609–1,636) at 613–619 s against 22–30 s, and neither the model, the
+exit status nor the log said so. The status, gap and bounds this wrapper prints
+are the only place that difference survives. They are printed, not acted on:
+which of the two stopping criteria to move is a question the numbers have to
+answer first.
+
 **It runs in the tool's environment, under a bare `python`** — the opposite of
 `steps.py`, and for the mirror-image reason: that module is CompareM2's and
 needs CompareM2's interpreter, this one imports `carveme` and needs the
@@ -66,6 +80,22 @@ from pathlib import Path
 # the point is that none of its reductions run.
 PRESOLVER_OFF = ("presolving/milp/maxrounds", 0)
 
+# What a finished solve is asked about itself. `status` is the field that
+# matters — `optimal` and `gaplimit` are converged, `timelimit` is not, and
+# nothing downstream of ReFramed can tell them apart. The bounds are here
+# because on this problem the gap alone is not enough to read: four
+# configurations of one SCIP build reported three different objective values on
+# the same written-out MILP, and one accepted as feasible a point below its own
+# dual bound.
+SOLVE_FIELDS = (
+    ("status", "getStatus"),
+    ("gap", "getGap"),
+    ("primal", "getPrimalbound"),
+    ("dual", "getDualbound"),
+    ("seconds", "getSolvingTime"),
+    ("solutions", "getNSols"),
+)
+
 
 def link_input(faa: Path, output: Path) -> Path:
     """Link `faa` into `output`'s directory and return the link.
@@ -82,12 +112,37 @@ def link_input(faa: Path, output: Path) -> Path:
     return link
 
 
+def describe_solve(problem) -> str:
+    """One line of SCIP's own account of the solve that just finished.
+
+    Every field is fetched defensively and independently. This runs after a
+    solve that has already produced whatever model it is going to produce, so a
+    getter that is missing or raises must cost that field and nothing else —
+    reporting is not worth failing a reconstruction over, and a build without
+    one of these getters should still report the other five.
+    """
+    parts = []
+    for label, getter in SOLVE_FIELDS:
+        try:
+            value = getattr(problem, getter)()
+            if isinstance(value, float):
+                value = f"{value:.6g}"
+        except Exception as exc:
+            value = f"unavailable({type(exc).__name__})"
+        parts.append(f"{label}={value}")
+    return " ".join(parts)
+
+
 def patch_solver() -> str:
-    """Make every SCIP solve skip the MILP presolver. Returns what it did.
+    """Make every SCIP solve skip the MILP presolver, and report what it did.
 
     Patched at `solve` rather than at construction because CarveMe sets its own
     `limits/time` and `limits/gap` immediately before solving, so anything set
     earlier is what it overwrites — and this has to be applied after that.
+
+    The same patch point is the only one that still holds the SCIP problem once
+    a solve has finished: CarveMe hands back a ReFramed `Solution`, whose status
+    has already collapsed `timelimit` and `gaplimit` into one value.
 
     A missing SCIP backend is reported and left alone. This wrapper exists to
     make a working run faster; it must not be the reason a run fails, and an
@@ -102,7 +157,12 @@ def patch_solver() -> str:
 
     def solve(self, *args, **kwargs):
         self.problem.setParam(*PRESOLVER_OFF)
-        return original(self, *args, **kwargs)
+        solution = original(self, *args, **kwargs)
+        # Every solve, not only the big MILP: `carve` does a handful and the
+        # cheap ones cost a line each, where picking out "the MILP" would mean
+        # guessing which call it was. `seconds` says which one this was.
+        print(f"carve_scip: solve {describe_solve(self.problem)}", file=sys.stderr)
+        return solution
 
     SCIPSolver.solve = solve
     return f"{PRESOLVER_OFF[0]}={PRESOLVER_OFF[1]}"

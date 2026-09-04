@@ -1237,3 +1237,43 @@ runs from different directories fetched up to 143 GB twice. But home here has
 101 G free against ~108 GB of databases and environments, so the defaults would
 just fit and be a bad idea; on a cluster with a quota they fail partway through
 a 60.8 GB download. Which is the whole reason both variables exist.
+
+---
+
+## 2026-09-04
+
+### `carve_scip.py` prints SCIP's status, gap and bounds for every solve
+Instrumentation, not a fix. The 2026-09-02 seven-genome *S. aureus* run
+(measured) had three genomes come back with 1,236–1,263 reactions against
+1,609–1,636 for the other four — 22–24% short — at 613–619 s against 22–30 s,
+and nothing said so. Reading the source afterwards explains why nothing could:
+
+- `carveme/reconstruction/carving.py:180-184` sets `limits/time=600` **and**
+  `limits/gap=0.001`, then calls `solve(allow_suboptimal=True)`. The pair is
+  the design: stop at a 0.1% gap, or at 600 s if the gap has not closed. It
+  applies to SCIP only — the Gurobi and CPLEX paths get no ceiling.
+- `reframed/solvers/scip_solver.py:15,20` maps `timelimit` and `gaplimit` alike
+  to `Status.SUBOPTIMAL`, and `solver.py:137` accepts SUBOPTIMAL when
+  `allow_suboptimal` is set. So a model stopped by the clock is returned through
+  the same path as one that converged, with no exception and exit 0, and the
+  status CarveMe can see does not distinguish them.
+
+The existing `SCIPSolver.solve` patch is the only place that still holds the
+SCIP problem after a solve, so the report goes there. It prints and does not
+act: **which of the two stopping criteria to move is not yet answerable.** If
+the gap at cut-off is small then `limits/gap=0.001` is the wrong knob to be
+strict about on this problem — the wrapper's docstring already argues that
+"optimal" here describes solver tolerances rather than the network — and
+relaxing it costs no packaging change. If the gap is large, the incumbent is
+genuinely poor and the PyPI SCIP wheel (measured: 10 s and `optimal` on the
+*E. faecium* instance where conda-forge gave 601 s and `timelimit`) is the
+candidate, at the cost of a `pip:` entry in a conda environment. Nobody has the
+gap number yet, which is the point of the line.
+
+Raising the ceiling is already ruled out: N315 re-solved at 3,600 s still
+returned `timelimit`, with 7 reactions *fewer* than the 600 s run (measured).
+A commercial solver is not a candidate for a pipeline other people install.
+
+Still undone, and separate: a truncated model reaches the report and
+`biosynthesis` indistinguishable from a converged one. The status is not yet a
+declared output, so nothing downstream can refuse or flag it.
