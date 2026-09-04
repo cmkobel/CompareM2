@@ -1037,8 +1037,12 @@ Four things this answered that a solve could not:
   by reading the file list.
 - **A read-only package prefix is fine.** `prepare()` writes the Snakefile and
   the env files under `<output>/.comparem2/`, never beside the installed
-  module, and both real runs did exactly that. `src/comparem2/` holds no
-  non-Python files, so there is no package-data declaration missing either.
+  module, and both real runs did exactly that. *Superseded 2026-09-04 in one
+  respect:* `src/comparem2/` no longer holds only Python. `demo/plasmids.zip`
+  is there and does need a `[tool.setuptools.package-data]` entry — measured in
+  the built wheel at **572 KB** against 109 KB before, and `--demo` extracts it
+  into `<output>/demo_assemblies/` rather than beside the module, so the
+  read-only conclusion still holds.
 - **`conda` as a run dependency works as intended.** Activating the environment
   puts `conda` on PATH and Snakemake finds it; the deployed environments landed
   in the prefix given by `$COMPAREM2_CONDA_PREFIX`.

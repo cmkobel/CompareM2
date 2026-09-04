@@ -17,6 +17,7 @@ import tempfile
 from pathlib import Path
 
 from . import __version__
+from . import demo
 from .catalogue import CATALOGUE
 from .report import render_report
 from .snakefile import prepare, render_envs
@@ -291,6 +292,10 @@ def main(argv: list[str] | None = None) -> int:
                    help="deploy the tool environments and exit, so the first "
                         "real run does not pay for them; takes no assemblies, "
                         "and needs no databases")
+    p.add_argument("--demo", action="store_true",
+                   help="run the four database-free analyses over six bundled "
+                        "Enterococcus faecium plasmids; takes no assemblies, "
+                        "and downloads nothing")
     p.add_argument("--keep-going", action="store_true",
                    help="keep running independent tools after one fails")
     p.add_argument("--dry-run", action="store_true")
@@ -324,9 +329,30 @@ def main(argv: list[str] | None = None) -> int:
             resolve(args.databases or default_databases(), base),
             resolve(args.conda_prefix or default_conda_prefix(), base))
 
+    if args.demo:
+        # Rejected rather than merged, for --setup's reason: a command naming
+        # genomes that are never analysed should not look like it analysed them.
+        if args.inputs:
+            raise SystemExit("--demo takes no assemblies: it runs the bundled "
+                             "ones. Drop --demo to analyse your own.")
+        # The assemblies land under the output directory, so `--demo` leaves
+        # everything it made in one place a reader can inspect and delete.
+        args.inputs = demo.extract(resolve(args.output, base) / "demo_assemblies")
+        # Fixed rather than defaulted: the bundled inputs are plasmids, and
+        # CheckM2 would report a correct and useless completeness near zero on
+        # them. An explicit --until is still honoured, because someone asking
+        # for a specific tool on known inputs has a reason.
+        if args.until is None:
+            args.until = list(demo.TOOLS)
+        print(f"demo: {len(args.inputs)} bundled plasmids -> "
+              f"{resolve(args.output, base)}\n"
+              f"      '{demo.DUPLICATE_AS}' is '{demo.DUPLICATE_OF}' again, so "
+              "the two should come out identical", file=sys.stderr)
+
     if not args.inputs:
         raise SystemExit("no assemblies given — pass one or more FASTA files, "
-                         "or --setup to deploy the tool environments")
+                         "--demo to run the bundled ones, or --setup to deploy "
+                         "the tool environments")
 
     inputs = [resolve(i, base) for i in args.inputs]
 

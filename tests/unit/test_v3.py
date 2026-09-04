@@ -2253,6 +2253,59 @@ def test_the_shading_legend_uses_the_same_steps_as_the_cells():
     assert "stop-opacity" not in key
 
 
+# --- the bundled demo ----------------------------------------------
+
+def test_demo_extracts_six_plasmids_and_one_duplicate(tmp_path):
+    """The seventh input is the first one again. It costs no bytes and gives
+    the report a pair that must come out at 0.00000 distance."""
+    from comparem2 import demo
+
+    paths = demo.extract(tmp_path / "demo_assemblies")
+    assert [p.name for p in paths] == [*demo.PLASMIDS, demo.DUPLICATE_AS]
+    assert all(p.exists() and p.stat().st_size > 0 for p in paths)
+
+    original = (tmp_path / "demo_assemblies" / demo.DUPLICATE_OF).read_bytes()
+    copy = (tmp_path / "demo_assemblies" / demo.DUPLICATE_AS).read_bytes()
+    assert original == copy, "the pair is only a cross-check if it is identical"
+    assert original.startswith(b">"), "and it has to be FASTA"
+
+    # Re-extracting is what a second `--demo` does, and it must not inherit an
+    # edited file from the first.
+    (tmp_path / "demo_assemblies" / demo.PLASMIDS[0]).write_text(">edited\nAC\n")
+    demo.extract(tmp_path / "demo_assemblies")
+    assert (tmp_path / "demo_assemblies" / demo.PLASMIDS[0]).read_bytes() == original
+
+
+def test_demo_runs_only_tools_that_need_no_database():
+    """It must say hello without downloading 62.5 GB — and the inputs are
+    plasmids, so CheckM2's completeness would be correct and useless."""
+    from comparem2 import demo
+
+    assert set(demo.TOOLS) <= {t.name for t in CATALOGUE}
+    # The closure, not just the named four: a dependency would pull one in.
+    for tool in CATALOGUE.closure(list(demo.TOOLS)):
+        assert tool.database is None, \
+            f"{tool.name} needs a database, so --demo would download one"
+
+
+def test_demo_is_packaged_not_merely_present_in_the_checkout():
+    """`plasmids.zip` is the only non-Python file in the package, so it needs a
+    package-data declaration — without one it exists in a git checkout and
+    vanishes from the installed wheel, which is the worst of both."""
+    root = Path(__file__).resolve().parents[2]
+    pyproject = (root / "pyproject.toml").read_text()
+    assert '"comparem2.demo" = ["plasmids.zip"]' in pyproject
+    assert (root / "src" / "comparem2" / "demo" / "plasmids.zip").exists()
+
+
+def test_demo_takes_no_assemblies(tmp_path, capsys):
+    """Rejected rather than merged: a command naming genomes that are never
+    analysed should not look like it analysed them."""
+    with pytest.raises(SystemExit) as excinfo:
+        cli_mod.main(["--demo", "some_genome.fna", "-o", str(tmp_path / "out")])
+    assert "takes no assemblies" in str(excinfo.value)
+
+
 # --- carveme's solver wrapper --------------------------------------
 
 def test_carve_scip_runs_as_a_plain_script():

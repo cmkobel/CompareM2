@@ -60,6 +60,12 @@ version = { attr = "comparem2.__version__" }
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+# The only non-Python file in the package, and the reason it is a zip rather
+# than six FASTAs: 452 KB against 1.5 MB installed, on a package that is
+# otherwise 109 KB. `--demo` extracts it into the run's own output directory.
+"comparem2.demo" = ["plasmids.zip"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
 asyncio_mode = "strict"

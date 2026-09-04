@@ -49,6 +49,9 @@ src/comparem2/
   carve_scip.py the wrapper in front of `carve` — see the solver convention below
   biosynthesis.py  the one tool that is ours: what each model can build, and
                    the 32-compound panel the report reads from
+  demo/         six bundled E. faecium plasmids and what `--demo` runs on them.
+                `plasmids.zip` is the *only* non-Python file in the package, so
+                it needs its `[tool.setuptools.package-data]` entry to ship
 ```
 
 The flow: `cli.py` canonicalises every input to

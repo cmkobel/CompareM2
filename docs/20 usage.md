@@ -35,6 +35,7 @@ typed. Results land next to the genomes.
 | `--tui` | off | interactive keyboard interface |
 | `--conda-prefix DIR` | `~/.comparem2/envs` | where the tool environments go |
 | `--setup` | off | build those environments and exit; takes no assemblies |
+| `--demo` | off | run the bundled plasmids; takes no assemblies |
 | `--keep-going` | off | keep running independent tools after a failure |
 | `--dry-run` | off | show what would run |
 | `--report-only` | off | re-render the report from existing outputs |
@@ -43,6 +44,28 @@ typed. Results land next to the genomes.
 
 There is no flag for *whether* to deploy the tools. Snakemake always does, into
 `--conda-prefix` — see [Installation](10 installation.md).
+
+## The bundled demo
+
+```bash
+cm2 --demo
+```
+
+Six *Enterococcus faecium* plasmids ship inside the package — 452 KB, the only
+non-Python file in it — so this needs no genomes of your own, no databases and
+no network beyond the tool environments themselves. They are extracted to
+`<output>/demo_assemblies/`, where you can look at them and delete them.
+
+It runs `seqkit`, `mashtree`, `treecluster` and `skani`: the four analyses that
+need no database. That list is fixed rather than defaulted, because the inputs
+are **plasmids** — CheckM2 would report a completeness near zero, correctly and
+uselessly, since it is looking for a chromosome's marker genes. Naming
+`--until` yourself still overrides it, on the assumption that you have a reason.
+
+A seventh input is the sixth one again as `116_2 duplicate.fna`. It costs
+nothing to ship and it gives the report something to check itself against: the
+pair must come out at 0.00000 mash distance and 100.00% ANI, and the space in
+the filename exercises sample-name canonicalisation on the way.
 
 ## Where databases go
 
