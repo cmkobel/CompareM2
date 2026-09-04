@@ -50,7 +50,7 @@ There is no flag for *whether* to deploy the tools. Snakemake always does, into
 cm2 --demo
 ```
 
-Six *Enterococcus faecium* plasmids ship inside the package — 452 KB, the only
+Six *Enterococcus faecium* plasmids ship inside the package — 461 KB, the only
 non-Python file in it — so this needs no genomes of your own, no databases and
 no network beyond the tool environments themselves. They are extracted to
 `<output>/demo_assemblies/`, where you can look at them and delete them.

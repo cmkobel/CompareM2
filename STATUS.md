@@ -1041,7 +1041,9 @@ Four things this answered that a solve could not:
   module, and both real runs did exactly that. *Superseded 2026-09-04 in one
   respect:* `src/comparem2/` no longer holds only Python. `demo/plasmids.zip`
   is there and does need a `[tool.setuptools.package-data]` entry — measured in
-  the built wheel at **572 KB** against 109 KB before, and `--demo` extracts it
+  the built wheel at **582,959 bytes** against **122,612** for the same tree
+  with the archive deleted (2026-09-04; the earlier "572 KB against 109 KB"
+  mixed units), and `--demo` extracts it
   into `<output>/demo_assemblies/` rather than beside the module, so the
   read-only conclusion still holds.
 - **`conda` as a run dependency works as intended.** Activating the environment
@@ -1189,12 +1191,34 @@ skani` overrides the fixed list, 2 jobs.
 assemblies with all fourteen tools and an absent `-d` prints `to download:
 checkm2, gtdb, bakta-light, amrfinder (62.5 GB + 2 of unknown size)`.
 
-**The caveat that decides what this is worth:** the code in `0555836` differs
-from `7c98aa9` — the commit whose demo run is recorded above — by **two prose
-strings**, one `--set` help line and one sentence in `guidance.py`. So the
-tagged tree's tools have not been executed; the tree that is two comments away
-from it has, 11 of 11. That is the reason this section is a list of checks and
-not a run.
+### And the tag itself was run on thylakoid
+The section above originally ended by saying the tagged tree's tools were
+unexecuted, on the grounds that `0555836` differs from the demo-verified
+`7c98aa9` by **two prose strings** — one `--set` help line and one sentence in
+`guidance.py`. Carl asked why that was left as an argument rather than a run.
+It is now a run.
+
+22:06:57–22:07:02 on 2026-09-04, from `/evo/postdoc/CompareM2` **checked out
+detached at `v3.1.0`** (`446fcf2`, `__version__` read back as `3.1.0` in the
+working tree), `pixi run cm2 --demo --output results_demo_v310 --cores 8`
+against the existing `/evo/postdoc/cm2-envs-two`: **11 of 11 steps, 4.24 s**
+wall, report **39,778 bytes**. No environment was rebuilt, which is the other
+thing it shows — bumping `pixi.toml`'s version does not invalidate the prefix.
+
+| analysis | the pair | and the rest |
+| --- | --- | --- |
+| seqkit | `contigs.tsv` md5 **`e2ec2407…`** for both — the same md5 the `7c98aa9` run recorded | |
+| skani | **100.00%** ANI | `Dallas_55`↔`ISMMS_VRE_1` **99.38%**, `EF_VRE`↔`116_2` **92.13%** — both unchanged |
+| mashtree | both at **0.00000** | `((EF_VRE,(116_2_duplicate,116_2)),((ISMMS_VRE_1,Dallas_55),E8202),VB3240)` |
+| treecluster | both **cluster 1** | `Dallas_55` and `ISMMS_VRE_1` together in **2**; `VB3240`, `EF_VRE`, `E8202` singletons at `-1` |
+
+The report is 62 bytes larger than the 39,716 of the `7c98aa9` run, and **that
+is not verified down to the byte**: the output directory name appears 4 times
+in the page and this one is 14 characters longer, and the embedded invocation
+differs by `--cores 8`, which accounts for ~65 — but the earlier run's
+directory has since been deleted, so the two pages cannot be diffed. What is
+checked is the tool output rather than the wrapper: identical seqkit md5 and
+identical skani, mashtree and treecluster values.
 
 ## Known broken or unfinished
 

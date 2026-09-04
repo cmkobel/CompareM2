@@ -1,8 +1,12 @@
 """Six *Enterococcus faecium* plasmids, shipped so that `--demo` needs nothing.
 
-Plasmids rather than chromosomes because of what they cost: 452 KB compressed
-against 3.4 MB for the four-chromosome set, on a package that is otherwise
-109 KB. That buys a demo every user can run without downloading a genome, and
+Plasmids rather than chromosomes because of what they cost: **460,821 bytes**
+compressed against 3,557,452 for the four-chromosome test set, on a wheel that
+is 122,612 bytes without them — measured 2026-09-04, both wheels built from the
+same tree. (An earlier version of this docstring said 452 KB, which was `du`'s
+block-allocated figure, and quoted the comparisons in MiB against it. The file
+is 461 kB, or 450 KiB, depending on which you want; bytes avoid the question.)
+That buys a demo every user can run without downloading a genome, and
 the four analyses `--demo` runs — contig statistics, an alignment-free tree,
 clusters and all-against-all ANI — are as meaningful on plasmids as on
 chromosomes.

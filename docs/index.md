@@ -26,7 +26,9 @@ stress test.
     all-against-all ANI (skani)
   - **Pangenome** — core and accessory gene content (Panaroo), SNP distances,
     core-genome tree (FastTree)
-  - **Metabolism** — draft genome-scale metabolic models (CarveMe)
+  - **Metabolism** — draft genome-scale metabolic models (CarveMe), and what
+    each one can build for itself: 32 amino acids, vitamins and cofactors, de
+    novo or acquired
 
 See [what analyses does it do](30 what analyses does it do.md) for the full
 reference, generated from the tool specs themselves.
@@ -45,6 +47,10 @@ report that prints both without saying so invites a conclusion the data will
 not support.
 
 ## Where to start
+
+Installed it already and want to see a report before committing any genomes of
+your own? `comparem2 --demo` runs four analyses over six bundled *Enterococcus
+faecium* plasmids and downloads nothing.
 
   - [Quick start](05 quick start.md) — install and run
   - [Installation](10 installation.md) — conda, pixi, databases, HPC

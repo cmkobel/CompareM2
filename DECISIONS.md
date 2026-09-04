@@ -1327,9 +1327,17 @@ was in flight; it is closed. So no hand-written PR this time — see
 [recipe/README.md](recipe/README.md), where the release steps now split at that
 line.
 
-What was tested first is in [STATUS.md](STATUS.md), and the honest shape of it
-is worth repeating here: a macOS check cannot run a tool and never will,
-because `Tool.conda` renders the whole thirteen-tool environment for any
-subset. So the tagged commit's *tools* are unexecuted, and the tree two prose
-strings away from it ran 11 of 11 on thylakoid. Everything up to the first job
-was checked at the tag: DAG, extraction, wheel, entry points, both docs checks.
+What was tested first is in [STATUS.md](STATUS.md). A macOS check cannot run a
+tool and never will, because `Tool.conda` renders the whole thirteen-tool
+environment for any subset — so the laptop covers everything up to the first
+job (DAG, extraction, wheel, entry points, both docs checks) and nothing after
+it.
+
+**Amended the same evening:** that was first written as an argument — the
+tagged commit is two prose strings from the tree that ran 11 of 11, so its
+tools "need not" be re-run. Carl asked why it had not simply been run, which
+was the right question, and the answer is that ssh to thylakoid cost four
+seconds: 11 of 11 at `v3.1.0` detached, identical seqkit md5 and identical
+skani, mashtree and treecluster numbers. An argument that a run is unnecessary
+is worth less than the run whenever the run is cheap, and here it was cheaper
+than the paragraph defending it.
