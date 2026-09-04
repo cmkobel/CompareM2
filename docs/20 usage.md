@@ -109,7 +109,7 @@ follow. Some useful combinations:
 
 # Everything except the 60.8 GB GTDB download
 --until seqkit checkm2 bakta amrfinder mlst mashtree treecluster skani \
-        panaroo snp-dists fasttree carveme
+        panaroo snp-dists fasttree carveme biosynthesis
 ```
 
 ## Passthrough parameters

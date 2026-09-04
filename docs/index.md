@@ -10,13 +10,15 @@ sequencing technology — and produces one portable HTML report comparing them.
     For the original CompareM (AAI and codon usage), see
     [github.com/donovan-h-parks/CompareM](https://github.com/donovan-h-parks/CompareM).
 
-## A wide view, not a deep one
+## Built for many genomes at once
 
-CompareM2 is triage across many assemblies rather than a deep dive into each. Deep
-functional and metabolic analysis is where DRAM2 and nf-core/funcscan are
-already strong; a fast, wide sweep over a large set is not well served, and it
-is what CompareM2's benchmark result — near-linear scaling with input count —
-actually supports.
+Fourteen analyses run across a whole set of assemblies and land in one report,
+and the cost scales near-linearly with how many you give it — which is the
+benchmark result the design is built on. Comparing a hundred genomes is the
+case it is good at, and for most questions the per-genome depth is what you
+need. Where you want a deep functional or metabolic dive into a single genome,
+[DRAM2](https://github.com/WrightonLabCSU/DRAM) and
+[nf-core/funcscan](https://nf-co.re/funcscan) complement it well.
 
 Narrowing the scope is what pays for everything else: **14 tools instead of
 30+, two conda environments instead of 25, 7.7 GB of software.**

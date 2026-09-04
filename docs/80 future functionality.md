@@ -2,15 +2,13 @@
 
 ## What CompareM2 deliberately does not do
 
-CompareM2 is a wide view over many assemblies, not a deep view into each one.
-Some
-things are out of scope by choice rather than for lack of time, and knowing
-which is which saves everyone an issue:
+Some things are out of scope by choice rather than for lack of time, and
+knowing which is which saves everyone an issue:
 
-  - **Deep functional and metabolic interpretation** — this is where
-    [DRAM2](https://github.com/WrightonLabCSU/DRAM) and
-    [nf-core/funcscan](https://nf-co.re/funcscan) are already strong. CompareM2
-    will not compete with them.
+  - **Deep functional and metabolic interpretation of a single genome** — this
+    is where [DRAM2](https://github.com/WrightonLabCSU/DRAM) and
+    [nf-core/funcscan](https://nf-co.re/funcscan) are strong, and they
+    complement CompareM2 rather than overlapping with it.
   - **Read-level processing** — mapping, assembly and binning are highly
     dependent on sequencing technology. CompareM2 works strictly downstream of
     them, which is what makes it technology-independent.

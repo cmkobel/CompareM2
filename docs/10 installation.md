@@ -150,8 +150,9 @@ authoritative answer to "what is this genome", but if you do not need taxonomy,
 leaving it out is the single biggest saving available:
 
 ```bash
-comparem2 *.fna --until seqkit checkm2 bakta amrfinder mlst \
-                        mashtree treecluster skani panaroo snp-dists fasttree
+comparem2 *.fna --until seqkit checkm2 bakta amrfinder mlst mashtree \
+                        treecluster skani panaroo snp-dists fasttree carveme \
+                        biosynthesis
 ```
 
 Bakta uses the **light** database (1.3 GB / 4.0 GB on disk) rather than v2's

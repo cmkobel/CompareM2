@@ -17,13 +17,13 @@ v2: **easy to install, easy to run, easy to interpret.**
 
 ## What is different in v3
 
-**A wide view, not a deep one.** v3 is triage across many assemblies rather than
-a deep dive into each. Deep functional and metabolic analysis is where DRAM2 and
-nf-core/funcscan are already strong; a fast wide sweep is not well served, and
-it is what v2's benchmark result — near-linear scaling with input count —
-actually supports.
+**Built for many genomes at once.** Fourteen analyses across a whole set of
+assemblies, in one report, at a cost that scales near-linearly with how many you
+give it — the benchmark result the design is built on. Where you want a deep
+functional or metabolic dive into a single genome, DRAM2 and nf-core/funcscan
+complement it well.
 
-That choice is what makes the rest possible:
+Scoping it that way is what makes the rest possible:
 
 | | v2 | v3 |
 | --- | --- | --- |
