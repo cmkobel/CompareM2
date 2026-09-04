@@ -527,6 +527,13 @@ GUIDANCE: dict[str, Guidance] = {
             "penalises size differences. A more fragmented or contaminated genome will shift "
             "for reasons that are not divergence, so cross-check CheckM2 and the assembly "
             "sizes before believing an odd placement.",
+            "Recombination is the other reason a placement can be odd, and the one CheckM2 "
+            "cannot rule out. Because the comparison is over whole k-mer sets, a genome "
+            "carrying a large block acquired from another lineage moves towards that "
+            "lineage, and its position then describes the mosaic rather than a vertical "
+            "history. The core-gene tree is not a way out — it inherits the same problem — "
+            "and masking the imported region is, which this pipeline does not do (general "
+            "caution, not a Mashtree finding).",
             "The demonstrated accuracy is for closely related genomes: the ANI correlation "
             "was shown over 90–100% ANI and degrades beyond it as the variance of the "
             "estimate grows. Deep splits in a mixed-genus set are the least trustworthy part "
