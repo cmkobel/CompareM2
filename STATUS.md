@@ -1060,6 +1060,36 @@ the test data out over.
 `/evo/postdoc/cm2-install-test` is **9.8 GB**, 7.7 GB of it a second copy of the
 two tool environments in its own prefix. Deletable once this is written down.
 
+### What v3.0.0 is tagged at, and what 3.0.1 owes
+Settled 2026-09-04. `v3.0.0` points at **`b217b50`**, tarball sha256
+**`f7644b3a…`**, which is what [PR #68805](https://github.com/bioconda/bioconda-recipes/pull/68805)
+carries and what all five of its checks passed against (Linux 10m52s, OSX-64
+7m57s, ARM 1m16s, Lint, Summary). Tag, tarball and recipe agree.
+
+The tag moved three times getting there — `009c88b` → `b217b50` → `42e2d0d` →
+`b217b50` — and the round trip is worth explaining, because `b217b50` is
+knowingly **not** the best commit. Its own CI is red: `1da59af` added a caveat
+to `guidance.py` without regenerating the page derived from it, and the four
+commits from there to `ec9b19c` all fail `docs/generate.py --check`. `42e2d0d`
+fixes that and adds the unit test that would have caught it.
+
+The tag went back anyway because **GitHub never synced the second recipe update
+onto the PR.** The commit landed on the fork branch (`5e4d7c7`, verified by
+`branches/comparem2-3.0.0`) and the PR's head stayed at `ddb0a1c` for eleven
+minutes — so the PR would have merged a recipe whose hash no longer matched the
+tag. Moving the tag back restored agreement, and re-tagging `b217b50` reproduced
+`f7644b3a` byte-for-byte, so the recipe needed no further change. The orphan
+`5e4d7c7` was reset off the branch, since a late sync would have reintroduced
+the wrong hash.
+
+**The cost is bounded and cosmetic:** the stale page is a mkdocs source file.
+readthedocs builds from `master`, and the conda package neither builds nor
+ships it — the three platform builds passing on that exact tarball is the
+evidence. What ships is right; what is tagged has a red docs check.
+
+**So 3.0.1 owes the contents of `42e2d0d`** — the regenerated page and its test.
+Nothing else is outstanding from this round.
+
 ## Known broken or unfinished
 
 - **AMRFinder's database still lives in the conda prefix**, so it is refetched

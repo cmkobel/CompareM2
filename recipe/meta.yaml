@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/cmkobel/CompareM2/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 4b00343c87fbfc2c77785fce8bfd45f6402be9c54364f3f3731fd9d42f24f081
+  sha256: f7644b3a6fdb774584d4f5246e59c43bd31dea3b572f191e3f27267afd5d05df
 
 build:
   number: 0
