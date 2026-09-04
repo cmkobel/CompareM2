@@ -7,11 +7,11 @@ conda install -c conda-forge -c bioconda comparem2=3
 comparem2 *.fna
 ```
 
-> On bioconda since 2026-09-04. `=3` asks for the v3 series — a fuzzy match, so
-> 3.0.1 and later still satisfy it. Worth asking for: conda resolves a conflict
-> by falling back to an older build, and here the older builds are v2, a
-> different program with a different interface. The constraint turns a silent
-> downgrade into an error. The paper describes v2, whose documentation remains at
+> On bioconda since 2026-09-04. `=3` is a fuzzy match on the v3 series, so 3.0.1
+> and later still satisfy it; it is there so that a resolver conflict fails
+> loudly instead of quietly giving you v2 — see
+> [installation](https://comparem2.readthedocs.io/en/latest/10%20installation/).
+> The paper describes v2, whose documentation remains at
 > [comparem2.readthedocs.io/en/stable](https://comparem2.readthedocs.io/en/stable/).
 
 CompareM2 takes microbial genome assemblies — isolates or MAGs — and produces a

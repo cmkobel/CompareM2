@@ -1103,6 +1103,13 @@ evidence. What ships is right; what is tagged has a red docs check.
 **So 3.0.1 owes the contents of `42e2d0d`** — the regenerated page and its test.
 Nothing else is outstanding from this round.
 
+**The published package installs.** `conda install -c conda-forge -c bioconda
+comparem2` into a clean environment resolves to v3, checked by Carl on
+2026-09-04 — so the `=3` the docs recommend is a guard against a resolver
+falling back to a v2 build under conflict, not a workaround for a channel that
+does not yet serve v3. An earlier version of the docs said the pin was needed
+"until the channel settles", which named no mechanism and was wrong.
+
 Loose end: autobump [PR #68821](https://github.com/bioconda/bioconda-recipes/pull/68821),
 opened by the bot at 12:25:44Z after the tag moved. Its hash is correct but it is
 a version-only bump — it neither drops v2's `build.sh` nor sets

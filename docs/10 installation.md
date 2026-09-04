@@ -3,10 +3,14 @@
 !!! tip "Ask for the major version"
     v3 reached bioconda on 2026-09-04, and 2.8.1 through 2.16.2 are still
     published alongside it. `comparem2=3` is conda's fuzzy match on the 3
-    release series, so it accepts 3.0.1 and later but never a v2 build. Without
-    it, conda is free to resolve a dependency conflict by falling back to an
-    older version — and v2 is a different program with a different interface,
-    which is a worse outcome than a resolver error.
+    release series, so it accepts 3.0.1 and later but never a v2 build.
+
+    A bare `conda install comparem2` into a clean environment picks the newest
+    version and does give you v3 — verified 2026-09-04. The constraint is for
+    the other case: installing into an environment where v3's dependencies
+    conflict, which conda may resolve by choosing an older build. Every older
+    build of this package is v2, a different program with a different
+    interface, and that is a worse outcome than a resolver error.
 
 There are two ways to install CompareM2, and they differ only in how *the
 pipeline* arrives. **The fourteen analysis tools arrive the same way in both**:
