@@ -5,11 +5,12 @@
 Linux only — the analysis tools are `linux-64`.
 
 ```bash
-conda install -c conda-forge -c bioconda comparem2=3.0.0
+conda install -c conda-forge -c bioconda comparem2=3
 ```
 
-Ask for the version. A bare `conda install comparem2` may still resolve to a v2
-build until the channel settles, and v2 is a different program.
+`=3` asks for the v3 series, and still accepts 3.0.1 and later. Without it,
+conda can resolve a dependency conflict by falling back to an older build — and
+the older builds here are v2, a different program.
 
 To work on CompareM2 rather than just use it, install from git with
 [pixi](https://pixi.prefix.dev/latest/#installation) instead — see

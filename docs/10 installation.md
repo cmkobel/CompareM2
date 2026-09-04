@@ -1,10 +1,12 @@
 # Installation
 
-!!! tip "Pin the version"
-    v3.0.0 reached bioconda on 2026-09-04. Ask for it by version —
-    `comparem2=3.0.0` — because a bare `conda install comparem2` may still
-    resolve to a v2 build until the channel settles, and v2 is a different
-    program with a different interface.
+!!! tip "Ask for the major version"
+    v3 reached bioconda on 2026-09-04, and 2.8.1 through 2.16.2 are still
+    published alongside it. `comparem2=3` is conda's fuzzy match on the 3
+    release series, so it accepts 3.0.1 and later but never a v2 build. Without
+    it, conda is free to resolve a dependency conflict by falling back to an
+    older version — and v2 is a different program with a different interface,
+    which is a worse outcome than a resolver error.
 
 There are two ways to install CompareM2, and they differ only in how *the
 pipeline* arrives. **The fourteen analysis tools arrive the same way in both**:
@@ -37,7 +39,7 @@ model, and there is no flag for it.
 ## With conda
 
 ```bash
-conda install -c conda-forge -c bioconda comparem2=3.0.0
+conda install -c conda-forge -c bioconda comparem2=3
 comparem2 *.fna
 ```
 

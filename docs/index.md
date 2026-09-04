@@ -5,11 +5,12 @@ sequencing technology — and produces one portable HTML report comparing them.
 
 !!! info "These docs describe v3"
     ```bash
-    conda install -c conda-forge -c bioconda comparem2=3.0.0
+    conda install -c conda-forge -c bioconda comparem2=3
     ```
-    v3 is a rewrite, on bioconda since 2026-09-04. Ask for the version — a
-    bare `conda install comparem2` may still resolve to a v2 build until the
-    channel settles. The version the paper describes is v2, documented at
+    v3 is a rewrite, on bioconda since 2026-09-04. `=3` asks for the v3 series
+    and still accepts 3.0.1 and later; without it, conda may resolve a conflict
+    by falling back to a v2 build, which is a different program. The version the
+    paper describes is v2, documented at
     [comparem2.readthedocs.io/en/stable](https://comparem2.readthedocs.io/en/stable/).
 
 !!! note
