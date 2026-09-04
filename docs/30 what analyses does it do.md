@@ -78,7 +78,7 @@ Answers whether a genome is good enough to use, by estimating how much of the or
 
 **How it works.** Genes are called with Prodigal and annotated against a reference database with DIAMOND; those annotations plus genome length and coding statistics feed machine-learning regression models trained on simulated genomes of known quality. There is no taxonomic assignment step at any point.
 
-Runs once over the whole set · 8 threads · database `checkm2` (1.7 GB) · **own conda environment**
+Runs once over the whole set · 8 threads · database `checkm2` (1.7 GB) · **its own conda environment**, `checkm2`
 
 ```
 checkm2 predict --threads 8 --database_path ~/.comparem2/databases/checkm2/checkm2.dmnd --output-directory results_comparem2/checkm2 --input results_comparem2/samples/genome_A/genome_A.fna results_comparem2/samples/genome_B/genome_B.fna

@@ -106,8 +106,11 @@ def analyses_page() -> str:
             facts.append("after " + ", ".join(f"`{n}`" for n in tool.needs))
         if tool.database:
             facts.append(f"database `{tool.database.name}` ({tool.database.human_size})")
-        if tool.isolated:
-            facts.append("**own conda environment**")
+        # `isolated: bool` became `environment: str` when the deploy went from
+        # one-per-tool to two shared environments. Naming which one it is says
+        # more than a flag did: everything is `main` except checkm2.
+        if tool.environment != "main":
+            facts.append(f"**its own conda environment**, `{tool.environment}`")
         parts.append(" · ".join(facts) + "\n\n")
 
         parts.append(f"```\n{_example_command(tool)}\n```\n\n")
