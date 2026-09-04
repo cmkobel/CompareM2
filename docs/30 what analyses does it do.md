@@ -247,6 +247,7 @@ mashtree --numcpus 8 --genomesize 5000000 --mindepth 5 --kmerlength 21 --sketch-
 
   - This is not a phylogeny and the authors say so: Katz et al. write "Although Mashtree does not infer phylogeny", and Ondov et al. "emphasize that Mash is not explicitly designed for phylogeny reconstruction". Use it to triage and group; use the core-genome tree for any evolutionary claim.
   - Mash distance measures resemblance of whole k-mer sets, so it moves with gene content and genome size as well as with point mutations — Mash deliberately penalises size differences. A more fragmented or contaminated genome will shift for reasons that are not divergence, so cross-check CheckM2 and the assembly sizes before believing an odd placement.
+  - Recombination is the other reason a placement can be odd, and the one CheckM2 cannot rule out. Because the comparison is over whole k-mer sets, a genome carrying a large block acquired from another lineage moves towards that lineage, and its position then describes the mosaic rather than a vertical history. The core-gene tree is not a way out — it inherits the same problem — and masking the imported region is, which this pipeline does not do (general caution, not a Mashtree finding).
   - The demonstrated accuracy is for closely related genomes: the ANI correlation was shown over 90–100% ANI and degrades beyond it as the variance of the estimate grows. Deep splits in a mixed-genus set are the least trustworthy part of the drawing.
 
 ---

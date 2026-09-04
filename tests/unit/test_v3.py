@@ -11,6 +11,7 @@ Run with: pixi run pytest tests/unit -q
 from __future__ import annotations
 
 import html
+import importlib.util
 import os
 import re
 import subprocess
@@ -2448,6 +2449,26 @@ def test_patch_solver_reports_a_missing_backend_rather_than_failing(monkeypatch)
 
     monkeypatch.setitem(sys.modules, "reframed.solvers.scip_solver", None)
     assert "unavailable" in carve_scip.patch_solver()
+
+
+def test_the_generated_docs_are_current():
+    """The pages are derived from catalogue.py and guidance.py, so a caveat
+    added to one of those leaves them stale.
+
+    This existed only as `docs/generate.py --check` in CI, which meant a full
+    green `pytest` said nothing about it: adding one sentence to mashtree's
+    guidance passed 206 tests locally and turned CI red. Same comparison as
+    `--check`, run where the change is made.
+    """
+    root = Path(__file__).resolve().parents[2]
+    spec = importlib.util.spec_from_file_location(
+        "cm2_docs_generate", root / "docs" / "generate.py")
+    generate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(generate)
+
+    stale = [name for name, build in generate.PAGES.items()
+             if (generate.DOCS / name).read_text() != build()]
+    assert not stale, f"run python docs/generate.py: {', '.join(stale)}"
 
 
 def test_the_generated_docs_do_not_carry_an_absolute_path():
