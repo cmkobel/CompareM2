@@ -1470,9 +1470,22 @@ def _section_amrfinder(tool: Tool, ctx: Context, workdir: Path) -> str:
     because the class names are long — `Lincosamide/Macrolide/Streptogramin` is
     one of them — and a column per class overflowed the page at four genomes.
     Rotated, a long name costs vertical space instead.
+
+    A row with no class is not a class. `--plus` also reports virulence genes,
+    and AMRFinderPlus writes them out with `Class=NA` — a literal string, not an
+    empty field, so accepting any non-empty `Class` gave them a column of their
+    own. It sorted between Mercury and Quaternary Ammonium and drew as `Na`, in
+    the styling of a real class: in the seven-genome *S. aureus* run of
+    2026-09-02 it took 121 of 220 rows, and because shading is scaled to the
+    peak, one genome's 22 virulence hits pushed every genuine class into the
+    bottom third of the ramp. It also reversed the row totals — TW20 with 29
+    real hits printed a lower total than N315 with 27. They are counted and
+    named in the summary instead, because `--plus` asks for them deliberately
+    and the per-genome TSV is where they are legible.
     """
     per_genome: dict[str, dict[str, int]] = {}
     classes: dict[str, None] = {}
+    unclassed = 0
     for sample in ctx.samples:
         path = ctx.sample_out(sample, "amrfinder", "amrfinder.tsv")
         if not path.exists():
@@ -1489,15 +1502,25 @@ def _section_amrfinder(tool: Tool, ctx: Context, workdir: Path) -> str:
         for rec in rows[1:]:
             if len(rec) > i_class and rec[i_class]:
                 name = rec[i_class]
+                if name.strip().upper() == "NA":
+                    unclassed += 1
+                    continue
                 counts[name] = counts.get(name, 0) + 1
                 classes.setdefault(name, None)
         per_genome[sample] = counts
+
+    # Named rather than merely subtracted: a reader who counts the rows of the
+    # TSV and the cells of this grid should be told where the difference went.
+    note = (f" A further {unclassed} hit{'s' if unclassed != 1 else ''} "
+            "carried no resistance class and are not shown — `--plus` also "
+            "reports virulence genes, which have none. They are in each "
+            "genome's own table." if unclassed else "")
 
     if not per_genome:
         return '<p class="missing">No resistance genes detected.</p>'
     if not classes:
         return ('<p class="summary">Every genome was searched and none carried a '
-                "gene with a resistance class assigned.</p>")
+                f"gene with a resistance class assigned.{note}</p>")
 
     order = sorted(classes)
     absent = len(ctx.samples) - len(per_genome)
@@ -1523,7 +1546,7 @@ def _section_amrfinder(tool: Tool, ctx: Context, workdir: Path) -> str:
         f"{'es' if len(order) != 1 else ''} across {len(per_genome)} genome"
         f"{'s' if len(per_genome) != 1 else ''}. Shading is the number of hits in "
         f"that class, darkest at {peak}; the figure after each row is the "
-        "genome's total.</p>"
+        f"genome's total.{note}</p>"
         + _grid(list(ctx.samples), [c.title() for c in order],
                 fracs, "43,108,176", row_notes=totals, cell_values=values,
                 label="resistance classes per genome")

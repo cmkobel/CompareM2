@@ -1994,6 +1994,44 @@ def test_a_genome_a_tool_skipped_is_shown_rather_than_dropped(tmp_path):
     assert ">B</text>" in chunk, "the skipped genome still needs its row"
 
 
+def test_amrfinder_does_not_draw_a_class_called_na(tmp_path):
+    """`--plus` reports virulence genes, which AMRFinderPlus writes with a
+    literal `Class=NA`. Accepting any non-empty class gave them a column that
+    sorted between Mercury and Quaternary Ammonium and drew as `Na`."""
+    samples = ("A", "B")
+    _fixture(tmp_path, samples, amr={
+        # B's real burden is larger; A's row is mostly virulence.
+        "A": ["NA"] * 9 + ["MACROLIDE"],
+        "B": ["TETRACYCLINE", "MACROLIDE", "MERCURY", "NA"],
+    })
+    body = render_report(CATALOGUE, ["seqkit", "amrfinder"], tmp_path,
+                         Path("db"), samples).read_text()
+    chunk = body.split('<h2 id="amrfinder">')[1].split("<h2 ")[0]
+
+    assert ">Na</text>" not in chunk and ">NA</text>" not in chunk
+    assert "3 resistance classes" in chunk, "only the classed hits are classes"
+    # The ramp is scaled to a real class now, not to a pile of virulence hits.
+    assert "darkest at 1" in chunk
+    # And the row-end totals no longer reverse the comparison. A's nine
+    # virulence hits used to put it above B, which carries three real classes.
+    notes = re.findall(r'<text x="163.0"[^>]*>(\d+)</text>', chunk)
+    assert notes == ["1", "3"], notes
+    assert "A further 10 hits carried no resistance class" in chunk
+    assert "virulence" in chunk
+
+
+def test_amrfinder_says_so_when_every_hit_was_unclassed(tmp_path):
+    """The grid would be empty. Saying nothing was found is wrong when ten
+    virulence genes were: the count has to survive into the summary."""
+    samples = ("A",)
+    _fixture(tmp_path, samples, amr={"A": ["NA"] * 10})
+    body = render_report(CATALOGUE, ["seqkit", "amrfinder"], tmp_path,
+                         Path("db"), samples).read_text()
+    chunk = body.split('<h2 id="amrfinder">')[1].split("<h2 ")[0]
+    assert "none carried a gene with a resistance class assigned" in chunk
+    assert "A further 10 hits carried no resistance class" in chunk
+
+
 def test_matrices_become_a_heatmap_before_they_stop_fitting(tmp_path):
     """A numeric cell needs ~70px, so a table of them stops fitting the column
     at about a dozen genomes. Past that the same data is drawn."""
