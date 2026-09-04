@@ -785,7 +785,47 @@ variation and is not worth a cause.
 
 FastTree had never been run on arm before this. Input is prodigal, not bakta,
 so **gene counts still are not comparable to thylakoid** — a bakta-annotated
-arm run needs the 1.3 GB light database and has not been done.
+arm run needs the 1.3 GB light database. That has since been done; see below.
+
+### bakta runs on arm, and gives thylakoid's numbers
+
+Measured 2026-09-04 on the laptop, macOS 26.2 / Apple silicon, 10 cores. Second
+tool executed on arm, after panaroo. Working material
+`~/postdoc/cm2-macos/bakta/`.
+
+*Installed from conda alone*, `bakta >=1.10` — the catalogue's own spec — into a
+pixi project pinned to `osx-arm64`: **155 packages, 1.2 GB**, bakta 1.12.1
+`pyhdfd78af_0`, **python 3.13.15**. bakta itself is `noarch`, and every compiled
+dependency has a native arm build — `file` reports `Mach-O 64-bit executable
+arm64` for diamond 2.2.6, blastn 2.17.0, aragorn 1.2.41, cmscan (infernal
+1.1.5), pilercr 1.06 and amrfinder 4.2.7. No pip, no `--no-deps`, nothing built
+locally, unlike panaroo.
+
+*Database.* `bakta_db download --type light` — the catalogue's own step —
+fetched db **v6.0** (2025-02-24, Zenodo 14916843): 1.34 GB in 4:28 at 5.01 MB/s,
+**4.0 GB on disk**, matching the figure in the table below. `version.json`, the
+catalogue's `ready` marker, is present.
+
+*Executed*, with `catalogue.py`'s command line verbatim (`--db`, `--threads 8`,
+`--output`, `--prefix`, `--force`), on `116_2.fna` and `116_2 duplicate.fna`:
+exit 0 both, **66.42 s** and **60.18 s** wall. Not comparable to the 350 s / 100 s
+in the per-rule table above — that was four jobs sharing 24 cores, this is two
+run one after the other.
+
+| | |
+| --- | --- |
+| CDS | **2,588** in the GFF3, both genomes — thylakoid's number exactly |
+| why the summary says 2,587 | `.txt` counts `CDSs: 2587` and `sORFs: 1` separately; the GFF3 emits both as `CDS`. Same features, two conventions |
+| duplicate pair | `.faa` **byte-identical**, sha256 `98c0541b…`; `.gff3` identical but for the lines carrying the sample name. The space in the filename is handled |
+| other features | 68 tRNA, 1 tmRNA, 18 rRNA, 13 ncRNA, 34 ncRNA regions, 0 CRISPR, 2 oriC, 305 hypotheticals — identical across the pair |
+| AMRFinder expert hits | **7** each, which is what thylakoid reports for these two |
+
+Two caveats. This is bakta alone, not bakta inside a Snakemake run, and no
+downstream tool has been fed these annotations on arm — the arm panaroo numbers
+above are still prodigal's. And bakta 1.12.1 emits a `SyntaxWarning: invalid
+escape sequence '\-'` from `bakta/features/annotation.py:28` under python 3.13;
+it is cosmetic, and thylakoid does not see it because intbitset holds that
+environment at 3.11.16.
 
 Working material, outside git because it holds a `conda-bld` tree:
 `~/postdoc/cm2-macos/` — the prepared feedstock branch, the four `.conda`
