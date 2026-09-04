@@ -1,17 +1,5 @@
 # Installation
 
-!!! tip "Ask for the major version"
-    v3 reached bioconda on 2026-09-04, and 2.8.1 through 2.16.2 are still
-    published alongside it. `comparem2=3` is conda's fuzzy match on the 3
-    release series, so it accepts 3.0.1 and later but never a v2 build.
-
-    A bare `conda install comparem2` into a clean environment picks the newest
-    version and does give you v3 — verified 2026-09-04. The constraint is for
-    the other case: installing into an environment where v3's dependencies
-    conflict, which conda may resolve by choosing an older build. Every older
-    build of this package is v2, a different program with a different
-    interface, and that is a worse outcome than a resolver error.
-
 There are two ways to install CompareM2, and they differ only in how *the
 pipeline* arrives. **The fourteen analysis tools arrive the same way in both**:
 Snakemake deploys them into two conda environments the first time they are
@@ -23,10 +11,8 @@ needed.
 | the tools | two environments, deployed on first use | two environments, deployed on first use |
 | good for | using it | development |
 
-That is a change from earlier v3 documentation, which described a pixi
-environment with every tool on PATH and a `--use-conda` flag to opt into
-deployment instead. Both are gone: since 2026-09-03 deployment is the only
-model, and there is no flag for it.
+There is no flag for *whether* to deploy them. Snakemake always does, into
+`--conda-prefix`.
 
 ## Requirements
 
@@ -43,13 +29,12 @@ model, and there is no flag for it.
 ## With conda
 
 ```bash
-conda install -c conda-forge -c bioconda comparem2=3
+conda install -c conda-forge -c bioconda comparem2
 comparem2 *.fna
 ```
 
-The package is `noarch: python`, published as
-`comparem2-3.0.0-pyhdfd78af_0.conda`, and contains **the pipeline and none of
-the fourteen tools**. Its only dependencies are Python, Snakemake and its two
+The package is `noarch: python` and contains **the pipeline and none of the
+fourteen tools**. Its only dependencies are Python, Snakemake and its two
 executor plugins, Textual, and `conda` itself — that last one because Snakemake
 shells out to it to build the tool environments.
 

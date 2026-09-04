@@ -1,19 +1,20 @@
 # Future functionality
 
-## What v3 deliberately does not do
+## What CompareM2 deliberately does not do
 
-v3 is a wide view over many assemblies, not a deep view into each one. Some
+CompareM2 is a wide view over many assemblies, not a deep view into each one.
+Some
 things are out of scope by choice rather than for lack of time, and knowing
 which is which saves everyone an issue:
 
   - **Deep functional and metabolic interpretation** — this is where
     [DRAM2](https://github.com/WrightonLabCSU/DRAM) and
-    [nf-core/funcscan](https://nf-co.re/funcscan) are already strong. v3 will
-    not compete with them.
+    [nf-core/funcscan](https://nf-co.re/funcscan) are already strong. CompareM2
+    will not compete with them.
   - **Read-level processing** — mapping, assembly and binning are highly
     dependent on sequencing technology. CompareM2 works strictly downstream of
     them, which is what makes it technology-independent.
-  - **Biosynthetic gene clusters** — antiSMASH was selected for v3 and then
+  - **Biosynthetic gene clusters** — antiSMASH was selected and then
     dropped: it pins `biopython 1.78` and `diamond 2.1.11` against the newer
     versions CheckM2, Bakta and GTDB-Tk need, and one solved environment was
     judged worth more than one BGC caller. funcscan ships four.

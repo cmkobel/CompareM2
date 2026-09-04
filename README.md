@@ -3,15 +3,12 @@
 [![unit tests](https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml/badge.svg)](https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml) [![https://doi.org/10.1093/bioinformatics/btaf517](https://img.shields.io/badge/doi%20%28OUP%29-10.1093%2Fbioinformatics%2Fbtaf517-blue.svg)](https://doi.org/10.1093/bioinformatics/btaf517)
 
 ```bash
-conda install -c conda-forge -c bioconda comparem2=3
+conda install -c conda-forge -c bioconda comparem2
 comparem2 *.fna
 ```
 
-> On bioconda since 2026-09-04. `=3` is a fuzzy match on the v3 series, so 3.0.1
-> and later still satisfy it; it is there so that a resolver conflict fails
-> loudly instead of quietly giving you v2 — see
-> [installation](https://comparem2.readthedocs.io/en/latest/10%20installation/).
-> The paper describes v2, whose documentation remains at
+> On bioconda since 2026-09-04. The paper describes v2, whose documentation
+> remains at
 > [comparem2.readthedocs.io/en/stable](https://comparem2.readthedocs.io/en/stable/).
 
 CompareM2 takes microbial genome assemblies — isolates or MAGs — and produces a

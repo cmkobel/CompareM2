@@ -3,23 +3,16 @@
 CompareM2 takes microbial genome assemblies — isolates or MAGs, from any
 sequencing technology — and produces one portable HTML report comparing them.
 
-!!! info "These docs describe v3"
-    ```bash
-    conda install -c conda-forge -c bioconda comparem2=3
-    ```
-    v3 is a rewrite, on bioconda since 2026-09-04. `=3` asks for the v3 series
-    and still accepts 3.0.1 and later; without it, conda may resolve a conflict
-    by falling back to a v2 build, which is a different program. The version the
-    paper describes is v2, documented at
+!!! note "Looking for something else?"
+    The paper describes v2, documented at
     [comparem2.readthedocs.io/en/stable](https://comparem2.readthedocs.io/en/stable/).
 
-!!! note
-    Looking for the original CompareM (AAI and codon usage)? See
+    For the original CompareM (AAI and codon usage), see
     [github.com/donovan-h-parks/CompareM](https://github.com/donovan-h-parks/CompareM).
 
 ## A wide view, not a deep one
 
-v3 is triage across many assemblies rather than a deep dive into each. Deep
+CompareM2 is triage across many assemblies rather than a deep dive into each. Deep
 functional and metabolic analysis is where DRAM2 and nf-core/funcscan are
 already strong; a fast, wide sweep over a large set is not well served, and it
 is what CompareM2's benchmark result — near-linear scaling with input count —

@@ -42,9 +42,7 @@ typed. Results land next to the genomes.
 | `--version` | | print the version and exit |
 
 There is no flag for *whether* to deploy the tools. Snakemake always does, into
-`--conda-prefix` — see [Installation](10 installation.md). Earlier v3
-documentation described `--use-conda` and `--isolated-launcher`; both were
-removed on 2026-09-03 along with the mode that needed them.
+`--conda-prefix` — see [Installation](10 installation.md).
 
 ## Where databases go
 
