@@ -138,7 +138,6 @@ def analyses_page() -> str:
         "bare:\n\n"
         "```bash\ncm2 *.fna --set treecluster--threshold=0.1 "
         "--set skani-c=125\n```\n\n"
-        "In v2 this was `set_<tool>--<flag>: <value>` in `config.yaml`.\n"
     )
     return "".join(parts)
 

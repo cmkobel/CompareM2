@@ -24,7 +24,7 @@ There is no flag for *whether* to deploy them. Snakemake always does, into
   - **Disk.** **7.7 GB** of tool environments, plus databases — see below.
     GTDB-Tk alone is 60.8 GB to download and 94 GB unpacked.
   - **RAM.** GTDB-Tk's classify step is the peak; its own paper reports under
-    55 GB for the v2 divide-and-conquer placement. Without GTDB-Tk, far less.
+    55 GB for GTDB-Tk 2's divide-and-conquer placement. Without GTDB-Tk, far less.
 
 ## With conda
 
@@ -49,7 +49,7 @@ no databases needed, so the first real run does not pay for it.
 git clone https://github.com/cmkobel/CompareM2.git
 cd CompareM2
 pixi install
-pixi run pytest        # 200 unit tests, no databases and no tools needed
+pixi run pytest        # 212 unit tests, no databases and no tools needed
 pixi run cm2 --help
 ```
 
@@ -155,7 +155,7 @@ comparem2 *.fna --until seqkit checkm2 bakta amrfinder mlst mashtree \
                         biosynthesis
 ```
 
-Bakta uses the **light** database (1.3 GB / 4.0 GB on disk) rather than v2's
+Bakta uses the **light** database (1.3 GB / 4.0 GB on disk) rather than the
 full one (30 GB / 84 GB). That saves 29 GB for less specific functional
 annotation, which a wide view can absorb — but note the Bakta paper's
 annotation-quality figures are measured on the full database and do not

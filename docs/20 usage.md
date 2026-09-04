@@ -9,8 +9,7 @@ pixi run cm2 <assemblies>... [options]   # from a git checkout
 are interchangeable. The examples below use the plain form; from a git checkout
 prefix them with `pixi run`.
 
-Assemblies are passed as paths, not as a glob string. In v2 this was
-`--config input_genomes="*.fna"`; now the shell expands it:
+Assemblies are passed as paths, and the shell expands the glob:
 
 ```bash
 cm2 genomes/*.fna
@@ -122,9 +121,8 @@ cm2 *.fna --until fasttree     # runs bakta, panaroo, fasttree
 cm2 *.fna --until seqkit skani # runs just those two
 ```
 
-There are no fixed pseudo-targets like v2's `fast` and `isolate`. The
-dependency closure replaces them: name what you want and the prerequisites
-follow. Some useful combinations:
+There are no fixed presets to memorise: name what you want and the
+prerequisites follow. Some useful combinations:
 
 ```bash
 # Fast, no databases at all

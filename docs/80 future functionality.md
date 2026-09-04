@@ -12,13 +12,13 @@ knowing which is which saves everyone an issue:
   - **Read-level processing** — mapping, assembly and binning are highly
     dependent on sequencing technology. CompareM2 works strictly downstream of
     them, which is what makes it technology-independent.
-  - **Biosynthetic gene clusters** — antiSMASH was selected and then
-    dropped: it pins `biopython 1.78` and `diamond 2.1.11` against the newer
-    versions CheckM2, Bakta and GTDB-Tk need, and one solved environment was
-    judged worth more than one BGC caller. funcscan ships four.
+  - **Biosynthetic gene clusters** — antiSMASH was considered and left out:
+    it pins `biopython 1.78` and `diamond 2.1.11` against the newer versions
+    CheckM2, Bakta and GTDB-Tk need, and one solved environment was judged
+    worth more than one BGC caller.
 
-Dropped from v2 for the same reason: eggNOG-mapper, InterProScan, dbCAN,
-gapseq, antiSMASH, IQ-TREE, clusterProfiler and Prokka.
+Left out for the same reason: eggNOG-mapper, InterProScan, dbCAN, gapseq,
+IQ-TREE, clusterProfiler and Prokka.
 
 ## Candidates
 

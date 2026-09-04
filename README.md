@@ -19,9 +19,8 @@ v2: **easy to install, easy to run, easy to interpret.**
 
 **Built for many genomes at once.** Fourteen analyses across a whole set of
 assemblies, in one report, at a cost that scales near-linearly with how many you
-give it — the benchmark result the design is built on. Where you want a deep
-functional or metabolic dive into a single genome, DRAM2 and nf-core/funcscan
-complement it well.
+give it — the benchmark result the design is built on. A hundred genomes is an
+ordinary input, not a stress test.
 
 Scoping it that way is what makes the rest possible:
 
@@ -33,13 +32,13 @@ Scoping it that way is what makes the rest possible:
 | Databases | 7 (incl. 84 GB Bakta full) | **4** (Bakta light) |
 | Report | R, RMarkdown, pandoc | **Python**, one HTML file |
 | Runtime | R + Python | **Python only** |
-| Unit tests | none | **200** |
+| Unit tests | none | **212** |
 
 **Every tool is one declarative spec.** There is no hand-written Snakefile —
 `src/comparem2/catalogue.py` holds the 14 specs and the workflow is generated
 from them, so the CLI, the TUI and the report all read the same source of truth.
 
-**The report explains itself.** Each section carries what the tool does, how to
+**An interpretative report.** Each section carries what the tool does, how to
 read the specific columns on screen, and what the result cannot tell you — every
 number quoted from the tool's own paper and checked against it — plus a
 citations list of every paper behind the tools that ran.
@@ -73,7 +72,7 @@ and two tools have resolved to builds that installed cleanly and crashed.
 For development, from a checkout rather than the package:
 
 ```bash
-python -m pytest tests/unit -q   # 200 tests, no pixi required
+python -m pytest tests/unit -q   # 212 tests, no pixi required
 
 pixi install                     # linux only
 pixi run test-fast               # 4 genomes, no databases needed

@@ -280,8 +280,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--until", nargs="*", default=None, metavar="TOOL",
                    help="run only these tools and their dependencies")
     p.add_argument("--set", action="append", default=[], metavar="TOOL--FLAG=VALUE",
-                   help="override a tool argument, e.g. --set treecluster--threshold=0.1 "
-                        "(v2 spelled this set_treecluster--threshold in config.yaml)")
+                   help="override a tool argument, e.g. "
+                        "--set treecluster--threshold=0.1")
     p.add_argument("--tui", action="store_true", help="interactive keyboard interface")
     p.add_argument("--version", action="version", version=f"CompareM2 {__version__}")
     p.add_argument("--conda-prefix", type=Path, default=None,

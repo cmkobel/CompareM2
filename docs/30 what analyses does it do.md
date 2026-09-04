@@ -125,7 +125,7 @@ gtdbtk classify_wf --cpus 16 --batchfile results_comparem2/.comparem2/gtdbtk_bat
   - The species line is pragmatic, not biological: GTDB found no genetic discontinuity below 95% ANI, and 2.2% of species contain a genome at or above 95% ANI to a different species — so 93–95% to the nearest reference is genuinely ambiguous and should not be reported as a confident species call.
   - The name is pinned to a release and GTDB rewrites itself — 0.26% of genomes move species cluster between releases on average — so record the release or the result is not reproducible.
   - A species-level hit is not evidence of a cultured relative: over 50% of bacterial taxa at every rank consist only of MAGs and/or SAGs, so the matched reference may itself be a bin with no phenotype behind it.
-  - The only two genuinely conflicting calls in the v1-versus-v2 comparison were both poor-quality genomes, so read a surprising name next to CheckM2 and msa_percent before trusting it.
+  - The only two genuinely conflicting calls in GTDB-Tk's own comparison of its v1 against its v2 were both poor-quality genomes, so read a surprising name next to CheckM2 and msa_percent before trusting it.
 
 ---
 
@@ -472,4 +472,3 @@ Any argument can be forwarded to any tool with `--set <tool>--<flag>=<value>`. N
 cm2 *.fna --set treecluster--threshold=0.1 --set skani-c=125
 ```
 
-In v2 this was `set_<tool>--<flag>: <value>` in `config.yaml`.

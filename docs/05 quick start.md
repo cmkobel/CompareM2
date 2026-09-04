@@ -6,9 +6,10 @@ Linux only — the analysis tools are `linux-64`.
 conda install -c conda-forge -c bioconda comparem2
 ```
 
-Working on CompareM2 rather than using it? Install from git with pixi instead —
-see [installation](10 installation.md), and read every `cm2` below as
-`pixi run cm2`.
+!!! info "Working on CompareM2 rather than using it?"
+    Install from git with pixi instead — see
+    [installation](10 installation.md) — and read every `cm2` below as
+    `pixi run cm2`.
 
 ## 1) Run it
 

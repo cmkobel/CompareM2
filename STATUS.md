@@ -936,7 +936,7 @@ Measured 2026-09-03. Earlier note: 914 GB free on `/evo` (2026-09-02, before the
 ```bash
 cd /evo/postdoc/CompareM2
 
-pixi run pytest          # 200 tests, no tools or databases needed
+pixi run pytest          # 212 tests, no tools or databases needed
 pixi run test-fast       # 4 genomes, no databases needed
 
 pixi run cm2 --setup     # deploy the two environments, once

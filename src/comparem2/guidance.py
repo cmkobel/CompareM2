@@ -312,7 +312,7 @@ GUIDANCE: dict[str, Guidance] = {
             "A species-level hit is not evidence of a cultured relative: over 50% of "
             "bacterial taxa at every rank consist only of MAGs and/or SAGs, so the matched "
             "reference may itself be a bin with no phenotype behind it.",
-            "The only two genuinely conflicting calls in the v1-versus-v2 comparison were "
+            "The only two genuinely conflicting calls in GTDB-Tk's own comparison of its v1 against its v2 were "
             "both poor-quality genomes, so read a surprising name next to CheckM2 and "
             "msa_percent before trusting it.",
         ),

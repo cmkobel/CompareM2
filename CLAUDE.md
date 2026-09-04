@@ -100,7 +100,7 @@ move.
 
 ### Testing
 
-`tests/unit/test_v3.py`, 200 tests, ~2.5 s. This is the primary instrument: the
+`tests/unit/test_v3.py`, 212 tests, ~2.5 s. This is the primary instrument: the
 codebase is a generator, and a wrong wildcard produces a Snakefile that parses
 cleanly and builds the wrong DAG, which an end-to-end run catches slowly if at
 all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.
