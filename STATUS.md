@@ -787,8 +787,11 @@ artifacts, the applied panaroo patch, and both runs.
 | Bakta light | 1.3 GB | 4.0 GB | download figure is Bakta's documented one; on-disk measured |
 | AMRFinder | unmeasured | — | version `2026-08-07.1`, 26 s to fetch. Lands in `$CONDA_PREFIX`, **not** under `--databases` |
 
-Software is 1.58 GB against 62.5 GB of measured downloads, and GTDB-Tk is
-60.8 GB of it. It was 143 GB until the release changed. **On disk the root is
+Software is 7.7 GB deployed against 62.5 GB of measured downloads, and GTDB-Tk
+is 60.8 GB of it. (This line said 1.58 GB until 2026-09-04; that was the
+superseded pixi-manifest figure recorded under *Environments* above, measured
+with sylph still in the set, and it contradicted the two-environment table on
+this same page.) It was 143 GB until the release changed. **On disk the root is
 101 GB** (107,812,346,055 bytes, measured when it was moved to `/midifiler`) —
 extraction inflates GTDB from 60.8 to 94 GB, which is the figure to plan a
 volume around rather than the download size.

@@ -23,14 +23,21 @@ pixi run pytest
 ```
 
 Then a real run over four *Enterococcus faecium* genomes shipped with the
-repository. This needs no databases either, because none of the four tools it
-runs has one:
+repository. This needs no databases, because none of the four tools it runs has
+one:
 
 ```bash
 pixi run test-fast
 ```
 
 That produces `cm2_test-fast/report.html`. Open it.
+
+!!! note "The first run builds the tool environments"
+    The fourteen tools are not in the pixi environment — Snakemake deploys them
+    into two conda environments, 7.7 GB, the first time they are needed. That
+    happens before any job starts, so the first run is quiet for about a minute
+    while it works. `pixi run cm2 --setup` does it deliberately and takes no
+    assemblies; see [installation](10 installation.md).
 
 ## 3) Run it on your own genomes
 

@@ -24,16 +24,16 @@ That choice is what makes the rest possible:
 
 | | v2 | v3 |
 | --- | --- | --- |
-| Analyses | 30+ | **13** |
+| Analyses | 30+ | **14** |
 | Conda environments | 25 | **2** — thirteen tools co-solve, CheckM2 cannot |
-| Software download | — | **1.58 GB** measured |
+| Software on disk | — | **7.7 GB** measured, deployed on first run |
 | Databases | 7 (incl. 84 GB Bakta full) | **4** (Bakta light) |
 | Report | R, RMarkdown, pandoc | **Python**, one HTML file |
 | Runtime | R + Python | **Python only** |
-| Unit tests | none | **163** |
+| Unit tests | none | **200** |
 
 **Every tool is one declarative spec.** There is no hand-written Snakefile —
-`src/comparem2/catalogue.py` holds the 13 specs and the workflow is generated
+`src/comparem2/catalogue.py` holds the 14 specs and the workflow is generated
 from them, so the CLI, the TUI and the report all read the same source of truth.
 
 **The report explains itself.** Each section carries what the tool does, how to
@@ -57,19 +57,18 @@ citations list of every paper behind the tools that ran.
 
 Linux-only; the tools are `linux-64`. Unit tests run anywhere.
 
-**13 of 14** tool command lines have been executed end to end on real genomes.
-GTDB-Tk was the last of those, and it took six defects and a database release
-change to get there — its rule had never been run, and two of its steps were
-described in comments that were not true. The fourteenth, `biosynthesis`, has
-been executed against eleven real models and a curated control, but not yet
-through Snakemake.
+**14 of 14** tool command lines have been executed end to end on real genomes,
+all of them under the conda deployment that is now the only way a tool arrives.
+GTDB-Tk was the last, and it took six defects and a database release change to
+get there — its rule had never been run, and two of its steps were described in
+comments that were not true.
 
 [`STATUS.md`](STATUS.md) has the per-tool table. It tracks *execution*, never
 installation — a clean `pixi install` says nothing about whether a tool runs,
 and two tools have resolved to builds that installed cleanly and crashed.
 
 ```bash
-python -m pytest tests/unit -q   # 196 tests, no pixi required
+python -m pytest tests/unit -q   # 200 tests, no pixi required
 
 pixi install                     # linux only
 pixi run test-fast               # 4 genomes, no databases needed

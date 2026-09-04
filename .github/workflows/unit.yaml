@@ -6,11 +6,11 @@ name: unit tests
 # the wrong instrument for a generator, because a wrong wildcard produces a
 # Snakefile that parses cleanly and builds the wrong DAG.
 #
-# Deliberately does NOT use pixi. The pixi environment pulls all thirteen
-# analysis tools from bioconda (1.58 GB, linux-64 only), and none of them is
-# needed to test rule generation, name sanitisation or report rendering.
-# Depending on that solve here would make a green tick contingent on bioconda
-# being up, and turn a 1-second check into a multi-minute one.
+# Deliberately does NOT use pixi, and never deploys a tool environment. The
+# fourteen analysis tools are 7.7 GB of linux-64 conda packages, and none of
+# them is needed to test rule generation, name sanitisation or report
+# rendering. Depending on that solve here would make a green tick contingent on
+# bioconda being up, and turn a 1-second check into a multi-minute one.
 
 on:
   push:

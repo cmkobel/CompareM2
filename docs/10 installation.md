@@ -2,88 +2,112 @@
 
 !!! warning "v3 is pre-release"
     The bioconda package is not published yet — the recipe is written and the
-    code path works, but `conda install comparem2` still gives you v2. For now,
-    install from git.
+    code path is built and tested, but `conda install comparem2` still gives
+    you v2. Until the recipe lands, install from git with pixi.
 
-There are two ways to install CompareM2, and they differ in where the fourteen
-analysis tools come from.
+There are two ways to install CompareM2, and they differ only in how *the
+pipeline* arrives. **The fourteen analysis tools arrive the same way in both**:
+Snakemake deploys them into two conda environments the first time they are
+needed.
 
-| | pixi, from git | conda *(not yet published)* |
+| | conda *(not yet published)* | pixi, from git |
 | --- | --- | --- |
-| the tools | one solved environment, all on PATH | deployed per rule on first run |
-| first run | starts immediately | solves 14 environments |
-| needs network at run time | only for databases | for databases and environments |
-| good for | development, HPC, anything repeated | trying it once, or a shared install |
+| what it installs | the pipeline and its Snakemake plugins | the same, plus the test tooling |
+| the tools | two environments, deployed on first use | two environments, deployed on first use |
+| good for | using it | development |
+
+That is a change from earlier v3 documentation, which described a pixi
+environment with every tool on PATH and a `--use-conda` flag to opt into
+deployment instead. Both are gone: since 2026-09-03 deployment is the only
+model, and there is no flag for it.
 
 ## Requirements
 
   - **Linux.** The analysis tools are `linux-64` only. On macOS you can run the
     unit tests and render reports, but not the pipeline.
-  - **[pixi](https://pixi.prefix.dev/latest/#installation)** for the
-    environment.
-  - **Disk.** 1.58 GB of software, plus databases — see below. GTDB-Tk alone is
-    60.8 GB.
+  - **conda**, or **[pixi](https://pixi.prefix.dev/latest/#installation)** for
+    the git route. `conda` is a dependency of the package rather than an
+    assumption: Snakemake shells out to it to build the tool environments.
+  - **Disk.** **7.7 GB** of tool environments, plus databases — see below.
+    GTDB-Tk alone is 60.8 GB to download and 94 GB unpacked.
   - **RAM.** GTDB-Tk's classify step is the peak; its own paper reports under
     55 GB for the v2 divide-and-conquer placement. Without GTDB-Tk, far less.
 
-## Install
+## With conda, once published
+
+```bash
+conda install -c conda-forge -c bioconda comparem2
+comparem2 *.fna
+```
+
+The package contains **the pipeline and none of the fourteen tools**. The first
+run builds the two tool environments before any job starts, which takes about a
+minute on a warm package cache and longer on a machine that has to download
+them.
+
+## From git, with pixi
 
 ```bash
 git clone https://github.com/cmkobel/CompareM2.git
 cd CompareM2
 pixi install
-pixi run pytest        # 163 unit tests, no databases needed
+pixi run pytest        # 200 unit tests, no databases and no tools needed
+pixi run cm2 --help
 ```
+
+`pixi install` builds the pipeline's environment only — the fourteen tools are
+deliberately not in it, so that there is exactly one way a tool can arrive and
+it is the way a conda install uses too.
 
 !!! note "Moving the directory invalidates the environment"
     Conda bakes the absolute prefix into shebangs and RPATHs, so after moving
     the checkout you need `rm -rf .pixi && pixi install`.
 
-## With conda, once published
+## The two tool environments
 
-The package will contain **the pipeline and none of the fourteen tools**.
-Snakemake deploys each tool's own environment the first time it is needed:
+| Environment | Packages | DIAMOND | Contents | Deployed |
+| --- | ---: | --- | --- | ---: |
+| `main` | 568 | 2.2.5 | thirteen tools, plus curl and tar | 6.0 GB |
+| `checkm2` | 127 | 2.1.11 | CheckM2 alone | 1.8 GB |
 
-```bash
-conda install -c conda-forge -c bioconda comparem2
-comparem2 *.fna --use-conda
-```
+Eighteen rules point at those two. **CheckM2 is separate because it pins
+DIAMOND 2.1.x while current Bakta needs 2.2.x** — they cannot co-solve, which
+is also the answer to why the tools are not simply dependencies of the conda
+package: no single environment can hold all fourteen.
 
-`--use-conda` is the whole difference. Without it, CompareM2 expects the tools
-on PATH and says so before doing any work:
+They go to `~/.comparem2/envs`, shared across runs, moved with `--conda-prefix`
+or `$COMPAREM2_CONDA_PREFIX`.
 
-```
-not on PATH: seqkit (seqkit), mashtree (mashtree)
-Either run inside an environment that has them (`pixi run cm2 ...`), or add
---use-conda to let Snakemake deploy each tool's own environment.
-```
+!!! warning "Keep that path stable"
+    Snakemake identifies an environment by a hash that includes the *realpath*
+    of the prefix, so moving it rebuilds both — and re-fetches AMRFinder's
+    database, which lives inside one of them.
 
-Environments go to `~/.comparem2/envs`, shared across runs, moved with
-`--conda-prefix` or `$COMPAREM2_CONDA_PREFIX`. **Keep that path stable.**
-Snakemake includes it in each environment's identity, so moving it re-solves all
-fourteen — and re-fetches AMRFinder's database, which lives inside one of them.
+    A **relative** `--conda-prefix` is the sharp edge: it resolves against the
+    directory you typed the command in, so the same relative path from two
+    directories is two prefixes and two 7.7 GB builds. The default is
+    home-relative and safe.
 
-Why the tools are not simply dependencies of the package: no single environment
-can hold all fourteen. CheckM2 pins DIAMOND 2.1.x and current Bakta needs
-2.2.x, so a package that listed them would have to leave one out.
+### Building them up front
 
-## Environments
-
-v3 solves **one** environment holding thirteen of the fourteen tools. v2 shipped
-25.
-
-The exception is **CheckM2**, which pins DIAMOND 2.1.x while current Bakta needs
-2.2.x — they cannot co-solve. CheckM2 gets its own environment, and because
-Snakemake's shell does not inherit an interactive PATH, it needs an absolute
-launcher:
+Snakemake builds a missing environment during DAG construction, *before the
+first job* — so a first run is silent for as long as that takes, which on a
+cluster is the point at which someone kills it. `--setup` asks for the same
+work deliberately:
 
 ```bash
-pixi run cm2 *.fna \
-  --isolated-launcher "$HOME/.pixi/bin/pixi run -e {tool}"
+comparem2 --setup
 ```
 
-`{tool}` is substituted with the tool name. Without this, the CheckM2 step fails
-with `command not found`.
+It takes **no assemblies and needs no databases**, and measured 61.7 s into a
+fresh prefix. Run against a prefix that already has them, it builds nothing and
+returns in about two seconds. The only thing that has to match a later run is
+`--conda-prefix`, however you set it.
+
+Two caveats. `--setup` is one-time per *catalogue*, not per machine: changing
+any tool's version pin changes the environment file, which changes the hash,
+which rebuilds. And `--setup --until <subset>` is not a cheaper setup — the
+environment is the whole thirteen-tool `main` whatever subset you name.
 
 ## Databases
 
@@ -91,18 +115,20 @@ with `command not found`.
 fetched once, skipped if already present, and re-fetched if a previous attempt
 was interrupted. Nothing needs to be placed by hand.
 
-Sizes are measured from `content-length`, not estimated:
+| Database | Download | On disk | Needed by |
+|---|---:|---:|---|
+| GTDB r232 | **60.8 GB** | 94 GB | `gtdbtk` |
+| CheckM2 | 1.7 GB | 2.9 GB | `checkm2` |
+| Bakta light | 1.3 GB *(documented)* | 4.0 GB | `bakta` |
+| AMRFinder | unmeasured | — | `amrfinder` |
 
-| Database | Size | Needed by |
-|---|---|---|
-| GTDB r232 | **60.8 GB** | `gtdbtk` |
-| CheckM2 | 1.7 GB | `checkm2` |
-| Bakta light | ~1.3 GB (documented, unmeasured) | `bakta` |
-| AMRFinder | unmeasured | `amrfinder` |
+Downloads are measured from `content-length`; on-disk figures are measured
+after extraction. **Plan volumes around 101 GB, not 62.5** — extraction inflates
+GTDB from 60.8 GB to 94 GB.
 
-They go under `databases/` unless you pass `-d`. Before running, CompareM2
-prints what is actually missing — not a total that includes what you already
-have:
+They go to `~/.comparem2/databases` unless you pass `-d` or set
+`$COMPAREM2_DATABASES`. Before running, CompareM2 prints what is actually
+missing — not a total that includes what you already have:
 
 ```
 2 assemblies, 5 tools
@@ -111,25 +137,26 @@ to download: amrfinder (1 of unknown size)
 
 !!! warning "AMRFinder ignores `-d`"
     `amrfinder -u` refuses the `--database` option — *"only operates on the
-    default database directory"* — so its data goes into the conda environment
-    rather than your `--databases` directory. CompareM2 records that the update
-    ran, but that record does not survive `pixi install` rebuilding the
-    environment. Rebuild the environment and AMRFinder's database is fetched
-    again.
+    default database directory"* — so its data lands inside the deployed
+    environment rather than under `--databases`. CompareM2 records that the
+    update ran, and that record lives with the run, so a rebuilt environment no
+    longer leaves a marker claiming data that is gone. Rebuilding the
+    environment does mean fetching it again: 241 MB, timed at 26 and 27 s in
+    two measurements.
 
-**GTDB-Tk is 97% of the measured total**, and the release matters: 2.7 accepts
-only r232 and refuses r226, which is also why the figure is 60.8 GB rather than
-the 141.4 GB it was until r232 replaced FastANI's reference genomes with skani
-sketches. It stays in the default path because it is the authoritative answer
-to "what is this genome", but if you do not need taxonomy, leaving it out is
-still the single biggest saving available:
+**GTDB-Tk is 97% of the measured download total**, and the release matters: 2.7
+accepts only r232 and refuses r226, which is also why the figure is 60.8 GB
+rather than the 141.4 GB it was until r232 replaced FastANI's reference genomes
+with skani sketches. It stays in the default path because it is the
+authoritative answer to "what is this genome", but if you do not need taxonomy,
+leaving it out is the single biggest saving available:
 
 ```bash
-pixi run cm2 *.fna --until seqkit checkm2 bakta amrfinder mlst \
-                           mashtree treecluster skani panaroo snp-dists fasttree
+comparem2 *.fna --until seqkit checkm2 bakta amrfinder mlst \
+                        mashtree treecluster skani panaroo snp-dists fasttree
 ```
 
-Bakta uses the **light** database (~1.3 GB / 3.9 GB on disk) rather than v2's
+Bakta uses the **light** database (1.3 GB / 4.0 GB on disk) rather than v2's
 full one (30 GB / 84 GB). That saves 29 GB for less specific functional
 annotation, which a wide view can absorb — but note the Bakta paper's
 annotation-quality figures are measured on the full database and do not
@@ -137,24 +164,34 @@ transfer.
 
 ## HPC
 
-Snakemake's SLURM executor plugin is installed. Point CompareM2 at more cores
-and let Snakemake submit:
+Snakemake's SLURM executor plugin ships with the package. Point CompareM2 at
+more cores and let Snakemake submit:
 
 ```bash
-pixi run cm2 *.fna --cores 64
+comparem2 *.fna --cores 64
 ```
 
 Job submission is Snakemake's business, not CompareM2's — the generated
 Snakefile lives at `<output>/.comparem2/Snakefile` and takes any Snakemake
 profile you already use.
 
+Two things worth setting once on a cluster, because home directories have
+quotas and neither default belongs there:
+
+```bash
+export COMPAREM2_DATABASES=/scratch/you/cm2-databases
+export COMPAREM2_CONDA_PREFIX=/scratch/you/cm2-envs
+comparem2 --setup            # build the environments on the login node
+```
+
 ## Verification status
 
-A clean `pixi install` says nothing about whether the pipeline runs. Both Bakta
-and Panaroo once resolved to years-old builds that installed cleanly and crashed
-on first use, which is why every tool now carries a minimum version.
+A clean install says nothing about whether the pipeline runs. Both Bakta and
+Panaroo once resolved to years-old builds that installed cleanly and crashed on
+first use, which is why every tool carries a minimum version.
 
 `STATUS.md` in the repository tracks which command lines have actually been
-**executed** on real genomes. All 13 now have. GTDB-Tk was the last and the
-most instructive: its rule carried six defects that only running it could
-show, including a database release the installed tool refuses.
+**executed** on real genomes. All fourteen have, under conda deployment, in one
+31-step run. GTDB-Tk was the most instructive: its rule carried six defects that
+only running it could show, including a database release the installed tool
+refuses.

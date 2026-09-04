@@ -1,8 +1,13 @@
 # Usage
 
 ```bash
-pixi run cm2 <assemblies>... [options]
+comparem2 <assemblies>... [options]      # installed with conda
+pixi run cm2 <assemblies>... [options]   # from a git checkout
 ```
+
+`cm2` is a second entry point for the same program, so `comparem2` and `cm2`
+are interchangeable. The examples below use the pixi form; drop `pixi run` and
+they are the conda form.
 
 Assemblies are passed as paths, not as a glob string. In v2 this was
 `--config input_genomes="*.fna"`; now the shell expands it:
@@ -28,18 +33,18 @@ typed. Results land next to the genomes.
 | `--until TOOL...` | *(all)* | run only these tools and their dependencies |
 | `--set TOOL--FLAG=VALUE` | — | override a tool argument; repeatable |
 | `--tui` | off | interactive keyboard interface |
-| `--use-conda` | off | let Snakemake deploy each tool's environment |
-| `--conda-prefix DIR` | `~/.comparem2/envs` | where those environments go |
-| `--isolated-launcher CMD` | — | how to enter an isolated tool's environment |
+| `--conda-prefix DIR` | `~/.comparem2/envs` | where the tool environments go |
+| `--setup` | off | build those environments and exit; takes no assemblies |
 | `--keep-going` | off | keep running independent tools after a failure |
 | `--dry-run` | off | show what would run |
 | `--report-only` | off | re-render the report from existing outputs |
 | `--unlock` | off | release a stale lock left by a killed run |
 | `--version` | | print the version and exit |
 
-`--use-conda` is for a CompareM2 installed without its tools — see
-[Installation](10 installation.md). It does not combine with
-`--isolated-launcher`, which is the same job done by hand for one tool.
+There is no flag for *whether* to deploy the tools. Snakemake always does, into
+`--conda-prefix` — see [Installation](10 installation.md). Earlier v3
+documentation described `--use-conda` and `--isolated-launcher`; both were
+removed on 2026-09-03 along with the mode that needed them.
 
 ## Where databases go
 
@@ -205,7 +210,7 @@ results_comparem2/
 ├── <tool>/…                       whole-set results
 └── .comparem2/
     ├── Snakefile                  generated from the tool specs
-    ├── envs/                      one generated conda env per tool and download
+    ├── envs/                      the two generated conda env files
     ├── gtdbtk_batchfile.tsv       generated input: genome path, genome id
     └── log/                       one log per step
 ```

@@ -22,7 +22,7 @@ is what CompareM2's benchmark result â€” near-linear scaling with input count â€
 actually supports.
 
 Narrowing the scope is what pays for everything else: **14 tools instead of
-30+, one conda environment instead of 25, 1.58 GB of software.**
+30+, two conda environments instead of 25, 7.7 GB of software.**
 
 ## What it does
 
