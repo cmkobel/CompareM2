@@ -3,7 +3,9 @@
 [![unit tests](https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml/badge.svg)](https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml) [![https://doi.org/10.1093/bioinformatics/btaf517](https://img.shields.io/badge/doi%20%28OUP%29-10.1093%2Fbioinformatics%2Fbtaf517-blue.svg)](https://doi.org/10.1093/bioinformatics/btaf517)
 
 ```bash
-conda install -c conda-forge -c bioconda comparem2
+pixi global install --channel conda-forge --channel bioconda comparem2
+# or: conda install -c conda-forge -c bioconda comparem2
+
 comparem2 *.fna
 ```
 

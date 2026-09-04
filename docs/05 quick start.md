@@ -2,9 +2,20 @@
 
 Linux only — the analysis tools are `linux-64`.
 
+With [pixi](https://pixi.prefix.dev/latest/#installation):
+
+```bash
+pixi global install --channel conda-forge --channel bioconda comparem2
+```
+
+or with conda:
+
 ```bash
 conda install -c conda-forge -c bioconda comparem2
 ```
+
+Either puts `comparem2` and `cm2` on your `PATH`. See
+[installation](10 installation.md) for workspace-scoped installs.
 
 !!! info "Working on CompareM2 rather than using it?"
     Install from git with pixi instead — see

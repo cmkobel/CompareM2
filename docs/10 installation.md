@@ -1,49 +1,83 @@
 # Installation
 
-There are two ways to install CompareM2, and they differ only in how *the
-pipeline* arrives. **The fourteen analysis tools arrive the same way in both**:
-Snakemake deploys them into two conda environments the first time they are
-needed.
-
-| | conda | pixi, from git |
-| --- | --- | --- |
-| what it installs | the pipeline and its Snakemake plugins | the same, plus the test tooling |
-| the tools | two environments, deployed on first use | two environments, deployed on first use |
-| good for | using it | development |
-
-There is no flag for *whether* to deploy them. Snakemake always does, into
-`--conda-prefix`.
+CompareM2 is on Bioconda, so **pixi** or **conda** installs it. However it
+arrives, the package is the pipeline alone — the fourteen analysis tools are
+not in it, and Snakemake deploys them into two conda environments the first
+time they are needed. There is no flag for whether to do that; it always
+happens, into `--conda-prefix`.
 
 ## Requirements
 
   - **Linux.** The analysis tools are `linux-64` only. On macOS you can run the
     unit tests and render reports, but not the pipeline.
-  - **conda**, or **[pixi](https://pixi.prefix.dev/latest/#installation)** for
-    the git route. `conda` is a dependency of the package rather than an
-    assumption: Snakemake shells out to it to build the tool environments.
+  - **[pixi](https://pixi.prefix.dev/latest/#installation)** or **conda**, to
+    install the package. You do not need a conda of your own: `conda` is a
+    dependency *of* the package, because Snakemake shells out to it to build
+    the tool environments, so it arrives with CompareM2 either way.
   - **Disk.** **7.7 GB** of tool environments, plus databases — see below.
     GTDB-Tk alone is 60.8 GB to download and 94 GB unpacked.
   - **RAM.** GTDB-Tk's classify step is the peak; its own paper reports under
     55 GB for GTDB-Tk 2's divide-and-conquer placement. Without GTDB-Tk, far less.
 
+## With pixi
+
+To install globally, so that `comparem2` is on `PATH` everywhere:
+
+```bash
+pixi global install --channel conda-forge --channel bioconda comparem2
+comparem2 *.fna
+```
+
+Or to add it to a workspace, alongside whatever else that project needs:
+
+```bash
+pixi workspace channel add conda-forge
+pixi workspace channel add bioconda
+pixi add comparem2
+pixi run comparem2 *.fna
+```
+
 ## With conda
+
+Into the environment you have active:
 
 ```bash
 conda install -c conda-forge -c bioconda comparem2
 comparem2 *.fna
 ```
 
+Or into a new one:
+
+```bash
+conda create -n comparem2 -c conda-forge -c bioconda comparem2
+conda activate comparem2
+```
+
+!!! note "The channels are given explicitly on purpose"
+    Bioconda's own instructions omit `-c`/`--channel` because they assume you
+    have already
+    [set the channels up](https://bioconda.github.io/#usage). Naming them makes
+    the command work on a machine that has not.
+
+## What you get, and the first run
+
 The package is `noarch: python` and contains **the pipeline and none of the
 fourteen tools**. Its only dependencies are Python, Snakemake and its two
-executor plugins, Textual, and `conda` itself — that last one because Snakemake
-shells out to it to build the tool environments.
+executor plugins, Textual, and `conda` itself.
 
-The first run builds those two environments before any job starts, which takes
-about a minute on a warm package cache and longer on a machine that has to
-download them. `comparem2 --setup` does it deliberately, with no assemblies and
-no databases needed, so the first real run does not pay for it.
+That last one is why a pixi install works without a conda of your own, and it
+was worth checking rather than assuming: on a machine with **no conda on
+`PATH` at all**, both pixi routes ran a dry run to completion (measured
+2026-09-04, macOS). A `pixi global install` exposes only `comparem2` and `cm2`,
+but its trampoline puts the environment's own `bin` on `PATH` for the process,
+and the bundled `conda` is in there.
 
-## From git, with pixi
+The first run builds the two tool environments before any job starts, which
+takes about a minute on a warm package cache and longer on a machine that has
+to download them. `comparem2 --setup` does it deliberately, with no assemblies
+and no databases needed, so the first real run does not pay for it.
+
+## From git, for development
 
 ```bash
 git clone https://github.com/cmkobel/CompareM2.git

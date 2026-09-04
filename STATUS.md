@@ -1226,3 +1226,27 @@ which is what makes it worth putting in front of a first-time user.
 - **The 35.4 MB of PDFs in history.** See
   [DECISIONS.md](DECISIONS.md#lives-on-branch-v3-in-cmkobelcomparem2) — purging
   them would mean rewriting `master`.
+
+### A pixi-installed CompareM2 finds its own conda
+Checked 2026-09-04 on macOS, against published 3.0.0 — and worth checking
+rather than assuming, because `carve_scip.py`'s neighbouring note records a run
+dying at DAG construction with `Error running conda info` when conda was
+reachable only through a pixi global.
+
+**There was no conda on `PATH` at all on the test machine** (`command -v conda`
+empty), which is what makes the result mean anything. Both pixi routes then ran
+`comparem2 <two plasmids> --dry-run --until seqkit` to completion, 3 jobs
+planned:
+
+| route | how conda is found |
+| --- | --- |
+| `pixi add comparem2` in a workspace | `.pixi/envs/default/bin/conda`, on `PATH` inside `pixi run` |
+| `pixi global install … comparem2` | `~/.pixi/envs/comparem2/bin/conda`; the trampoline at `~/.pixi/bin/comparem2` sets `path_diff` to that env's `bin`, so the process sees it |
+
+The global install exposes only `comparem2` and `cm2` — **not** `conda` — so the
+`path_diff` mechanism is the whole reason it works. If pixi ever stopped setting
+it, a global install would break in exactly the documented way.
+
+`pixi global install` needs `--channel conda-forge --channel bioconda`
+explicitly unless the channels are already configured; without them it fails
+with "No candidates were found for comparem2 *".
