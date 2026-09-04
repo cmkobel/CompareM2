@@ -1,4 +1,4 @@
-# CompareM2 v3
+# CompareM2
 
 [![unit tests](https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml/badge.svg)](https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml) [![https://doi.org/10.1093/bioinformatics/btaf517](https://img.shields.io/badge/doi%20%28OUP%29-10.1093%2Fbioinformatics%2Fbtaf517-blue.svg)](https://doi.org/10.1093/bioinformatics/btaf517)
 
@@ -7,32 +7,19 @@ conda install -c conda-forge -c bioconda comparem2
 comparem2 *.fna
 ```
 
-> On bioconda since 2026-09-04. The paper describes v2, whose documentation
-> remains at
-> [comparem2.readthedocs.io/en/stable](https://comparem2.readthedocs.io/en/stable/).
+No genomes to hand? `comparem2 --demo` runs six bundled *Enterococcus faecium*
+plasmids and needs no databases.
 
-CompareM2 takes microbial genome assemblies — isolates or MAGs — and produces a
-single portable HTML report comparing them. v3 keeps only that philosophy from
-v2: **easy to install, easy to run, easy to interpret.**
+CompareM2 takes microbial genome assemblies — isolates or MAGs, from any
+sequencing technology — and produces a single portable HTML report comparing
+them: **easy to install, easy to run, easy to interpret.**
 
-## What is different in v3
+## Highlights
 
 **Built for many genomes at once.** Fourteen analyses across a whole set of
 assemblies, in one report, at a cost that scales near-linearly with how many you
 give it — the benchmark result the design is built on. A hundred genomes is an
 ordinary input, not a stress test.
-
-Scoping it that way is what makes the rest possible:
-
-| | v2 | v3 |
-| --- | --- | --- |
-| Analyses | 30+ | **14** |
-| Conda environments | 25 | **2** — thirteen tools co-solve, CheckM2 cannot |
-| Software on disk | — | **7.7 GB** measured, deployed on first run |
-| Databases | 7 (incl. 84 GB Bakta full) | **4** (Bakta light) |
-| Report | R, RMarkdown, pandoc | **Python**, one HTML file |
-| Runtime | R + Python | **Python only** |
-| Unit tests | none | **212** |
 
 **Every tool is one declarative spec.** There is no hand-written Snakefile —
 `src/comparem2/catalogue.py` holds the 14 specs and the workflow is generated
@@ -42,6 +29,18 @@ from them, so the CLI, the TUI and the report all read the same source of truth.
 read the specific columns on screen, and what the result cannot tell you — every
 number quoted from the tool's own paper and checked against it — plus a
 citations list of every paper behind the tools that ran.
+
+At a glance:
+
+| | |
+| --- | --- |
+| Analyses | **14** |
+| Conda environments | **2** — thirteen tools co-solve, CheckM2 cannot |
+| Software on disk | **7.7 GB** measured, deployed on first run |
+| Databases | **4**, fetched automatically (Bakta light) |
+| Report | **one** self-contained HTML file |
+| Runtime | **Python** only |
+| Unit tests | **212** |
 
 ## The 14 tools
 
@@ -60,7 +59,7 @@ citations list of every paper behind the tools that ran.
 Linux-only; the tools are `linux-64`. Unit tests run anywhere.
 
 **14 of 14** tool command lines have been executed end to end on real genomes,
-all of them under the conda deployment that is now the only way a tool arrives.
+all of them under the conda deployment that is the only way a tool arrives.
 GTDB-Tk was the last, and it took six defects and a database release change to
 get there — its rule had never been run, and two of its steps were described in
 comments that were not true.
@@ -81,8 +80,6 @@ pixi run cm2 --help
 
 ## Citation
 
-The paper describes v2:
-
 Kobel C.M., Aho V.T.E., Øyås O., Nørskov-Lauritsen N., Woodcroft B.J., Pope P.B.
 CompareM2 is a genomes-to-report pipeline for comparing microbial genomes.
 *Bioinformatics* 41(9), btaf517 (2025).
@@ -93,9 +90,8 @@ section lists them for the run you did.
 
 ## Links
 
-- **Design**: [`DESIGN.md`](DESIGN.md) — what v3 is and why
+- **Documentation**: [comparem2.readthedocs.io](https://comparem2.readthedocs.io)
+- **Design**: [`DESIGN.md`](DESIGN.md) — what CompareM2 is and why it is shaped this way
 - **Decision log**: [`DECISIONS.md`](DECISIONS.md) — how it got here, including what was reversed and what went wrong
 - **Status**: [`STATUS.md`](STATUS.md) — what has actually been run
-- **v3 documentation**: [comparem2.readthedocs.io/en/latest](https://comparem2.readthedocs.io/en/latest/)
-- **v2 documentation**: [comparem2.readthedocs.io/en/stable](https://comparem2.readthedocs.io/en/stable/) — what the paper describes
 - **Issues**: [github.com/cmkobel/CompareM2/issues](https://github.com/cmkobel/CompareM2/issues)
