@@ -20,9 +20,6 @@ need. Where you want a deep functional or metabolic dive into a single genome,
 [DRAM2](https://github.com/WrightonLabCSU/DRAM) and
 [nf-core/funcscan](https://nf-co.re/funcscan) complement it well.
 
-Narrowing the scope is what pays for everything else: **14 tools instead of
-30+, two conda environments instead of 25, 7.7 GB of software.**
-
 ## What it does
 
   - **Quality** — contig lengths, GC and N50 (SeqKit); completeness and
