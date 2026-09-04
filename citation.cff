@@ -20,9 +20,9 @@ authors:
   given-names: "Phillip B."
   orcid: "http://orcid.org/0000-0002-2067-4059"
 title: "CompareM2 is a genomes-to-report pipeline for comparing microbial genomes"
-version: 3.0.0
+version: 3.1.0
 doi: 10.1093/bioinformatics/btaf517
-# The DOI above is the paper's, and the paper describes v2. This date is the v3
-# release; move it if the tag is pushed on a different day.
+# The DOI above is the paper's, and the paper describes v2. This date is the
+# v3.1.0 release; move it if the tag is pushed on a different day.
 date-released: 2026-09-04
 url: "https://github.com/cmkobel/CompareM2"

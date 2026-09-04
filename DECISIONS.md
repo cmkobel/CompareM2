@@ -1309,3 +1309,27 @@ One measurement would still change the severity, and has never been made:
 whether the sparse models drop reactions the annotation supports. That column
 is what convicted the shipped build on 116_2 (253 against 44) and is unknown
 for these three. Small is not the same as wrong.
+
+### The release after 3.0.0 is 3.1.0, not 3.0.1
+Carl's call, 2026-09-04, having asked for 3.0.1 and been shown the objection.
+`cm2 --demo` is a new user-facing flag, and the README, quick start and usage
+pages are rewritten around it — a patch number would say "nothing new here"
+about the one thing the release exists to ship. Nothing downstream is affected
+either way: the recipe's `run_exports` pins at `max_pin="x"`, so 3.0.1 and
+3.1.0 pin identically.
+
+The other half of the release changed with it. **Pushing the tag is now the
+whole release**: bioconda's autobump is on, and unlike the v2→v3 bump it is the
+right tool for this one, because the published recipe is already the v3 shape
+and a version-and-checksum bump is the entire change. The bot's #68821 was a
+hazard only because it was generated from v2's recipe while the shape change
+was in flight; it is closed. So no hand-written PR this time — see
+[recipe/README.md](recipe/README.md), where the release steps now split at that
+line.
+
+What was tested first is in [STATUS.md](STATUS.md), and the honest shape of it
+is worth repeating here: a macOS check cannot run a tool and never will,
+because `Tool.conda` renders the whole thirteen-tool environment for any
+subset. So the tagged commit's *tools* are unexecuted, and the tree two prose
+strings away from it ran 11 of 11 on thylakoid. Everything up to the first job
+was checked at the tag: DAG, extraction, wheel, entry points, both docs checks.

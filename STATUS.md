@@ -4,7 +4,8 @@ What is currently true of a real run. This file changes whenever something is
 re-run, which is why it is not in [DESIGN.md](DESIGN.md) — decisions should not
 need editing because a tool was verified again.
 
-Last updated **2026-09-03**, from runs on thylakoid.
+Last updated **2026-09-04**. The tool numbers are from runs on thylakoid; the
+pre-tag checks for v3.1.0 are from the laptop and say so.
 
 ## Tool verification: 14 of 14
 
@@ -990,8 +991,8 @@ is the *only* model — see [DESIGN.md](DESIGN.md#one-deployment-model-and-two-e
 | --- | --- |
 | environments a full run builds | **2** — 18 rules, `main` (13 tools + curl + tar) and `checkm2`. Measured at 7.7 GB, built in 76 s warm |
 | flags the user needs for any of this | **none.** `--use-conda` and `--isolated-launcher` were deleted. `cm2 --setup` is available to do the build up front |
-| published recipe today | `comparem2` **2.16.2**, `noarch: generic`, maintainer `cmkobel` |
-| version here | `3.0.0.dev0` — the release needs a real one, in three files |
+| published recipe today | `comparem2` **3.0.0**, `noarch: python`, maintainer `cmkobel`, on anaconda.org since 2026-09-04 12:16:47Z. It replaced 2.16.2, `noarch: generic` |
+| version here | **3.1.0**, in four files: `src/comparem2/__init__.py`, `pixi.toml`, `citation.cff` and the draft `recipe/meta.yaml`. A unit test enforces the first two agreeing |
 
 **The deployment model has been executed whole**: all fourteen tools, both
 environments, 31 of 31 steps, correct results, report rendered — see *Two
@@ -1064,7 +1065,7 @@ the test data out over.
 `/evo/postdoc/cm2-install-test` is **9.8 GB**, 7.7 GB of it a second copy of the
 two tool environments in its own prefix. Deletable once this is written down.
 
-### v3.0.0 is on bioconda, and what 3.0.1 owes
+### v3.0.0 is on bioconda, and what the next release owed
 Released 2026-09-04. `v3.0.0` points at **`b217b50`**, tarball sha256
 **`f7644b3a…`**. [PR #68805](https://github.com/bioconda/bioconda-recipes/pull/68805)
 merged at **12:14:21Z** (`8278c92`, approved by bgruening) and
@@ -1104,8 +1105,9 @@ mkdocs source, readthedocs builds from `master`, and the conda package neither
 builds nor ships it — three platform builds passing on that exact tarball is the
 evidence. What ships is right; what is tagged has a red docs check.
 
-**So 3.0.1 owes the contents of `42e2d0d`** — the regenerated page and its test.
-Nothing else is outstanding from this round.
+**So the next release owes the contents of `42e2d0d`** — the regenerated page
+and its test. Both are on `master` and ship in **v3.1.0**; nothing else was
+outstanding from this round.
 
 **The published package installs.** `conda install -c conda-forge -c bioconda
 comparem2` into a clean environment resolves to v3, checked by Carl on
@@ -1114,11 +1116,20 @@ falling back to a v2 build under conflict, not a workaround for a channel that
 does not yet serve v3. An earlier version of the docs said the pin was needed
 "until the channel settles", which named no mechanism and was wrong.
 
-Loose end: autobump [PR #68821](https://github.com/bioconda/bioconda-recipes/pull/68821),
-opened by the bot at 12:25:44Z after the tag moved. Its hash is correct but it is
-a version-only bump — it neither drops v2's `build.sh` nor sets
-`noarch: python`, so merging it would undo the recipe #68805 landed. It is on a
-branch in the bioconda org, so only bioconda can close it; asked on the PR.
+Loose end, **now closed**: autobump
+[PR #68821](https://github.com/bioconda/bioconda-recipes/pull/68821), opened by
+the bot at 12:25:44Z after the tag moved. Its hash was correct but it was a
+version-only bump — it neither dropped v2's `build.sh` nor set `noarch: python`,
+so merging it would have undone the recipe #68805 landed. Only bioconda could
+close it, and it is closed (checked 2026-09-04, `state: CLOSED`,
+`mergedAt: null`).
+
+**And that inverts the bot's role from here on.** #68821 was dangerous because
+it was generated from v2's recipe while the shape change was still in flight.
+The published recipe is now the v3 shape, so a version-only bump is exactly the
+right change — which is what autobump does, and it is enabled. From v3.0.0
+onward **pushing the tag is the release**; see
+[recipe/README.md](recipe/README.md).
 
 ### `cm2 --demo` has been run
 Measured on thylakoid 2026-09-04 at `7c98aa9`, against an existing
@@ -1141,6 +1152,50 @@ The set is not only a smoke test: `Dallas_55` and `ISMMS_VRE_1` come out at
 against `116_2` — so the ANI matrix and the tree have real structure to read,
 which is what makes it worth putting in front of a first-time user.
 
+### What was checked before tagging v3.1.0
+Run 2026-09-04 on the laptop (macOS 26.2, Apple silicon), against `0555836` —
+the commit the tag names. A macOS check has a hard ceiling and it is worth
+stating first: **no real run is possible here and never will be**, because
+`Tool.conda` is the whole environment's package list, so even `--until skani`
+renders the thirteen-tool `main.yaml`, which does not solve on `osx-arm64`.
+Tool execution is thylakoid's job. What is reachable is everything up to the
+first job, plus the package.
+
+| check | result |
+| --- | --- |
+| unit suite, python 3.13.12 | **210 passed, 2 skipped**, 1.46 s. The two skips are the Snakemake-backed runner tests; `snakemake` is not in this venv, and CI runs them |
+| the same suite, python **3.14.3** | identical, 1.55 s — worth running because the published package resolved to python 3.14.7 on this machine, so 3.14 is a version users already get |
+| `docs/generate.py --check` | *2 generated pages up to date* — the check `42e2d0d` added, which is what v3.0.0's tag was red on |
+| `mkdocs build --strict` | clean |
+| report render, real file not fixture | `report.html`, **14,852 bytes**, guidance and citations sections present |
+| wheel | **582,959 B**, and `comparem2/demo/plasmids.zip` (460,821 B) is the **only** non-`.py` file in it — the `package-data` entry holds |
+| the wheel installed `--no-deps` into a clean venv | both entry points work; `demo.extract()` writes **7 files** from `site-packages`, and the duplicate is byte-identical (md5 `f8805711…` for both) |
+
+**`cm2 --demo --dry-run` plans the same 11 steps thylakoid executed**: 7 ×
+seqkit, mashtree, skani, treecluster, `all`. Run from `src` through the
+interpreter of the published 3.0.0 pixi-global install (python 3.14.7,
+snakemake 9.26.1, conda 26.7.1), which is also the only conda on this laptop —
+`command -v conda` is empty, so the run is only possible with that
+environment's `bin` prepended, and **the preflight fired correctly without it**
+(`not on PATH: conda`, exit 1, before any Snakemake call).
+
+The CLI's own edges, all exit 1 with the intended message: `--demo` with
+assemblies (*"--demo takes no assemblies"*, and **no output directory created**
+— the check runs before extraction), and no inputs at all (*"pass one or more
+FASTA files, --demo to run the bundled ones, or --setup"*). `--demo --until
+skani` overrides the fixed list, 2 jobs.
+
+**The quick start's quoted output is verbatim**, not illustrative: two
+assemblies with all fourteen tools and an absent `-d` prints `to download:
+checkm2, gtdb, bakta-light, amrfinder (62.5 GB + 2 of unknown size)`.
+
+**The caveat that decides what this is worth:** the code in `0555836` differs
+from `7c98aa9` — the commit whose demo run is recorded above — by **two prose
+strings**, one `--set` help line and one sentence in `guidance.py`. So the
+tagged tree's tools have not been executed; the tree that is two comments away
+from it has, 11 of 11. That is the reason this section is a list of checks and
+not a run.
+
 ## Known broken or unfinished
 
 - **AMRFinder's database still lives in the conda prefix**, so it is refetched
@@ -1157,12 +1212,11 @@ which is what makes it worth putting in front of a first-time user.
   by accident, but not driven by hand since.
 - **`/evo/postdoc/cm2v3`** is the old rsync scratch directory, now redundant,
   holding an 8.5 GB pixi environment that can be deleted.
-- **No bioconda package**, and this is now the only thing left: a tag, a
-  sha256 and the PR. Every technical unknown in the deployment model has been
-  executed — all fourteen tools, two environments, 31 of 31 steps, 2026-09-03.
-  See *Packaging* above and `recipe/README.md`. **A hand-built container image
-  is no longer planned** — decided 2026-09-02, see
-  [DECISIONS.md](DECISIONS.md).
+- **The bioconda package exists** — 3.0.0, published 2026-09-04, so this bullet
+  is no longer a gap; it is kept for the one thing still true of it. **A
+  hand-built container image is not planned** — decided 2026-09-02, see
+  [DECISIONS.md](DECISIONS.md). Bioconda builds a BioContainer of the pipeline
+  automatically, with no analysis tools in it.
 - **The old per-tool conda prefix `/evo/postdoc/cm2-conda-envs` is orphaned.**
   8.6 GB, 8 single-tool environments, addressed by env-file content that no
   longer renders — the two-environment change gives every rule a different hash.
