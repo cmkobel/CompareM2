@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/cmkobel/CompareM2/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 0000000000000000000000000000000000000000000000000000000000000000
+  sha256: a115bf2c634bc78aef857882b2403bae7c08962766e068a1039ba5b4cc44a20d
 
 build:
   number: 0
@@ -48,7 +48,7 @@ about:
   license_file: LICENSE
   summary: A genomes-to-report pipeline for comparing microbial genomes
   description: |
-    CompareM2 runs thirteen analysis tools over a set of microbial assemblies
+    CompareM2 runs fourteen analysis tools over a set of microbial assemblies
     and renders one self-contained HTML report: assembly statistics,
     completeness, taxonomy, annotation, AMR genes, sequence types, ANI, a
     pangenome, phylogenies and draft metabolic models.
