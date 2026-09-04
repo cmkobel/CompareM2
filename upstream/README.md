@@ -1,15 +1,16 @@
 # Upstream reports
 
 Drafts of things this project found in software it depends on, kept here so they
-do not evaporate with the session that wrote them. **Nothing here has been
-sent.** Each file says what it is, where it goes, and what it still needs.
+do not evaporate with the session that wrote them. Each file says what it is,
+where it goes, and what it still needs. **One has been sent** — the status
+column is the record of which.
 
 | draft | destination | status |
 | ----- | ----------- | ------ |
 | [carveme-205-comment.md](carveme-205-comment.md) | comment on [cdanielmachado/carveme#205](https://github.com/cdanielmachado/carveme/issues/205) | unsent |
 | [scip-question.md](scip-question.md) | issue or discussion on [scipopt/scip](https://github.com/scipopt/scip) | unsent |
 | [panaroo-intbitset-note.md](panaroo-intbitset-note.md) | issue or discussion on [gtonkinhill/panaroo](https://github.com/gtonkinhill/panaroo) | unsent, and incomplete on purpose — see its last section |
-| [intbitset-feedstock-pr.md](intbitset-feedstock-pr.md) | PR against [conda-forge/intbitset-feedstock](https://github.com/conda-forge/intbitset-feedstock) | unsent; branch prepared and all four arm configs build |
+| [intbitset-feedstock-pr.md](intbitset-feedstock-pr.md) | PR against [conda-forge/intbitset-feedstock](https://github.com/conda-forge/intbitset-feedstock) | **sent 2026-09-04** — [PR #21](https://github.com/conda-forge/intbitset-feedstock/pull/21) |
 | [bioconda-panaroo-pr.md](bioconda-panaroo-pr.md) | PR against [bioconda/bioconda-recipes](https://github.com/bioconda/bioconda-recipes) `recipes/panaroo` | unsent; patch prepared and verified to apply |
 
 The first two findings are in [../STATUS.md](../STATUS.md) (*CarveMe was nine

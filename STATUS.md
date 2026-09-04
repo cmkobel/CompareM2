@@ -682,6 +682,12 @@ us on Linux today: `python 3.12` + panaroo is unsatisfiable because intbitset
 has no py3.12 build, which is what holds the default environment at python
 3.11.16.
 
+**The maintainer is active; only the feedstock is stalled.** Checked 2026-09-04,
+because the paragraph above reads as though he were gone and he is not: public
+activity to 2026-09-03, two panaroo PRs merged 2026-07-02, a push to
+`bioconda/bioconda-recipes` on 2026-08-23. That matters for how PR #21 is
+handled — it is an argument for waiting rather than escalating.
+
 *The second blocker is prokka, and it cannot be fixed.* With a locally built arm
 intbitset in a channel, `panaroo>=1.5` still does not solve: prokka requires
 `tbl2asn-forever >=25.7` (linux-64, linux-aarch64, osx-64), which repackages
@@ -713,10 +719,17 @@ dependency closure.
 
 ### Both changes are now written, built and proven sufficient
 
-Measured 2026-09-03 on the laptop, later the same day. Drafts and the prepared
-branch: [upstream/intbitset-feedstock-pr.md](upstream/intbitset-feedstock-pr.md)
-and [upstream/bioconda-panaroo-pr.md](upstream/bioconda-panaroo-pr.md).
-**Neither PR has been sent.**
+Measured 2026-09-03 on the laptop, later the same day. Notes:
+[upstream/intbitset-feedstock-pr.md](upstream/intbitset-feedstock-pr.md) and
+[upstream/bioconda-panaroo-pr.md](upstream/bioconda-panaroo-pr.md).
+
+**The intbitset one was sent 2026-09-04 —
+[conda-forge/intbitset-feedstock#21](https://github.com/conda-forge/intbitset-feedstock/pull/21).**
+The four `osx_arm64` configs built green in conda-forge's own CI on the first
+push, which is the claim below confirmed off this laptop. The linter then
+failed the PR for a missing `{{ stdlib('c') }}`; adding it needed a second
+rerender and a local py3.13 rebuild, and the linter is green after that. The
+bioconda one has **not** been sent, and the pair is useless one at a time.
 
 *The cascade is three tools, not one.* Worth stating because the sections above
 do not: `snp-dists` and `fasttree` both take

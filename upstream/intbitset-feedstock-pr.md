@@ -1,10 +1,24 @@
-# Draft: intbitset 4.1.2 + osx-arm64 builds
+# intbitset 4.1.2 + osx-arm64 builds
 
-**Unsent.** Destination: a PR against
-[conda-forge/intbitset-feedstock](https://github.com/conda-forge/intbitset-feedstock).
-The branch is prepared at
-`~/postdoc/cm2-macos/upstream/intbitset-feedstock`, branch
-`osx-arm64-and-4.1.2`, not pushed and not forked.
+**Sent 2026-09-04:
+[conda-forge/intbitset-feedstock#21](https://github.com/conda-forge/intbitset-feedstock/pull/21)**,
+from `cmkobel:osx-arm64-and-4.1.2`. Two commits: the recipe change, and the
+rerender separately so the human change stays reviewable on its own. The local
+branch is `~/postdoc/cm2-macos/upstream/intbitset-feedstock`.
+
+Everything below is the working note the PR was written from; the PR body
+itself is much shorter. Two changes were made after the first push, both from
+the conda-forge linter, which failed the PR on the first of them:
+
+- **`{{ stdlib('c') }}` in `build:`** — now required of any recipe using a
+  compiler ([conda-forge.github.io#2102](https://github.com/conda-forge/conda-forge.github.io/issues/2102)).
+  This changes the variant config, so it needed a second rerender; py3.13 was
+  rebuilt locally afterwards and still passes. The build string moves from
+  `py313h2f2c7d1_0` to `py313hd55261d_0` because `c_stdlib` joins the hash.
+- **`files.pythonhosted.org` instead of `pypi.io`** — the linter's advisory,
+  not a failure.
+
+The linter is green after both: *"found it was in an excellent condition."*
 
 Measured 2026-09-03 on macOS 26.2 / Apple silicon. This is the first of the two
 changes CompareM2 needs for panaroo on macOS; the other is
@@ -26,6 +40,15 @@ second is about macOS:
 The feedstock is stalled rather than hostile: last human merge **2023-09-19**,
 **seven** open autotick-bot PRs (#14–#20), sole maintainer `gtonkinhill` — who
 also wrote panaroo.
+
+**But the maintainer is not absent, only this feedstock is.** Checked
+2026-09-04: his public activity runs to **2026-09-03**, he merged two panaroo
+PRs on 2026-07-02, and he pushed to `bioconda/bioconda-recipes` on 2026-08-23.
+So the three-year feedstock silence is not evidence that a ping will go
+unanswered, and it argues against escalating to `@conda-forge/core` early.
+`.github/CODEOWNERS` is `* @gtonkinhill`, so opening the PR requested his
+review automatically — he has already been notified once, without anyone
+@-mentioning him.
 
 ## The cause is one missing line, and no rerender will fix it
 
