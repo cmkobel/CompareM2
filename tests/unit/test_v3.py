@@ -2408,6 +2408,39 @@ def test_patch_solver_logs_every_solve_it_wraps(monkeypatch, capsys):
     assert "seconds=43.2" in err
 
 
+def test_patch_solver_tolerates_a_scip_that_has_no_papilo(monkeypatch, capsys):
+    """`presolving/milp/maxrounds` exists only where PaPILO is linked, and the
+    build without it is the one the docstring proposes as the alternative fix.
+    Measured 2026-09-04: the PyPI wheel died at the first solve, exit 1, no
+    model — this wrapper must never be why a working solver fails."""
+    from comparem2 import carve_scip
+
+    class NoPapilo:
+        def setParam(self, name, value):
+            raise KeyError("Not a valid parameter name")
+
+        getStatus = staticmethod(lambda: "optimal")
+
+    class FakeSCIPSolver:
+        def __init__(self):
+            self.problem = NoPapilo()
+
+        def solve(self, *args, **kwargs):
+            return "solution"
+
+    module = type(sys)("reframed.solvers.scip_solver")
+    module.SCIPSolver = FakeSCIPSolver
+    monkeypatch.setitem(sys.modules, "reframed.solvers.scip_solver", module)
+    carve_scip.patch_solver()
+
+    assert FakeSCIPSolver().solve() == "solution", "the solve still has to happen"
+    err = capsys.readouterr().err
+    assert "not a parameter of this SCIP build" in err
+    assert "PaPILO is not linked" in err
+    # And the solve is still reported, so the two builds stay comparable.
+    assert "carve_scip: solve status=optimal" in err
+
+
 def test_patch_solver_reports_a_missing_backend_rather_than_failing(monkeypatch):
     """An installation solving with Gurobi or CPLEX has nothing here to patch.
     This wrapper is a speed fix and must not be why a working run fails."""

@@ -156,7 +156,18 @@ def patch_solver() -> str:
     original = SCIPSolver.solve
 
     def solve(self, *args, **kwargs):
-        self.problem.setParam(*PRESOLVER_OFF)
+        try:
+            self.problem.setParam(*PRESOLVER_OFF)
+        except KeyError:
+            # A SCIP with no PaPILO has no such parameter — `setParam` raises
+            # `KeyError('Not a valid parameter name')` — and nothing to turn
+            # off, PaPILO being the MILP presolver this disables. That is
+            # exactly the build named above as the alternative fix, so it must
+            # not be the build this wrapper breaks: measured 2026-09-04, the
+            # PyPI wheel died here at the first solve, exit 1 and no model.
+            print(f"carve_scip: {PRESOLVER_OFF[0]} is not a parameter of this "
+                  "SCIP build, so PaPILO is not linked and there is nothing to "
+                  "disable", file=sys.stderr)
         solution = original(self, *args, **kwargs)
         # Every solve, not only the big MILP: `carve` does a handful and the
         # cheap ones cost a line each, where picking out "the MILP" would mean
