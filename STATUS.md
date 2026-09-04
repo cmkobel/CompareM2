@@ -1060,35 +1060,54 @@ the test data out over.
 `/evo/postdoc/cm2-install-test` is **9.8 GB**, 7.7 GB of it a second copy of the
 two tool environments in its own prefix. Deletable once this is written down.
 
-### What v3.0.0 is tagged at, and what 3.0.1 owes
-Settled 2026-09-04. `v3.0.0` points at **`b217b50`**, tarball sha256
-**`f7644b3a…`**, which is what [PR #68805](https://github.com/bioconda/bioconda-recipes/pull/68805)
-carries and what all five of its checks passed against (Linux 10m52s, OSX-64
-7m57s, ARM 1m16s, Lint, Summary). Tag, tarball and recipe agree.
+### v3.0.0 is on bioconda, and what 3.0.1 owes
+Released 2026-09-04. `v3.0.0` points at **`b217b50`**, tarball sha256
+**`f7644b3a…`**. [PR #68805](https://github.com/bioconda/bioconda-recipes/pull/68805)
+merged at **12:14:21Z** (`8278c92`, approved by bgruening) and
+`noarch/comparem2-3.0.0-pyhdfd78af_0.conda` was on anaconda.org at
+**12:16:47Z** — 2m26s from merge to available. Tag, merged recipe and published
+package all agree; the hash was re-verified against a fresh download and the
+61 files of `b217b50` compared byte-for-byte against the tarball.
 
-The tag moved three times getting there — `009c88b` → `b217b50` → `42e2d0d` →
-`b217b50` — and the round trip is worth explaining, because `b217b50` is
-knowingly **not** the best commit. Its own CI is red: `1da59af` added a caveat
-to `guidance.py` without regenerating the page derived from it, and the four
-commits from there to `ec9b19c` all fail `docs/generate.py --check`. `42e2d0d`
-fixes that and adds the unit test that would have caught it.
+The tag moved three times — `009c88b` → `b217b50` → `42e2d0d` → `b217b50` —
+and the round trip needs explaining, because `b217b50` is knowingly **not** the
+best commit. Its own CI is red: `1da59af` added a caveat to `guidance.py`
+without regenerating the page derived from it, and the four commits from there
+to `ec9b19c` all fail `docs/generate.py --check`. `42e2d0d` fixes that and adds
+the unit test that would have caught it.
 
-The tag went back anyway because **GitHub never synced the second recipe update
-onto the PR.** The commit landed on the fork branch (`5e4d7c7`, verified by
-`branches/comparem2-3.0.0`) and the PR's head stayed at `ddb0a1c` for eleven
-minutes — so the PR would have merged a recipe whose hash no longer matched the
-tag. Moving the tag back restored agreement, and re-tagging `b217b50` reproduced
-`f7644b3a` byte-for-byte, so the recipe needed no further change. The orphan
-`5e4d7c7` was reset off the branch, since a late sync would have reintroduced
-the wrong hash.
+**It went back because the PR had already merged.** A second recipe update
+carrying `42e2d0d`'s hash was pushed to the fork branch at 12:16:51Z — 2m30s
+*after* the merge and 4 s after the package was uploaded — so it went nowhere
+and the PR head stayed at `ddb0a1c`. (An earlier version of this entry blamed a
+GitHub sync failure over eleven minutes. That was wrong: nothing failed to
+sync, the branch simply no longer had an open PR.) Moving the tag back to
+`b217b50` was then not tidiness but a requirement — the shipped recipe declares
+`f7644b3a`, and a tag pointing anywhere else would leave the release
+unrebuildable. Re-tagging reproduced `f7644b3a` exactly. The orphan commit
+`5e4d7c7` was reset off the branch.
 
-**The cost is bounded and cosmetic:** the stale page is a mkdocs source file.
-readthedocs builds from `master`, and the conda package neither builds nor
-ships it — the three platform builds passing on that exact tarball is the
+**What went wrong, and it was luck that it did not:** the tag was force-moved to
+`42e2d0d` at roughly 12:15–12:16Z, inside the 12:14:21–12:16:47Z window in
+which bioconda was building against it. The build succeeded, so it fetched bytes
+hashing to `f7644b3a` — but whether that is because it downloaded before the
+move or because GitHub served a cached archive is not determinable after the
+fact. **Do not move a tag once its recipe is merged and building.** The check
+that would have caught it is one line: read `.merged_at` before touching the tag.
+
+The cost of tagging the red commit is bounded and cosmetic: the stale page is
+mkdocs source, readthedocs builds from `master`, and the conda package neither
+builds nor ships it — three platform builds passing on that exact tarball is the
 evidence. What ships is right; what is tagged has a red docs check.
 
 **So 3.0.1 owes the contents of `42e2d0d`** — the regenerated page and its test.
 Nothing else is outstanding from this round.
+
+Loose end: autobump [PR #68821](https://github.com/bioconda/bioconda-recipes/pull/68821),
+opened by the bot at 12:25:44Z after the tag moved. Its hash is correct but it is
+a version-only bump — it neither drops v2's `build.sh` nor sets
+`noarch: python`, so merging it would undo the recipe #68805 landed. It is on a
+branch in the bioconda org, so only bioconda can close it; asked on the PR.
 
 ## Known broken or unfinished
 
