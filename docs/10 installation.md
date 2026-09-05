@@ -102,7 +102,8 @@ it is the way a conda install uses too.
 | `main` | 568 | 2.2.5 | thirteen tools, plus curl and tar | 6.0 GB |
 | `checkm2` | 127 | 2.1.11 | CheckM2 alone | 1.8 GB |
 
-Eighteen rules point at those two. **CheckM2 is separate because it pins
+Together they are **7.7 GB** measured; the two figures are rounded, so they add
+to 7.8. Eighteen rules point at those two. **CheckM2 is separate because it pins
 DIAMOND 2.1.x while current Bakta needs 2.2.x** — they cannot co-solve, which
 is also the answer to why the tools are not simply dependencies of the conda
 package: no single environment can hold all fourteen.
@@ -155,8 +156,13 @@ was interrupted. Nothing needs to be placed by hand.
 | AMRFinder | unmeasured | — | `amrfinder` |
 
 Downloads are measured from `content-length`; on-disk figures are measured
-after extraction. **Plan volumes around 101 GB, not 62.5** — extraction inflates
-GTDB from 60.8 GB to 94 GB.
+after extraction. The **62.5 GB** CompareM2 prints is GTDB plus CheckM2 and
+nothing else — Bakta's 1.3 GB is Bakta's own documented figure and AMRFinder
+publishes none, so both are counted as "of unknown size" rather than folded into
+a total that would then look measured.
+
+**Plan volumes around 101 GB, not 62.5** — extraction inflates GTDB from
+60.8 GB to 94 GB.
 
 They go to `~/.comparem2/databases` unless you pass `-d` or set
 `$COMPAREM2_DATABASES`. Before running, CompareM2 prints what is actually
@@ -164,7 +170,7 @@ missing — not a total that includes what you already have:
 
 ```
 2 assemblies, 5 tools
-to download: amrfinder (1 of unknown size)
+to download: amrfinder (1 of unknown size) -> /home/you/.comparem2/databases
 ```
 
 !!! warning "AMRFinder ignores `-d`"
@@ -190,10 +196,10 @@ comparem2 *.fna --until seqkit checkm2 bakta amrfinder mlst mashtree \
 ```
 
 Bakta uses the **light** database (1.3 GB / 4.0 GB on disk) rather than the
-full one (30 GB / 84 GB). That saves 29 GB for less specific functional
+full one (30 GB / 84 GB on disk). That saves 29 GB for less specific functional
 annotation, which a wide view can absorb — but note the Bakta paper's
-annotation-quality figures are measured on the full database and do not
-transfer.
+annotation-quality figures are measured on the full database, a 53 GB version of
+it at the time, and do not transfer.
 
 ## HPC
 

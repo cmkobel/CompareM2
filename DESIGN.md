@@ -10,12 +10,12 @@ interpret** — a straightforward view into a set of assemblies.
 ## Wide, not deep
 
 v3 is triage across many assemblies, not a deep dive into each. Deep functional
-and metabolic analysis is where DRAM2 and nf-core/funcscan are already strong; a
+and metabolic analysis is where DRAM and nf-core/funcscan are already strong; a
 fast wide sweep is not well served, and it is what v2's benchmark result —
 near-linear scaling with input count — actually supports.
 
-Every other decision follows from that one. Fourteen tools instead of 30+, one
-conda environment instead of 25, one runtime instead of two.
+Every other decision follows from that one. Fourteen tools instead of 30+, two
+conda environments instead of 25, one runtime instead of two.
 
 ## The shape
 
@@ -29,7 +29,7 @@ src/comparem2/
   tools.py      the contract: Tool, Database, Context, Registry, Scope
   catalogue.py  the fourteen specs — command lines and outputs
   guidance.py   what each tool does and how to read it, for the report
-  snakefile.py  generates the Snakefile and per-tool env files
+  snakefile.py  generates the Snakefile and the two env files
   cli.py        arguments, input canonicalisation, hands off to Snakemake
   runner.py     drives Snakemake's API, emits structured events
   tui.py        Textual interface over those events
@@ -197,10 +197,11 @@ Four consequences worth knowing:
   `$COMPAREM2_CONDA_PREFIX` — on a cluster, everyone.
 - **Co-solving thirteen tools is not a new risk, but the pins are load-bearing.**
   It is the same solve `pixi.toml` used to carry, and what every verification run
-  on thylakoid ran on — 422 packages, seqkit 2.13.0, bakta 1.12.1, panaroo 1.8.0,
-  gtdbtk 2.7.2, DIAMOND 2.2.5. What a thirteen-way solve does change is the blast
-  radius of an unconstrained spec, so **every tool carries a minimum version**,
-  floored at the build verified on linux-64, and a test enforces it.
+  on thylakoid ran on — 568 packages in `main`, seqkit 2.13.0, bakta 1.12.1,
+  panaroo 1.8.0, gtdbtk 2.7.2, DIAMOND 2.2.5. What a thirteen-way solve does
+  change is the blast radius of an unconstrained spec, so **every tool carries a
+  minimum version**, floored at the build verified on linux-64, and a test
+  enforces it.
 - **AMRFinder depends on the sharing.** `amrfinder -u` writes into
   `$CONDA_PREFIX`, so its download rule and its analysis rules must land in the
   same deployed environment. They do — both name `main`. **Executed

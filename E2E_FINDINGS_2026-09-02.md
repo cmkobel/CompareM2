@@ -1,9 +1,19 @@
 # End-to-end test findings — 2026-09-02
 
-Untracked scratch notes, not one of the three canonical docs. Follow-up items
-from a real, from-scratch run: fresh `git clone` of `496c8b3` on thylakoid,
-`pixi install`, seven *Staphylococcus aureus* genomes downloaded from NCBI
-RefSeq that morning, all 13 tools, `--cores 24`.
+Scratch notes from one run, kept in git but **not maintained** and not one of
+the three canonical docs. Every count and line reference below is as of
+2026-09-02 and several have moved since — the pipeline is 14 tools rather than
+13, the unit suite 212 tests rather than 171, and deployment is two shared
+environments rather than one per tool. Read it as a dated record, and check
+[STATUS.md](STATUS.md) before acting on anything in it.
+
+None of findings 2–5 has been folded into `STATUS.md` or `DECISIONS.md`, and
+finding 3 was still true of `catalogue.py` on 2026-09-05: snp-dists and fasttree
+are handed `core_gene_alignment.aln`, not the filtered file.
+
+The run: a fresh `git clone` of `496c8b3` on thylakoid, `pixi install`, seven
+*Staphylococcus aureus* genomes downloaded from NCBI RefSeq that morning, all
+13 tools, `--cores 24`.
 
 Ground truth (PubMLST typing, published AMR genotypes, the Holden et al. 2010
 ST239/TW20 recombination) and the report were checked by independent agents

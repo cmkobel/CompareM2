@@ -62,8 +62,9 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 # The only non-Python file in the package, and the reason it is a zip rather
-# than six FASTAs: 452 KB against 1.5 MB installed, on a package that is
-# otherwise 109 KB. `--demo` extracts it into the run's own output directory.
+# than six FASTAs: 460,821 bytes against 1,541,425 uncompressed, on a wheel that
+# is 122,612 bytes without it. `--demo` extracts it into the run's own output
+# directory. All three measured 2026-09-05; see src/comparem2/demo/__init__.py.
 "comparem2.demo" = ["plasmids.zip"]
 
 [tool.pytest.ini_options]

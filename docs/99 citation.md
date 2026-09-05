@@ -14,8 +14,9 @@ If you use CompareM2, please cite:
     genomes. *Bioinformatics* 41(9), btaf517 (2025).
     [doi:10.1093/bioinformatics/btaf517](https://doi.org/10.1093/bioinformatics/btaf517)
 
-CompareM2 is Open Access under the
-[CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) license.
+That paper is Open Access under
+[CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/); the software itself
+is [GPL-3.0-or-later](https://www.gnu.org/licenses/gpl-3.0.html).
 
 ## Citing the tools
 

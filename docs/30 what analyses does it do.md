@@ -416,6 +416,8 @@ Runs once per genome · 1 thread · after `bakta`
 python src/comparem2/carve_scip.py --faa results_comparem2/samples/genome_A/bakta/genome_A.faa --output results_comparem2/samples/genome_A/carveme/genome_A.xml
 ```
 
+*That path is this repository's; from an installed CompareM2 the script sits inside the `comparem2` package. Either way it runs under the tool environment's own `python` rather than CompareM2's, because it imports `carveme` and `reframed`.*
+
 **Reading the output**
 
   - *Reactions* — Counted from every reaction element in the SBML, so transporters, exchange and spontaneous reactions and the biomass equation are included — the paper's per-organism figures count only gene-associated reactions, so this number runs larger. For scale, across 5,587 RefSeq bacterial models the average was 1,308 reactions, the smallest 238 and the largest 2,472. A few hundred is expected for a genuinely reduced genome and suspicious for a free-living organism.
@@ -445,6 +447,8 @@ Runs once per genome · 1 thread · after `carveme`
 python src/comparem2/biosynthesis.py --model results_comparem2/samples/genome_A/carveme/genome_A.xml --output results_comparem2/samples/genome_A/biosynthesis/genome_A.tsv --media results_comparem2/samples/genome_A/biosynthesis/genome_A.media.tsv
 ```
 
+*That path is this repository's; from an installed CompareM2 the script sits inside the `comparem2` package. Either way it runs under the tool environment's own `python` rather than CompareM2's, because it imports `carveme` and `reframed`.*
+
 **Reading the output**
 
   - *De novo* — A complete, connected route from the minimal medium. On the manually curated Escherichia coli model iML1515 this probe returns 31 of the 32 compounds as de novo, the single exception being adenosylcobalamin — which E. coli genuinely cannot synthesise, only salvage. That is the calibration for how much weight the column carries.
@@ -466,7 +470,7 @@ python src/comparem2/biosynthesis.py --model results_comparem2/samples/genome_A/
 
 ## Passthrough parameters
 
-Any argument can be forwarded to any tool with `--set <tool>--<flag>=<value>`. Naming one flag replaces only that flag; the tool's other defaults stay. A flag with no value is passed bare:
+Any argument can be forwarded to any tool with `--set <tool><flag>=<value>`, where the flag is spelled exactly as the tool spells it — dashes and all, which is why `treecluster--threshold` has two and skani's `-c` has one. Naming one flag replaces only that flag; the tool's other defaults stay. A flag with no value is passed bare:
 
 ```bash
 cm2 *.fna --set treecluster--threshold=0.1 --set skani-c=125

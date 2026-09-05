@@ -50,8 +50,9 @@ with run dependencies `snakemake-minimal <8`, `pulp <2.8`, `python <3.12`,
 | kept | `run_exports` pinning at major version | the PR template asks for it; semantic versioning, so `max_pin="x"` |
 
 The tool set is *not* in either recipe. v2 deployed 25 environments at run
-time; v3 deploys 14. That is the same model, and it is why a recipe for a
-13-tool pipeline is this short.
+time; v3 deploys 2, because thirteen of the fourteen tools co-solve and CheckM2
+cannot join them. That is the same model, more cheaply, and it is why a recipe
+for a fourteen-tool pipeline is this short.
 
 ## Release steps
 
@@ -89,7 +90,7 @@ tools**: it can render a report and run `--dry-run`, and a real run inside it
 would deploy the tool environments on first use, needing network and a writable
 `--conda-prefix`.
 
-**A hand-built image with all thirteen tools is not planned** (decided
+**A hand-built image with all fourteen tools is not planned** (decided
 2026-09-02). pixi and conda both install this well enough that the image would
 be a third thing to keep in step, and it could not be one environment anyway —
 CheckM2 pins DIAMOND 2.1.x against Bakta's 2.2.x, so it would be two

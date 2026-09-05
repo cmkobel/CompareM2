@@ -73,10 +73,11 @@ and two tools have resolved to builds that installed cleanly and crashed.
 For development, from a checkout rather than the package:
 
 ```bash
-python -m pytest tests/unit -q   # 212 tests, no pixi required
+pip install pytest pytest-asyncio textual   # what CI installs; no pixi needed
+python -m pytest tests/unit -q              # 212 tests, ~2.5 s
 
-pixi install                     # linux only
-pixi run test-fast               # 4 genomes, no databases needed
+pixi install                                # linux only
+pixi run test-fast                          # 4 genomes, no databases needed
 pixi run cm2 --help
 ```
 

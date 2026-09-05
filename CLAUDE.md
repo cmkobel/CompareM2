@@ -159,5 +159,5 @@ ANI, 0 SNPs, identical CDS counts.
 `STATUS.md` carries the table of which tool command lines have actually been
 executed. **It tracks execution, never installation** — a clean `pixi install`
 says nothing about whether a tool runs. Commands drafted against documented
-interfaces and never executed are the standing risk here. All 13 are now
+interfaces and never executed are the standing risk here. All 14 are now
 verified; GTDB-Tk was the last, and its rule turned out to carry six defects.

@@ -30,7 +30,7 @@ typed. Results land next to the genomes.
 | `-d`, `--databases` | `~/.comparem2/databases` | where databases live |
 | `-t`, `--cores` | `4` | cores for Snakemake |
 | `--until TOOL...` | *(all)* | run only these tools and their dependencies |
-| `--set TOOL--FLAG=VALUE` | — | override a tool argument; repeatable |
+| `--set TOOL-FLAG=VALUE` | — | override a tool argument; repeatable |
 | `--tui` | off | interactive keyboard interface |
 | `--conda-prefix DIR` | `~/.comparem2/envs` | where the tool environments go |
 | `--setup` | off | build those environments and exit; takes no assemblies |
@@ -144,8 +144,10 @@ cm2 *.fna \
   --set bakta--gram=+
 ```
 
-Naming one flag replaces only that flag — the tool's other defaults stay. A flag
-with no value is passed bare: `--set bakta--force=`.
+Write the flag exactly as the tool spells it, dashes and all — that is why
+`treecluster--threshold` has two and skani's `-c` has one. Naming one flag
+replaces only that flag; the tool's other defaults stay. A flag with no value is
+passed bare: `--set bakta--force=`.
 
 Every tool's defaults are listed on
 [what analyses does it do](30 what analyses does it do.md), generated from the
@@ -223,17 +225,24 @@ tarball instead of fetching 60.8 GB again.
 
 ```
 results_comparem2/
-├── report.html                    the product; self-contained
-├── samples/<name>/<name>.fna      canonical link to your input
-├── samples/<name>/<tool>/…        per-genome results
-├── <tool>/…                       whole-set results
+├── report.html                     the product; self-contained
+├── <tool>/…                        whole-set results
+├── logs/<tool>.log                 one per whole-set step
+├── samples/<name>/<name>.fna       canonical link to your input
+├── samples/<name>/<tool>/…         per-genome results
+├── samples/<name>/logs/<tool>.log  one per per-genome step
 └── .comparem2/
-    ├── Snakefile                  generated from the tool specs
-    ├── envs/                      the two generated conda env files
-    ├── gtdbtk_batchfile.tsv       generated input: genome path, genome id
-    └── log/                       one log per step
+    ├── Snakefile                   generated from the tool specs
+    ├── envs/                       the two generated conda env files
+    └── gtdbtk_batchfile.tsv        generated input: genome path, genome id
 ```
 
+A log sits beside the results it describes, so a per-genome tool leaves one log
+per genome rather than one for the run. Database downloads are the exception:
+they log to `<databases>/logs/`, next to the data instead of next to the run —
+all but AMRFinder's, which has no directory of its own under `--databases` and
+writes to `logs/download_amrfinder.log` here.
+
 The generated `Snakefile` is a normal Snakemake workflow. If something fails,
-that file plus the matching log in `.comparem2/log/` is where to look — and you
-can run Snakemake against it directly with any profile you already use.
+that file plus the matching log is where to look — and you can run Snakemake
+against it directly with any profile you already use.

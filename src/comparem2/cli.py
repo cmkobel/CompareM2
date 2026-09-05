@@ -279,7 +279,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("-t", "--cores", type=int, default=4)
     p.add_argument("--until", nargs="*", default=None, metavar="TOOL",
                    help="run only these tools and their dependencies")
-    p.add_argument("--set", action="append", default=[], metavar="TOOL--FLAG=VALUE",
+    # `TOOL-FLAG`, not `TOOL--FLAG`: the flag keeps whatever dashes the tool
+    # spells it with, so `skani-c=125` and `treecluster--threshold=0.1` are
+    # both well-formed. Matches the error `parse_overrides` raises.
+    p.add_argument("--set", action="append", default=[], metavar="TOOL-FLAG=VALUE",
                    help="override a tool argument, e.g. "
                         "--set treecluster--threshold=0.1")
     p.add_argument("--tui", action="store_true", help="interactive keyboard interface")

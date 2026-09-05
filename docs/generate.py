@@ -45,7 +45,9 @@ def _example_command(tool) -> str:
     # A command that names one of our own files does so by absolute path, which
     # is right at runtime and wrong in a checked-in page: it would read as this
     # laptop's directory layout, and `--check` would fail in CI, where the
-    # checkout is somewhere else. carveme is the one — see carve_scip.py.
+    # checkout is somewhere else. carveme and biosynthesis are the two, and the
+    # repo-relative form they fall back to is the one thing on the page a reader
+    # cannot paste — so `analyses_page` says so under the block.
     return line.replace(str(Path(__file__).resolve().parents[1]) + "/", "")
 
 
@@ -113,7 +115,18 @@ def analyses_page() -> str:
             facts.append(f"**its own conda environment**, `{tool.environment}`")
         parts.append(" · ".join(facts) + "\n\n")
 
-        parts.append(f"```\n{_example_command(tool)}\n```\n\n")
+        command = _example_command(tool)
+        parts.append(f"```\n{command}\n```\n\n")
+        # The two tools that are ours name a file rather than a binary on PATH,
+        # so the path above is the only thing on this page that is not
+        # pasteable as written. Say why once, where it appears.
+        if "src/comparem2/" in command:
+            parts.append(
+                "*That path is this repository's; from an installed CompareM2 "
+                "the script sits inside the `comparem2` package. Either way it "
+                "runs under the tool environment's own `python` rather than "
+                "CompareM2's, because it imports `carveme` and `reframed`.*\n\n"
+            )
 
         if tool.params:
             parts.append("| Parameter | Default |\n|---|---|\n")
@@ -133,7 +146,9 @@ def analyses_page() -> str:
     parts.append(
         "---\n\n## Passthrough parameters\n\n"
         "Any argument can be forwarded to any tool with "
-        "`--set <tool>--<flag>=<value>`. Naming one flag replaces only that "
+        "`--set <tool><flag>=<value>`, where the flag is spelled exactly as the "
+        "tool spells it — dashes and all, which is why `treecluster--threshold` "
+        "has two and skani's `-c` has one. Naming one flag replaces only that "
         "flag; the tool's other defaults stay. A flag with no value is passed "
         "bare:\n\n"
         "```bash\ncm2 *.fna --set treecluster--threshold=0.1 "
@@ -159,8 +174,9 @@ If you use CompareM2, please cite:
     genomes. *Bioinformatics* 41(9), btaf517 (2025).
     [doi:10.1093/bioinformatics/btaf517](https://doi.org/10.1093/bioinformatics/btaf517)
 
-CompareM2 is Open Access under the
-[CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) license.
+That paper is Open Access under
+[CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/); the software itself
+is [GPL-3.0-or-later](https://www.gnu.org/licenses/gpl-3.0.html).
 
 ## Citing the tools
 

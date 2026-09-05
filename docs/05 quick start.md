@@ -30,31 +30,29 @@ On your own assemblies:
 cm2 *.fna
 ```
 
-Or, to see a report before you commit any genomes of your own, on six
-*Enterococcus faecium* plasmids that ship with the package:
-
-```bash
-cm2 --demo
-```
-
-That downloads nothing and runs the four analyses that need no database. One of
-the seven inputs is another one again under a different name, so the tree and
-the ANI matrix have a pair in them that must come out identical.
-
-CompareM2 says what it is about to do, and how much database it needs, before
-fetching anything:
+Before fetching anything, CompareM2 says what it is about to do and what it
+will cost:
 
 ```
 4 assemblies, 14 tools
-to download: checkm2, gtdb, bakta-light, amrfinder (62.5 GB + 2 of unknown size) -> ~/.comparem2/databases
+to download: checkm2, gtdb, bakta-light, amrfinder (62.5 GB + 2 of unknown size) -> /home/you/.comparem2/databases
+tool environments: 2 in /home/you/.comparem2/envs (none built yet)
 ```
 
 **60.8 GB of that 62.5 GB is GTDB-Tk alone.** If you do not need taxonomic
 assignment, name the analyses you do want instead and the download falls under
 2 GB — see [running a subset](20 usage.md#running-a-subset).
 
-The first run is then quiet for about a minute while Snakemake builds the two
+The first run is then quiet for about a minute while Snakemake builds those two
 tool environments. That is expected, and `cm2 --setup` does it in advance.
+
+!!! tip "No genomes to hand?"
+    `cm2 --demo` needs none, and no databases either. Six *Enterococcus
+    faecium* plasmids ship inside the package, and one of them is passed a
+    second time under another name — so seven inputs, six distinct genomes. It
+    runs the four analyses that need no database, and the duplicated pair is
+    what you check the report against: it must come out at 0.00000 mash
+    distance and 100.00% ANI.
 
 ## 2) Read the report
 

@@ -6,7 +6,7 @@ Some things are out of scope by choice rather than for lack of time, and
 knowing which is which saves everyone an issue:
 
   - **Deep functional and metabolic interpretation of a single genome** — this
-    is where [DRAM2](https://github.com/WrightonLabCSU/DRAM) and
+    is where [DRAM](https://github.com/WrightonLabCSU/DRAM) and
     [nf-core/funcscan](https://nf-co.re/funcscan) are strong, and they
     complement CompareM2 rather than overlapping with it.
   - **Read-level processing** — mapping, assembly and binning are highly
@@ -40,7 +40,8 @@ Genuinely wanted, not yet in:
     or similar. Panaroo's `--clean-mode strict` can remove rare plasmids, so
     this is partly a correction.
   - **Replication origin identification** —
-    [Oriloc](http://pbil.univ-lyon1.fr/software/Oriloc/oriloc.html).
+    [Oriloc](https://doi.org/10.1093/bioinformatics/16.6.560), which ships in
+    the R package `seqinr`.
   - **GC3 profiling** — synonymous GC-content fingerprinting.
   - **Horizontally transferred gene identification.** The pangenome section can
     already point at candidates: a gene pattern shared by genomes that are not
