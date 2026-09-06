@@ -77,10 +77,11 @@ the recipe's shape; otherwise autobump does them.
 6. **PR.** CI builds the package and the BioContainer. Then comment
    `@BiocondaBot please add label` to request the merge label.
 
-!!! **Do not move a tag once a recipe is building against it.** `v3.0.0` was
-force-moved inside the two-minute window in which bioconda was building, and
-whether the build fetched the old bytes or a cached archive is not determinable
-after the fact. The check is one line: read the PR's `.merged_at` first.
+> **Do not move a tag once a recipe is building against it.** `v3.0.0` was
+> force-moved inside the two-minute window in which bioconda was building, and
+> whether the build fetched the old bytes or a cached archive is not
+> determinable after the fact. The check is one line: read the PR's
+> `.merged_at` first.
 
 ## About the container
 

@@ -15,12 +15,11 @@ Assemblies are passed as paths, and the shell expands the glob:
 cm2 genomes/*.fna
 ```
 
-Relative paths mean what they look like they mean, from any directory. A pixi
-task runs from the workspace root rather than from your shell's directory, so
-`pixi run cm2 *.fna` in a subdirectory would otherwise look for the files
-somewhere else entirely; CompareM2 resolves inputs, `--output` and
-`--databases` against `$INIT_CWD`, which pixi sets to where the command was
-typed. Results land next to the genomes.
+Relative paths mean what they look like they mean, from any directory —
+including under `pixi run`, which would otherwise resolve them against the
+workspace root rather than your shell's directory. Inputs, `--output` and
+`--databases` are all resolved against where you typed the command, so results
+land next to the genomes.
 
 ## Options
 
@@ -44,74 +43,6 @@ typed. Results land next to the genomes.
 There is no flag for *whether* to deploy the tools. Snakemake always does, into
 `--conda-prefix` — see [Installation](10 installation.md).
 
-## The bundled demo
-
-```bash
-cm2 --demo
-```
-
-Six *Enterococcus faecium* plasmids ship inside the package — 461 KB, the only
-non-Python file in it — so this needs no genomes of your own, no databases and
-no network beyond the tool environments themselves. They are extracted to
-`<output>/demo_assemblies/`, where you can look at them and delete them.
-
-It runs `seqkit`, `mashtree`, `treecluster` and `skani`: the four analyses that
-need no database. That list is fixed rather than defaulted, because the inputs
-are **plasmids** — CheckM2 would report a completeness near zero, correctly and
-uselessly, since it is looking for a chromosome's marker genes. Naming
-`--until` yourself still overrides it, on the assumption that you have a reason.
-
-A seventh input is the sixth one again as `116_2 duplicate.fna`. It costs
-nothing to ship and it gives the report something to check itself against: the
-pair must come out at 0.00000 mash distance and 100.00% ANI, and the space in
-the filename exercises sample-name canonicalisation on the way.
-
-## Where databases go
-
-Databases are shared across runs, not stored per-run: the default is
-`~/.comparem2/databases`, the same location whatever directory you invoke from
-and outside any checkout, so deleting a checkout does not cost a re-download.
-The full set is 62.5 GB of measured downloads plus two of unmeasured size,
-and 60.8 GB of that is GTDB alone.
-
-A home directory is the wrong place for that on a cluster with a home quota, so
-set the location once:
-
-```bash
-export COMPAREM2_DATABASES=/evo/postdoc/cm2-databases
-```
-
-Precedence is `-d`, then `$COMPAREM2_DATABASES`, then `~/.comparem2/databases`.
-Whichever wins is printed before anything is fetched:
-
-```
-to download: checkm2, gtdb, bakta-light, amrfinder (62.5 GB + 2 of unknown size) -> /evo/postdoc/cm2-databases
-```
-
-Only what is actually missing is listed, so this shrinks to nothing once the
-databases are in place.
-
-Two databases are not under this root, and cannot be:
-
-- **AMRFinder** rejects `-d` on update (`amrfinder -u -d <dir>` exits with *"only
-  operates on the default database directory"*), so its data lands in
-  `$CONDA_PREFIX` and only a marker file is recorded here.
-- **GTDB-Tk** has no flag for its database at all; it is passed
-  `GTDBTK_DATA_PATH=<root>/gtdb` instead.
-
-## Sample names
-
-Every input is linked to `<output>/samples/<name>/<name>.fna`, and that is what
-every tool reads. The name comes from the filename stem with anything outside
-`[A-Za-z0-9._-]` replaced by `_`, because a space in a filename otherwise
-produces a silently broken workflow rule. CompareM2 tells you when it renames:
-
-```
-note: '116_2 duplicate.fna' -> sample '116_2_duplicate'
-```
-
-Two inputs that reduce to the same name is an error, not a silent overwrite.
-
 ## Running a subset
 
 `--until` takes tool names and pulls in whatever they need:
@@ -122,16 +53,19 @@ cm2 *.fna --until seqkit skani # runs just those two
 ```
 
 There are no fixed presets to memorise: name what you want and the
-prerequisites follow. Some useful combinations:
+prerequisites follow. Two combinations worth knowing:
 
 ```bash
-# Fast, no databases at all
+# Fast, and no databases at all
 --until seqkit mashtree treecluster skani
 
 # Everything except the 60.8 GB GTDB download
 --until seqkit checkm2 bakta amrfinder mlst mashtree treecluster skani \
         panaroo snp-dists fasttree carveme biosynthesis
 ```
+
+The second is the single biggest saving available — GTDB-Tk is 60.8 GB of the
+download, and everything else together is roughly 3 GB.
 
 ## Passthrough parameters
 
@@ -189,6 +123,69 @@ GB. Read the size on the second line before pressing `r`.
 
 `--dry-run` is refused with `--tui`, because the tool list is already the dry
 run and it shows the download size too.
+
+## The bundled demo
+
+```bash
+cm2 --demo
+```
+
+Six *Enterococcus faecium* plasmids ship inside the package — 461 KB, the only
+non-Python file in it — so this needs no genomes of your own, no databases and
+no network beyond the tool environments themselves. They are extracted to
+`<output>/demo_assemblies/`, where you can look at them and delete them.
+
+It runs `seqkit`, `mashtree`, `treecluster` and `skani`: the four analyses that
+need no database. That list is fixed rather than defaulted, because the inputs
+are **plasmids** — CheckM2 would report a completeness near zero, correctly and
+uselessly, since it is looking for a chromosome's marker genes. Naming
+`--until` yourself still overrides it, on the assumption that you have a reason.
+
+A seventh input is the sixth one again as `116_2 duplicate.fna`. It costs
+nothing to ship and it gives the report something to check itself against: the
+pair must come out at 0.00000 mash distance and 100.00% ANI, and the space in
+the filename exercises sample-name canonicalisation on the way.
+
+## Sample names
+
+Every input is linked to `<output>/samples/<name>/<name>.fna`, and that is what
+every tool reads. The name comes from the filename stem with anything outside
+`[A-Za-z0-9._-]` replaced by `_`, because a space in a filename otherwise
+produces a silently broken workflow rule. CompareM2 tells you when it renames:
+
+```
+note: '116_2 duplicate.fna' -> sample '116_2_duplicate'
+```
+
+Two inputs that reduce to the same name is an error, not a silent overwrite.
+
+## Where databases go
+
+Databases are shared across runs, not stored per-run, so deleting a checkout
+does not cost a re-download. Precedence is `-d`, then `$COMPAREM2_DATABASES`,
+then `~/.comparem2/databases` — and a home directory is the wrong place for
+101 GB on a cluster with a quota:
+
+```bash
+export COMPAREM2_DATABASES=/evo/postdoc/cm2-databases
+```
+
+Whichever location wins is printed before anything is fetched, listing only
+what is actually missing:
+
+```
+to download: checkm2, gtdb, bakta-light, amrfinder (62.5 GB + 2 of unknown size) -> /evo/postdoc/cm2-databases
+```
+
+Two databases are not under this root, and cannot be:
+
+- **AMRFinder** rejects `-d` on update (`amrfinder -u -d <dir>` exits with *"only
+  operates on the default database directory"*), so its data lands in
+  `$CONDA_PREFIX` and only a marker file is recorded here.
+- **GTDB-Tk** has no flag for its database at all; it is passed
+  `GTDBTK_DATA_PATH=<root>/gtdb` instead.
+
+Sizes are in [Installation](10 installation.md#databases).
 
 ## Re-rendering the report
 

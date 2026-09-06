@@ -143,16 +143,17 @@ def analyses_page() -> str:
             parts.append(f"  - {caveat}\n")
         parts.append("\n")
 
+    # The tables above list each tool's defaults, so the syntax for changing one
+    # belongs on this page — but only the syntax. The rules and the worked
+    # examples are in usage, and were duplicated here until 2026-09-06.
     parts.append(
-        "---\n\n## Passthrough parameters\n\n"
-        "Any argument can be forwarded to any tool with "
-        "`--set <tool><flag>=<value>`, where the flag is spelled exactly as the "
-        "tool spells it — dashes and all, which is why `treecluster--threshold` "
-        "has two and skani's `-c` has one. Naming one flag replaces only that "
-        "flag; the tool's other defaults stay. A flag with no value is passed "
-        "bare:\n\n"
+        "---\n\n## Changing a default\n\n"
+        "Every parameter above can be overridden with "
+        "`--set <tool><flag>=<value>`, spelling the flag exactly as the table "
+        "does:\n\n"
         "```bash\ncm2 *.fna --set treecluster--threshold=0.1 "
         "--set skani-c=125\n```\n\n"
+        "See [passthrough parameters](20 usage.md#passthrough-parameters).\n"
     )
     return "".join(parts)
 
@@ -187,17 +188,9 @@ Bakta calls Prodigal, Panaroo aligns with MAFFT.
 
 """
 
-CITATION_FOOTER = """
-## Tools with no publication
-
-Two have none of their own, so the reference is to what should be credited
-instead:
-
-  - **MLST** — `tseemann/mlst` is unpublished; it types against PubMLST, so
-    Jolley et al. 2018 is the citation. Cite the GitHub repository alongside it.
-  - **snp-dists** — `tseemann/snp-dists` is unpublished and has no preprint.
-    Cite the software DOI.
-"""
+# There is no "tools with no publication" section: mlst and snp-dists are the
+# two, and each already carries a note saying so under its own heading. Saying
+# it twice on one page was the duplication, not the information.
 
 
 def citation_page() -> str:
@@ -218,7 +211,6 @@ def citation_page() -> str:
         "`papers/tools.bib` in the repository, fetched from Crossref rather "
         "than hand-typed.\n"
     )
-    parts.append(CITATION_FOOTER)
     return "".join(parts)
 
 

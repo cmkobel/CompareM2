@@ -26,9 +26,9 @@ stress test.
     all-against-all ANI (skani)
   - **Pangenome** — core and accessory gene content (Panaroo), SNP distances,
     core-genome tree (FastTree)
-  - **Metabolism** — draft genome-scale metabolic models (CarveMe), and what
-    each one can build for itself: 32 amino acids, vitamins and cofactors, de
-    novo or acquired
+  - **Metabolism** — draft genome-scale metabolic models (CarveMe), and which
+    of a 32-compound panel of amino acids, vitamins and cofactors each genome
+    can build for itself rather than having to acquire
 
 See [what analyses does it do](30 what analyses does it do.md) for the full
 reference, generated from the tool specs themselves.

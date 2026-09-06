@@ -29,10 +29,6 @@ Genuinely wanted, not yet in:
     halved it. The requirement is that it takes *assemblies* —
     sylph was tried and removed because it profiles metagenomic reads, which is
     not the question being asked here.
-  - **Aligned fraction alongside ANI.** skani computes it, but `triangle
-    --full-matrix` emits identity only, and an ANI is reported once alignment
-    covers as little as ~15% of a genome. Identity without coverage is half the
-    picture.
   - **Recombination detection** in the core genome — Bruen's PHI statistic or
     ClonalFrameML. The core-genome tree currently assumes one shared history for
     all genes, which recombination breaks.

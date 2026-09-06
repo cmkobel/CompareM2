@@ -107,13 +107,3 @@ Bakta calls Prodigal, Panaroo aligns with MAFFT.
 ## BibTeX
 
 All 24 distinct references are in `papers/tools.bib` in the repository, fetched from Crossref rather than hand-typed.
-
-## Tools with no publication
-
-Two have none of their own, so the reference is to what should be credited
-instead:
-
-  - **MLST** — `tseemann/mlst` is unpublished; it types against PubMLST, so
-    Jolley et al. 2018 is the citation. Cite the GitHub repository alongside it.
-  - **snp-dists** — `tseemann/snp-dists` is unpublished and has no preprint.
-    Cite the software DOI.

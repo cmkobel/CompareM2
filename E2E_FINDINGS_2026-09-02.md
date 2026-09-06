@@ -7,9 +7,14 @@ the three canonical docs. Every count and line reference below is as of
 environments rather than one per tool. Read it as a dated record, and check
 [STATUS.md](STATUS.md) before acting on anything in it.
 
-None of findings 2–5 has been folded into `STATUS.md` or `DECISIONS.md`, and
-finding 3 was still true of `catalogue.py` on 2026-09-05: snp-dists and fasttree
-are handed `core_gene_alignment.aln`, not the filtered file.
+Re-checked against the code on 2026-09-06. **Finding 1** is superseded by
+STATUS.md's *And it does not generalise* — the deficit is the genomes, not the
+solver build. **Findings 2 and 10 are fixed** in `report.py` and `guidance.py`.
+**Finding 4** is recorded in STATUS.md. **Finding 3 is still true and is the
+only live one**: snp-dists and fasttree are handed `core_gene_alignment.aln`,
+not the filtered file — now tracked in STATUS.md's *Known broken or unfinished*.
+Findings 5 and 12 stand as written. An earlier version of this paragraph said
+none of 2–5 had been folded in anywhere, which was already wrong when written.
 
 The run: a fresh `git clone` of `496c8b3` on thylakoid, `pixi install`, seven
 *Staphylococcus aureus* genomes downloaded from NCBI RefSeq that morning, all

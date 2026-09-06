@@ -1222,6 +1222,17 @@ identical skani, mashtree and treecluster values.
 
 ## Known broken or unfinished
 
+- **snp-dists and fasttree read Panaroo's *unfiltered* core alignment**, and
+  nothing had recorded that this was a choice. `catalogue.py` hands both
+  `core_gene_alignment.aln`; `-a core` also writes
+  `core_gene_alignment_filtered.aln`, which Panaroo's own documentation calls
+  the one "recommended for building core genome phylogenies". Re-run on the
+  filtered file over the seven *S. aureus* genomes of 2026-09-02: **branch
+  lengths down 26–71%, pairwise SNP counts down 20–60%, topology unchanged.**
+  Neither number is wrong — they measure different alignments — but the
+  pipeline should say which it means, or switch. From
+  [E2E_FINDINGS_2026-09-02.md](E2E_FINDINGS_2026-09-02.md), finding 3, still
+  true on 2026-09-06.
 - **AMRFinder's database still lives in the conda prefix**, so it is refetched
   whenever the environment is rebuilt. What is fixed is the *lie*: the marker
   now lives with the run, so a rebuilt environment no longer leaves a stale

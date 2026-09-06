@@ -9,42 +9,14 @@ pixi global install --channel conda-forge --channel bioconda comparem2
 comparem2 *.fna
 ```
 
-No genomes to hand? `comparem2 --demo` runs six bundled *Enterococcus faecium*
-plasmids and needs no databases.
-
 CompareM2 takes microbial genome assemblies — isolates or MAGs, from any
 sequencing technology — and produces a single portable HTML report comparing
 them: **easy to install, easy to run, easy to interpret.**
 
-## Highlights
+No genomes to hand? `comparem2 --demo` runs six bundled *Enterococcus faecium*
+plasmids and needs no databases.
 
-**Built for many genomes at once.** Fourteen analyses across a whole set of
-assemblies, in one report, at a cost that scales near-linearly with how many you
-give it — the benchmark result the design is built on. A hundred genomes is an
-ordinary input, not a stress test.
-
-**Every tool is one declarative spec.** There is no hand-written Snakefile —
-`src/comparem2/catalogue.py` holds the 14 specs and the workflow is generated
-from them, so the CLI, the TUI and the report all read the same source of truth.
-
-**An interpretative report.** Each section carries what the tool does, how to
-read the specific columns on screen, and what the result cannot tell you — every
-number quoted from the tool's own paper and checked against it — plus a
-citations list of every paper behind the tools that ran.
-
-At a glance:
-
-| | |
-| --- | --- |
-| Analyses | **14** |
-| Conda environments | **2** — thirteen tools co-solve, CheckM2 cannot |
-| Software on disk | **7.7 GB** measured, deployed on first run |
-| Databases | **4**, fetched automatically (Bakta light) |
-| Report | **one** self-contained HTML file |
-| Runtime | **Python** only |
-| Unit tests | **212** |
-
-## The 14 tools
+## The 14 analyses
 
 | | |
 | --- | --- |
@@ -56,21 +28,41 @@ At a glance:
 | **Pangenome** | Panaroo, snp-dists, FastTree |
 | **Metabolism** | CarveMe (genome-scale metabolic models), biosynthesis (which building blocks each genome can make) |
 
+All fourteen run across the whole set and land in one report, at a cost that
+scales near-linearly with how many assemblies you give it. A hundred genomes is
+an ordinary input, not a stress test.
+
+Each section of the report says what the tool does, how to read the specific
+columns on screen, and what the result *cannot* tell you — every number quoted
+from the tool's own paper and checked against it — and the report ends with a
+citation list covering exactly the tools that ran.
+
+## Installing
+
+**Linux only**, because the analysis tools are `linux-64`. The package is the
+pipeline alone: Snakemake deploys the tools into two conda environments
+(**7.7 GB**) the first time they are needed, and fetches four databases
+(**62.5 GB** measured, 60.8 GB of it GTDB-Tk) as the workflow reaches them.
+Both defaults are shared across runs and both are movable, which matters on a
+cluster with a home quota.
+
+[The documentation](https://comparem2.readthedocs.io) covers all of that, plus
+running a subset to skip the 60.8 GB, HPC, and how to read each analysis.
+
 ## Status
 
-Linux-only; the tools are `linux-64`. Unit tests run anywhere.
+All **14 of 14** tool command lines have been executed end to end on real
+genomes, under the conda deployment that is the only way a tool arrives.
+[`STATUS.md`](STATUS.md) has the per-tool table; it tracks *execution*, never
+installation, because two tools have resolved to builds that installed cleanly
+and crashed on first use.
 
-**14 of 14** tool command lines have been executed end to end on real genomes,
-all of them under the conda deployment that is the only way a tool arrives.
-GTDB-Tk was the last, and it took six defects and a database release change to
-get there — its rule had never been run, and two of its steps were described in
-comments that were not true.
+## Development
 
-[`STATUS.md`](STATUS.md) has the per-tool table. It tracks *execution*, never
-installation — a clean `pixi install` says nothing about whether a tool runs,
-and two tools have resolved to builds that installed cleanly and crashed.
-
-For development, from a checkout rather than the package:
+There is no hand-written Snakefile. `src/comparem2/catalogue.py` holds the 14
+tool specs and the workflow is generated from them, so the CLI, the TUI and the
+report all read one source of truth — which is why the unit tests, not an
+end-to-end run, are the primary instrument.
 
 ```bash
 pip install pytest pytest-asyncio textual   # what CI installs; no pixi needed

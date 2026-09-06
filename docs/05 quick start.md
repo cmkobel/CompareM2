@@ -40,19 +40,19 @@ tool environments: 2 in /home/you/.comparem2/envs (none built yet)
 ```
 
 **60.8 GB of that 62.5 GB is GTDB-Tk alone.** If you do not need taxonomic
-assignment, name the analyses you do want instead and the download falls under
-2 GB — see [running a subset](20 usage.md#running-a-subset).
+assignment, name the analyses you do want instead and the download drops to
+roughly 3 GB — see [running a subset](20 usage.md#running-a-subset). The printed
+figure there reads 1.7 GB, because Bakta's and AMRFinder's databases publish no
+size; they cost 1.3 GB and 241 MB.
 
-The first run is then quiet for about a minute while Snakemake builds those two
+The first run is also quiet for about a minute while Snakemake builds those two
 tool environments. That is expected, and `cm2 --setup` does it in advance.
 
 !!! tip "No genomes to hand?"
-    `cm2 --demo` needs none, and no databases either. Six *Enterococcus
-    faecium* plasmids ship inside the package, and one of them is passed a
-    second time under another name — so seven inputs, six distinct genomes. It
-    runs the four analyses that need no database, and the duplicated pair is
-    what you check the report against: it must come out at 0.00000 mash
-    distance and 100.00% ANI.
+    `cm2 --demo` needs none, and no databases either: six *Enterococcus
+    faecium* plasmids ship inside the package, and it runs the four analyses
+    that need no database. See
+    [the bundled demo](20 usage.md#the-bundled-demo).
 
 ## 2) Read the report
 

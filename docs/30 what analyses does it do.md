@@ -468,11 +468,12 @@ python src/comparem2/biosynthesis.py --model results_comparem2/samples/genome_A/
 
 ---
 
-## Passthrough parameters
+## Changing a default
 
-Any argument can be forwarded to any tool with `--set <tool><flag>=<value>`, where the flag is spelled exactly as the tool spells it — dashes and all, which is why `treecluster--threshold` has two and skani's `-c` has one. Naming one flag replaces only that flag; the tool's other defaults stay. A flag with no value is passed bare:
+Every parameter above can be overridden with `--set <tool><flag>=<value>`, spelling the flag exactly as the table does:
 
 ```bash
 cm2 *.fna --set treecluster--threshold=0.1 --set skani-c=125
 ```
 
+See [passthrough parameters](20 usage.md#passthrough-parameters).
