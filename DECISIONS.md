@@ -1486,3 +1486,20 @@ overridden by a flag looks identical to a variable that was never set, so that
 reads `given, overriding $COMPAREM2_DATABASES`. `execution` says `local` or the
 profile, since "am I actually submitting to the queue" is the same class of
 question.
+
+### `--unlock` takes no assemblies
+`pixi run comparem2 --unlock` exited on `no assemblies given — pass one or more
+FASTA files`, which is a demand for input that clearing a lock never reads.
+The flag was handled at the bottom of `main`, after the input requirement,
+after canonicalisation and after `prepare` — so the one working invocation,
+`comparem2 *.fna --unlock`, copied every genome into the workdir and re-rendered
+the Snakefile before releasing anything. On a killed 60.8 GB download that is
+the wrong order of operations twice over.
+
+A lock belongs to an output directory. `--unlock` now returns early on
+`--output` alone, reusing the Snakefile the dead run already left in
+`<output>/.comparem2/` — if there is none, no run ever started there, so there
+is no lock, and it says that instead of handing back a Snakemake traceback.
+Assemblies are still accepted and still ignored: adding `--unlock` to the
+command that just died is how anyone reaches for it, and unlike `--setup` and
+`--demo` there is no risk of the command looking as though it analysed them.

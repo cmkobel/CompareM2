@@ -398,7 +398,8 @@ def main(argv: list[str] | None = None) -> int:
                    help="keep running independent tools after one fails")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--unlock", action="store_true",
-                   help="release a stale lock left by a killed run, then exit")
+                   help="release a stale lock left by a killed run on --output, "
+                        "then exit; needs no assemblies")
     p.add_argument("--report-only", action="store_true",
                    help="re-render the report from existing outputs")
     args = p.parse_args(argv)
@@ -426,6 +427,37 @@ def main(argv: list[str] | None = None) -> int:
             args.until,
             resolve(args.databases or default_databases(), base),
             resolve(args.conda_prefix or default_conda_prefix(), base))
+
+    if args.unlock:
+        # Snakemake locks the output directory, and a run that died without
+        # releasing it — SIGKILL, a lost node, a power cut — leaves the next
+        # one refusing to start. Snakemake's own message names `--unlock`, but
+        # it was not a flag CompareM2 had, so the only way out was to know that
+        # a Snakefile sits in `<output>/.comparem2/` and to invoke Snakemake
+        # against it by hand. Found by killing a 60.8 GB download.
+        #
+        # A lock belongs to an output directory and to nothing else, so this
+        # takes `--output` and no assemblies. It used to fall through the whole
+        # input path instead: `--unlock` on its own died on "no assemblies
+        # given", which is a demand for something clearing a lock never reads,
+        # and `*.fna --unlock` copied every genome into the workdir and
+        # re-rendered the Snakefile before clearing anything. Assemblies are
+        # accepted and ignored here, because adding --unlock to the command
+        # that just died is how anyone would reach for it.
+        workdir = resolve(args.output, base)
+        snakefile = workdir / ".comparem2" / "Snakefile"
+        if not snakefile.is_file():
+            # No generated Snakefile means no run ever started here, so there
+            # is no lock either. Say where we looked: the likely mistake is a
+            # missing --output, and the default is not in sight of the cwd.
+            raise SystemExit(f"nothing to unlock: no run in {workdir}\n"
+                             "A run leaves its Snakefile in "
+                             "<output>/.comparem2/. Pass --output if this one "
+                             "wrote somewhere else.")
+        print(f"unlocking {workdir}", file=sys.stderr)
+        return subprocess.run([sys.executable, "-m", "snakemake",
+                               "--snakefile", str(snakefile),
+                               "--directory", str(workdir), "--unlock"]).returncode
 
     if args.demo:
         # Rejected rather than merged, for --setup's reason: a command naming
@@ -475,10 +507,10 @@ def main(argv: list[str] | None = None) -> int:
     print(f"{len(samples)} assemblies, {len(tools)} tools", file=sys.stderr)
 
     # Say it now rather than from inside DAG construction. Skipped where nothing
-    # will be deployed: --report-only reads output that already exists and
-    # --unlock only clears a lock. A --dry-run *is* checked, because Snakemake
-    # queries conda while building the DAG.
-    if not (args.report_only or args.unlock) and missing_conda():
+    # will be deployed: --report-only reads output that already exists.
+    # (--unlock never reaches here; it returns above.) A --dry-run *is* checked,
+    # because Snakemake queries conda while building the DAG.
+    if not args.report_only and missing_conda():
         raise SystemExit(
             "not on PATH: conda\n"
             "CompareM2 runs each tool in an environment Snakemake deploys, so "
@@ -530,17 +562,6 @@ def main(argv: list[str] | None = None) -> int:
 
     snakefile = prepare(CATALOGUE, args.until, workdir, databases, samples,
                         overrides=overrides)
-
-    if args.unlock:
-        # Snakemake locks the output directory, and a run that died without
-        # releasing it — SIGKILL, a lost node, a power cut — leaves the next
-        # one refusing to start. Snakemake's own message names `--unlock`, but
-        # it was not a flag CompareM2 had, so the only way out was to know that
-        # a Snakefile sits in `<output>/.comparem2/` and to invoke Snakemake
-        # against it by hand. Found by killing a 60.8 GB download.
-        return subprocess.run([sys.executable, "-m", "snakemake",
-                               "--snakefile", str(snakefile),
-                               "--directory", str(workdir), "--unlock"]).returncode
 
     if not args.report_only:
         cmd = [

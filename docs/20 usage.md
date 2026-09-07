@@ -38,7 +38,7 @@ land next to the genomes.
 | `--keep-going` | off | keep running independent tools after a failure |
 | `--dry-run` | off | show what would run |
 | `--report-only` | off | re-render the report from existing outputs |
-| `--unlock` | off | release a stale lock left by a killed run |
+| `--unlock` | off | release a stale lock on `--output` and exit; takes no assemblies |
 | `--version` | | print the version and exit |
 
 There is no flag for *whether* to deploy the tools. Snakemake always does, into
@@ -244,9 +244,13 @@ LockException: Directory cannot be locked.
 Nothing is wrong with the results. Release the lock and carry on:
 
 ```bash
-comparem2 *.fna --unlock
+comparem2 --unlock         # add -o if the run wrote somewhere else
 comparem2 *.fna            # picks up where it stopped
 ```
+
+The lock belongs to the output directory, not to the assemblies, so `--unlock`
+needs only `-o`. Naming the assemblies as well is accepted — adding the flag to
+the command that just died is the obvious move — and they are not read.
 
 Downloads resume rather than restart: a killed GTDB fetch continues its partial
 tarball instead of fetching 60.8 GB again.

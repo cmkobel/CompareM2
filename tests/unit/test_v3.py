@@ -949,17 +949,22 @@ def test_a_partial_run_still_renders_its_report(monkeypatch, tmp_path):
     assert "report" in seen
 
 
-def test_unlock_releases_the_lock_and_does_nothing_else(monkeypatch, tmp_path):
+def test_unlock_needs_only_the_output_directory(monkeypatch, tmp_path):
     """A run killed mid-flight leaves a lock the next one refuses to start on.
 
     Snakemake's message names `--unlock`, but CompareM2 had no such flag, so
     the only way out was knowing that a generated Snakefile sits in
     `<output>/.comparem2/`. Found by killing a 60.8 GB download.
+
+    A lock belongs to an output directory, so clearing one reads no assemblies:
+    `--unlock` alone used to die on "no assemblies given", and with assemblies
+    it canonicalised every one of them into the workdir first.
     """
     monkeypatch.delenv("INIT_CWD", raising=False)
     # Tools are irrelevant to clearing a lock, so the preflight must not fire.
     monkeypatch.setattr(cli_mod.shutil, "which", lambda exe: None)
     (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    out = tmp_path / "out"
 
     seen: dict[str, object] = {}
 
@@ -971,12 +976,31 @@ def test_unlock_releases_the_lock_and_does_nothing_else(monkeypatch, tmp_path):
     monkeypatch.setattr(cli_mod, "render_report",
                         lambda *a, **k: seen.setdefault("report", True))
 
-    assert cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"),
-                         "--until", "seqkit", "--unlock"]) == 0
+    # Nothing ran there, so there is no lock, and saying so beats a Snakemake
+    # traceback about a missing Snakefile.
+    with pytest.raises(SystemExit) as excinfo:
+        cli_mod.main(["-o", str(out), "--unlock"])
+    assert "nothing to unlock" in str(excinfo.value)
+    assert "cmd" not in seen
+
+    # What a run leaves behind is the Snakefile this needs.
+    (out / ".comparem2").mkdir(parents=True)
+    (out / ".comparem2" / "Snakefile").write_text("rule all:\n    input: []\n")
+
+    assert cli_mod.main(["-o", str(out), "--unlock"]) == 0
     cmd = seen["cmd"]
     assert "--unlock" in cmd and cmd[:3] == [sys.executable, "-m", "snakemake"]
     assert "--cores" not in cmd, "unlocking is not a run"
     assert "report" not in seen, "unlocking must not render a report"
+    assert not (out / "samples").exists(), "unlocking must not touch the inputs"
+
+    # Adding --unlock to the command that just died is how anyone reaches for
+    # it, so the assemblies are accepted — and still not read.
+    seen.clear()
+    assert cli_mod.main([str(tmp_path / "a.fna"), "-o", str(out),
+                         "--until", "seqkit", "--unlock"]) == 0
+    assert "--unlock" in seen["cmd"]
+    assert not (out / "samples").exists(), "unlocking must not touch the inputs"
 
 
 def test_setup_deploys_the_environments_and_runs_nothing(monkeypatch, tmp_path):

@@ -15,11 +15,13 @@ on startup is what a re-run would actually skip.
 from __future__ import annotations
 
 from pathlib import Path
+from time import monotonic
 
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal
 # textual, not rich: rich is textual's dependency rather than this package's.
 from textual.markup import escape
+from textual.timer import Timer
 from textual.widgets import DataTable, Footer, Header, ProgressBar, RichLog, Static
 
 from .catalogue import CATALOGUE
@@ -44,6 +46,27 @@ LABEL = {PENDING: "pending", RUNNING: "running", DONE: "done",
 # `[x]` is a tag, not text. The selection UI had no visible selection.
 MARK_ON, MARK_DEP, MARK_OFF = "▣", "▨", "▢"
 
+# Liveness. A run's first minutes are silent — the DAG, then conda solving six
+# environments — and a still screen in that state is indistinguishable from a
+# hung one. The frames are driven by a Textual timer on the UI thread, which is
+# the property that makes them worth having: if the interface is genuinely
+# blocked, the spinner stops with it rather than reassuring the user it hasn't.
+SPINNER = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+SPINNER_INTERVAL = 0.1  # 10 fps reads as motion; the clock only needs 1 Hz
+
+# What the activity line says when no job is running. Three distinct cases, and
+# they are worth distinguishing: the first is where minutes go on a first run,
+# and the last is where they go at the end of a long one.
+STARTING = "starting up — the DAG, and tool environments on a first run"
+WAITING = "no job running — waiting on Snakemake"
+REPORTING = "collecting outputs and writing the report"
+
+
+def elapsed_text(seconds: float) -> str:
+    """`3s`, `4m 12s`. Whole seconds, so a short run does not read `0m 3s`."""
+    total = int(seconds)
+    return f"{total}s" if total < 60 else f"{total // 60}m {total % 60:02d}s"
+
 
 class ComparemTUI(App):
     """Pick tools, watch them run, open the report."""
@@ -53,9 +76,13 @@ class ComparemTUI(App):
     #cost { padding: 0 1; color: $text-muted; }
     #where { padding: 0 1; }
     #panes { height: 1fr; }
+    #activity { padding: 0 1; height: 1; }
     DataTable { width: 46%; border: round $primary; }
     RichLog { width: 1fr; border: round $primary; padding: 0 1; }
     ProgressBar { padding: 0 1; }
+    /* The indeterminate bar is $error by default — red, for a run that is
+       merely still going. */
+    Bar > .bar--indeterminate { color: $accent; }
     """
 
     BINDINGS = [
@@ -103,6 +130,18 @@ class ComparemTUI(App):
         self.state: dict[str, str] = dict(self.disk)
         self.running = False
         self.cost_text = ""
+        # The animation. `phase` is what the line says when no rule is running,
+        # and it has to be maintained rather than assumed: after the last event
+        # the worker is still rendering the report, and "starting up" would then
+        # be a false statement at the moment a user is most likely reading it.
+        self.frame = 0
+        self.phase = STARTING
+        self.started_at: float | None = None
+        self.activity_timer: Timer | None = None
+        # Whether Snakemake has said how many jobs there are. Until it has, the
+        # bar has nothing to show, and a bar parked at 0% was the other half of
+        # this same complaint.
+        self.progress_seen = False
 
     def scan(self) -> dict[str, str]:
         """Read the output directory: which tools already have results there.
@@ -127,6 +166,7 @@ class ComparemTUI(App):
         with Horizontal(id="panes"):
             yield DataTable(cursor_type="row", zebra_stripes=True)
             yield RichLog(highlight=False, markup=True, wrap=True)
+        yield Static(id="activity")
         yield ProgressBar(total=100, show_eta=False)
         yield Footer()
 
@@ -233,6 +273,47 @@ class ComparemTUI(App):
                 table.update_cell(tool.name, "status", LABEL[state])
         self.refresh_cost()
 
+    # --- liveness --------------------------------------------------
+
+    def activity_text(self) -> str:
+        """One line: a frame, what is running, and how long it has been.
+
+        The elapsed clock does the same work as the spinner and survives a
+        screenshot, which is the form the question usually arrives in.
+        """
+        frame = SPINNER[self.frame % len(SPINNER)]
+        active = [t.name for t in CATALOGUE if self.state.get(t.name) == RUNNING]
+        shown = ", ".join(active[:3]) if active else self.phase
+        if len(active) > 3:
+            shown += f" +{len(active) - 3} more"
+        since = elapsed_text(monotonic() - self.started_at) if self.started_at else ""
+        return f"[cyan]{frame}[/] {shown} [dim]· {since}[/]"
+
+    def refresh_activity(self) -> None:
+        self.query_one("#activity", Static).update(self.activity_text())
+
+    def advance_activity(self) -> None:
+        self.frame += 1
+        self.refresh_activity()
+
+    def stop_activity(self) -> None:
+        """Stop the animation, and say why it stopped.
+
+        A still spinner and a hung interface look identical, so the line is
+        replaced rather than frozen mid-frame.
+        """
+        if self.activity_timer is not None:
+            self.activity_timer.stop()
+            self.activity_timer = None
+        took = elapsed_text(monotonic() - self.started_at) if self.started_at else ""
+        self.query_one("#activity", Static).update(
+            f"[dim]not running — the last run took {took}[/]" if took else "")
+        if not self.progress_seen:
+            # An indeterminate bar animates for as long as it exists. Left
+            # going after the run it would be exactly the false signal the
+            # spinner is here to avoid.
+            self.query_one(ProgressBar).update(total=100, progress=0)
+
     # --- running ---------------------------------------------------
 
     def action_start(self) -> None:
@@ -246,59 +327,78 @@ class ComparemTUI(App):
         self.disk = self.scan()
         for tool in CATALOGUE.closure(chosen):
             self.state[tool.name] = self.disk[tool.name]
+        self.frame = 0
+        self.phase = STARTING
+        self.progress_seen = False
+        self.started_at = monotonic()
+        # Indeterminate until Snakemake says how many jobs there are: a bar
+        # that cannot know its total should not draw itself at 0%.
+        self.query_one(ProgressBar).update(total=None)
+        self.refresh_activity()
+        self.activity_timer = self.set_interval(SPINNER_INTERVAL,
+                                                self.advance_activity)
         self.run_worker(self.execute(chosen), thread=True, exclusive=True)
 
     async def execute(self, chosen: list[str]) -> None:
         log = self.query_one(RichLog)
-        snakefile = prepare(CATALOGUE, chosen, self.workdir, self.databases,
-                            self.samples, overrides=self.overrides)
-        names = [t.name for t in CATALOGUE.closure(chosen)]
+        # try/finally around the whole run: the animation is a claim that work
+        # is happening, so it has to come down even on a path that raises.
+        try:
+            snakefile = prepare(CATALOGUE, chosen, self.workdir, self.databases,
+                                self.samples, overrides=self.overrides)
+            names = [t.name for t in CATALOGUE.closure(chosen)]
 
-        self.call_from_thread(log.write, f"[bold]Running {len(names)} tools[/]")
-        # Snakemake's own "Creating conda environment" lines are quietened in
-        # the API path, so a first run would otherwise look hung while the
-        # environments solve.
-        self.call_from_thread(
-            log.write, f"[dim]deploying tool environments in {self.conda_prefix}"
-                       " — first run only[/]")
-        for event in run(snakefile, self.cores, workdir=self.workdir,
-                         keep_going=self.keep_going,
-                         conda_prefix=self.conda_prefix,
-                         profile=self.profile):
-            self.call_from_thread(self.apply_event, event)
-
-        # Safe to read self.state here: call_from_thread blocks until the UI
-        # thread has applied the update, so every event above has landed.
-        self.call_from_thread(self.settle, names)
-        done = [n for n in names if self.state[n] == DONE]
-        failed = [n for n in names if self.state[n] == FAILED]
-        # Is there anything to report? Asked of the files, and of the same
-        # function the CLI asks, so the two paths cannot disagree about it.
-        # Snakemake emits no job events for a rule it skips, so a directory that
-        # was already current produced none at all, every row settled to
-        # `not run`, and the report was withheld over a complete set of outputs.
-        have = any_outputs_exist(chosen, self.workdir, self.databases, self.samples)
-
-        if not have:
-            reason = f" Failed: {', '.join(failed)}." if failed else ""
+            self.call_from_thread(log.write, f"[bold]Running {len(names)} tools[/]")
+            # Snakemake's own "Creating conda environment" lines are quietened in
+            # the API path, so a first run would otherwise look hung while the
+            # environments solve.
             self.call_from_thread(
-                log.write,
-                f"[bold red]Nothing ran.[/]{reason} No report written.")
-        else:
-            if not done:
+                log.write, f"[dim]deploying tool environments in {self.conda_prefix}"
+                           " — first run only[/]")
+            for event in run(snakefile, self.cores, workdir=self.workdir,
+                             keep_going=self.keep_going,
+                             conda_prefix=self.conda_prefix,
+                             profile=self.profile):
+                self.call_from_thread(self.apply_event, event)
+
+            # Rendering the report reads every output and takes seconds on a
+            # real run, with no events left to arrive. Naming that phase is
+            # what keeps the spinner's line true to the end.
+            self.phase = REPORTING
+            # Safe to read self.state here: call_from_thread blocks until the UI
+            # thread has applied the update, so every event above has landed.
+            self.call_from_thread(self.settle, names)
+            done = [n for n in names if self.state[n] == DONE]
+            failed = [n for n in names if self.state[n] == FAILED]
+            # Is there anything to report? Asked of the files, and of the same
+            # function the CLI asks, so the two paths cannot disagree about it.
+            # Snakemake emits no job events for a rule it skips, so a directory that
+            # was already current produced none at all, every row settled to
+            # `not run`, and the report was withheld over a complete set of outputs.
+            have = any_outputs_exist(chosen, self.workdir, self.databases, self.samples)
+
+            if not have:
+                reason = f" Failed: {', '.join(failed)}." if failed else ""
                 self.call_from_thread(
                     log.write,
-                    "[dim]Nothing to do — every selected tool's output was "
-                    "already up to date.[/]")
-            if failed:
-                self.call_from_thread(
-                    log.write,
-                    f"[yellow]{len(failed)} of {len(names)} failed:[/] {', '.join(failed)}")
-            report = render_report(CATALOGUE, chosen, self.workdir,
-                                   self.databases, self.samples,
-                                   command=self.command)
-            self.call_from_thread(log.write, f"[bold green]Report:[/] {report}")
-        self.running = False
+                    f"[bold red]Nothing ran.[/]{reason} No report written.")
+            else:
+                if not done:
+                    self.call_from_thread(
+                        log.write,
+                        "[dim]Nothing to do — every selected tool's output was "
+                        "already up to date.[/]")
+                if failed:
+                    self.call_from_thread(
+                        log.write,
+                        f"[yellow]{len(failed)} of {len(names)} failed:[/] {', '.join(failed)}")
+                report = render_report(CATALOGUE, chosen, self.workdir,
+                                       self.databases, self.samples,
+                                       command=self.command)
+                self.call_from_thread(log.write, f"[bold green]Report:[/] {report}")
+        finally:
+            self.running = False
+            self.call_from_thread(self.stop_activity)
 
     def settle(self, names: list[str]) -> None:
         """Once the run is over, a tool that never started reads `not run`.
@@ -331,6 +431,8 @@ class ComparemTUI(App):
         if event.kind == "job_started" and event.rule:
             self.mark(table, event.rule, RUNNING)
             log.write(f"[cyan]▸[/] {event.rule}")
+            # Whatever the wait is from here on, it is not the first solve.
+            self.phase = WAITING
         elif event.kind == "job_finished" and event.rule:
             self.mark(table, event.rule, DONE)
             log.write(f"[green]✓[/] {event.rule}")
@@ -339,6 +441,7 @@ class ComparemTUI(App):
                 self.mark(table, event.rule, FAILED)
             log.write(f"[red]✗ {event.rule or 'error'}[/] {event.message}")
         elif event.kind == "progress" and event.total:
+            self.progress_seen = True
             self.query_one(ProgressBar).update(
                 total=event.total, progress=event.done or 0)
         elif event.kind == "error":
