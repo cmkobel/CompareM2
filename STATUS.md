@@ -4,8 +4,38 @@ What is currently true of a real run. This file changes whenever something is
 re-run, which is why it is not in [DESIGN.md](DESIGN.md) — decisions should not
 need editing because a tool was verified again.
 
-Last updated **2026-09-04**. The tool numbers are from runs on thylakoid; the
+Last updated **2026-09-07**. The tool numbers are from runs on thylakoid; the
 pre-tag checks for v3.1.0 are from the laptop and say so.
+
+## Known unverified: cluster submission
+
+`--profile` was added 2026-09-07 and **has never submitted a job**. No SLURM,
+PBS, SGE or LSF run exists. What is checked is the argument handling, in seven
+unit tests: that the flag reaches the Snakemake command line, that a relative
+directory is made absolute and a bare name is not, and that CompareM2's default
+of four cores is withheld when a profile is present.
+
+What that leaves open, in the order it would bite:
+
+- The TUI's branch calls `snakemake.cli.parse_args()` and `args_to_api()`
+  in-process. The argv it builds is asserted; that Snakemake accepts it is not.
+- `--quiet all` is meant to keep Snakemake's logger off the Textual display.
+  Read from Snakemake 9.16.3's source (`nargs="*"`, `choices=Quietness.choices()`),
+  not observed.
+- Whether `--cores` constrains *submitted* jobs under a non-local executor, and
+  not just local ones. The suppression above assumes it might.
+- Whether the log events `_Capture` reads still arrive when jobs run on other
+  nodes. If they do not, the TUI shows a run that never progresses.
+
+Nothing here is measured for resources either: the generated rules declare
+`threads:` and no `mem_mb` or `runtime` (`snakefile.py:113`), so a profile's
+`default-resources` decides every job. There is no peak-RSS measurement for any
+rule anywhere in this repo. The `set-resources` example in the installation
+docs carries the GTDB-Tk paper's under-55 GB figure plus headroom, and says so.
+
+GenomeDK is the intended place to close this; `hpc.env` in the repo root
+configures it, and non-interactive SSH is refused until a ControlMaster socket
+is warmed by an interactive login.
 
 ## Tool verification: 14 of 14
 
