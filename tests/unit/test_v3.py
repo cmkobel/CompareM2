@@ -1426,7 +1426,10 @@ async def test_tui_lists_tools_and_shows_install_cost():
 
     app = ComparemTUI([], Path("results"), Path("databases"), SAMPLES, 4)
     async with app.run_test() as pilot:
-        assert app.query_one(DataTable).row_count == len(CATALOGUE)
+        # Fourteen tools and the four databases. The databases have rows of
+        # their own because they are rules Snakemake reports on, and every
+        # place that counted `CATALOGUE` was blind to a running download.
+        assert app.query_one(DataTable).row_count == len(CATALOGUE) + 4
         # Nothing is selected until the user says so, so nothing is to be
         # downloaded either.
         assert "0 tools selected" in app.cost_text
@@ -1831,6 +1834,209 @@ def test_quit_dialog_says_what_happens_to_the_jobs():
     # "0 jobs running" would read as nothing to lose at exactly that moment.
     early = ConfirmQuit(True, 0, None).text()
     assert "no job has started yet" in early
+
+
+def test_quit_dialog_names_a_running_download():
+    """A fetch is the one job the queue sentence is false of.
+
+    Under a profile the dialog tells the user their jobs survive because they
+    are in a queue. The four `download_*` rules are `localrules`, so they run
+    on the machine the interface is on — which is why `departure()` calls
+    `stop_local()` under a profile too, and why `s` is the key that acts on
+    them.
+    """
+    pytest.importorskip("textual")
+    from comparem2.tui import ConfirmQuit
+
+    queued = ConfirmQuit(True, 3, "slurm", downloads=1).text()
+    assert "A database download is in progress" in queued
+    assert "rather than in the queue" in queued
+
+    local = ConfirmQuit(True, 2, None, downloads=2).text()
+    assert "2 database downloads are in progress" in local
+    # No queue to contrast with, so the sentence about one is not offered.
+    assert "rather than in the queue" not in local
+
+    # And it stays out of the way when there is no download to mention.
+    assert "database download" not in ConfirmQuit(True, 2, "slurm").text()
+
+
+def test_database_rule_name_has_one_definition():
+    """`Database.rule` is the string a download event carries back.
+
+    The generator and the interface have to agree on it, and a drift is
+    invisible from either side: the Snakefile still runs, and the TUI just
+    stops finding the row — which is exactly the bug this fixes, in a second
+    form.
+    """
+    assert {db.rule for db in CATALOGUE.databases(None)} == {
+        "download_checkm2", "download_gtdb", "download_bakta_light",
+        "download_amrfinder"}
+    text = render(CATALOGUE, None, Path("/res"), Path("/db"), SAMPLES)
+    for db in CATALOGUE.databases(None):
+        assert f"rule {db.rule}:" in text
+
+
+@pytest.mark.asyncio
+async def test_tui_shows_a_running_database_download(tmp_path):
+    """Regression: a 60.8 GB GTDB fetch was invisible in three places.
+
+    `self.state` was keyed by the fourteen tools, so `mark()` looked up
+    `download_gtdb`, missed on both its lookups and returned silently. The
+    table had no row to update, the activity line said "no job running —
+    waiting on Snakemake", and the quit dialog counted zero jobs and offered
+    "no job has started yet" over the longest job the pipeline has.
+    """
+    pytest.importorskip("textual")
+    from textual.widgets import DataTable
+
+    from comparem2 import tui as tui_mod
+
+    app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                              selected=["gtdbtk"])
+    async with app.run_test():
+        table = app.query_one(DataTable)
+        app.started_at = tui_mod.monotonic()
+        app.running = True
+
+        app.apply_event(tui_mod.Event("job_started", rule="download_gtdb"))
+        assert app.state["download_gtdb"] == tui_mod.RUNNING
+        assert table.get_cell("download_gtdb", "status") == "downloading"
+        # The line the complaint was about.
+        assert "download_gtdb" in app.activity_text()
+        assert tui_mod.WAITING not in app.activity_text()
+        # And the count the quit dialog is built from.
+        assert sum(1 for n in app.row_order
+                   if app.state.get(n) == tui_mod.RUNNING) == 1
+
+        app.apply_event(tui_mod.Event("job_finished", rule="download_gtdb"))
+        assert table.get_cell("download_gtdb", "status") == "downloaded"
+        assert tui_mod.WAITING in app.activity_text()
+
+
+@pytest.mark.asyncio
+async def test_tui_cost_line_ignores_databases_already_here(tmp_path):
+    """Announcing 62.5 GB before a run that downloads nothing.
+
+    `cli.py` fixed this once — "how 'databases: 143.2 GB' came to be printed
+    before a run that downloaded nothing at all" — and the TUI's own cost line
+    kept totalling every database the selection needs. The arbiter is the same
+    `ready_path` the download rule declares as its output.
+    """
+    pytest.importorskip("textual")
+    from comparem2 import tui as tui_mod
+
+    db = tmp_path / "db"
+    app = tui_mod.ComparemTUI([], tmp_path, db, SAMPLES, 4, selected=["gtdbtk"])
+    async with app.run_test():
+        assert "60.8 GB" in app.cost_text
+
+    # Now put it on disk, at the path the rule would have written.
+    ready = CATALOGUE["gtdbtk"].database.ready_path(db, tmp_path)
+    ready.parent.mkdir(parents=True)
+    ready.touch()
+    app = tui_mod.ComparemTUI([], tmp_path, db, SAMPLES, 4, selected=["gtdbtk"])
+    async with app.run_test():
+        assert "60.8 GB" not in app.cost_text
+        # Not the same statement as "this selection needs no databases".
+        assert "none — all present" in app.cost_text
+        assert "no databases" not in app.cost_text
+
+
+@pytest.mark.asyncio
+async def test_tui_database_row_says_whether_the_selection_needs_it(tmp_path):
+    """A database no selected tool needs must not read `to download`.
+
+    That is a promise nothing in the DAG keeps, and the tool rows already say
+    `not selected` from the same position. What is on disk is still reported
+    either way, for the reason the tool rows are: `not needed` over a database
+    that is sitting right there reads as missing.
+    """
+    pytest.importorskip("textual")
+    from textual.widgets import DataTable
+
+    from comparem2 import tui as tui_mod
+
+    db = tmp_path / "db"
+    have = [d for d in CATALOGUE.databases(None) if d.name == "bakta-light"][0]
+    have.ready_path(db, tmp_path).parent.mkdir(parents=True)
+    have.ready_path(db, tmp_path).touch()
+
+    app = tui_mod.ComparemTUI([], tmp_path, db, SAMPLES, 4, selected=["gtdbtk"])
+    async with app.run_test():
+        table = app.query_one(DataTable)
+        assert table.get_cell("download_gtdb", "status") == "to download"
+        assert table.get_cell("download_gtdb", "sel") == tui_mod.MARK_DEP
+        # Wanted by nothing selected, and not here.
+        assert table.get_cell("download_checkm2", "status") == "not needed"
+        assert table.get_cell("download_checkm2", "sel") == tui_mod.MARK_NONE
+        # Wanted by nothing selected, but here — the disk still gets reported.
+        assert table.get_cell("download_bakta_light", "status") == "present"
+
+
+@pytest.mark.asyncio
+async def test_tui_cost_line_moves_when_a_run_fetches_a_database(tmp_path):
+    """`refresh_cost` hangs off `sync_table`, which only the selection keys
+    reach — so the line sat at 60.8 GB after the session that downloaded it."""
+    pytest.importorskip("textual")
+    from comparem2 import tui as tui_mod
+
+    db = tmp_path / "db"
+    app = tui_mod.ComparemTUI([], tmp_path, db, SAMPLES, 4, selected=["gtdbtk"])
+    async with app.run_test():
+        assert "60.8 GB" in app.cost_text
+        # What the download rule writes.
+        ready = CATALOGUE["gtdbtk"].database.ready_path(db, tmp_path)
+        ready.parent.mkdir(parents=True)
+        ready.touch()
+        app.settle(["gtdbtk"])
+        assert "60.8 GB" not in app.cost_text
+        assert "none — all present" in app.cost_text
+        # And the end of a run must not re-label a database it never touched.
+        # Seen in a real terminal: checkm2's row flipped from `not needed` to
+        # `to download` the moment the run finished.
+        table = app.query_one(tui_mod.DataTable)
+        assert table.get_cell("download_checkm2", "status") == "not needed"
+
+
+@pytest.mark.asyncio
+async def test_tui_database_rows_are_not_selectable(tmp_path):
+    """Nothing chooses to download GTDB; gtdbtk chooses it by needing it.
+
+    And the row must not fall through into `self.selected`: an unknown name
+    there makes the next `closure()` raise `KeyError: unknown tool`, which in
+    a Textual worker is a traceback over the interface.
+    """
+    pytest.importorskip("textual")
+    from textual.widgets import DataTable
+
+    from comparem2 import tui as tui_mod
+
+    app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4)
+    async with app.run_test() as pilot:
+        table = app.query_one(DataTable)
+        # `a` selects the tools, and stops there.
+        await pilot.press("a")
+        assert app.selected == {t.name for t in CATALOGUE}
+
+        table.cursor_coordinate = table.cursor_coordinate.__class__(
+            len(CATALOGUE) + 1, 0)   # a database row
+        assert app._row_key().startswith("download_")
+        await pilot.press("space")
+        assert app.selected == {t.name for t in CATALOGUE}, \
+            "a database must not land in the selection"
+
+        # The tool rows still toggle — the guard is not a blanket refusal.
+        table.cursor_coordinate = table.cursor_coordinate.__class__(0, 0)
+        first = CATALOGUE[[t.name for t in CATALOGUE][0]].name
+        await pilot.press("space")
+        assert first not in app.selected
+
+        # `checkm2` names both a tool and a database, which is why the cursor
+        # reads the row key rather than the text in the Tool column.
+        keys = [r.key.value for r in table.ordered_rows]
+        assert len(keys) == len(set(keys))
+        assert "checkm2" in keys and "download_checkm2" in keys
 
 
 @pytest.mark.asyncio

@@ -1743,3 +1743,69 @@ That is a timing convenience. The reason it is worth having is that **3.1.0 is
 a version that cannot deploy its tools** — it renders the two-environment
 `main`, which stopped solving upstream on 09-07 — so the channel currently has
 nothing that works past the first job, and 3.2.0 is the fix.
+
+## 2026-09-07 — the download rules get rows, not a special case
+
+### A database is a row, keyed by its rule name
+The four `download_*` rules were rules Snakemake reported on and rows the TUI
+did not have, and the failure was silent by construction: `mark()` looked up
+`download_gtdb` in a `self.state` keyed by the fourteen tools, missed both its
+lookups, and returned. Three readers of that dict were wrong at the same
+moment — the table, the activity line (`no job running — waiting on Snakemake`
+through a 60.8 GB fetch), and `action_quit`'s count, which produced **"no job
+has started yet"** in the dialog whose entire job is to stop that sentence
+being read as *nothing to lose*.
+
+**Rows rather than a message.** Special-casing the wording would have fixed one
+of the three and left the other two, and a fourth reader added later would have
+been wrong again. The table already is the answer to "what is this run made
+of"; a download was simply missing from it.
+
+**Keyed by rule name, and the key is `Database.rule` in `tools.py`.** Not
+`db.name`: `checkm2` names both a tool and a database, so the two would collide
+on one key and the display text no longer identifies a row. Putting the string
+on the spec rather than in `snakefile.py` is the load-bearing half — it is what
+`runner.Event.rule` carries back, so it is not only the generator's business,
+and two definitions drifting apart would be invisible from both sides. The
+Snakefile would still run; the interface would just stop finding the row again.
+
+That change made `_row_key()` wrong. It read the *Tool column's text* and used
+it as identity, which held only while every row was a tool. It now reads the
+row's own key.
+
+### `space` on a database does nothing, deliberately
+Nothing chooses to download GTDB — GTDB-Tk chooses it by needing it — so the
+row carries the dependency mark `▨` and no checkbox. The guard is not cosmetic:
+without it the name falls into `self.selected` and the next `closure()` raises
+`KeyError: unknown tool: download_gtdb` inside a Textual worker. Confirmed by
+removing the guard and watching the test fail that way.
+
+### What a real terminal found that the tests had not
+Driven under tmux against a synthetic event stream, which is the only kind
+available on macOS. Two defects were visible in the pane and in neither the
+unit suite nor the review that preceded it:
+
+- an unneeded database read `to download`, a promise nothing in the DAG keeps,
+  where the tool rows say `not selected` from the same position;
+- `settle()` re-labelled all four databases at the end of a run, flipping an
+  unneeded one back from `not needed` — undoing, one second later, the thing
+  `sync_table` had been careful about.
+
+Both now have tests. The general point is the one worth keeping: this interface
+is where a wrong claim is *read*, and the unit suite checks the values behind
+the claims rather than the sentence the user ends up looking at. A pane capture
+is cheap and should be part of changing it.
+
+### The cost line was fixed once already, on the other path
+`cli.py` filters the download total by each database's `ready_path`, with a
+comment recording the bug — "how `databases: 143.2 GB` came to be printed
+before a run that downloaded nothing at all". The TUI's cost line never got
+that filter and still totalled every database the selection needed. Carried
+across, with the distinction the CLI does not have to make: `no databases`
+means this selection needs none, and `none — all present` means it needs them
+and they are here. Collapsing those two into one string would be the same
+class of wrong claim as the rest of this entry.
+
+`refresh_cost()` is now also called from `settle()`. It hung off `sync_table()`,
+which only the selection keys reach, so the figure sat at 60.8 GB after the
+very session that downloaded it.

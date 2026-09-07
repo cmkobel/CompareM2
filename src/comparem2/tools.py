@@ -99,6 +99,19 @@ class Database:
         return root / (self.ready or f"{self.name}/.fetched")
 
     @property
+    def rule(self) -> str:
+        """The Snakemake rule name that fetches this database.
+
+        Here rather than in `snakefile.py` because it is not only the
+        generator's business: this is the name `runner.Event.rule` carries back
+        for a download, so anything watching a run has to be able to derive it
+        from the spec. The TUI keys its download rows on it — which is also
+        what keeps `checkm2` the database from colliding with `checkm2` the
+        tool, since only one of the two is called `download_checkm2`.
+        """
+        return f"download_{self.name.replace('-', '_')}"
+
+    @property
     def human_size(self) -> str:
         if self.size is None:
             return "unmeasured"

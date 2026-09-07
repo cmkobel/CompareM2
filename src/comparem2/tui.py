@@ -43,10 +43,27 @@ LABEL = {PENDING: "pending", RUNNING: "running", DONE: "done",
          FAILED: "failed", SKIPPED: "not selected", NOT_RUN: "not run",
          EXISTS: "already run", PARTIAL: "part-finished"}
 
+# The same states said in the words a database takes. A download is not an
+# analysis: `already run` over GTDB is the wrong noun, and `pending` does not
+# say the thing the user is deciding about, which is whether pressing `r` is
+# about to fetch 60.8 GB. EXISTS and DONE stay distinct for the reason above —
+# one was found here, the other was watched arriving.
+DB_LABEL = {PENDING: "to download", RUNNING: "downloading", DONE: "downloaded",
+            FAILED: "failed", NOT_RUN: "to download", EXISTS: "present",
+            PARTIAL: "part-fetched",
+            # A database no selected tool needs. `to download` over it would be
+            # a promise nothing in the DAG is going to keep, and the tool rows
+            # already say `not selected` in exactly this position.
+            SKIPPED: "not needed"}
+
 # The selection column. These were `[x]`, `[+]` and `[ ]` and rendered as
 # nothing at all: a DataTable cell given a `str` is parsed as Rich markup, and
 # `[x]` is a tag, not text. The selection UI had no visible selection.
 MARK_ON, MARK_DEP, MARK_OFF = "▣", "▨", "▢"
+# A database is never selected directly — it is pulled in by whichever tool
+# needs it — so its row gets the dependency mark or nothing at all. An empty
+# checkbox would be an offer the row cannot honour.
+MARK_NONE = " "
 
 # Liveness. A run's first minutes are silent — the DAG, then conda solving six
 # environments — and a still screen in that state is indistinguishable from a
@@ -146,7 +163,7 @@ class ConfirmQuit(ModalScreen[str]):
     ]
 
     def __init__(self, in_flight: bool, running: int,
-                 profile: str | None) -> None:
+                 profile: str | None, downloads: int = 0) -> None:
         super().__init__()
         # Two different questions: whether a run is going at all, and how many
         # of its jobs have started. A first run spends its first minutes
@@ -155,6 +172,12 @@ class ConfirmQuit(ModalScreen[str]):
         self.in_flight = in_flight
         self.running = running
         self.profile = profile
+        # How many of those are database fetches. Kept separate because under a
+        # profile the sentence above them is false of a download: the four
+        # `download_*` rules are `localrules`, so they run here as children of
+        # this process while everything else is in the queue. `departure()`
+        # already knows this and calls `stop_local()` under a profile too.
+        self.downloads = downloads
 
     def compose(self) -> ComposeResult:
         yield Static(self.text(), id="confirm")
@@ -185,8 +208,20 @@ class ConfirmQuit(ModalScreen[str]):
         stop = ("[dim]s[/] quit and cancel this run's queued jobs"
                 if self.profile else
                 "[dim]s[/] quit and stop them")
+        # Said only when one is running, and said under a profile especially:
+        # the paragraph above has just told the user their jobs are safe in a
+        # queue, and a download is the one job that is not.
+        fetching = ""
+        if self.downloads:
+            which = ("A database download is" if self.downloads == 1 else
+                     f"{self.downloads} database downloads are")
+            fetching = (
+                f"\n\n[bold]{which} in progress.[/] A download runs here "
+                "rather than in the queue, so [dim]s[/] stops it."
+                if self.profile else
+                f"\n\n[bold]{which} in progress.[/]")
         return (
-            f"[bold]Quit while a run is going?[/]\n\n{where}\n\n"
+            f"[bold]Quit while a run is going?[/]\n\n{where}{fetching}\n\n"
             f"{what} No report is written, and the output directory stays "
             f"locked — [dim]u releases it[/].\n\n"
             f"[dim]y[/] quit, leave the run going\n{stop}\n[dim]n[/] stay")
@@ -290,12 +325,28 @@ class ComparemTUI(App):
         # it made the interface a confirmation step rather than a choice. `a`
         # is still one key away for anyone who does want everything.
         self.selected: set[str] = set(selected) if selected else set()
+        # Every database in the catalogue, and the rule name that fetches each.
+        # All four are shown rather than only the ones the selection needs: the
+        # row is as much an answer to "do I already have GTDB" as it is a
+        # progress display, and that question does not depend on what is
+        # ticked.
+        self.dbs = CATALOGUE.databases(None)
+        self.download_rules: list[str] = [db.rule for db in self.dbs]
         # What is already in the output directory, and the live state of this
         # session. Kept apart: the second is overwritten by every event, and the
         # first is the answer to "what did I run here last time" — which the
         # table has to keep giving for a tool the user has since deselected.
         self.disk: dict[str, str] = self.scan()
-        self.state: dict[str, str] = dict(self.disk)
+        # Databases kept in their own dict rather than folded into `self.disk`,
+        # which several lines count to say "N of 14 tools already ran".
+        self.db_disk: dict[str, str] = self.scan_databases()
+        self.state: dict[str, str] = {**self.disk, **self.db_disk}
+        # Table order, and the only list that knows a run has more moving parts
+        # than there are tools. `activity_text` and `action_quit` read it: both
+        # used to ask `CATALOGUE` what was running, so a 60.8 GB fetch — which
+        # is a rule but not a tool — counted as nothing at all.
+        self.row_order: list[str] = ([t.name for t in CATALOGUE]
+                                     + self.download_rules)
         self.running = False
         self.cost_text = ""
         # The animation. `phase` is what the line says when no rule is running,
@@ -335,6 +386,23 @@ class ComparemTUI(App):
             found[tool.name] = EXISTS if done.done else (
                 PARTIAL if done.partial else PENDING)
         return found
+
+    def scan_databases(self) -> dict[str, str]:
+        """Which databases are already here, keyed by download rule name.
+
+        One `stat` each, against the same `ready_path` the rule declares as its
+        output — so this agrees with what Snakemake will decide to skip by
+        construction rather than by care. There is no PARTIAL: a half-fetched
+        database has no marker, which is the whole design of `ready`.
+        """
+        return {db.rule: (EXISTS if db.ready_path(self.databases,
+                                                  self.workdir).exists()
+                          else PENDING)
+                for db in self.dbs}
+
+    def label(self, name: str, state: str) -> str:
+        """A row's status in the words its kind takes."""
+        return (DB_LABEL if name in self.download_rules else LABEL)[state]
 
     # --- layout ----------------------------------------------------
 
@@ -376,6 +444,17 @@ class ComparemTUI(App):
         table.add_column("What it does", key="summary")
         for tool in CATALOGUE:
             table.add_row(MARK_OFF, tool.name, LABEL[PENDING], tool.summary, key=tool.name)
+        # The databases, below the tools and keyed by rule name. Their own rows
+        # rather than a special case in the message, because there are three
+        # separate places that were wrong about a running download and only one
+        # of them is a message: the status table, the activity line, and the
+        # quit dialog's count. A row fixes all three at once.
+        #
+        # The size goes in the summary column because it is the number the
+        # decision turns on, and it is the one column with room for it.
+        for db in self.dbs:
+            table.add_row(MARK_NONE, db.name, DB_LABEL[PENDING],
+                          f"database, {db.human_size}", key=db.rule)
         # Not refresh_cost(): nothing is selected unless `--until` seeded it,
         # and the marks and statuses have to say so before anything is drawn.
         self.sync_table()
@@ -415,10 +494,16 @@ class ComparemTUI(App):
     # key, the command palette's Quit entry, and ctrl+c — which in Textual 8
     # does not quit but points at whichever key runs the `quit` action.
     async def action_quit(self) -> None:
-        running = sum(1 for tool in CATALOGUE
-                      if self.state.get(tool.name) == RUNNING)
-        self.push_screen(ConfirmQuit(self.running, running, self.profile),
-                         self.departing)
+        # Counted over every row. Counting CATALOGUE alone meant a run whose
+        # only live job was a 60.8 GB download reported "no job has started
+        # yet" — the exact wording this dialog exists to avoid, offered over
+        # the most expensive thing the pipeline does.
+        running = sum(1 for n in self.row_order if self.state.get(n) == RUNNING)
+        downloads = sum(1 for n in self.download_rules
+                        if self.state.get(n) == RUNNING)
+        self.push_screen(
+            ConfirmQuit(self.running, running, self.profile, downloads),
+            self.departing)
 
     def departing(self, decision: str | None) -> None:
         if decision == "stay":
@@ -472,11 +557,26 @@ class ComparemTUI(App):
     def refresh_cost(self) -> None:
         chosen = sorted(self.selected)
         closure = CATALOGUE.closure(chosen) if chosen else []
-        known = CATALOGUE.install_size(chosen) if chosen else 0
-        unknown = CATALOGUE.unmeasured(chosen) if chosen else []
-        cost = f"{known / 1e9:.1f} GB" if known else "no databases"
+        # Only what is actually going to be fetched. `install_size()` totals
+        # every database the selection needs whether or not it is already here,
+        # so this line announced 62.5 GB on a machine that would download
+        # nothing — the same defect `cli.py` fixed once and this path never
+        # got. The disk is the arbiter, via each rule's own declared output.
+        wanted = CATALOGUE.databases(chosen) if chosen else []
+        pending = [db for db in wanted if self.db_disk.get(db.rule) != EXISTS]
+        known = sum(db.size for db in pending if db.size is not None)
+        unknown = [db for db in pending if db.size is None]
+        if not wanted:
+            cost = "no databases"
+        elif not pending:
+            # Distinct from "no databases", and the difference is the whole
+            # point: this selection does need them, and they are already here.
+            cost = "none — all present"
+        else:
+            cost = f"{known / 1e9:.1f} GB" if known else ""
         if unknown:
-            cost += f" + {len(unknown)} of unknown size ({', '.join(d.name for d in unknown)})"
+            cost += (" + " if known else "") + \
+                f"{len(unknown)} of unknown size ({', '.join(d.name for d in unknown)})"
         pulled = len(closure) - len(chosen)
         extra = f", {pulled} pulled in as dependencies" if pulled > 0 else ""
         self.cost_text = (
@@ -484,14 +584,29 @@ class ComparemTUI(App):
         self.query_one("#cost", Static).update(self.cost_text)
 
     def _row_key(self) -> str | None:
+        """The key of the row under the cursor — not the text in its cells.
+
+        It used to read the Tool column and use that string as the identity,
+        which held only while every row was a tool. The database rows broke it
+        twice over: `checkm2` names both a tool and a database, so the cell text
+        no longer picks a row out, and a download's key is its rule name and is
+        deliberately not what the column displays.
+        """
         table = self.query_one(DataTable)
         if table.cursor_row < 0:
             return None
-        return str(table.get_row_at(table.cursor_row)[1])
+        return str(table.ordered_rows[table.cursor_row].key.value)
 
     def action_toggle(self) -> None:
         name = self._row_key()
         if name is None or self.running:
+            return
+        if name not in CATALOGUE:
+            # A database row. It is not selectable, because nothing chooses to
+            # download GTDB — gtdbtk does, by needing it. Silent rather than
+            # scolding: the row shows no checkbox, so `space` on it is a
+            # question, not a mistake. And it must not fall through: an unknown
+            # name reaching `self.selected` makes the next `closure()` raise.
             return
         self.selected.symmetric_difference_update({name})
         self.sync_table()
@@ -521,6 +636,23 @@ class ComparemTUI(App):
                          else (self.disk[tool.name] if self.disk[tool.name] != PENDING
                                else SKIPPED))
                 table.update_cell(tool.name, "status", LABEL[state])
+        # A database is marked when the current selection needs it, using the
+        # same mark a tool gets when it is pulled in as a dependency — which is
+        # exactly what a database is. Its status is disk state, not selection
+        # state: whether GTDB is here does not change with what is ticked.
+        needed = {db.rule for db in CATALOGUE.databases(sorted(self.selected))
+                  } if self.selected else set()
+        for rule in self.download_rules:
+            table.update_cell(rule, "sel",
+                              MARK_DEP if rule in needed else MARK_NONE)
+            if not self.running:
+                # Same shape as the tool line above: what is on disk is
+                # reported whether or not it is wanted, and only a database
+                # that is neither wanted nor here reads as out of play.
+                state = (self.db_disk[rule]
+                         if rule in needed or self.db_disk[rule] == EXISTS
+                         else SKIPPED)
+                table.update_cell(rule, "status", DB_LABEL[state])
         self.refresh_cost()
 
     # --- liveness --------------------------------------------------
@@ -532,7 +664,12 @@ class ComparemTUI(App):
         screenshot, which is the form the question usually arrives in.
         """
         frame = SPINNER[self.frame % len(SPINNER)]
-        active = [t.name for t in CATALOGUE if self.state.get(t.name) == RUNNING]
+        # Over every row, not over CATALOGUE: a database fetch is a rule and not
+        # a tool, so this line read "no job running — waiting on Snakemake"
+        # through a 60.8 GB GTDB download, while the log pane two columns over
+        # said `▸ download_gtdb`. The rule name is shown as-is, which is what
+        # makes the two agree.
+        active = [n for n in self.row_order if self.state.get(n) == RUNNING]
         shown = ", ".join(active[:3]) if active else self.phase
         if len(active) > 3:
             shown += f" +{len(active) - 3} more"
@@ -593,6 +730,11 @@ class ComparemTUI(App):
         self.disk = self.scan()
         for tool in CATALOGUE.closure(chosen):
             self.state[tool.name] = self.disk[tool.name]
+        # Same for the databases, and for the same reason: one that is already
+        # here gets no events either, so anything but its disk state would be a
+        # claim the run will never correct.
+        self.db_disk = self.scan_databases()
+        self.state.update(self.db_disk)
         self.frame = 0
         self.phase = STARTING
         self.progress_seen = False
@@ -691,6 +833,29 @@ class ComparemTUI(App):
                 self.state[name] = (self.disk[name] if self.disk[name] != PENDING
                                     else NOT_RUN)
                 table.update_cell(name, "status", LABEL[self.state[name]])
+        # The databases settle the same way, and only from PENDING for the same
+        # reason: a row this session watched reach `downloaded` or `failed` is
+        # a statement about what happened, and the disk cannot improve on it.
+        # What it does fix is one Snakemake skipped, which emits no event and
+        # would otherwise still read `to download` beside a directory that
+        # plainly has it.
+        self.db_disk = self.scan_databases()
+        # Only the databases this run needed. The others were never in its DAG,
+        # so `not run` is not a fact about them — and settling all four flipped
+        # an unneeded one from `not needed` back to `to download` the moment a
+        # run ended, which is the claim `sync_table` had just been careful not
+        # to make.
+        wanted = {db.rule for db in CATALOGUE.databases(names)}
+        for rule, found in self.db_disk.items():
+            if rule in wanted and self.state[rule] == PENDING:
+                self.state[rule] = found if found != PENDING else NOT_RUN
+                table.update_cell(rule, "status", DB_LABEL[self.state[rule]])
+        # The cost line is about what a *next* run would fetch, so a run that
+        # has just fetched 60.8 GB has to move it. Nothing else calls this
+        # after a run: `refresh_cost` hangs off `sync_table`, which only the
+        # selection keys reach, so the figure sat at 60.8 GB over a database
+        # the same session had finished downloading.
+        self.refresh_cost()
 
     # NB: not `on_event` — Textual reserves that for its own event dispatch,
     # and overriding it swallows every framework message.
@@ -727,11 +892,13 @@ class ComparemTUI(App):
             log.write("[bold green]Finished[/]")
 
     def mark(self, table: DataTable, rule: str, state: str) -> None:
-        # Rule names replace '-' with '_' for Snakemake; map back.
+        # Rule names replace '-' with '_' for Snakemake; map back. A download
+        # rule needs no mapping — `Database.rule` is the key its row was added
+        # under — so it is found by the first branch and labelled as a fetch.
         name = rule if rule in self.state else rule.replace("_", "-")
         if name in self.state:
             self.state[name] = state
-            table.update_cell(name, "status", LABEL[state])
+            table.update_cell(name, "status", self.label(name, state))
 
 
 def departure(mid_run: bool, stop: bool, profile: str | None,

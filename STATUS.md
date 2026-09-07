@@ -854,6 +854,64 @@ Two things that fell out of it, neither acted on:
 - `mkdocs build --strict`
 - `docs/generate.py --check` — generated pages current
 
+### The download rules have rows, verified in a real terminal
+Fixed 2026-09-07, after the 3.2.1 tag. The four `download_*` rules were rules
+Snakemake reported on and rows the interface did not have: `self.state` was
+keyed by the fourteen tools, so `mark(table, "download_gtdb", RUNNING)` missed
+both its lookups and returned silently. Three things read that dict and all
+three were wrong at once — the status table had nothing to update, the activity
+line said `no job running — waiting on Snakemake`, and `action_quit` counted
+zero, so the dialog offered **"no job has started yet"** over a 60.8 GB fetch.
+
+Each database is now a row keyed by its rule name, which is `Database.rule` —
+moved to `tools.py` so the generator and the interface cannot disagree about
+the string an event carries back. That also settles a collision: `checkm2`
+names both a tool and a database, and only one of the two is `download_checkm2`.
+
+Driven under **tmux at 132x40**, a real terminal with the real Textual timer,
+against a synthetic event stream — no tools exist on macOS, so `run()` was
+replaced and everything above it is the real thing. The probe was a throwaway
+in `/tmp` and is not kept; it is forty lines that monkeypatch `tui.run` to
+yield `job_started`/`job_finished` for `download_gtdb` with a sleep between
+them, and drive the app with `tmux send-keys` / `capture-pane`. What the pane
+showed:
+
+| | |
+| --- | --- |
+| opening | `▨ gtdb · to download · database, 60.8 GB`, `bakta-light · present`, `checkm2 · not needed` |
+| cost line | `databases to download: 60.8 GB` — gtdbtk only, not the catalogue's 62.5 |
+| during the fetch | row `downloading`, activity line `⠋ download_gtdb · 4s` |
+| `q` during the fetch, under a profile | **"1 job started"**, and `A database download is in progress. A download runs here rather than in the queue, so s stops it.` |
+| after | row `downloaded` — not overwritten by `present`, because `settle()` only moves a row that is still `pending` |
+| cost line after | `none — all present` |
+
+**Two defects the real terminal found that the unit tests had not.** An
+unneeded database read `to download`, where the tool rows say `not selected`
+from the same position; and at the end of a run `settle()` re-labelled all four
+databases, flipping an unneeded one back from `not needed`. Both are fixed and
+both now have a test — the second one caught by mutating the fix and watching
+`test_tui_cost_line_moves_when_a_run_fetches_a_database` fail.
+
+One related defect fixed in the same change, and it is a carry-across rather
+than a discovery: the TUI's cost line totalled every database the selection
+needed whether or not it was on disk, so it announced 62.5 GB on a machine that
+would download nothing. `cli.py:566` had already been fixed for exactly this —
+its comment records "how `databases: 143.2 GB` came to be printed before a run
+that downloaded nothing at all" — and the TUI path never got it.
+
+**260 unit tests**, 6.0 s, from 253. The six new ones were each checked by
+mutation: reverting the fix they cover makes exactly that test fail, and
+removing the guard on `action_toggle` reproduces the `KeyError: unknown tool`
+it exists to prevent.
+
+**Not verified:** any of this against a *real* download. The event stream was
+synthetic, so what has been shown is that the interface renders a download
+correctly when Snakemake reports one — not that Snakemake reports one in the
+shape assumed. `_Capture` takes the rule name from `job_info`'s `rule_name` and
+nothing in it distinguishes a `localrule` from any other job, so there is no
+filter in the way; what is missing is an observation, not a mechanism. The
+first real `--tui` run that fetches a database is the check.
+
 ## Environments
 
 **These are the two Snakemake deploys**, measured on `linux-64`. Until
@@ -1510,15 +1568,8 @@ carrying the code this tag ships.
 - **`--tui` has not been run against a failing workflow interactively.** The
   "Nothing ran / no report" path is covered by unit tests and was reached once
   by accident, but not driven by hand since.
-- **The four `download_*` rules are invisible to the TUI**, found by review on
-  2026-09-07 and *not* fixed in 3.2.0. `self.state` and `activity_text()` are
-  keyed by the fourteen tools in `CATALOGUE`, so `mark(table, "download_gtdb",
-  RUNNING)` resolves nothing and returns silently. During a database fetch the
-  activity line therefore reads `no job running — waiting on Snakemake`, and
-  `action_quit` counts `RUNNING` over `CATALOGUE` alone, so the dialog offers
-  the "nothing has started yet" wording — over a 60.8 GB GTDB download that
-  `q` then abandons. The fix is to give the download rules rows of their own
-  rather than to special-case the message.
+- ~~**The four `download_*` rules are invisible to the TUI.**~~ **Fixed
+  2026-09-07**, after 3.2.1 — see *The download rules have rows* below.
 - **`runner._profile_argv` deploys conda only when a prefix is set.** With
   `deploy=True` and `conda_prefix=None` the profile branch omits
   `--software-deployment-method conda` entirely, where the API branch enables

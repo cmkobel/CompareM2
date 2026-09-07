@@ -117,6 +117,12 @@ and none, `r` runs, `u` releases a lock, `q` quits — and asks first if a run i
 going. `▣` is chosen, `▨` is pulled in as a dependency of something chosen, `▢`
 is off.
 
+Below the fourteen tools are the four databases, which are rows in the same
+table because they are steps in the same run. They are not selectable and have
+no `▢`: nothing chooses to download GTDB, GTDB-Tk chooses it by needing it. A
+database the current selection needs is marked `▨`, the same mark a tool gets
+when something pulls it in.
+
 !!! note "It works on an eight-colour terminal"
     Which is not a corner case: tmux ships `default-terminal screen`, so a
     session inside tmux over SSH has eight colours whatever the terminal
@@ -146,6 +152,25 @@ Those are read from the same files Snakemake decides resumability on, so the
 table is what a re-run would actually skip — a `part-finished` tool is one that
 will be redone. A tool you have not selected still reports what it has; whether
 it is selected is what the mark column says.
+
+**Which databases you already have.** The four database rows read `present` for
+one that is here, `to download` for one this selection needs and does not have,
+and `not needed` for one nothing selected asks for. `present` is decided by the
+same file the download rule declares as its output, so it agrees with what
+Snakemake will skip:
+
+```
+      checkm2       not needed     database, 1.7 GB
+▨     gtdb          to download    database, 60.8 GB
+      bakta-light   present        database, unmeasured
+      amrfinder     not needed     database, unmeasured
+```
+
+The cost line above the table counts only what is missing, so a machine that
+already holds GTDB reads `databases to download: none — all present` rather
+than announcing 60.8 GB it is not going to fetch. `unmeasured` means exactly
+that — Bakta and AMRFinder have no static URL to read a `content-length` from,
+so their size is not guessed.
 
 **Where the run's four locations come from.** Above the table:
 
@@ -186,8 +211,18 @@ frozen":
 ⠹ bakta, gtdbtk · 4m 12s
 ```
 
-A spinner, what is running now, and how long since you pressed `r`. When no job
-is running the line says why — `starting up — the DAG, and tool environments on
+A spinner, what is running now, and how long since you pressed `r`. A database
+fetch names itself there too, by its rule name:
+
+```
+⠹ download_gtdb · 41m 08s
+```
+
+which is worth knowing before you conclude nothing is happening: on a 3 MB/s
+link GTDB is a six-hour transfer, and it is the longest single thing the
+pipeline does.
+
+When no job is running the line says why — `starting up — the DAG, and tool environments on
 a first run` is the long one, because a first run solves six conda environments
 before anything else happens and Snakemake's own output for that is quietened
 under the interface. The progress bar has no total to draw until Snakemake
@@ -219,6 +254,19 @@ n  stay
 Without a profile the same dialog says the other true thing: jobs already
 started are child processes of the interface and are **not** killed on the way
 out, so they keep running unattended.
+
+If a database is being fetched the dialog says so before either of those, and
+under a profile it says the part the queue sentence does not cover:
+
+```
+A database download is in progress. A download runs here rather than in
+the queue, so s stops it.
+```
+
+The four `download_*` rules are `localrules` — they run wherever you started
+the interface, not on a compute node, because a compute node may have no
+outbound network. So under a profile they are the one job `y` leaves as an
+orphan on your login node rather than as a job in a queue.
 
 `s` stops them, and the two halves are done differently because they have to
 be. A queue is cancelled with `scancel --name <run id>` — the SLURM executor
