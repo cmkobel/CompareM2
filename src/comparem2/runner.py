@@ -83,15 +83,66 @@ class _Capture(logging.Handler):
             self.sink(Event("progress", done=data.get("done"), total=data.get("total")))
 
 
-def run(snakefile: Path, cores: int, workdir: Path | None = None,
+def _profile_argv(snakefile: Path, profile: str, cores: int | None,
+                  workdir: Path | None, dry_run: bool, keep_going: bool,
+                  rerun_incomplete: bool, conda_prefix: Path | None) -> list[str]:
+    """The command line the profile branch hands to Snakemake's own parser.
+
+    Kept separate so it can be asserted in a test without a Snakemake install,
+    which is the only way this gets checked on a machine that cannot run the
+    workflow at all.
+    """
+    argv = ["--snakefile", str(snakefile),
+            # Under a TUI, Snakemake's own logger plugin writing to stderr
+            # scribbles over the Textual display. The non-profile branch gets
+            # the same effect from `OutputSettings(quiet={"all"})`.
+            "--quiet", "all",
+            "--profile", profile]
+    if workdir is not None:
+        argv += ["--directory", str(workdir)]
+    if conda_prefix is not None:
+        argv += ["--software-deployment-method", "conda",
+                 "--conda-prefix", str(conda_prefix)]
+    # Omitted unless asked for: a profile carries `cores:`/`jobs:`, and those
+    # arrive as argparse defaults, so a number passed here would beat them.
+    if cores is not None:
+        argv += ["--cores", str(cores)]
+    if rerun_incomplete:
+        argv.append("--rerun-incomplete")
+    if keep_going:
+        argv.append("--keep-going")
+    if dry_run:
+        argv.append("--dry-run")
+    return argv
+
+
+def run(snakefile: Path, cores: int | None, workdir: Path | None = None,
         dry_run: bool = False, keep_going: bool = False,
         rerun_incomplete: bool = True,
         conda_prefix: Path | None = None,
-        deploy: bool = True) -> Iterator[Event]:
+        deploy: bool = True,
+        profile: str | None = None) -> Iterator[Event]:
     """Execute the workflow, yielding events as they happen.
 
     Snakemake runs on a worker thread so the caller — a TUI, usually — keeps
     its own loop responsive.
+
+    **`profile` takes a second route through Snakemake, deliberately.** A
+    profile is a construct of Snakemake's *command line*: `config.yaml` is read
+    as argparse defaults, which is how one file can set the executor, the
+    account, `jobs`, `default-resources` and `set-resources` at once. The API
+    used below has no notion of it — `execute_workflow()` takes `executor` and
+    `executor_settings`, and mapping a profile onto those by hand would mean
+    re-implementing that parser and getting a subset of it right. So with a
+    profile, this calls `snakemake.cli.parse_args()` and `args_to_api()`, which
+    is Snakemake's own CLI running in this process.
+
+    The cost is that `args_to_api` swallows the exception and reports failure
+    as `False`, where the API branch below yields the exception text as an
+    `error` event. Both still emit every job event, because those come from the
+    log handler and not from either call. Keeping the API branch for the local
+    case is what makes the profile branch additive: the path that has actually
+    been run stays byte-identical.
 
     `workdir` is not optional in practice: Snakemake locks its working
     directory rather than its output paths, so leaving it unset makes every run
@@ -119,6 +170,24 @@ def run(snakefile: Path, cores: int, workdir: Path | None = None,
 
     def work() -> None:
         try:
+            if profile is not None:
+                from snakemake.cli import args_to_api, parse_args
+
+                argv = _profile_argv(snakefile, profile, cores, workdir,
+                                     dry_run, keep_going, rerun_incomplete,
+                                     conda_prefix if deploy else None)
+                parser, parsed = parse_args(argv)
+                if args_to_api(parsed, parser):
+                    events.put(Event("done"))
+                else:
+                    # `args_to_api` has already printed the exception through
+                    # Snakemake's own printer; it returns a bool and nothing
+                    # more, so there is no text to pass on here.
+                    events.put(Event("error", message=(
+                        "Snakemake reported a failed run — see the log under "
+                        f"{workdir}/.snakemake/log/ for what the queue said")))
+                return
+
             from snakemake.api import SnakemakeApi
             from snakemake.settings.types import (
                 DAGSettings,

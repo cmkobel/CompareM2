@@ -23,6 +23,11 @@ from .report import render_report
 from .snakefile import prepare, render_envs
 from .tools import Context, Scope
 
+# Cores when the user names no number and no profile. Small on purpose: this is
+# a laptop-safe default, and the machines where a bigger one would help are the
+# ones where `-t` or a profile gets typed anyway.
+DEFAULT_CORES = 4
+
 
 def _invocation() -> str:
     """The command that produced this run, for the report's provenance line.
@@ -134,6 +139,26 @@ def resolve(path: Path, base: Path) -> Path:
     nothing except the relative case it exists for.
     """
     return (base / path.expanduser()).resolve()
+
+
+def resolve_profile(profile: Path | None, base: Path) -> str | None:
+    """A `--profile` argument in the form Snakemake should receive it.
+
+    Snakemake accepts two things here: a path to a directory holding
+    `config.yaml`, and a bare *name* it looks up under `~/.config/snakemake`
+    and the system config directory. Both have to keep working, and they need
+    opposite treatment — a relative path has to be made absolute against the
+    directory the user typed in, for `invocation_dir()`'s reason, while a bare
+    name must be passed through untouched or Snakemake's lookup never happens.
+
+    So: resolve it, and keep the resolved form only if that is a directory that
+    exists. Otherwise hand the string back unchanged and let Snakemake's own
+    profile search produce the error, which names the places it looked.
+    """
+    if profile is None:
+        return None
+    resolved = resolve(profile, base)
+    return str(resolved) if resolved.is_dir() else str(profile)
 
 
 def slug(stem: str) -> str:
@@ -276,7 +301,14 @@ def main(argv: list[str] | None = None) -> int:
                    help="where databases live; shared across runs (default: "
                         f"{default_databases()}, overridden for every run by "
                         "$COMPAREM2_DATABASES)")
-    p.add_argument("-t", "--cores", type=int, default=4)
+    # Defaulted below rather than here, because with `--profile` it matters
+    # whether the user *said* a number: a profile carries its own `cores:` and
+    # `jobs:`, and an unasked-for `--cores 4` on the command line would beat
+    # them — the profile's values arrive as argparse defaults, so anything
+    # explicit wins. See DEFAULT_CORES.
+    p.add_argument("-t", "--cores", type=int, default=None,
+                   help=f"cores for Snakemake (default: {DEFAULT_CORES}; with "
+                        "--profile, left to the profile unless given)")
     p.add_argument("--until", nargs="*", default=None, metavar="TOOL",
                    help="run only these tools and their dependencies")
     # `TOOL-FLAG`, not `TOOL--FLAG`: the flag keeps whatever dashes the tool
@@ -299,6 +331,16 @@ def main(argv: list[str] | None = None) -> int:
                    help="run the four database-free analyses over six bundled "
                         "Enterococcus faecium plasmids; takes no assemblies, "
                         "and downloads nothing")
+    # A Snakemake profile directory, handed straight through. Cluster
+    # submission is Snakemake's, not CompareM2's: the profile names the
+    # executor (`slurm`, `cluster-generic`) and carries the account, partition
+    # and default resources, and both plugins are already dependencies. v2
+    # spelled this `$COMPAREM2_PROFILE` and shipped fourteen profiles in-tree;
+    # two of the four it advertised as cluster-specific were unedited copies of
+    # the templates, so this ships none and documents one.
+    p.add_argument("--profile", type=Path, default=None, metavar="DIR",
+                   help="Snakemake profile directory, for submitting to a "
+                        "cluster queue (SLURM, PBS, SGE, LSF)")
     p.add_argument("--keep-going", action="store_true",
                    help="keep running independent tools after one fails")
     p.add_argument("--dry-run", action="store_true")
@@ -370,6 +412,8 @@ def main(argv: list[str] | None = None) -> int:
     # below) and every generated path has to survive that.
     workdir: Path = resolve(args.output, base)
     workdir.mkdir(parents=True, exist_ok=True)
+    cores: int = args.cores if args.cores is not None else DEFAULT_CORES
+    profile: str | None = resolve_profile(args.profile, base)
     databases: Path = resolve(args.databases or default_databases(), base)
     conda_prefix: Path = resolve(args.conda_prefix or default_conda_prefix(), base)
     samples = canonicalise(inputs, workdir)
@@ -421,10 +465,14 @@ def main(argv: list[str] | None = None) -> int:
                 "the dry run, and it shows the download size too")
         from .tui import launch
 
-        launch(inputs, workdir, databases, samples, args.cores,
+        launch(inputs, workdir, databases, samples,
+               # Same rule as the subprocess path: with a profile, a number
+               # nobody asked for would override the profile's own.
+               cores if (args.cores is not None or profile is None) else None,
                selected=args.until, overrides=overrides,
                keep_going=args.keep_going,
-               conda_prefix=conda_prefix, command=_invocation())
+               conda_prefix=conda_prefix, command=_invocation(),
+               profile=profile)
         return 0
 
     snakefile = prepare(CATALOGUE, args.until, workdir, databases, samples,
@@ -451,7 +499,7 @@ def main(argv: list[str] | None = None) -> int:
             # FileNotFoundError traceback out of subprocess, three lines after
             # announcing what it was about to do.
             sys.executable, "-m", "snakemake",
-            "--snakefile", str(snakefile), "--cores", str(args.cores),
+            "--snakefile", str(snakefile),
             "--rerun-incomplete",
             # Snakemake locks its working directory, not its output paths, so
             # without this every run in one checkout shares `./.snakemake` —
@@ -468,6 +516,16 @@ def main(argv: list[str] | None = None) -> int:
             "--software-deployment-method", "conda",
             "--conda-prefix", str(conda_prefix),
         ]
+        # Cluster submission is Snakemake's job. The profile names the executor
+        # and carries the account, partition and default resources; nothing
+        # here needs to know which queue system it is.
+        if profile is not None:
+            cmd += ["--profile", profile]
+        # With a profile, only an explicit `-t` is forwarded: a profile sets
+        # `cores:`/`jobs:` and those arrive as argparse defaults, so passing
+        # our own default here would silently cap a cluster run at four.
+        if args.cores is not None or args.profile is None:
+            cmd += ["--cores", str(cores)]
         if args.keep_going:
             cmd.append("--keep-going")
         if args.dry_run:

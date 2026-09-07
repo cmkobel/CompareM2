@@ -167,25 +167,75 @@ it at the time, and do not transfer.
 
 ## HPC
 
-Snakemake's SLURM executor plugin ships with the package. Point CompareM2 at
-more cores and let Snakemake submit:
+Three things, in this order.
+
+**1. Put the databases and the environments somewhere with room.** Home
+directories have quotas and neither default belongs there — and both paths must
+be visible from the compute nodes, not just the login node.
 
 ```bash
-comparem2 *.fna --cores 64
-```
-
-Job submission is Snakemake's business, not CompareM2's — the generated
-Snakefile lives at `<output>/.comparem2/Snakefile` and takes any Snakemake
-profile you already use.
-
-Two things worth setting once on a cluster, because home directories have
-quotas and neither default belongs there:
-
-```bash
-export COMPAREM2_DATABASES=/scratch/you/cm2-databases
-export COMPAREM2_CONDA_PREFIX=/scratch/you/cm2-envs
+export COMPAREM2_DATABASES=/scratch/you/comparem2-databases
+export COMPAREM2_CONDA_PREFIX=/scratch/you/comparem2-envs
 comparem2 --setup            # build the environments on the login node
 ```
+
+Run `--setup` before submitting anything. Otherwise the first job to start
+builds both conda environments inside its own allocation, on the clock.
+
+**2. Write a profile.** Job submission is Snakemake's, not CompareM2's:
+a profile directory holding a `config.yaml` names the executor and carries the
+account, the partition and the resource defaults. CompareM2 ships none — your
+cluster's account name and partitions are not ours to guess.
+
+```yaml
+# ~/.config/snakemake/slurm/config.yaml
+executor: slurm
+jobs: 200                      # max jobs in the queue at once
+local-cores: 4                 # for rules that stay on the login node
+latency-wait: 30               # shared filesystems are not instantaneous
+
+default-resources:
+  slurm_account: YOUR_ACCOUNT
+  slurm_partition: normal
+  mem_mb: 8000
+  runtime: 240                 # minutes
+
+# CompareM2's rules declare threads but not memory or walltime, so the
+# defaults above apply to all of them. Override the greedy one by name:
+set-resources:
+  gtdbtk:
+    mem_mb: 64000
+    runtime: 720
+```
+
+**Those numbers are starting points, not measurements.** GTDB-Tk's follows the
+GTDB-Tk 2 paper's under-55 GB figure for divide-and-conquer placement, with
+headroom; nothing else here has been measured on a cluster at all. Run
+`sacct -o JobName,MaxRSS,Elapsed -j <jobid>` afterwards and correct them —
+`MaxRSS` is the number that decides whether the next run is killed.
+
+**3. Point CompareM2 at it.**
+
+```bash
+comparem2 *.fna --profile ~/.config/snakemake/slurm
+```
+
+A bare name works too — `--profile slurm` searches `~/.config/snakemake`, the
+way Snakemake's own `--profile` does. The flag is a passthrough, so anything
+Snakemake supports works: `snakemake-executor-plugin-slurm` for SLURM and
+`snakemake-executor-plugin-cluster-generic` for PBS, SGE and LSF are both
+already installed.
+
+`--tui` works with a profile: the interface runs on the login node and shows
+jobs starting and finishing as the queue runs them.
+
+!!! warning "`--cores` is not a submission setting"
+    `comparem2 *.fna --cores 64` starts 64 processes **on the machine you typed
+    it on**. It submits nothing. On a login node that is a way to get an email
+    from your sysadmin. Queue submission needs `--profile`.
+
+    With `--profile`, `-t/--cores` is left to the profile unless you pass it,
+    because a number on the command line overrides the profile's own.
 
 ## From git, for development
 
@@ -193,7 +243,7 @@ comparem2 --setup            # build the environments on the login node
 git clone https://github.com/cmkobel/CompareM2.git
 cd CompareM2
 pixi install
-pixi run pytest        # 212 unit tests, no databases and no tools needed
+pixi run pytest        # 219 unit tests, no databases and no tools needed
 pixi run comparem2 --help
 ```
 

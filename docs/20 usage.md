@@ -27,7 +27,8 @@ land next to the genomes.
 |---|---|---|
 | `-o`, `--output` | `results_comparem2` | output directory |
 | `-d`, `--databases` | `~/.comparem2/databases` | where databases live |
-| `-t`, `--cores` | `4` | cores for Snakemake |
+| `-t`, `--cores` | `4` | cores for Snakemake; with `--profile`, left to the profile unless given |
+| `--profile DIR` | — | Snakemake profile, for submitting to a cluster queue |
 | `--until TOOL...` | *(all)* | run only these tools and their dependencies |
 | `--set TOOL-FLAG=VALUE` | — | override a tool argument; repeatable |
 | `--tui` | off | interactive keyboard interface |
@@ -42,6 +43,10 @@ land next to the genomes.
 
 There is no flag for *whether* to deploy the tools. Snakemake always does, into
 `--conda-prefix` — see [Installation](10 installation.md).
+
+`--profile` is a passthrough to Snakemake and is what makes jobs go to a queue
+rather than to this machine; `--cores` never submits anything. See
+[HPC](10 installation.md#hpc) for a worked profile.
 
 ## Running a subset
 

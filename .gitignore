@@ -63,5 +63,11 @@ uv.lock
 papers/*.pdf
 papers/.pytest_cache/
 
+# genomedk-jobs skill. `hpc.env` holds one person's cluster account and paths,
+# which is noise in a public tool repo; `.hpc_root_verified` is a local cache of
+# the remote-root ownership check. The audit log is already covered by *.log.
+hpc.env
+.hpc_root_verified
+
 # Misc
 *.log

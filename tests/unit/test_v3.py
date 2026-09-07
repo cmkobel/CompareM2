@@ -734,6 +734,114 @@ def test_deployment_flags_go_to_snakemake_unconditionally(monkeypatch, tmp_path)
     assert cmd[cmd.index("--conda-prefix") + 1] == str(prefix)
 
 
+def _snakemake_cmd(monkeypatch, tmp_path, extra: list[str]) -> list[str]:
+    """Run the CLI with subprocess stubbed, and give back the command it built."""
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.delenv("COMPAREM2_CONDA_PREFIX", raising=False)
+    monkeypatch.setattr(cli_mod, "missing_conda", lambda: None)
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+
+    seen: dict[str, list[str]] = {}
+
+    def fake_run(cmd, *a, **k):
+        seen["cmd"] = cmd
+        return subprocess.CompletedProcess(cmd, 0)
+
+    monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
+    monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: tmp_path / "r.html")
+    monkeypatch.setattr(cli_mod.subprocess, "run", fake_run)
+
+    assert cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"),
+                         "--until", "seqkit", *extra]) == 0
+    return seen["cmd"]
+
+
+def test_profile_is_handed_to_snakemake(monkeypatch, tmp_path):
+    """Cluster submission is Snakemake's, so `--profile` is a passthrough.
+
+    v2 spelled this `$COMPAREM2_PROFILE` and the launcher put it on the
+    Snakemake command line; the only thing that changed is that it is a flag.
+    """
+    prof = tmp_path / "slurm"
+    prof.mkdir()
+    (prof / "config.yaml").write_text("executor: slurm\n")
+
+    cmd = _snakemake_cmd(monkeypatch, tmp_path, ["--profile", str(prof)])
+    assert cmd[cmd.index("--profile") + 1] == str(prof)
+
+
+def test_profile_directory_is_made_absolute(monkeypatch, tmp_path):
+    """A relative profile path is resolved against where the user typed it, for
+    `invocation_dir()`'s reason: under `pixi run` the cwd is the manifest root,
+    so `--profile ./slurm` would otherwise be looked up in the wrong place."""
+    prof = tmp_path / "slurm"
+    prof.mkdir()
+    (prof / "config.yaml").write_text("executor: slurm\n")
+    monkeypatch.setenv("INIT_CWD", str(tmp_path))
+
+    assert cli_mod.resolve_profile(Path("slurm"), tmp_path) == str(prof)
+
+
+def test_a_bare_profile_name_is_passed_through_untouched(tmp_path):
+    """Snakemake also takes a *name* it looks up under ~/.config/snakemake.
+    Resolving that to a non-existent absolute path would defeat the lookup and
+    replace Snakemake's error — which names every directory it searched — with
+    a worse one."""
+    assert cli_mod.resolve_profile(Path("slurm-genomedk"), tmp_path) \
+        == "slurm-genomedk"
+
+
+def test_profile_suppresses_the_default_cores(monkeypatch, tmp_path):
+    """A profile carries `cores:`/`jobs:`, and Snakemake reads a profile as
+    argparse *defaults* — so anything explicit on the command line beats it.
+    Passing our own default of 4 would silently cap a cluster run at four
+    jobs, which is the failure that looks like the queue being slow."""
+    prof = tmp_path / "slurm"
+    prof.mkdir()
+    (prof / "config.yaml").write_text("executor: slurm\njobs: 200\n")
+
+    cmd = _snakemake_cmd(monkeypatch, tmp_path, ["--profile", str(prof)])
+    assert "--cores" not in cmd
+
+
+def test_explicit_cores_survives_a_profile(monkeypatch, tmp_path):
+    """Suppressing the *default* must not suppress a number the user typed."""
+    prof = tmp_path / "slurm"
+    prof.mkdir()
+    (prof / "config.yaml").write_text("executor: slurm\n")
+
+    cmd = _snakemake_cmd(monkeypatch, tmp_path,
+                         ["--profile", str(prof), "-t", "16"])
+    assert cmd[cmd.index("--cores") + 1] == "16"
+
+
+def test_cores_defaults_without_a_profile(monkeypatch, tmp_path):
+    """The laptop case is unchanged: no profile, no `-t`, still four cores."""
+    cmd = _snakemake_cmd(monkeypatch, tmp_path, [])
+    assert cmd[cmd.index("--cores") + 1] == str(cli_mod.DEFAULT_CORES)
+
+
+def test_profile_argv_carries_the_run_settings(tmp_path):
+    """The TUI's profile branch goes through Snakemake's own CLI parser, so
+    what it builds is an argv rather than settings objects. Asserted here
+    because it cannot be exercised on a machine without the tools."""
+    from comparem2.runner import _profile_argv
+
+    argv = _profile_argv(tmp_path / "Snakefile", "slurm", None,
+                         tmp_path / "out", False, True, True,
+                         tmp_path / "envs")
+    assert argv[argv.index("--profile") + 1] == "slurm"
+    assert argv[argv.index("--directory") + 1] == str(tmp_path / "out")
+    assert argv[argv.index("--conda-prefix") + 1] == str(tmp_path / "envs")
+    assert argv[argv.index("--software-deployment-method") + 1] == "conda"
+    # Under a TUI, Snakemake printing to stderr corrupts the display.
+    assert argv[argv.index("--quiet") + 1] == "all"
+    assert "--keep-going" in argv
+    assert "--rerun-incomplete" in argv
+    assert "--cores" not in argv
+    assert "--dry-run" not in argv
+
+
 def test_use_conda_and_isolated_launcher_are_gone(tmp_path):
     """Both flags described a choice that should not exist. Accepting them
     silently would let an old command line look like it still worked."""

@@ -52,12 +52,13 @@ class ComparemTUI(App):
     ]
 
     def __init__(self, inputs: list[Path], workdir: Path, databases: Path,
-                 samples: tuple[str, ...], cores: int,
+                 samples: tuple[str, ...], cores: int | None,
                  selected: list[str] | None = None,
                  overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
                  keep_going: bool = False,
                  conda_prefix: Path | None = None,
-                 command: str | None = None) -> None:
+                 command: str | None = None,
+                 profile: str | None = None) -> None:
         super().__init__()
         self.inputs = inputs
         self.workdir = workdir
@@ -67,6 +68,11 @@ class ComparemTUI(App):
         self.overrides = overrides
         self.keep_going = keep_going
         self.conda_prefix = conda_prefix
+        # A Snakemake profile directory or name. When set, jobs go to a queue
+        # instead of this machine, and the run this interface is watching is a
+        # frontend process waiting on sbatch — which is the case the progress
+        # display is most useful in.
+        self.profile = profile
         # Passed in rather than read from sys.argv here: the CLI already
         # renders it, and the TUI's job is to display what it was given.
         self.command = command
@@ -183,7 +189,8 @@ class ComparemTUI(App):
                        " — first run only[/]")
         for event in run(snakefile, self.cores, workdir=self.workdir,
                          keep_going=self.keep_going,
-                         conda_prefix=self.conda_prefix):
+                         conda_prefix=self.conda_prefix,
+                         profile=self.profile):
             self.call_from_thread(self.apply_event, event)
 
         # Safe to read self.state here: call_from_thread blocks until the UI
@@ -257,10 +264,11 @@ class ComparemTUI(App):
 
 
 def launch(inputs: list[Path], workdir: Path, databases: Path,
-           samples: tuple[str, ...], cores: int,
+           samples: tuple[str, ...], cores: int | None,
            selected: list[str] | None = None,
            overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
            keep_going: bool = False,
-           conda_prefix: Path | None = None, command: str | None = None) -> None:
+           conda_prefix: Path | None = None, command: str | None = None,
+           profile: str | None = None) -> None:
     ComparemTUI(inputs, workdir, databases, samples, cores, selected,
-                overrides, keep_going, conda_prefix, command).run()
+                overrides, keep_going, conda_prefix, command, profile).run()
