@@ -6,6 +6,10 @@ or a scrolling wall of Snakemake output.
 
 Tool state comes from `catalogue.py` and progress from `runner.Event`, so this
 module knows nothing about Snakemake and nothing about which tools exist.
+
+Opening state comes from the output directory. A tool's declared outputs are
+the same thing Snakemake's resumability is decided on, so what the table says
+on startup is what a re-run would actually skip.
 """
 
 from __future__ import annotations
@@ -14,16 +18,26 @@ from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal
+# textual, not rich: rich is textual's dependency rather than this package's.
+from textual.markup import escape
 from textual.widgets import DataTable, Footer, Header, ProgressBar, RichLog, Static
 
 from .catalogue import CATALOGUE
+from .cli import any_outputs_exist, run_settings
 from .report import render_report
 from .runner import Event, run
 from .snakefile import prepare
+from .tools import completion
 
 PENDING, RUNNING, DONE, FAILED, SKIPPED, NOT_RUN = "·", "▸", "✓", "✗", "–", "○"
+# Results found on disk when the interface opened, as against results this
+# session produced. Distinct from DONE on purpose: "done" is something the user
+# watched happen, and claiming it for a file left by a run last week would put
+# this session's name on someone else's output.
+EXISTS, PARTIAL = "◆", "◐"
 LABEL = {PENDING: "pending", RUNNING: "running", DONE: "done",
-         FAILED: "failed", SKIPPED: "not selected", NOT_RUN: "not run"}
+         FAILED: "failed", SKIPPED: "not selected", NOT_RUN: "not run",
+         EXISTS: "already run", PARTIAL: "part-finished"}
 
 # The selection column. These were `[x]`, `[+]` and `[ ]` and rendered as
 # nothing at all: a DataTable cell given a `str` is parsed as Rich markup, and
@@ -37,6 +51,7 @@ class ComparemTUI(App):
     CSS = """
     Screen { layout: vertical; }
     #cost { padding: 0 1; color: $text-muted; }
+    #where { padding: 0 1; }
     #panes { height: 1fr; }
     DataTable { width: 46%; border: round $primary; }
     RichLog { width: 1fr; border: round $primary; padding: 0 1; }
@@ -80,20 +95,57 @@ class ComparemTUI(App):
         # puts gtdbtk's 60.8 GB one keypress away, so a user who named the
         # tools they want on the command line gets exactly those.
         self.selected: set[str] = set(selected) if selected else {t.name for t in CATALOGUE}
-        self.state: dict[str, str] = {t.name: PENDING for t in CATALOGUE}
+        # What is already in the output directory, and the live state of this
+        # session. Kept apart: the second is overwritten by every event, and the
+        # first is the answer to "what did I run here last time" — which the
+        # table has to keep giving for a tool the user has since deselected.
+        self.disk: dict[str, str] = self.scan()
+        self.state: dict[str, str] = dict(self.disk)
         self.running = False
         self.cost_text = ""
+
+    def scan(self) -> dict[str, str]:
+        """Read the output directory: which tools already have results there.
+
+        Opening the interface on a directory that had been run in showed
+        fourteen rows of `pending`, so the only way to find out what was already
+        done was to run it again and watch Snakemake skip things.
+        """
+        found = {}
+        for tool in CATALOGUE:
+            done = completion(tool, self.workdir, self.databases, self.samples)
+            found[tool.name] = EXISTS if done.done else (
+                PARTIAL if done.partial else PENDING)
+        return found
 
     # --- layout ----------------------------------------------------
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
+        yield Static(self.where_text(), id="where")
         yield Static(id="cost")
         with Horizontal(id="panes"):
             yield DataTable(cursor_type="row", zebra_stripes=True)
             yield RichLog(highlight=False, markup=True, wrap=True)
         yield ProgressBar(total=100, show_eta=False)
         yield Footer()
+
+    def where_text(self) -> str:
+        """The four locations this run depends on, and where each came from.
+
+        Databases and tool environments are settable by environment variable,
+        which makes them the two settings most likely to be wrong without
+        anyone noticing: both are exported once in a shell profile and never
+        looked at again, and either one pointing somewhere unexpected costs a
+        re-download or a re-solve rather than an error.
+        """
+        rows = run_settings(self.workdir, self.databases, self.conda_prefix,
+                            self.profile)
+        width = max(len(what) for what, _, _ in rows)
+        # Escaped: a path may contain '[', which Rich reads as a markup tag.
+        return "\n".join(
+            f"[dim]{what.ljust(width)}[/] {escape(where)}  [dim]{escape(origin)}[/]"
+            for what, where, origin in rows)
 
     def on_mount(self) -> None:
         self.title = f"CompareM2 v3 — {len(self.samples)} assemblies"
@@ -109,8 +161,21 @@ class ComparemTUI(App):
         # a key has been pressed, because `--until` seeds it, and the rows have
         # to say so.
         self.sync_table()
-        self.query_one(RichLog).write(
-            "[dim]space[/] select · [dim]r[/] run · [dim]q[/] quit")
+        log = self.query_one(RichLog)
+        log.write("[dim]space[/] select · [dim]r[/] run · [dim]q[/] quit")
+        # Said once, in words, because the table's own answer is spread over
+        # fourteen rows: a directory that has been run in before is the case
+        # where "what still needs doing" is the first question.
+        done = [n for n, s in self.disk.items() if s == EXISTS]
+        part = [n for n, s in self.disk.items() if s == PARTIAL]
+        if done:
+            log.write(f"[bold]{len(done)} of {len(CATALOGUE)} tools[/] already ran "
+                      "in this directory — [dim]a run re-uses their output[/]")
+        if part:
+            # Missing one declared output is what makes Snakemake re-run a rule,
+            # so this is a statement about what pressing `r` will do.
+            log.write(f"[yellow]part-finished, and will be redone:[/] "
+                      f"{', '.join(sorted(part))}")
 
     # --- selection -------------------------------------------------
 
@@ -159,7 +224,12 @@ class ComparemTUI(App):
                 MARK_DEP if tool.name in closure else MARK_OFF)
             table.update_cell(tool.name, "sel", mark)
             if not self.running:
-                state = self.state[tool.name] if tool.name in closure else SKIPPED
+                # An unselected tool still reports results it has on disk.
+                # Whether it is selected is what the mark column is for, and
+                # "not selected" over a finished analysis reads as "missing".
+                state = (self.state[tool.name] if tool.name in closure
+                         else (self.disk[tool.name] if self.disk[tool.name] != PENDING
+                               else SKIPPED))
                 table.update_cell(tool.name, "status", LABEL[state])
         self.refresh_cost()
 
@@ -170,8 +240,12 @@ class ComparemTUI(App):
             return
         self.running = True
         chosen = sorted(self.selected)
+        # Reset to what is on disk, not to `pending`: Snakemake will skip a tool
+        # whose outputs are current, so no event will ever arrive for it, and
+        # `pending` would be a claim that its results are not there.
+        self.disk = self.scan()
         for tool in CATALOGUE.closure(chosen):
-            self.state[tool.name] = PENDING
+            self.state[tool.name] = self.disk[tool.name]
         self.run_worker(self.execute(chosen), thread=True, exclusive=True)
 
     async def execute(self, chosen: list[str]) -> None:
@@ -198,13 +272,24 @@ class ComparemTUI(App):
         self.call_from_thread(self.settle, names)
         done = [n for n in names if self.state[n] == DONE]
         failed = [n for n in names if self.state[n] == FAILED]
+        # Is there anything to report? Asked of the files, and of the same
+        # function the CLI asks, so the two paths cannot disagree about it.
+        # Snakemake emits no job events for a rule it skips, so a directory that
+        # was already current produced none at all, every row settled to
+        # `not run`, and the report was withheld over a complete set of outputs.
+        have = any_outputs_exist(chosen, self.workdir, self.databases, self.samples)
 
-        if not done:
+        if not have:
             reason = f" Failed: {', '.join(failed)}." if failed else ""
             self.call_from_thread(
                 log.write,
                 f"[bold red]Nothing ran.[/]{reason} No report written.")
         else:
+            if not done:
+                self.call_from_thread(
+                    log.write,
+                    "[dim]Nothing to do — every selected tool's output was "
+                    "already up to date.[/]")
             if failed:
                 self.call_from_thread(
                     log.write,
@@ -224,12 +309,18 @@ class ComparemTUI(App):
         A row still marked `running` is left alone: that job did start, and the
         stream ended before saying how it went. Calling that `not run` would be
         a false statement rather than an unknown one.
+
+        The disk is re-read first, so a tool that finished without its finish
+        event arriving — and one whose outputs a failed run part-wrote — reads
+        as what it left behind rather than as `not run`.
         """
         table = self.query_one(DataTable)
+        self.disk = self.scan()
         for name in names:
             if self.state[name] == PENDING:
-                self.state[name] = NOT_RUN
-                table.update_cell(name, "status", LABEL[NOT_RUN])
+                self.state[name] = (self.disk[name] if self.disk[name] != PENDING
+                                    else NOT_RUN)
+                table.update_cell(name, "status", LABEL[self.state[name]])
 
     # NB: not `on_event` — Textual reserves that for its own event dispatch,
     # and overriding it swallows every framework message.

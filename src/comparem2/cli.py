@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 
 from . import __version__
@@ -21,12 +22,16 @@ from . import demo
 from .catalogue import CATALOGUE
 from .report import render_report
 from .snakefile import prepare, render_envs
-from .tools import Context, Scope
+from .tools import completion
 
 # Cores when the user names no number and no profile. Small on purpose: this is
 # a laptop-safe default, and the machines where a bigger one would help are the
 # ones where `-t` or a profile gets typed anyway.
 DEFAULT_CORES = 4
+
+# Where results go when `-o` is not given. Named rather than inlined because
+# `run_settings()` has to recognise the value it produced.
+DEFAULT_OUTPUT = Path("results_comparem2")
 
 
 def _invocation() -> str:
@@ -76,6 +81,59 @@ def default_conda_prefix() -> Path:
     return Path.home() / ".comparem2" / "envs"
 
 
+def _same(a: Path, b: Path) -> bool:
+    """Two paths naming the same place, whether or not either exists."""
+    return a.expanduser().resolve() == b.expanduser().resolve()
+
+
+def _origin(value: Path, var: str | None, default: Callable[[], Path]) -> str:
+    """Where `value` came from: the environment, the command line, or neither.
+
+    The case worth naming is the third one. `$COMPAREM2_DATABASES` set *and*
+    overridden by `-d` looks identical to the variable never having been set,
+    and a user who exported it in `.bashrc` months ago has no way to tell those
+    apart from inside a run.
+
+    `default()` reads the variable itself, so it is only consulted when the
+    variable is unset — where it returns the built-in default by construction.
+    `var` is None for a setting no environment variable reaches.
+    """
+    env = os.environ.get(var) if var else None
+    if env:
+        return f"${var}" if _same(value, Path(env)) else f"given, overriding ${var}"
+    return "default" if _same(value, default()) else "given"
+
+
+def run_settings(workdir: Path, databases: Path, conda_prefix: Path | None,
+                 profile: str | None, base: Path | None = None,
+                 ) -> list[tuple[str, str, str]]:
+    """The four locations a run depends on, each with where its value came from.
+
+    `(what, where, origin)` triples, for the TUI's header. Two of these are
+    settable by environment variable and both decide whether work is repeated:
+    a `$COMPAREM2_DATABASES` pointing somewhere unexpected re-downloads up to
+    143 GB, and a `$COMPAREM2_CONDA_PREFIX` that moved means every tool
+    environment solves again — Snakemake keys a deployed environment on the
+    prefix's realpath. Neither is visible anywhere in the interface otherwise,
+    and both are typically set once in a shell profile and then forgotten.
+    """
+    base = base if base is not None else invocation_dir()
+    # None reaches here only from a caller that built the run itself; `main()`
+    # always resolves one. Saying so beats printing "None" as if it were a path.
+    envs = ((str(conda_prefix),
+             _origin(conda_prefix, "COMPAREM2_CONDA_PREFIX", default_conda_prefix))
+            if conda_prefix is not None else
+            ("<snakemake's own>", "unset"))
+    return [
+        ("output", str(workdir),
+         _origin(workdir, None, lambda: resolve(DEFAULT_OUTPUT, base))),
+        ("databases", str(databases),
+         _origin(databases, "COMPAREM2_DATABASES", default_databases)),
+        ("tool envs", *envs),
+        ("execution", profile or "local", "--profile" if profile else "default"),
+    ]
+
+
 def missing_conda() -> str | None:
     """The one preflight left, and the one that actually fires.
 
@@ -100,17 +158,12 @@ def any_outputs_exist(selected: list[str] | None, workdir: Path,
     The question behind "is there anything to report". Asked of the declared
     outputs rather than of the exit code, because a run can fail one tool and
     finish twelve.
+
+    One finished unit of work is enough — a single genome's annotation is worth
+    reporting — which is why this reads `complete > 0` and not `Completion.done`.
     """
-    for tool in CATALOGUE.closure(selected):
-        contexts = ([Context(workdir, databases, tool.threads, samples, s)
-                     for s in samples]
-                    if tool.scope is Scope.GENOME else
-                    [Context(workdir, databases, tool.threads, samples, None)])
-        for ctx in contexts:
-            outputs = list(tool.outputs(ctx))
-            if outputs and all(Path(o).exists() for o in outputs):
-                return True
-    return False
+    return any(completion(tool, workdir, databases, samples).complete
+               for tool in CATALOGUE.closure(selected))
 
 
 def invocation_dir() -> Path:
@@ -296,7 +349,7 @@ def main(argv: list[str] | None = None) -> int:
     # `*` rather than `+` because --setup takes none. A bare invocation is
     # checked below and still says what is missing.
     p.add_argument("inputs", nargs="*", type=Path, help="assembly FASTA files")
-    p.add_argument("-o", "--output", type=Path, default=Path("results_comparem2"))
+    p.add_argument("-o", "--output", type=Path, default=DEFAULT_OUTPUT)
     p.add_argument("-d", "--databases", type=Path, default=None,
                    help="where databases live; shared across runs (default: "
                         f"{default_databases()}, overridden for every run by "

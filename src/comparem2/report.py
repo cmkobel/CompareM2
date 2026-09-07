@@ -43,7 +43,7 @@ from . import __version__
 # imports inside the functions that solve — this process has no solver.
 from .biosynthesis import ABSENT, DE_NOVO, LB, NO_ROUTE, PANEL, UPSTREAM
 from .guidance import GUIDANCE, citations
-from .tools import Context, Registry, Scope, Tool
+from .tools import Context, Registry, Scope, Tool, completion
 
 # The content column, in CSS pixels: 62rem of body minus 1.5rem of padding on
 # each side. Figures are drawn in these units and scaled with `max-width`, so
@@ -2131,15 +2131,11 @@ def render_report(registry: Registry, selected: list[str] | None, workdir: Path,
     for tool in registry.closure(selected):
         ctx = Context(workdir, databases, tool.threads, samples,
                       sample=samples[0] if tool.scope is Scope.GENOME else None)
-        produced = [p for p in tool.outputs(ctx) if p.exists()]
-        if tool.scope is Scope.GENOME:
-            produced = [
-                p for s in samples
-                for p in tool.outputs(Context(workdir, databases, tool.threads, samples, s))
-                if p.exists()
-            ]
-        if not produced:
-            continue  # partial runs stay readable
+        # `started`, not `done`: a section appears as soon as anything is there,
+        # so a partial run stays readable. Each renderer checks the file it
+        # reads for itself.
+        if not completion(tool, workdir, databases, samples).started:
+            continue
         shown += 1
         ran.append(tool.name)
         renderer = SECTIONS.get(tool.name)

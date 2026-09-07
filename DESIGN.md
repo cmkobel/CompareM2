@@ -279,6 +279,15 @@ something already published. The post-mortems are in
 - **Commands are argument lists, never shell strings.** A tool that writes to
   stdout declares `stdout_to_output=True`; the redirect is added by whatever
   runs it. The same discipline applies to database `fetch` steps.
+- **"Has this already run" is answered from the declared outputs, by one
+  function.** `tools.completion()`, counted per unit of work — per genome for a
+  genome-scope tool. The TUI's opening state, `any_outputs_exist` and the
+  report's section-by-section rendering are the same question at three
+  thresholds (`done`, `complete > 0`, `started > 0`), and they were three
+  hand-written spellings before. Declared outputs are also what Snakemake
+  decides resumability on, which is what makes the TUI's table a statement
+  about what a re-run will skip rather than a guess. Results found on disk are
+  a *different state* from results this session produced.
 - **A second environment must carry its reason in `catalogue.py`.** There is
   exactly one, and the DIAMOND conflict is written above its spec. v2 reached
   25 environments by making isolation the default rather than the exception,

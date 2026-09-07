@@ -1428,3 +1428,61 @@ the split was still one of two options, and they stay as the record of a set
 that ran — the lock installs on GenomeDK in 6.9 s where the floors-only solve
 failed in 4 min 07 s, which is worth knowing if drift ever hits a group that
 cannot be split further.
+
+### The TUI reads the output directory before it shows anything
+Opening `--tui` on a directory that had already been run in showed fourteen
+rows of `pending`. The state dict was seeded `{t.name: PENDING for t in
+CATALOGUE}` and nothing ever looked at the filesystem, so the interface whose
+job is to say what still needs doing could not answer that question at all —
+the only way to find out was to press `r` and watch Snakemake skip things.
+
+The signal is the tools' **declared outputs**, which is the same thing
+Snakemake's resumability is decided on, so what the table says on startup is
+what a re-run would actually skip. Three places were already asking that
+question in three different spellings — `cli.any_outputs_exist`,
+`report.render_report`, and nothing at all in the TUI — so it became one
+function, `tools.completion()`, counted per unit of work because the three
+callers need three different answers from the same files:
+
+| caller | question | reads |
+| --- | --- | --- |
+| TUI | which analyses are done | `units == complete` |
+| `any_outputs_exist` | is there anything to report | `complete > 0` — one finished genome counts |
+| report | does this section render | `started > 0` — partial runs stay readable |
+
+`already run` is a separate state from `done`, not an alias: "done" is
+something the user watched happen this session, and putting this session's name
+on a file left by a run last week is the kind of small false claim that gets
+believed. `part-finished` is its own state too, and the startup line says those
+will be redone — missing one declared output is exactly what makes Snakemake
+re-run a rule.
+
+Two consequences fell out that were not the goal. A tool that is *not* selected
+still reports results it has on disk, because the mark column already carries
+the selection and `not selected` over a finished analysis reads as "there is
+nothing there". And pressing `r` in a finished directory used to print
+**"Nothing ran. No report written."** over a complete set of outputs: Snakemake
+emits no job events for a rule it skips, so every row settled to `not run` and
+the report was withheld. The TUI now calls `any_outputs_exist` for that
+decision — the CLI's own answer since 09-02 — rather than counting the events
+it happened to see, so the two paths cannot disagree about whether there is
+anything to report.
+
+### The TUI shows where the databases and environments come from
+`$COMPAREM2_DATABASES` and `$COMPAREM2_CONDA_PREFIX` are exported once in a
+shell profile and then never looked at again, and neither appeared anywhere in
+the interface. The failure mode is on record above: three stacked
+`COMPAREM2_DATABASES` exports in `.bashrc` had v3 pointed at v2's database
+directory on 2026-09-03, which would have silently refetched 62.5 GB into the
+wrong place. Neither variable produces an error when it is wrong — one costs a
+re-download, the other a re-solve of every tool environment, because Snakemake
+keys a deployed environment on the prefix's realpath.
+
+So four lines above the tool table: output, databases, tool envs, execution,
+each with **where the value came from** rather than just the value.
+`run_settings()` lives in `cli.py`, next to the defaults that read those
+variables. The case worth naming is the third one — a variable that is set *and*
+overridden by a flag looks identical to a variable that was never set, so that
+reads `given, overriding $COMPAREM2_DATABASES`. `execution` says `local` or the
+profile, since "am I actually submitting to the queue" is the same class of
+question.

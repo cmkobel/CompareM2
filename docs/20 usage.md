@@ -116,6 +116,34 @@ structured.
 and none, `r` runs, `q` quits. `▣` is chosen, `▨` is pulled in as a dependency
 of something chosen, `▢` is off.
 
+### What it says before you press anything
+
+**Which analyses already ran here.** Open it on a directory you have run in
+before and the status column is filled in from what is on disk: `already run`
+where every declared output is present, `part-finished` where some are missing.
+Those are read from the same files Snakemake decides resumability on, so the
+table is what a re-run would actually skip — a `part-finished` tool is one that
+will be redone. A tool you have not selected still reports what it has; whether
+it is selected is what the mark column says.
+
+**Where the run's four locations come from.** Above the table:
+
+```
+output    /faststorage/project/x/run/results_comparem2  given
+databases /faststorage/project/x/comparem2_databases    $COMPAREM2_DATABASES
+tool envs /home/carl/.comparem2/envs                    default
+execution local                                         default
+```
+
+The right-hand column is the *origin*, not the value: `default`, `given` for
+something you typed, or the name of the environment variable the value came
+from. `given, overriding $COMPAREM2_DATABASES` means the variable is set and a
+`-d` beat it — which is worth seeing, because a variable exported in `.bashrc`
+months ago and silently overridden looks exactly like no variable at all. Both
+of these decide whether existing work gets re-used: a databases directory that
+is not the one holding your 62.5 GB re-downloads it, and a moved
+`$COMPAREM2_CONDA_PREFIX` re-solves every tool environment.
+
 Every other flag works the same way with `--tui` as without it — `--until` seeds
 the selection, and `--set`, `--keep-going` and `-d` are all honoured:
 

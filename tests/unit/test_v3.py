@@ -1463,6 +1463,18 @@ def test_tui_selection_marks_are_not_rich_markup():
     assert len(set(marks)) == 3, "the three states must be distinguishable"
 
 
+def test_tui_states_are_distinct_symbols():
+    """The state symbols are dict keys. Two states spelled the same glyph would
+    merge silently — `already run` and `done` are the pair that invites it."""
+    from comparem2 import tui as tui_mod
+
+    states = (tui_mod.PENDING, tui_mod.RUNNING, tui_mod.DONE, tui_mod.FAILED,
+              tui_mod.SKIPPED, tui_mod.NOT_RUN, tui_mod.EXISTS, tui_mod.PARTIAL)
+    assert len(set(states)) == len(states)
+    assert set(tui_mod.LABEL) == set(states), "every state needs a label"
+    assert len(set(tui_mod.LABEL.values())) == len(states)
+
+
 @pytest.mark.asyncio
 async def test_tui_rows_reflect_the_seeded_selection_at_startup():
     """`on_mount` refreshed the cost line but not the rows.
@@ -1576,6 +1588,198 @@ async def test_tui_seeds_its_selection_from_until():
         assert app.selected == {"mashtree"}
         assert "1 tools selected" in app.cost_text
         assert "no databases" in app.cost_text
+
+
+# --- what already ran ----------------------------------------------
+
+def _wrote(root: Path, *parts: str) -> Path:
+    """A tool output sitting on disk, as a finished run leaves it."""
+    path = root.joinpath(*parts)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("x")
+    return path
+
+
+def test_completion_counts_per_genome(tmp_path):
+    """The shared primitive behind three different questions.
+
+    `complete` is per unit of work, so one finished genome out of three is
+    `complete == 1` and not `done` — the CLI reports on the first, the TUI
+    displays the second.
+    """
+    from comparem2.tools import completion
+
+    seqkit = CATALOGUE["seqkit"]
+    empty = completion(seqkit, tmp_path, tmp_path / "db", SAMPLES)
+    assert (empty.units, empty.complete, empty.started) == (3, 0, 0)
+    assert not empty.done and not empty.partial
+
+    _wrote(tmp_path, "samples", "A", "seqkit", "contigs.tsv")
+    one = completion(seqkit, tmp_path, tmp_path / "db", SAMPLES)
+    assert (one.complete, one.started) == (1, 1)
+    assert one.partial and not one.done
+
+    for s in ("B", "C"):
+        _wrote(tmp_path, "samples", s, "seqkit", "contigs.tsv")
+    assert completion(seqkit, tmp_path, tmp_path / "db", SAMPLES).done
+
+
+def test_completion_needs_every_declared_output(tmp_path):
+    """bakta declares a .gff3 *and* a .faa; panaroo reads the second one.
+
+    A genome with only the first is a half-finished job, not a finished one.
+    """
+    from comparem2.tools import completion
+
+    for s in SAMPLES:
+        _wrote(tmp_path, "samples", s, "bakta", f"{s}.gff3")
+    half = completion(CATALOGUE["bakta"], tmp_path, tmp_path / "db", SAMPLES)
+    assert half.started == 3 and half.complete == 0
+    assert half.partial and not half.done
+
+    for s in SAMPLES:
+        _wrote(tmp_path, "samples", s, "bakta", f"{s}.faa")
+    assert completion(CATALOGUE["bakta"], tmp_path, tmp_path / "db", SAMPLES).done
+
+
+@pytest.mark.asyncio
+async def test_tui_opens_showing_which_tools_already_ran(tmp_path):
+    """Regression: the TUI never looked at the output directory.
+
+    Every tool was seeded `pending`, so opening the interface where analyses
+    had already been run said nothing about them, and the only way to find out
+    what was done was to run it again and watch Snakemake skip things.
+    """
+    pytest.importorskip("textual")
+    from textual.widgets import DataTable
+
+    from comparem2.tui import EXISTS, PARTIAL, PENDING, ComparemTUI
+
+    for s in SAMPLES:
+        _wrote(tmp_path, "samples", s, "seqkit", "contigs.tsv")
+    _wrote(tmp_path, "mashtree", "mashtree.newick")
+    _wrote(tmp_path, "samples", "A", "bakta", "A.gff3")  # one genome, one file
+
+    app = ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4)
+    async with app.run_test():
+        table = app.query_one(DataTable)
+        assert app.state["seqkit"] == EXISTS
+        assert app.state["mashtree"] == EXISTS
+        assert app.state["bakta"] == PARTIAL
+        assert app.state["checkm2"] == PENDING
+        assert table.get_cell("seqkit", "status") == "already run"
+        assert table.get_cell("bakta", "status") == "part-finished"
+        assert table.get_cell("checkm2", "status") == "pending"
+
+
+@pytest.mark.asyncio
+async def test_tui_reports_results_of_a_tool_that_is_not_selected(tmp_path):
+    """`--until mashtree` in a directory where seqkit ran must still say so.
+
+    The mark column carries the selection; putting "not selected" in the status
+    column over a finished analysis reads as "there is nothing there".
+    """
+    pytest.importorskip("textual")
+    from textual.widgets import DataTable
+
+    from comparem2.tui import ComparemTUI
+
+    for s in SAMPLES:
+        _wrote(tmp_path, "samples", s, "seqkit", "contigs.tsv")
+
+    app = ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                      selected=["mashtree"])
+    async with app.run_test():
+        table = app.query_one(DataTable)
+        assert "seqkit" not in {t.name for t in CATALOGUE.closure(["mashtree"])}
+        assert table.get_cell("seqkit", "status") == "already run"
+        assert table.get_cell("checkm2", "status") == "not selected"
+
+
+@pytest.mark.asyncio
+async def test_tui_renders_the_report_when_everything_was_already_current(
+        tmp_path, monkeypatch):
+    """Snakemake emits no job events for a rule it skips.
+
+    So a second run in a finished directory produced no `job_finished` at all,
+    every row settled to `not run`, and the interface said "Nothing ran. No
+    report written." with a complete set of outputs sitting next to it.
+    """
+    pytest.importorskip("textual")
+    from comparem2 import tui as tui_mod
+
+    _wrote(tmp_path, "mashtree", "mashtree.newick")
+    monkeypatch.setattr(tui_mod, "run", lambda *a, **k: iter([tui_mod.Event("done")]))
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(tui_mod, "render_report",
+                        lambda *a, **k: seen.setdefault("report", Path("r.html")))
+
+    app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                              selected=["mashtree"])
+    async with app.run_test() as pilot:
+        await pilot.press("r")
+        await pilot.pause()
+        while app.running:
+            await pilot.pause()
+        assert app.state["mashtree"] == tui_mod.EXISTS, "results were on disk"
+        assert "report" in seen
+
+
+@pytest.mark.asyncio
+async def test_tui_shows_where_the_databases_come_from(tmp_path, monkeypatch):
+    """The two settings an environment variable reaches are the two most likely
+    to be silently wrong, and neither appeared anywhere in the interface."""
+    pytest.importorskip("textual")
+    from textual.widgets import Static
+
+    from comparem2.tui import ComparemTUI
+
+    monkeypatch.setenv("COMPAREM2_DATABASES", str(tmp_path / "db"))
+    monkeypatch.delenv("COMPAREM2_CONDA_PREFIX", raising=False)
+
+    app = ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                      conda_prefix=tmp_path / "envs", profile="slurm")
+    async with app.run_test():
+        text = str(app.query_one("#where", Static).content)
+        assert str(tmp_path / "db") in text
+        assert "$COMPAREM2_DATABASES" in text
+        assert "slurm" in text and "--profile" in text
+
+
+def test_run_settings_names_the_variable_a_flag_overrode(monkeypatch, tmp_path):
+    """`$COMPAREM2_DATABASES` set and beaten by `-d` looks exactly like the
+    variable never having been set. Which of the two it is decides whether the
+    143 GB already on disk gets used."""
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.setenv("COMPAREM2_DATABASES", str(tmp_path / "exported"))
+    monkeypatch.delenv("COMPAREM2_CONDA_PREFIX", raising=False)
+
+    rows = dict((what, (where, origin)) for what, where, origin
+                in cli_mod.run_settings(tmp_path / "out", tmp_path / "typed",
+                                        cli_mod.default_conda_prefix(),
+                                        None, base=tmp_path))
+    assert rows["databases"] == (str(tmp_path / "typed"),
+                                 "given, overriding $COMPAREM2_DATABASES")
+    assert rows["tool envs"][1] == "default"
+    assert rows["execution"] == ("local", "default")
+
+    # The same value the variable holds is attributed to the variable.
+    same = dict((what, origin) for what, _, origin
+                in cli_mod.run_settings(tmp_path / "out", tmp_path / "exported",
+                                        cli_mod.default_conda_prefix(), None,
+                                        base=tmp_path))
+    assert same["databases"] == "$COMPAREM2_DATABASES"
+    assert same["output"] == "given"
+
+
+def test_run_settings_recognises_the_default_output(monkeypatch, tmp_path):
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    workdir = cli_mod.resolve(cli_mod.DEFAULT_OUTPUT, tmp_path)
+    rows = dict((what, origin) for what, _, origin
+                in cli_mod.run_settings(workdir, cli_mod.default_databases(),
+                                        None, None, base=tmp_path))
+    assert rows["output"] == "default"
+    assert rows["tool envs"] == "unset", "None is not a path to print"
 
 
 def test_runner_names_the_rule_that_finished(tmp_path):

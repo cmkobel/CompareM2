@@ -16,6 +16,9 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+__all__ = ["Completion", "Context", "Database", "Registry", "Scope", "Tool",
+           "completion", "contexts"]
+
 
 class Scope(Enum):
     """How often a tool runs."""
@@ -230,6 +233,71 @@ class Tool:
         if not self.summary:
             raise ValueError(f"{self.name}: summary is required — it is what the report shows")
 
+
+def contexts(tool: Tool, workdir: Path, databases: Path,
+             samples: Sequence[str]) -> list[Context]:
+    """Every unit of work one run of `tool` covers.
+
+    One Context per sample for `Scope.GENOME`, one for the whole set otherwise.
+    That distinction was written out by hand in three places before this
+    existed, and each spelling drifted.
+    """
+    samples = tuple(samples)
+    if tool.scope is Scope.GENOME:
+        return [Context(workdir, databases, tool.threads, samples, s) for s in samples]
+    return [Context(workdir, databases, tool.threads, samples, None)]
+
+
+@dataclass(frozen=True)
+class Completion:
+    """What a tool has already left in an output directory.
+
+    Counted per unit of work — per sample for a genome-scope tool — because the
+    three callers ask three different questions of the same files and each one
+    needs a different count:
+
+    - the TUI opens on a directory and must say which analyses are *done*, so it
+      wants `units == complete`;
+    - `cli.any_outputs_exist` decides whether a failed run still has something
+      to report, so one finished genome is enough: `complete > 0`;
+    - the report renders a section whenever anything at all is there, partial
+      runs included: `started > 0`.
+
+    Read from the declared outputs rather than from a stamp or an exit code.
+    Snakemake's own resumability is decided the same way, so this agrees with
+    what a re-run will actually skip.
+    """
+
+    units: int  # samples, or 1 for a set-scope tool
+    complete: int  # units with every declared output present
+    started: int  # units with at least one declared output present
+
+    @property
+    def done(self) -> bool:
+        """Every unit finished. What "already run" means in the TUI."""
+        return self.units > 0 and self.complete == self.units
+
+    @property
+    def partial(self) -> bool:
+        """Something is there, but not all of it — an interrupted run."""
+        return self.started > 0 and not self.done
+
+
+def completion(tool: Tool, workdir: Path, databases: Path,
+               samples: Sequence[str]) -> Completion:
+    """How much of `tool`'s declared output is already in `workdir`."""
+    complete = started = 0
+    units = contexts(tool, workdir, databases, samples)
+    for ctx in units:
+        outputs = [Path(o) for o in tool.outputs(ctx)]
+        present = [o for o in outputs if o.exists()]
+        if not outputs:
+            continue
+        if len(present) == len(outputs):
+            complete += 1
+        if present:
+            started += 1
+    return Completion(units=len(units), complete=complete, started=started)
 
 
 class Registry:
