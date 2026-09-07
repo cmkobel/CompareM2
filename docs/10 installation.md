@@ -2,7 +2,7 @@
 
 CompareM2 is on Bioconda, so **pixi** or **conda** installs it. However it
 arrives, the package is the pipeline alone — the fourteen analysis tools are
-not in it, and Snakemake deploys them into two conda environments the first
+not in it, and Snakemake deploys them into six conda environments the first
 time they are needed. There is no flag for whether to do that; it always
 happens, into `--conda-prefix`.
 
@@ -16,7 +16,7 @@ happens, into `--conda-prefix`.
     the tool environments, so it arrives with CompareM2 either way. Checked on
     a machine with no conda on `PATH` at all — both pixi routes ran a dry run
     to completion (2026-09-04).
-  - **Disk.** **7.7 GB** of tool environments, plus databases — see below.
+  - **Disk.** **1.4 GB** of tool environments, plus databases — see below.
     GTDB-Tk alone is 60.8 GB to download and 94 GB unpacked.
   - **RAM.** GTDB-Tk's classify step is the peak; its own paper reports under
     55 GB for GTDB-Tk 2's divide-and-conquer placement. Without GTDB-Tk, far less.
@@ -61,34 +61,44 @@ conda activate comparem2
     [set the channels up](https://bioconda.github.io/#usage). Naming them makes
     the command work on a machine that has not.
 
-## The two tool environments
+## The six tool environments
 
 The package is `noarch: python` and depends only on Python, Snakemake and its
 two executor plugins, Textual, and `conda`. Everything the analyses need is
-deployed on first use into two environments:
+deployed on first use into six environments, grouped by dependency ecosystem:
 
-| Environment | Contents | DIAMOND | On disk |
-| --- | --- | --- | ---: |
-| `main` | thirteen tools, plus curl and tar | 2.2.5 | 6.0 GB |
-| `checkm2` | CheckM2 alone | 2.1.11 | 1.8 GB |
+| Environment | Tools | On disk |
+| --- | --- | ---: |
+| `basic` | seqkit, skani, snp-dists, fasttree, treecluster, curl, tar | 55 MB |
+| `perl` | mashtree, mlst, panaroo | 543 MB |
+| `annotation` | bakta, amrfinder | 83 MB |
+| `gtdbtk` | gtdbtk | 62 MB |
+| `carveme` | carveme, biosynthesis | 102 MB |
+| `checkm2` | checkm2 | 645 MB |
 
-**CheckM2 is separate because it pins DIAMOND 2.1.x while current Bakta needs
-2.2.x** — they cannot co-solve, which is also why the tools are not simply
-dependencies of the conda package: no single environment can hold all fourteen.
-Eighteen rules point at these two, and together they are 7.7 GB measured (the
-two figures are rounded, so they add to 7.8).
+**1.4 GB for all six**, measured on GenomeDK 2026-09-07. Conda hardlinks
+packages that several environments share, so the total is well under the sum of
+independent installs — and correspondingly, the per-environment figures do not
+add up to it.
+
+**Why six and not one.** CheckM2 pins DIAMOND 2.1.x while current Bakta needs
+2.2.x, so no single environment ever held all fourteen. The rest of the split
+is newer: in September 2026 the thirteen-tool environment stopped solving
+because the Perl stack broke upstream and took every other tool with it. Tools
+that share an environment share its fate, so they are grouped by what they
+actually depend on. An environment per *tool* would be the opposite mistake.
 
 They go to `~/.comparem2/envs`, shared across runs, moved with `--conda-prefix`
 or `$COMPAREM2_CONDA_PREFIX`.
 
 !!! warning "Keep that path stable"
     Snakemake identifies an environment by a hash that includes the *realpath*
-    of the prefix, so moving it rebuilds both — and re-fetches AMRFinder's
-    database, which lives inside one of them.
+    of the prefix, so moving it rebuilds all six — and re-fetches AMRFinder's
+    database, which lives inside `annotation`.
 
     A **relative** `--conda-prefix` is the sharp edge: it resolves against the
     directory you typed the command in, so the same relative path from two
-    directories is two prefixes and two 7.7 GB builds. The default is
+    directories is two prefixes and two full builds. The default is
     home-relative and safe.
 
 ### Building them up front
@@ -109,8 +119,8 @@ returns in about two seconds. The only thing that has to match a later run is
 
 Two caveats. `--setup` is one-time per *catalogue*, not per machine: changing
 any tool's version pin changes the environment file, which changes the hash,
-which rebuilds. And `--setup --until <subset>` is not a cheaper setup — the
-environment is the whole thirteen-tool `main` whatever subset you name.
+which rebuilds. And `--setup --until <subset>` builds only the environments
+that subset needs — `--until seqkit skani` builds `basic` alone.
 
 ## Databases
 

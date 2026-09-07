@@ -40,7 +40,44 @@ Resources are unmeasured. The generated rules declare `threads:` and no
 `mem_mb` or `runtime` (`snakefile.py:113`), so a profile's `default-resources`
 decides every job, and there is no peak-RSS figure for any rule in this repo.
 
+## Six environments, and a SLURM run that used them
+
+**Fixed 2026-09-07 by splitting `main` into five.** `comparem2 --setup` builds
+all six on GenomeDK, and `comparem2 --demo --profile <slurm>` then ran to
+completion through the queue:
+
+| | |
+| --- | --- |
+| steps | **11 of 11**, 78 s wall (11:35:14 → 11:36:32) |
+| SLURM jobs | **10**, all `COMPLETED`, on `cn-1086` and `cn-1093` |
+| report | 39,854 bytes |
+| cross-check | duplicate pair at **100.00% ANI** and **0.00000** mash distance |
+
+The environments and what landed in each, verified by the binaries present:
+
+| Environment | Tools | Size |
+| --- | --- | ---: |
+| `basic` | seqkit, skani, snp-dists, fasttree, treecluster, curl, tar | 55 MB |
+| `perl` | mashtree, mlst, panaroo | 543 MB |
+| `annotation` | bakta, amrfinder | 83 MB |
+| `gtdbtk` | gtdbtk | 62 MB |
+| `carveme` | carveme, biosynthesis | 102 MB |
+| `checkm2` | checkm2 | 645 MB |
+
+**1.4 GB for all six**, by `du` on the prefix — but conda hardlinks shared
+packages, so that is a deduplicated figure and **not comparable** to the 7.7 GB
+recorded below for the two-environment layout, which was measured differently
+on a different machine. Neither number includes the package cache. Treat the
+7.7 GB in the older sections as the historical figure it is.
+
+The database downloads did not run — `--demo` needs none — so the four
+`download_*` rules remain unexercised under a profile, `localrules` and all.
+
 ## Known broken: the `main` environment no longer solves, anywhere
+
+*Superseded by the split above; kept because the diagnosis is what justified
+it, and because the same failure will recur in any group that co-solves too
+much.*
 
 2026-09-07. `comparem2 --setup` builds `checkm2` and then fails on `main` with
 `LibMambaUnsatisfiableError`. **This is not machine-specific and not new

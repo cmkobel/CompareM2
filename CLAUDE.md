@@ -130,13 +130,22 @@ ANI, 0 SNPs, identical CDS counts.
   presolver off; deleting the line costs nine minutes a genome *and* the model.
   Numbers, and the reasons "optimal" is not well defined on this problem, are in
   the wrapper's docstring — re-measure before changing it.
-- **Two conda environments, and adding a third needs a reason in
-  `catalogue.py`.** `MAIN_ENV` holds thirteen tools plus curl and tar;
-  `CHECKM2_ENV` exists because checkm2 pins DIAMOND 2.1.x against bakta's
-  2.2.x. Eighteen rules point at those two. An environment per tool is v2's 25
-  in a cheaper disguise — and because thirteen tools co-solve, **every spec
-  needs a `>=` floor**, not just the three that used to have one. A test
-  enforces it.
+- **Six conda environments, grouped by dependency ecosystem.** `basic`
+  (seqkit, skani, snp-dists, fasttree, treecluster, curl, tar), `perl`
+  (mashtree, mlst, panaroo), `annotation` (bakta, amrfinder), `gtdbtk`,
+  `carveme` (with biosynthesis) and `checkm2`. Eighteen rules point at those
+  six, and a test enforces the list.
+
+  This was two until 2026-09-07, when the thirteen-tool `main` **stopped
+  solving at all** — the same spec that built a working environment on 09-03
+  failed on 09-07 on two different machines, because the Perl stack went bad
+  upstream and took the other ten with it. A co-solve is a shared fate: every
+  tool in one environment must have its transitive constraints hold at the same
+  moment. Grouping by ecosystem is what keeps one bad month in bioconda from
+  making the pipeline uninstallable. **An environment per *tool* is still
+  wrong** — that is v2's 25 in another form.
+
+  **Every spec still needs a `>=` floor**, and a test enforces that too.
 - **Databases declare a measured size**, taken from `content-length`. `None`
   means unmeasured — never guess, and say "unmeasured" when totalling.
 - **Passthrough parameters**: `--set tool--flag=value` on the CLI, `params` on

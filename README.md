@@ -40,8 +40,8 @@ citation list covering exactly the tools that ran.
 ## Installing
 
 **Linux only**, because the analysis tools are `linux-64`. The package is the
-pipeline alone: Snakemake deploys the tools into two conda environments
-(**7.7 GB**) the first time they are needed, and fetches four databases
+pipeline alone: Snakemake deploys the tools into six conda environments
+(**1.4 GB**) the first time they are needed, and fetches four databases
 (**62.5 GB** measured, 60.8 GB of it GTDB-Tk) as the workflow reaches them.
 Both defaults are shared across runs and both are movable, which matters on a
 cluster with a home quota.

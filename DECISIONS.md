@@ -1341,3 +1341,90 @@ seconds: 11 of 11 at `v3.1.0` detached, identical seqkit md5 and identical
 skani, mashtree and treecluster numbers. An argument that a run is unnecessary
 is worth less than the run whenever the run is cheap, and here it was cheaper
 than the paragraph defending it.
+
+---
+
+## 2026-09-07
+
+### `--profile`, and the TUI submits too
+The pipeline could not submit a job. Both execution paths were pinned to local
+execution — `cli.py` built a Snakemake command with no `--executor`, and
+`runner.py` passed `executor="local"` literally — while the docs claimed
+`--cores 64` would submit. It starts 64 processes on the machine you typed it
+on.
+
+`--profile` is a passthrough. Cluster submission belongs to Snakemake and
+already worked there; both executor plugins had been declared dependencies all
+along, so SLURM, PBS, SGE and LSF arrive with the flag and no new code. v2
+spelled the same thing `$COMPAREM2_PROFILE` and shipped fourteen profiles
+in-tree — two of the four it advertised as cluster-specific were byte-identical
+to the templates, placeholder account and all — so v3 ships none and documents
+one.
+
+The first proposal was to *refuse* `--profile` with `--tui`, on the grounds
+that the API has no notion of a profile. Carl rejected it: watching a queue
+from a frontend is exactly when a progress display earns its keep. The profile
+branch therefore calls `snakemake.cli.parse_args()`/`args_to_api()` — Snakemake's
+own CLI, in-process — because `config.yaml` is read as argparse *defaults*, and
+hand-mapping that onto `execute_workflow(executor=..., executor_settings=...)`
+would be re-implementing a parser and getting a subset right.
+
+**A measurement retired the reason for one of the guards.** Withholding the
+default `--cores 4` under `--profile` was justified in the code as preventing a
+cluster run being capped at four jobs. Measured on GenomeDK: under `--cores 1`
+against a profile's `jobs: 20`, all three test jobs still started at 2.2 s.
+`--cores` governs local scheduling, not submission. The behaviour is kept for
+the smaller true reason — a profile may set `cores:` itself and our default
+would replace it — and the comment now says the measured thing.
+
+### Downloads are `localrules`, because Snakemake decides where a rule runs
+Carl's observation that running `--setup` on a frontend is obvious was correct,
+and chasing it found the thing that is not: the four `download_*` rules are
+*rules*, so under a profile Snakemake submitted them like everything else.
+GenomeDK's compute nodes have no outbound network, so the 60.8 GB GTDB fetch
+would have been sent to the one machine that cannot reach the internet. No
+amount of user discipline fixes that.
+
+Verified: given `localrules: fetch`, `fetch` ran on `fe-open-01` while a sibling
+rule went to `cn-1050` in the same run.
+
+### Two environments became six, because two stopped solving
+**This reverses "Two conda environments, and adding a third needs a reason"**,
+which stood from 2026-09-01. The reason turned out to be the strongest kind:
+the thirteen-tool `main` environment stopped solving at all. Not on one machine
+and not from new configuration — the identical spec built a working 6.0 GB
+environment on thylakoid on 09-03 and, re-solved there on 09-07, failed after
+6 min 46 s; on GenomeDK after 4 min 07 s. `perl-bioperl` could not be placed,
+taking `mlst` and `panaroo` (through `prokka`) with it, while `mashtree` wanted
+`perl >=5.32.1` and `perl-bio-samtools` was offered only as perl 5.26/5.22
+builds.
+
+Three things were ruled out by measurement before the split, and are recorded
+so they are not re-tried: the `_python_rc` / python-3.14rc line is a red
+herring — an earlier note blamed it and that was a misreading of the solver's
+own tree; pinning `curl` and `tar`, the two specs with no floor, fails
+identically; `channel_priority: strict` fails identically.
+
+The lesson is about co-solving, not about perl. Thirteen tools in one
+environment means thirteen sets of transitive constraints that must hold at the
+same moment, so one ecosystem going bad upstream takes the other twelve down.
+Every candidate group solves in under 30 s where the thirteen-way solve fails
+after four minutes, so the split is by *ecosystem*: `basic`, `perl`,
+`annotation`, `gtdbtk`, `carveme`, `checkm2`.
+
+An environment per tool is still wrong — v2's 25 in another form — and the
+floors are still mandatory for the same reason as before.
+
+Two things fell out of it that were not the goal. A subset now builds only what
+it needs: `--until seqkit skani` builds one 55 MB environment where it used to
+build the whole thirteen-tool `main`. And all six together are 1.4 GB by `du`,
+against 7.7 GB recorded for the old two — but conda hardlinks shared packages
+and the two figures were measured differently on different machines, so that is
+not a like-for-like comparison and is not claimed as one.
+
+`envs/locks/` holds `conda list --explicit` from thylakoid's surviving
+environments, 394 packages and 130. Nothing reads them. They were captured when
+the split was still one of two options, and they stay as the record of a set
+that ran — the lock installs on GenomeDK in 6.9 s where the floors-only solve
+failed in 4 min 07 s, which is worth knowing if drift ever hits a group that
+cannot be split further.

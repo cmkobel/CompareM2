@@ -50,7 +50,7 @@ Measures the physical shape of each assembly: how many pieces it is in, how long
 
 **How it works.** A single pass of `seqkit fx2tab --name --length --gc` writes one row per fasta record with its length and GC. Contig count, total length, largest contig, N50 and mean GC are all arithmetic done on those rows afterwards.
 
-Runs once per genome · 1 thread
+Runs once per genome · 1 thread · **its own conda environment**, `basic`
 
 ```
 seqkit fx2tab --name --length --gc results_comparem2/samples/genome_A/genome_A.fna -o results_comparem2/samples/genome_A/seqkit/contigs.tsv
@@ -106,7 +106,7 @@ Gives each assembly a seven-rank name, domain down to species, by placing it in 
 
 **How it works.** Marker genes (120 bacterial, 122 archaeal) are extracted and aligned, and the genome is placed with pplacer into a backbone tree and then a class-level subtree; disagreement resolves to the lowest common ancestor. ANI to a species representative decides the species, and relative evolutionary divergence decides the ranks above it.
 
-Runs once over the whole set · 16 threads · database `gtdb` (60.8 GB)
+Runs once over the whole set · 16 threads · database `gtdb` (60.8 GB) · **its own conda environment**, `gtdbtk`
 
 ```
 gtdbtk classify_wf --cpus 16 --batchfile results_comparem2/.comparem2/gtdbtk_batchfile.tsv --out_dir results_comparem2/gtdbtk
@@ -135,7 +135,7 @@ Works out where the genes are in each assembly and what they are called. The cou
 
 **How it works.** Structural calls come from specialist tools — Prodigal for protein-coding genes (via the pyrodigal binding), tRNAscan-SE, Aragorn, Infernal against Rfam, PILER-CR. Naming is where Bakta differs from Prokka: it hashes each predicted protein and looks the hash up in a pre-built database, sending only the leftovers to DIAMOND against UniRef90 then UniRef50, so no taxon has to be specified.
 
-Runs once per genome · 8 threads · database `bakta-light` (unmeasured)
+Runs once per genome · 8 threads · database `bakta-light` (unmeasured) · **its own conda environment**, `annotation`
 
 ```
 bakta --db ~/.comparem2/databases/bakta --threads 8 --output results_comparem2/samples/genome_A/bakta --prefix genome_A --force results_comparem2/samples/genome_A/genome_A.fna
@@ -167,7 +167,7 @@ Reports which known antimicrobial-resistance genes — plus, because `--plus` is
 
 **How it works.** Predicted proteins are searched with BLASTP against curated reference proteins and with HMMER against family HMMs carrying manually curated cutoffs; a hierarchy of gene families then gives the most specific name the sequence actually supports rather than just the closest hit. This pipeline runs protein-only with `--plus` and no `--organism`.
 
-Runs once per genome · 4 threads · after `bakta` · database `amrfinder` (unmeasured)
+Runs once per genome · 4 threads · after `bakta` · database `amrfinder` (unmeasured) · **its own conda environment**, `annotation`
 
 ```
 amrfinder -p results_comparem2/samples/genome_A/bakta/genome_A.faa --plus --threads 4 > results_comparem2/samples/genome_A/amrfinder/amrfinder.tsv
@@ -196,7 +196,7 @@ Puts a short, globally shared name on each genome — a sequence type, which lab
 
 **How it works.** Each assembly is BLAST-searched against PubMLST's catalogue of known allele sequences; every locus gets the identifier of the allele it matches, and that combination is looked up in the scheme's profile table. The ST exists only if a curator has already registered that profile — these identifiers are curated nomenclature, not a computed measurement.
 
-Runs once over the whole set · 1 thread
+Runs once over the whole set · 1 thread · **its own conda environment**, `perl`
 
 ```
 mlst results_comparem2/samples/genome_A/genome_A.fna results_comparem2/samples/genome_B/genome_B.fna > results_comparem2/mlst/mlst.tsv
@@ -223,7 +223,7 @@ Draws a tree of all the genomes at once without aligning anything, by compressin
 
 **How it works.** Mash hashes every canonical 21-mer and keeps the 10,000 smallest hashes as each genome's sketch; the fraction two sketches share estimates the Jaccard index, which becomes the Mash distance D = −(1/k)·ln(2j/(1+j)). Mashtree feeds that all-against-all matrix to QuickTree's neighbour-joining.
 
-Runs once over the whole set · 8 threads
+Runs once over the whole set · 8 threads · **its own conda environment**, `perl`
 
 ```
 mashtree --numcpus 8 --genomesize 5000000 --mindepth 5 --kmerlength 21 --sketch-size 10000 results_comparem2/samples/genome_A/genome_A.fna results_comparem2/samples/genome_B/genome_B.fna > results_comparem2/mashtree/mashtree.newick
@@ -258,7 +258,7 @@ Chops the mashtree into groups so each genome gets a cluster label instead of yo
 
 **How it works.** It solves a min-cut partitioning problem: cut the fewest edges so every resulting group stays under a diversity limit. This pipeline uses `--method max_clade --threshold 0.05`, which limits the longest leaf-to-leaf path inside a group and additionally requires each group to be a clade — a node plus all its descendants.
 
-Runs once over the whole set · 1 thread · after `mashtree`
+Runs once over the whole set · 1 thread · after `mashtree` · **its own conda environment**, `basic`
 
 ```
 TreeCluster.py -i results_comparem2/mashtree/mashtree.newick -o results_comparem2/treecluster/treecluster.tsv --method max_clade --threshold 0.05
@@ -290,7 +290,7 @@ Computes average nucleotide identity between every pair of genomes — the perce
 
 **How it works.** A sparse subset of k-mers is chained to locate orthologous regions, the query is cut into 20-kb chunks, and identity is estimated per chunk from the fraction of seeds that anchor into a chain, then averaged and debiased against a MUMmer-based reference. Because identity is measured only inside regions that chain, sequence missing from an incomplete assembly does not drag ANI down the way it does for pure sketching.
 
-Runs once over the whole set · 8 threads
+Runs once over the whole set · 8 threads · **its own conda environment**, `basic`
 
 ```
 skani triangle -t 8 --full-matrix -c 70 results_comparem2/samples/genome_A/genome_A.fna results_comparem2/samples/genome_B/genome_B.fna -o results_comparem2/skani/ani.tsv
@@ -322,7 +322,7 @@ Sorts every predicted gene into clusters and reports which are in all of the gen
 
 **How it works.** Genes are clustered with CD-HIT at 98% identity into a graph whose nodes are orthologue clusters and whose edges join genes that neighbour each other on a contig. That context is then used to correct annotation error: merging genes translated in different frames, re-collapsing over-split families at 70% identity, deleting poorly supported degree-1 nodes, and re-searching for genes the annotator missed. This pipeline runs `--clean-mode strict` with `-a core`, which also writes the core alignment that snp-dists and FastTree consume.
 
-Runs once over the whole set · 16 threads · after `bakta`
+Runs once over the whole set · 16 threads · after `bakta` · **its own conda environment**, `perl`
 
 ```
 panaroo --clean-mode strict -a core -t 16 -o results_comparem2/panaroo -i results_comparem2/samples/genome_A/bakta/genome_A.gff3 results_comparem2/samples/genome_B/bakta/genome_B.gff3
@@ -352,7 +352,7 @@ Counts, for every pair of genomes, how many positions differ in the core gene al
 
 **How it works.** Panaroo aligns the core clusters and concatenates them; snp-dists walks that alignment column by column and counts, per pair, the columns where the bases differ. It runs with no options, so the result is raw uncorrected counts — no evolutionary model, no distance transformation, no normalisation by alignment length.
 
-Runs once over the whole set · 1 thread · after `panaroo`
+Runs once over the whole set · 1 thread · after `panaroo` · **its own conda environment**, `basic`
 
 ```
 snp-dists results_comparem2/panaroo/core_gene_alignment.aln > results_comparem2/snp-dists/snp-dists.tsv
@@ -381,7 +381,7 @@ Builds a phylogenetic tree from Panaroo's core-gene alignment, so relatedness is
 
 **How it works.** It starts from a heuristic neighbour-joining tree, improves it with minimum-evolution subtree-pruning-regrafting, then rearranges under maximum likelihood using nearest-neighbour interchanges only — never ML SPR moves, which is why the authors call it approximately-maximum-likelihood. Rate variation is handled by the CAT approximation, picking one of 20 fixed rates per site instead of integrating over a gamma distribution.
 
-Runs once over the whole set · 1 thread · after `panaroo`
+Runs once over the whole set · 1 thread · after `panaroo` · **its own conda environment**, `basic`
 
 ```
 FastTree -nt -gtr results_comparem2/panaroo/core_gene_alignment.aln > results_comparem2/fasttree/fasttree.newick
@@ -410,7 +410,7 @@ Turns each genome's predicted proteins into a genome-scale metabolic model: a ma
 
 **How it works.** A manually curated universal bacterial model from BiGG — 4,383 reactions and 2,383 metabolites — is the starting point. Your proteins are aligned with DIAMOND against 30,814 BiGG-derived sequences, alignment scores become per-reaction confidence scores through gene-protein-reaction rules, and a mixed-integer program then 'carves': keep high-scoring reactions, drop low-scoring ones, enforce connectivity so no dead ends remain.
 
-Runs once per genome · 1 thread · after `bakta`
+Runs once per genome · 1 thread · after `bakta` · **its own conda environment**, `carveme`
 
 ```
 python src/comparem2/carve_scip.py --faa results_comparem2/samples/genome_A/bakta/genome_A.faa --output results_comparem2/samples/genome_A/carveme/genome_A.xml
@@ -441,7 +441,7 @@ Reads a high-level phenotype off each metabolic model: of 32 building blocks —
 
 **How it works.** Flux balance analysis on the CarveMe model. A drain reaction is added for each compound and maximised on M9 minimal medium — salts, glucose, ammonium, phosphate, sulfate, oxygen — with every compound capped at 10 mmol/gDW/h, which is the uptake rate CarveMe's own phenotype-array protocol specifies. A compound that cannot be reached that way is tried again on M9 plus every other panel compound, which separates 'no route exists' from 'the route exists but something else on this list is missing'. The background is never the complete medium: with every exchange open, one draft appeared able to make asparagine because it can import the Gly-Asn dipeptide and hydrolyse it, and salvage is not synthesis.
 
-Runs once per genome · 1 thread · after `carveme`
+Runs once per genome · 1 thread · after `carveme` · **its own conda environment**, `carveme`
 
 ```
 python src/comparem2/biosynthesis.py --model results_comparem2/samples/genome_A/carveme/genome_A.xml --output results_comparem2/samples/genome_A/biosynthesis/genome_A.tsv --media results_comparem2/samples/genome_A/biosynthesis/genome_A.media.tsv

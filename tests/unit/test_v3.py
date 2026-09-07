@@ -208,23 +208,32 @@ def test_every_rule_gets_an_environment():
     assert downloads.count("conda:") == len(CATALOGUE.databases())
 
 
-def test_eighteen_rules_share_two_environments():
+def test_eighteen_rules_share_six_environments():
     """The count the user pays for is environments, not rules.
 
-    Thirteen tools co-solve; checkm2 cannot, because it pins DIAMOND 2.1.x
-    against bakta's 2.2.x. An environment per tool is what content addressing
-    makes easy and it is the wrong default — v2's mistake in another form.
+    Six, grouped by dependency ecosystem. This was two until 2026-09-07, when
+    the thirteen-way co-solve stopped solving at all: any one ecosystem going
+    bad upstream took the other twelve with it, and the Perl stack did. An
+    environment per *tool* would still be wrong — v2's 25 in another form.
     """
     envs = render_envs(CATALOGUE, None)
-    assert sorted(envs) == ["checkm2.yaml", "main.yaml"]
+    assert sorted(envs) == ["annotation.yaml", "basic.yaml", "carveme.yaml",
+                            "checkm2.yaml", "gtdbtk.yaml", "perl.yaml"]
 
     text = render(CATALOGUE, None, Path("res"), Path("db"), SAMPLES)
     checkm2 = text.split("rule checkm2:")[1].split("rule ")[0]
     bakta = text.split("rule bakta:")[1].split("rule ")[0]
     assert 'conda: "envs/checkm2.yaml"' in checkm2
-    assert 'conda: "envs/main.yaml"' in bakta
-    # checkm2 alone must not drag the thirteen in with it.
+    assert 'conda: "envs/annotation.yaml"' in bakta
+    # The DIAMOND conflict that made checkm2 separate in the first place.
     assert "bakta" not in envs["checkm2.yaml"]
+    # The Perl stack is the fault line, so nothing else may share its file.
+    perl = envs["perl.yaml"]
+    assert all(t in perl for t in ("mashtree", "mlst", "panaroo"))
+    for other in ("annotation.yaml", "basic.yaml", "carveme.yaml",
+                  "checkm2.yaml", "gtdbtk.yaml"):
+        for tool in ("mashtree", "mlst", "panaroo"):
+            assert tool not in envs[other], (other, tool)
 
 
 def test_environment_names_are_unambiguous():
@@ -232,9 +241,11 @@ def test_environment_names_are_unambiguous():
     whichever rule rendered last decides what the other one ran in."""
     from comparem2.tools import Registry
 
+    # Same environment name, two package lists: `skani` shares `basic` with
+    # `seqkit`, so re-specifying one of them is the collision this catches.
     a = replace(CATALOGUE["seqkit"], conda=("bioconda::seqkit",))
     with pytest.raises(ValueError, match="two different package lists"):
-        render_envs(Registry([a, CATALOGUE["mlst"]]), None)
+        render_envs(Registry([a, CATALOGUE["skani"]]), None)
 
 
 def test_every_tool_carries_a_minimum_version():
@@ -291,11 +302,11 @@ def test_amrfinder_download_and_analysis_share_one_environment():
     equivalent. Read from snakemake 9.26.1's conda.py.
     """
     assert CATALOGUE["amrfinder"].database.environment == \
-        CATALOGUE["amrfinder"].environment == "main"
+        CATALOGUE["amrfinder"].environment == "annotation"
     # One name, one file, so they cannot differ — but the packages have to
     # agree too, or `render_envs` would refuse to name them the same thing.
     assert CATALOGUE["amrfinder"].database.conda == CATALOGUE["amrfinder"].conda
-    assert list(render_envs(CATALOGUE, ["amrfinder"])) == ["main.yaml"]
+    assert list(render_envs(CATALOGUE, ["amrfinder"])) == ["annotation.yaml"]
 
 
 def test_biosynthesis_shares_carvemes_environment():
@@ -303,10 +314,10 @@ def test_biosynthesis_shares_carvemes_environment():
     addresses a deployed environment by md5 of the file's content, so a drifted
     spec string would solve and build CarveMe twice for no benefit."""
     assert CATALOGUE["biosynthesis"].environment == \
-        CATALOGUE["carveme"].environment == "main"
+        CATALOGUE["carveme"].environment == "carveme"
     # And it is CarveMe that is asked for, because ReFramed is what the wrapper
     # imports and it arrives with CarveMe rather than on its own.
-    assert "carveme" in render_envs(CATALOGUE, ["biosynthesis"])["main.yaml"]
+    assert "carveme" in render_envs(CATALOGUE, ["biosynthesis"])["carveme.yaml"]
 
 
 def test_database_ready_paths_are_distinct_and_under_the_root():
@@ -1048,8 +1059,8 @@ def test_a_tool_subset_shares_the_environments_of_a_full_run(tmp_path):
     the whole environment, which is the cost side of having only two."""
     full = render_envs(CATALOGUE, None)
     subset = render_envs(CATALOGUE, ["seqkit"])
-    assert list(subset) == ["main.yaml"]
-    assert subset["main.yaml"] == full["main.yaml"]
+    assert list(subset) == ["basic.yaml"]
+    assert subset["basic.yaml"] == full["basic.yaml"]
 
 
 def test_preflight_refuses_a_run_with_no_conda(monkeypatch, tmp_path):
