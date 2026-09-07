@@ -1628,13 +1628,23 @@ carrying the code this tag ships.
   hand-built container image is not planned** — decided 2026-09-02, see
   [DECISIONS.md](DECISIONS.md). Bioconda builds a BioContainer of the pipeline
   automatically, with no analysis tools in it.
-- **What is in the channel today cannot deploy its tools.** 3.0.0 and the
-  unpublished 3.1.0 both render the two-environment `main`, and that spec
-  stopped solving upstream on 2026-09-07 — 6 min 46 s to fail on thylakoid,
-  4 min 07 s on GenomeDK. Such an install works up to the first job and then
-  dies at environment creation. 3.2.0 is the first published version whose
-  environments solve, which is the reason it is worth getting out the same day
-  rather than after 3.1.0.
+- ~~**What is in the channel cannot deploy its tools.**~~ **Fixed at
+  2026-09-07T20:17:22Z**, when [PR #68842](https://github.com/bioconda/bioconda-recipes/pull/68842)
+  merged and **3.2.1 became the published version**. Until that moment the
+  channel held only 3.0.0, which renders the two-environment `main` — a spec
+  that stopped solving upstream on 2026-09-07 (6 min 46 s to fail on thylakoid,
+  4 min 07 s on GenomeDK), so such an install worked up to the first job and
+  then died at environment creation. **3.2.1 is the first published version
+  whose environments solve.** 3.1.0 and 3.2.0 remain tags that were never
+  published, the bot having overwritten each with the next on the same PR.
+
+  **3.2.2 missed this window and is unpublished.** It was tagged 19:29:52Z, but
+  the autobump bot runs roughly hourly at :15–:20 past and mergify merged 3.2.1
+  at 20:17:22Z before the bot took the newer tag. So 3.2.2 gets a *fresh* PR
+  and a fresh three-day clock — expected to land around 2026-09-10. Nothing is
+  lost: 3.2.1 carries everything except the TUI's download rows, and the
+  behaviour that matters most for a new user — the interface no longer arming
+  all fourteen tools, `76bdb35` — is in 3.2.1 already.
 - **The old per-tool conda prefix `/evo/postdoc/cm2-conda-envs` is orphaned.**
   8.6 GB, 8 single-tool environments, addressed by env-file content that no
   longer renders — the two-environment change gives every rule a different hash.
