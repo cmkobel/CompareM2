@@ -41,11 +41,6 @@ each tool's own paper and checked against it. The report ends with a *Methods
 and citations* list covering exactly the tools that ran, which is the thing you
 paste into a manuscript.
 
-That matters more than it sounds. A completeness of 92% and one of 94% are not
-meaningfully different — CheckM2's own mean absolute error is 2.1±2.9% — and a
-report that prints both without saying so invites a conclusion the data will
-not support.
-
 ## Where to start
 
 Installed it already and want to see a report before committing any genomes of
