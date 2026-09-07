@@ -78,6 +78,36 @@ Nothing reads those files yet. Adopting them means `render_envs()` shipping a
 lock instead of a floors-only yaml, which is a change to the pinned surface and
 to how a tool version is updated, so it is a decision rather than a fix.
 
+### A third environment solves it, measured
+
+Splitting the perl tools out restores the ability to solve at all. Measured on
+GenomeDK 2026-09-07, `conda env create --dry-run` per subset:
+
+| Subset | Result | Time |
+| ------ | ------ | ---: |
+| mashtree, mlst, panaroo | **solved** | 91 s |
+| the other nine, plus curl and tar | **solved** | 33 s |
+| those nine plus mashtree and mlst — i.e. only panaroo moved out | failed | 131 s |
+| panaroo alone | solved | 69 s |
+| mashtree, mlst | solved | 57 s |
+
+So the split has to be all three perl tools, not just panaroo: moving panaroo
+alone still fails. Together the two halves solve in 124 s where the single
+environment fails after 4 min 07 s.
+
+This is the same shape as the reason `checkm2` is already separate — an
+incompatibility no one environment can hold — and it is the reason
+`catalogue.py` would need for a third.
+
+Sizes are **unmeasured**; these were dry runs. 341 packages in the perl subset
+and 208 in the other, with 146 appearing in both. Conda hardlinks from the
+package cache, so duplication should cost far less than twice the disk, but
+that has not been checked either.
+
+Untested: solving is not running. Under the rule at the top of this file, a
+split would put all fourteen tools back to unverified until they are executed
+again.
+
 Two related facts from the same session:
 
 - **GenomeDK compute nodes have no outbound network** — a job there died with
