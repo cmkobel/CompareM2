@@ -1,5 +1,5 @@
 {% set name = "comparem2" %}
-{% set version = "3.1.0" %}
+{% set version = "3.2.0" %}
 
 package:
   name: {{ name|lower }}
@@ -7,6 +7,9 @@ package:
 
 source:
   url: https://github.com/cmkobel/CompareM2/archive/refs/tags/v{{ version }}.tar.gz
+  # Still the v3.1.0 archive's, and it cannot be otherwise until the v3.2.0 tag
+  # exists: no file can carry the hash of the archive that contains it. Filled
+  # in by the commit after the tag, which is also the check on the bot's.
   sha256: efa476b9a24351977c1883edc41dddd440fd3a226c4fc1d327dd78e69f3cea32
 
 build:

@@ -32,9 +32,11 @@ nobody typed would quietly replace a profile's own `cores:`.
 `runtime: "12h"` becomes 720. Anyone writing `runtime: 240` for four hours gets
 four minutes and every job dies. The installation docs carry this as a warning.
 
-Still unverified: the **CLI** path end-to-end (`comparem2 --profile …` rather
-than `runner.run`), which is blocked by the environment below, and the TUI's
-rendering under a profile, which needs a terminal.
+**The CLI path is no longer unverified** — that was written while the
+environments below were unsolvable, and the next section is the run that closed
+it: `comparem2 --demo --profile <slurm>`, 11 of 11 steps through the queue.
+What is still unverified is the TUI's *rendering* under a profile, which needs
+a terminal, and `cancel.stop_slurm()`, which no run has called.
 
 Resources are unmeasured. The generated rules declare `threads:` and no
 `mem_mb` or `runtime` (`snakefile.py:113`), so a profile's `default-resources`
@@ -1185,14 +1187,15 @@ To skip the 60.8 GB:
 The code side of the bioconda package is done; the release is not. What exists:
 `pyproject.toml`, the `comparem2`/`cm2` entry points, `--conda-prefix`, and a
 draft recipe in `recipe/`. The model is *pipeline only*, and since 2026-09-03 it
-is the *only* model — see [DESIGN.md](DESIGN.md#one-deployment-model-and-two-environments).
+is the *only* model — see [DESIGN.md](DESIGN.md#one-deployment-model-and-six-environments).
 
 | | |
 | --- | --- |
-| environments a full run builds | **2** — 18 rules, `main` (13 tools + curl + tar) and `checkm2`. Measured at 7.7 GB, built in 76 s warm |
-| flags the user needs for any of this | **none.** `--use-conda` and `--isolated-launcher` were deleted. `cm2 --setup` is available to do the build up front |
+| environments a full run builds | **6** since 2026-09-07 — 18 rules over `basic`, `perl`, `annotation`, `gtdbtk`, `carveme` and `checkm2`. 1.4 GB by `du`, deduplicated by hardlinks, so not comparable to the 7.7 GB the two-environment layout was measured at |
+| flags the user needs for any of this | **none.** `--use-conda` and `--isolated-launcher` were deleted. `comparem2 --setup` is available to do the build up front |
 | published recipe today | `comparem2` **3.0.0**, `noarch: python`, maintainer `cmkobel`, on anaconda.org since 2026-09-04 12:16:47Z. It replaced 2.16.2, `noarch: generic` |
-| version here | **3.1.0**, in four files: `src/comparem2/__init__.py`, `pixi.toml`, `citation.cff` and the draft `recipe/meta.yaml`. A unit test enforces the first two agreeing |
+| **3.1.0 was tagged and never published** | its autobump PR [#68842](https://github.com/bioconda/bioconda-recipes/pull/68842) has been open and green since 2026-09-04T20:15:57Z. Nothing is wrong with it: bioconda's `.mergify.yml` auto-merges an autobump PR only once it is more than three days old, so it becomes eligible 2026-09-07T20:15:57Z |
+| version here | **3.2.0**, in four files: `src/comparem2/__init__.py`, `pixi.toml`, `citation.cff` and the draft `recipe/meta.yaml`. A unit test enforces the first two agreeing |
 
 **The deployment model has been executed whole**: all fourteen tools, both
 environments, 31 of 31 steps, correct results, report rendered — see *Two
@@ -1420,6 +1423,29 @@ directory has since been deleted, so the two pages cannot be diffed. What is
 checked is the tool output rather than the wrapper: identical seqkit md5 and
 identical skani, mashtree and treecluster values.
 
+### What was checked before tagging v3.2.0
+Run 2026-09-07 on the laptop against `8c68d1e`, plus the GenomeDK runs recorded
+at the top of this file. The same macOS ceiling applies as for v3.1.0 — no tool
+can run here — so the laptop covers everything up to the first job.
+
+| check | result |
+| --- | --- |
+| unit suite | **251 passed**, 5.3 s |
+| the same suite on Linux, 3.11 / 3.12 / 3.13 | **green at `8c68d1e`**, and it was *red* at `52d3a74` — the process walk counted a zombie. That is what the tag would have shipped without today's fix |
+| `docs/generate.py --check` | *2 generated pages up to date* |
+| `mkdocs build --strict` | clean |
+| wheel | **601,283 B**, built from `HEAD` |
+| the wheel installed into a clean venv, with the recipe's own dependencies | the four commands bioconda's `test:` section runs — `import comparem2`, `comparem2 --version`, `comparem2 --help`, `cm2 --help` — all pass |
+| the recipe's `run:` list against `pyproject.toml` | unchanged since 3.0.0, so autobump's version-and-checksum bump is the whole change and no hand-written PR is needed |
+
+**What the cluster has not seen is the tag.** The GenomeDK run of 11:35 was
+from the tree rsynced at 11:18 CEST, and `src/` has moved 1,014 insertions
+since — `cli.py`, `snakefile.py`, `tools.py`, `runner.py`, `report.py`, all of
+`tui.py` and the new `cancel.py`. `snakefile.py` and `cli.py` are the two that
+make this more than ceremony: they decide the rules and the arguments. A
+`comparem2 --demo --profile` from the tagged tree costs about 78 s wall with
+the six environments already built, which is cheaper than this paragraph.
+
 ## Known broken or unfinished
 
 - **snp-dists and fasttree read Panaroo's *unfiltered* core alignment**, and
@@ -1452,6 +1478,13 @@ identical skani, mashtree and treecluster values.
   hand-built container image is not planned** — decided 2026-09-02, see
   [DECISIONS.md](DECISIONS.md). Bioconda builds a BioContainer of the pipeline
   automatically, with no analysis tools in it.
+- **What is in the channel today cannot deploy its tools.** 3.0.0 and the
+  unpublished 3.1.0 both render the two-environment `main`, and that spec
+  stopped solving upstream on 2026-09-07 — 6 min 46 s to fail on thylakoid,
+  4 min 07 s on GenomeDK. Such an install works up to the first job and then
+  dies at environment creation. 3.2.0 is the first published version whose
+  environments solve, which is the reason it is worth getting out the same day
+  rather than after 3.1.0.
 - **The old per-tool conda prefix `/evo/postdoc/cm2-conda-envs` is orphaned.**
   8.6 GB, 8 single-tool environments, addressed by env-file content that no
   longer renders — the two-environment change gives every rule a different hash.

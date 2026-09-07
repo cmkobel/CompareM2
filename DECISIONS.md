@@ -1720,3 +1720,26 @@ still lists it as `Z`, so it is the unreaped case being checked rather than a
 table that moved on. Verified to bite on macOS too, by running it against a
 copy of the module with the state check removed: `[7034]` where the fixed one
 returns `[]`.
+
+### The release after 3.1.0 is 3.2.0, not 3.1.1
+Same question as 2026-09-04, same answer, and for the same reason: `--profile`
+is a new user-facing flag and a patch number would say "nothing new here" about
+the thing the release exists to ship. The rest of the diff argues it harder than
+3.1.0's did — the deployment shape changed from two environments to six, the
+TUI grew a run picker, an unlock, a quit dialog and `cancel.py`, and `cli.py`,
+`snakefile.py` and `tools.py` all changed. Nothing downstream is affected either
+way: the recipe's `run_exports` pins at `max_pin="x"`.
+
+**Why it goes out the same evening rather than after 3.1.0 lands.** Bioconda
+holds an autobump PR for three days from *its own creation* and then merges it
+(the rule is in [recipe/README.md](../recipe/README.md), with the evidence).
+v3.1.0's PR was opened 2026-09-04T20:15:57Z, so it becomes eligible at
+20:15:57Z on 09-07, and the bot pushes a newer tag onto that same PR rather
+than opening a new one. A tag pushed this evening therefore ships tonight;
+waiting for 3.1.0 to merge first starts a fresh three days and lands 3.2.0
+around 09-11.
+
+That is a timing convenience. The reason it is worth having is that **3.1.0 is
+a version that cannot deploy its tools** — it renders the two-environment
+`main`, which stopped solving upstream on 09-07 — so the channel currently has
+nothing that works past the first job, and 3.2.0 is the fix.

@@ -33,6 +33,35 @@ release**; the PR arrives on its own. Only a change to the dependencies, the
 build script or the test section needs a hand-written PR again, and this file is
 where to draft it.
 
+### It arrives on its own, and then waits three days
+
+Learned 2026-09-07, when v3.1.0's PR
+[#68842](https://github.com/bioconda/bioconda-recipes/pull/68842) had sat open
+and green since 2026-09-04T20:15:57Z. Nothing was wrong with it. Bioconda's
+[`.mergify.yml`](https://github.com/bioconda/bioconda-recipes/blob/master/.mergify.yml)
+is one 19-line rule that approves and squash-merges an autobump PR when every
+commit is BiocondaBot's, the three build checks pass, and:
+
+```yaml
+- created-at<3 days ago   # i.e. the PR must be older than three days
+```
+
+So **the release lands three days after the PR is opened**, and no label or
+comment is needed — the 2.x bumps that merged in 36 minutes predate this rule.
+Two consequences worth knowing before a tag:
+
+- **The clock runs on the PR, not on the commit.** The bot pushes each new
+  version onto the same `bump/comparem2` branch and rewrites the PR title —
+  verified on a live example, pybiolib #68885, created 08:14 for 1.4.474 and
+  carrying 1.4.481 by 12:11 the same day, one `created-at`. A tag pushed while
+  an unmerged bump PR is open therefore inherits that PR's age instead of
+  starting a new three days. The bot picked up the v3.1.0 tag about nine
+  minutes after it was pushed, and runs roughly hourly.
+- **Do not push to that branch by hand.** `commits[*].author=BiocondaBot` is a
+  condition, so one commit of ours — or a maintainer's merge of master, as on
+  dotmatch #68860 — disqualifies the PR from auto-merge and it needs a human
+  after that.
+
 Before v3.0.0 the published recipe was **2.16.2**, build 0, `noarch: generic`,
 with run dependencies `snakemake-minimal <8`, `pulp <2.8`, `python <3.12`,
 `mamba <2`, `pandas`.
@@ -64,7 +93,8 @@ the recipe's shape; otherwise autobump does them.
    Update `citation.cff` (`version` and `date-released`) at the same time.
 2. **Tag and push.** `git tag vX.Y.Z && git push origin vX.Y.Z`. GitHub
    generates the source tarball the recipe fetches, and autobump opens the
-   bump PR from the tag.
+   bump PR from the tag — then holds it three days, so check whether an older
+   bump PR is already open and can carry this version instead.
 3. **Hash it**, to check the bot against and to update the draft here.
    ```bash
    curl -sL https://github.com/cmkobel/CompareM2/archive/refs/tags/vX.Y.Z.tar.gz \
