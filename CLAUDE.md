@@ -162,6 +162,30 @@ ANI, 0 SNPs, identical CDS counts.
   each other and the pair then reports a kinase. Tests enforce both; the
   calibration is `iML1515` at 31 of 32 de novo. Adding a compound means
   checking its BiGG representation the same way.
+- **The documentation ships with the change, not after it.** A change that
+  makes something in these files wrong is not finished until that file says so
+  — in the same commit, so the two cannot drift apart between one session and
+  the next. The test is whether an existing sentence has become false, not
+  whether the diff was interesting: a refactor behind an unchanged interface, a
+  test, a comment, a typo needs nothing. Which file depends on what changed,
+  and they do not overlap:
+
+  | changed | update |
+  | --- | --- |
+  | a flag, a default, what the user sees or types | `docs/` — and `--help` in `cli.py`, which is documentation too |
+  | a tool, a database, an environment, a spec in `catalogue.py` | `docs/`, and the tool table in `README.md` if the count moved |
+  | why the design is now shaped differently | `DESIGN.md`, especially *Rules that must not be quietly undone* |
+  | a decision the next session could undo without knowing why | `DECISIONS.md` — dated, append-only, and it records reversals rather than deleting them |
+  | what a real run actually did or now does | `STATUS.md`, which tracks *execution* and never installation |
+  | the test count, the environment list, the architecture map | `CLAUDE.md` — this file goes stale first, because nothing fails when it is wrong |
+
+  Nothing here fails a build, which is exactly why it has to be habit: a wrong
+  `CLAUDE.md` misleads the next session silently, and stale `docs/` is a
+  promise to a user that the code no longer keeps. Cheapest check after
+  touching the pipeline: `grep -rn "<the flag, count or name you changed>"
+  docs/ *.md` — if it returns nothing, there was nothing to sync. Do not
+  document something not yet executed: say what is verified and label the rest
+  unverified, in the same sentence.
 
 ## Verification status
 
