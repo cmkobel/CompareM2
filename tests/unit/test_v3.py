@@ -734,6 +734,28 @@ def test_deployment_flags_go_to_snakemake_unconditionally(monkeypatch, tmp_path)
     assert cmd[cmd.index("--conda-prefix") + 1] == str(prefix)
 
 
+def test_downloads_are_localrules():
+    """Under a cluster profile Snakemake submits every rule by default, and a
+    compute node is the one machine that may have no outbound network — on
+    GenomeDK a fetch from a node dies with `CondaHTTPError: HTTP 000
+    CONNECTION FAILED`, which would take the 60.8 GB GTDB rule with it."""
+    text = render(CATALOGUE, None, Path("/res"), Path("/db"), SAMPLES)
+    line = next(ln for ln in text.splitlines() if ln.startswith("localrules:"))
+    named = {n.strip() for n in line.removeprefix("localrules:").split(",")}
+    assert named == {"download_checkm2", "download_gtdb",
+                     "download_bakta_light", "download_amrfinder"}
+    # Every name has to be a rule that exists, or Snakemake refuses the file.
+    for name in named:
+        assert f"rule {name}:" in text
+
+
+def test_no_localrules_line_without_databases():
+    """A bare `localrules:` is a syntax error, so the subset that needs no
+    database must not emit the directive at all."""
+    text = render(CATALOGUE, ["seqkit", "skani"], Path("/res"), Path("/db"), SAMPLES)
+    assert "localrules" not in text
+
+
 def _snakemake_cmd(monkeypatch, tmp_path, extra: list[str]) -> list[str]:
     """Run the CLI with subprocess stubbed, and give back the command it built."""
     monkeypatch.delenv("INIT_CWD", raising=False)

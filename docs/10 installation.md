@@ -179,11 +179,16 @@ export COMPAREM2_CONDA_PREFIX=/scratch/you/comparem2-envs
 comparem2 --setup            # build the environments on the login node
 ```
 
-Run `--setup` on the login node before submitting anything, and treat that as
-required rather than an optimisation. Many clusters give compute nodes no
-outbound network — on GenomeDK a `--setup` submitted as a batch job died in
-2 min 25 s with `CondaHTTPError: HTTP 000 CONNECTION FAILED` against
-`conda.anaconda.org`, because the node could not reach it. The login node can.
+Run `--setup` on the login node before submitting anything, so the first job to
+start does not build both environments inside its own allocation. It also has
+to be the login node on a cluster whose compute nodes have no outbound network,
+which is common — CompareM2 has no way to fetch a conda package from a node
+that cannot reach `conda.anaconda.org`.
+
+Database downloads are handled for you: the four `download_*` rules are
+declared `localrules`, so they run wherever Snakemake is — the login node —
+rather than being submitted. That is deliberate, and it is what stops the
+60.8 GB GTDB fetch from being sent to a node with no route to the internet.
 
 **2. Write a profile.** Job submission is Snakemake's, not CompareM2's:
 a profile directory holding a `config.yaml` names the executor and carries the
@@ -252,7 +257,7 @@ jobs starting and finishing as the queue runs them.
 git clone https://github.com/cmkobel/CompareM2.git
 cd CompareM2
 pixi install
-pixi run pytest        # 219 unit tests, no databases and no tools needed
+pixi run pytest        # 221 unit tests, no databases and no tools needed
 pixi run comparem2 --help
 ```
 

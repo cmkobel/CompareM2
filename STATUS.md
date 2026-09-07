@@ -62,11 +62,15 @@ it, so it is written here rather than applied.
 
 Two related facts from the same session:
 
-- **GenomeDK compute nodes have no outbound network.** A `--setup` submitted as
-  a batch job died in 2:25 with `CondaHTTPError: HTTP 000 CONNECTION FAILED for
-  url https://conda.anaconda.org/...`. `--setup` has to run on the login node.
-  This is stronger than the docs' reason for `--setup`, which is only about not
-  paying for the build inside an allocation.
+- **GenomeDK compute nodes have no outbound network** — a job there died with
+  `CondaHTTPError: HTTP 000 CONNECTION FAILED for url
+  https://conda.anaconda.org/...`. That a human runs `--setup` on the frontend
+  is ordinary practice and not worth recording; what mattered is that the four
+  `download_*` rules are *rules*, so under a profile Snakemake submitted them
+  too, and the 60.8 GB GTDB fetch would have died on a node with no route out.
+  They are now `localrules`, which was verified to work: given
+  `localrules: fetch`, `fetch` ran on `fe-open-01` and a sibling rule went to
+  `cn-1050` in the same run.
 - Non-interactive SSH to GenomeDK is refused (`publickey,keyboard-interactive`)
   until an interactive login warms a ControlMaster socket. `hpc.env` in the repo
   root configures the rest.
@@ -1001,7 +1005,7 @@ Measured 2026-09-03. Earlier note: 914 GB free on `/evo` (2026-09-02, before the
 ```bash
 cd /evo/postdoc/CompareM2
 
-pixi run pytest          # 219 tests, no tools or databases needed
+pixi run pytest          # 221 tests, no tools or databases needed
 pixi run test-fast       # 4 genomes, no databases needed
 
 pixi run comparem2 --setup     # deploy the two environments, once
