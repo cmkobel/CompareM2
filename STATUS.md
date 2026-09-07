@@ -1438,13 +1438,32 @@ can run here — so the laptop covers everything up to the first job.
 | the wheel installed into a clean venv, with the recipe's own dependencies | the four commands bioconda's `test:` section runs — `import comparem2`, `comparem2 --version`, `comparem2 --help`, `cm2 --help` — all pass |
 | the recipe's `run:` list against `pyproject.toml` | unchanged since 3.0.0, so autobump's version-and-checksum bump is the whole change and no hand-written PR is needed |
 
-**What the cluster has not seen is the tag.** The GenomeDK run of 11:35 was
-from the tree rsynced at 11:18 CEST, and `src/` has moved 1,014 insertions
-since — `cli.py`, `snakefile.py`, `tools.py`, `runner.py`, `report.py`, all of
-`tui.py` and the new `cancel.py`. `snakefile.py` and `cli.py` are the two that
-make this more than ceremony: they decide the rules and the arguments. A
-`comparem2 --demo --profile` from the tagged tree costs about 78 s wall with
-the six environments already built, which is cheaper than this paragraph.
+**And the tree that will be tagged was run on GenomeDK**, through the queue,
+because the morning's run was from the tree rsynced at 11:18 CEST and `src/`
+moved 1,014 insertions after it — `cli.py`, `snakefile.py`, `tools.py`,
+`runner.py`, `report.py`, all of `tui.py` and the new `cancel.py`. Two of those
+decide what a run *is*, so this was not ceremony.
+
+18:49:00–18:51:31 CEST on 2026-09-07, `8bb961c` rsynced to
+`/faststorage/project/PM_group/carl/comparem2/repo` (`__version__` read back as
+**3.2.0** there), `comparem2 --demo --profile <slurm>` with the frontend on the
+login node and `COMPAREM2_CONDA_PREFIX` pointed at the six environments built
+that morning:
+
+| | |
+| --- | --- |
+| steps | **11 of 11**, exit 0. Snakemake 18:49:17 → 18:50:50, **93 s** |
+| SLURM jobs | **10**, all `COMPLETED` `0:0` on `cn-1041`, 14–18 s each |
+| job name | one UUID for all ten, `7063cf30-d7ee-46c4-…` — the handle `cancel.stop_slurm()` would `scancel` by, now seen on a real queue even though no cancel has been run |
+| environments rebuilt | **none.** Zero `Creating conda environment` lines: the release does not invalidate the six, because `catalogue.py` is untouched and `snakefile.py`'s only change since is a Python comment |
+| report | **39,882 bytes** — against 39,854 for the morning's run and 39,778 at `v3.1.0`, on output directory names of different lengths |
+
+The standing cross-check, all four tools agreeing with what earlier runs
+recorded: seqkit md5 **`e2ec2407…`** for both members of the duplicate pair —
+the same md5 as the `7c98aa9` run — skani **100.00%** ANI for the pair and
+**92.13%** for `EF_VRE`↔`116_2`, mashtree **0.00000** with the recorded
+topology unchanged, and TreeCluster putting the pair in cluster 1,
+`Dallas_55`/`ISMMS_VRE_1` in 2, the other three at `-1`.
 
 ## Known broken or unfinished
 
