@@ -14,6 +14,7 @@ on startup is what a re-run would actually skip.
 
 from __future__ import annotations
 
+import shlex
 from pathlib import Path
 from time import monotonic
 
@@ -648,7 +649,11 @@ class ComparemTUI(App):
                     log.write,
                     f"[bold red]Nothing ran.[/]{reason} No report written.")
             else:
-                if not done:
+                # `and not failed`: `have` is satisfied by *any* output in the
+                # closure, including one an earlier run left, so a run in which
+                # every job failed can reach here with nothing done — and the
+                # line below would then contradict the failure line under it.
+                if not done and not failed:
                     self.call_from_thread(
                         log.write,
                         "[dim]Nothing to do — every selected tool's output was "
@@ -756,8 +761,13 @@ def departure(mid_run: bool, stop: bool, profile: str | None,
         else:
             note.append("  Jobs already started keep running unattended. "
                         "Nothing further will start and no report was written.")
+        # Quoted, because this line is meant to be pasted: an output directory
+        # with a space in it otherwise prints a command that reads the tail as
+        # a positional. `_invocation()` and `snakefile._rule` already quote for
+        # the same reason, and `tests/E._faecium/116_2 duplicate.fna` exists to
+        # keep that honest.
         note.append(f"  The output directory is still locked: "
-                    f"comparem2 --unlock --output {workdir}")
+                    f"comparem2 --unlock --output {shlex.quote(str(workdir))}")
         return note
 
     from .cancel import stop_local, stop_slurm
@@ -781,7 +791,7 @@ def departure(mid_run: bool, stop: bool, profile: str | None,
     # a 60.8 GB GTDB fetch is a child of this process, not a job.
     lines.append(stop_local())
     lines.append(f"The output directory is still locked: "
-                 f"comparem2 --unlock --output {workdir}")
+                 f"comparem2 --unlock --output {shlex.quote(str(workdir))}")
     return lines
 
 

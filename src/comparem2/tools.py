@@ -195,10 +195,16 @@ class Tool:
     params: tuple[tuple[str, str], ...] = ()
     # Which named environment `conda` constitutes. This is what the rule's
     # `conda:` directive points at, so it is also the count the user pays for:
-    # two names means two solves and two copies on disk. A name used twice must
+    # six names means six solves and six copies on disk. A name used twice must
     # carry the same packages both times, and a test enforces that — otherwise
     # one file would be written twice with different content and whichever rule
     # rendered last would silently decide what the other one ran in.
+    #
+    # **The default names an environment that no longer exists**, and is kept
+    # only because the field follows defaulted ones and cannot be made required
+    # without reordering the dataclass. Every spec in `catalogue.py` sets it, and
+    # a test enforces the six names; a new spec that forgets renders a lone
+    # `main.yaml` rather than failing, which is the trap to watch for.
     environment: str = "main"
     # Some tools write their result to stdout rather than taking an -o flag.
     # Commands stay as argument lists — never hand-built shell strings — so the

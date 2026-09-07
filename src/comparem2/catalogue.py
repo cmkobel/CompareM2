@@ -626,7 +626,7 @@ biosynthesis = Tool(
     summary="Which building blocks each genome can make, and which it must acquire.",
     scope=Scope.GENOME,
     # Needs ReFramed, which is where the SBML reader and the LP solver are, and
-    # which arrives with CarveMe rather than with CompareM2 — see MAIN_ENV.
+    # which arrives with CarveMe rather than with CompareM2 — see CARVEME_ENV.
     conda=CARVEME_ENV,
     environment="carveme",
     needs=("carveme",),

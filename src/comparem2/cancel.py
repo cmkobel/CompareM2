@@ -43,8 +43,12 @@ import subprocess
 from time import sleep
 
 
-def descendants(pid: int) -> list[int]:
-    """Every live process below `pid`, deepest first.
+def descendants(pid: int) -> list[int] | None:
+    """Every live process below `pid`, deepest first — or None if unknowable.
+
+    `None` means `ps` could not be read, which is not the same answer as the
+    empty list and must not be reported as one: the caller says "nothing was
+    running" for `[]`, and that would be a lie about a tree it failed to see.
 
     Deepest first because that is the order they have to be signalled in: a
     tool runs under a `conda run` wrapper under a spawned Snakemake, and
@@ -73,7 +77,15 @@ def descendants(pid: int) -> list[int]:
         out = subprocess.run(["ps", "-A", "-o", "pid=,ppid=,stat="],
                              capture_output=True, text=True, timeout=10)
     except (OSError, subprocess.SubprocessError):
-        return []
+        return None
+    if out.returncode != 0:
+        # `subprocess.run` does not raise on a non-zero exit, so without this
+        # a `ps` that refused the arguments — a busybox build, a `hidepid`
+        # mount — reads as an empty process table, and the caller tells the
+        # user nothing was running while the tools carry on. Not knowing and
+        # knowing there is nothing are different answers, so they get
+        # different return values.
+        return None
 
     children: dict[int, list[int]] = {}
     reaped: set[int] = set()
@@ -113,14 +125,17 @@ def stop_local(pid: int | None = None, grace: float = 3.0) -> str:
     """
     root = os.getpid() if pid is None else pid
     targets = descendants(root)
+    if targets is None:
+        return ("The process table could not be read, so nothing was "
+                "signalled. Check with: ps -f -u $USER")
     if not targets:
         return "No job processes were running."
 
-    signalled = []
+    signalled = set()
     for target in targets:
         try:
             os.kill(target, signal.SIGTERM)
-            signalled.append(target)
+            signalled.add(target)
         except ProcessLookupError:
             # Finished between listing and signalling. Nothing to report: the
             # outcome the user asked for is the one that happened.
@@ -136,18 +151,25 @@ def stop_local(pid: int | None = None, grace: float = 3.0) -> str:
     # wait, and a job that started *during* the cancelling is exactly the
     # survivor the user would notice. Whatever is still below the root now gets
     # SIGKILL, whether it ignored the SIGTERM or never received one.
-    killed = 0
-    for target in descendants(root):
+    killed = set()
+    for target in descendants(root) or ():
         try:
             os.kill(target, signal.SIGKILL)
-            killed += 1
+            killed.add(target)
         except OSError:
             continue
 
-    plural = "process" if len(signalled) == 1 else "processes"
-    note = f"Stopped {len(signalled)} job {plural}"
+    # The union, not the first pass's count. The two scans see different sets —
+    # a job Snakemake started during the grace period is in the second and not
+    # the first, and one that exited between listing and signalling is in
+    # neither — so counting only the SIGTERMs could report "Stopped 0 job
+    # processes (2 needed SIGKILL)", which says two contradictory things about
+    # the same run.
+    stopped = signalled | killed
+    plural = "process" if len(stopped) == 1 else "processes"
+    note = f"Stopped {len(stopped)} job {plural}"
     if killed:
-        note += f" ({killed} needed SIGKILL)"
+        note += f" ({len(killed)} needed SIGKILL)"
     return note + "."
 
 

@@ -266,7 +266,7 @@ def _env_file(packages: Sequence[str]) -> str:
 def render_envs(registry: Registry, selected: list[str] | None) -> dict[str, str]:
     """One conda environment file per *environment*, not per rule.
 
-    So `len()` of this is the number of environments the user pays for — two for
+    So `len()` of this is the number of environments the user pays for — six for
     the full catalogue — rather than the number of rules that need one, which is
     eighteen. Content addressing would deduplicate identical files anyway; naming
     them by environment means the count is visible in the directory rather than

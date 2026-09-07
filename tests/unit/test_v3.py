@@ -1962,6 +1962,45 @@ def test_runner_learns_the_name_a_queue_can_be_cancelled_by():
     assert seen[0].message == "4f1c9a02-dead-beef"
 
 
+def test_stop_local_says_so_when_the_process_table_cannot_be_read(monkeypatch):
+    """A `ps` that exits non-zero is not an empty machine. `subprocess.run`
+    does not raise on a non-zero exit, so without the returncode check this
+    read as "no job processes were running" — told to a user who had just
+    asked to stop them, with every tool still going."""
+    from comparem2 import cancel as cancel_mod
+
+    class Refused:
+        returncode = 1
+        stdout = ""
+
+    monkeypatch.setattr(cancel_mod.subprocess, "run", lambda *a, **k: Refused())
+    assert cancel_mod.descendants(1) is None
+    note = cancel_mod.stop_local(pid=1, grace=0)
+    assert "could not be read" in note
+    assert "No job processes were running" not in note
+
+
+def test_stop_local_counts_the_union_of_both_scans(monkeypatch):
+    """The SIGTERM pass and the SIGKILL re-scan see different sets: a job
+    Snakemake starts during the grace period is in the second only. Counting
+    the first alone reported "Stopped 0 job processes (2 needed SIGKILL)",
+    which says two contradictory things about one run."""
+    import signal as signal_mod
+
+    from comparem2 import cancel as cancel_mod
+
+    scans = iter([[11, 12], [21, 22]])
+    monkeypatch.setattr(cancel_mod, "descendants", lambda pid: next(scans))
+
+    def gone_then_killed(pid, sig):
+        if sig == signal_mod.SIGTERM:
+            raise ProcessLookupError  # exited between listing and signalling
+    monkeypatch.setattr(cancel_mod.os, "kill", gone_then_killed)
+
+    note = cancel_mod.stop_local(pid=1, grace=0)
+    assert note == "Stopped 2 job processes (2 needed SIGKILL)."
+
+
 def test_stop_local_signals_the_tree_and_not_its_root():
     """A tool runs under a `conda run` wrapper under a spawned Snakemake, so
     the descendants are what has to be signalled — and only they. Killing the

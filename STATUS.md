@@ -1490,6 +1490,29 @@ topology unchanged, and TreeCluster putting the pair in cluster 1,
 - **`--tui` has not been run against a failing workflow interactively.** The
   "Nothing ran / no report" path is covered by unit tests and was reached once
   by accident, but not driven by hand since.
+- **The four `download_*` rules are invisible to the TUI**, found by review on
+  2026-09-07 and *not* fixed in 3.2.0. `self.state` and `activity_text()` are
+  keyed by the fourteen tools in `CATALOGUE`, so `mark(table, "download_gtdb",
+  RUNNING)` resolves nothing and returns silently. During a database fetch the
+  activity line therefore reads `no job running — waiting on Snakemake`, and
+  `action_quit` counts `RUNNING` over `CATALOGUE` alone, so the dialog offers
+  the "nothing has started yet" wording — over a 60.8 GB GTDB download that
+  `q` then abandons. The fix is to give the download rules rows of their own
+  rather than to special-case the message.
+- **`runner._profile_argv` deploys conda only when a prefix is set.** With
+  `deploy=True` and `conda_prefix=None` the profile branch omits
+  `--software-deployment-method conda` entirely, where the API branch enables
+  it unconditionally and lets Snakemake choose the prefix. Not reachable from
+  the CLI — `cli.main` always resolves `default_conda_prefix()`, so no user
+  path passes None — but the two branches disagree, and the docstring's "conda
+  deployment is on by default and nothing in the pipeline turns it off" is
+  true of only one of them.
+- **The end of a run walks the output tree three times** — `settle()`'s
+  `scan()`, then `any_outputs_exist()`, then `render_report()`'s per-tool
+  `completion()` — and `scan()` runs on the UI thread. On a few hundred
+  genomes on a network filesystem that is the case where the spinner freezes
+  and, by its own docstring, means "genuinely wedged". One `{tool: Completion}`
+  map computed in a worker would serve all three.
 - **`/evo/postdoc/cm2v3`** is the old rsync scratch directory, now redundant,
   holding an 8.5 GB pixi environment that can be deleted.
 - **The bioconda package exists** — 3.0.0, published 2026-09-04, so this bullet
