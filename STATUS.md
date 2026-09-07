@@ -940,8 +940,8 @@ cd /evo/postdoc/CompareM2
 pixi run pytest          # 212 tests, no tools or databases needed
 pixi run test-fast       # 4 genomes, no databases needed
 
-pixi run cm2 --setup     # deploy the two environments, once
-pixi run cm2 my/*.fna \
+pixi run comparem2 --setup     # deploy the two environments, once
+pixi run comparem2 my/*.fna \
   --output results_myrun \
   --cores 24
 ```

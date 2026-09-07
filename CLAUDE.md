@@ -81,14 +81,14 @@ python -m pytest tests/unit -q          # or: pixi run pytest
 
 # On linux. pixi installs the *pipeline*, never the tools.
 pixi install
-pixi run cm2 --help
+pixi run comparem2 --help
 pixi run test-fast                      # 4 genomes, no databases required
-pixi run cm2 <assemblies>... --dry-run
+pixi run comparem2 <assemblies>... --dry-run
 ```
 
 Snakemake deploys the tools on first use, into `--conda-prefix` (default
 `~/.comparem2/envs`, or `$COMPAREM2_CONDA_PREFIX`). There is **no flag for
-this** and no mode without it. `cm2 --setup` does that build up front — no
+this** and no mode without it. `comparem2 --setup` does that build up front — no
 assemblies, no databases needed — so the first real run does not pay for it. `conda` is a declared pixi dependency for that
 reason — it used to be reached through a pixi global at `~/.pixi/bin/conda`,
 which is not on PATH inside `pixi run`, and a run died at DAG construction with

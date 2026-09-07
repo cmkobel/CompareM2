@@ -1,18 +1,18 @@
 # Usage
 
 ```bash
-comparem2 <assemblies>... [options]      # installed with conda
-pixi run cm2 <assemblies>... [options]   # from a git checkout
+comparem2 <assemblies>... [options]            # installed with conda
+pixi run comparem2 <assemblies>... [options]   # from a git checkout
 ```
 
-`cm2` is a second entry point for the same program, so `comparem2` and `cm2`
-are interchangeable. The examples below use the plain form; from a git checkout
-prefix them with `pixi run`.
+The examples below use the first form; from a git checkout, read each one as
+`pixi run comparem2 …`. A conda install also puts `cm2` on your `PATH` as a
+shorter alias, interchangeable with `comparem2` everywhere.
 
 Assemblies are passed as paths, and the shell expands the glob:
 
 ```bash
-cm2 genomes/*.fna
+comparem2 genomes/*.fna
 ```
 
 Relative paths mean what they look like they mean, from any directory —
@@ -48,8 +48,8 @@ There is no flag for *whether* to deploy the tools. Snakemake always does, into
 `--until` takes tool names and pulls in whatever they need:
 
 ```bash
-cm2 *.fna --until fasttree     # runs bakta, panaroo, fasttree
-cm2 *.fna --until seqkit skani # runs just those two
+comparem2 *.fna --until fasttree     # runs bakta, panaroo, fasttree
+comparem2 *.fna --until seqkit skani # runs just those two
 ```
 
 There are no fixed presets to memorise: name what you want and the
@@ -72,7 +72,7 @@ download, and everything else together is roughly 3 GB.
 Any argument can be forwarded to any tool:
 
 ```bash
-cm2 *.fna \
+comparem2 *.fna \
   --set treecluster--threshold=0.1 \
   --set skani-c=125 \
   --set bakta--gram=+
@@ -99,7 +99,7 @@ specs so they cannot drift from what actually runs.
 ## The TUI
 
 ```bash
-cm2 *.fna --tui
+comparem2 *.fna --tui
 ```
 
 A keyboard interface over the same run: per-tool progress, the download size
@@ -115,7 +115,7 @@ Every other flag works the same way with `--tui` as without it — `--until` see
 the selection, and `--set`, `--keep-going` and `-d` are all honoured:
 
 ```bash
-cm2 *.fna --tui --until mashtree treecluster
+comparem2 *.fna --tui --until mashtree treecluster
 ```
 
 Without `--until` everything is selected, which includes GTDB-Tk and its 60.8
@@ -127,7 +127,7 @@ run and it shows the download size too.
 ## The bundled demo
 
 ```bash
-cm2 --demo
+comparem2 --demo
 ```
 
 Six *Enterococcus faecium* plasmids ship inside the package — 461 KB, the only
@@ -193,7 +193,7 @@ The report is regenerated on every run, but you can rebuild it alone — useful
 after a partial run, or when only the report code changed:
 
 ```bash
-cm2 *.fna --report-only
+comparem2 *.fna --report-only
 ```
 
 Sections appear only when their outputs exist, so a partial run still gives a
@@ -211,8 +211,8 @@ LockException: Directory cannot be locked.
 Nothing is wrong with the results. Release the lock and carry on:
 
 ```bash
-cm2 *.fna --unlock
-cm2 *.fna            # picks up where it stopped
+comparem2 *.fna --unlock
+comparem2 *.fna            # picks up where it stopped
 ```
 
 Downloads resume rather than restart: a killed GTDB fetch continues its partial

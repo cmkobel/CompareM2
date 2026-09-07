@@ -622,10 +622,10 @@ def test_relative_database_path_is_resolved_absolute(monkeypatch, tmp_path):
 
 
 def test_init_cwd_is_where_relative_paths_resolve(monkeypatch, tmp_path):
-    """`pixi run` executes a task from the manifest root, so `pixi run cm2
-    *.fna` in a subdirectory handed the CLI four names that existed and none
-    that resolved — every one reported missing. Pixi sets $INIT_CWD to the
-    directory the task was launched from."""
+    """`pixi run` executes a task from the manifest root, so
+    `pixi run comparem2 *.fna` in a subdirectory handed the CLI four names that
+    existed and none that resolved — every one reported missing. Pixi sets
+    $INIT_CWD to the directory the task was launched from."""
     typed_in = tmp_path / "E._faecium"
     typed_in.mkdir()
     monkeypatch.chdir(tmp_path)  # stand-in for the manifest root

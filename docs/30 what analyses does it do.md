@@ -18,7 +18,7 @@ Use `--until` to run a subset. Dependencies come along automatically, so
 `--until fasttree` also runs bakta and panaroo:
 
 ```bash
-cm2 *.fna --until fasttree
+comparem2 *.fna --until fasttree
 ```
 
 ## Summary
@@ -40,7 +40,7 @@ cm2 *.fna --until fasttree
 | [`carveme`](#carveme) | per genome | `bakta` | — |
 | [`biosynthesis`](#biosynthesis) | per genome | `carveme` | — |
 
-Running everything downloads **62.5 GB** of databases, plus 2 of unknown size. `cm2` prints the total before downloading anything.
+Running everything downloads **62.5 GB** of databases, plus 2 of unknown size. `comparem2` prints the total before downloading anything.
 
 ---
 
@@ -473,7 +473,7 @@ python src/comparem2/biosynthesis.py --model results_comparem2/samples/genome_A/
 Every parameter above can be overridden with `--set <tool><flag>=<value>`, spelling the flag exactly as the table does:
 
 ```bash
-cm2 *.fna --set treecluster--threshold=0.1 --set skani-c=125
+comparem2 *.fna --set treecluster--threshold=0.1 --set skani-c=125
 ```
 
 See [passthrough parameters](20 usage.md#passthrough-parameters).

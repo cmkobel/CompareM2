@@ -5,8 +5,10 @@ platforms = ["linux-64"]
 version = "3.1.0"
 
 [tasks]
-# The entry point. `pixi run cm2 <assemblies>...` — see `pixi run cm2 --help`.
-cm2 = "python -m comparem2.cli"
+# The entry point. `pixi run comparem2 <assemblies>...` — see
+# `pixi run comparem2 --help`. Named for the command the docs and the paper
+# use; the installed package also ships a shorter `cm2` alias.
+comparem2 = "python -m comparem2.cli"
 
 pytest = "pytest tests/unit -q"
 

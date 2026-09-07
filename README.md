@@ -70,7 +70,7 @@ python -m pytest tests/unit -q              # 212 tests, ~2.5 s
 
 pixi install                                # linux only
 pixi run test-fast                          # 4 genomes, no databases needed
-pixi run cm2 --help
+pixi run comparem2 --help
 ```
 
 ## Citation

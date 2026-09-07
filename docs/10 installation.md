@@ -194,7 +194,7 @@ git clone https://github.com/cmkobel/CompareM2.git
 cd CompareM2
 pixi install
 pixi run pytest        # 212 unit tests, no databases and no tools needed
-pixi run cm2 --help
+pixi run comparem2 --help
 ```
 
 `pixi install` builds the pipeline's environment only — the fourteen tools are

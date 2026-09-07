@@ -111,13 +111,13 @@ def any_outputs_exist(selected: list[str] | None, workdir: Path,
 def invocation_dir() -> Path:
     """The directory the command was typed in, which is not always the cwd.
 
-    `pixi run cm2 ...` executes the task from the workspace manifest root, not
-    from the shell's directory, so `pixi run cm2 *.fna` in a subdirectory
-    arrives as relative paths that resolve against the wrong place: every input
-    is reported missing, including ones plainly listed by `ls` in that same
-    shell. Pixi sets `$INIT_CWD` to the directory the task was launched from
-    (verified against pixi 0.78.0), and honouring it makes a relative path mean
-    what it looked like it meant.
+    `pixi run comparem2 ...` executes the task from the workspace manifest
+    root, not from the shell's directory, so `pixi run comparem2 *.fna` in a
+    subdirectory arrives as relative paths that resolve against the wrong
+    place: every input is reported missing, including ones plainly listed by
+    `ls` in that same shell. Pixi sets `$INIT_CWD` to the directory the task
+    was launched from (verified against pixi 0.78.0), and honouring it makes a
+    relative path mean what it looked like it meant.
 
     Outside pixi the variable is unset and the cwd is already right.
     """

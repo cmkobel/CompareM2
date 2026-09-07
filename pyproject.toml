@@ -2,11 +2,11 @@
 # package someone else can `conda install`.
 #
 # pixi.toml stays the development and HPC path — one solved environment with
-# every tool on PATH, entered with `pixi run cm2`. This file is what makes the
-# bioconda package possible, and the two describe different things: the conda
-# package ships *only* the pipeline, and Snakemake deploys each tool's own
-# environment at run time (`--use-conda`). See DESIGN.md, "Two deployment
-# models".
+# every tool on PATH, entered with `pixi run comparem2`. This file is what
+# makes the bioconda package possible, and the two describe different things:
+# the conda package ships *only* the pipeline, and Snakemake deploys each
+# tool's own environment at run time (`--use-conda`). See DESIGN.md, "Two
+# deployment models".
 #
 # Dependencies here are therefore the pipeline's own, not the thirteen tools'.
 
@@ -44,7 +44,8 @@ dependencies = [
 
 [project.scripts]
 # `comparem2` is the name the paper, the docs and the v2 bioconda package all
-# use, so it is the one that must exist. `cm2` matches the pixi task.
+# use, so it is the one that must exist, and the one the docs and the pixi task
+# spell out. `cm2` is kept as a shorter alias for typing at a prompt.
 comparem2 = "comparem2.cli:main"
 cm2 = "comparem2.cli:main"
 

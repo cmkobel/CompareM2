@@ -72,7 +72,7 @@ Use `--until` to run a subset. Dependencies come along automatically, so
 `--until fasttree` also runs bakta and panaroo:
 
 ```bash
-cm2 *.fna --until fasttree
+comparem2 *.fna --until fasttree
 ```
 
 """
@@ -94,7 +94,7 @@ def analyses_page() -> str:
     note = f", plus {len(unmeasured)} of unknown size" if unmeasured else ""
     parts.append(
         f"\nRunning everything downloads **{total / 1e9:.1f} GB** of "
-        f"databases{note}. `cm2` prints the total before downloading anything.\n\n"
+        f"databases{note}. `comparem2` prints the total before downloading anything.\n\n"
     )
 
     for tool in CATALOGUE:
@@ -151,7 +151,7 @@ def analyses_page() -> str:
         "Every parameter above can be overridden with "
         "`--set <tool><flag>=<value>`, spelling the flag exactly as the table "
         "does:\n\n"
-        "```bash\ncm2 *.fna --set treecluster--threshold=0.1 "
+        "```bash\ncomparem2 *.fna --set treecluster--threshold=0.1 "
         "--set skani-c=125\n```\n\n"
         "See [passthrough parameters](20 usage.md#passthrough-parameters).\n"
     )
