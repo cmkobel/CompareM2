@@ -1689,3 +1689,34 @@ at whichever key runs the `quit` action.
 capture is tested against a synthetic log record, and the local half against a
 real process tree, but no queue has been cancelled — see
 [STATUS.md](STATUS.md).
+
+### The process walk reads `ps`, not `pgrep`, because a zombie is not a job to stop
+The test above passed on macOS and **failed on all three CI Pythons** —
+`1 failed, 247 passed` on Linux against 250 passed on the laptop, the first red
+CI on this branch. The log alone identifies the cause: the pid it complains
+about survived SIGTERM *and* SIGKILL, which only an already-dead process can.
+
+A process that has exited holds its place in the process table until its
+parent reaps it, and in that test the parent is asleep for 30 s and never does.
+`pgrep -P` lists such a zombie on Linux and does not on macOS — that difference
+is the whole of the platform split, and it was never about the signalling.
+
+So the walk now takes one `ps -A -o pid=,ppid=,stat=` snapshot and drops
+anything in state `Z`, rather than one `pgrep -P` per node. Three reasons in
+that order: **`ps` reports the state and `pgrep` cannot**, so the check is only
+possible this way without a psutil dependency; one snapshot cannot shift
+underneath the walk where a call per node can; and it is one subprocess instead
+of one per node. Zombies are still walked *through* in case a table lags,
+though a dying process's children are reparented at once.
+
+This was a real defect and not only a red test: `stop_local()` re-scans after
+the grace period and SIGKILLs what is left, so on Linux **every** cancelled
+local run would have reported the processes its SIGTERM had already stopped as
+having "needed SIGKILL" — the one line the user sees after the interface
+closes, wrong about the only thing it says.
+
+The new test asserts the zombie is gone from `descendants()` *and* that `ps`
+still lists it as `Z`, so it is the unreaped case being checked rather than a
+table that moved on. Verified to bite on macOS too, by running it against a
+copy of the module with the state check removed: `[7034]` where the fixed one
+returns `[]`.

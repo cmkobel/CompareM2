@@ -1994,6 +1994,50 @@ def test_stop_local_signals_the_tree_and_not_its_root():
         parent.wait(timeout=5)
 
 
+def test_descendants_omits_a_process_that_exited_but_was_not_reaped():
+    """A process that has exited keeps its place in the process table until its
+    parent collects it, and here the parent is asleep and never will. Nothing
+    can be done to a zombie — SIGKILL at one returns successfully and changes
+    nothing — so it is not a job process to stop, and counting it made a
+    cancelled run claim a SIGTERM that had worked "needed SIGKILL".
+
+    This is the shape that turned CI red on 2026-09-07 while the suite passed
+    on macOS: the walk read `pgrep -P`, which lists a zombie on Linux and not
+    on macOS. `ps` lists it on both, so this now bites on both."""
+    import signal
+    import time
+
+    from comparem2.cancel import descendants
+
+    parent = subprocess.Popen(
+        [sys.executable, "-c",
+         "import subprocess, sys, time; "
+         "child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)']); "
+         "print(child.pid, flush=True); "
+         "time.sleep(30)"],
+        stdout=subprocess.PIPE, text=True)
+    try:
+        child = int(parent.stdout.readline())
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline and child not in descendants(parent.pid):
+            time.sleep(0.05)
+        assert child in descendants(parent.pid), "the child never appeared"
+
+        os.kill(child, signal.SIGTERM)
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline and descendants(parent.pid):
+            time.sleep(0.05)
+        assert not descendants(parent.pid), "the exited child is still counted"
+        # And it really is the unreaped case rather than a table that moved on:
+        # the pid is still there, held by a parent that has not waited on it.
+        listing = subprocess.run(["ps", "-o", "stat=", "-p", str(child)],
+                                 capture_output=True, text=True)
+        assert listing.stdout.strip().startswith("Z"), listing.stdout
+    finally:
+        parent.kill()
+        parent.wait(timeout=5)
+
+
 # --- what already ran ----------------------------------------------
 
 def _wrote(root: Path, *parts: str) -> Path:

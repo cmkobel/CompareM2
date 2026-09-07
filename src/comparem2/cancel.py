@@ -44,30 +44,58 @@ from time import sleep
 
 
 def descendants(pid: int) -> list[int]:
-    """Every process below `pid`, deepest first.
+    """Every live process below `pid`, deepest first.
 
     Deepest first because that is the order they have to be signalled in: a
     tool runs under a `conda run` wrapper under a spawned Snakemake, and
     killing the wrapper first leaves the tool running with a reparented
     parent and no one to collect it.
 
-    `pgrep -P` rather than psutil: psutil would be a dependency of the
-    *pipeline* for the sake of one function, and `pgrep` is on both platforms
-    the pipeline runs on.
+    **A zombie is not a live process and is not in the list.** One that has
+    exited but whose parent has not yet reaped it keeps its place in the
+    process table, and nothing can be done to it — SIGKILL at a zombie returns
+    successfully and changes nothing. Counting them made a cancelled run
+    report a SIGTERM that had worked as having "needed SIGKILL", and turned
+    the CI Linux runners red on 2026-09-07 while the same suite passed on
+    macOS: `pgrep -P`, which this used to walk with, lists a zombie on Linux
+    and does not on macOS. `ps` lists it on both, so the state has to be read
+    either way and the platform difference stops mattering. They are still
+    walked *through*, in case a table lags — though a dying process's children
+    are reparented at once, so nothing should be hidden below one.
+
+    One `ps` snapshot rather than one `pgrep` per node: it is a single process
+    either way, and the tree cannot shift underneath the walk. psutil would do
+    this too and is not worth a dependency of the *pipeline* for one function;
+    `ps` is on both platforms the pipeline runs on, and on Linux it comes from
+    the same `procps` package `pgrep` did, so nothing new has to be present.
     """
+    try:
+        out = subprocess.run(["ps", "-A", "-o", "pid=,ppid=,stat="],
+                             capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return []
+
+    children: dict[int, list[int]] = {}
+    reaped: set[int] = set()
+    for line in out.stdout.splitlines():
+        fields = line.split()
+        if len(fields) < 3 or not (fields[0].isdigit() and fields[1].isdigit()):
+            continue
+        child, parent, state = int(fields[0]), int(fields[1]), fields[2]
+        if child == parent:
+            # A process listed as its own parent would be walked forever.
+            continue
+        children.setdefault(parent, []).append(child)
+        if state.startswith("Z"):
+            reaped.add(child)
+
     found: list[int] = []
     frontier = [pid]
     while frontier:
-        parent = frontier.pop()
-        try:
-            out = subprocess.run(["pgrep", "-P", str(parent)],
-                                 capture_output=True, text=True, timeout=10)
-        except (OSError, subprocess.SubprocessError):
-            continue
-        # pgrep exits 1 when there are no children, which is not an error here.
-        children = [int(line) for line in out.stdout.split() if line.isdigit()]
-        found.extend(children)
-        frontier.extend(children)
+        for child in children.get(frontier.pop(), ()):
+            if child not in reaped:
+                found.append(child)
+            frontier.append(child)
     found.reverse()
     return found
 

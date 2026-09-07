@@ -103,10 +103,16 @@ move.
 
 ### Testing
 
-`tests/unit/test_v3.py`, 250 tests, ~6 s. This is the primary instrument: the
+`tests/unit/test_v3.py`, 251 tests, ~6 s. This is the primary instrument: the
 codebase is a generator, and a wrong wildcard produces a Snakefile that parses
 cleanly and builds the wrong DAG, which an end-to-end run catches slowly if at
 all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.
+
+**A green run on the laptop is not a green CI**, and anything touching
+processes, paths or signals is where they diverge: `cancel.py`'s walk read
+`pgrep -P`, which lists a zombie on Linux and not on macOS, so one test passed
+here and failed on all three CI Pythons. Check the run rather than assuming —
+`gh run list --repo cmkobel/CompareM2 --limit 1`.
 
 Test genomes are shipped zipped under `tests/`; `pixi run unpack` extracts them.
 Unpacked `.fna` files are gitignored on purpose.

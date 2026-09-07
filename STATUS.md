@@ -832,8 +832,15 @@ Two things that fell out of it, neither acted on:
   its work 20 s later. That measurement is what the new quit dialog states.
 - **Stopping a local run works on real processes** — `cancel.stop_local()`
   against a two-deep process tree in the unit suite: the grandchild was
-  signalled and gone, the root untouched. **`cancel.stop_slurm()` has never
-  been executed** — no `scancel` has been run from this code. The name it
+  signalled and gone, the root untouched. **That held on macOS only until
+  2026-09-07**, when the same test failed on all three CI Pythons
+  (`1 failed, 247 passed` on Linux against 250 passed on the laptop): the
+  process walk counted a zombie the sleeping parent had not reaped, which
+  `pgrep -P` lists on Linux and not on macOS, so the SIGKILL re-scan found it
+  and every cancelled local run there would have claimed the SIGTERM "needed
+  SIGKILL". The walk now reads one `ps` snapshot and drops state `Z`; 251 tests
+  pass on the laptop and CI is the check on Linux. **`cancel.stop_slurm()` has
+  never been executed** — no `scancel` has been run from this code. The name it
   cancels by is read from the plugin's own `SLURM run ID:` line, and that
   capture is tested against a synthetic log record only, so a change of wording
   upstream would go quiet rather than fail. First real cluster run should check
