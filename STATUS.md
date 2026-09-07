@@ -904,13 +904,50 @@ mutation: reverting the fix they cover makes exactly that test fail, and
 removing the guard on `action_toggle` reproduces the `KeyError: unknown tool`
 it exists to prevent.
 
-**Not verified:** any of this against a *real* download. The event stream was
-synthetic, so what has been shown is that the interface renders a download
-correctly when Snakemake reports one — not that Snakemake reports one in the
-shape assumed. `_Capture` takes the rule name from `job_info`'s `rule_name` and
-nothing in it distinguishes a `localrule` from any other job, so there is no
-filter in the way; what is missing is an observation, not a mechanism. The
-first real `--tui` run that fetches a database is the check.
+### And then against a real download, on GenomeDK
+The paragraph that used to sit here said no real download had ever been
+watched, and named the check: a `--tui` run that fetches a database. Run
+2026-09-07 on `fe-open-01`, **inside tmux over SSH**, `--until checkm2` on one
+*E. faecium* genome into a fresh `--output` and a `databases` root that did not
+exist. `--until checkm2` because it is the only target with **one database and
+no tool dependencies** — `--until amrfinder` pulls bakta in and fetches two.
+
+| | |
+| --- | --- |
+| steps | **3 of 3** — `download_checkm2`, `checkm2`, `all` — `Finished`, bar at 100% |
+| wall | 5m 02s, of which the first ~90 s was the `checkm2` environment solving |
+| fetched | 1.7 GB tarball → **2.9 GB on disk**, `checkm2.dmnd` symlinked to `CheckM2_database/uniref100.KO.1.dmnd` |
+| the log pane | `▸ download_checkm2` then `✓ download_checkm2` — the events arrive named exactly as `Database.rule` spells them |
+| the row | **`downloaded`**, not `present` |
+| the cost line | `1.7 GB` before, **`none — all present`** after |
+| the other three | `not needed`, correctly, throughout |
+| result | 116_2 at **100.0% complete, 0.47% contamination** — the standing figure |
+
+**`downloaded` rather than `present` is the load-bearing observation.** Those
+are different words for a reason: `present` is what the disk scan writes, and
+`downloaded` can only be reached through a `job_finished` event arriving at
+`mark()` and finding the row. So this is evidence about the event path, not
+just about rendering.
+
+It also closes the older gap two bullets up — **the TUI had never been looked
+at over SSH**, which is where the eight-colour complaint came from. It renders.
+
+Not covered by this run: a download under `--profile`. It would change nothing
+— the four rules are `localrules` and run on the frontend either way — but that
+is reasoning, not an observation.
+
+### The 3.2.2 release check
+`comparem2 --demo --profile <slurm>` from the bumped tree, 2026-09-07: **11 of
+11 steps, exit 0, 2m 11s**, **10 SLURM jobs all `COMPLETED`** under one run-id,
+report 39,878 bytes, and the duplicate pair identical at 100.00 / 100.00 ANI.
+The four-byte difference from 3.2.1's 39,882 is the output path, which the
+report embeds and which is longer here — not a content change.
+
+Unit tests on the cluster: **256 of 260**. The four failures are artefacts of
+how the code gets there — `HPC_PUSH_PATHS` is `"src tests pixi.toml pixi.lock"`,
+so `pyproject.toml`, `citation.cff`, `docs/` and `recipe/` are absent and the
+two version-consistency tests and the two generated-docs tests have nothing to
+read. All 25 download and database tests pass on Linux.
 
 ## Environments
 
