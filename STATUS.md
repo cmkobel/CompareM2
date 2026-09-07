@@ -1195,7 +1195,7 @@ is the *only* model — see [DESIGN.md](DESIGN.md#one-deployment-model-and-six-e
 | flags the user needs for any of this | **none.** `--use-conda` and `--isolated-launcher` were deleted. `comparem2 --setup` is available to do the build up front |
 | published recipe today | `comparem2` **3.0.0**, `noarch: python`, maintainer `cmkobel`, on anaconda.org since 2026-09-04 12:16:47Z. It replaced 2.16.2, `noarch: generic` |
 | **3.1.0 was tagged and never published** | its autobump PR [#68842](https://github.com/bioconda/bioconda-recipes/pull/68842) has been open and green since 2026-09-04T20:15:57Z. Nothing is wrong with it: bioconda's `.mergify.yml` auto-merges an autobump PR only once it is more than three days old, so it becomes eligible 2026-09-07T20:15:57Z |
-| version here | **3.2.0**, in four files: `src/comparem2/__init__.py`, `pixi.toml`, `citation.cff` and the draft `recipe/meta.yaml`. A unit test enforces the first two agreeing |
+| version here | **3.2.1**, in four files: `src/comparem2/__init__.py`, `pixi.toml`, `citation.cff` and the draft `recipe/meta.yaml`. A unit test enforces the first two agreeing |
 
 **The deployment model has been executed whole**: all fourteen tools, both
 environments, 31 of 31 steps, correct results, report rendered — see *Two
@@ -1464,6 +1464,26 @@ the same md5 as the `7c98aa9` run — skani **100.00%** ANI for the pair and
 **92.13%** for `EF_VRE`↔`116_2`, mashtree **0.00000** with the recorded
 topology unchanged, and TreeCluster putting the pair in cluster 1,
 `Dallas_55`/`ISMMS_VRE_1` in 2, the other three at `-1`.
+
+### 3.2.1 replaced it the same evening, and was run the same way
+A review of the release diff found four user-facing messages that were false —
+`stop_local()` reporting an unreadable process table as an empty one, its two
+scans counted so that "Stopped 0 job processes (2 needed SIGKILL)" was
+reachable, "Nothing to do" printed above "1 of 3 failed", and an unquoted
+`--unlock` path — none of which touch what a run computes. They went out as
+3.2.1 rather than waiting, because bioconda holds the bump PR until 20:15:57Z
+and a tag before then rides the same PR. **3.2.0 is therefore a tag that exists
+and was never published**, the same shape as 3.1.0.
+
+Re-run on GenomeDK from the bumped tree, 19:41:36–19:44:05 CEST, `--version`
+read back as **3.2.1** on the cluster: **11 of 11 steps**, exit 0, **10** SLURM
+jobs all `COMPLETED` on `cn-1110`/`cn-1096`/`cn-1046`, no environment rebuilt.
+Byte-for-byte the same result as the 3.2.0 run above — report **39,882 bytes**,
+seqkit md5 `e2ec2407…` for both duplicates, the identical mashtree string,
+100.00% ANI — which is what the fixes being message-only predicts.
+
+253 unit tests, and CI green on Linux 3.11/3.12/3.13 at `d18bb31`, the commit
+carrying the code this tag ships.
 
 ## Known broken or unfinished
 
