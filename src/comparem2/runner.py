@@ -103,8 +103,8 @@ def _profile_argv(snakefile: Path, profile: str, cores: int | None,
     if conda_prefix is not None:
         argv += ["--software-deployment-method", "conda",
                  "--conda-prefix", str(conda_prefix)]
-    # Omitted unless asked for: a profile carries `cores:`/`jobs:`, and those
-    # arrive as argparse defaults, so a number passed here would beat them.
+    # Omitted unless asked for, so a profile's own `cores:` survives. It does
+    # not affect how many jobs reach the queue — see cli.py for the measurement.
     if cores is not None:
         argv += ["--cores", str(cores)]
     if rerun_incomplete:

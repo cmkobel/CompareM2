@@ -792,10 +792,13 @@ def test_a_bare_profile_name_is_passed_through_untouched(tmp_path):
 
 
 def test_profile_suppresses_the_default_cores(monkeypatch, tmp_path):
-    """A profile carries `cores:`/`jobs:`, and Snakemake reads a profile as
-    argparse *defaults* — so anything explicit on the command line beats it.
-    Passing our own default of 4 would silently cap a cluster run at four
-    jobs, which is the failure that looks like the queue being slow."""
+    """Snakemake reads a profile as argparse *defaults*, so anything explicit
+    on the command line beats it — and a profile that sets `cores:` should not
+    be overruled by a number nobody typed.
+
+    Not a throttling fix: measured on GenomeDK 2026-09-07, three jobs against
+    `jobs: 20` all started at 2.2 s under `--cores 1`, so `--cores` governs
+    local scheduling rather than how many jobs reach the queue."""
     prof = tmp_path / "slurm"
     prof.mkdir()
     (prof / "config.yaml").write_text("executor: slurm\njobs: 200\n")

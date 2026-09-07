@@ -7,35 +7,69 @@ need editing because a tool was verified again.
 Last updated **2026-09-07**. The tool numbers are from runs on thylakoid; the
 pre-tag checks for v3.1.0 are from the laptop and say so.
 
-## Known unverified: cluster submission
+## Cluster submission: the mechanism works, the pipeline cannot yet use it
 
-`--profile` was added 2026-09-07 and **has never submitted a job**. No SLURM,
-PBS, SGE or LSF run exists. What is checked is the argument handling, in seven
-unit tests: that the flag reaches the Snakemake command line, that a relative
-directory is made absolute and a bare name is not, and that CompareM2's default
-of four cores is withheld when a profile is present.
+`--profile` was added 2026-09-07 and **submits to SLURM**, verified on GenomeDK
+the same day. The tool environments are a separate matter and are broken there
+— see the next section — so what ran was a hand-written three-rule Snakefile
+through `runner.run(..., deploy=False, profile=...)`, which is the TUI's exact
+data path minus conda.
 
-What that leaves open, in the order it would bite:
+| Question | Answer, measured |
+| -------- | ---------------- |
+| Do jobs reach the queue? | Yes. Three jobs submitted at 2.2 s, executed on `cn-1060`, not the login node |
+| Does the TUI see progress? | Yes. `started` 1, `job_started` 4, `job_finished` 4, `progress` 4, `done` 1 — `_Capture` reads remote jobs the same as local ones |
+| Does `--quiet all` parse? | Yes, to `{Quietness.ALL}` under Snakemake 9.16.3 |
+| Does `--cores` throttle submission? | **No.** Under `--cores 1` against a profile's `jobs: 20`, all three jobs still started at 2.2 s. `--cores` governs local scheduling, not how many jobs reach the queue |
 
-- The TUI's branch calls `snakemake.cli.parse_args()` and `args_to_api()`
-  in-process. The argv it builds is asserted; that Snakemake accepts it is not.
-- `--quiet all` is meant to keep Snakemake's logger off the Textual display.
-  Read from Snakemake 9.16.3's source (`nargs="*"`, `choices=Quietness.choices()`),
-  not observed.
-- Whether `--cores` constrains *submitted* jobs under a non-local executor, and
-  not just local ones. The suppression above assumes it might.
-- Whether the log events `_Capture` reads still arrive when jobs run on other
-  nodes. If they do not, the TUI shows a run that never progresses.
+That last one retired the reason the code was written for. Withholding
+CompareM2's default `--cores 4` under `--profile` is kept, but for the smaller
+true reason: a profile's values arrive as argparse *defaults*, so a number
+nobody typed would quietly replace a profile's own `cores:`.
 
-Nothing here is measured for resources either: the generated rules declare
-`threads:` and no `mem_mb` or `runtime` (`snakefile.py:113`), so a profile's
-`default-resources` decides every job. There is no peak-RSS measurement for any
-rule anywhere in this repo. The `set-resources` example in the installation
-docs carries the GTDB-Tk paper's under-55 GB figure plus headroom, and says so.
+**`runtime` in a profile is parsed as seconds, and the resource is minutes.**
+`runtime: 60` becomes `Resource("runtime", 1)` — a one-minute walltime — while
+`runtime: "12h"` becomes 720. Anyone writing `runtime: 240` for four hours gets
+four minutes and every job dies. The installation docs carry this as a warning.
 
-GenomeDK is the intended place to close this; `hpc.env` in the repo root
-configures it, and non-interactive SSH is refused until a ControlMaster socket
-is warmed by an interactive login.
+Still unverified: the **CLI** path end-to-end (`comparem2 --profile …` rather
+than `runner.run`), which is blocked by the environment below, and the TUI's
+rendering under a profile, which needs a terminal.
+
+Resources are unmeasured. The generated rules declare `threads:` and no
+`mem_mb` or `runtime` (`snakefile.py:113`), so a profile's `default-resources`
+decides every job, and there is no peak-RSS figure for any rule in this repo.
+
+## Known broken: the `main` environment does not solve on GenomeDK
+
+2026-09-07. `comparem2 --setup` builds `checkm2` and then fails on `main`:
+
+```
+LibMambaUnsatisfiableError:
+  - nothing provides _python_rc needed by python-3.14.0rc1-h4dad89b_2_cp314t
+  - package blast-2.14.0-hf3cf87c_0 requires zlib >=1.2.13,<1.3.0a0
+```
+
+`main.yaml` pins a floor on all thirteen tools and says nothing about Python,
+so the solver considers `python-3.14.0rc1`, whose `_python_rc` marker lives in
+a channel that is not enabled. bakta's `alive-progress ==3.0.1` is where the
+chain starts. This is the rule in CLAUDE.md — *pin a minimum version for every
+tool* — applied to every spec except the interpreter they all share.
+
+Untested fix: a `conda-forge::python >=3.9,<3.14` line in `MAIN_ENV`. That
+changes the solved environment for everyone and no run has been made against
+it, so it is written here rather than applied.
+
+Two related facts from the same session:
+
+- **GenomeDK compute nodes have no outbound network.** A `--setup` submitted as
+  a batch job died in 2:25 with `CondaHTTPError: HTTP 000 CONNECTION FAILED for
+  url https://conda.anaconda.org/...`. `--setup` has to run on the login node.
+  This is stronger than the docs' reason for `--setup`, which is only about not
+  paying for the build inside an allocation.
+- Non-interactive SSH to GenomeDK is refused (`publickey,keyboard-interactive`)
+  until an interactive login warms a ControlMaster socket. `hpc.env` in the repo
+  root configures the rest.
 
 ## Tool verification: 14 of 14
 

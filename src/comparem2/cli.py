@@ -521,9 +521,12 @@ def main(argv: list[str] | None = None) -> int:
         # here needs to know which queue system it is.
         if profile is not None:
             cmd += ["--profile", profile]
-        # With a profile, only an explicit `-t` is forwarded: a profile sets
-        # `cores:`/`jobs:` and those arrive as argparse defaults, so passing
-        # our own default here would silently cap a cluster run at four.
+        # With a profile, only an explicit `-t` is forwarded. Not because it
+        # would throttle the queue — measured on GenomeDK 2026-09-07, three
+        # jobs against `jobs: 20` all started at 2.2 s under `--cores 1`, so
+        # `--cores` governs local scheduling and not submission. It is because
+        # a profile may set `cores:` itself, and a profile's values arrive as
+        # argparse *defaults*, so our unasked-for 4 would quietly replace it.
         if args.cores is not None or args.profile is None:
             cmd += ["--cores", str(cores)]
         if args.keep_going:

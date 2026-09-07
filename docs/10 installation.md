@@ -179,8 +179,11 @@ export COMPAREM2_CONDA_PREFIX=/scratch/you/comparem2-envs
 comparem2 --setup            # build the environments on the login node
 ```
 
-Run `--setup` before submitting anything. Otherwise the first job to start
-builds both conda environments inside its own allocation, on the clock.
+Run `--setup` on the login node before submitting anything, and treat that as
+required rather than an optimisation. Many clusters give compute nodes no
+outbound network — on GenomeDK a `--setup` submitted as a batch job died in
+2 min 25 s with `CondaHTTPError: HTTP 000 CONNECTION FAILED` against
+`conda.anaconda.org`, because the node could not reach it. The login node can.
 
 **2. Write a profile.** Job submission is Snakemake's, not CompareM2's:
 a profile directory holding a `config.yaml` names the executor and carries the
@@ -198,15 +201,21 @@ default-resources:
   slurm_account: YOUR_ACCOUNT
   slurm_partition: normal
   mem_mb: 8000
-  runtime: 240                 # minutes
+  runtime: "4h"                # quote it — see the warning below
 
 # CompareM2's rules declare threads but not memory or walltime, so the
 # defaults above apply to all of them. Override the greedy one by name:
 set-resources:
   gtdbtk:
     mem_mb: 64000
-    runtime: 720
+    runtime: "12h"
 ```
+
+!!! danger "Quote `runtime`, and give it a unit"
+    A bare number here is read as **seconds**, and `runtime` is in minutes — so
+    `runtime: 240` asks for four minutes, not four hours, and every job dies at
+    the walltime. Verified against Snakemake 9.16.3 on GenomeDK: `runtime: 60`
+    parses to `Resource("runtime", 1)`, while `runtime: "12h"` parses to 720.
 
 **Those numbers are starting points, not measurements.** GTDB-Tk's follows the
 GTDB-Tk 2 paper's under-55 GB figure for divide-and-conquer placement, with
