@@ -1770,6 +1770,142 @@ async def test_tui_shows_where_the_databases_come_from(tmp_path, monkeypatch):
         assert "slurm" in text and "--profile" in text
 
 
+def test_elapsed_text_reads_as_a_duration():
+    """Whole seconds under a minute: `0m 03s` for a three-second run is noise."""
+    from comparem2.tui import elapsed_text
+
+    assert elapsed_text(0) == "0s"
+    assert elapsed_text(3.7) == "3s"
+    assert elapsed_text(59.9) == "59s"
+    assert elapsed_text(60) == "1m 00s"
+    assert elapsed_text(252) == "4m 12s"
+
+
+def test_tui_spinner_frames_do_not_collide_with_the_state_glyphs():
+    """The spinner and the status column are read together.
+
+    A frame that also means `part-finished` would make the activity line say
+    something about a tool. And a frame containing '[' draws as nothing, which
+    is how the selection marks were once invisible.
+    """
+    from comparem2.tui import LABEL, SPINNER
+
+    assert len(SPINNER) > 1, "one frame is not an animation"
+    assert not set(SPINNER) & set(LABEL), "a frame doubles as a status glyph"
+    for frame in SPINNER:
+        assert "[" not in frame and "]" not in frame
+
+
+@pytest.mark.asyncio
+async def test_tui_activity_line_moves_and_names_the_running_tools(tmp_path):
+    """The complaint this answers: a started run looks identical to a hung one.
+
+    Two things have to be true — the frame changes, and the line says what is
+    being waited on. Driven directly rather than by wall clock, so the test
+    does not depend on a timer firing.
+    """
+    pytest.importorskip("textual")
+    from textual.widgets import Static
+
+    from comparem2 import tui as tui_mod
+
+    app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                              selected=["mashtree"])
+    async with app.run_test():
+        app.started_at = tui_mod.monotonic() - 252
+        app.state["mashtree"] = tui_mod.RUNNING
+        first = app.activity_text()
+        app.advance_activity()
+        second = app.activity_text()
+
+        assert first != second, "the frame never changed — a still spinner"
+        assert "mashtree" in first
+        assert "4m 12s" in first, "the elapsed clock is the half that survives a screenshot"
+        assert str(app.query_one("#activity", Static).content) == second
+
+
+@pytest.mark.asyncio
+async def test_tui_activity_line_names_the_silent_phase(tmp_path):
+    """Before the first job there is nothing to name, and that stretch — six
+    conda environments solving — is the longest one there is. Saying only
+    `running` there would leave the user with the same question."""
+    pytest.importorskip("textual")
+    from textual.widgets import DataTable
+
+    from comparem2 import tui as tui_mod
+
+    app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                              selected=["mashtree"])
+    async with app.run_test():
+        app.started_at = tui_mod.monotonic()
+        assert "environment" in app.activity_text()
+
+        # Once a job has started, the wait is no longer the first solve, and
+        # claiming otherwise during a queue wait would be a false statement.
+        app.apply_event(tui_mod.Event("job_started", rule="mashtree"))
+        app.mark(app.query_one(DataTable), "mashtree", tui_mod.DONE)
+        assert "environment" not in app.activity_text()
+
+
+@pytest.mark.asyncio
+async def test_tui_stops_the_animation_when_the_run_ends(tmp_path, monkeypatch):
+    """A spinner still turning after the run is a worse lie than no spinner.
+
+    Same for the indeterminate progress bar, which animates for as long as it
+    has no total. Both are claims that work is in progress, and the run is the
+    only thing entitled to make them.
+    """
+    pytest.importorskip("textual")
+    from textual.widgets import ProgressBar, Static
+
+    from comparem2 import tui as tui_mod
+
+    monkeypatch.setattr(tui_mod, "run", lambda *a, **k: iter(
+        [tui_mod.Event("job_finished", rule="mashtree")]))
+    monkeypatch.setattr(tui_mod, "render_report", lambda *a, **k: Path("r.html"))
+
+    app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                              selected=["mashtree"])
+    async with app.run_test() as pilot:
+        await pilot.press("r")
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+
+        assert app.activity_timer is None, "the animation outlived the run"
+        text = str(app.query_one("#activity", Static).content)
+        assert "not running" in text, "a still spinner reads as a freeze"
+        assert not set(tui_mod.SPINNER) & set(text)
+        # No progress event arrived, so the bar has to be put back to a total
+        # it can draw rather than left pulsing.
+        assert app.query_one(ProgressBar).total == 100
+
+
+@pytest.mark.asyncio
+async def test_tui_progress_bar_keeps_a_total_snakemake_reported(tmp_path, monkeypatch):
+    """The other side of it: once there is a real total, the run's own numbers
+    stand, and the end of the run must not overwrite them with 0 of 100."""
+    pytest.importorskip("textual")
+    from textual.widgets import ProgressBar
+
+    from comparem2 import tui as tui_mod
+
+    monkeypatch.setattr(tui_mod, "run", lambda *a, **k: iter([
+        tui_mod.Event("progress", done=1, total=4),
+        tui_mod.Event("job_error", rule="mashtree", message="boom"),
+    ]))
+    monkeypatch.setattr(tui_mod, "render_report", lambda *a, **k: Path("r.html"))
+
+    app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                              selected=["mashtree"])
+    async with app.run_test() as pilot:
+        await pilot.press("r")
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+
+        bar = app.query_one(ProgressBar)
+        assert (bar.total, bar.progress) == (4, 1), "a partial run stays partial"
+
+
 def test_run_settings_names_the_variable_a_flag_overrode(monkeypatch, tmp_path):
     """`$COMPAREM2_DATABASES` set and beaten by `-d` looks exactly like the
     variable never having been set. Which of the two it is decides whether the

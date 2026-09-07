@@ -1503,3 +1503,43 @@ is no lock, and it says that instead of handing back a Snakemake traceback.
 Assemblies are still accepted and still ignored: adding `--unlock` to the
 command that just died is how anyone reaches for it, and unlike `--setup` and
 `--demo` there is no risk of the command looking as though it analysed them.
+
+### The TUI animates while it runs
+"When you start the run there is no way to see if the screen is frozen" —
+Carl, and correct: between pressing `r` and the first `job_started` event
+nothing on screen changed at all. That gap is the *longest* one in a run,
+because a first run solves six conda environments before Snakemake emits a
+single job event, and the interface deliberately quietens Snakemake's own
+"Creating conda environment" output because it scribbles over the display.
+
+One line above the progress bar, at 10 fps: a spinner frame, the tools that are
+running, and the elapsed clock. Two decisions in it worth keeping:
+
+- **Driven by a `set_interval` timer on the UI thread, not by the worker.** That
+  is what makes it evidence rather than decoration — if the interface is
+  genuinely blocked, the spinner freezes with it. A spinner animated from the
+  Snakemake thread would keep turning through exactly the failure it is there
+  to detect.
+- **When nothing is running the line says which nothing it is.** `starting up —
+  the DAG, and tool environments on a first run` before the first job, `no job
+  running — waiting on Snakemake` after it, `collecting outputs and writing the
+  report` once the event stream has ended. Rendering the report reads every
+  output and takes seconds on a real run, so without the third the line would
+  have been claiming a conda solve at the moment a user is most likely reading
+  it.
+
+The progress bar goes indeterminate — it pulses — from `r` until the first
+`progress` event carries a total, and reverts to a drawable total when the run
+ends. An indeterminate bar animates for as long as it has no total, so leaving
+one going after the run would be the same lie in the other direction. A run
+that reported real numbers keeps them: a failure at 1 of 4 stays at 1 of 4
+rather than being reset.
+
+At the end the line is replaced by `not running — the last run took 4m 12s`. A
+stopped spinner and a hung interface look identical, so the animation is
+removed rather than frozen mid-frame.
+
+Six tests, and the two that matter are about the honesty rather than the
+motion: that the animation is torn down on every exit path including one that
+raises, and that a spinner frame is never also a status glyph — `◐` already
+means `part-finished` in the column two lines above.

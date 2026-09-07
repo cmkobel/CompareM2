@@ -144,6 +144,27 @@ of these decide whether existing work gets re-used: a databases directory that
 is not the one holding your 62.5 GB re-downloads it, and a moved
 `$COMPAREM2_CONDA_PREFIX` re-solves every tool environment.
 
+### What it says while it runs
+
+Above the progress bar, one line answers "is this still going, or has it
+frozen":
+
+```
+⠹ bakta, gtdbtk · 4m 12s
+```
+
+A spinner, what is running now, and how long since you pressed `r`. When no job
+is running the line says why — `starting up — the DAG, and tool environments on
+a first run` is the long one, because a first run solves six conda environments
+before anything else happens and Snakemake's own output for that is quietened
+under the interface. The progress bar has no total to draw until Snakemake
+reports one, so it pulses rather than sitting at 0%.
+
+The animation is driven by the interface's own event loop, which is the point:
+if it is genuinely wedged, the spinner stops with it rather than reassuring you
+it hasn't. When the run ends the line is replaced by `not running — the last run
+took 4m 12s`, so a still screen never has to be interpreted.
+
 Every other flag works the same way with `--tui` as without it — `--until` seeds
 the selection, and `--set`, `--keep-going` and `-d` are all honoured:
 

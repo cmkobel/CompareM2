@@ -798,6 +798,13 @@ Two things that fell out of it, neither acted on:
   `checkm2`, so the isolated launcher goes through the TUI path too. Five
   defects had to be fixed first, see [DECISIONS.md](DECISIONS.md). The
   isolated-launcher half of that no longer applies.
+- **The TUI's activity line animates** — verified 2026-09-07 headlessly on
+  macOS against a *synthetic* event stream, with the real Textual timer: the
+  frame advanced every 100 ms, the phase text moved from `starting up` to the
+  running tool's name on the first `job_started`, the bar went indeterminate
+  and then took Snakemake's 1-of-4, and the line stopped at `not running — the
+  last run took 2s`. **Not yet seen in a real terminal against a real run**,
+  which is where the six-environment solve is the case it exists for.
 - 200 unit tests, ~2.5 s — 8 for the steps around GTDB-Tk's command, 16 for the
   report rewrite, 6 for CarveMe's solver wrapper, 23 for `biosynthesis`, and
   the conda-deployment set rewritten when the flag was deleted
@@ -1090,7 +1097,7 @@ Measured 2026-09-03. Earlier note: 914 GB free on `/evo` (2026-09-02, before the
 ```bash
 cd /evo/postdoc/CompareM2
 
-pixi run pytest          # 230 tests, no tools or databases needed
+pixi run pytest          # 236 tests, no tools or databases needed
 pixi run test-fast       # 4 genomes, no databases needed
 
 pixi run comparem2 --setup     # deploy the six environments, once
