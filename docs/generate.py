@@ -51,6 +51,24 @@ def _example_command(tool) -> str:
     return line.replace(str(Path(__file__).resolve().parents[1]) + "/", "")
 
 
+def _environment_fact(tool) -> str:
+    """Which conda environment this tool lands in, and who shares it.
+
+    Derived from `CATALOGUE`, so it cannot drift from the grouping. Sibling
+    *tools* only: `basic` also carries curl and tar, which are not tools and
+    are listed on the installation page instead.
+    """
+    members = [t.name for t in CATALOGUE if t.environment == tool.environment]
+    if len(members) == 1:
+        return f"**its own conda environment**, `{tool.environment}`"
+    # The whole membership rather than "shared with <the others>": the same
+    # list then appears on every tool in the group, which is easier to trust,
+    # and it avoids `biosynthesis` reading "shared with `carveme`" in an
+    # environment that is *also* called `carveme`.
+    return (f"conda environment `{tool.environment}`, which holds "
+            + ", ".join(f"`{n}`" for n in members))
+
+
 # --- 30 what analyses does it do ------------------------------------
 
 ANALYSES_HEADER = f"""
@@ -109,10 +127,14 @@ def analyses_page() -> str:
         if tool.database:
             facts.append(f"database `{tool.database.name}` ({tool.database.human_size})")
         # `isolated: bool` became `environment: str` when the deploy went from
-        # one-per-tool to two shared environments. Naming which one it is says
-        # more than a flag did: everything is `main` except checkm2.
-        if tool.environment != "main":
-            facts.append(f"**its own conda environment**, `{tool.environment}`")
+        # one-per-tool to shared environments, and the shared ones are now six
+        # grouped by dependency ecosystem. Naming which one, *and who else is
+        # in it*, is the fact that matters: tools that share an environment
+        # share its fate, so a reader debugging a failed deploy needs to know
+        # the blast radius. This said "**its own conda environment**" for every
+        # tool between 2026-09-07 and the split being written up here — true of
+        # gtdbtk and checkm2, false of the twelve that share.
+        facts.append(_environment_fact(tool))
         parts.append(" · ".join(facts) + "\n\n")
 
         command = _example_command(tool)

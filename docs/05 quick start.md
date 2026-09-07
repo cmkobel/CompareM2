@@ -36,7 +36,7 @@ will cost:
 ```
 4 assemblies, 14 tools
 to download: checkm2, gtdb, bakta-light, amrfinder (62.5 GB + 2 of unknown size) -> /home/you/.comparem2/databases
-tool environments: 2 in /home/you/.comparem2/envs (none built yet)
+tool environments: 6 in /home/you/.comparem2/envs (none built yet)
 ```
 
 **60.8 GB of that 62.5 GB is GTDB-Tk alone.** If you do not need taxonomic
@@ -45,7 +45,7 @@ roughly 3 GB — see [running a subset](20 usage.md#running-a-subset). The print
 figure there reads 1.7 GB, because Bakta's and AMRFinder's databases publish no
 size; they cost 1.3 GB and 241 MB.
 
-The first run is also quiet for about a minute while Snakemake builds those two
+The first run is also quiet for about a minute while Snakemake builds those six
 tool environments. That is expected, and `comparem2 --setup` does it in advance.
 
 !!! tip "No genomes to hand?"

@@ -113,8 +113,9 @@ def _rule(tool: Tool, workdir: Path, databases: Path, samples: tuple[str, ...],
         f"    threads: {tool.threads}",
         # Unconditional: Snakemake deploying the tool is the only way a tool
         # arrives. There is no mode in which the pipeline expects one on PATH.
-        # Named by *environment*, not by tool — thirteen rules point at the same
-        # file, which is what makes them one environment on disk.
+        # Named by *environment*, not by tool — several rules point at the same
+        # file, which is what makes them one environment on disk. Eighteen rules
+        # across six files; `basic` alone is named by seven of them.
         f"    conda: {_q('envs/' + tool.environment + '.yaml')}",
         "    shell:",
         f'        """',

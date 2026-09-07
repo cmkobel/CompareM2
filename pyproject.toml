@@ -1,14 +1,14 @@
 # Packaging metadata, for the one thing pixi cannot do: install CompareM2 as a
 # package someone else can `conda install`.
 #
-# pixi.toml stays the development and HPC path — one solved environment with
-# every tool on PATH, entered with `pixi run comparem2`. This file is what
-# makes the bioconda package possible, and the two describe different things:
-# the conda package ships *only* the pipeline, and Snakemake deploys each
-# tool's own environment at run time (`--use-conda`). See DESIGN.md, "Two
-# deployment models".
+# pixi.toml stays the development and HPC path, entered with
+# `pixi run comparem2`. Since 2026-09-03 the two files describe the *same*
+# thing: the pipeline alone. Neither carries the fourteen analysis tools —
+# Snakemake deploys those into six conda environments at run time, with no flag
+# to turn it off, and that is the only way a tool arrives on either route. See
+# DESIGN.md, "One deployment model".
 #
-# Dependencies here are therefore the pipeline's own, not the thirteen tools'.
+# Dependencies here are therefore the pipeline's own, not the fourteen tools'.
 
 [build-system]
 requires = ["setuptools>=77"]

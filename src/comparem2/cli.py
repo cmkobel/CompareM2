@@ -501,9 +501,9 @@ def main(argv: list[str] | None = None) -> int:
         # this is the line that precedes a download of up to 143 GB.
         print(f"to download: {names} ({size}) -> {databases}", file=sys.stderr)
 
-    # One file per environment, so this is the number Snakemake will build: two
-    # for the full catalogue. Worth saying because the first run pays for both
-    # solves and every later run pays for neither.
+    # One file per environment, so this is the number Snakemake will build: six
+    # for the full catalogue, fewer under `--until`. Worth saying because the
+    # first run pays for every one of those solves and later runs pay for none.
     envs = len(render_envs(CATALOGUE, args.until))
     print(f"tool environments: {envs} in {conda_prefix}"
           + ("" if conda_prefix.exists() else " (none built yet)"),

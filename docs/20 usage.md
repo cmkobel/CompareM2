@@ -263,7 +263,7 @@ results_comparem2/
 ├── samples/<name>/logs/<tool>.log  one per per-genome step
 └── .comparem2/
     ├── Snakefile                   generated from the tool specs
-    ├── envs/                       the two generated conda env files
+    ├── envs/                       the six generated conda env files
     └── gtdbtk_batchfile.tsv        generated input: genome path, genome id
 ```
 

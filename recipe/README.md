@@ -50,9 +50,9 @@ with run dependencies `snakemake-minimal <8`, `pulp <2.8`, `python <3.12`,
 | kept | `run_exports` pinning at major version | the PR template asks for it; semantic versioning, so `max_pin="x"` |
 
 The tool set is *not* in either recipe. v2 deployed 25 environments at run
-time; v3 deploys 2, because thirteen of the fourteen tools co-solve and CheckM2
-cannot join them. That is the same model, more cheaply, and it is why a recipe
-for a fourteen-tool pipeline is this short.
+time; v3 deploys 6, grouped by dependency ecosystem rather than one per tool.
+That is the same model, more cheaply, and it is why a recipe for a
+fourteen-tool pipeline is this short.
 
 ## Release steps
 

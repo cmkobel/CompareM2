@@ -190,7 +190,7 @@ comparem2 --setup            # build the environments on the login node
 ```
 
 Run `--setup` on the login node before submitting anything, so the first job to
-start does not build both environments inside its own allocation. It also has
+start does not build all six environments inside its own allocation. It also has
 to be the login node on a cluster whose compute nodes have no outbound network,
 which is common — CompareM2 has no way to fetch a conda package from a node
 that cannot reach `conda.anaconda.org`.
@@ -267,7 +267,7 @@ jobs starting and finishing as the queue runs them.
 git clone https://github.com/cmkobel/CompareM2.git
 cd CompareM2
 pixi install
-pixi run pytest        # 221 unit tests, no databases and no tools needed
+pixi run pytest        # 230 unit tests, no databases and no tools needed
 pixi run comparem2 --help
 ```
 
