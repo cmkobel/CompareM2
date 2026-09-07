@@ -44,6 +44,9 @@ src/comparem2/
   cli.py        argument parsing, input canonicalisation, hands off to Snakemake
   runner.py     drives Snakemake via its API, emits structured events
   tui.py        Textual interface over those events
+  cancel.py     stopping a run that is already going: `scancel --name <run id>`
+                for a queue, the process tree for a local one. Snakemake will
+                not do either for us — the docstring says why
   report.py     renders the HTML report
   steps.py      the small steps a rule runs around a command (GTDB-Tk's merge)
   carve_scip.py the wrapper in front of `carve` — see the solver convention below
@@ -100,7 +103,7 @@ move.
 
 ### Testing
 
-`tests/unit/test_v3.py`, 240 tests, ~3 s. This is the primary instrument: the
+`tests/unit/test_v3.py`, 250 tests, ~6 s. This is the primary instrument: the
 codebase is a generator, and a wrong wildcard produces a Snakefile that parses
 cleanly and builds the wrong DAG, which an end-to-end run catches slowly if at
 all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.

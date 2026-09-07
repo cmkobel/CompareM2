@@ -1597,3 +1597,95 @@ a lock written by hand in Snakemake's format: `r` refused, `u` opened the
 dialog, `n` left the lock, `y` removed it, and `--unlock` did the same from the
 command line. **The lock was not one a killed Snakemake left behind** — see
 [STATUS.md](STATUS.md).
+
+## 2026-09-07 — the interface is legible on eight colours, and quitting says what it costs
+
+### The selection was invisible over SSH, and a colour could not fix it
+Reported from a real session on GenomeDK: with the command palette open, no row
+looked selected. Not a rendering accident — arithmetic.
+
+tmux ships `default-terminal screen`, an eight-colour TERM, so Rich renders
+through its `standard` colour system and every RGB colour in the theme is
+downgraded to one of eight. Textual's *blurred* cursor is `$primary` at 30%
+alpha: `#0178D44C` blended over the surface is `#153854`, which downgrades to
+ANSI 8, against a surface that downgrades to ANSI 0 — two near-blacks — and
+`block-cursor-blurred-text-style` is `none`, so nothing else distinguishes it.
+The palette is where it showed first because its list is `can_focus=False` and
+is therefore *always* drawn blurred. Every built-in theme has this, including
+the two ANSI ones.
+
+**The fix is an attribute, not a colour: `text-style: reverse`.** A colour
+cannot be chosen safely here — `ansi-dark` and `ansi-light` set `surface` to
+`ansi_default`, which is whatever the user's terminal background happens to be,
+so nothing can be guaranteed distinct from it. `reverse` is SGR 7: it inverts
+whatever the row already is, in every colour system and every theme. Verified
+at the byte level — a `standard`-system console emits `\x1b[7;36;40m`, reverse
+plus cyan on black — and by the resolved styles in the real app, where the
+palette's highlight comes out opaque `#1E1E1E`/`#0178D4`, ANSI 0 against ANSI
+6, with `reverse` set. Focus is carried by `bold` on top, for the same reason a
+second colour would not do.
+
+Measured candidates before settling on this: solid `$primary` survives the
+downgrade in `textual-dark` (6 vs 0), `textual-light` (8 vs 15), `nord` (7 vs 8)
+and `gruvbox` (7 vs 8), but darkened variants collide with the surface in nord
+and gruvbox, and no colour at all works against `ansi_default`.
+
+### `q` asks, and says what happens to the jobs
+Quitting mid-run was silent about the only thing that mattered. What it
+actually did was measured with a probe of this module's shape (Textual 8.2.8):
+`App.run()` returns in 1.52 s, the worker's next `call_from_thread` raises
+`App is not running` about a second later — so Snakemake stops being driven
+almost at once — and **the child process survived its parent** and finished its
+work twenty seconds on. So: nothing downstream starts, no report is written,
+the lock stays, and the jobs keep going.
+
+The dialog now says which of two situations the user is in, because the answers
+differ: with a profile the jobs are in a queue that does not care that the
+frontend is gone, and without one they are child processes of it. `s` quits and
+stops them.
+
+**Cancellation cannot go through Snakemake, and the reason is structural.** Its
+scheduler reaches `executor.cancel()` from one place — a `KeyboardInterrupt`
+inside its own loop — and installs the SIGTERM handler that would get it there
+inside a `try/except ValueError` that silently skips when the scheduler is not
+on the main thread (`job_scheduler.py:170-175`). `runner.run()` puts Snakemake
+on a worker thread, so that handler is never installed and there is nothing to
+signal. Reaching for the executor object is no better: the profile branch goes
+through `args_to_api()`, which returns a bool.
+
+So `cancel.py` does each half directly, and they are not symmetric:
+
+- **A queue** is cancelled with `scancel --name <run_uuid>`. The SLURM executor
+  plugin submits every job of a run under the run UUID as its job name *in
+  order to* make `--name`-based cancellation possible — its own comment says so
+  — and announces it as `SLURM run ID: <uuid>`, which `_Capture` now reads. One
+  call covers jobs submitted but not yet started, which is the case that
+  matters most.
+- **This machine** needs the process tree signalled by hand, because
+  Snakemake's local executor `cancel()` is `self.pool.shutdown()`
+  (`executors/local.py:260`) — it stops *scheduling* and waits for what is
+  running. It does not kill anything.
+
+Both run under a profile, not one or the other: the analyses are queue jobs,
+but the four `download_*` rules are `localrules` and run wherever Snakemake is,
+so a 60.8 GB GTDB fetch is a child process rather than a job.
+
+Two smaller decisions inside that. The outcome is printed by `departure()`
+*after* the app has closed rather than inside it — `scancel` is allowed a
+minute by the plugin's own code and the SIGTERM grace is three seconds, neither
+of which belongs on a screen the user has just asked to leave, and text in a
+restored terminal can be scrolled back to. And the decision is recorded on the
+app (`left_mid_run`, `stop_requested`) at the moment it is made rather than
+read back afterwards, because `self.running` is cleared by the worker thread
+that is still coming down as the app exits — reading it after `run()` returns
+is a race.
+
+`action_quit` is overridden rather than binding `q` to a new action, so that
+everything which quits goes through the question: the key, the command
+palette's Quit entry, and ctrl+c — which in Textual 8 does not quit but points
+at whichever key runs the `quit` action.
+
+**What is not verified:** `scancel` has never been run from this code. The id
+capture is tested against a synthetic log record, and the local half against a
+real process tree, but no queue has been cancelled — see
+[STATUS.md](STATUS.md).

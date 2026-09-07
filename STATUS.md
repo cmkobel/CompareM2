@@ -817,6 +817,27 @@ Two things that fell out of it, neither acted on:
   but the real case has not been re-driven since the two paths were made to
   share `cli.unlock()`. That refactor also stopped Snakemake's own `Unlocking
   working directory` line reaching the terminal, because the TUI cannot have it.
+- **The cursor is legible at eight colours** — verified 2026-09-07 on macOS,
+  two ways and neither of them by eye. The resolved styles in the real app:
+  the palette's `CommandList` highlight comes out opaque `#1E1E1E` on
+  `#0178D4` with `reverse` set, ANSI **0 against 6** after downgrade, where
+  before it was `#153854` on `#1E1E1E`, ANSI **8 against 0** with no text
+  style. And at the byte level, a Rich console at `color_system="standard"`
+  emits `\x1b[7;36;40m` — SGR 7, cyan on black. **Not yet looked at over SSH**,
+  which is where it was reported.
+- **Quitting mid-run leaves the jobs running** — measured 2026-09-07 on macOS
+  with a probe of `tui.py`'s shape (Textual 8.2.8): `App.run()` returned in
+  1.52 s, the worker's next `call_from_thread` raised `App is not running`
+  after about a second, and the child process survived its parent and finished
+  its work 20 s later. That measurement is what the new quit dialog states.
+- **Stopping a local run works on real processes** — `cancel.stop_local()`
+  against a two-deep process tree in the unit suite: the grandchild was
+  signalled and gone, the root untouched. **`cancel.stop_slurm()` has never
+  been executed** — no `scancel` has been run from this code. The name it
+  cancels by is read from the plugin's own `SLURM run ID:` line, and that
+  capture is tested against a synthetic log record only, so a change of wording
+  upstream would go quiet rather than fail. First real cluster run should check
+  `squeue --name <id>` before and after pressing `s`.
 - 200 unit tests, ~2.5 s — 8 for the steps around GTDB-Tk's command, 16 for the
   report rewrite, 6 for CarveMe's solver wrapper, 23 for `biosynthesis`, and
   the conda-deployment set rewritten when the flag was deleted
@@ -1109,7 +1130,7 @@ Measured 2026-09-03. Earlier note: 914 GB free on `/evo` (2026-09-02, before the
 ```bash
 cd /evo/postdoc/CompareM2
 
-pixi run pytest          # 240 tests, no tools or databases needed
+pixi run pytest          # 250 tests, no tools or databases needed
 pixi run test-fast       # 4 genomes, no databases needed
 
 pixi run comparem2 --setup     # deploy the six environments, once

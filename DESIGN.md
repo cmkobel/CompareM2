@@ -340,6 +340,27 @@ something already published. The post-mortems are in
   `snakemake`. It is this package's own dependency, so the correct one is the
   one beside the running interpreter; by name it was simply not found when a
   packaged `comparem2` was invoked by absolute path.
+- **The interface indicates state with attributes, not with tints.** Every
+  cursor and highlight is `text-style: reverse`, and the tempting cleanup — put
+  the theme's own colour back — is the bug it was written for. tmux ships
+  `default-terminal screen`, so eight colours is the ordinary case over SSH,
+  and Textual's blurred cursor is `$primary` at 30% alpha: it blends to
+  `#153854`, downgrades to ANSI 8 against a surface on ANSI 0, and disappears.
+  The command palette showed it first because its list can never take focus.
+  No colour can be made safe here — the two ANSI themes set `surface` to
+  `ansi_default`, the user's own terminal background — while `reverse` is SGR 7
+  and inverts whatever is already there. Verified at the byte level: a
+  `standard`-system console emits `\x1b[7;36;40m`.
+- **Stopping a run is done by this code, not by Snakemake.** Its scheduler
+  reaches `executor.cancel()` only from a `KeyboardInterrupt` inside its own
+  loop, and installs the SIGTERM handler that would get it there inside a
+  `try/except ValueError` that skips silently off the main thread — which is
+  where `runner.run()` puts it. So `cancel.py` cancels a queue with
+  `scancel --name <run_uuid>`, the name the SLURM plugin submits under for
+  exactly this purpose, and signals the process tree for a local run, because
+  Snakemake's local `cancel()` is `pool.shutdown()` and waits rather than
+  killing. Both halves run under a profile: the `download_*` rules are
+  `localrules`, so a 60.8 GB fetch is a child process and not a job.
 - **Unit tests are the primary instrument.** The codebase is a generator, and a
   wrong wildcard yields a Snakefile that parses cleanly and builds the wrong
   DAG. An end-to-end run catches that slowly, if at all.

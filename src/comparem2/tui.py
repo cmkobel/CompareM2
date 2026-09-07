@@ -116,6 +116,92 @@ class ConfirmUnlock(ModalScreen[bool]):
         self.dismiss(False)
 
 
+class ConfirmQuit(ModalScreen[str]):
+    """Ask before leaving, and say what happens to the jobs.
+
+    Quitting mid-run is silent about the one thing that matters, and what it is
+    silent about was measured rather than assumed (Textual 8.2.8, a probe with
+    this module's shape): `App.run()` returns in 1.52 s, the worker's next
+    `call_from_thread` raises `App is not running` about a second later — so
+    Snakemake stops being driven almost at once — and the child process
+    **survived its parent** and finished its work twenty seconds on. Nothing
+    downstream starts, no report is written, and Snakemake's lock stays on the
+    output directory.
+
+    So the dialog says which of the two situations the user is in, because they
+    need different things done about them: with a profile the jobs are in a
+    queue that does not care that this process is gone, and without one they
+    are child processes of it. `s` acts on either — see `cancel.py` for why
+    each half has to be done by hand.
+
+    Returns `quit`, `stop` or `stay`.
+    """
+
+    BINDINGS = [
+        ("y", "quit", "Quit"),
+        ("s", "stop", "Quit and stop the jobs"),
+        ("n", "stay", "Stay"),
+        ("escape", "stay", "Stay"),
+    ]
+
+    def __init__(self, in_flight: bool, running: int,
+                 profile: str | None) -> None:
+        super().__init__()
+        # Two different questions: whether a run is going at all, and how many
+        # of its jobs have started. A first run spends its first minutes
+        # solving conda environments with nothing started, and "0 jobs running"
+        # would read as "nothing to lose" at exactly the wrong moment.
+        self.in_flight = in_flight
+        self.running = running
+        self.profile = profile
+
+    def compose(self) -> ComposeResult:
+        yield Static(self.text(), id="confirm")
+
+    def text(self) -> str:
+        if not self.in_flight:
+            # Thin on purpose. There is no consequence to state, and "are you
+            # sure" is the dialog this application does not otherwise have.
+            return ("[bold]Quit?[/]\n\nNothing is running.\n\n"
+                    "[dim]y quit · n stay[/]")
+        # `started` under a profile, because a job this interface has not been
+        # told about may still be sitting in the queue: what is counted here is
+        # what Snakemake said began, which is a floor and not a total.
+        state = "started" if self.profile else "running"
+        jobs = ("no job has started yet" if not self.running else
+                f"1 job {state}" if self.running == 1 else
+                f"{self.running} jobs {state}")
+        where = (f"[dim]{jobs} · profile {escape(self.profile)}[/]"
+                 if self.profile else f"[dim]{jobs} · on this machine[/]")
+        what = (
+            "Jobs already submitted [bold]keep running[/] — the queue does not "
+            "care that this process is gone. Nothing further is submitted."
+            if self.profile else
+            "Jobs already started are child processes of this one and are "
+            "[bold]not killed on the way out[/] — they keep running "
+            "unattended. Nothing further starts."
+        )
+        stop = ("[dim]s[/] quit and cancel this run's queued jobs"
+                if self.profile else
+                "[dim]s[/] quit and stop them")
+        return (
+            f"[bold]Quit while a run is going?[/]\n\n{where}\n\n"
+            f"{what} No report is written, and the output directory stays "
+            f"locked — [dim]u releases it[/].\n\n"
+            f"[dim]y[/] quit, leave the run going\n{stop}\n[dim]n[/] stay")
+
+    def action_quit(self) -> None:
+        self.dismiss("quit")
+
+    def action_stop(self) -> None:
+        # Nothing to stop when nothing is running, and dismissing as `stop`
+        # would send the caller looking for processes that were never there.
+        self.dismiss("stop" if self.in_flight else "quit")
+
+    def action_stay(self) -> None:
+        self.dismiss("stay")
+
+
 class ComparemTUI(App):
     """Pick tools, watch them run, open the report."""
 
@@ -131,7 +217,32 @@ class ComparemTUI(App):
     /* The indeterminate bar is $error by default — red, for a run that is
        merely still going. */
     Bar > .bar--indeterminate { color: $accent; }
+
+    /* The cursor has to be visible on a terminal that has eight colours and no
+       more, which is the normal case rather than a corner one: tmux ships
+       `default-terminal screen`, an eight-colour TERM, so every run inside tmux
+       over SSH is one. Textual's blurred cursor is $primary at 30% alpha, and
+       an alpha blend is what defeats the downgrade — #0178D44C over #1E1E1E is
+       #153854, which lands on ANSI 8 against a surface on ANSI 0, and
+       `block-cursor-blurred-text-style` is `none`, so there is nothing else to
+       tell them apart. The command palette is where it showed: its list is
+       `can_focus=False` and therefore always drawn blurred, and the selected
+       command was invisible. `reverse` is an SGR attribute rather than a
+       colour, so it survives every colour system, and every theme — including
+       the two whose surface is `ansi_default`, where no colour choice could. */
+    DataTable > .datatable--cursor,
+    OptionList > .option-list--option-highlighted {
+        background: $surface; color: $primary; text-style: reverse;
+    }
+    /* Which widget has focus is carried by an attribute too, for the same
+       reason: a second colour would have the same problem as the first. */
+    DataTable:focus > .datatable--cursor,
+    OptionList:focus > .option-list--option-highlighted {
+        text-style: bold reverse;
+    }
+
     ConfirmUnlock { align: center middle; }
+    ConfirmQuit { align: center middle; }
     #confirm {
         width: 64; padding: 1 2;
         border: round $warning; background: $surface;
@@ -198,6 +309,17 @@ class ComparemTUI(App):
         # bar has nothing to show, and a bar parked at 0% was the other half of
         # this same complaint.
         self.progress_seen = False
+        # The name the SLURM executor plugin submits every job of this run
+        # under, learned from its own log line. Without it a queue cannot be
+        # cancelled — see `cancel.stop_slurm()`.
+        self.slurm_run_id: str | None = None
+        # What the user chose on the way out, read by `launch()` after the
+        # interface has given the terminal back. Recorded at the moment of the
+        # decision rather than looked up afterwards: `self.running` is cleared
+        # by the worker thread, which is still finishing as the app exits, so
+        # reading it after `run()` returns is a race.
+        self.left_mid_run = False
+        self.stop_requested = False
 
     def scan(self) -> dict[str, str]:
         """Read the output directory: which tools already have results there.
@@ -284,6 +406,25 @@ class ComparemTUI(App):
             log.write("[bold yellow]The output directory is locked.[/] A run is "
                       "either still going or was killed before it could clean "
                       "up — [dim]press u to release the lock[/]")
+
+    # --- leaving ----------------------------------------------------
+
+    # Overriding Textual's own `quit` action rather than binding `q` to a new
+    # one, so that everything which quits goes through the question: the `q`
+    # key, the command palette's Quit entry, and ctrl+c — which in Textual 8
+    # does not quit but points at whichever key runs the `quit` action.
+    async def action_quit(self) -> None:
+        running = sum(1 for tool in CATALOGUE
+                      if self.state.get(tool.name) == RUNNING)
+        self.push_screen(ConfirmQuit(self.running, running, self.profile),
+                         self.departing)
+
+    def departing(self, decision: str | None) -> None:
+        if decision == "stay":
+            return
+        self.left_mid_run = self.running
+        self.stop_requested = decision == "stop"
+        self.exit()
 
     # --- the lock ---------------------------------------------------
 
@@ -568,6 +709,13 @@ class ComparemTUI(App):
             self.progress_seen = True
             self.query_one(ProgressBar).update(
                 total=event.total, progress=event.done or 0)
+        elif event.kind == "slurm_run_id":
+            self.slurm_run_id = event.message
+            # Shown, not just kept: it is the handle on the queue from any
+            # other terminal too — `squeue --name <id>`, `scancel --name <id>`
+            # — which matters most in the case this interface cannot help
+            # with, a frontend that died with the run still queued.
+            log.write(f"[dim]SLURM run id {escape(event.message)}[/]")
         elif event.kind == "error":
             log.write(f"[red]{event.message}[/]")
         elif event.kind == "done":
@@ -581,6 +729,62 @@ class ComparemTUI(App):
             table.update_cell(name, "status", LABEL[state])
 
 
+def departure(mid_run: bool, stop: bool, profile: str | None,
+              slurm_run_id: str | None, workdir: Path) -> list[str]:
+    """What to do and to say once the interface has closed.
+
+    Deliberately not done inside the app. Cancelling means `scancel`, which the
+    plugin's own code allows a minute for, and a process tree that gets three
+    seconds to take a SIGTERM — both of them on a screen the user has just
+    asked to leave. Doing it here means the terminal is already back, the
+    outcome is ordinary text they can scroll to, and none of it can leave a
+    half-torn-down Textual display behind.
+
+    Split from `launch()` so it can be tested: it is the branch that decides
+    whether a queue gets cancelled, and it should not need a terminal to check.
+    """
+    if not mid_run:
+        return []
+    if not stop:
+        note = ["Left the run going."]
+        if profile:
+            note.append("  Jobs already submitted stay in the queue. Nothing "
+                        "further will be submitted and no report was written.")
+            if slurm_run_id:
+                note.append(f"  squeue --name {slurm_run_id}   "
+                            f"scancel --name {slurm_run_id}")
+        else:
+            note.append("  Jobs already started keep running unattended. "
+                        "Nothing further will start and no report was written.")
+        note.append(f"  The output directory is still locked: "
+                    f"comparem2 --unlock --output {workdir}")
+        return note
+
+    from .cancel import stop_local, stop_slurm
+
+    lines = []
+    if profile:
+        if slurm_run_id:
+            lines.append(stop_slurm(slurm_run_id))
+        else:
+            # No id means the plugin never announced one: nothing had been
+            # submitted yet, or the executor is not the SLURM plugin at all —
+            # cluster-generic for PBS and SGE goes through this same branch and
+            # has no equivalent handle. Either way, guessing at job ids would
+            # be worse than saying so.
+            lines.append("No SLURM run id had been announced, so the queue was "
+                         "left alone — either nothing was submitted yet, or "
+                         "this profile's executor is not the SLURM plugin. "
+                         "Check with: squeue -u $USER")
+    # Run in both cases. Under a profile the analyses are in the queue, but the
+    # four database downloads are `localrules` and run here on the login node —
+    # a 60.8 GB GTDB fetch is a child of this process, not a job.
+    lines.append(stop_local())
+    lines.append(f"The output directory is still locked: "
+                 f"comparem2 --unlock --output {workdir}")
+    return lines
+
+
 def launch(inputs: list[Path], workdir: Path, databases: Path,
            samples: tuple[str, ...], cores: int | None,
            selected: list[str] | None = None,
@@ -588,5 +792,9 @@ def launch(inputs: list[Path], workdir: Path, databases: Path,
            keep_going: bool = False,
            conda_prefix: Path | None = None, command: str | None = None,
            profile: str | None = None) -> None:
-    ComparemTUI(inputs, workdir, databases, samples, cores, selected,
-                overrides, keep_going, conda_prefix, command, profile).run()
+    app = ComparemTUI(inputs, workdir, databases, samples, cores, selected,
+                      overrides, keep_going, conda_prefix, command, profile)
+    app.run()
+    for line in departure(app.left_mid_run, app.stop_requested, profile,
+                          app.slurm_run_id, workdir):
+        print(line)

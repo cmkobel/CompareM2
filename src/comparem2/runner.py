@@ -19,11 +19,20 @@ from pathlib import Path
 from typing import Callable, Iterator
 
 
+# What the SLURM executor plugin prints once, at info level, when it starts:
+# `SLURM run ID: <uuid>`. Matched as a prefix rather than parsed, and kept here
+# rather than inline because it is a string in someone else's package — if a
+# plugin release changes the wording, cancellation goes quiet, and this is the
+# line a test pins.
+SLURM_RUN_ID = "SLURM run ID:"
+
+
 @dataclass(frozen=True)
 class Event:
     """One thing that happened during a run."""
 
-    kind: str  # started | job_started | job_finished | job_error | progress | done | error
+    kind: str  # started | job_started | job_finished | job_error | progress
+    #          | slurm_run_id | done | error
     rule: str | None = None
     jobid: int | None = None
     done: int | None = None
@@ -52,6 +61,20 @@ class _Capture(logging.Handler):
         self.rules: dict[int, str] = {}
 
     def emit(self, record: logging.LogRecord) -> None:
+        try:
+            message = record.getMessage()
+        except Exception:  # pragma: no cover - a handler must not raise
+            message = ""
+        # The name every job of this run is submitted under. It is the only
+        # handle on a queue full of them — `scancel --name` stops the run in
+        # one call, whatever is still pending — and the plugin sets it *in
+        # order to* make that possible. It arrives as a plain info message with
+        # no structured event attached, so it has to be read before the
+        # get_event() filter below drops it.
+        if message.startswith(SLURM_RUN_ID):
+            self.sink(Event("slurm_run_id",
+                            message=message[len(SLURM_RUN_ID):].strip()))
+
         try:
             from snakemake.logging import get_event
 

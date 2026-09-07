@@ -113,8 +113,23 @@ through its logger plugin system rather than scraping stdout, so the events are
 structured.
 
 `space` selects and deselects the tool under the cursor, `a` and `n` select all
-and none, `r` runs, `u` releases a lock, `q` quits. `▣` is chosen, `▨` is pulled
-in as a dependency of something chosen, `▢` is off.
+and none, `r` runs, `u` releases a lock, `q` quits — and asks first if a run is
+going. `▣` is chosen, `▨` is pulled in as a dependency of something chosen, `▢`
+is off.
+
+!!! note "It works on an eight-colour terminal"
+    Which is not a corner case: tmux ships `default-terminal screen`, so a
+    session inside tmux over SSH has eight colours whatever the terminal
+    attached to it can do. Every cursor and selection in the interface is drawn
+    with an inverted block rather than a tinted background, because a tint
+    downgrades to the same ANSI colour as the surface behind it and disappears
+    — which is exactly what happened to the selected row in the command
+    palette.
+
+    Nothing needs configuring for that. If you would rather have the colours,
+    give tmux a terminal that has them: `set -g default-terminal tmux-256color`
+    in `~/.tmux.conf`, plus `set -ga terminal-overrides ",*256col*:Tc"` for
+    24-bit.
 
 **Nothing is selected when it opens.** Choosing the analyses is what the
 interface is for, and selecting all fourteen by default put GTDB-Tk's 60.8 GB
@@ -182,6 +197,61 @@ The animation is driven by the interface's own event loop, which is the point:
 if it is genuinely wedged, the spinner stops with it rather than reassuring you
 it hasn't. When the run ends the line is replaced by `not running — the last run
 took 4m 12s`, so a still screen never has to be interpreted.
+
+### Quitting while a run is going
+
+`q` asks, because quitting does not stop the run and that is not guessable:
+
+```
+Quit while a run is going?
+
+3 jobs started · profile slurm
+
+Jobs already submitted keep running — the queue does not care that this
+process is gone. Nothing further is submitted. No report is written, and
+the output directory stays locked — u releases it.
+
+y  quit, leave the run going
+s  quit and cancel this run's queued jobs
+n  stay
+```
+
+Without a profile the same dialog says the other true thing: jobs already
+started are child processes of the interface and are **not** killed on the way
+out, so they keep running unattended.
+
+`s` stops them, and the two halves are done differently because they have to
+be. A queue is cancelled with `scancel --name <run id>` — the SLURM executor
+plugin submits every job of a run under that one name precisely so this works,
+and the interface logs the id (`SLURM run id 4f1c…`) when the plugin announces
+it, so it is also the handle from any other terminal:
+
+```bash
+squeue --name 4f1c9a02-…      # what is still queued
+scancel --name 4f1c9a02-…     # stop the run from anywhere
+```
+
+Local jobs are stopped by signalling the process tree — SIGTERM, three seconds,
+then SIGKILL — because Snakemake's own local cancellation stops *scheduling*
+and waits for what is running rather than ending it. Under a profile both
+happen: the analyses are queue jobs, but the four database downloads are
+`localrules` and run wherever Snakemake is, so a 60.8 GB GTDB fetch is a child
+process of the interface and not a job.
+
+Either way the outcome is printed after the interface closes, not inside it, so
+it survives the screen going away.
+
+!!! warning "Cancelling leaves the directory locked, and half-written outputs"
+    Neither half can release Snakemake's lock — it outlives the process — so a
+    cancelled run is followed by `u` next time, or `comparem2 --unlock --output
+    <dir>`. The partial outputs are handled: CompareM2 runs with
+    `--rerun-incomplete`, so a rule that was interrupted is redone rather than
+    trusted.
+
+    `s` under a profile whose executor is not the SLURM plugin —
+    `cluster-generic` for PBS, SGE and LSF — leaves the queue alone and says
+    so. There is no equivalent one-name handle to cancel by, so check with your
+    own queue command.
 
 Every other flag works the same way with `--tui` as without it — `--until` seeds
 the selection, and `--set`, `--keep-going` and `-d` are all honoured:

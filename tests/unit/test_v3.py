@@ -1756,6 +1756,244 @@ async def test_tui_seeds_its_selection_from_until():
         assert "no databases" in app.cost_text
 
 
+@pytest.mark.asyncio
+async def test_tui_cursor_is_visible_on_an_eight_colour_terminal():
+    """Regression: the selected command in the palette could not be seen.
+
+    tmux ships `default-terminal screen`, an eight-colour TERM, so a run inside
+    tmux over SSH is the normal case. Textual's blurred cursor is $primary at
+    30% alpha: #0178D44C over #1E1E1E is #153854, which downgrades to ANSI 8
+    against a surface on ANSI 0, and `block-cursor-blurred-text-style` is
+    `none` — nothing left to tell them apart. The command palette is where it
+    showed, because its list is `can_focus=False` and therefore always drawn
+    blurred.
+
+    Two properties are asserted, and the first is the one that generalises: an
+    opaque pair cannot blend into what is behind it, and `reverse` is an SGR
+    attribute rather than a colour, so it survives a colour system that has
+    thrown the colours away.
+    """
+    pytest.importorskip("textual")
+    from rich.color import Color
+    from textual.widgets import DataTable
+
+    from comparem2.tui import ComparemTUI
+
+    def visible(widget, component: str) -> None:
+        opaque = widget.get_component_styles(component).background.a
+        assert opaque == 1, f"{component} is translucent: it blends into the surface"
+        style = widget.get_component_rich_style(component)
+        assert style.reverse, f"{component} needs an attribute, not only a colour"
+        assert style.color is not None and style.bgcolor is not None
+        slots = {Color.parse(style.color.name).downgrade(1).number,
+                 Color.parse(style.bgcolor.name).downgrade(1).number}
+        assert len(slots) == 2, f"{component} is one ANSI slot at eight colours"
+
+    app = ComparemTUI([], Path("results"), Path("databases"), SAMPLES, 4)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        visible(app.query_one(DataTable), "datatable--cursor")
+
+        app.action_command_palette()
+        for _ in range(8):
+            await pilot.pause()
+        lists = list(app.screen.query("OptionList"))
+        assert lists, "the palette should be showing a command list"
+        for widget in lists:
+            visible(widget, "option-list--option-highlighted")
+        app.pop_screen()
+        await pilot.pause()
+
+
+def test_quit_dialog_says_what_happens_to_the_jobs():
+    """The question on the way out is not "are you sure" but "what happens to
+    the run" — and the answer differs by where the jobs are."""
+    pytest.importorskip("textual")
+    from comparem2.tui import ConfirmQuit
+
+    idle = ConfirmQuit(False, 0, None).text()
+    assert "Nothing is running" in idle
+    assert "keep running" not in idle, "nothing to warn about when nothing runs"
+
+    local = ConfirmQuit(True, 2, None).text()
+    assert "2 jobs running" in local
+    assert "not killed on the way out" in local
+    assert "No report is written" in local
+    assert "u releases it" in local, "the lock outlives the process"
+
+    queued = ConfirmQuit(True, 2, "slurm").text()
+    assert "profile slurm" in queued
+    assert "2 jobs started" in queued, "a queue holds more than it has started"
+    assert "keep running" in queued
+    assert "queued jobs" in queued
+
+    # A first run solves six conda environments before anything starts, and
+    # "0 jobs running" would read as nothing to lose at exactly that moment.
+    early = ConfirmQuit(True, 0, None).text()
+    assert "no job has started yet" in early
+
+
+@pytest.mark.asyncio
+async def test_tui_asks_before_quitting_and_staying_keeps_it_open():
+    """`q` used to exit without a word, leaving a queue nobody would collect."""
+    pytest.importorskip("textual")
+    from comparem2.tui import ComparemTUI, ConfirmQuit
+
+    app = ComparemTUI([], Path("results"), Path("databases"), SAMPLES, 4)
+    async with app.run_test() as pilot:
+        await pilot.press("q")
+        await pilot.pause()
+        assert isinstance(app.screen, ConfirmQuit)
+        await pilot.press("n")
+        await pilot.pause()
+        assert not isinstance(app.screen, ConfirmQuit)
+        assert not app.left_mid_run and not app.stop_requested
+        # `s` with nothing running gets out without asking anyone to go
+        # looking for processes that were never there.
+        await pilot.press("q")
+        await pilot.pause()
+        await pilot.press("s")
+        await pilot.pause()
+    assert not app.left_mid_run and not app.stop_requested
+
+
+@pytest.mark.asyncio
+async def test_tui_records_a_request_to_stop_the_jobs():
+    """The decision is recorded, not acted on: `self.running` is cleared by the
+    worker thread as the app comes down, so reading it afterwards is a race."""
+    pytest.importorskip("textual")
+    from comparem2.tui import ComparemTUI
+
+    app = ComparemTUI([], Path("results"), Path("databases"), SAMPLES, 4,
+                      profile="slurm")
+    async with app.run_test() as pilot:
+        app.running = True
+        await pilot.press("q")
+        await pilot.pause()
+        assert "keep running" in app.screen.text()
+        await pilot.press("s")
+        await pilot.pause()
+    assert app.left_mid_run and app.stop_requested
+
+
+def test_departure_is_silent_unless_a_run_was_going():
+    from comparem2.tui import departure
+
+    assert departure(False, False, None, None, Path("out")) == []
+    assert departure(False, True, "slurm", "abc-123", Path("out")) == []
+
+
+def test_departure_hands_over_the_handle_on_a_queue_it_leaves_running():
+    """A frontend that walked away from a queue is the case this interface
+    cannot help with later, so the two commands that can go on screen."""
+    from comparem2.tui import departure
+
+    text = "\n".join(departure(True, False, "slurm", "abc-123", Path("out")))
+    assert "stay in the queue" in text
+    assert "squeue --name abc-123" in text
+    assert "scancel --name abc-123" in text
+    assert "--unlock --output out" in text
+
+    local = "\n".join(departure(True, False, None, None, Path("out")))
+    assert "keep running unattended" in local
+    assert "scancel" not in local
+
+
+def test_departure_cancels_the_queue_and_the_local_tree(monkeypatch):
+    """Both, under a profile: the analyses are jobs, but the four database
+    downloads are localrules and run on the login node as children of this
+    process — a 60.8 GB GTDB fetch among them."""
+    from comparem2 import cancel as cancel_mod
+    from comparem2.tui import departure
+
+    calls = {}
+
+    def fake_slurm(run_uuid, user=None):
+        calls["slurm"] = run_uuid
+        return "cancelled the queue"
+
+    def fake_local(pid=None, grace=3.0):
+        calls["local"] = True
+        return "stopped the tree"
+
+    monkeypatch.setattr(cancel_mod, "stop_slurm", fake_slurm)
+    monkeypatch.setattr(cancel_mod, "stop_local", fake_local)
+
+    text = "\n".join(departure(True, True, "slurm", "abc-123", Path("out")))
+    assert calls == {"slurm": "abc-123", "local": True}
+    assert "cancelled the queue" in text and "stopped the tree" in text
+
+    calls.clear()
+    text = "\n".join(departure(True, True, None, None, Path("out")))
+    assert calls == {"local": True}, "no profile, no queue to cancel"
+
+
+def test_departure_will_not_guess_at_job_ids(monkeypatch):
+    """No run id means nothing was submitted yet, or the executor is
+    cluster-generic and has no equivalent handle. Either way, saying so beats
+    cancelling something else."""
+    from comparem2 import cancel as cancel_mod
+    from comparem2.tui import departure
+
+    monkeypatch.setattr(cancel_mod, "stop_local",
+                        lambda pid=None, grace=3.0: "stopped the tree")
+    monkeypatch.setattr(cancel_mod, "stop_slurm",
+                        lambda *a, **k: pytest.fail("cancelled without an id"))
+
+    text = "\n".join(departure(True, True, "slurm", None, Path("out")))
+    assert "No SLURM run id" in text
+    assert "squeue -u $USER" in text
+
+
+def test_runner_learns_the_name_a_queue_can_be_cancelled_by():
+    """The SLURM plugin submits every job as `--job-name <run_uuid>` in order
+    to make `--name`-based cancellation possible, and announces the id in a
+    plain info line with no structured event attached to it."""
+    import logging
+
+    from comparem2.runner import SLURM_RUN_ID, _Capture
+
+    seen = []
+    capture = _Capture(seen.append)
+    for message in (f"{SLURM_RUN_ID} 4f1c9a02-dead-beef", "Nothing to do."):
+        capture.emit(logging.LogRecord("snakemake.logging", logging.INFO, "", 0,
+                                       message, None, None))
+    assert [event.kind for event in seen] == ["slurm_run_id"]
+    assert seen[0].message == "4f1c9a02-dead-beef"
+
+
+def test_stop_local_signals_the_tree_and_not_its_root():
+    """A tool runs under a `conda run` wrapper under a spawned Snakemake, so
+    the descendants are what has to be signalled — and only they. Killing the
+    process it was handed would, here, be killing the test runner."""
+    import time
+
+    from comparem2.cancel import descendants, stop_local
+
+    parent = subprocess.Popen(
+        [sys.executable, "-c",
+         "import subprocess, sys, time; "
+         "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)']); "
+         "time.sleep(30)"])
+    try:
+        deadline = time.monotonic() + 10
+        found = []
+        while time.monotonic() < deadline:
+            found = descendants(parent.pid)
+            if found:
+                break
+            time.sleep(0.05)
+        assert found, "the grandchild never appeared"
+
+        note = stop_local(pid=parent.pid, grace=0.3)
+        assert "Stopped 1 job process" in note
+        assert parent.poll() is None, "the root of the tree must survive"
+        assert not descendants(parent.pid)
+    finally:
+        parent.kill()
+        parent.wait(timeout=5)
+
+
 # --- what already ran ----------------------------------------------
 
 def _wrote(root: Path, *parts: str) -> Path:
