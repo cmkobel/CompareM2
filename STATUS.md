@@ -40,25 +40,43 @@ Resources are unmeasured. The generated rules declare `threads:` and no
 `mem_mb` or `runtime` (`snakefile.py:113`), so a profile's `default-resources`
 decides every job, and there is no peak-RSS figure for any rule in this repo.
 
-## Known broken: the `main` environment does not solve on GenomeDK
+## Known broken: the `main` environment no longer solves, anywhere
 
-2026-09-07. `comparem2 --setup` builds `checkm2` and then fails on `main`:
+2026-09-07. `comparem2 --setup` builds `checkm2` and then fails on `main` with
+`LibMambaUnsatisfiableError`. **This is not machine-specific and not new
+configuration — it is channel drift.** The identical spec built a working
+6.0 GB environment on thylakoid on 09-03; re-solved there on 09-07 it fails
+after **6 min 46 s**, and on GenomeDK after **4 min 07 s**.
 
-```
-LibMambaUnsatisfiableError:
-  - nothing provides _python_rc needed by python-3.14.0rc1-h4dad89b_2_cp314t
-  - package blast-2.14.0-hf3cf87c_0 requires zlib >=1.2.13,<1.3.0a0
-```
+The conflict is the Perl stack. `perl-bioperl` cannot be placed, and that takes
+`mlst` and `panaroo` (via `prokka`) with it, while `mashtree` wants
+`perl >=5.32.1,<5.33` and `perl-bio-samtools` is offered only as builds needing
+perl 5.26.2 or 5.22, and `snp-dists` wants `libzlib >=1.3.1` against blast's
+`zlib <1.3.0`.
 
-`main.yaml` pins a floor on all thirteen tools and says nothing about Python,
-so the solver considers `python-3.14.0rc1`, whose `_python_rc` marker lives in
-a channel that is not enabled. bakta's `alive-progress ==3.0.1` is where the
-chain starts. This is the rule in CLAUDE.md — *pin a minimum version for every
-tool* — applied to every spec except the interpreter they all share.
+A valid answer still exists in the channel — thylakoid's working environment
+holds `perl-bio-samtools-1.43-pl5321h577a1d6_6`, a perl-5.32.1 build with
+zlib 1.3.2, and `conda search` on GenomeDK lists that exact build. The solver
+no longer finds the path to it.
 
-Untested fix: a `conda-forge::python >=3.9,<3.14` line in `MAIN_ENV`. That
-changes the solved environment for everyone and no run has been made against
-it, so it is written here rather than applied.
+Ruled out by measurement, so as not to be re-tried:
+
+- **`_python_rc` / python 3.14rc is a red herring.** It appears high in the
+  explanation tree but the same branch says python 3.7–3.13 "can be installed".
+  An earlier note here blamed it; that was a misreading.
+- **Pinning `curl` and `tar`**, the two specs with no floor, does not fix it —
+  `curl>=8` plus `tar>=1.34` fails the same way.
+- **`channel_priority: strict`** does not fix it. GenomeDK is on `flexible`,
+  which was the obvious suspect; the strict solve fails after 4 min 07 s.
+
+**What does work: an explicit lock.** `conda list --explicit` from thylakoid's
+surviving environments is saved at `envs/locks/` — 394 packages for `main`, 130
+for `checkm2`. On GenomeDK, `conda create --dry-run --file main.linux-64.lock`
+returns **exit 0 in 6.9 s**, against 4 min 07 s to fail from floors.
+
+Nothing reads those files yet. Adopting them means `render_envs()` shipping a
+lock instead of a floors-only yaml, which is a change to the pinned surface and
+to how a tool version is updated, so it is a decision rather than a fix.
 
 Two related facts from the same session:
 
