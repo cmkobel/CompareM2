@@ -1427,17 +1427,159 @@ async def test_tui_lists_tools_and_shows_install_cost():
     app = ComparemTUI([], Path("results"), Path("databases"), SAMPLES, 4)
     async with app.run_test() as pilot:
         assert app.query_one(DataTable).row_count == len(CATALOGUE)
+        # Nothing is selected until the user says so, so nothing is to be
+        # downloaded either.
+        assert "0 tools selected" in app.cost_text
+        assert "no databases" in app.cost_text
+
         # The whole point of the cost line: the download is visible before
         # running. 62.5 GB is GTDB's 60.8 plus CheckM2's 1.7, both measured;
         # it read 143.2 GB until the database moved from r226 to the r232 that
         # GTDB-Tk 2.7 actually accepts.
+        await pilot.press("a")
+        assert f"{len(CATALOGUE)} tools selected" in app.cost_text
         assert "62.5 GB" in app.cost_text
         assert "unknown size" in app.cost_text
 
         await pilot.press("n")
         assert "0 tools selected" in app.cost_text
-        await pilot.press("a")
-        assert f"{len(CATALOGUE)} tools selected" in app.cost_text
+
+
+@pytest.mark.asyncio
+async def test_tui_opens_with_nothing_selected_and_r_says_so():
+    """The opening state is empty, and `r` on it explains itself.
+
+    Selecting all fourteen by default put gtdbtk's 60.8 GB one keypress away.
+    Empty is only usable if the key that runs things does not silently do
+    nothing, which is what it did before.
+    """
+    pytest.importorskip("textual")
+    from textual.widgets import DataTable, RichLog
+
+    from comparem2.tui import MARK_OFF, ComparemTUI
+
+    app = ComparemTUI([], Path("results"), Path("databases"), SAMPLES, 4)
+    async with app.run_test() as pilot:
+        assert app.selected == set()
+        table = app.query_one(DataTable)
+        for tool in CATALOGUE:
+            assert table.get_cell(tool.name, "sel") == MARK_OFF
+
+        await pilot.press("r")
+        assert not app.running
+        written = "".join(str(line) for line in app.query_one(RichLog).lines)
+        assert "Nothing selected" in written
+
+
+def _locked(workdir: Path) -> Path:
+    """A directory holding a lock of the shape Snakemake leaves behind."""
+    lock = workdir / ".snakemake" / "locks" / "0.output.lock"
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    lock.write_text(f"{workdir}/samples/A/seqkit/contigs.tsv\n")
+    (workdir / ".comparem2").mkdir(parents=True, exist_ok=True)
+    (workdir / ".comparem2" / "Snakefile").write_text("rule all:\n    input: []\n")
+    return lock
+
+
+def test_lock_files_reads_what_snakemake_left(tmp_path):
+    """A lock is files under `.snakemake/locks`, and nothing else says so.
+
+    Asked before Snakemake starts, so it cannot be Snakemake's own
+    `Persistence.locked` — that needs a built DAG to intersect against.
+    """
+    assert cli_mod.lock_files(tmp_path) == []
+    (tmp_path / ".snakemake" / "locks").mkdir(parents=True)
+    # The directory exists during a clean run too; it is the files that lock.
+    assert cli_mod.lock_files(tmp_path) == []
+    lock = _locked(tmp_path)
+    assert cli_mod.lock_files(tmp_path) == [lock]
+
+
+def test_unlock_reports_instead_of_exiting(tmp_path, monkeypatch):
+    """The TUI cannot take a SystemExit, so the shared function returns text.
+
+    `--unlock` turns the same message into one; both paths call this, so they
+    cannot disagree about where the Snakefile is or what failure means.
+    """
+    assert "nothing to unlock" in (cli_mod.unlock(tmp_path) or "")
+
+    _locked(tmp_path)
+    seen: dict[str, object] = {}
+
+    def fake_run(cmd, *a, **k):
+        seen["cmd"] = cmd
+        seen["captured"] = k.get("capture_output")
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(cli_mod.subprocess, "run", fake_run)
+    assert cli_mod.unlock(tmp_path) is None
+    assert "--unlock" in seen["cmd"]
+    # Inherited stderr scribbles over the Textual display.
+    assert seen["captured"] is True
+
+    def failing(cmd, *a, **k):
+        return subprocess.CompletedProcess(cmd, 1, "", "IOError: read-only\n")
+
+    monkeypatch.setattr(cli_mod.subprocess, "run", failing)
+    assert "read-only" in (cli_mod.unlock(tmp_path) or "")
+
+
+@pytest.mark.asyncio
+async def test_tui_offers_to_unlock_a_locked_directory(tmp_path, monkeypatch):
+    """A killed run leaves a lock, and Snakemake then refuses to start.
+
+    The way out was to quit, remember the right `--output` and type a second
+    command. It is a keypress now — behind a confirmation, because a lock file
+    lists paths and no pid, so nothing here can tell a dead run's lock from a
+    live one's.
+    """
+    pytest.importorskip("textual")
+    from textual.widgets import RichLog
+
+    from comparem2 import tui as tui_mod
+    from comparem2.tui import ComparemTUI, ConfirmUnlock
+
+    lock = _locked(tmp_path)
+    cleared: list[Path] = []
+
+    def fake_unlock(workdir: Path) -> str | None:
+        cleared.append(workdir)
+        lock.unlink()
+        return None
+
+    monkeypatch.setattr(tui_mod, "unlock", fake_unlock)
+
+    app = ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                      selected=["seqkit"])
+    async with app.run_test() as pilot:
+        log = app.query_one(RichLog)
+        assert "locked" in "".join(str(line) for line in log.lines)
+
+        # Refused here rather than several seconds into a run that has already
+        # said it is starting up.
+        await pilot.press("r")
+        assert not app.running
+        assert "Not started" in "".join(str(line) for line in log.lines)
+
+        # Cancelling leaves the lock alone.
+        await pilot.press("u")
+        assert isinstance(app.screen, ConfirmUnlock)
+        await pilot.press("n")
+        await pilot.pause()
+        assert cleared == [] and lock.exists()
+
+        await pilot.press("u")
+        assert isinstance(app.screen, ConfirmUnlock)
+        await pilot.press("y")
+        await pilot.pause()
+        # The worker is a thread; wait for it to have done its one subprocess.
+        for _ in range(50):
+            if cleared:
+                break
+            await pilot.pause(0.05)
+        assert cleared == [tmp_path]
+        assert not lock.exists()
+        assert not cli_mod.lock_files(tmp_path)
 
 
 @pytest.mark.asyncio
@@ -1685,15 +1827,22 @@ async def test_tui_opens_showing_which_tools_already_ran(tmp_path):
     _wrote(tmp_path, "samples", "A", "bakta", "A.gff3")  # one genome, one file
 
     app = ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4)
-    async with app.run_test():
+    async with app.run_test() as pilot:
         table = app.query_one(DataTable)
         assert app.state["seqkit"] == EXISTS
         assert app.state["mashtree"] == EXISTS
         assert app.state["bakta"] == PARTIAL
         assert app.state["checkm2"] == PENDING
+        # What is on disk is reported whether or not it is selected, and
+        # nothing is selected when the interface opens.
         assert table.get_cell("seqkit", "status") == "already run"
         assert table.get_cell("bakta", "status") == "part-finished"
+        assert table.get_cell("checkm2", "status") == "not selected"
+
+        # Selected and with nothing on disk is what `pending` means.
+        await pilot.press("a")
         assert table.get_cell("checkm2", "status") == "pending"
+        assert table.get_cell("seqkit", "status") == "already run"
 
 
 @pytest.mark.asyncio

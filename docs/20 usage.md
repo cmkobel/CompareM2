@@ -113,8 +113,14 @@ through its logger plugin system rather than scraping stdout, so the events are
 structured.
 
 `space` selects and deselects the tool under the cursor, `a` and `n` select all
-and none, `r` runs, `q` quits. `▣` is chosen, `▨` is pulled in as a dependency
-of something chosen, `▢` is off.
+and none, `r` runs, `u` releases a lock, `q` quits. `▣` is chosen, `▨` is pulled
+in as a dependency of something chosen, `▢` is off.
+
+**Nothing is selected when it opens.** Choosing the analyses is what the
+interface is for, and selecting all fourteen by default put GTDB-Tk's 60.8 GB
+download one keypress from someone who had not read the table yet. `a` is still
+one key away if you do want everything. `--until` seeds the selection, so
+`--tui --until mashtree treecluster` opens with exactly those two chosen.
 
 ### What it says before you press anything
 
@@ -144,6 +150,18 @@ of these decide whether existing work gets re-used: a databases directory that
 is not the one holding your 62.5 GB re-downloads it, and a moved
 `$COMPAREM2_CONDA_PREFIX` re-solves every tool environment.
 
+**Whether the output directory is locked**, and `u` clears it. A run that was
+killed leaves a lock Snakemake refuses to start on — see [After a run is
+killed](#after-a-run-is-killed) for what that is. `r` on a locked directory
+refuses to start rather than letting the run fail several seconds in, and `u`
+does the same thing `--unlock` does without leaving the interface.
+
+It asks first, and the question is not "are you sure" but "is anything else
+running": a lock file lists paths and carries no process id, so neither you nor
+CompareM2 can tell a dead run's lock from a live one's, and clearing a live
+one's puts two Snakemake processes on the same outputs. Check before saying
+yes.
+
 ### What it says while it runs
 
 Above the progress bar, one line answers "is this still going, or has it
@@ -171,9 +189,6 @@ the selection, and `--set`, `--keep-going` and `-d` are all honoured:
 ```bash
 comparem2 *.fna --tui --until mashtree treecluster
 ```
-
-Without `--until` everything is selected, which includes GTDB-Tk and its 60.8
-GB. Read the size on the second line before pressing `r`.
 
 `--dry-run` is refused with `--tui`, because the tool list is already the dry
 run and it shows the download size too.
@@ -272,6 +287,11 @@ comparem2 *.fna            # picks up where it stopped
 The lock belongs to the output directory, not to the assemblies, so `--unlock`
 needs only `-o`. Naming the assemblies as well is accepted — adding the flag to
 the command that just died is the obvious move — and they are not read.
+
+Under `--tui` this is `u`, which asks before clearing. Either way, make sure no
+other run is writing to that directory first: the lock is what stops two
+Snakemake processes from corrupting each other's outputs, and nothing in it
+says whether the process that made it is still alive.
 
 Downloads resume rather than restart: a killed GTDB fetch continues its partial
 tarball instead of fetching 60.8 GB again.

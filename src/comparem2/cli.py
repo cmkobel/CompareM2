@@ -151,6 +151,55 @@ def missing_conda() -> str | None:
     return None if shutil.which("conda") else "conda"
 
 
+def lock_files(workdir: Path) -> list[Path]:
+    """Lock files a Snakemake run left on `workdir`.
+
+    Snakemake locks its working directory by writing
+    `.snakemake/locks/<n>.{input,output}.lock`, and removes the whole directory
+    when the run ends cleanly. Files still there therefore mean one of two
+    things, and *nothing in them says which*: a run is going on right now, or
+    one was killed and never got to clean up. A lock file holds a list of paths,
+    not a PID.
+
+    Snakemake's own `Persistence.locked` is narrower — it asks whether the locked
+    paths intersect *this* DAG's inputs and outputs, which needs a built DAG.
+    Here every run in a directory is the same workflow over the same outputs, so
+    presence is the answer, and it can be had before Snakemake is started.
+    """
+    lockdir = workdir / ".snakemake" / "locks"
+    return sorted(lockdir.glob("*.lock")) if lockdir.is_dir() else []
+
+
+def unlock(workdir: Path) -> str | None:
+    """Release a lock on `workdir`. Returns None on success, else what went wrong.
+
+    Snakemake's own `--unlock` against the Snakefile the run left behind, which
+    is the only thing that clears the lock in a way Snakemake will believe.
+
+    Shared by `--unlock` and the TUI's `u`, so the two cannot disagree about
+    where the Snakefile is or what a failure means. Output is captured rather
+    than inherited: under the TUI anything written to stderr scribbles over the
+    display, and the CLI reprints what it got.
+    """
+    snakefile = workdir / ".comparem2" / "Snakefile"
+    if not snakefile.is_file():
+        # No generated Snakefile means no run ever started here, so there is no
+        # lock either. Say where we looked: the likely mistake is a missing
+        # --output, and the default is not in sight of the cwd.
+        return (f"nothing to unlock: no run in {workdir}\n"
+                "A run leaves its Snakefile in <output>/.comparem2/. Pass "
+                "--output if this one wrote somewhere else.")
+    result = subprocess.run([sys.executable, "-m", "snakemake",
+                             "--snakefile", str(snakefile),
+                             "--directory", str(workdir), "--unlock"],
+                            capture_output=True, text=True)
+    if result.returncode:
+        tail = (result.stderr or result.stdout or "").strip().splitlines()
+        return "snakemake --unlock failed: " + (tail[-1] if tail else
+                                                f"exit {result.returncode}")
+    return None
+
+
 def any_outputs_exist(selected: list[str] | None, workdir: Path,
                       databases: Path, samples: tuple[str, ...]) -> bool:
     """Did any selected tool leave a complete set of declared outputs?
@@ -370,7 +419,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--set", action="append", default=[], metavar="TOOL-FLAG=VALUE",
                    help="override a tool argument, e.g. "
                         "--set treecluster--threshold=0.1")
-    p.add_argument("--tui", action="store_true", help="interactive keyboard interface")
+    p.add_argument("--tui", action="store_true",
+                   help="interactive keyboard interface; opens with nothing "
+                        "selected, seeded by --until when given")
     p.add_argument("--version", action="version", version=f"CompareM2 {__version__}")
     p.add_argument("--conda-prefix", type=Path, default=None,
                    help="where the tools' environments are deployed; shared "
@@ -445,19 +496,11 @@ def main(argv: list[str] | None = None) -> int:
         # accepted and ignored here, because adding --unlock to the command
         # that just died is how anyone would reach for it.
         workdir = resolve(args.output, base)
-        snakefile = workdir / ".comparem2" / "Snakefile"
-        if not snakefile.is_file():
-            # No generated Snakefile means no run ever started here, so there
-            # is no lock either. Say where we looked: the likely mistake is a
-            # missing --output, and the default is not in sight of the cwd.
-            raise SystemExit(f"nothing to unlock: no run in {workdir}\n"
-                             "A run leaves its Snakefile in "
-                             "<output>/.comparem2/. Pass --output if this one "
-                             "wrote somewhere else.")
-        print(f"unlocking {workdir}", file=sys.stderr)
-        return subprocess.run([sys.executable, "-m", "snakemake",
-                               "--snakefile", str(snakefile),
-                               "--directory", str(workdir), "--unlock"]).returncode
+        problem = unlock(workdir)
+        if problem:
+            raise SystemExit(problem)
+        print(f"unlocked {workdir}", file=sys.stderr)
+        return 0
 
     if args.demo:
         # Rejected rather than merged, for --setup's reason: a command naming

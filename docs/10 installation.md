@@ -267,7 +267,7 @@ jobs starting and finishing as the queue runs them.
 git clone https://github.com/cmkobel/CompareM2.git
 cd CompareM2
 pixi install
-pixi run pytest        # 230 unit tests, no databases and no tools needed
+pixi run pytest        # 240 unit tests, no databases and no tools needed
 pixi run comparem2 --help
 ```
 

@@ -1543,3 +1543,57 @@ Six tests, and the two that matter are about the honesty rather than the
 motion: that the animation is torn down on every exit path including one that
 raises, and that a spinner frame is never also a status glyph — `◐` already
 means `part-finished` in the column two lines above.
+
+### The TUI opens with nothing selected
+"I don't think that all tools should be enabled as default. Let the user decide
+what to run manually" — Carl. It had seeded the selection with all fourteen
+tools whenever `--until` was absent, which made `r` a 60.8 GB download for
+anyone who pressed it before reading the second line, and made the interface a
+confirmation step for a decision already taken rather than the place the
+decision gets made. `a` still selects everything in one keypress, and `--until`
+still seeds, so `--tui --until mashtree treecluster` opens on exactly those.
+
+The change is one line; what it cost is the second one. `r` on an empty
+selection had been a silent no-op, which was harmless when empty was a state
+you had to press `n` to reach and is the worst available answer now that it is
+the state the interface opens in — the key that runs things appearing to do
+nothing at all. It now says what is missing and which key fixes it, and the log
+says so on startup too.
+
+The CLI default is untouched: no `--until` still means all fourteen. A command
+naming no tools is unambiguous about wanting the lot, and there is no table in
+front of the user to choose from.
+
+### The TUI can unlock the directory it opens on
+`--unlock` existed but only as a second command: quit the interface, remember
+which `--output` the dead run used, retype it. The lock is also the one
+condition that makes everything else the table says unreachable, and Snakemake
+only reports it several seconds into a run that has already announced it is
+starting up.
+
+So the interface reads `<output>/.snakemake/locks/` on opening, says so if
+anything is there, refuses `r` while it is, and `u` clears it. `cli.unlock()`
+is shared with the flag — it returns the problem as text rather than raising
+`SystemExit`, which is what the TUI can use, and captures Snakemake's output
+because anything written to stderr scribbles over a Textual display.
+
+**It asks first, and the dialog is about the one thing that cannot be known.**
+A lock file holds a list of paths and no process id, so neither the user nor
+this code can distinguish a killed run's lock from a live run's — and clearing
+a live one puts two Snakemake processes on the same outputs. The dialog says
+that in those words rather than asking "are you sure". Two further honesty
+rules in the same feature: `u` during a run refuses, because that lock is this
+run's, and after `snakemake --unlock` returns 0 the directory is re-read rather
+than declared clear, since the exit code is not the same statement.
+
+Detection is presence of `*.lock`, not Snakemake's own `Persistence.locked`,
+which asks whether the locked paths intersect *this* DAG's files and therefore
+needs a built DAG — unavailable before the run starts, which is exactly when
+the question is being asked. Every run in one output directory is the same
+workflow over the same outputs, so presence is the right answer here.
+
+Verified against a real `snakemake --unlock` and a real generated Snakefile, on
+a lock written by hand in Snakemake's format: `r` refused, `u` opened the
+dialog, `n` left the lock, `y` removed it, and `--unlock` did the same from the
+command line. **The lock was not one a killed Snakemake left behind** — see
+[STATUS.md](STATUS.md).

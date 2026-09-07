@@ -805,6 +805,18 @@ Two things that fell out of it, neither acted on:
   and then took Snakemake's 1-of-4, and the line stopped at `not running — the
   last run took 2s`. **Not yet seen in a real terminal against a real run**,
   which is where the six-environment solve is the case it exists for.
+- **Unlocking, both paths** — verified 2026-09-07 on macOS against a real
+  `snakemake --unlock` (9.26.1) and a real generated Snakefile, over
+  `.snakemake/locks/{0.input,0.output}.lock` written by hand in Snakemake's own
+  format. `comparem2 -o out --unlock` printed `unlocked …`, exited 0 and left
+  no `locks/` directory. Headlessly through `run_test()`, the TUI warned on
+  opening, refused `r` with `Not started — the output directory is locked`,
+  opened the dialog on `u`, left the lock alone on `n`, and on `y` ran the same
+  subprocess and reported `Unlocked.` **The lock was hand-written, not left by a
+  killed Snakemake** — the file format is Snakemake's and Snakemake consumed it,
+  but the real case has not been re-driven since the two paths were made to
+  share `cli.unlock()`. That refactor also stopped Snakemake's own `Unlocking
+  working directory` line reaching the terminal, because the TUI cannot have it.
 - 200 unit tests, ~2.5 s — 8 for the steps around GTDB-Tk's command, 16 for the
   report rewrite, 6 for CarveMe's solver wrapper, 23 for `biosynthesis`, and
   the conda-deployment set rewritten when the flag was deleted
@@ -1097,7 +1109,7 @@ Measured 2026-09-03. Earlier note: 914 GB free on `/evo` (2026-09-02, before the
 ```bash
 cd /evo/postdoc/CompareM2
 
-pixi run pytest          # 236 tests, no tools or databases needed
+pixi run pytest          # 240 tests, no tools or databases needed
 pixi run test-fast       # 4 genomes, no databases needed
 
 pixi run comparem2 --setup     # deploy the six environments, once

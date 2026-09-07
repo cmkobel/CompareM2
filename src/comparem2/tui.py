@@ -21,11 +21,12 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal
 # textual, not rich: rich is textual's dependency rather than this package's.
 from textual.markup import escape
+from textual.screen import ModalScreen
 from textual.timer import Timer
 from textual.widgets import DataTable, Footer, Header, ProgressBar, RichLog, Static
 
 from .catalogue import CATALOGUE
-from .cli import any_outputs_exist, run_settings
+from .cli import any_outputs_exist, lock_files, run_settings, unlock
 from .report import render_report
 from .runner import Event, run
 from .snakefile import prepare
@@ -68,6 +69,53 @@ def elapsed_text(seconds: float) -> str:
     return f"{total}s" if total < 60 else f"{total // 60}m {total % 60:02d}s"
 
 
+class ConfirmUnlock(ModalScreen[bool]):
+    """Ask before clearing a lock, and say what cannot be known.
+
+    Snakemake refuses to start on a locked directory, and the way out is
+    `--unlock` — which means quitting the interface, finding the right
+    `--output`, and typing a second command. So the interface offers it.
+
+    It asks first, and this is the one dialog in the application, because the
+    question is not "are you sure" but "is something else running": a lock file
+    carries a list of paths and no PID, so neither the user nor this code can
+    tell a dead run's lock from a live one's. Clearing a live one puts two
+    Snakemake processes on the same outputs.
+    """
+
+    BINDINGS = [
+        ("y", "yes", "Unlock"),
+        ("n", "no", "Cancel"),
+        ("escape", "no", "Cancel"),
+    ]
+
+    def __init__(self, workdir: Path, locks: int) -> None:
+        super().__init__()
+        self.workdir = workdir
+        self.locks = locks
+
+    def compose(self) -> ComposeResult:
+        files = "1 lock file" if self.locks == 1 else f"{self.locks} lock files"
+        yield Static(
+            f"[bold]Unlock the output directory?[/]\n\n"
+            f"{escape(str(self.workdir))}\n"
+            f"[dim]{files} in .snakemake/locks/[/]\n\n"
+            "Snakemake locks a directory while it runs and leaves the lock "
+            "behind if it was killed. A lock file lists paths and no process "
+            "id, so [bold]this cannot tell you whether that run is still "
+            "alive[/] — check that nothing else is writing here before you "
+            "say yes. Two Snakemake runs over one directory corrupt each "
+            "other's outputs.\n\n"
+            "[dim]y unlock · n cancel[/]",
+            id="confirm")
+
+    def action_yes(self) -> None:
+        self.dismiss(True)
+
+    def action_no(self) -> None:
+        self.dismiss(False)
+
+
 class ComparemTUI(App):
     """Pick tools, watch them run, open the report."""
 
@@ -83,6 +131,11 @@ class ComparemTUI(App):
     /* The indeterminate bar is $error by default — red, for a run that is
        merely still going. */
     Bar > .bar--indeterminate { color: $accent; }
+    ConfirmUnlock { align: center middle; }
+    #confirm {
+        width: 64; padding: 1 2;
+        border: round $warning; background: $surface;
+    }
     """
 
     BINDINGS = [
@@ -90,6 +143,7 @@ class ComparemTUI(App):
         ("a", "all", "Select all"),
         ("n", "none", "Select none"),
         ("r", "start", "Run"),
+        ("u", "unlock", "Unlock directory"),
         ("q", "quit", "Quit"),
     ]
 
@@ -118,10 +172,12 @@ class ComparemTUI(App):
         # Passed in rather than read from sys.argv here: the CLI already
         # renders it, and the TUI's job is to display what it was given.
         self.command = command
-        # Seeded from `--until` when given. Selecting everything by default
-        # puts gtdbtk's 60.8 GB one keypress away, so a user who named the
-        # tools they want on the command line gets exactly those.
-        self.selected: set[str] = set(selected) if selected else {t.name for t in CATALOGUE}
+        # Seeded from `--until` when given, and otherwise empty: the user
+        # chooses. Selecting all fourteen by default put gtdbtk's 60.8 GB
+        # download one keypress from a user who had not read the table yet, and
+        # it made the interface a confirmation step rather than a choice. `a`
+        # is still one key away for anyone who does want everything.
+        self.selected: set[str] = set(selected) if selected else set()
         # What is already in the output directory, and the live state of this
         # session. Kept apart: the second is overwritten by every event, and the
         # first is the answer to "what did I run here last time" — which the
@@ -196,13 +252,18 @@ class ComparemTUI(App):
         table.add_column("Status", key="status", width=13)
         table.add_column("What it does", key="summary")
         for tool in CATALOGUE:
-            table.add_row(MARK_ON, tool.name, LABEL[PENDING], tool.summary, key=tool.name)
-        # Not refresh_cost(): the selection can differ from "everything" before
-        # a key has been pressed, because `--until` seeds it, and the rows have
-        # to say so.
+            table.add_row(MARK_OFF, tool.name, LABEL[PENDING], tool.summary, key=tool.name)
+        # Not refresh_cost(): nothing is selected unless `--until` seeded it,
+        # and the marks and statuses have to say so before anything is drawn.
         self.sync_table()
         log = self.query_one(RichLog)
-        log.write("[dim]space[/] select · [dim]r[/] run · [dim]q[/] quit")
+        log.write("[dim]space[/] select · [dim]a[/] all · [dim]r[/] run · [dim]q[/] quit")
+        if not self.selected:
+            # Said in words, because an empty selection is the one state where
+            # the table looks the same whether the interface is waiting for the
+            # user or has decided there is nothing to do.
+            log.write("[bold]Nothing is selected[/] — pick the analyses you "
+                      "want, then press [dim]r[/]")
         # Said once, in words, because the table's own answer is spread over
         # fourteen rows: a directory that has been run in before is the case
         # where "what still needs doing" is the first question.
@@ -216,6 +277,53 @@ class ComparemTUI(App):
             # so this is a statement about what pressing `r` will do.
             log.write(f"[yellow]part-finished, and will be redone:[/] "
                       f"{', '.join(sorted(part))}")
+        # Said on opening rather than only on `r`: a lock is the one condition
+        # that makes everything else this table promises impossible, and the
+        # user is reading the log at that moment anyway.
+        if lock_files(self.workdir):
+            log.write("[bold yellow]The output directory is locked.[/] A run is "
+                      "either still going or was killed before it could clean "
+                      "up — [dim]press u to release the lock[/]")
+
+    # --- the lock ---------------------------------------------------
+
+    def action_unlock(self) -> None:
+        log = self.query_one(RichLog)
+        if self.running:
+            # This run holds the lock. Clearing it would be clearing our own.
+            log.write("[dim]not while a run is going — that lock is this run's[/]")
+            return
+        locks = lock_files(self.workdir)
+        if not locks:
+            log.write(f"[dim]not locked: {escape(str(self.workdir))}[/]")
+            return
+        self.push_screen(ConfirmUnlock(self.workdir, len(locks)), self.unlocked)
+
+    def unlocked(self, confirmed: bool | None) -> None:
+        """What the dialog decided. Runs on the UI thread; the work does not."""
+        if confirmed:
+            # A subprocess, so it goes to a thread: it is quick, but a blocked
+            # UI thread is the state the spinner exists to make impossible.
+            self.run_worker(self.do_unlock, thread=True)
+        else:
+            self.query_one(RichLog).write("[dim]left locked[/]")
+
+    def do_unlock(self) -> None:
+        problem = unlock(self.workdir)
+        log = self.query_one(RichLog)
+        if problem:
+            self.call_from_thread(log.write, f"[red]{escape(problem)}[/]")
+            return
+        # Re-read rather than assume: `snakemake --unlock` exiting 0 is not the
+        # same statement as "there is no lock now", and the difference decides
+        # whether pressing `r` is about to fail.
+        left = len(lock_files(self.workdir))
+        if left:
+            self.call_from_thread(
+                log.write, f"[yellow]still locked[/] — {left} lock files remain "
+                           f"in {escape(str(self.workdir))}/.snakemake/locks/")
+        else:
+            self.call_from_thread(log.write, "[green]Unlocked.[/] [dim]r runs[/]")
 
     # --- selection -------------------------------------------------
 
@@ -317,7 +425,23 @@ class ComparemTUI(App):
     # --- running ---------------------------------------------------
 
     def action_start(self) -> None:
-        if self.running or not self.selected:
+        if self.running:
+            return
+        if not self.selected:
+            # `r` on an empty selection used to be a silent no-op, which is the
+            # worst answer available now that empty is the opening state: the
+            # key that runs things appears to do nothing at all.
+            self.query_one(RichLog).write(
+                "[yellow]Nothing selected[/] — [dim]space picks the tool under "
+                "the cursor, a selects all[/]")
+            return
+        if lock_files(self.workdir):
+            # Refused here rather than left to Snakemake: from inside the run
+            # this arrives as a WorkflowError several seconds in, by which time
+            # the interface has already claimed to be starting up.
+            self.query_one(RichLog).write(
+                "[bold yellow]Not started — the output directory is locked.[/] "
+                "[dim]press u to release the lock[/]")
             return
         self.running = True
         chosen = sorted(self.selected)
