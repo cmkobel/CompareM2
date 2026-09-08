@@ -953,6 +953,26 @@ Not covered by this run: a download under `--profile`. It would change nothing
 — the four rules are `localrules` and run on the frontend either way — but that
 is reasoning, not an observation.
 
+### The 3.3.0 release check
+From the bumped tree on GenomeDK, 2026-09-08, `SNAKEMAKE_PROFILE=slurm` and no
+`--profile` flag: `CompareM2 3.3.0`, **11 of 11 steps, 2m 58.95s**, report
+written. Against the 3.2.2 check's 2m 11s under `--profile` — the difference is
+queue wait on a shared partition, not the pickup route.
+
+Unit tests on the cluster: **265 of 269**. The four failures are the same
+artefacts as last release — `HPC_PUSH_PATHS` is `"src tests pixi.toml
+pixi.lock"`, so `pyproject.toml` and `docs/` are absent and the two
+version-consistency and two generated-docs tests have nothing to read.
+
+**One failure went unidentified, and that is worth writing down rather than
+rounding off.** The first run after the push reported 5 failed / 264 passed;
+the name was lost to a truncated pipe, and it did not recur — three subsequent
+full runs gave the same four artefacts, and the 33 TUI, runner and profile
+tests passed five times out of five. A cold-cache reproduction was not
+attempted, because it needed a remote `rm` that the safety hook correctly
+refuses. So: a single unreproduced failure on a shared login node, cause
+unknown.
+
 ### The 3.2.2 release check
 `comparem2 --demo --profile <slurm>` from the bumped tree, 2026-09-07: **11 of
 11 steps, exit 0, 2m 11s**, **10 SLURM jobs all `COMPLETED`** under one run-id,
