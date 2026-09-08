@@ -1,5 +1,5 @@
 {% set name = "comparem2" %}
-{% set version = "3.2.2" %}
+{% set version = "3.3.0" %}
 
 package:
   name: {{ name|lower }}

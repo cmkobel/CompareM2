@@ -1926,3 +1926,26 @@ venv is 9.26.1.
 `--profile none` and `--setup` were checked in the same session with the
 variable still exported: both stayed on the frontend and `sacct` recorded
 nothing for either.
+
+### The release is 3.3.0, and it rides the PR that 3.2.2 is sitting in
+Same question as 2026-09-04 and 09-07, same answer: `$SNAKEMAKE_PROFILE` is a
+new user-facing way to decide where a run executes, `--help` and `docs/`
+changed with it, and a patch number would say "nothing new here" about the
+thing the release exists to ship. The TUI's false-success fix on its own would
+have been a patch.
+
+**Pushing it today is free, and waiting is not.** Bioconda
+[PR #68904](https://github.com/bioconda/bioconda-recipes/pull/68904) — "Update
+comparem2 to 3.2.2" — has been open since 2026-09-07T21:25:46Z, so mergify's
+`created-at<3 days ago` makes it eligible at 2026-09-10T21:25:46Z. The bot
+pushes a newer tag onto that same `bump/comparem2` branch and rewrites the
+title, so 3.3.0 inherits that clock and publishes at the same moment 3.2.2
+would have. Tagging after 09-10 21:25Z instead would publish 3.2.2 and start a
+fresh three days for the next number.
+
+So **3.2.2 will never be published**, overwritten exactly as 3.1.0 and 3.2.0
+were, and the channel goes 3.2.1 -> 3.3.0. Nothing is lost: 3.2.2's content is
+in 3.3.0, and `run_exports` pins at `max_pin="x"` either way.
+
+No recipe change: the diff added no dependency, no build-script change and no
+test-section change, which are the only three things autobump cannot do.

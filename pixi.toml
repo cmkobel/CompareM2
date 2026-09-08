@@ -2,7 +2,7 @@
 channels = ["conda-forge", "bioconda"]
 name = "comparem2"
 platforms = ["linux-64"]
-version = "3.2.2"
+version = "3.3.0"
 
 [tasks]
 # The entry point. `pixi run comparem2 <assemblies>...` — see
