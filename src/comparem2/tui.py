@@ -420,11 +420,13 @@ class ComparemTUI(App):
     def where_text(self) -> str:
         """The four locations this run depends on, and where each came from.
 
-        Databases and tool environments are settable by environment variable,
-        which makes them the two settings most likely to be wrong without
-        anyone noticing: both are exported once in a shell profile and never
-        looked at again, and either one pointing somewhere unexpected costs a
-        re-download or a re-solve rather than an error.
+        Databases, tool environments and execution are settable by environment
+        variable, which makes them the three settings most likely to be wrong
+        without anyone noticing: all are exported once in a shell profile and
+        never looked at again. The first two cost a re-download or a re-solve
+        rather than an error; `$SNAKEMAKE_PROFILE` — Snakemake's own, honoured
+        by `cli.resolve_profile()` — decides whether this is a queue run, which
+        is why the row says where the value came from and not just what it is.
         """
         rows = run_settings(self.workdir, self.databases, self.conda_prefix,
                             self.profile)

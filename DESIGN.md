@@ -331,6 +331,16 @@ something already published. The post-mortems are in
   Snakemake includes the prefix's realpath in each environment's hash, so
   moving it re-solves all six environments *and* re-fetches AMRFinder's
   database, which lives inside `annotation`.
+- **Cluster submission is Snakemake's, and so is the variable that turns it
+  on.** `--profile` defaults from `$SNAKEMAKE_PROFILE`, declared `env_var=` on
+  Snakemake's own `--profile`, and there is deliberately no
+  `$COMPAREM2_PROFILE` — v2 had one, and a second name for someone else's
+  setting needs a precedence rule and buys nothing. Two consequences read like
+  noise and are not: every Snakemake launched from `cli.py` names its profile
+  explicitly, `none` included, because otherwise an exported variable submits a
+  run this program has just reported as local; and the `--cores` gate keys on
+  the *effective* profile, not on `args.profile`, which is what it did for as
+  long as the variable went unread here.
 - **The bioconda package must not grow tool dependencies.** It ships the
   pipeline; Snakemake deploys the tools. Adding them to the recipe would
   require dropping CheckM2 or Bakta — see *One deployment model*. The same

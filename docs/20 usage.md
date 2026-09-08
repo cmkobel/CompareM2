@@ -27,8 +27,8 @@ land next to the genomes.
 |---|---|---|
 | `-o`, `--output` | `results_comparem2` | output directory |
 | `-d`, `--databases` | `~/.comparem2/databases` | where databases live |
-| `-t`, `--cores` | `4` | cores for Snakemake; with `--profile`, left to the profile unless given |
-| `--profile DIR` | — | Snakemake profile, for submitting to a cluster queue |
+| `-t`, `--cores` | `4` | cores for Snakemake; under a profile, left to the profile unless given |
+| `--profile DIR\|NAME` | `$SNAKEMAKE_PROFILE` | Snakemake profile, for submitting to a cluster queue; `none` runs locally despite the variable |
 | `--until TOOL...` | *(all)* | run only these tools and their dependencies |
 | `--set TOOL-FLAG=VALUE` | — | override a tool argument; repeatable |
 | `--tui` | off | interactive keyboard interface |
@@ -45,8 +45,12 @@ There is no flag for *whether* to deploy the tools. Snakemake always does, into
 `--conda-prefix` — see [Installation](10 installation.md).
 
 `--profile` is a passthrough to Snakemake and is what makes jobs go to a queue
-rather than to this machine; `--cores` never submits anything. See
-[HPC](10 installation.md#hpc) for a worked profile.
+rather than to this machine; `--cores` never submits anything. It takes a
+directory holding `config.yaml`, or a bare name looked up under
+`~/.config/snakemake` — and with no flag at all it follows
+**`$SNAKEMAKE_PROFILE`**, which is Snakemake's own variable, so exporting it
+once submits every run from that shell. `--profile none` is how one run stays
+local anyway. See [HPC](10 installation.md#hpc) for a worked profile.
 
 ## Running a subset
 
@@ -185,10 +189,17 @@ The right-hand column is the *origin*, not the value: `default`, `given` for
 something you typed, or the name of the environment variable the value came
 from. `given, overriding $COMPAREM2_DATABASES` means the variable is set and a
 `-d` beat it — which is worth seeing, because a variable exported in `.bashrc`
-months ago and silently overridden looks exactly like no variable at all. Both
+months ago and silently overridden looks exactly like no variable at all. Two
 of these decide whether existing work gets re-used: a databases directory that
 is not the one holding your 62.5 GB re-downloads it, and a moved
 `$COMPAREM2_CONDA_PREFIX` re-solves every tool environment.
+
+The `execution` row is the third, and it decides where the work runs at all.
+It reads `local` for a run on this machine, or the profile that is submitting
+it — attributed to `$SNAKEMAKE_PROFILE` when that variable is what turned
+submission on, and `--profile none, overriding $SNAKEMAKE_PROFILE` when you
+have asked for a local run in a shell that exports one. The CLI prints the
+same line, but only when a profile or the variable is in play.
 
 **Whether the output directory is locked**, and `u` clears it. A run that was
 killed leaves a lock Snakemake refuses to start on — see [After a run is

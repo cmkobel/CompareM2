@@ -109,13 +109,15 @@ def run_settings(workdir: Path, databases: Path, conda_prefix: Path | None,
                  ) -> list[tuple[str, str, str]]:
     """The four locations a run depends on, each with where its value came from.
 
-    `(what, where, origin)` triples, for the TUI's header. Two of these are
-    settable by environment variable and both decide whether work is repeated:
-    a `$COMPAREM2_DATABASES` pointing somewhere unexpected re-downloads up to
-    143 GB, and a `$COMPAREM2_CONDA_PREFIX` that moved means every tool
-    environment solves again — Snakemake keys a deployed environment on the
-    prefix's realpath. Neither is visible anywhere in the interface otherwise,
-    and both are typically set once in a shell profile and then forgotten.
+    `(what, where, origin)` triples, for the TUI's header. Three of these are
+    settable by environment variable, and each one decides something a run
+    cannot report on its own: a `$COMPAREM2_DATABASES` pointing somewhere
+    unexpected re-downloads up to 143 GB, a `$COMPAREM2_CONDA_PREFIX` that
+    moved means every tool environment solves again — Snakemake keys a deployed
+    environment on the prefix's realpath — and `$SNAKEMAKE_PROFILE` decides
+    whether this is a queue run at all. None of the three is visible anywhere
+    in the interface otherwise, and all are typically set once in a shell
+    profile and then forgotten.
     """
     base = base if base is not None else invocation_dir()
     # None reaches here only from a caller that built the run itself; `main()`
@@ -130,7 +132,7 @@ def run_settings(workdir: Path, databases: Path, conda_prefix: Path | None,
         ("databases", str(databases),
          _origin(databases, "COMPAREM2_DATABASES", default_databases)),
         ("tool envs", *envs),
-        ("execution", profile or "local", "--profile" if profile else "default"),
+        ("execution", profile or "local", profile_origin(profile, base)),
     ]
 
 
@@ -191,7 +193,11 @@ def unlock(workdir: Path) -> str | None:
                 "--output if this one wrote somewhere else.")
     result = subprocess.run([sys.executable, "-m", "snakemake",
                              "--snakefile", str(snakefile),
-                             "--directory", str(workdir), "--unlock"],
+                             "--directory", str(workdir), "--unlock",
+                             # Clearing a lock is local bookkeeping, and it must
+                             # stay that way whether or not $SNAKEMAKE_PROFILE
+                             # is exported — see profile_flag().
+                             *profile_flag(None)],
                             capture_output=True, text=True)
     if result.returncode:
         tail = (result.stderr or result.stdout or "").strip().splitlines()
@@ -244,23 +250,81 @@ def resolve(path: Path, base: Path) -> Path:
 
 
 def resolve_profile(profile: Path | None, base: Path) -> str | None:
-    """A `--profile` argument in the form Snakemake should receive it.
+    """The one answer to "is this run going to a queue, and under which profile".
 
-    Snakemake accepts two things here: a path to a directory holding
-    `config.yaml`, and a bare *name* it looks up under `~/.config/snakemake`
-    and the system config directory. Both have to keep working, and they need
-    opposite treatment — a relative path has to be made absolute against the
-    directory the user typed in, for `invocation_dir()`'s reason, while a bare
-    name must be passed through untouched or Snakemake's lookup never happens.
+    `--profile` wins; with no flag, **`$SNAKEMAKE_PROFILE`** decides. That is
+    Snakemake's own variable, not one of ours: its `--profile` is declared with
+    `env_var="SNAKEMAKE_PROFILE"` and its parser subclasses
+    `configargparse.ArgumentParser`, so `parse_args()` reads the variable and
+    then reparses with that profile's `config.yaml` as defaults (read in 9.16.3,
+    the pinned version).
+
+    Which means the variable was already half-honoured, in the worst available
+    way. The CLI path shells out to Snakemake, so an exported variable *did*
+    submit the run — while `run_settings()` reported `execution: local` and a
+    `--cores 4` nobody typed was appended, because the gate for that tested the
+    flag rather than the effective profile. The TUI path uses Snakemake's API,
+    which has no notion of a profile, so the same variable submitted nothing.
+    Reading it here is what makes one exported variable mean one thing on both
+    paths. v2 spelled this `$COMPAREM2_PROFILE`; a second name for Snakemake's
+    own setting would buy nothing and need a precedence rule.
+
+    `none` is Snakemake's spelling of "no profile at all", and it is how one run
+    escapes an exported variable. It arrives path-shaped and leaves as None, so
+    everything downstream treats it as the local run it is — `profile_flag()`
+    is what stops Snakemake from reading the variable back.
+
+    Snakemake accepts two other forms: a path to a directory holding
+    `config.yaml`, and a bare *name* it looks up in `~/.config/snakemake` and
+    the system config directory (`appdirs.AppDirs("snakemake", "snakemake")`,
+    so XDG on Linux). Both have to keep working, and they need opposite
+    treatment — a relative path has to be made absolute against the directory
+    the user typed in, for `invocation_dir()`'s reason, while a bare name must
+    be passed through untouched or Snakemake's lookup never happens.
 
     So: resolve it, and keep the resolved form only if that is a directory that
     exists. Otherwise hand the string back unchanged and let Snakemake's own
     profile search produce the error, which names the places it looked.
     """
-    if profile is None:
+    named = str(profile) if profile is not None \
+        else os.environ.get("SNAKEMAKE_PROFILE")
+    if not named or named == "none":
         return None
-    resolved = resolve(profile, base)
-    return str(resolved) if resolved.is_dir() else str(profile)
+    resolved = resolve(Path(named), base)
+    return str(resolved) if resolved.is_dir() else named
+
+
+def profile_flag(profile: str | None) -> list[str]:
+    """`--profile` for a Snakemake command line, always said out loud.
+
+    `none` rather than nothing when there is no profile, because Snakemake
+    reads `$SNAKEMAKE_PROFILE` itself. Omitting the flag would leave an
+    exported variable free to submit a run this program had just described as
+    local, and would make `--profile none` mean nothing at all. So every
+    Snakemake launched from here names its profile, and what the header says is
+    what runs.
+    """
+    return ["--profile", profile if profile is not None else "none"]
+
+
+def profile_origin(profile: str | None, base: Path) -> str:
+    """Where the execution setting came from: the flag, the variable, or neither.
+
+    `_origin()`'s job for `$SNAKEMAKE_PROFILE`, and it cannot borrow it: a
+    profile is a name *or* a directory, so "the value the variable holds" means
+    whatever `resolve_profile()` makes of it rather than a path comparison.
+
+    The case worth the code is the last one — a variable exported months ago
+    and overridden by `--profile none` for this run looks exactly like no
+    variable at all.
+    """
+    from_env = resolve_profile(None, base)
+    if from_env is None:
+        return "--profile" if profile else "default"
+    if profile == from_env:
+        return "$SNAKEMAKE_PROFILE"
+    return ("--profile, overriding $SNAKEMAKE_PROFILE" if profile else
+            "--profile none, overriding $SNAKEMAKE_PROFILE")
 
 
 def slug(stem: str) -> str:
@@ -388,6 +452,16 @@ def setup_environments(selected: list[str] | None, databases: Path,
             "--software-deployment-method", "conda",
             "--conda-prefix", str(conda_prefix),
             "--conda-create-envs-only",
+            # Setup is a frontend job by definition — it solves and unpacks
+            # environments and executes no rule — so it says so rather than
+            # inheriting `$SNAKEMAKE_PROFILE`. Nothing would have been
+            # submitted either way: `--conda-create-envs-only` reaches
+            # `dag_api.conda_create_envs()` in the same elif chain that
+            # `execute_workflow()` sits at the end of (read in 9.16.3). The
+            # point is that a profile's `default-resources`, `latency-wait` and
+            # the rest arrive as argparse defaults, and `--setup` should build
+            # the same environments on any machine.
+            *profile_flag(None),
         ]).returncode
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
@@ -409,8 +483,8 @@ def main(argv: list[str] | None = None) -> int:
     # them — the profile's values arrive as argparse defaults, so anything
     # explicit wins. See DEFAULT_CORES.
     p.add_argument("-t", "--cores", type=int, default=None,
-                   help=f"cores for Snakemake (default: {DEFAULT_CORES}; with "
-                        "--profile, left to the profile unless given)")
+                   help=f"cores for Snakemake (default: {DEFAULT_CORES}; under "
+                        "a profile, left to the profile unless given)")
     p.add_argument("--until", nargs="*", default=None, metavar="TOOL",
                    help="run only these tools and their dependencies")
     # `TOOL-FLAG`, not `TOOL--FLAG`: the flag keeps whatever dashes the tool
@@ -435,16 +509,22 @@ def main(argv: list[str] | None = None) -> int:
                    help="run the four database-free analyses over six bundled "
                         "Enterococcus faecium plasmids; takes no assemblies, "
                         "and downloads nothing")
-    # A Snakemake profile directory, handed straight through. Cluster
+    # A Snakemake profile directory or name, handed straight through. Cluster
     # submission is Snakemake's, not CompareM2's: the profile names the
     # executor (`slurm`, `cluster-generic`) and carries the account, partition
     # and default resources, and both plugins are already dependencies. v2
     # spelled this `$COMPAREM2_PROFILE` and shipped fourteen profiles in-tree;
     # two of the four it advertised as cluster-specific were unedited copies of
     # the templates, so this ships none and documents one.
-    p.add_argument("--profile", type=Path, default=None, metavar="DIR",
-                   help="Snakemake profile directory, for submitting to a "
-                        "cluster queue (SLURM, PBS, SGE, LSF)")
+    #
+    # Defaulted from Snakemake's own variable rather than from None, so both
+    # execution paths see the same value — see resolve_profile().
+    p.add_argument("--profile", type=Path, default=None, metavar="DIR|NAME",
+                   help="Snakemake profile for submitting to a cluster queue "
+                        "(SLURM, PBS, SGE, LSF): a directory holding "
+                        "config.yaml, or a name under ~/.config/snakemake. "
+                        "Defaults to $SNAKEMAKE_PROFILE; --profile none runs "
+                        "locally despite it")
     p.add_argument("--keep-going", action="store_true",
                    help="keep running independent tools after one fails")
     p.add_argument("--dry-run", action="store_true")
@@ -607,6 +687,14 @@ def main(argv: list[str] | None = None) -> int:
                         overrides=overrides)
 
     if not args.report_only:
+        # Said out loud, because a queue run and a local run look identical
+        # from here and one of the two ways to ask for a queue is a variable
+        # exported months ago. Printed only when a profile or the variable is
+        # in play: "local, default" is the unremarkable case, and the TUI shows
+        # the same thing in its header on every run.
+        if profile is not None or os.environ.get("SNAKEMAKE_PROFILE"):
+            print(f"execution: {profile or 'local'} "
+                  f"({profile_origin(profile, base)})", file=sys.stderr)
         cmd = [
             # `sys.executable -m`, not a bare `snakemake`: Snakemake is this
             # package's own dependency, so the right one is the one installed
@@ -635,16 +723,22 @@ def main(argv: list[str] | None = None) -> int:
         ]
         # Cluster submission is Snakemake's job. The profile names the executor
         # and carries the account, partition and default resources; nothing
-        # here needs to know which queue system it is.
-        if profile is not None:
-            cmd += ["--profile", profile]
+        # here needs to know which queue system it is. Unconditional, `none`
+        # included, so an exported `$SNAKEMAKE_PROFILE` cannot mean something
+        # different to the subprocess than it meant to the line above.
+        cmd += profile_flag(profile)
         # With a profile, only an explicit `-t` is forwarded. Not because it
         # would throttle the queue — measured on GenomeDK 2026-09-07, three
         # jobs against `jobs: 20` all started at 2.2 s under `--cores 1`, so
         # `--cores` governs local scheduling and not submission. It is because
         # a profile may set `cores:` itself, and a profile's values arrive as
         # argparse *defaults*, so our unasked-for 4 would quietly replace it.
-        if args.cores is not None or args.profile is None:
+        #
+        # Keyed on the *effective* profile, not on `args.profile`: with
+        # `$SNAKEMAKE_PROFILE` exported and no flag, this gate used to be open
+        # and the 4 went out anyway — over the profile of a run this program
+        # did not know was a queue run.
+        if args.cores is not None or profile is None:
             cmd += ["--cores", str(cores)]
         if args.keep_going:
             cmd.append("--keep-going")

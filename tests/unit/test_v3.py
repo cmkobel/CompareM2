@@ -767,10 +767,20 @@ def test_no_localrules_line_without_databases():
     assert "localrules" not in text
 
 
-def _snakemake_cmd(monkeypatch, tmp_path, extra: list[str]) -> list[str]:
-    """Run the CLI with subprocess stubbed, and give back the command it built."""
+def _snakemake_cmd(monkeypatch, tmp_path, extra: list[str],
+                   profile_env: str | None = None) -> list[str]:
+    """Run the CLI with subprocess stubbed, and give back the command it built.
+
+    `$SNAKEMAKE_PROFILE` is set or cleared here rather than left alone,
+    because the CLI now reads it: a developer with it exported would otherwise
+    get different answers from these tests than CI does.
+    """
     monkeypatch.delenv("INIT_CWD", raising=False)
     monkeypatch.delenv("COMPAREM2_CONDA_PREFIX", raising=False)
+    if profile_env is None:
+        monkeypatch.delenv("SNAKEMAKE_PROFILE", raising=False)
+    else:
+        monkeypatch.setenv("SNAKEMAKE_PROFILE", profile_env)
     monkeypatch.setattr(cli_mod, "missing_conda", lambda: None)
     (tmp_path / "a.fna").write_text(">c\nACGT\n")
 
@@ -855,6 +865,117 @@ def test_cores_defaults_without_a_profile(monkeypatch, tmp_path):
     """The laptop case is unchanged: no profile, no `-t`, still four cores."""
     cmd = _snakemake_cmd(monkeypatch, tmp_path, [])
     assert cmd[cmd.index("--cores") + 1] == str(cli_mod.DEFAULT_CORES)
+
+
+def test_snakemake_profile_variable_is_picked_up(monkeypatch, tmp_path):
+    """`$SNAKEMAKE_PROFILE` is Snakemake's own variable, and honouring it here
+    is what makes it mean one thing on both execution paths.
+
+    Its `--profile` is declared `env_var="SNAKEMAKE_PROFILE"` on a parser that
+    subclasses configargparse (read in 9.16.3, the pinned version), so the
+    subprocess path already submitted under it — while `run_settings()` said
+    `execution: local` and a `--cores 4` nobody typed went out over the
+    profile's own, and the TUI's API branch ignored the variable entirely.
+    """
+    prof = tmp_path / ".config" / "snakemake" / "slurm"
+    prof.mkdir(parents=True)
+    (prof / "config.yaml").write_text("executor: slurm\ncores: 32\n")
+
+    cmd = _snakemake_cmd(monkeypatch, tmp_path, [], profile_env=str(prof))
+    assert cmd[cmd.index("--profile") + 1] == str(prof)
+    assert "--cores" not in cmd, "the variable is a profile, so it keeps cores:"
+
+
+def test_the_profile_flag_beats_the_variable(monkeypatch, tmp_path):
+    """One run's choice overrides a variable exported months ago."""
+    for name in ("exported", "typed"):
+        (tmp_path / name).mkdir()
+        (tmp_path / name / "config.yaml").write_text("executor: slurm\n")
+
+    cmd = _snakemake_cmd(monkeypatch, tmp_path,
+                         ["--profile", str(tmp_path / "typed")],
+                         profile_env=str(tmp_path / "exported"))
+    assert cmd[cmd.index("--profile") + 1] == str(tmp_path / "typed")
+
+
+def test_profile_none_escapes_the_variable(monkeypatch, tmp_path):
+    """`none` is Snakemake's spelling of "no profile", and it is the way out of
+    an exported variable for one run.
+
+    Two things have to happen: this run is local, so the default `--cores`
+    comes back, and Snakemake has to be *told* `none` — omitting the flag would
+    leave it free to read the variable itself and submit anyway.
+    """
+    prof = tmp_path / "slurm"
+    prof.mkdir()
+    (prof / "config.yaml").write_text("executor: slurm\n")
+
+    cmd = _snakemake_cmd(monkeypatch, tmp_path, ["--profile", "none"],
+                         profile_env=str(prof))
+    assert cmd[cmd.index("--profile") + 1] == "none"
+    assert cmd[cmd.index("--cores") + 1] == str(cli_mod.DEFAULT_CORES)
+
+
+def test_a_local_run_says_none_rather_than_nothing(monkeypatch, tmp_path):
+    """Every Snakemake launched from here names its profile.
+
+    Snakemake reads `$SNAKEMAKE_PROFILE` in its own parser, so a command that
+    simply omits `--profile` is not a local run — it is whatever the
+    environment says, which is the divergence this whole change is about.
+    """
+    cmd = _snakemake_cmd(monkeypatch, tmp_path, [])
+    assert cmd[cmd.index("--profile") + 1] == "none"
+    assert cmd[cmd.index("--cores") + 1] == str(cli_mod.DEFAULT_CORES)
+
+
+def test_the_cli_says_when_a_variable_sent_the_run_to_a_queue(
+        monkeypatch, tmp_path, capsys):
+    """The CLI has no header, so this line is the only place a queue run is
+    distinguishable from a local one — and the variable that caused it may have
+    been exported months ago in a shell profile."""
+    prof = tmp_path / "slurm"
+    prof.mkdir()
+    (prof / "config.yaml").write_text("executor: slurm\n")
+
+    _snakemake_cmd(monkeypatch, tmp_path, [], profile_env=str(prof))
+    assert f"execution: {prof} ($SNAKEMAKE_PROFILE)" in capsys.readouterr().err
+
+    # And the overridden case, which otherwise reads as a plain local run.
+    _snakemake_cmd(monkeypatch, tmp_path, ["--profile", "none"],
+                   profile_env=str(prof))
+    assert "execution: local (--profile none, overriding $SNAKEMAKE_PROFILE)" \
+        in capsys.readouterr().err
+
+    # Nothing exported, nothing said: "local, default" is not news.
+    _snakemake_cmd(monkeypatch, tmp_path, [])
+    assert "execution:" not in capsys.readouterr().err
+
+
+def test_setup_and_unlock_pin_the_profile_too(monkeypatch, tmp_path):
+    """Both are frontend bookkeeping — an environment build and a lock file —
+    and neither should change because a variable is exported.
+
+    Nothing would have been submitted either way: `--conda-create-envs-only`
+    and `--unlock` both sit in the elif chain ahead of `execute_workflow()`
+    (read in 9.16.3). What a profile would have changed is the defaults they
+    run under.
+    """
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.setenv("SNAKEMAKE_PROFILE", "slurm")
+    monkeypatch.setattr(cli_mod, "missing_conda", lambda: None)
+
+    seen: list[list[str]] = []
+    monkeypatch.setattr(cli_mod.subprocess, "run",
+                        lambda cmd, *a, **k: (seen.append(cmd),
+                                              subprocess.CompletedProcess(
+                                                  cmd, 0, "", ""))[1])
+
+    assert cli_mod.main(["--setup", "--conda-prefix", str(tmp_path / "envs")]) == 0
+    _locked(tmp_path / "out")
+    assert cli_mod.unlock(tmp_path / "out") is None
+
+    for cmd in seen:
+        assert cmd[cmd.index("--profile") + 1] == "none"
 
 
 def test_profile_argv_carries_the_run_settings(tmp_path):
@@ -2589,6 +2710,9 @@ def test_run_settings_names_the_variable_a_flag_overrode(monkeypatch, tmp_path):
     monkeypatch.delenv("INIT_CWD", raising=False)
     monkeypatch.setenv("COMPAREM2_DATABASES", str(tmp_path / "exported"))
     monkeypatch.delenv("COMPAREM2_CONDA_PREFIX", raising=False)
+    # The execution row asserted below reads this one — see
+    # test_run_settings_attributes_the_execution_row.
+    monkeypatch.delenv("SNAKEMAKE_PROFILE", raising=False)
 
     rows = dict((what, (where, origin)) for what, where, origin
                 in cli_mod.run_settings(tmp_path / "out", tmp_path / "typed",
@@ -2606,6 +2730,38 @@ def test_run_settings_names_the_variable_a_flag_overrode(monkeypatch, tmp_path):
                                         base=tmp_path))
     assert same["databases"] == "$COMPAREM2_DATABASES"
     assert same["output"] == "given"
+
+
+def test_run_settings_attributes_the_execution_row(monkeypatch, tmp_path):
+    """The header's job is to say *where the value came from*, and for
+    execution there are three answers that look alike from inside a run.
+
+    A profile exported months ago and overridden by `--profile none` today is
+    the one worth the code: it renders as a plain local run otherwise, which is
+    exactly the state someone would be trying to confirm.
+    """
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    prof = tmp_path / "slurm"
+    prof.mkdir()
+    (prof / "config.yaml").write_text("executor: slurm\n")
+
+    monkeypatch.delenv("SNAKEMAKE_PROFILE", raising=False)
+    assert cli_mod.profile_origin(None, tmp_path) == "default"
+    assert cli_mod.profile_origin(str(prof), tmp_path) == "--profile"
+
+    monkeypatch.setenv("SNAKEMAKE_PROFILE", "slurm")
+    # A bare name is resolved the same way both times, so the variable is
+    # recognised as the source of its own value rather than as an override.
+    assert cli_mod.profile_origin(str(prof), tmp_path) == "$SNAKEMAKE_PROFILE"
+    assert cli_mod.profile_origin(str(tmp_path / "other"), tmp_path) \
+        == "--profile, overriding $SNAKEMAKE_PROFILE"
+    assert cli_mod.profile_origin(None, tmp_path) \
+        == "--profile none, overriding $SNAKEMAKE_PROFILE"
+
+    rows = dict((what, (where, origin)) for what, where, origin
+                in cli_mod.run_settings(tmp_path / "out", tmp_path / "db",
+                                        None, str(prof), base=tmp_path))
+    assert rows["execution"] == (str(prof), "$SNAKEMAKE_PROFILE")
 
 
 def test_run_settings_recognises_the_default_output(monkeypatch, tmp_path):

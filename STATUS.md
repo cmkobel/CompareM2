@@ -4,7 +4,7 @@ What is currently true of a real run. This file changes whenever something is
 re-run, which is why it is not in [DESIGN.md](DESIGN.md) — decisions should not
 need editing because a tool was verified again.
 
-Last updated **2026-09-07**. The tool numbers are from runs on thylakoid; the
+Last updated **2026-09-08**. The tool numbers are from runs on thylakoid; the
 pre-tag checks for v3.1.0 are from the laptop and say so.
 
 ## Cluster submission: the mechanism works, the pipeline cannot yet use it
@@ -37,6 +37,13 @@ environments below were unsolvable, and the next section is the run that closed
 it: `comparem2 --demo --profile <slurm>`, 11 of 11 steps through the queue.
 What is still unverified is the TUI's *rendering* under a profile, which needs
 a terminal, and `cancel.stop_slurm()`, which no run has called.
+
+**`$SNAKEMAKE_PROFILE` reaches the same place, and no cluster run has used it
+yet** (added 2026-09-08). Every verified submission above named `--profile`. The
+variable is Snakemake's own and its parsing is verified locally — exported, its
+`parse_args()` yields `executor='slurm'` and the profile's `cores: 32`, and
+`--profile none` parses identically to passing nothing — but the first
+GenomeDK run started from the variable rather than the flag has not happened.
 
 Resources are unmeasured. The generated rules declare `threads:` and no
 `mem_mb` or `runtime` (`snakefile.py:113`), so a profile's `default-resources`

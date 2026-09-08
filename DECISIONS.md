@@ -1809,3 +1809,61 @@ class of wrong claim as the rest of this entry.
 `refresh_cost()` is now also called from `settle()`. It hung off `sync_table()`,
 which only the selection keys reach, so the figure sat at 60.8 GB after the
 very session that downloaded it.
+
+---
+
+## 2026-09-08
+
+### A cluster profile is picked up from `$SNAKEMAKE_PROFILE`, and there is no `$COMPAREM2_PROFILE`
+The question was how to make v3 pick up a profile from `~/.config/snakemake`
+automatically, and whether that wants a `$COMPAREM2_PROFILE` like v2's. It
+wants neither a new variable nor a search: **Snakemake already defines both the
+default location and the variable**, and v3 was obeying one of them by accident.
+
+`~/.config/snakemake/<name>/` is Snakemake's own default because
+`appdirs.AppDirs("snakemake", "snakemake")` is what its profile lookup uses —
+`get_profile_dir()` searches the cwd, that directory, and the system one, which
+is why a bare `--profile slurm` already worked. And its `--profile` is declared
+`env_var="SNAKEMAKE_PROFILE"` on a parser that subclasses
+`configargparse.ArgumentParser`. Verified by running it, not only by reading it:
+with `SNAKEMAKE_PROFILE` exported, `parse_args([])` comes back with
+`executor='slurm'` and `cores=32` out of the profile's `config.yaml`
+(snakemake 9.26.1; source read at the pinned 9.16.3 is identical).
+
+**So the variable was half-honoured, in the worst available way.** The CLI path
+shells out to Snakemake, which read the variable itself — so an exported
+profile *did* submit the run, while `run_settings()` reported
+`execution: local`, and a `--cores 4` nobody typed went out over the profile's
+own `cores:` because that gate tested `args.profile` rather than the effective
+profile. The TUI path uses Snakemake's API, which has no notion of a profile,
+so the same variable submitted nothing at all. One exported variable, two
+behaviours, and the header wrong in one of them.
+
+The fix is to read it in `resolve_profile()`, the single place both paths get
+their value from. A second name would have needed a precedence rule and bought
+nothing; the honest version of "like v2" is to follow the upstream variable.
+
+**`none` is the escape, and it is why every Snakemake we launch now names its
+profile.** Snakemake spells "no profile at all" as `--profile none`, which
+`resolve_profile()` turns into None. But *omitting* `--profile` on the
+subprocess is not a local run — it is whatever the environment says. So
+`profile_flag()` always emits one, `none` included, and `--setup` and
+`--unlock` pin it to `none` outright: both are login-node bookkeeping, and a
+profile would have changed the defaults they run under. Verified that this
+costs nothing in the local case — with no variable set, `--profile none` and
+passing nothing parse identically (`profile`, `executor`, `cores`, `jobs` all
+None).
+
+Nothing would have been submitted by those two either way:
+`--conda-create-envs-only` reaches `dag_api.conda_create_envs()` and `--unlock`
+reaches `dag_api.unlock()` in the same `elif` chain that ends at
+`execute_workflow()`.
+
+**What was rejected: scanning `~/.config/snakemake` and using what is there.**
+A directory existing is not a decision to submit, and with `slurm` and
+`slurm-gpu` side by side there is no right answer. Discovery is not worth a
+surprise of that size.
+
+**Unverified on a cluster.** 267 unit tests cover the resolution, the
+attribution and every command line built; the GenomeDK submission of 2026-09-07
+was through `--profile`, and no run has yet been started from the variable.

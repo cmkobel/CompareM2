@@ -245,20 +245,45 @@ comparem2 *.fna --profile ~/.config/snakemake/slurm
 ```
 
 A bare name works too — `--profile slurm` searches `~/.config/snakemake`, the
-way Snakemake's own `--profile` does. The flag is a passthrough, so anything
-Snakemake supports works: `snakemake-executor-plugin-slurm` for SLURM and
+way Snakemake's own `--profile` does. That directory is the default place for a
+profile because it is Snakemake's default place, not ours:
+`appdirs.AppDirs("snakemake", "snakemake")`, so `$XDG_CONFIG_HOME/snakemake` on
+Linux, with `/etc/xdg/snakemake` searched too for a profile your sysadmin
+installed for everyone. The flag is a passthrough, so anything Snakemake
+supports works: `snakemake-executor-plugin-slurm` for SLURM and
 `snakemake-executor-plugin-cluster-generic` for PBS, SGE and LSF are both
 already installed.
+
+**Or set it once and forget the flag.** `$SNAKEMAKE_PROFILE` is Snakemake's own
+variable, and CompareM2 follows it, so this belongs next to the two exports in
+step 1:
+
+```bash
+export SNAKEMAKE_PROFILE=slurm       # a name under ~/.config/snakemake, or a path
+comparem2 *.fna                      # submits, and says so
+```
+
+Every run from that shell then goes to the queue. Because that is easy to
+forget, a run that a variable submitted prints where it is going —
+`execution: /home/you/.config/snakemake/slurm ($SNAKEMAKE_PROFILE)` — and the
+TUI's header says the same in its `execution` row.
+
+`--profile` beats the variable, and **`--profile none` runs locally in spite of
+it**, which is what you want for a four-genome check on the login node.
 
 `--tui` works with a profile: the interface runs on the login node and shows
 jobs starting and finishing as the queue runs them.
 
+!!! note "`--setup` and `--unlock` ignore the profile on purpose"
+    Both are login-node bookkeeping — solving environments, clearing a lock —
+    so they run locally whether or not `$SNAKEMAKE_PROFILE` is exported.
+
 !!! warning "`--cores` is not a submission setting"
     `comparem2 *.fna --cores 64` starts 64 processes **on the machine you typed
     it on**. It submits nothing. On a login node that is a way to get an email
-    from your sysadmin. Queue submission needs `--profile`.
+    from your sysadmin. Queue submission needs a profile.
 
-    With `--profile`, `-t/--cores` is left to the profile unless you pass it,
+    Under a profile, `-t/--cores` is left to the profile unless you pass it,
     because a number on the command line overrides the profile's own.
 
 ## From git, for development
@@ -267,7 +292,7 @@ jobs starting and finishing as the queue runs them.
 git clone https://github.com/cmkobel/CompareM2.git
 cd CompareM2
 pixi install
-pixi run pytest        # 240 unit tests, no databases and no tools needed
+pixi run pytest        # 267 unit tests, no databases and no tools needed
 pixi run comparem2 --help
 ```
 
