@@ -1910,3 +1910,19 @@ profile.yaml (or config.yaml) found") and accepts `config.v<major>+.yaml`
 patterns besides. `resolve_profile()`'s docstring already says to let
 Snakemake's search produce that error; the bug was never the message, it was
 that one execution path threw the message away.
+
+### The variable was verified on GenomeDK the same day, and it submits
+`SNAKEMAKE_PROFILE=slurm`, no flag, `comparem2 --demo`: 11 of 11 steps, 10 jobs
+on `cn-1060` and `cn-1103`. The numbers are in [STATUS.md](STATUS.md).
+
+Two things the local tests could not have shown. The bare-name form is what a
+cluster actually uses — `~/.config/snakemake/slurm` was already sitting on
+GenomeDK, written from the installation docs — and that path is the one
+`resolve_profile()` deliberately does *not* resolve, so it had never been run
+end to end. And the remote Snakemake is 9.16.3, the pinned version, where the
+`env_var=` declaration had only been read rather than executed; the laptop's
+venv is 9.26.1.
+
+`--profile none` and `--setup` were checked in the same session with the
+variable still exported: both stayed on the frontend and `sacct` recorded
+nothing for either.

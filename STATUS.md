@@ -38,12 +38,22 @@ it: `comparem2 --demo --profile <slurm>`, 11 of 11 steps through the queue.
 What is still unverified is the TUI's *rendering* under a profile, which needs
 a terminal, and `cancel.stop_slurm()`, which no run has called.
 
-**`$SNAKEMAKE_PROFILE` reaches the same place, and no cluster run has used it
-yet** (added 2026-09-08). Every verified submission above named `--profile`. The
-variable is Snakemake's own and its parsing is verified locally — exported, its
-`parse_args()` yields `executor='slurm'` and the profile's `cores: 32`, and
-`--profile none` parses identically to passing nothing — but the first
-GenomeDK run started from the variable rather than the flag has not happened.
+**`$SNAKEMAKE_PROFILE` submits, verified on GenomeDK 2026-09-08** against
+Snakemake 9.16.3 — the pinned version — with `SNAKEMAKE_PROFILE=slurm` and no
+`--profile` on the command line. A bare name, resolved by Snakemake in
+`~/.config/snakemake`, which is the case the flag never exercised.
+
+| Command, variable exported | What happened |
+| --- | --- |
+| `comparem2 --demo` | `execution: slurm ($SNAKEMAKE_PROFILE)`, then `Using profile slurm` from Snakemake. **11 of 11 steps, 10 jobs** under one run id `e8e98e63…`, all COMPLETED on `cn-1060` and `cn-1103` at 14–16 s each |
+| `--demo --until seqkit --profile none` | `execution: local (--profile none, overriding $SNAKEMAKE_PROFILE)`. No profile loaded, ran on the frontend, `sacct` empty |
+| `--setup --until seqkit` | Deployed one environment. No profile loaded, nothing submitted |
+
+**The 10 min 06 s that run took was 8 min 05 s of `perl` environment build on
+the frontend**, against 1 min 20 s from the first submission to the last of the
+11 steps. The prefix held `basic` and not `perl`, so this is the cost `--setup`
+exists to move out of a run — and it is paid on the login node, not inside an
+allocation.
 
 Resources are unmeasured. The generated rules declare `threads:` and no
 `mem_mb` or `runtime` (`snakefile.py:113`), so a profile's `default-resources`
