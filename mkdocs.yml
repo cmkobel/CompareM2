@@ -4,6 +4,7 @@ copyright: CompareM2 genomes-to-report pipeline. Copyright © 2019-2026 GNU GPL 
 nav:
   - "index.md"
   - "05 quick start.md"
+  - "07 an example report.md"
   - "10 installation.md"
   - "20 usage.md"
   - "30 what analyses does it do.md"

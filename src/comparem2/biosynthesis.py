@@ -116,6 +116,25 @@ LB = ("adn", "ala__L", "amp", "arg__L", "aso3", "asp__L", "ca2", "cbl1", "cd2",
 
 AEROBE = "o2"
 
+# M9's two elemental sources. The panel's `de_novo` verdict is measured on M9,
+# so a model that cannot get carbon or nitrogen into its cytoplasm from that
+# medium answers `de_novo` to nothing — one hole, thirty-two zeros — and the
+# whole column then describes the model rather than the organism.
+#
+# **Probed in the cytoplasm, not as a membership test on the exchange set**,
+# because the two differ and the difference is not hypothetical. Of the eight
+# models in the 2026-09-08 showcase run, four could not reach ammonium and they
+# failed in two different places: three carried no `EX_nh4_e` at all, and the
+# fourth carried both `EX_nh4_e` and `NH4tex` with no periplasm-to-cytoplasm
+# `NH4tpp`. An exchange-set check clears that fourth model, which is as broken
+# as the other three — it was the one that reached a certified optimum with the
+# most reactions in the set.
+#
+# Only the M9 family gets this. LB carries nitrogen in every amino acid and
+# carbon in most of them, so no single compound is its source and a missing
+# `nh4` there is not a defect.
+SOURCES = (("glc__D", "carbon"), ("nh4", "nitrogen"))
+
 
 class Compound(NamedTuple):
     """One panel entry: the BiGG metabolite probed, and how to name it."""
@@ -169,7 +188,13 @@ PANEL = (
 DE_NOVO, UPSTREAM, NO_ROUTE, ABSENT = "de_novo", "upstream", "none", "absent"
 
 PANEL_HEADER = ("compound", "name", "group", "verdict")
-MEDIA_HEADER = ("medium", "compounds", "present", "growth")
+# `missing` names the medium's compounds the model has no exchange for, and
+# `unreachable` the elements of `SOURCES` it cannot get into the cytoplasm.
+# Both exist because the `present` count could not tell "no nickel" from "no
+# nitrogen source": on 2026-09-08 two models of one strain both read 17 of 20
+# for M9 and differed in which three were missing.
+MEDIA_HEADER = ("medium", "compounds", "present", "growth", "missing",
+                "unreachable")
 
 
 def _status(solution) -> str:
@@ -207,6 +232,27 @@ def add_demands(model) -> list[Compound]:
         model.add_reaction_from_str(f"{rid}: M_{compound.bigg}_c --> ")
         present.append(compound)
     return present
+
+
+def add_source_demands(model) -> list[tuple[str, str, str | None]]:
+    """One drain per `SOURCES` compound, as (compound, element, reaction).
+
+    Same contract as `add_demands` — must run before the solver is built. A
+    compound the model does not carry gets `None` for its reaction rather than
+    being dropped, because "the metabolite is not in the network" is one of the
+    ways a source is unreachable and has to reach the report as such.
+    """
+    out: list[tuple[str, str, str | None]] = []
+    for bigg, element in SOURCES:
+        if f"M_{bigg}_c" not in model.metabolites:
+            out.append((bigg, element, None))
+            continue
+        rid = _demand(bigg)
+        if rid in model.reactions:
+            raise SystemExit(f"biosynthesis: {rid} already exists in the model")
+        model.add_reaction_from_str(f"{rid}: M_{bigg}_c --> ")
+        out.append((bigg, element, rid))
+    return out
 
 
 def medium_constraints(by_compound: dict[str, str], upper: dict[str, float | None],
@@ -252,6 +298,7 @@ class _Probe:
         self.model = model
         self.max_uptake = max_uptake
         self.present = add_demands(model)
+        self.sources = add_source_demands(model)
         self.exchanges = _exchanges(model)
         # After the drains, because the solver is built over the model as it
         # stands and would not know about a reaction added later.
@@ -264,6 +311,10 @@ class _Probe:
         # `None` here, not `inf`.
         self._drain_ub = {_demand(c.bigg): model.reactions[_demand(c.bigg)].ub
                           for c in self.present}
+        # The source drains are pinned shut with the rest, so probing one
+        # cannot leave another open as a free sink.
+        self._drain_ub.update({rid: model.reactions[rid].ub
+                               for _, _, rid in self.sources if rid is not None})
 
     def medium(self, compounds, open_drain: str | None = None) -> dict:
         return medium_constraints(self.exchanges, self._upper, self._drain_ub,
@@ -309,26 +360,52 @@ def verdicts(probe: _Probe, min_flux: float = MIN_FLUX) -> list[tuple[str, ...]]
     return rows
 
 
+def unreachable_sources(probe: _Probe, compounds,
+                        min_flux: float = MIN_FLUX) -> list[str]:
+    """Which of `SOURCES` the model cannot reach in the cytoplasm on `compounds`.
+
+    The check that has to pass before any verdict on this medium means
+    anything about the organism. See `SOURCES` for why it is a flux probe and
+    not a lookup in `probe.exchanges`.
+    """
+    blocked = []
+    for _, element, rid in probe.sources:
+        if rid is None or probe.maximum(rid, probe.medium(compounds, rid)) <= min_flux:
+            blocked.append(element)
+    return blocked
+
+
 def media(probe: _Probe) -> list[tuple[str, ...]]:
     """Growth on each reference medium, with how much of it the model can take.
 
-    `present` is the diagnostic: a medium whose compounds the model has no
-    exchange for is not the medium it was asked for. The eleven drafts measured
-    carry exchanges for 48 to 51 of LB's 65, against 62 for the curated
+    `present` was the original diagnostic: a medium whose compounds the model
+    has no exchange for is not the medium it was asked for. The eleven drafts
+    measured carry exchanges for 48 to 51 of LB's 65, against 62 for the curated
     `iML1515`, and the missing ones are the vitamins and nucleosides — which is
     why a Gram-positive draft returns zero on a rich medium.
+
+    **A count was not enough**, so `missing` names them and `unreachable` says
+    whether what is gone matters. On 2026-09-08 two models of one strain both
+    read 17 of 20 for M9 while differing in which three they lacked — and one of
+    those three was ammonium, M9's only nitrogen source, which zeroed all 32 of
+    that model's panel verdicts. 17 of 20 looks fine; `nitrogen` does not.
     """
     anaerobic = tuple(c for c in M9 if c != AEROBE)
     lb_anaerobic = tuple(c for c in LB if c != AEROBE)
     rows = []
     for name, compounds in (("M9", M9), ("M9[-O2]", anaerobic),
                             ("LB", LB), ("LB[-O2]", lb_anaerobic)):
-        count = sum(1 for c in compounds if c in probe.exchanges)
+        absent = tuple(c for c in compounds if c not in probe.exchanges)
         growth = probe.growth(probe.medium(compounds))
-        rows.append((name, str(len(compounds)), str(count), f"{growth:.4f}"))
+        # M9 family only — see `SOURCES` on why LB gets no such claim.
+        blocked = (unreachable_sources(probe, compounds)
+                   if name.startswith("M9") else [])
+        rows.append((name, str(len(compounds)),
+                     str(len(compounds) - len(absent)), f"{growth:.4f}",
+                     " ".join(absent), " ".join(blocked)))
     every = list(probe.exchanges)
     rows.append(("complete", str(len(every)), str(len(every)),
-                 f"{probe.growth(probe.medium(every)):.4f}"))
+                 f"{probe.growth(probe.medium(every)):.4f}", "", ""))
     return rows
 
 

@@ -37,6 +37,10 @@ columns on screen, and what the result *cannot* tell you — every number quoted
 from the tool's own paper and checked against it — and the report ends with a
 citation list covering exactly the tools that ran.
 
+**[See a real one](https://comparem2.readthedocs.io/en/latest/07%20an%20example%20report/)**
+— all fourteen tools over eight *Streptococcus mitis* group genomes, including
+what the report gets wrong on that set and how it says so.
+
 ## Installing
 
 **Linux only**, because the analysis tools are `linux-64`. The package is the

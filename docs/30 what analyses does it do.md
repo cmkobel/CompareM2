@@ -21,6 +21,9 @@ Use `--until` to run a subset. Dependencies come along automatically, so
 comparem2 *.fna --until fasttree
 ```
 
+Every section below appears in [an example report](07 an example report.md),
+rendered from a real run of all 14 over eight genomes.
+
 ## Summary
 
 | Tool | Runs | Needs | Database |

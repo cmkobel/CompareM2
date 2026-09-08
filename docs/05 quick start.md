@@ -63,6 +63,9 @@ Each section carries a **"What this is, and how to read it"** block, collapsed
 by default. Open it before drawing a conclusion from the numbers: it says what
 the columns mean, what the tool's own error is, and what the result cannot show.
 
+[An example report](07 an example report.md) is a real run of all fourteen
+tools over eight genomes, with a walk through what to look at first.
+
 ---
 
 [Installation](10 installation.md) covers databases, the tool environments and

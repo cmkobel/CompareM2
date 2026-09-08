@@ -1900,6 +1900,29 @@ def _biosynthesis_naming(varying: list) -> str:
     return "."
 
 
+def _starved_note(starved: dict[str, list[str]], total: int) -> str:
+    """Which models cannot reach a source element on the minimal medium.
+
+    Empty when none are, so the sentence only appears when it applies. The
+    element names come from `biosynthesis.SOURCES` and are not translated here:
+    what the report can say is that the model has no route to carbon or to
+    nitrogen, which is a fact about the network rather than an interpretation.
+    """
+    if not starved:
+        return ""
+    listed = ", ".join(
+        f"{html.escape(sample)} (no {' or '.join(elements)})"
+        for sample, elements in starved.items())
+    return (
+        f'<p class="summary"><strong>{len(starved)} of {total} models cannot '
+        "reach a source element from the minimal medium</strong>, so for those "
+        "the <em>de novo</em> column above is a property of the reconstruction "
+        f"and not of the organism: {listed}. A draft model with no uptake route "
+        "for carbon or nitrogen can build nothing from M9 whatever else it "
+        "contains, and that shows up as every compound falling to "
+        "<em>upstream</em> or <em>no route</em> at once.</p>")
+
+
 def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
     """What each genome can build, and what it has to be given.
 
@@ -1943,6 +1966,20 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
     varying = [c for c in PANEL
                if len({verdicts[s].get(c.bigg, ABSENT) for s in named}) > 1]
 
+    # M9 is the medium `de_novo` is measured on, so a model that cannot reach
+    # carbon or nitrogen from it answers `de_novo` to nothing and its whole row
+    # describes the reconstruction. Said here, beside the counts a reader would
+    # quote, rather than left to the media table further down: on 2026-09-08
+    # four of eight models could not reach ammonium and all four reported 0 of
+    # 32, while the media table's `present` count read a reassuring 17 of 20.
+    # Read defensively — a table written before this column existed, or while
+    # the rule is still writing it, simply has nothing to say here.
+    starved = {}
+    for sample in named:
+        row = media.get(sample, {}).get("M9")
+        if row is not None and len(row) > 5 and row[5].strip():
+            starved[sample] = row[5].split()
+
     parts = [
         f'<p class="summary">{len(PANEL)} building blocks per genome. '
         "<em>De novo</em> is a complete route from a minimal medium; "
@@ -1953,6 +1990,7 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
         _table(rows, header=["Genome", "De novo", "Upstream", "No route",
                              "Not in model"]),
         _absent_note(absent, len(ctx.samples)),
+        _starved_note(starved, len(named)),
         "<h3>Building blocks per genome</h3>",
         '<p class="summary">Darkest is <em>no route</em> (×), mid is '
         "<em>upstream</em> (~), lightest is <em>de novo</em>, and an unshaded "
@@ -2010,6 +2048,23 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
                 '<p class="note">A zero on a rich medium is usually missing '
                 "transport, not missing metabolism: these models carry exchange "
                 f"reactions for {span} of LB's {len(LB)} compounds.</p>")
+        # The compounds themselves, for the minimal medium only. A count cannot
+        # distinguish a missing trace metal from a missing nitrogen source, and
+        # the ids are what a reader checks against the medium definition.
+        gone = {}
+        for sample in media:
+            row = media[sample].get("M9")
+            if row is not None and len(row) > 4 and row[4].strip():
+                gone[sample] = row[4].split()
+        if gone:
+            listed = ", ".join(
+                f"{html.escape(s)} ({', '.join(html.escape(c) for c in ids)})"
+                for s, ids in gone.items())
+            parts.append(
+                '<p class="note">M9 compounds these models have no exchange '
+                f"reaction for: {listed}. Whether that matters depends on which "
+                "compound it is, which is what the line above the grid "
+                "reports.</p>")
 
     return "".join(parts)
 

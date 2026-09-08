@@ -7,6 +7,189 @@ need editing because a tool was verified again.
 Last updated **2026-09-08**. The tool numbers are from runs on thylakoid; the
 pre-tag checks for v3.1.0 are from the laptop and say so.
 
+## The docs showcase run: eight genomes, all fourteen tools, through SLURM
+
+2026-09-08 on GenomeDK. Eight complete *Streptococcus mitis* group genomes
+(2.04–2.25 Mb, 1,992–2,242 CDS) fetched from RefSeq, `--profile` pointing at a
+run-specific profile inside the project root so the shared `~/.config/snakemake/slurm`
+was left alone. **53 jobs, 14 of 14 tools produced output, report 155,829 bytes**,
+14 sections plus methods. The report is checked in at
+`docs/assets/example-report.html`; the genome list and accessions are in
+[`docs/07 an example report.md`](docs/07 an example report.md).
+
+| | |
+| --- | --- |
+| thirteen tools | **25 min** wall across the queue, 12:44:14 → 13:09 |
+| GTDB-Tk | waited on its database, then **under a minute** for eight genomes |
+| the GTDB download | **60.8 GB in 2 h 15 m**, measured **10.81 MB/s** on the front-end (973 MB in a 90 s window, and the same rate end to end) |
+| extracted GTDB r232 | **92 GB** by `du` including the retained tarball |
+| bakta-light | 3.6 GB on disk |
+| conda environments | six, already present; `gtdbtk` was rebuilt because the catalogue hash had moved since 09-07 |
+
+**Two seqkit jobs failed and it was the node, not the pipeline.** Jobs
+62874391/62874392 (`Spn_ATCC700669`, `Spseudo_IS7493`) died after 3 s on
+`Error running conda info` on `cn-1047`, while the other six seqkit jobs on
+other nodes succeeded in the same run. `--keep-going` carried on and the report
+was written for the twelve tools that finished; a plain resume re-ran exactly
+those two jobs and both completed, which is what makes it transient rather than
+a PATH problem. This is the failure mode `CLAUDE.md` records for conda on
+`PATH`, arriving per-node.
+
+**GTDB-Tk on three species, the first time that section has had anything to
+resolve below genus.** Shared lineage collapsed to `Streptococcus`; six genomes
+`s__Streptococcus pneumoniae` at 98.31–99.18 ANI, `Spseudo_IS7493`
+`s__Streptococcus pseudopneumoniae` at 97.53, `Smitis_B6` `s__Streptococcus
+mitis_AR` at 100.0 — all against a 95.0 radius, all `ani_screen`, AF 0.892–0.997.
+
+The comparative sections, for the record and because they are the cross-check:
+
+| | |
+| --- | --- |
+| skani | pneumococci 98.31–98.99% to each other; **D39/R6 100.00%**; *S. pseudopneumoniae* **93.98–94.51%**; *S. mitis* 91.03–92.09% |
+| snp-dists | **D39↔R6 65**; pneumococci 10,685–16,922; pseudopneumoniae 62,231–62,757; mitis 82,970–88,439 |
+| panaroo | **3,764 clusters, 1,252 core**, core alignment **1,183,231 columns**, 93 distinct presence patterns |
+| fasttree | `(D39,R6)` sister at 1.7e-5 / 4.2e-5, mitis-group pair basal — correct topology |
+| mlst | ST205, **ST595 for both D39 and R6**, ST81, ST268, ST303; *S. pseudopneumoniae* **no ST** with inexact alleles (`ddl(656?)`); *S. mitis* on the `smitis` scheme, ST167 |
+| amrfinder | 9 resistance classes; 1, 1, 1, 2, 3, 5 across the pneumococci and **8 in *S. mitis* B6** |
+| checkm2 | 100.0% complete (mitis 99.97), contamination 0.09–0.38% |
+
+### And the metabolism sections contradict themselves on this set
+
+**This is the important result of the run**, and it partly answers the question
+the *S. aureus* section below flags as unmeasured and decisive.
+
+`Spn_D39` and `Spn_R6` are the same strain by every other measure above. The
+biosynthesis panel calls **18 of 32 compounds *de novo* for D39 and 0 for R6**,
+flipping 20 of the 32 in one direction (D39 `de_novo` → R6 `upstream`). Their
+models share 1,048 reactions, with 530 unique to R6 and **85 unique to D39**.
+
+| genome | SCIP status | gap | solver s | reactions | de novo |
+| --- | --- | --: | --: | --: | --: |
+| Spn_R6 | optimal | 0 | 15.4 | 1,579 | **0** |
+| Spn_ATCC700669 | optimal | 0 | 7.9 | 1,573 | 0 |
+| Spn_Hungary19A | optimal | 0 | 18.8 | 1,555 | 0 |
+| Spn_TIGR4 | gaplimit | 1.25e-4 | 363 | 1,523 | 0 |
+| Spn_P1031 | gaplimit | 7.6e-4 | 380 | 1,571 | **18** |
+| Spn_D39 | **timelimit** | 2.61e-2 | 600 | 1,134 | 18 |
+| Spseudo_IS7493 | **timelimit** | 2.33e-2 | 600 | 1,051 | 18 |
+| Smitis_B6 | **timelimit** | 4.01e-2 | 600 | 1,037 | 17 |
+
+Four things follow, and three of them close a door:
+
+1. **Proteome size does not predict the timeout.** 3 of 8 hit the 600 s ceiling
+   at ~2,000 proteins, at gaps *worse* than the 3,200-protein *S. aureus*
+   genomes' 1.0–2.1%. The heuristic that picked this set was wrong.
+2. **It is not a gap tolerance away and not a time limit away.** `Spn_P1031`
+   met CarveMe's own `limits/gap=0.001`, re-solved to a **certified optimum at
+   the same objective 790**, and still answers 18 de novo against 0 for four
+   other converged models.
+3. **The problem is deterministic, not noisy.** `Spn_R6` re-solved to the same
+   objective 813.6 in 15.2 s against 15.4 s in the pipeline run.
+4. **The truncated model *gains* de novo verdicts rather than losing them.**
+   D39's 1,134-reaction model reports more self-sufficiency than R6's
+   1,579-reaction one. The 85 D39-unique reactions are what close its routes.
+
+**And more time is now ruled out by direct measurement, not by analogy.** Jobs
+62889010 (`Spn_D39`) and 62889013 (`Smitis_B6`) re-solved at
+`limits/time=10800` and `limits/gap=1e-5` — 18x the solver time — through
+[`upstream/carve_longsolve.py`](upstream/carve_longsolve.py), which patches
+`SCIPSolver.solve` at the same point `carve_scip.py` does, because that is after
+CarveMe sets its own limits. Both ran the full 10,800 s and returned
+`timelimit`:
+
+| genome | | 600 s | 10,800 s |
+| --- | --- | --: | --: |
+| Spn_D39 | gap | 2.61% | 2.01% |
+| | objective | 825.1 | **825.3** |
+| | reactions | 1,134 | **1,135** |
+| | solutions found | 65 | 100 |
+| Smitis_B6 | gap | 4.01% | 2.90% |
+| | objective | 763.7 | 770.0 |
+| | reactions | 1,037 | **1,042** |
+
+**Eighteen times the time buys one reaction on D39 and five on Smitis_B6**, and
+leaves D39 444 reactions short of R6's 1,579. So the sparse model is not a
+truncated version of the dense one — it is where the search lands and stays.
+Together with `Spn_P1031` (certified optimal, 1,571 reactions, 18 de novo) and
+`Spn_R6` (certified optimal, 1,579 reactions, 0 de novo), neither reaction count
+nor solver status nor solver time determines the verdict. What determines it is
+*which* network comes back, and CarveMe's objective does not pin that down.
+
+### Diagnosed: the four "0 de novo" models cannot take up ammonium
+
+Measured 2026-09-08 with [`upstream/probe_akg.py`](upstream/probe_akg.py) and
+[`upstream/find_entry.py`](upstream/find_entry.py), against the run's own
+models. **This is the answer to which side of the D39/R6 split is wrong, and it
+needed no biological assumption.**
+
+The first hypothesis was wrong and is recorded because it was: 2-oxoglutarate
+*is* the hinge — glutamate is unreachable from M9 in **all eight** models, which
+is expected for a lactic acid bacterium with no oxidative TCA cycle — but that
+is what the two models *agree* on, so it cannot be what separates them. What
+separates them is upstream of the enzymes entirely:
+
+| model | `EX_nh4_e` | `NH4tex` | `NH4tpp` | de novo |
+| --- | :-: | :-: | :-: | --: |
+| Spn_D39, Spn_P1031, Spseudo_IS7493, Smitis_B6 | yes | yes | yes | 17–18 |
+| Spn_R6, Spn_TIGR4, Spn_Hungary19A | **no** | **no** | yes | **0** |
+| Spn_ATCC700669 | yes | yes | **no** | **0** |
+
+**M9's only nitrogen source is ammonium**, so a model missing any link in that
+three-step chain can build nothing from it — one hole, thirty-two zeros, and the
+cascade the `upstream` verdict exists to absorb cannot absorb a missing medium
+component. The partition is exact: the four with a complete chain answer 17–18,
+the four without answer 0.
+
+All eight carry `GLUDy`, `ASPTA` and `ALATA_L` with identical bounds, so the
+enzymes were never the difference. In D39 the working route is
+gene-associated — `R_GLUDy` ← `G_AJOIJO_01205` at flux -10.0 with `R_NH4tpp`
+at +10.0 — and glutamate/2-oxoglutarate cycle catalytically rather than being
+net-synthesised, which is why `glu__L` is not itself producible while aspartate
+is. That is ordinary biochemistry, not a gap-fill.
+
+**So the zeros are model defects and the 17–18 are the defensible numbers.** And
+the part that indicts the reconstruction rather than the luck: `Spn_R6`'s model
+is the one that reached a **certified optimum in 15.4 s with the most reactions
+of any model in the set, 1,579**, and it is the one that cannot eat. CarveMe's
+objective does not require a viable uptake chain and nothing downstream checks
+for one.
+
+**The evidence was already in the report and unreadable.** `_section_biosynthesis`
+printed the media table's `present` column — how many of a medium's compounds the
+model has an exchange for. R6 and D39 both read **17 of 20** for M9, differing
+only in *which* three were missing (R6: `na1 nh4 ni2`; D39: `mobd na1 ni2`). A
+count cannot distinguish "no nickel" from "no nitrogen source".
+
+**Fixed the same day, and the showcase report was re-rendered over it.**
+`biosynthesis.py` gained `SOURCES` (M9's one carbon and one nitrogen source),
+`add_source_demands()` and `unreachable_sources()`; the media TSV gained a
+`missing` column naming the compounds and an `unreachable` column naming the
+elements; `report.py` gained `_starved_note()`, which puts the sentence directly
+beneath the *de novo* counts rather than in a footnote. Five unit tests, 274
+total. Measured on the eight models after the change:
+
+| model | present | missing | unreachable |
+| --- | --: | --- | --- |
+| Spn_R6, Spn_TIGR4, Spn_Hungary19A | 17/20 | `na1 nh4 ni2` | **nitrogen** |
+| Spn_ATCC700669 | **18/20** | `na1 ni2` | **nitrogen** |
+| Spn_D39, Spseudo_IS7493, Smitis_B6 | 17/20 | `mobd na1 ni2` | — |
+| Spn_P1031 | 18/20 | `na1 ni2` | — |
+
+The partition matches the de novo split exactly, and **`Spn_ATCC700669` is why
+`unreachable` is a flux probe and not set membership on `probe.exchanges`**: it
+reads the *highest* `present` count of the eight, carries `EX_nh4_e`, and still
+cannot get nitrogen into the cytoplasm. A membership test clears it. The
+rendered line in the shipped report is *"4 of 8 models cannot reach a source
+element from the minimal medium."*
+
+Every one of the eight models grows 0.0000 on M9 and on LB (except R6 at 0.4604
+on LB) and only on the complete medium — consistent with a fastidious organism,
+and now also with four of them having no nitrogen route.
+
+What is left is disclosure, which `carve_scip.py` prints to a rule log that
+`report.py` does not read. See the 2026-09-08 entry in
+[DECISIONS.md](DECISIONS.md) for why that was not fixed as part of the docs work.
+
 ## Cluster submission: the mechanism works, the pipeline cannot yet use it
 
 `--profile` was added 2026-09-07 and **submits to SLURM**, verified on GenomeDK

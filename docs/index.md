@@ -43,11 +43,14 @@ paste into a manuscript.
 
 ## Where to start
 
-Installed it already and want to see a report before committing any genomes of
-your own? `comparem2 --demo` runs four analyses over six bundled *Enterococcus
-faecium* plasmids and downloads nothing.
+Want to see a report before committing any genomes of your own? There is
+[an example report](07 an example report.md) here — all fourteen tools over
+eight *Streptococcus mitis* group genomes — and once installed,
+`comparem2 --demo` runs four analyses over six bundled *Enterococcus faecium*
+plasmids and downloads nothing.
 
   - [Quick start](05 quick start.md) — install and run
+  - [An example report](07 an example report.md) — a real run, all 14 tools
   - [Installation](10 installation.md) — conda, pixi, databases, HPC
   - [Usage](20 usage.md) — the CLI, the TUI, passthrough parameters
   - [What analyses does it do](30 what analyses does it do.md) — the 14 tools

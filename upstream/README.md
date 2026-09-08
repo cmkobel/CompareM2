@@ -17,6 +17,42 @@ The first two findings are in [../STATUS.md](../STATUS.md) (*CarveMe was nine
 minutes for the wrong reason*), [../DECISIONS.md](../DECISIONS.md) and
 `../src/comparem2/carve_scip.py`.
 
+## Three scripts, not drafts
+
+`carve_longsolve.py`, `probe_akg.py` and `find_entry.py` are the instruments
+behind the strongest evidence the CarveMe and SCIP drafts have, and neither
+draft has been rewritten to use them yet. All three run under the tool
+environment's own python and import nothing from `comparem2`, like
+`carve_scip.py` and `biosynthesis.py`.
+
+**`probe_akg.py` and `find_entry.py` found a second, sharper CarveMe defect than
+the one `carveme-205-comment.md` currently describes: a draft model that cannot
+take up the medium's nitrogen source.** Of the eight *S. mitis* group models
+from the 2026-09-08 docs showcase run, **four are missing a link in the
+three-step ammonium uptake chain** — three lack `EX_nh4_e` and `NH4tex`
+outright, one lacks `NH4tpp` — and those four are exactly the four that report
+0 of 32 biosynthesis panel compounds as producible from M9, whose only nitrogen
+source is ammonium. The four with a complete chain report 17–18. All eight carry
+`GLUDy`, `ASPTA` and `ALATA_L` identically, so the enzymes are not the
+difference.
+
+The reason this is a reconstruction bug and not a search accident: the worst
+affected model, `Spn_R6`, is the one that reached a **certified optimum in 15.4 s
+with the most reactions in the set (1,579)**. CarveMe's objective does not
+require the network to be able to eat. This is a cleaner thing to report
+upstream than degenerate optima, because it is a yes/no property of the output
+that any user can check.
+
+`carve_longsolve.py` is the one that rules out solver time. It re-solves one genome with SCIP's time limit raised, patching
+`SCIPSolver.solve` at the same point `carve_scip.py` does. Measured with it on
+2026-09-08 (the docs showcase run, *S. mitis* group): **eighteen times the
+solver budget bought one reaction.** `Spn_D39` at `limits/time=10800` ran the
+full 3 h, still `timelimit` at a 2.01% gap, 1,135 reactions against 1,134 at
+600 s — and 444 short of the 1,579 its near-identical sibling `Spn_R6` reaches
+in 15.4 s. So the sparse model is not a truncated dense one, which is the claim
+`carveme-205-comment.md` currently cannot make. Full numbers in
+[../STATUS.md](../STATUS.md), *the docs showcase run*.
+
 ## The two panaroo-on-macOS PRs are a pair
 
 `intbitset-feedstock-pr.md` and `bioconda-panaroo-pr.md` are what it takes to

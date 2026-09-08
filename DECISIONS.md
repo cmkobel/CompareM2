@@ -1949,3 +1949,132 @@ in 3.3.0, and `run_exports` pins at `max_pin="x"` either way.
 
 No recipe change: the diff added no dependency, no build-script change and no
 test-section change, which are the only three things autobump cannot do.
+
+### The docs ship a real report, and it keeps the section that contradicts itself
+Asked for: a complete HTML report of an interesting genome set, in `docs/`, to
+show new users what the product is. The set chosen is eight complete
+*Streptococcus mitis* group genomes — six pneumococci across serotypes and both
+pandemic MDR lineages, plus *S. pseudopneumoniae* IS7493 and *S. mitis* B6 — and
+it is on the *Streptococcus mitis* group because that is where the 95% ANI
+species boundary is genuinely contested, so three of the fourteen sections have
+something to disagree about rather than merely reporting one species eight times.
+
+**Including D39 *and* R6 was the load-bearing choice, and it is what caught the
+defect.** R6 is D39's unencapsulated laboratory derivative; the run puts them at
+100.00% ANI, 65 core SNPs, the same ST595 and branch lengths of 1.7e-5 and
+4.2e-5 from their common ancestor. Twelve sections agree they are one strain. The biosynthesis panel calls **18 of 32
+compounds *de novo* for D39 and 0 for R6**, flipping 20 of the 32 one way. That
+is not a subtle disagreement and a pneumococcal reader would see it immediately.
+
+**The set was chosen partly on a heuristic that then failed.** The reasoning was
+that ~2,000-protein genomes sit below the ~3,200 where the *S. aureus* run of
+2026-09-04 started hitting CarveMe's 600 s MILP ceiling. Measured here: **3 of 8
+hit the ceiling anyway**, at gaps of 2.3–4.0% — *worse* than that run's 1.0–2.1%.
+Proteome size does not predict it. Do not re-derive the heuristic; it is retired.
+
+**And it is not a time limit away — measured, 18x.** `Spn_D39` re-solved at
+`limits/time=10800` ran the full 3 h, returned `timelimit` at a 2.01% gap, and
+came back with **1,135 reactions against 1,134** — one more, for eighteen times
+the budget, still 444 short of R6's 1,579. `Smitis_B6` gained five. The sparse
+model is therefore not a truncated version of the dense one; it is where the
+search lands and stays.
+
+**Nor is it about convergence.** `Spn_P1031` stopped on CarveMe's own gap
+criterion (7.6e-4, under `limits/gap=0.001`), re-solved to a certified optimum at
+the same objective 790, and *still* answers 18 de novo against 0 for four other
+converged models. `Spn_R6` reproduces to the same objective 813.6 in 15.2 s, so
+the problem is deterministic, not noisy. Two certified-optimal models, opposite
+panel verdicts: this is the degeneracy STATUS.md already records for the
+*S. aureus* set, now shown to reach the **verdicts** and not only the reaction
+counts. That is a stronger statement than the one STATUS.md flagged as unmeasured
+— the truncated model does not merely drop reactions, it *gains* de novo calls.
+
+**Three options were considered for the showcase.** Omitting the two metabolism
+sections was rejected: they are two of the three things `docs/index.md`
+advertises, and a showcase that quietly drops the inconvenient section is worse
+than one that explains it. Choosing a set without the near-identical pair was
+rejected for the same reason and worse — it would have hidden the defect rather
+than fixed it, and the pair is what makes any of this checkable. Fixing the
+disclosure first (threading SCIP's status into the carveme and biosynthesis
+sections) is the right change and is *not* done here, because `report.py` would
+have to read a rule's log, which is not a declared output — that is a
+`DESIGN.md` question, not a docs task.
+
+So the report ships whole, and `docs/07 an example report.md` states the
+contradiction with its numbers under a heading that says so. The page uses it to
+teach the habit the repo already runs on: **put a known duplicate or
+near-duplicate in your set and see which sections agree.** That is the standing
+cross-check, handed to the user.
+
+### GTDB-Tk's ANI-against-own-radius colouring earns itself on a three-species set
+First time the section has rendered on genomes that disagree below genus. The
+shared lineage collapses to `Bacteria › Bacillota › Bacilli › Lactobacillales ›
+Streptococcaceae › Streptococcus` and one Species column carries
+*S. pneumoniae* (6), *S. pseudopneumoniae* and *S. mitis_AR* — GTDB's split of
+*S. mitis*, at 100.0% ANI because B6 is that cluster's own reference. All eight
+green against a 95.0 radius at 97.53–100.0.
+
+The point is what skani says about the same genomes: *S. pseudopneumoniae* sits
+at **93.98–94.51%** ANI to the pneumococci, i.e. below the conventional 95%, while
+GTDB-Tk still assigns it a species — because it is 97.53% to *its own* closest
+reference. A report that coloured against a global 95% would have shown a
+contradiction that is not there.
+
+### The "0 de novo" models cannot take up nitrogen, and that was diagnosable without a biological assumption
+Follow-up to the entry above, same day. The showcase left one thing open: which
+side of the D39/R6 biosynthesis split was wrong. Answering it looked like it
+needed a judgement about pneumococcal physiology, which is exactly the kind of
+call that should not be guessed. It did not.
+
+**The first hypothesis was wrong, and is kept because it was.** 2-oxoglutarate
+looked like the hinge: no oxidative TCA cycle in a lactic acid bacterium means
+no route from glucose, no glutamate, and no transaminated amino acid — one
+missing link, twenty zeros. Measured, `akg` and `glu__L` are indeed unreachable
+from M9 in **all eight** models. But that is what the two models *agree* on, so
+it cannot be what separates them. A hypothesis that explains both sides of a
+disagreement explains neither.
+
+**What separates them is upstream of every enzyme:** four of the eight models
+are missing a link in the three-step ammonium uptake chain, and M9's only
+nitrogen source is ammonium. The partition against the panel is exact — the four
+with `EX_nh4_e`, `NH4tex` and `NH4tpp` answer 17–18 de novo, the four without
+answer 0. All eight carry `GLUDy`, `ASPTA` and `ALATA_L` with identical bounds.
+
+So the zeros are defects, the 17–18 are the defensible numbers, and the working
+route is gene-associated rather than gap-filled (`R_GLUDy` ← `G_AJOIJO_01205`,
+with glutamate and 2-oxoglutarate cycling catalytically, which is why aspartate
+is producible while glutamate is not).
+
+**The generalisation, and the change it produced.** A draft metabolic model has
+to be checked for whether it can take up the medium's carbon and nitrogen
+sources *before* any phenotype is read off it. `biosynthesis.py` already
+computed the ingredients — the media table's `present` column counts how many of
+a medium's compounds the model has an exchange for — but it is a **count**, and
+that is why this hid: R6 and D39 both read 17 of 20 for M9, differing only in
+which three (`na1 nh4 ni2` against `mobd na1 ni2`), and 17 of 20 looks fine.
+
+Now `SOURCES` names M9's one carbon and one nitrogen source,
+`unreachable_sources()` probes each, the media TSV carries `missing` and
+`unreachable` columns, and `_starved_note()` renders the sentence **directly
+beneath the de novo counts** rather than as a footnote under the media table —
+the qualification belongs next to the number a reader would quote.
+
+**`unreachable` is a flux probe, not set membership on `probe.exchanges`, and
+that is the load-bearing part.** The obvious implementation is the cheap one:
+is the source compound in the exchange set? It would have cleared
+`Spn_ATCC700669`, which reads the *highest* `present` count of the eight
+(18 of 20), carries `EX_nh4_e` and `NH4tex`, and has no
+periplasm-to-cytoplasm `NH4tpp` — so ammonium reaches the periplasm and stops.
+It was also the model that reached a certified optimum with the most reactions
+in the set. Three of the four broken models would have been caught by the cheap
+check and the fourth, the most deceptive one, would not. A unit test pins the
+behaviour with a stub probe rather than the implementation's text.
+
+Only the M9 family gets the claim. LB carries nitrogen in every amino acid, so
+no single compound is its source and a missing `nh4` there is not a defect;
+asserting otherwise would have produced a false alarm on every rich medium.
+
+The showcase report was re-rendered over the fix, so the shipped artefact
+diagnoses its own limitation instead of relying on the docs page to do it. The
+diagnostic scripts are in `upstream/` so the next session does not re-derive
+them.

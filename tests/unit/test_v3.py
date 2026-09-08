@@ -4128,8 +4128,11 @@ def _biosynthesis_fixture(tmp_path, verdicts, media=None):
                   [(c.bigg, c.name, c.group, overrides.get(c.bigg, DE_NOVO))
                    for c in PANEL])
         if media is not None:
+            # A value may be a bare growth figure, or a
+            # (growth, missing, unreachable) triple for the source diagnostic.
             write_tsv(d / f"{sample}.media.tsv", MEDIA_HEADER,
-                      [(name, "20", "18", value)
+                      [(name, "20", "18", *(value if isinstance(value, tuple)
+                                            else (value, "", "")))
                        for name, value in media[sample].items()])
 
 
@@ -4194,6 +4197,117 @@ def test_the_four_verdicts_are_four_distinguishable_cells():
     # And one shade step apart at least, given _grid quantises to 8 buckets.
     steps = sorted(round(v * 8) for v in _SHADE_BY_VERDICT.values())
     assert all(b - a >= 2 for a, b in zip(steps, steps[1:])), steps
+
+
+def test_a_model_that_cannot_reach_nitrogen_is_named_beside_its_de_novo_count():
+    """Measured 2026-09-08: four of eight showcase models could not reach
+    ammonium, M9's only nitrogen source, and every one of them reported 0 of 32
+    de novo. Nothing in the report said so — the media table's `present` count
+    read 17 of 20, which looks fine. The de_novo column is measured on M9, so
+    the qualification belongs beside that column."""
+    from comparem2.report import _starved_note
+
+    body = _starved_note({"R6": ["nitrogen"], "T4": ["carbon", "nitrogen"]}, 8)
+    assert "2 of 8 models cannot reach a source element" in body
+    assert "R6 (no nitrogen)" in body
+    assert "T4 (no carbon or nitrogen)" in body
+    assert "not of the organism" in body
+    # Silent when every model can eat, so the sentence means something.
+    assert _starved_note({}, 8) == ""
+
+
+def test_the_starved_note_reaches_a_rendered_report(tmp_path):
+    """The units above are only worth having if the wiring holds: the column is
+    read from the media table, which is written by a different program."""
+    _biosynthesis_fixture(
+        tmp_path, {"A": {}, "B": {}},
+        media={"A": {"M9": ("0.0000", "na1 nh4 ni2", "nitrogen"),
+                     "complete": "18.1086"},
+               "B": {"M9": ("0.0000", "mobd na1 ni2", ""),
+                     "complete": "21.0601"}})
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A", "B")).read_text()
+    assert "1 of 2 models cannot reach a source element" in body
+    assert "A (no nitrogen)" in body
+    assert "B (no" not in body  # B can eat; only A is named
+    # And the compounds themselves, which is what a reader checks the medium
+    # definition against.
+    assert "nh4" in body and "mobd" in body
+
+
+class _StubProbe:
+    """Enough of `_Probe` to check `unreachable_sources` without a solver.
+
+    `reach` maps a drain reaction to the flux the probe should report for it,
+    so a source can be given an exchange and still be unreachable — which is
+    the case that matters.
+    """
+
+    def __init__(self, reach, exchanges):
+        from comparem2.biosynthesis import SOURCES, _demand
+
+        self.sources = [(b, e, _demand(b)) for b, e in SOURCES]
+        self.exchanges = exchanges
+        self._reach = reach
+
+    def medium(self, compounds, open_drain=None):
+        return {}
+
+    def maximum(self, reaction, constraints):
+        return self._reach.get(reaction, 0.0)
+
+
+def test_a_source_with_an_exchange_can_still_be_unreachable():
+    """The distinction is load-bearing and was measured. Of the four showcase
+    models that could not reach ammonium, three carried no `EX_nh4_e` at all —
+    but `Spn_ATCC700669` carried both `EX_nh4_e` and `NH4tex` and lacked the
+    periplasm-to-cytoplasm `NH4tpp`. A membership test on `probe.exchanges`
+    clears that model, which was the one that reached a certified optimum with
+    the most reactions in the set."""
+    from comparem2.biosynthesis import M9, unreachable_sources
+
+    # ATCC700669's shape: ammonium is in the exchange set and does not reach
+    # the cytoplasm. It must still be reported.
+    probe = _StubProbe({"R_CM2_DM_glc__D": 10.0},
+                       {"glc__D": "R_EX_glc__D_e", "nh4": "R_EX_nh4_e"})
+    assert unreachable_sources(probe, M9) == ["nitrogen"]
+
+    # And the converse, so the check is not merely inverted: reaching the
+    # cytoplasm is what counts, however it got there.
+    probe = _StubProbe({"R_CM2_DM_glc__D": 10.0, "R_CM2_DM_nh4": 10.0},
+                       {"glc__D": "R_EX_glc__D_e"})
+    assert unreachable_sources(probe, M9) == []
+
+
+def test_the_source_elements_are_m9s_own_and_carry_their_element():
+    """M9 has exactly one carbon source and one nitrogen source, which is what
+    makes the claim checkable. LB gets no such claim — every amino acid in it
+    carries nitrogen — and the code must not invent one."""
+    from comparem2.biosynthesis import LB, M9, SOURCES
+
+    assert dict(SOURCES) == {"glc__D": "carbon", "nh4": "nitrogen"}
+    for bigg, _ in SOURCES:
+        assert bigg in M9, bigg
+    # The reason LB is excluded, stated as a fact about LB rather than a
+    # comment: it carries many nitrogen sources beyond ammonium.
+    assert len([c for c in LB if c.endswith("__L")]) > 1
+
+
+def test_a_source_compound_absent_from_the_model_gets_a_reaction_of_none():
+    """"The metabolite is not in the network" is one of the ways a source is
+    unreachable, and dropping it would report the model as fine."""
+    from comparem2.biosynthesis import add_source_demands
+
+    class _Model:
+        metabolites = {"M_glc__D_c": object()}  # no M_nh4_c
+        reactions: dict = {}
+
+        def add_reaction_from_str(self, spec):
+            self.reactions[spec.split(":")[0]] = object()
+
+    out = add_source_demands(_Model())
+    assert [(b, e, r is None) for b, e, r in out] == [
+        ("glc__D", "carbon", False), ("nh4", "nitrogen", True)]
 
 
 def test_biosynthesis_section_survives_a_half_written_media_table(tmp_path):
