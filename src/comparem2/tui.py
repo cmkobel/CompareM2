@@ -361,6 +361,11 @@ class ComparemTUI(App):
         # bar has nothing to show, and a bar parked at 0% was the other half of
         # this same complaint.
         self.progress_seen = False
+        # Whether an `error` event arrived. Read at the end of a run, because
+        # "no job events" has two causes that look identical from the table —
+        # everything was already up to date, or Snakemake never got as far as a
+        # job — and only one of them is worth congratulating.
+        self.run_error: str | None = None
         # The name the SLURM executor plugin submits every job of this run
         # under, learned from its own log line. Without it a queue cannot be
         # cancelled — see `cancel.stop_slurm()`.
@@ -740,6 +745,7 @@ class ComparemTUI(App):
         self.frame = 0
         self.phase = STARTING
         self.progress_seen = False
+        self.run_error = None
         self.started_at = monotonic()
         # Indeterminate until Snakemake says how many jobs there are: a bar
         # that cannot know its total should not draw itself at 0%.
@@ -797,11 +803,22 @@ class ComparemTUI(App):
                 # closure, including one an earlier run left, so a run in which
                 # every job failed can reach here with nothing done — and the
                 # line below would then contradict the failure line under it.
-                if not done and not failed:
+                if not done and not failed and self.run_error is None:
                     self.call_from_thread(
                         log.write,
                         "[dim]Nothing to do — every selected tool's output was "
                         "already up to date.[/]")
+                elif not done and not failed:
+                    # An error with no job events at all means Snakemake never
+                    # reached a job — a command line it refused, a locked
+                    # directory — so the sentence above would be false, and the
+                    # report under it describes an earlier run rather than this
+                    # one. `have` is satisfied by outputs on disk and cannot
+                    # tell the two apart.
+                    self.call_from_thread(
+                        log.write,
+                        "[yellow]The run did not start.[/] The report below "
+                        "describes what was already on disk.")
                 if failed:
                     self.call_from_thread(
                         log.write,
@@ -889,6 +906,7 @@ class ComparemTUI(App):
             # with, a frontend that died with the run still queued.
             log.write(f"[dim]SLURM run id {escape(event.message)}[/]")
         elif event.kind == "error":
+            self.run_error = event.message
             log.write(f"[red]{event.message}[/]")
         elif event.kind == "done":
             log.write("[bold green]Finished[/]")

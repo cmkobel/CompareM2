@@ -1867,3 +1867,46 @@ surprise of that size.
 **Unverified on a cluster.** 267 unit tests cover the resolution, the
 attribution and every command line built; the GenomeDK submission of 2026-09-07
 was through `--profile`, and no run has yet been started from the variable.
+
+### A run Snakemake refused to start was reported as a run with nothing to do
+Found by asking what `--profile path/to` does. The answer is three answers —
+a directory with `config.yaml` submits, a directory without one and a path that
+does not exist both hand off to Snakemake's own profile search, which fails
+naming every directory it looked in — and the third of those is where the
+defect was.
+
+**Snakemake's CLI refuses a command line by calling `exit()`.** That raises
+`SystemExit`, which is not an `Exception`, so `runner.run()`'s handler never
+saw it and `threading` discarded it without a word. Measured:
+`list(run(..., profile='empty'))` returned `[]` — no `done`, no `error`, no
+job events, nothing.
+
+The CLI path is unaffected: Snakemake is a subprocess there, the message goes
+to stderr and the exit code is 1. The TUI path read that empty stream as
+success. In a fresh output directory it recovered by accident and said
+`Nothing ran`, without saying why. **In a directory holding earlier results it
+said "every selected tool's output was already up to date" and wrote a
+report** — about a run that had never started. `have` is satisfied by outputs
+on disk and cannot distinguish the two, and neither can the table: "no job
+events" means either *Snakemake skipped everything* or *Snakemake never got as
+far as a job*.
+
+Two changes, because the event alone was not enough. `runner.run()` catches
+`SystemExit` separately and ahead of `Exception`, naming `--profile` as the
+only part of that argv the user supplied — Snakemake's own message names the
+directories it searched, but it goes to stderr, which is not where a TUI user
+is looking. And the TUI keeps `run_error`, so the up-to-date sentence is
+withheld and replaced by "The run did not start. The report below describes
+what was already on disk."
+
+Verified against real Snakemake, 9.26.1: the two failing profiles now yield
+one `error` event each, and a valid profile still yields
+`started, job_started, done`.
+
+**What was not done: pre-validating the profile in `cli.py`.** Checking for a
+`config.yaml` ourselves would duplicate a search that has already changed
+between the pinned 9.16.3 ("no config.yaml found") and 9.26.1 ("no
+profile.yaml (or config.yaml) found") and accepts `config.v<major>+.yaml`
+patterns besides. `resolve_profile()`'s docstring already says to let
+Snakemake's search produce that error; the bug was never the message, it was
+that one execution path threw the message away.

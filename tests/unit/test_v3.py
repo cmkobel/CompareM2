@@ -2774,6 +2774,73 @@ def test_run_settings_recognises_the_default_output(monkeypatch, tmp_path):
     assert rows["tool envs"] == "unset", "None is not a path to print"
 
 
+def test_a_rejected_command_line_is_an_error_event(monkeypatch, tmp_path):
+    """Snakemake refuses a command line by calling `exit()`, and SystemExit is
+    not an Exception — so the runner's handler missed it and `threading`
+    discarded it, leaving a stream with no `done` and no `error` at all.
+
+    Measured with `--profile <a directory holding no config.yaml>`:
+    `list(run(..., profile=...))` came back `[]`. The TUI read that as success.
+
+    Faked rather than driven through Snakemake, and faked even where Snakemake
+    is installed, so the test means the same thing on CI — which installs none.
+    """
+    import types
+
+    fake = types.ModuleType("snakemake.cli")
+
+    def parse_args(argv):  # what snakemake.cli does to a bad --profile
+        raise SystemExit(1)
+
+    fake.parse_args = parse_args
+    fake.args_to_api = lambda *a: True
+    monkeypatch.setitem(sys.modules, "snakemake", types.ModuleType("snakemake"))
+    monkeypatch.setitem(sys.modules, "snakemake.cli", fake)
+
+    from comparem2.runner import run
+
+    events = list(run(tmp_path / "Snakefile", None, workdir=tmp_path,
+                      deploy=False, profile="empty"))
+    assert [e.kind for e in events] == ["error"]
+    # Names the one part of that command line the user supplied.
+    assert "--profile 'empty'" in events[0].message
+
+
+@pytest.mark.asyncio
+async def test_tui_does_not_call_a_rejected_run_up_to_date(tmp_path, monkeypatch):
+    """The claim that made the silent SystemExit expensive.
+
+    With outputs already on disk, `have` is true and no job event ever arrives,
+    so the interface said *every selected tool's output was already up to date*
+    and wrote a report — about a run Snakemake had refused to start. "No job
+    events" has two causes and the table cannot tell them apart; an `error`
+    event can.
+    """
+    pytest.importorskip("textual")
+    from textual.widgets import RichLog
+
+    from comparem2 import tui as tui_mod
+
+    for s in SAMPLES:
+        _wrote(tmp_path, "samples", s, "seqkit", "contigs.tsv")
+    monkeypatch.setattr(tui_mod, "run", lambda *a, **k: iter(
+        [tui_mod.Event("error", message="Snakemake rejected the command line")]))
+    monkeypatch.setattr(tui_mod, "render_report",
+                        lambda *a, **k: Path("report.html"))
+
+    app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                              selected=["seqkit"])
+    async with app.run_test() as pilot:
+        await pilot.press("r")
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+        written = "".join(str(line) for line in app.query_one(RichLog).lines)
+
+    assert "already up to date" not in written
+    assert "did not start" in written
+    assert "rejected the command line" in written
+
+
 def test_runner_names_the_rule_that_finished(tmp_path):
     """Regression: `job_finished` carries `job_id`, not `jobid`, and no rule.
 

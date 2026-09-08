@@ -167,6 +167,10 @@ def run(snakefile: Path, cores: int | None, workdir: Path | None = None,
     case is what makes the profile branch additive: the path that has actually
     been run stays byte-identical.
 
+    The other cost is that a *command line* can be rejected, and Snakemake
+    rejects one by calling `exit()` — which is why `SystemExit` is caught
+    below, separately and before `Exception`, since it is not one.
+
     `workdir` is not optional in practice: Snakemake locks its working
     directory rather than its output paths, so leaving it unset makes every run
     in one checkout share `./.snakemake`, and a killed run leaves a lock the
@@ -245,6 +249,31 @@ def run(snakefile: Path, cores: int | None, workdir: Path | None = None,
                     execution_settings=ExecutionSettings(keep_going=keep_going),
                 )
             events.put(Event("done"))
+        except SystemExit as exc:
+            # Snakemake's own CLI refuses a command line by printing a message
+            # and calling `exit()`. That raises SystemExit, which is not an
+            # Exception, so the handler below never saw it and `threading`
+            # discarded it without a word — leaving a stream with no `done` and
+            # no `error` at all.
+            #
+            # Which the TUI then read as *success*. In a fresh output directory
+            # it said "Nothing ran"; in one holding earlier results it said
+            # every selected tool was already up to date and wrote a report,
+            # over a run Snakemake had refused to start. Measured with
+            # `--profile <a directory holding no config.yaml>`: zero events.
+            #
+            # Only the profile branch can get here, and `--profile` is the only
+            # part of that argv not built above, so the message says so rather
+            # than guessing. Snakemake's own message names every directory it
+            # searched, but it goes to stderr, which is not where a TUI user is
+            # looking.
+            blame = (f"the only part of it that came from you is "
+                     f"--profile {profile!r}" if profile is not None else
+                     "its own message went to stderr")
+            events.put(Event("error", message=(
+                f"Snakemake rejected the command line (exit {exc.code}) — "
+                f"{blame}. Running the same command without --tui shows what "
+                "it said.")))
         except Exception as exc:  # surfaced to the user, not swallowed
             events.put(Event("error", message=f"{type(exc).__name__}: {exc}"))
         finally:
