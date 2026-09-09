@@ -2327,3 +2327,46 @@ the device is stale.
 The simulation is worth keeping too, for the next time an HTML/CSS pair has to
 land together: build, overwrite `site/assets/extra.css` with the previous
 commit's copy, reload.
+
+## 2026-09-09 — the release is 3.4.0, and it rides the PR 3.3.0 is sitting in
+
+**Minor, not patch, and the reason is narrower than usual.** Nothing the panel
+reported got corrected: R6 still says 0 of 32 de novo, and the number is right
+— the model genuinely cannot build anything from M9 when it cannot take up
+ammonium. What the release ships is *additive output*: the media TSV gained
+`missing` and `unreachable`, and the report gained a paragraph beneath the de
+novo counts. So this is a feature by the same test applied on 09-04, 09-07 and
+09-08 — a patch number would say "nothing new here" about the thing the release
+exists to ship. The docs page, the example report and the logo land with it.
+
+The version-bump-as-bugfix reading was considered and rejected on that basis.
+Had the fix changed a count, it would have been 3.3.1.
+
+**Same free window as last time.** Bioconda
+[PR #68904](https://github.com/bioconda/bioconda-recipes/pull/68904) has been
+open since 2026-09-07T21:25:46Z and mergify's `created-at<3 days ago` makes it
+eligible at 2026-09-10T21:25:46Z. The bot pushes a newer tag onto the same
+`bump/comparem2` branch and rewrites the title, so 3.4.0 inherits that clock
+and publishes at the moment 3.3.0 would have. Tagging after 09-10 21:25Z
+instead publishes 3.3.0 without the biosynthesis fix and starts a fresh three
+days.
+
+So **3.3.0 will never be published either**, and the channel goes 3.2.1 ->
+3.4.0. Two unpublished numbers in a row is not a problem — `run_exports` pins
+at `max_pin="x"` and both numbers' content is in 3.4.0 — but it is now the
+pattern rather than the exception, and the thing to check before a tag is the
+open PR's `created-at`, not the last published version.
+
+No recipe change: `git diff v3.3.0..HEAD -- pyproject.toml pixi.toml` is empty
+except the version line, so no dependency, no build script and no test section
+moved. Those are the only three things autobump cannot do.
+
+**One consequence for an existing workdir.** Snakemake will not re-run the
+biosynthesis rule for a `media.tsv` that already exists, so an older run keeps
+the four-column file. `report.py` reads it defensively — `len(row) > 5` — and
+renders without the note rather than failing. Delete the file to get the
+diagnosis on an old run.
+
+`CLAUDE.md` said 274 tests; the measured count is **276**. The two arrived in
+`f4d033d` and `c258dd0` after the count was last written down, which is the
+failure mode that file's own note predicts.
