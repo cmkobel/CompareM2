@@ -2282,3 +2282,27 @@ The bar's wordmark sits about 2 px below centre and 13 px right of it — the
 floated hamburger takes that much out of the centred line box, and the text it
 replaced was off by the same amount. Measured, not corrected: nudging it would
 mean hard-coding an offset against markup the theme controls.
+
+## 2026-09-09 — the mobile bar's size goes inline, because CSS is cached apart
+
+The bar rendered as a small blue disc on a phone an hour after the change
+above, while the same page was correct from a cold cache. Not a layout bug:
+new HTML against a stylesheet one commit old. Read the Docs serves
+`assets/extra.css` with `cache-control: max-age=1800`, so Chrome revalidated
+the page and reused a still-fresh CSS. The tell was in the colours — the disc
+was the theme's `#2980b9` while the bar around it was our `#2b6cb0`, and those
+two rules shipped in different commits.
+
+So the six declarations that undo `.wy-nav-top img`'s 45px circle moved into
+the `style` attribute of the `<img>` in `overrides/main.html`. **An element
+that is unreadable without particular rules should travel in the same file as
+them.** The sidebar logo stays in `extra.css`, because that `<img>` comes from
+the theme's template and CSS is the only hook there — and nothing about its
+markup changed, so there is no pair to desynchronise.
+
+Checked by simulating the skew rather than reasoning about it: build the site,
+overwrite `site/assets/extra.css` with the previous commit's copy, reload. The
+wordmark stays 160x27. Before this change that produced the disc.
+
+Inline style is not the house style for anything else here, and the comment in
+the template says why this one is the exception.

@@ -55,20 +55,11 @@
   border-color: #24578f;
 }
 
-/* The mobile bar shows the same wordmark at the same height (the <img> is put
- * there by overrides/main.html). theme.css crops this one to a 45px circle
- * too, via `.wy-nav-top img`. */
-.wy-nav-top > a img.logo {
-  display: inline-block;
-  vertical-align: middle;
-  width: auto;
-  height: 27px;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  background: none;
-  border-radius: 0;
-}
+/* The mobile bar carries the same wordmark at the same height, and its rules
+ * are *not* here: theme.css crops that slot to a 45px circle as well
+ * (`.wy-nav-top img`), so the <img> is unreadable without them, and this file
+ * is cached separately from the HTML that introduces it. They sit inline in
+ * overrides/main.html, which explains itself. */
 
 /* Homepage hero. The wordmark carries the project name, so index.md has no
  * separate <h1> text to sit under it. */
