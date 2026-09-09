@@ -1,13 +1,13 @@
 # Usage
 
 ```bash
-comparem2 <assemblies>... [options]            # installed with conda
-pixi run comparem2 <assemblies>... [options]   # from a git checkout
+comparem2 <assemblies>... [options]            # conda, or pixi global
+pixi run comparem2 <assemblies>... [options]   # a pixi workspace, or a git checkout
 ```
 
-The examples below use the first form; from a git checkout, read each one as
-`pixi run comparem2 …`. A conda install also puts `cm2` on your `PATH` as a
-shorter alias, interchangeable with `comparem2` everywhere.
+The examples below use the first form; inside a pixi workspace or a git
+checkout, read each one as `pixi run comparem2 …`. Either way you also get
+`cm2` as a shorter alias, interchangeable with `comparem2` everywhere.
 
 Assemblies are passed as paths, and the shell expands the glob:
 
