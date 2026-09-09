@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{#
+  The mobile bar carries the wordmark rather than the site name as text, so it
+  matches the sidebar header a swipe away from it.
+
+  This is the theme's own hook, not a workaround: the readthedocs theme's
+  main.html is a bare extends of base.html plus a comment saying that
+  customisations should override it and redefine blocks. `mobile_nav` is the
+  block base.html wraps around that bar. The body below is base.html's, with
+  the <img> in place of the bare `config.site_name` — worth re-reading against
+  the theme if a mkdocs upgrade changes that markup.
+
+  The site name stays as the image's alt text, and 404.html extends base.html
+  directly rather than through main.html, so its bar keeps the plain text.
+#}
+{% block mobile_nav %}
+  <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+  <a href="{{ nav.homepage.url|url }}">
+    {%- if config.theme.logo %}
+      <img src="{{ config.theme.logo|url }}" class="logo" alt="{{ config.site_name }}"/>
+    {%- else %}
+      {{ config.site_name }}
+    {%- endif %}
+  </a>
+{% endblock %}

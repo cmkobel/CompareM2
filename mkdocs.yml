@@ -17,6 +17,10 @@ site_url: https://comparem2.readthedocs.io/
 theme:
   name: readthedocs
   highlightjs: true
+  # One template override, `overrides/main.html`, and it is the theme's own
+  # documented hook: it redefines the `mobile_nav` block so the narrow-screen
+  # bar carries the wordmark instead of the site name as text.
+  custom_dir: overrides
   # The sidebar wordmark, in the on-blue variant: the header keeps the theme's
   # blue backdrop, so the dark-ink wordmark cannot go there. SVG so it stays
   # sharp at any zoom; the theme styles this slot for a square avatar, which

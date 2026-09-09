@@ -2254,3 +2254,31 @@ Verified in a real build — `mkdocs build` into a temp dir, screenshotted at
 1280 and 390 px wide with the mobile nav both closed and open — rather than
 read off the CSS. mkdocs is not a project dependency, so that was a throwaway
 venv from `docs/requirements.txt`.
+
+## 2026-09-09 — the mobile bar carries the wordmark too
+
+Same day again, and it finishes the previous entry: with the header blue fixed,
+the narrow-screen bar was the one place still spelling the name in bold white
+text while the sidebar a swipe away showed the mark.
+
+**A template override, not CSS image replacement.** `.wy-nav-top` gets no
+`<img>` from the theme, so the alternative was hiding the text and painting a
+`background-image` over it — which loses the alt text and leaves an empty blue
+bar if the asset ever 404s. Instead `overrides/main.html` redefines the
+`mobile_nav` block, and that is the theme's own documented hook: readthedocs'
+`main.html` is a bare extends of `base.html` plus a comment saying to override
+it and redefine blocks. `theme.custom_dir: overrides` in `mkdocs.yml`, one
+file, and the site name survives as the image's `alt`.
+
+Same asset and same 27 px as the sidebar. theme.css crops this slot to a 45 px
+circle as well (`.wy-nav-top img`), so `extra.css` undoes it here too.
+
+**`404.html` keeps the text**, because it is a static template that extends
+`base.html` directly rather than through `main.html`. Overriding it as well
+would mean copying the theme's 404 body into this repo to inherit one block;
+not worth freezing that page's markup for the one bar nobody navigates by.
+
+The bar's wordmark sits about 2 px below centre and 13 px right of it — the
+floated hamburger takes that much out of the centred line box, and the text it
+replaced was off by the same amount. Measured, not corrected: nudging it would
+mean hard-coding an offset against markup the theme controls.
