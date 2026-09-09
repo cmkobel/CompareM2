@@ -36,6 +36,7 @@ import re
 from datetime import datetime, timezone
 from itertools import count
 from pathlib import Path
+from urllib.parse import quote
 
 from . import __version__
 # The panel is data the wrapper and the report have to agree on, so it lives in
@@ -52,11 +53,46 @@ from .tools import Context, Registry, Scope, Tool, completion
 # up by 1.31, which is why their labels came out larger than the prose.
 WIDTH = 944
 
+# The CompareM2 mark: three rows of contigs, differing in length and in how
+# fragmented they are. Each bar is (x, y, width, solid?) in a 64-unit box; the
+# solid ones take the accent, the rest the tint. Height 10, fully rounded.
+#
+# The geometry is duplicated from `docs/assets/logo/make_logo.py`, which renders
+# the same shape to the files the documentation uses. It is copied rather than
+# imported or read because `docs/` is not in the package — `plasmids.zip` is the
+# only non-Python file that ships — and drawing it in Python keeps that true.
+MARK_BARS = ((8, 11, 27, True), (40, 11, 16, True),
+             (8, 27, 13, False), (26, 27, 30, False),
+             (8, 43, 36, True))
+
+
+def _mark(accent: str, tint: str, *, panel: str | None = None, cls: str = "") -> str:
+    """The mark as inline SVG. `accent`/`tint` may be CSS `var()` references."""
+    bg = f'<rect width="64" height="64" rx="14" fill="{panel}"/>' if panel else ""
+    bars = "".join(
+        f'<rect x="{x}" y="{y}" width="{w}" height="10" rx="5" '
+        f'fill="{accent if solid else tint}"/>'
+        for x, y, w, solid in MARK_BARS)
+    attr = f' class="{cls}"' if cls else ""
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"'
+            f'{attr} aria-hidden="true">{bg}{bars}</svg>')
+
+
+# The favicon is the badge variant — the mark on its own blue panel — because at
+# 16 px a transparent mark on browser chrome is three faint bars of unknown
+# colour. Its colours are literals, not `var()`: a data URI is a separate
+# document and does not see the page's custom properties, which is also why it
+# cannot follow the reader's colour scheme. Safari may ignore an SVG favicon
+# and fall back to its own default. Inline, so the report stays one file.
+FAVICON = "data:image/svg+xml," + quote(
+    _mark("#ffffff", "#bcd8f5", panel="#2b6cb0"), safe="/:=")
+
 CSS = """
 :root { --fg:#1a1a1a; --mut:#666; --line:#e3e3e3; --accent:#2b6cb0; --bg:#fff;
-        --measure:40em; }
+        --tint:#7fb3e8; --measure:40em; }
 @media (prefers-color-scheme: dark) {
-  :root { --fg:#e8e8e8; --mut:#9a9a9a; --line:#333; --accent:#7fb3e8; --bg:#161616; }
+  :root { --fg:#e8e8e8; --mut:#9a9a9a; --line:#333; --accent:#7fb3e8; --bg:#161616;
+          --tint:#3f80c4; }
 }
 * { box-sizing: border-box; }
 body { font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -72,6 +108,14 @@ body { font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, 
 p, dl, ul, ol { max-width: var(--measure); }
 
 h1 { font-size: 1.75rem; margin: 0 0 .25rem; letter-spacing: -.02em; }
+/* The mark sits on the run's own title, which is the only place the report is
+   branded: the version and the command are in .meta below it. Sized in em so
+   it tracks the heading, and nudged off the baseline to sit optically centred
+   on the cap height rather than hanging below it. `display` and `margin` are
+   overrides, not decoration — every other svg here is a full-width figure, so
+   the rule below sets `display:block`, which puts the mark on its own line. */
+h1 .mark { display: inline-block; width: 1.05em; height: 1.05em;
+           vertical-align: -.14em; margin: 0 .42em 0 0; }
 h2 { font-size: 1.15rem; margin: 3rem 0 .2rem; letter-spacing: -.01em;
      scroll-margin-top: 1rem; }
 h3 { font-size: .82rem; margin: 1.9rem 0 .5rem; color: var(--mut);
@@ -2224,8 +2268,9 @@ def render_report(registry: Registry, selected: list[str] | None, workdir: Path,
     parts = [
         '<!doctype html><html lang="en"><head><meta charset="utf-8">',
         '<meta name="viewport" content="width=device-width, initial-scale=1">',
+        f'<link rel="icon" href="{FAVICON}">',
         f"<title>{heading}</title><style>{CSS}</style></head><body>",
-        f"<h1>{heading}</h1>",
+        f'<h1>{_mark("var(--accent)", "var(--tint)", cls="mark")}{heading}</h1>',
         f'<p class="sub">{len(samples)} assemblies &middot; '
         f"{shown} of {total} tools produced output</p>",
         f'<p class="meta">{" &middot; ".join(meta)}</p>',

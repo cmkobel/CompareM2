@@ -2078,3 +2078,98 @@ The showcase report was re-rendered over the fix, so the shipped artefact
 diagnoses its own limitation instead of relying on the docs page to do it. The
 diagnostic scripts are in `upstream/` so the next session does not re-derive
 them.
+
+## 2026-09-09 — the logo goes in, and the theme's avatar slot has to be undone
+
+The mark is three rows of contigs — genomes of differing length and
+fragmentation — in the report's own palette (`#2b6cb0` accent, `#7fb3e8` tint).
+`docs/assets/logo/make_logo.py` renders it: `comparem2-icon{,-dark,-badge}` and
+`comparem2-logo{,-dark}`, each as SVG and PNG, plus the three concepts that
+lost (synteny, dot plot, pangenome) which the script still draws.
+
+**The rendered files are committed, not generated at build time.** The script
+needs `cairosvg`, `fontTools` and Inter SemiBold, and `FONT` points at
+`/tmp/inter/extras/otf/Inter-SemiBold.otf` — a path that will not survive a
+reboot. Read the Docs installs `docs/requirements.txt`, which is mkdocs and
+markdown-include and should stay that small. So the SVG/PNG are the artefact;
+the script is the record of how they were made, and re-running it means
+re-fetching Inter first.
+
+**`docs/assets/extra.css` is load-bearing, not cosmetic.** The built-in
+`readthedocs` theme styles its logo slot for a square avatar — theme.css pins
+`.wy-side-nav-search img` to `45px` square with `border-radius:100%` on a
+`#2980b9` backdrop. The wordmark is 331.7×56, a 5.9:1 lockup in near-black ink.
+Dropped in unstyled it is squashed into a circle; on the blue header the `M2`
+in `#7fb3e8` sits at about 2:1 contrast. Hence: un-crop the image, and make
+that panel white so dark ink has something to sit on. Deleting the file does
+not return the sidebar to the theme default — it returns it to a cropped
+wordmark.
+
+**The favicon is `docs/img/favicon.ico` because that is the only hook left.**
+`site_favicon` was removed from mkdocs' config schema (it is absent from
+`config/defaults.py` in 1.6, so `--strict` would reject it), but both built-in
+themes still emit `<link rel="shortcut icon" href="img/favicon.ico">` as the
+fallback, and a file under `docs/` overrides the theme's copy. Verified against
+the build, not assumed: `site/img/favicon.ico` is byte-identical to ours. The
+ICO carries 16–256 px from the badge variant — the blue-square one, because at
+16 px a transparent mark on browser chrome is three faint bars and the badge is
+still recognisably the mark.
+
+**The homepage leads with the wordmark instead of `# CompareM2`,** which is why
+`nav` now says `Home: "index.md"` — the label used to come from that heading.
+Two copies of the same lockup on one screen (sidebar and hero) was the
+alternative and it read worse.
+
+**The README uses `<picture>` with `prefers-color-scheme`** and relative paths.
+Both were checked rather than assumed: GitHub's `POST /markdown` keeps
+`<picture>`/`<source>` through sanitisation and wraps them in
+`themed-picture`, so the dark variant does get used. Relative paths are right
+because nothing renders this README off GitHub — `readme = "README.md"` in
+`pyproject.toml` feeds a PyPI long description that is never published, since
+the bioconda recipe builds from a GitHub tag tarball.
+
+`exclude_docs` now keeps `generate.py`, the logo script and the 315 kB concept
+sheet out of the built site. They are inputs to the documentation, not pages of
+it.
+
+**The report gets the mark too, and it is drawn rather than embedded.** The
+heading carries it as inline SVG whose rects are filled from `var(--accent)`
+and `var(--tint)` — a new custom property, `#7fb3e8` light and `#3f80c4` dark,
+which is what `make_logo.py` already used for the two icon variants. Painting
+from properties is the whole point: an `<img>` or a `background-image` cannot
+see them, so the mark would sit in light-mode blue on a `#161616` page.
+Measured on the two schemes: accent 5.42:1 on white and 8.20:1 on `#161616`,
+tint 2.21:1 and 4.39:1. The tint is the quiet half of a decorative mark next to
+a text heading, not information, so the low light-mode figure is the design and
+not a defect.
+
+`h1 .mark` has to set `display:inline-block`. Every other SVG in the report is
+a full-width figure, so the sheet sets `svg { display:block }`, and the mark
+first rendered on its own line above the title — 29.4 px in the right place,
+one line too high. Cheapest thing to get wrong twice.
+
+**The favicon is a `data:` URI holding the badge variant with literal
+colours**, which cost one narrowing of `test_report_is_self_contained`: it
+asserted `"<link" not in body`, and the rule it means is *nothing the browser
+fetches*, so it now allows a `<link>` whose href is a data URI and fails on any
+other. Literal colours because a data URI is a separate document and cannot see
+the page's properties — the one place the mark cannot follow the reader's
+scheme. The badge, not the plain mark, because at 16 px a transparent mark on
+browser chrome is three faint bars of unspecified colour; blown up 10x, the
+badge still reads. Safari may ignore an SVG favicon entirely and show its own
+default; that is untested here.
+
+The geometry is duplicated between `report.py` and `make_logo.py` rather than
+shared. `docs/` is not in the package — `plasmids.zip` is the only non-Python
+file that ships — so importing or reading the artwork would either break that
+or add package data for five rectangles.
+
+`docs/assets/example-report.html` was **patched, not re-rendered**: the run it
+came from is on GenomeDK. The substitution is provably what the current
+renderer emits, because the example's inlined `<style>` was byte-identical to
+`report.py`'s `CSS` constant beforehand — so replacing that block, adding the
+favicon `<link>` and putting the mark in the one `<h1>` reproduces today's
+output for that run exactly, and the diff is five hunks all inside the head.
+156,180 → 158,052 bytes. If a future change to `CSS` lands while the example
+still needs updating, the same three substitutions are the recipe; a real
+re-render needs the cluster.

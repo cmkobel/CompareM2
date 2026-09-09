@@ -12,10 +12,22 @@ pre-tag checks for v3.1.0 are from the laptop and say so.
 2026-09-08 on GenomeDK. Eight complete *Streptococcus mitis* group genomes
 (2.04–2.25 Mb, 1,992–2,242 CDS) fetched from RefSeq, `--profile` pointing at a
 run-specific profile inside the project root so the shared `~/.config/snakemake/slurm`
-was left alone. **53 jobs, 14 of 14 tools produced output, report 155,829 bytes**,
+was left alone. **53 jobs, 14 of 14 tools produced output, report 158,052 bytes**,
 14 sections plus methods. The report is checked in at
 `docs/assets/example-report.html`; the genome list and accessions are in
 [`docs/07 an example report.md`](docs/07 an example report.md).
+
+**The checked-in copy is 2026-09-09 patched, not re-rendered.** It was committed
+at 156,180 bytes and the mark went into its heading here, on this laptop,
+because the run directory it was rendered from is on GenomeDK and a round trip
+for a presentational change is not worth it. What was substituted is exactly
+what today's `report.py` emits: the whole `<style>` block — verified
+byte-identical to the renderer's `CSS` constant before the edit — plus the
+favicon `<link>` and the mark inside the one `<h1>`. Five hunks, all in the
+head; not a byte of the run's own numbers, tables or figures moved. This
+section previously said 155,829 bytes, which matches neither the committed file
+nor its character count; where that figure came from is unknown, so it is
+replaced by a measured one rather than explained.
 
 | | |
 | --- | --- |

@@ -1,0 +1,50 @@
+/* CompareM2 additions to the built-in `readthedocs` theme.
+ *
+ * The theme's sidebar header is built for a circular avatar: theme.css pins
+ * `.wy-side-nav-search img` to 45x45 with `border-radius:100%` on a #2980b9
+ * backdrop. The CompareM2 mark is a 5.9:1 wordmark in dark ink, so both have
+ * to go — un-crop the image, and put a white panel behind it so the ink has
+ * something to sit on. Nothing else about the theme changes.
+ *
+ * Colours are the report's own palette (see report.py --accent/--fg):
+ * #2b6cb0 accent, #c9d3de muted.
+ */
+
+.wy-side-nav-search {
+  background-color: #fff;
+  padding-top: 1em;
+  border-bottom: 1px solid #c9d3de;
+}
+
+.wy-side-nav-search > a,
+.wy-side-nav-search > a:hover {
+  background: none;
+  margin-bottom: 0.5em;
+}
+
+.wy-side-nav-search img.logo {
+  width: auto;
+  height: auto;
+  max-width: 190px;
+  padding: 0;
+  margin: 0 auto 0.809em;
+  background: none;
+  border-radius: 0;
+}
+
+/* The search field's border was chosen against the blue header. */
+.wy-side-nav-search input[type="text"] {
+  border-color: #c9d3de;
+}
+
+/* Homepage hero. The wordmark carries the project name, so index.md has no
+ * separate <h1> text to sit under it. */
+.comparem2-hero {
+  margin: 0.5em 0 1.2em;
+}
+
+.comparem2-hero img {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+}

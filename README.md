@@ -1,6 +1,14 @@
-# CompareM2
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo/comparem2-logo-dark.png">
+    <img src="docs/assets/logo/comparem2-logo.png" alt="CompareM2" width="420">
+  </picture>
+</h1>
 
-[![unit tests](https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml/badge.svg)](https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml) [![https://doi.org/10.1093/bioinformatics/btaf517](https://img.shields.io/badge/doi%20%28OUP%29-10.1093%2Fbioinformatics%2Fbtaf517-blue.svg)](https://doi.org/10.1093/bioinformatics/btaf517)
+<p align="center">
+  <a href="https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml"><img src="https://github.com/cmkobel/CompareM2/actions/workflows/unit.yaml/badge.svg" alt="unit tests"></a>
+  <a href="https://doi.org/10.1093/bioinformatics/btaf517"><img src="https://img.shields.io/badge/doi%20%28OUP%29-10.1093%2Fbioinformatics%2Fbtaf517-blue.svg" alt="doi:10.1093/bioinformatics/btaf517"></a>
+</p>
 
 ```bash
 pixi global install --channel conda-forge --channel bioconda comparem2
@@ -70,7 +78,7 @@ end-to-end run, are the primary instrument.
 
 ```bash
 pip install pytest pytest-asyncio textual   # what CI installs; no pixi needed
-python -m pytest tests/unit -q              # 250 tests, ~6 s
+python -m pytest tests/unit -q              # 276 tests, ~6 s
 
 pixi install                                # linux only
 pixi run test-fast                          # 4 genomes, no databases needed

@@ -1,4 +1,6 @@
-# CompareM2
+<p class="comparem2-hero">
+  <img src="assets/logo/comparem2-logo.svg" alt="CompareM2" width="420">
+</p>
 
 CompareM2 takes microbial genome assemblies — isolates or MAGs, from any
 sequencing technology — and produces one portable HTML report comparing them.

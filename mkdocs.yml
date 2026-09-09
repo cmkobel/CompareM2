@@ -2,7 +2,9 @@ site_name: CompareM2
 site_description: Documentation for CompareM2, the genomes-to-report pipeline
 copyright: CompareM2 genomes-to-report pipeline. Copyright © 2019-2026 GNU GPL v3
 nav:
-  - "index.md"
+  # The homepage leads with the wordmark instead of an `# CompareM2` heading,
+  # so its nav label is set here rather than taken from a first-level heading.
+  - Home: "index.md"
   - "05 quick start.md"
   - "07 an example report.md"
   - "10 installation.md"
@@ -15,6 +17,22 @@ site_url: https://comparem2.readthedocs.io/
 theme:
   name: readthedocs
   highlightjs: true
+  # The sidebar wordmark. SVG so it stays sharp at any zoom; the theme styles
+  # this slot for a square avatar, which docs/assets/extra.css undoes. The
+  # favicon is docs/img/favicon.ico, which overrides the theme's own file —
+  # `site_favicon` is not a mkdocs option any more, so that path is the hook.
+  logo: assets/logo/comparem2-logo.svg
+extra_css:
+  - assets/extra.css
+# Inputs to the documentation, not pages of it: the page generator, the logo
+# generator and the concept sheet it came from, and the Read the Docs pins.
+exclude_docs: |
+  __pycache__/
+  generate.py
+  requirements.in
+  requirements.txt
+  assets/logo/*.py
+  assets/logo/concepts/
 plugins:
   - search
 markdown_extensions:

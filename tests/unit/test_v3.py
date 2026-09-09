@@ -1360,16 +1360,42 @@ def test_report_is_self_contained(tmp_path):
     Narrowed from "no href starting with http": citations link out to doi.org,
     and a hyperlink the reader may click is not an external asset. What must not
     appear is anything the browser fetches to render the page.
+
+    Narrowed a second time, for the same reason, when the favicon arrived: a
+    `<link rel="icon">` holding a `data:` URI is a subresource the browser
+    already has. So the rule is on the href, not on the tag — a `<link>` to
+    anything but a data URI still fails.
     """
     d = tmp_path / "samples" / "A" / "seqkit"
     d.mkdir(parents=True)
     (d / "contigs.tsv").write_text("c1\t100\t50.0\n")
     body = render_report(CATALOGUE, ["seqkit"], tmp_path, Path("db"), ("A",)).read_text()
     assert "<script" not in body
-    assert "<link" not in body
     assert "<img" not in body
     assert "url(http" not in body  # no webfonts or background images via CSS
     assert "@import" not in body
+    links = re.findall(r"<link[^>]*>", body)
+    assert links, "the favicon link went missing"
+    assert all(re.search(r'href="data:', link) for link in links), links
+
+
+def test_report_mark_follows_the_colour_scheme(tmp_path):
+    """The heading's mark is inline SVG painted from custom properties.
+
+    An <img> or a background-image cannot see `--accent`, so the mark would be
+    stuck in light-mode blue on a dark page. That is the whole reason it is
+    drawn in Python instead of shipped as a file, and the favicon — which *is*
+    a separate document, and so carries literal colours — is the counter-case.
+    """
+    from comparem2 import report as report_mod
+
+    body = render_report(CATALOGUE, ["seqkit"], tmp_path, Path("db"), ("A",)).read_text()
+    h1 = re.search(r"<h1>(.*?)</h1>", body, re.DOTALL).group(1)
+    assert 'class="mark"' in h1
+    assert "var(--accent)" in h1 and "var(--tint)" in h1
+    assert h1.count("<rect") == len(report_mod.MARK_BARS)
+    assert 'href="data:image/svg+xml,' in body
+    assert "var(" not in report_mod.FAVICON
 
 
 def test_report_survives_no_results(tmp_path):

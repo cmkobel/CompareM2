@@ -350,6 +350,17 @@ something already published. The post-mortems are in
   `snakemake`. It is this package's own dependency, so the correct one is the
   one beside the running interpreter; by name it was simply not found when a
   packaged `comparem2` was invoked by absolute path.
+- **The report's own artwork is drawn in Python, never linked or embedded as a
+  file.** The mark in the heading is inline SVG painted from `var(--accent)`
+  and `var(--tint)`, so it inverts with the reader's colour scheme — an `<img>`
+  or a `background-image` cannot see a custom property and would sit in
+  light-mode blue on a dark page. The favicon is the exception that shows the
+  reason: a `data:` URI is a separate document, does not see the page's
+  properties, and so carries literal colours and cannot follow the scheme.
+  Shipping either as an asset would break the other invariant too —
+  `plasmids.zip` is the only non-Python file in the package, and `docs/` is not
+  in it, so the geometry is duplicated in `report.py` on purpose.
+  `test_report_is_self_contained` permits a `<link>` only with a `data:` href.
 - **The interface indicates state with attributes, not with tints.** Every
   cursor and highlight is `text-style: reverse`, and the tempting cleanup — put
   the theme's own colour back — is the bug it was written for. tmux ships
