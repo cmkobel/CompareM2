@@ -69,5 +69,10 @@ papers/.pytest_cache/
 hpc.env
 .hpc_root_verified
 
+# Scratch from a session: screenshots taken while checking the docs render, and
+# working copies of scripts that are tracked under `upstream/` once they earn
+# it. Nothing here is an input to anything.
+Claude outputs/
+
 # Misc
 *.log

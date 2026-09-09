@@ -1003,6 +1003,25 @@ Sparser sketching on plasmid-scale input, not a pipeline defect — but it is
 [the standing cross-check](#the-standing-cross-check) bending by 0.09 pp under
 a non-default setting, and only in the file the report reads for coverage.
 
+**And through the queue on GenomeDK the same afternoon**, which is the case
+that matters for `--set`: a profile's values arrive as argparse *defaults*, so
+the override had to survive the path that once made the TUI ignore `--set`
+entirely. Same clone of `a91c68d` under
+`/faststorage/project/PM_group/carl/comparem2/set-check-0909`, `--profile
+profiles/showcase`, against the six environments already in
+`.comparem2-envs` — nothing rebuilt, because the clone's `catalogue.py` is
+identical to the synced `repo/`'s and the prefix realpath did not move.
+
+| | |
+| --- | --- |
+| `--set skani-c=125` | SLURM **63060448**, `COMPLETED 0:0` on `cn-1047`, 18 s, 8 CPUs; 2 of 2 steps, 221 s wall including queue |
+| default `-c 70` | SLURM **63061851**, `COMPLETED 0:0` on `cn-1048`, 13 s; 97 s wall |
+| what the compute node logged | `skani triangle -t 8 --full-matrix -c 125 …`, so the flag reached the *job*, not just the frontend's Snakefile |
+| against thylakoid | both matrices **byte-identical** at both settings once the path prefix is stripped (`ani.tsv` md5 `27643123…` at c = 125, `9cff237f…` at c = 70) |
+
+That last row is what makes the 99.91 a property of skani at c = 125 on this
+input rather than one machine's oddity.
+
 Caveat: run as user `ghrunner` from `~/cm2-set-check`, with its own `.pixi` and
 its own conda prefix `~/cm2-envs` — not the `/evo/postdoc` checkout, which that
 account cannot write. So `basic` was solved and built there fresh today, which
