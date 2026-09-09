@@ -161,6 +161,30 @@ def test_threads_are_substituted_by_snakemake():
     assert "--numcpus 8" not in text
 
 
+def test_overrides_reach_the_rendered_command():
+    """The parse tests above stop at the returned dict; this is the rest.
+
+    `--set` was asserted only at `parse_overrides`, so nothing checked that
+    the dict survives `render()` into the command line a rule actually runs —
+    which is where the single-dash defect above was visible. Confirmed live on
+    thylakoid 2026-09-09: skani's own log echoed `-c 125`.
+    """
+    overrides = parse_overrides(["skani-c=125", "mashtree--kmerlength=17"])
+    text = render(CATALOGUE, ["skani", "mashtree"], Path("res"), Path("db"),
+                  SAMPLES, overrides=overrides)
+
+    skani = text.split("rule skani:")[1].split("\nrule ")[0]
+    assert "-c 125" in skani
+    assert "-c 70" not in skani  # replaced, not appended alongside
+
+    mashtree = text.split("rule mashtree:")[1].split("\nrule ")[0]
+    assert "--kmerlength 17" in mashtree
+    assert "--genomesize 5000000" in mashtree  # a flag not named keeps its default
+
+    # and the same rule rendered without overrides still carries the catalogue's
+    assert "-c 70" in render(CATALOGUE, ["skani"], Path("res"), Path("db"), SAMPLES)
+
+
 def test_shell_block_uses_wildcards_prefix():
     """Regression: bare {sample} in a shell block is a NameError at runtime.
 

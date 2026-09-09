@@ -4,7 +4,7 @@ What is currently true of a real run. This file changes whenever something is
 re-run, which is why it is not in [DESIGN.md](DESIGN.md) — decisions should not
 need editing because a tool was verified again.
 
-Last updated **2026-09-08**. The tool numbers are from runs on thylakoid; the
+Last updated **2026-09-09**. The tool numbers are from runs on thylakoid; the
 pre-tag checks for v3.1.0 are from the laptop and say so.
 
 ## The docs showcase run: eight genomes, all fourteen tools, through SLURM
@@ -972,6 +972,34 @@ Two things that fell out of it, neither acted on:
   Topology and support identical, deterministic across thread counts, and at 4
   taxa byte-identical.
 
+### `--set` passthrough, executed live 2026-09-09
+Until now `--set` was asserted at `parse_overrides` only, and no run had ever
+carried one. Two `--demo --until skani` runs on thylakoid from a fresh clone of
+`a91c68d`, one with `--set skani-c=125` and one on the catalogue's default
+`-c 70`:
+
+| | |
+| --- | --- |
+| the rendered rule | `skani triangle -t {threads} --full-matrix -c 125 …` — `-c 125` once, `-c 70` absent |
+| what the tool logged | `skani triangle -t 8 --full-matrix -c 125 …`, skani echoing the command line it was given |
+| both runs | **2 of 2 steps**, reports written (17,731 and 17,711 bytes), 8 s and 2 s wall |
+| and it changed the result | 116_2 against EF_VRE, **92.13 → 94.23 ANI** — the largest of the 21 pairs. Aligned fraction moved the other way: VB3240 against Dallas_55, 65.00 → 63.07 |
+
+**The identical pair reads 99.91 aligned fraction at c = 125**, both
+directions, while its ANI stays 100.00; at the default c = 70 it is 100.00.
+Sparser sketching on plasmid-scale input, not a pipeline defect — but it is
+[the standing cross-check](#the-standing-cross-check) bending by 0.09 pp under
+a non-default setting, and only in the file the report reads for coverage.
+
+Caveat: run as user `ghrunner` from `~/cm2-set-check`, with its own `.pixi` and
+its own conda prefix `~/cm2-envs` — not the `/evo/postdoc` checkout, which that
+account cannot write. So `basic` was solved and built there fresh today, which
+is the second datum: the 09-07 `perl` breakage still does not touch it. Reusing
+thylakoid's *other* conda from a read-only prefix does not work, and the error
+names the wrong thing — `conda env create` reads the base prefix's own
+`conda-meta/*.json` while verifying the transaction and dies on
+`PermissionError: … gitdb-4.0.12-pyhd8ed1ab_0.json` after a successful solve.
+
 ## Also verified
 
 - `pixi install` — re-solved 2026-09-03 without the thirteen tools, 8.8 GB
@@ -1450,6 +1478,16 @@ Measured 2026-09-03. Earlier note: 914 GB free on `/evo` (2026-09-02, before the
 | databases | `/midifiler/carl/cm2_db_v3` — **101 GB** (94 of it GTDB r232), deliberately **outside** any checkout so deleting a checkout does not cost a re-download. Moved off `/evo` on 2026-09-03 at Carl's call: `/midifiler` is 13 T where `/evo` had 785 G free. 12m23s at 138 MB/s, verified byte-identical at 107,812,346,055 |
 | conda prefix | `/evo/postdoc/cm2-envs-two` — 7.7 GB, **2** environments (`main` 6.0 GB, `checkm2` 1.8 GB). The older `cm2-conda-envs` (8.6 GB, 8 single-tool environments) is orphaned and deletable |
 | pixi | `/home/thylakoid/.pixi/bin/pixi`. `conda` now comes from the pixi *environment* (a declared dependency, 26.7.1); the pixi **global** at `~/.pixi/bin/conda` is what the 09-03 failure was about and is no longer relied on |
+
+**Getting in, as of 2026-09-09: the `thylakoid` account rejects the laptop's
+key** — `Permission denied (publickey)` on all three host aliases, with
+`~/.ssh/id_ed25519` offered and refused. The `ghrunner` account on the same
+machine and port (`kbintra-test2` in `~/.ssh/config`) takes the same key and
+logs in. That account reads `/evo/postdoc` but writes nothing in it, so work
+from there means its own clone, its own `.pixi` and its own
+`$COMPAREM2_CONDA_PREFIX` under `/home/ghrunner` — 73 G free on `/`, and pixi's
+package cache is shared, so `pixi install` was 2 s. `/home/thylakoid/.pixi/bin/pixi`
+is world-executable, and `git` is `/usr/bin/git`; there is no `/usr/bin/time`.
 
 ```bash
 cd /evo/postdoc/CompareM2
