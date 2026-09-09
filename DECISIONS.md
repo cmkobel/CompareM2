@@ -2173,3 +2173,38 @@ output for that run exactly, and the diff is five hunks all inside the head.
 156,180 → 158,052 bytes. If a future change to `CSS` lands while the example
 still needs updating, the same three substitutions are the recipe; a real
 re-render needs the cluster.
+
+### The prose drops the em dash, because the tells were mechanical and the content was not
+Carl pointed at
+[WP:AISIGNS](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) and
+asked for documentation that does not read as machine-written. Measured first:
+309 em dashes across README and `docs/`, 17.4 per 1,000 words, against the 1–3
+that ordinary technical prose runs. Also 52 rhetorical `rather than`
+antitheses and 36 `**Bold lead-in.** Explanation` paragraphs. Now 28 and 1.5.
+
+What the essay actually weights most was already absent, and that is the part
+worth recording: no puffery vocabulary, no `serves as` for `is`, no "not only X
+but Y", no vague attribution, no invented citations. Checked by grep after the
+rewrite as well as before. So this was a surface pass and the content did not
+move — verified by diffing every numeric token in `guidance.py` against the
+previous commit (one `82%` gained a comma where a dash had been; nothing else)
+and by comparing all 25 verbatim paper quotations byte-for-byte.
+
+**The single biggest source was one line of `docs/generate.py`**, not the
+prose. `parts.append(f"  - *{label}* — {text}")` emitted roughly 65 of page
+30's em dashes on its own; it is now a colon. Worth knowing before anyone
+hand-edits that page: it is generated, and the separator lives in the
+generator. The report never had this problem, because `report.py` renders the
+same pairs as a real `<dl>`/`<dt>`/`<dd>`.
+
+Kept deliberately: em dashes inside verbatim UI output (`databases to download:
+none — all present`, the quit dialog, the spinner's idle line), inside `| — |`
+table cells meaning "not applicable", and in the FastTree 2 paper's actual
+title. Those are quotations and data, not voice. Also kept: 21 `rather than` on
+page 30, because it is a plain comparative that the essay does not flag, and in
+most of them it carries the claim — "a statement about the model rather than
+the organism" does not survive being reworded to hit a count.
+
+Three stale test counts were fixed in passing. `README.md` said 276,
+`docs/10 installation.md` 269, `CLAUDE.md` 275; CI and a local run both say
+**274 passed, 2 skipped**.

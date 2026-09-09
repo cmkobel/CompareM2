@@ -22,7 +22,7 @@ is [GPL-3.0-or-later](https://www.gnu.org/licenses/gpl-3.0.html).
 
 Please cite the tools you actually used. Every report lists them for its own run
 in its *Methods and citations* section, generated from the same source as this
-page. Where a tool wraps another method, both are listed — Mashtree wraps Mash,
+page. Where a tool wraps another method, both are listed: Mashtree wraps Mash,
 Bakta calls Prodigal, Panaroo aligns with MAFFT.
 
 ### seqkit
@@ -40,7 +40,7 @@ Bakta calls Prodigal, Panaroo aligns with MAFFT.
 
   - Chaumeil P-A, Mussig AJ, Hugenholtz P, Parks DH (2022) GTDB-Tk v2: memory friendly classification with the Genome Taxonomy Database. Bioinformatics 38:5315–5316. [doi:10.1093/bioinformatics/btac672](https://doi.org/10.1093/bioinformatics/btac672)
   - Parks DH, Chuvochina M, Rinke C, Mussig AJ, Chaumeil P-A, Hugenholtz P (2022) GTDB: an ongoing census of bacterial and archaeal diversity through a phylogenetically consistent, rank normalized and complete genome-based taxonomy. Nucleic Acids Research 50:D785–D794. [doi:10.1093/nar/gkab776](https://doi.org/10.1093/nar/gkab776)
-    <br>*Cite alongside GTDB-Tk, and record the release — this run used r232.*
+    <br>*Cite alongside GTDB-Tk, and record the release: this run used r232.*
 
 ### bakta
 
@@ -83,7 +83,7 @@ Bakta calls Prodigal, Panaroo aligns with MAFFT.
 ### snp-dists
 
   - Seemann T, Klötzl F, Page AJ. snp-dists: pairwise SNP distance matrix from a FASTA sequence alignment (software). [doi:10.5281/zenodo.1411986](https://doi.org/10.5281/zenodo.1411986)
-    <br>*snp-dists has no paper. There is no published description of its algorithm, defaults or validation — cite the software DOI.*
+    <br>*snp-dists has no paper. There is no published description of its algorithm, defaults or validation, so cite the software DOI.*
   - Tonkin-Hill G, MacAlasdair N, Ruis C, et al. (2020) Producing polished prokaryotic pangenomes with the Panaroo pipeline. Genome Biology 21:180. [doi:10.1186/s13059-020-02090-4](https://doi.org/10.1186/s13059-020-02090-4)
 
 ### fasttree
@@ -100,7 +100,7 @@ Bakta calls Prodigal, Panaroo aligns with MAFFT.
 
   - Machado D, Andrejev S, Tramontano M, Patil KR (2018) Fast automated reconstruction of genome-scale metabolic models for microbial species and communities. Nucleic Acids Research 46:7542–7553. [doi:10.1093/nar/gky537](https://doi.org/10.1093/nar/gky537)
   - Orth JD, Thiele I, Palsson BØ (2010) What is flux balance analysis? Nature Biotechnology 28:245–248. [doi:10.1038/nbt.1614](https://doi.org/10.1038/nbt.1614)
-    <br>*The method behind the biosynthesis section — a linear program over a steady-state stoichiometric network. Not a CompareM2 contribution.*
+    <br>*The method behind the biosynthesis section: a linear program over a steady-state stoichiometric network. Not a CompareM2 contribution.*
   - Monk JM, Lloyd CJ, Brunk E, et al. (2017) iML1515, a knowledgebase that computes Escherichia coli traits. Nature Biotechnology 35:904–908. [doi:10.1038/nbt.3956](https://doi.org/10.1038/nbt.3956)
     <br>*Not run by the pipeline. It is the manually curated model the biosynthesis probe was validated against, and the reason the 31-of-32 figure in that section can be checked.*
 

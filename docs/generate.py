@@ -3,7 +3,7 @@
 
 Writes `30 what analyses does it do.md` and `99 citation.md`.
 
-v2 maintained both by hand and both drifted — the citation list kept entries for
+v2 maintained both by hand and both drifted: the citation list kept entries for
 dropped tools and missed added ones, and the analyses page documented default
 parameters that no longer matched `config.yaml`. Everything these pages state is
 already declared in `catalogue.py` and `guidance.py`, so they are derived.
@@ -32,7 +32,7 @@ def _example_command(tool) -> str:
     """The command as it would actually run, with placeholder paths."""
     ctx = Context(
         # Both placeholders are the real defaults, so the example is a command
-        # a reader can paste — see `default_databases()` for the second.
+        # a reader can paste; see `default_databases()` for the second.
         Path("results_comparem2"), Path("~/.comparem2/databases"), tool.threads,
         ("genome_A", "genome_B"),
         sample="genome_A" if tool.scope is Scope.GENOME else None,
@@ -47,7 +47,7 @@ def _example_command(tool) -> str:
     # laptop's directory layout, and `--check` would fail in CI, where the
     # checkout is somewhere else. carveme and biosynthesis are the two, and the
     # repo-relative form they fall back to is the one thing on the page a reader
-    # cannot paste — so `analyses_page` says so under the block.
+    # cannot paste, so `analyses_page` says so under the block.
     return line.replace(str(Path(__file__).resolve().parents[1]) + "/", "")
 
 
@@ -83,8 +83,8 @@ with what actually runs.
 
 Two kinds of tool:
 
-  - **per genome** — runs once for each assembly
-  - **per set** — runs once over all of them together
+  - **per genome**: runs once for each assembly
+  - **per set**: runs once over all of them together
 
 Use `--until` to run a subset. Dependencies come along automatically, so
 `--until fasttree` also runs bakta and panaroo:
@@ -135,7 +135,7 @@ def analyses_page() -> str:
         # in it*, is the fact that matters: tools that share an environment
         # share its fate, so a reader debugging a failed deploy needs to know
         # the blast radius. This said "**its own conda environment**" for every
-        # tool between 2026-09-07 and the split being written up here — true of
+        # tool between 2026-09-07 and the split being written up here. True of
         # gtdbtk and checkm2, false of the twelve that share.
         facts.append(_environment_fact(tool))
         parts.append(" · ".join(facts) + "\n\n")
@@ -162,14 +162,14 @@ def analyses_page() -> str:
 
         parts.append("**Reading the output**\n\n")
         for label, text in entry.reading:
-            parts.append(f"  - *{label}* — {text}\n")
+            parts.append(f"  - *{label}*: {text}\n")
         parts.append("\n**What it cannot tell you**\n\n")
         for caveat in entry.caveats:
             parts.append(f"  - {caveat}\n")
         parts.append("\n")
 
     # The tables above list each tool's defaults, so the syntax for changing one
-    # belongs on this page — but only the syntax. The rules and the worked
+    # belongs on this page, but only the syntax. The rules and the worked
     # examples are in usage, and were duplicated here until 2026-09-06.
     parts.append(
         "---\n\n## Changing a default\n\n"
@@ -208,7 +208,7 @@ is [GPL-3.0-or-later](https://www.gnu.org/licenses/gpl-3.0.html).
 
 Please cite the tools you actually used. Every report lists them for its own run
 in its *Methods and citations* section, generated from the same source as this
-page. Where a tool wraps another method, both are listed — Mashtree wraps Mash,
+page. Where a tool wraps another method, both are listed: Mashtree wraps Mash,
 Bakta calls Prodigal, Panaroo aligns with MAFFT.
 
 """

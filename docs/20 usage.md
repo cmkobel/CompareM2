@@ -5,7 +5,7 @@ comparem2 <assemblies>... [options]            # conda, or pixi global
 pixi run comparem2 <assemblies>... [options]   # a pixi workspace, or a git checkout
 ```
 
-The examples below use the first form; inside a pixi workspace or a git
+The examples below use the first form. Inside a pixi workspace or a git
 checkout, read each one as `pixi run comparem2 …`. Either way you also get
 `cm2` as a shorter alias, interchangeable with `comparem2` everywhere.
 
@@ -15,9 +15,9 @@ Assemblies are passed as paths, and the shell expands the glob:
 comparem2 genomes/*.fna
 ```
 
-Relative paths mean what they look like they mean, from any directory —
-including under `pixi run`, which would otherwise resolve them against the
-workspace root rather than your shell's directory. Inputs, `--output` and
+Relative paths mean what they look like they mean, from any directory. That
+includes under `pixi run`, which would otherwise resolve them against the
+workspace root instead of your shell's directory. Inputs, `--output` and
 `--databases` are all resolved against where you typed the command, so results
 land next to the genomes.
 
@@ -42,15 +42,15 @@ land next to the genomes.
 | `--version` | | print the version and exit |
 
 There is no flag for *whether* to deploy the tools. Snakemake always does, into
-`--conda-prefix` — see [Installation](10 installation.md).
+`--conda-prefix`; see [Installation](10 installation.md).
 
-`--profile` is a passthrough to Snakemake and is what makes jobs go to a queue
-rather than to this machine; `--cores` never submits anything. It takes a
-directory holding `config.yaml`, or a bare name looked up under
-`~/.config/snakemake` — and with no flag at all it follows
-**`$SNAKEMAKE_PROFILE`**, which is Snakemake's own variable, so exporting it
-once submits every run from that shell. `--profile none` is how one run stays
-local anyway. See [HPC](10 installation.md#hpc) for a worked profile.
+`--profile` is a passthrough to Snakemake, and it is what makes jobs go to a
+queue instead of to this machine. `--cores` never submits anything. The flag
+takes a directory holding `config.yaml`, or a bare name looked up under
+`~/.config/snakemake`. With no flag at all it follows **`$SNAKEMAKE_PROFILE`**,
+which is Snakemake's own variable, so exporting it once submits every run from
+that shell. `--profile none` is how one run stays local anyway. There is a
+worked profile under [HPC](10 installation.md#hpc).
 
 ## Running a subset
 
@@ -73,8 +73,8 @@ prerequisites follow. Two combinations worth knowing:
         panaroo snp-dists fasttree carveme biosynthesis
 ```
 
-The second is the single biggest saving available — GTDB-Tk is 60.8 GB of the
-download, and everything else together is roughly 3 GB.
+The second is the single biggest saving available. GTDB-Tk is 60.8 GB of the
+download and everything else together is roughly 3 GB.
 
 ## Passthrough parameters
 
@@ -87,22 +87,22 @@ comparem2 *.fna \
   --set bakta--gram=+
 ```
 
-Write the flag exactly as the tool spells it, dashes and all — that is why
+Write the flag exactly as the tool spells it, dashes and all, which is why
 `treecluster--threshold` has two and skani's `-c` has one. Naming one flag
-replaces only that flag; the tool's other defaults stay. A flag with no value is
-passed bare: `--set bakta--force=`.
+replaces only that flag; the tool's other defaults stay. A flag with no value
+is passed bare: `--set bakta--force=`.
 
 Every tool's defaults are listed on
 [what analyses does it do](30 what analyses does it do.md), generated from the
 specs so they cannot drift from what actually runs.
 
 !!! note "Two things worth overriding"
-    `--set skani-c=125` if all your genomes are complete isolates — the default
+    `--set skani-c=125` if all your genomes are complete isolates. The default
     of 70 is the more accurate setting for fragmented MAGs but costs runtime.
 
     `--set treecluster--threshold=…` if the clusters look wrong. The threshold
-    dominates the answer: TreeCluster's own paper moved from 181,574 clusters to
-    10,112 by sweeping it, so re-run at a couple of nearby values before
+    dominates the answer: TreeCluster's own paper moved from 181,574 clusters
+    to 10,112 by sweeping it, so re-run at a couple of nearby values before
     reporting a grouping.
 
 ## The TUI
@@ -113,20 +113,20 @@ comparem2 *.fna --tui
 
 ![The CompareM2 TUI: the tool table on the left, the run log on the right](assets/tui.png)
 
-The header names where output, databases and tool environments are going and
-where each of those paths came from — `default`, an environment variable, a
+The header names where output, databases and tool environments are going, and
+where each of those paths came from: `default`, an environment variable, a
 flag. The tool table is on the left, the run log on the right, and the footer
 carries the keys. Above, a run of mashtree has just finished and three more
 tools are starting; `carveme` is under the cursor and `bakta` is marked `▨`
 because something selected needs it.
 
-A keyboard interface over the same run: per-tool progress, the download size
-before anything is fetched, and failures as they happen. It drives Snakemake
-through its logger plugin system rather than scraping stdout, so the events are
-structured.
+It is a keyboard interface over the same run, showing per-tool progress, the
+download size before anything is fetched, and failures as they happen. It
+drives Snakemake through its logger plugin system instead of scraping stdout,
+so the events are structured.
 
 `space` selects and deselects the tool under the cursor, `a` and `n` select all
-and none, `r` runs, `u` releases a lock, `q` quits — and asks first if a run is
+and none, `r` runs, `u` releases a lock, `q` quits and asks first if a run is
 going. `▣` is chosen, `▨` is pulled in as a dependency of something chosen, `▢`
 is off.
 
@@ -140,20 +140,20 @@ when something pulls it in.
     Which is not a corner case: tmux ships `default-terminal screen`, so a
     session inside tmux over SSH has eight colours whatever the terminal
     attached to it can do. Every cursor and selection in the interface is drawn
-    with an inverted block rather than a tinted background, because a tint
-    downgrades to the same ANSI colour as the surface behind it and disappears
-    — which is exactly what happened to the selected row in the command
-    palette.
+    with an inverted block instead of a tinted background, because a tint
+    downgrades to the same ANSI colour as the surface behind it and
+    disappears. That is exactly what happened to the selected row in the
+    command palette.
 
     Nothing needs configuring for that. If you would rather have the colours,
     give tmux a terminal that has them: `set -g default-terminal tmux-256color`
     in `~/.tmux.conf`, plus `set -ga terminal-overrides ",*256col*:Tc"` for
     24-bit.
 
-**Nothing is selected when it opens.** Choosing the analyses is what the
-interface is for, and selecting all fourteen by default put GTDB-Tk's 60.8 GB
-download one keypress from someone who had not read the table yet. `a` is still
-one key away if you do want everything. `--until` seeds the selection, so
+Nothing is selected when it opens. Choosing the analyses is what the interface
+is for, and selecting all fourteen by default put GTDB-Tk's 60.8 GB download
+one keypress from someone who had not read the table yet. `a` is still one key
+away if you do want everything. `--until` seeds the selection, so
 `--tui --until mashtree treecluster` opens with exactly those two chosen.
 
 ### What it says before you press anything
@@ -162,9 +162,9 @@ one key away if you do want everything. `--until` seeds the selection, so
 before and the status column is filled in from what is on disk: `already run`
 where every declared output is present, `part-finished` where some are missing.
 Those are read from the same files Snakemake decides resumability on, so the
-table is what a re-run would actually skip — a `part-finished` tool is one that
-will be redone. A tool you have not selected still reports what it has; whether
-it is selected is what the mark column says.
+table is what a re-run would actually skip, and a `part-finished` tool is one
+that will be redone. A tool you have not selected still reports what it has;
+whether it is selected is what the mark column says.
 
 **Which databases you already have.** The four database rows read `present` for
 one that is here, `to download` for one this selection needs and does not have,
@@ -180,10 +180,10 @@ Snakemake will skip:
 ```
 
 The cost line above the table counts only what is missing, so a machine that
-already holds GTDB reads `databases to download: none — all present` rather
-than announcing 60.8 GB it is not going to fetch. `unmeasured` means exactly
-that — Bakta and AMRFinder have no static URL to read a `content-length` from,
-so their size is not guessed.
+already holds GTDB reads `databases to download: none — all present` instead of
+announcing 60.8 GB it is not going to fetch. `unmeasured` means exactly that:
+Bakta and AMRFinder have no static URL to read a `content-length` from, so
+their size is not guessed.
 
 **Where the run's four locations come from.** Above the table:
 
@@ -197,23 +197,23 @@ execution local                                         default
 The right-hand column is the *origin*, not the value: `default`, `given` for
 something you typed, or the name of the environment variable the value came
 from. `given, overriding $COMPAREM2_DATABASES` means the variable is set and a
-`-d` beat it — which is worth seeing, because a variable exported in `.bashrc`
+`-d` beat it, which is worth seeing, because a variable exported in `.bashrc`
 months ago and silently overridden looks exactly like no variable at all. Two
 of these decide whether existing work gets re-used: a databases directory that
 is not the one holding your 62.5 GB re-downloads it, and a moved
 `$COMPAREM2_CONDA_PREFIX` re-solves every tool environment.
 
-The `execution` row is the third, and it decides where the work runs at all.
-It reads `local` for a run on this machine, or the profile that is submitting
-it — attributed to `$SNAKEMAKE_PROFILE` when that variable is what turned
-submission on, and `--profile none, overriding $SNAKEMAKE_PROFILE` when you
-have asked for a local run in a shell that exports one. The CLI prints the
-same line, but only when a profile or the variable is in play.
+The `execution` row is the third, and it decides where the work runs at all. It
+reads `local` for a run on this machine, or the profile that is submitting it,
+attributed to `$SNAKEMAKE_PROFILE` when that variable is what turned submission
+on, and `--profile none, overriding $SNAKEMAKE_PROFILE` when you have asked for
+a local run in a shell that exports one. The CLI prints the same line, but only
+when a profile or the variable is in play.
 
 **Whether the output directory is locked**, and `u` clears it. A run that was
-killed leaves a lock Snakemake refuses to start on — see [After a run is
+killed leaves a lock Snakemake refuses to start on; see [After a run is
 killed](#after-a-run-is-killed) for what that is. `r` on a locked directory
-refuses to start rather than letting the run fail several seconds in, and `u`
+refuses to start instead of letting the run fail several seconds in, and `u`
 does the same thing `--unlock` does without leaving the interface.
 
 It asks first, and the question is not "are you sure" but "is anything else
@@ -238,20 +238,20 @@ fetch names itself there too, by its rule name:
 ⠹ download_gtdb · 41m 08s
 ```
 
-which is worth knowing before you conclude nothing is happening: on a 3 MB/s
+which is worth knowing before you conclude nothing is happening. On a 3 MB/s
 link GTDB is a six-hour transfer, and it is the longest single thing the
 pipeline does.
 
-When no job is running the line says why — `starting up — the DAG, and tool environments on
-a first run` is the long one, because a first run solves six conda environments
-before anything else happens and Snakemake's own output for that is quietened
-under the interface. The progress bar has no total to draw until Snakemake
-reports one, so it pulses rather than sitting at 0%.
+When no job is running the line says why. `starting up — the DAG, and tool
+environments on a first run` is the long one, because a first run solves six
+conda environments before anything else happens, and Snakemake's own output for
+that is quietened under the interface. The progress bar has no total to draw
+until Snakemake reports one, so it pulses instead of sitting at 0%.
 
 The animation is driven by the interface's own event loop, which is the point:
 if it is genuinely wedged, the spinner stops with it rather than reassuring you
-it hasn't. When the run ends the line is replaced by `not running — the last run
-took 4m 12s`, so a still screen never has to be interpreted.
+it hasn't. When the run ends the line is replaced by `not running — the last
+run took 4m 12s`, so a still screen never has to be interpreted.
 
 ### Quitting while a run is going
 
@@ -283,13 +283,13 @@ A database download is in progress. A download runs here rather than in
 the queue, so s stops it.
 ```
 
-The four `download_*` rules are `localrules` — they run wherever you started
-the interface, not on a compute node, because a compute node may have no
-outbound network. So under a profile they are the one job `y` leaves as an
-orphan on your login node rather than as a job in a queue.
+The four `download_*` rules are `localrules`. They run wherever you started the
+interface, not on a compute node, because a compute node may have no outbound
+network. So under a profile they are the one job `y` leaves as an orphan on
+your login node instead of as a job in a queue.
 
 `s` stops them, and the two halves are done differently because they have to
-be. A queue is cancelled with `scancel --name <run id>` — the SLURM executor
+be. A queue is cancelled with `scancel --name <run id>`. The SLURM executor
 plugin submits every job of a run under that one name precisely so this works,
 and the interface logs the id (`SLURM run id 4f1c…`) when the plugin announces
 it, so it is also the handle from any other terminal:
@@ -299,29 +299,29 @@ squeue --name 4f1c9a02-…      # what is still queued
 scancel --name 4f1c9a02-…     # stop the run from anywhere
 ```
 
-Local jobs are stopped by signalling the process tree — SIGTERM, three seconds,
-then SIGKILL — because Snakemake's own local cancellation stops *scheduling*
-and waits for what is running rather than ending it. Under a profile both
-happen: the analyses are queue jobs, but the four database downloads are
-`localrules` and run wherever Snakemake is, so a 60.8 GB GTDB fetch is a child
-process of the interface and not a job.
+Local jobs are stopped by signalling the process tree, SIGTERM, three seconds,
+then SIGKILL, because Snakemake's own local cancellation stops *scheduling* and
+waits for what is running rather than ending it. Under a profile both happen:
+the analyses are queue jobs, but the four database downloads are `localrules`
+and run wherever Snakemake is, so a 60.8 GB GTDB fetch is a child process of
+the interface and not a job.
 
 Either way the outcome is printed after the interface closes, not inside it, so
 it survives the screen going away.
 
 !!! warning "Cancelling leaves the directory locked, and half-written outputs"
-    Neither half can release Snakemake's lock — it outlives the process — so a
+    Neither half can release Snakemake's lock, which outlives the process, so a
     cancelled run is followed by `u` next time, or `comparem2 --unlock --output
     <dir>`. The partial outputs are handled: CompareM2 runs with
-    `--rerun-incomplete`, so a rule that was interrupted is redone rather than
+    `--rerun-incomplete`, so a rule that was interrupted is redone instead of
     trusted.
 
-    `s` under a profile whose executor is not the SLURM plugin —
-    `cluster-generic` for PBS, SGE and LSF — leaves the queue alone and says
+    `s` under a profile whose executor is not the SLURM plugin
+    (`cluster-generic` for PBS, SGE and LSF) leaves the queue alone and says
     so. There is no equivalent one-name handle to cancel by, so check with your
     own queue command.
 
-Every other flag works the same way with `--tui` as without it — `--until` seeds
+Every other flag works the same way with `--tui` as without it. `--until` seeds
 the selection, and `--set`, `--keep-going` and `-d` are all honoured:
 
 ```bash
@@ -337,16 +337,17 @@ run and it shows the download size too.
 comparem2 --demo
 ```
 
-Six *Enterococcus faecium* plasmids ship inside the package — 461 KB, the only
-non-Python file in it — so this needs no genomes of your own, no databases and
+Six *Enterococcus faecium* plasmids ship inside the package at 461 KB, the only
+non-Python file in it, so this needs no genomes of your own, no databases and
 no network beyond the tool environments themselves. They are extracted to
 `<output>/demo_assemblies/`, where you can look at them and delete them.
 
 It runs `seqkit`, `mashtree`, `treecluster` and `skani`: the four analyses that
 need no database. That list is fixed rather than defaulted, because the inputs
-are **plasmids** — CheckM2 would report a completeness near zero, correctly and
+are **plasmids**. CheckM2 would report a completeness near zero, correctly and
 uselessly, since it is looking for a chromosome's marker genes. Naming
-`--until` yourself still overrides it, on the assumption that you have a reason.
+`--until` yourself still overrides it, on the assumption that you have a
+reason.
 
 A seventh input is the sixth one again as `116_2 duplicate.fna`. It costs
 nothing to ship and it gives the report something to check itself against: the
@@ -368,10 +369,10 @@ Two inputs that reduce to the same name is an error, not a silent overwrite.
 
 ## Where databases go
 
-Databases are shared across runs, not stored per-run, so deleting a checkout
+Databases are shared across runs and not stored per-run, so deleting a checkout
 does not cost a re-download. Precedence is `-d`, then `$COMPAREM2_DATABASES`,
-then `~/.comparem2/databases` — and a home directory is the wrong place for
-101 GB on a cluster with a quota:
+then `~/.comparem2/databases`. A home directory is the wrong place for 101 GB
+on a cluster with a quota:
 
 ```bash
 export COMPAREM2_DATABASES=/evo/postdoc/cm2-databases
@@ -386,8 +387,8 @@ to download: checkm2, gtdb, bakta-light, amrfinder (62.5 GB + 2 of unknown size)
 
 Two databases are not under this root, and cannot be:
 
-- **AMRFinder** rejects `-d` on update (`amrfinder -u -d <dir>` exits with *"only
-  operates on the default database directory"*), so its data lands in
+- **AMRFinder** rejects `-d` on update. `amrfinder -u -d <dir>` exits with
+  *"only operates on the default database directory"*, so its data lands in
   `$CONDA_PREFIX` and only a marker file is recorded here.
 - **GTDB-Tk** has no flag for its database at all; it is passed
   `GTDBTK_DATA_PATH=<root>/gtdb` instead.
@@ -396,8 +397,8 @@ Sizes are in [Installation](10 installation.md#databases).
 
 ## Re-rendering the report
 
-The report is regenerated on every run, but you can rebuild it alone — useful
-after a partial run, or when only the report code changed:
+The report is regenerated on every run, but you can rebuild it alone, which is
+useful after a partial run or when only the report code changed:
 
 ```bash
 comparem2 *.fna --report-only
@@ -408,8 +409,8 @@ readable document.
 
 ## After a run is killed
 
-Snakemake locks the output directory, so a run that died without releasing it —
-SIGKILL, a lost node, a power cut — leaves the next one refusing to start:
+Snakemake locks the output directory, so a run that died without releasing it
+(SIGKILL, a lost node, a power cut) leaves the next one refusing to start:
 
 ```
 LockException: Directory cannot be locked.
@@ -423,15 +424,15 @@ comparem2 *.fna            # picks up where it stopped
 ```
 
 The lock belongs to the output directory, not to the assemblies, so `--unlock`
-needs only `-o`. Naming the assemblies as well is accepted — adding the flag to
-the command that just died is the obvious move — and they are not read.
+needs only `-o`. Naming the assemblies as well is accepted, since adding the
+flag to the command that just died is the obvious move, and they are not read.
 
 Under `--tui` this is `u`, which asks before clearing. Either way, make sure no
 other run is writing to that directory first: the lock is what stops two
 Snakemake processes from corrupting each other's outputs, and nothing in it
 says whether the process that made it is still alive.
 
-Downloads resume rather than restart: a killed GTDB fetch continues its partial
+Downloads resume rather than restart. A killed GTDB fetch continues its partial
 tarball instead of fetching 60.8 GB again.
 
 ## Output layout
@@ -452,10 +453,10 @@ results_comparem2/
 
 A log sits beside the results it describes, so a per-genome tool leaves one log
 per genome rather than one for the run. Database downloads are the exception:
-they log to `<databases>/logs/`, next to the data instead of next to the run —
-all but AMRFinder's, which has no directory of its own under `--databases` and
+they log to `<databases>/logs/`, next to the data instead of next to the run.
+All but AMRFinder's, which has no directory of its own under `--databases` and
 writes to `logs/download_amrfinder.log` here.
 
 The generated `Snakefile` is a normal Snakemake workflow. If something fails,
-that file plus the matching log is where to look — and you can run Snakemake
+that file plus the matching log is where to look, and you can run Snakemake
 against it directly with any profile you already use.

@@ -6,7 +6,7 @@ it answers, how it works, what the specific columns on screen mean, and what
 would make a conclusion drawn from them indefensible.
 
 **Why this is not in `catalogue.py`.** A tool's spec there is ~20 lines of
-executable detail — the command line, which DESIGN.md calls the largest single
+executable detail: the command line, which DESIGN.md calls the largest single
 risk in the rewrite. Burying that under prose written for a different audience
 would hide the thing developers actually edit. The two change for different
 reasons, so they live apart; `test_every_tool_has_guidance` keeps the split
@@ -14,8 +14,8 @@ honest by failing when a tool is added without its explanation.
 
 **Sourcing rule.** Every number here was copied from the tool's own paper and
 checked back against the PDF text. Where a statement is ordinary methodological
-caution rather than something a paper establishes, it says so in the sentence —
-a reader cannot audit a claim whose provenance is hidden, and an unattributed
+caution rather than something a paper establishes, it says so in the sentence.
+A reader cannot audit a claim whose provenance is hidden, and an unattributed
 caveat that sounds like a finding is worse than no caveat.
 """
 
@@ -52,7 +52,7 @@ class Guidance:
     reading: tuple[tuple[str, str], ...]
     caveats: tuple[str, ...]
     citation: Citation
-    # Underlying methods that deserve credit in their own right — the algorithm
+    # Underlying methods that deserve credit in their own right: the algorithm
     # a wrapper wraps, the database a classifier classifies against.
     also: tuple[Citation, ...] = field(default_factory=tuple)
 
@@ -84,7 +84,7 @@ GTDB = Citation("Parks DH, Chuvochina M, Rinke C, Mussig AJ, Chaumeil P-A, Hugen
                 "through a phylogenetically consistent, rank normalized and complete "
                 "genome-based taxonomy. Nucleic Acids Research 50:D785–D794",
                 "10.1093/nar/gkab776",
-                note="Cite alongside GTDB-Tk, and record the release — this run used r232.")
+                note="Cite alongside GTDB-Tk, and record the release: this run used r232.")
 BAKTA = Citation("Schwengers O, Jelonek L, Dieckmann MA, Beyvers S, Blom J, Goesmann A "
                  "(2021) Bakta: rapid and standardized annotation of bacterial genomes "
                  "via alignment-free sequence identification. Microbial Genomics 7:000685",
@@ -145,7 +145,7 @@ SNPDISTS = Citation("Seemann T, Klötzl F, Page AJ. snp-dists: pairwise SNP dist
                     "matrix from a FASTA sequence alignment (software)",
                     "10.5281/zenodo.1411986",
                     note="snp-dists has no paper. There is no published description of "
-                         "its algorithm, defaults or validation — cite the software DOI.")
+                         "its algorithm, defaults or validation, so cite the software DOI.")
 FASTTREE = Citation("Price MN, Dehal PS, Arkin AP (2010) FastTree 2 — approximately "
                     "maximum-likelihood trees for large alignments. PLOS ONE 5:e9490",
                     "10.1371/journal.pone.0009490")
@@ -156,7 +156,7 @@ CARVEME = Citation("Machado D, Andrejev S, Tramontano M, Patil KR (2018) Fast au
 FBA = Citation("Orth JD, Thiele I, Palsson BØ (2010) What is flux balance analysis? "
                "Nature Biotechnology 28:245–248",
                "10.1038/nbt.1614",
-               note="The method behind the biosynthesis section — a linear program over "
+               note="The method behind the biosynthesis section: a linear program over "
                     "a steady-state stoichiometric network. Not a CompareM2 contribution.")
 IML1515 = Citation("Monk JM, Lloyd CJ, Brunk E, et al. (2017) iML1515, a knowledgebase "
                    "that computes Escherichia coli traits. Nature Biotechnology 35:904–908",
@@ -171,8 +171,8 @@ GUIDANCE: dict[str, Guidance] = {
     "seqkit": Guidance(
         blurb="Measures the physical shape of each assembly: how many pieces it is in, "
               "how long they are, and how much of each is G or C. It answers whether an "
-              "assembly is one clean piece or a thousand fragments — nothing about "
-              "whether it is complete or correct.",
+              "assembly is one clean piece or a thousand fragments. It says nothing "
+              "about whether that assembly is complete or correct.",
         method="A single pass of `seqkit fx2tab --name --length --gc` writes one row per "
                "fasta record with its length and GC. Contig count, total length, largest "
                "contig, N50 and mean GC are all arithmetic done on those rows afterwards.",
@@ -180,7 +180,8 @@ GUIDANCE: dict[str, Guidance] = {
             ("Contigs",
              "The number of fasta records, which for a draft assembly is a fragmentation "
              "count. A closed genome gives one record per replicon. Neither SeqKit paper "
-             "offers a threshold for 'too many' — judge it against the other genomes here."),
+             "offers a threshold for 'too many', so judge it against the other genomes "
+             "here."),
             ("Total length",
              "Compare against the expected genome size for the taxon: far above suggests "
              "contamination or a merged bin, far below an incomplete assembly. N characters "
@@ -192,23 +193,24 @@ GUIDANCE: dict[str, Guidance] = {
              "essentially one piece. Discarding short contigs raises N50 without improving "
              "anything, and N50 only compares between genomes of similar total size."),
             ("GC %",
-             "Length-weighted, so it is the GC of the whole assembly rather than the mean "
-             "of per-contig values — a small plasmid cannot drag it around. Within a "
+             "Length-weighted: it is the GC of the whole assembly and not the mean of "
+             "per-contig values, so a small plasmid cannot drag it around. Within a "
              "species this is tight; a genome sitting well off its neighbours here is "
              "worth a second look."),
             ("The figure",
              "One bar per genome, one segment per fasta record in file order, width by "
              "length and colour by that record's own GC. Colours are relative to this run, "
              "not an absolute GC scale. A segment whose colour breaks the pattern is a "
-             "prompt to check for a plasmid, phage or contaminant — not evidence of one."),
+             "prompt to check for a plasmid, phage or contaminant. It is not evidence "
+             "of one."),
         ),
         caveats=(
             "A contiguous assembly is not a complete or uncontaminated one: completeness "
             "and contamination come from CheckM2 and identity from GTDB-Tk, not from here.",
             "The SeqKit2 paper states empty files are \"allowed and omitted without "
-            "reporting errors\", so a truncated assembly yields no rows rather than a "
+            "reporting errors\", so a truncated assembly yields no rows instead of a "
             "failure, and simply disappears from this table.",
-            "Neither paper defines an acceptable contig count, N50 or GC deviation — they "
+            "Neither paper defines an acceptable contig count, N50 or GC deviation. They "
             "are software papers about speed and features, so any cut-off you apply comes "
             "from your own expectations for the organism.",
         ),
@@ -228,7 +230,7 @@ GUIDANCE: dict[str, Guidance] = {
             ("Completeness",
              "Green is ≥90%, amber 50–90%, red <50%, matching the MIMAG bands the paper "
              "uses. Mean absolute error was 2.1±2.9% on high-quality genomes and 3.1±3.3% "
-             "on medium, low-quality and highly contaminated ones — so a 92% and a 94% "
+             "on medium, low-quality and highly contaminated ones, so a 92% and a 94% "
              "genome are not meaningfully different."),
             ("Contamination",
              "The predicted percentage of material that does not belong, including a second "
@@ -256,8 +258,8 @@ GUIDANCE: dict[str, Guidance] = {
             "paper gives no per-genome confidence interval, so ranking genomes by small "
             "differences is not defensible.",
             "Training simulated contamination from 0% to 35%, so a value far above that "
-            "range is an extrapolation — our reading of the training range, not a claim "
-            "the paper makes.",
+            "range is an extrapolation. That is our reading of the training range, not a "
+            "claim the paper makes.",
         ),
         citation=CHECKM2,
         also=(DIAMOND,),
@@ -275,14 +277,14 @@ GUIDANCE: dict[str, Guidance] = {
                "evolutionary divergence decides the ranks above it.",
         reading=(
             ("classification",
-             "A rank left empty — a bare `s__` at the end — means GTDB-Tk would not commit "
+             "An empty rank (a bare `s__` at the end) means GTDB-Tk would not commit "
              "there, usually because no reference was close enough on ANI. That is a "
              "result, not a failure: it says the genome is novel relative to this release. "
              "An alphanumeric name like `s__UBA1234 sp002345675` is a real GTDB species, "
              "not missing data; 77.0% of R06-RS202 species clusters carry such a name."),
             ("closest_genome_ani and closest_genome_af",
              "ANI is identity to the nearest reference; AF is how much of the two genomes "
-             "could be aligned to compute it. Both matter — high ANI over a small AF is not "
+             "could be aligned to compute it. Both matter: high ANI over a small AF is not "
              "evidence of the same species. Read 95–96% as the conventional species line "
              "and the high 80s to low 90s as a genus-level relative at best."),
             ("closest_genome_reference_radius",
@@ -292,23 +294,23 @@ GUIDANCE: dict[str, Guidance] = {
             ("red_value and classification_method",
              "classification_method says whether an ANI match or topological placement "
              "produced the name. When it is placement, red_value is the divergence of the "
-             "placement node on a 0-to-1 scale. Treat it as an audit trail, not a score to "
-             "threshold — neither paper publishes the per-rank RED intervals, so you cannot "
-             "recompute the decision from this column."),
+             "placement node on a 0-to-1 scale. Treat it as an audit trail and not a score "
+             "to threshold. Neither paper publishes the per-rank RED intervals, so you "
+             "cannot recompute the decision from this column."),
             ("msa_percent",
              "How much of the marker alignment this genome contributed. A low value means "
-             "missing markers — fragmented, contaminated, or genuinely divergent — and a "
+             "missing markers (fragmented, contaminated, or genuinely divergent) and a "
              "correspondingly weaker placement. No paper gives a cut-off, so read it "
              "comparatively and next to your CheckM2 completeness."),
         ),
         caveats=(
             "The species line is pragmatic, not biological: GTDB found no genetic "
             "discontinuity below 95% ANI, and 2.2% of species contain a genome at or above "
-            "95% ANI to a different species — so 93–95% to the nearest reference is "
+            "95% ANI to a different species, so 93–95% to the nearest reference is "
             "genuinely ambiguous and should not be reported as a confident species call.",
-            "The name is pinned to a release and GTDB rewrites itself — 0.26% of genomes "
-            "move species cluster between releases on average — so record the release or "
-            "the result is not reproducible.",
+            "The name is pinned to a release, and GTDB rewrites itself: 0.26% of genomes "
+            "move species cluster between releases on average. Record the release or the "
+            "result is not reproducible.",
             "A species-level hit is not evidence of a cultured relative: over 50% of "
             "bacterial taxa at every rank consist only of MAGs and/or SAGs, so the matched "
             "reference may itself be a bin with no phenotype behind it.",
@@ -324,7 +326,7 @@ GUIDANCE: dict[str, Guidance] = {
         blurb="Works out where the genes are in each assembly and what they are called. "
               "The counts here are the structural result; the annotation itself is what "
               "AMRFinder, Panaroo and CarveMe read later in this report.",
-        method="Structural calls come from specialist tools — Prodigal for protein-coding "
+        method="Structural calls come from specialist tools: Prodigal for protein-coding "
                "genes (via the pyrodigal binding), tRNAscan-SE, Aragorn, Infernal against "
                "Rfam, PILER-CR. Naming is where Bakta differs from Prokka: it hashes each "
                "predicted protein and looks the hash up in a pre-built database, sending "
@@ -336,17 +338,17 @@ GUIDANCE: dict[str, Guidance] = {
              "against 5794 from NCBI's PGAP and 5754 from Prokka. Read this next to CheckM2 "
              "completeness and assembly size: well below expectation usually means a "
              "fragmented assembly rather than gene loss, well above means a contaminated "
-             "bin. Genes under 30 codons are largely invisible — Prodigal only scores open "
-             "reading frames above 90 bp."),
+             "bin. Genes under 30 codons are largely invisible, since Prodigal only scores "
+             "open reading frames above 90 bp."),
             ("tRNA and rRNA",
              "On the benchmark genome all four annotators compared gave equal or comparable "
-             "counts, so this is not where annotators differ — it mostly reflects assembly "
+             "counts, so this is not where annotators differ; it mostly reflects assembly "
              "completeness. rRNA operons are near-identical repeats that routinely collapse "
              "in short-read assemblies, so a low rRNA count is more often an assembly "
              "artefact than biology (general caution, not a claim of the paper)."),
             ("Other features",
-             "A sum over unlike categories — tmRNA, ncRNA genes and regulatory regions, "
-             "CRISPR arrays, gaps, origins — normally dominated by non-coding RNA; the "
+             "A sum over unlike categories (tmRNA, ncRNA genes and regulatory regions, "
+             "CRISPR arrays, gaps, origins), normally dominated by non-coding RNA. The "
              "benchmark genome had 223 ncRNA genes and 66 regulatory regions. Because it "
              "mixes categories, a difference here is not interpretable on its own."),
             ("What this table does not show",
@@ -356,8 +358,8 @@ GUIDANCE: dict[str, Guidance] = {
         ),
         caveats=(
             "This run uses Bakta's light database and the paper characterises only the full "
-            "one (53 GB), so its functional-annotation figures — 10.6% hypothetical "
-            "proteins, 94.2% of CDS identified — cannot be assumed to hold here. Since "
+            "one (53 GB), so its functional-annotation figures (10.6% hypothetical "
+            "proteins, 94.2% of CDS identified) cannot be assumed to hold here. Since "
             "Bakta finds small proteins only by matching known sequences and \"is not able "
             "to predict these small protein coding genes de novo either\", a smaller "
             "database can only find fewer of them.",
@@ -365,7 +367,7 @@ GUIDANCE: dict[str, Guidance] = {
             "Prokka 130,360 and Bakta 130,683. Compare within this run, not against a number "
             "produced elsewhere.",
             "Annotation quality collapses for organisms poorly represented in public "
-            "databases — across 362 GenBank genomes of undefined genera the per-genome "
+            "databases. Across 362 GenBank genomes of undefined genera the per-genome "
             "identification rate ran from 0 to 99.9% with a median of 10.4%, so for a MAG "
             "from an uncharacterised lineage a high CDS count says little about how much of "
             "it is functionally described.",
@@ -377,11 +379,11 @@ GUIDANCE: dict[str, Guidance] = {
     ),
 
     "amrfinder": Guidance(
-        blurb="Reports which known antimicrobial-resistance genes — plus, because `--plus` "
-              "is passed, biocide, metal and virulence genes — are present in each genome, "
-              "against NCBI's curated Reference Gene Catalog. It tells you what resistance "
-              "machinery a genome encodes, not what the isolate will do in a susceptibility "
-              "test.",
+        blurb="Reports which known antimicrobial-resistance genes are present in each "
+              "genome, against NCBI's curated Reference Gene Catalog. Because `--plus` is "
+              "passed, biocide, metal and virulence genes come with them. It tells you "
+              "what resistance machinery a genome encodes, not what the isolate will do "
+              "in a susceptibility test.",
         method="Predicted proteins are searched with BLASTP against curated reference "
                "proteins and with HMMER against family HMMs carrying manually curated "
                "cutoffs; a hierarchy of gene families then gives the most specific name the "
@@ -389,7 +391,7 @@ GUIDANCE: dict[str, Guidance] = {
                "runs protein-only with `--plus` and no `--organism`.",
         reading=(
             ("Total",
-             "Reported hits, not distinct phenotypes. Genes of one operon count separately — "
+             "Reported hits, not distinct phenotypes. Genes of one operon count separately: "
              "a single vancomycin-resistance cluster appears as five rows (vanR-A, vanS-A, "
              "vanH-A, vanA, vanX-A)."),
             ("Class columns",
@@ -397,7 +399,7 @@ GUIDANCE: dict[str, Guidance] = {
              "reference gene is annotated to all of them. Curators use a broad label "
              "deliberately where \"the literature is unclear, contradictory as to resistance "
              "phenotype, or the effect of the element is highly dependent on strain or "
-             "species background\" — so breadth signals uncertainty about phenotype, not "
+             "species background\", so breadth signals uncertainty about phenotype and not "
              "breadth of resistance."),
             ("Non-antibiotic columns",
              "Because `--plus` is on, this table mixes antibiotic resistance with stress "
@@ -405,7 +407,7 @@ GUIDANCE: dict[str, Guidance] = {
              "A COPPER/SILVER hit says nothing about antibiotics."),
             ("Empty cells",
              "Weaker evidence than a hit. Only genes in the catalog can be found, and "
-             "carrying nothing is an ordinary result — 34.2% of the 6,242 validation "
+             "carrying nothing is an ordinary result: 34.2% of the 6,242 validation "
              "isolates were pansusceptible."),
             ("Method, %Coverage and %Identity",
              "In the per-genome TSV rather than this table, and they decide how much to "
@@ -421,14 +423,14 @@ GUIDANCE: dict[str, Guidance] = {
             "porin mutations and efflux overexpression.",
             "The 98.4% genotype-phenotype concordance was measured across 87,679 "
             "susceptibility tests in only Salmonella, Campylobacter and E. coli, on a "
-            "collection partly selected for resistant isolates — the authors say this "
+            "collection partly selected for resistant isolates. The authors say this "
             "\"might overestimate the overall PPV while underestimating the NPV\" and might "
             "not hold in other species. Per isolate rather than per test, 17% had at least "
             "one mismatch.",
-            "Protein-only mode with no --organism screens no point mutations, so resistances "
-            "that are mutational — Campylobacter fluoroquinolone and macrolide resistance is "
-            "almost entirely gyrA T86I and 23S A2075G — are invisible here. It also cannot "
-            "flag internal stops or frameshifts.",
+            "Protein-only mode with no --organism screens no point mutations, so mutational "
+            "resistances are invisible here. Campylobacter fluoroquinolone and macrolide "
+            "resistance is almost entirely gyrA T86I and 23S A2075G, and none of it would "
+            "show up. It also cannot flag internal stops or frameshifts.",
             "Calls are made on Bakta's predicted proteins, so a gene annotation missed or "
             "truncated cannot be reported; the authors note assembly-based systems \"can be "
             "only as good as the genomic data they are assessing\".",
@@ -438,25 +440,25 @@ GUIDANCE: dict[str, Guidance] = {
     ),
 
     "mlst": Guidance(
-        blurb="Puts a short, globally shared name on each genome — a sequence type, which "
+        blurb="Puts a short, globally shared name on each genome: a sequence type, which "
               "labels the exact combination of alleles at a handful of housekeeping genes. "
               "It answers whether this genotype has been seen and named before, not how "
               "closely related two genomes are.",
         method="Each assembly is BLAST-searched against PubMLST's catalogue of known allele "
                "sequences; every locus gets the identifier of the allele it matches, and "
                "that combination is looked up in the scheme's profile table. The ST exists "
-               "only if a curator has already registered that profile — these identifiers "
+               "only if a curator has already registered that profile. These identifiers "
                "are curated nomenclature, not a computed measurement.",
         reading=(
             ("Scheme",
-             "Which PubMLST scheme was auto-detected, per genome — no scheme is forced here, "
+             "Which PubMLST scheme was auto-detected, per genome. No scheme is forced here, "
              "so different rows may carry different schemes. Two rows are only comparable "
              "if this column reads the same. PubMLST hosted schemes for over 100 species or "
              "genera, so a genome outside that coverage shows `-` and nothing useful "
              "elsewhere in the row."),
             ("Sequence type",
              "An index into that scheme's profile table, nothing more. ST 5 in one scheme "
-             "has no relationship to ST 5 in another, and the numbers carry no ordering — "
+             "has no relationship to ST 5 in another, and the numbers carry no ordering: "
              "ST 78 is not between ST 77 and ST 79. A `-` means the allele combination was "
              "not in the table: either a locus failed to call, or the combination is novel "
              "and would need submitting to PubMLST to get a number."),
@@ -464,7 +466,7 @@ GUIDANCE: dict[str, Guidance] = {
              "One entry per locus. Classical MLST indexes \"multiple, but few (six or "
              "seven), housekeeping gene fragments\", so expect roughly that many. The number "
              "in brackets is a catalogue identifier assigned at curation, not a similarity "
-             "score — allele 4 is no more similar to allele 5 than to allele 100."),
+             "score: allele 4 is no more similar to allele 5 than to allele 100."),
             ("A dash at a locus",
              "More often a contig break than real gene loss. The paper is explicit that a "
              "core gene can be absent from a WGS dataset through \"technical issues due to "
@@ -474,12 +476,12 @@ GUIDANCE: dict[str, Guidance] = {
         caveats=(
             "An ST is meaningless without its scheme. A scheme is an arbitrary grouping of "
             "loci chosen for a purpose, with no limit on how many exist, so STs must never "
-            "be compared across schemes, species, or databases — Salmonella and E. coli are "
+            "be compared across schemes, species, or databases. Salmonella and E. coli are "
             "hosted on Enterobase and only mirrored into PubMLST.",
             "Six or seven housekeeping genes is a coarse ruler: the paper's own argument is "
             "that outbreak-level resolution needs cgMLST or wgMLST at ~1500–2000 loci, where "
             "point-source outbreaks are called at five or fewer allele differences. Two "
-            "genomes sharing an ST are the same lineage, not the same isolate — use the ANI, "
+            "genomes sharing an ST are the same lineage, not the same isolate; use the ANI, "
             "SNP-distance or tree sections for relatedness.",
             "Allele and ST numbers come from a static PubMLST copy bundled with the "
             "installed tool while PubMLST itself grows continuously, so a profile with no ST "
@@ -506,7 +508,7 @@ GUIDANCE: dict[str, Guidance] = {
              "95% ANI. Vertical spacing only keeps labels apart and means nothing."),
             ("No scale bar",
              "The phylogram is scaled to fit the page. Branch lengths are comparable to each "
-             "other but no absolute distance can be read off the picture — the numbers are "
+             "other but no absolute distance can be read off the picture; the numbers are "
              "in the newick file."),
             ("No support values",
              "Not a rendering omission. Mashtree implements bootstrapping and jackknifing, "
@@ -514,7 +516,7 @@ GUIDANCE: dict[str, Guidance] = {
              "split as untested: a group that looks tight here has not been shown to be "
              "stable."),
             ("The leftmost node",
-             "A drawing convention, not an inferred ancestor — neighbour-joining output is "
+             "A drawing convention, not an inferred ancestor: neighbour-joining output is "
              "unrooted. Do not read 'earliest-branching' off the left edge."),
         ),
         caveats=(
@@ -523,7 +525,7 @@ GUIDANCE: dict[str, Guidance] = {
             "not explicitly designed for phylogeny reconstruction\". Use it to triage and "
             "group; use the core-genome tree for any evolutionary claim.",
             "Mash distance measures resemblance of whole k-mer sets, so it moves with gene "
-            "content and genome size as well as with point mutations — Mash deliberately "
+            "content and genome size as well as with point mutations. Mash deliberately "
             "penalises size differences. A more fragmented or contaminated genome will shift "
             "for reasons that are not divergence, so cross-check CheckM2 and the assembly "
             "sizes before believing an odd placement.",
@@ -531,9 +533,9 @@ GUIDANCE: dict[str, Guidance] = {
             "cannot rule out. Because the comparison is over whole k-mer sets, a genome "
             "carrying a large block acquired from another lineage moves towards that "
             "lineage, and its position then describes the mosaic rather than a vertical "
-            "history. The core-gene tree is not a way out — it inherits the same problem — "
-            "and masking the imported region is, which this pipeline does not do (general "
-            "caution, not a Mashtree finding).",
+            "history. The core-gene tree is not a way out, since it inherits the same "
+            "problem. Masking the imported region is, and this pipeline does not do it "
+            "(general caution, not a Mashtree finding).",
             "The demonstrated accuracy is for closely related genomes: the ANI correlation "
             "was shown over 90–100% ANI and degrades beyond it as the variance of the "
             "estimate grows. Deep splits in a mixed-genus set are the least trustworthy part "
@@ -550,8 +552,8 @@ GUIDANCE: dict[str, Guidance] = {
         method="It solves a min-cut partitioning problem: cut the fewest edges so every "
                "resulting group stays under a diversity limit. This pipeline uses "
                "`--method max_clade --threshold 0.05`, which limits the longest leaf-to-leaf "
-               "path inside a group and additionally requires each group to be a clade — a "
-               "node plus all its descendants.",
+               "path inside a group and additionally requires each group to be a clade, "
+               "meaning a node plus all its descendants.",
         reading=(
             ("ClusterNumber",
              "An arbitrary integer with no ordering or meaning beyond grouping. Each cluster "
@@ -561,26 +563,27 @@ GUIDANCE: dict[str, Guidance] = {
             ("ClusterNumber = −1",
              "Not an error code. TreeCluster writes −1 for every genome that ended up alone, "
              "so all −1 rows are separate singletons rather than one large cluster. "
-             "Singletons are routine — 27% of clusters were singletons in the paper's 16S "
+             "Singletons are routine: 27% of clusters were singletons in the paper's 16S "
              "benchmark at threshold 0.09."),
             ("The coloured leaves in the mashtree section",
              "The same assignments, painted onto the tree they were cut from. They summarise "
              "that drawing; they are not independent evidence about it. A leaf left in the "
-             "default colour means its name did not match a row here — a naming mismatch, "
+             "default colour means its name did not match a row here: a naming mismatch, "
              "not a biological result."),
         ),
         caveats=(
-            "The 0.05 threshold is in the branch-length units of the tree it was handed — "
-            "mash distances — so it means no two genomes in a cluster are more than 0.05 "
-            "apart along that tree. It is not 95% ANI and not a species boundary; the paper "
+            "The 0.05 threshold is in the branch-length units of the tree it was handed, "
+            "which are mash distances, so it means no two genomes in a cluster are more "
+            "than 0.05 apart along that tree. It is not 95% ANI and not a species "
+            "boundary; the paper "
             "uses a similarity threshold precisely \"to avoid the notoriously difficult "
             "problem of defining species for microbial organisms\".",
             "Clusters are an artefact of the threshold, not discovered structure: the "
             "paper's own sweep from 0.005 to 0.15 moved the answer from 181,574 to 10,112 "
             "clusters. Re-run at neighbouring thresholds and see which pairs stay together "
-            "before reporting a grouping — the clustering itself takes seconds.",
-            "The optimal clustering is not unique — the number of equally optimal partitions "
-            "can be exponential in the number of leaves — so a genome sitting at the "
+            "before reporting a grouping; the clustering itself takes seconds.",
+            "The optimal clustering is not unique. The number of equally optimal partitions "
+            "can be exponential in the number of leaves, so a genome sitting at the "
             "threshold boundary has one of several equally valid assignments.",
             "TreeCluster never looks at the genomes, only the tree, so any error in the "
             "sketching or the neighbour-joining topology is inherited whole. These clusters "
@@ -590,7 +593,7 @@ GUIDANCE: dict[str, Guidance] = {
     ),
 
     "skani": Guidance(
-        blurb="Computes average nucleotide identity between every pair of genomes — the "
+        blurb="Computes average nucleotide identity between every pair of genomes: the "
               "percent identity over the parts that share ancestry. The shaded matrix is "
               "the fastest way to spot duplicates, see which inputs are the same species, "
               "and find the odd one out.",
@@ -603,11 +606,11 @@ GUIDANCE: dict[str, Guidance] = {
         reading=(
             ("Cells of the ANI matrix",
              "Estimated percent identity over the regions that could be matched. This "
-             "matrix is symmetric — the value \"does not depend on the order of the "
-             "inputs\" — unlike the aligned-fraction matrix below it. The "
+             "matrix is symmetric, since the value \"does not depend on the order of the "
+             "inputs\", unlike the aligned-fraction matrix below it. The "
              "paper refers to \"the standard 95% ANI species threshold\" as the convention "
              "for calling two genomes the same species, and describes the estimator as "
-             "accurate at ANI ≥ ~82% — so this is a within-species and near-species "
+             "accurate at ANI ≥ ~82%, so this is a within-species and near-species "
              "instrument."),
             ("The shading range",
              "Stretched to the lowest value actually present, not a fixed scale. If every "
@@ -617,7 +620,7 @@ GUIDANCE: dict[str, Guidance] = {
             ("Empty or near-zero cells",
              "skani declines to report a pair when the marker screen puts putative ANI below "
              "80% or the aligned fraction is under ~15%. So a blank means 'too little "
-             "detectable homology to estimate', not '0% identical' — and it carries no "
+             "detectable homology to estimate' and not '0% identical', and it carries no "
              "information about how distant the pair actually is."),
             ("Differences inside the 98–100% band",
              "Against a BLAST-style baseline on 4,350 E. coli genomes skani gave Pearson R "
@@ -627,7 +630,7 @@ GUIDANCE: dict[str, Guidance] = {
             ("The aligned fraction matrix",
              "The second matrix, and the half of the answer ANI alone does not give: how "
              "much of each genome the matched regions actually cover. It is not symmetric, "
-             "because the fraction is relative to each genome's own size — a small genome "
+             "because the fraction is relative to each genome's own size: a small genome "
              "fully contained in a larger one reads high in one direction and low in the "
              "other. skani emits an ANI once this reaches only about 15%, so a high "
              "identity over a low aligned fraction can be a shared plasmid, prophage or "
@@ -655,7 +658,7 @@ GUIDANCE: dict[str, Guidance] = {
     "panaroo": Guidance(
         blurb="Sorts every predicted gene into clusters and reports which are in all of "
               "the genomes, which in some, and which in only one. It answers what gene "
-              "content these genomes share — while actively trying to undo the annotation "
+              "content these genomes share, while actively trying to undo the annotation "
               "errors that otherwise make that answer wrong.",
         method="Genes are clustered with CD-HIT at 98% identity into a graph whose nodes are "
                "orthologue clusters and whose edges join genes that neighbour each other on "
@@ -667,7 +670,7 @@ GUIDANCE: dict[str, Guidance] = {
                "consume.",
         reading=(
             ("The summary line",
-             "Gene clusters is the pan genome — everything seen anywhere in this set. "
+             "Gene clusters is the pan genome: everything seen anywhere in this set. "
              "Distinct presence patterns is how many on/off combinations actually occur; "
              "close to 1 means near-identical gene content, close to the ceiling means "
              "presence is scattered rather than tracking a few lineages."),
@@ -679,8 +682,8 @@ GUIDANCE: dict[str, Guidance] = {
              "than the others usually means a fragmented assembly, not real gene loss."),
             ("Pangenome partitions",
              "Which table you get depends on how many genomes you ran. From 20 genomes up "
-             "you get the conventional Core/Soft core/Shell/Cloud bins — the ≥99% core "
-             "cutoff is the paper's convention, the rest are this report's. Below 20 you "
+             "you get the conventional Core/Soft core/Shell/Cloud bins. The ≥99% core "
+             "cutoff is the paper's convention; the rest are this report's. Below 20 you "
              "get an exact count of clusters against the number of genomes sharing them, "
              "because those bin edges are fractions of N and two of the four cannot be "
              "reached on a small set: a cluster missing from one of N genomes sits at "
@@ -699,7 +702,7 @@ GUIDANCE: dict[str, Guidance] = {
         ),
         caveats=(
             "`--clean-mode strict` recursively deletes poorly supported nodes, and the paper "
-            "states this \"can occasionally lead to rare plasmids being removed\" — so an "
+            "states this \"can occasionally lead to rare plasmids being removed\", so an "
             "absent gene here is not evidence of absence, and this run cannot show that a "
             "strain lacks a rare plasmid.",
             "The paper says Panaroo \"is not recommended for metagenomic datasets\", so a "
@@ -710,7 +713,7 @@ GUIDANCE: dict[str, Guidance] = {
             "does not estimate a species pangenome.",
             "Annotation error is the thing this tool exists to fix, and the scale is worth "
             "knowing: on 413 near-clonal M. tuberculosis genomes with a maximum pairwise "
-            "distance of 9 SNPs — where essentially no accessory genome should exist — other "
+            "distance of 9 SNPs, where essentially no accessory genome should exist, other "
             "tools reported 2,584 to 3,670 spurious accessory genes, 59% of the difference "
             "attributable to genes broken across contigs.",
             "Only the ≥99% core threshold comes from the paper; the Soft core, Shell and "
@@ -723,11 +726,11 @@ GUIDANCE: dict[str, Guidance] = {
 
     "snp-dists": Guidance(
         blurb="Counts, for every pair of genomes, how many positions differ in the core "
-              "gene alignment Panaroo built — the genes shared by nearly all genomes in "
-              "this run. Zero means indistinguishable across that shared core.",
+              "gene alignment Panaroo built, which is the genes shared by nearly all "
+              "genomes in this run. Zero means indistinguishable across that shared core.",
         method="Panaroo aligns the core clusters and concatenates them; snp-dists walks that "
                "alignment column by column and counts, per pair, the columns where the bases "
-               "differ. It runs with no options, so the result is raw uncorrected counts — "
+               "differ. It runs with no options, so the result is raw uncorrected counts: "
                "no evolutionary model, no distance transformation, no normalisation by "
                "alignment length.",
         reading=(
@@ -738,7 +741,7 @@ GUIDANCE: dict[str, Guidance] = {
             ("Off-diagonal integers",
              "A raw count of differing alignment columns over the whole concatenated core, "
              "not a percentage and not a per-Mb rate. To compare against anything outside "
-             "this run, divide by the alignment length — the same 6,000 differences mean "
+             "this run, divide by the alignment length. The same 6,000 differences mean "
              "very different things over a 0.5 Mb core and a 2 Mb core."),
             ("A zero off the diagonal",
              "The two genomes are indistinguishable across the core alignment. That is what "
@@ -754,9 +757,9 @@ GUIDANCE: dict[str, Guidance] = {
             "Raw counts with no evolutionary model: no correction for "
             "transition/transversion bias and none for multiple substitutions at one site, "
             "so this is a ballpark similarity measure rather than an evolutionary distance. "
-            "snp-dists has no publication, so this is a methodological caveat rather than a "
+            "snp-dists has no publication, so that is a methodological caveat and not a "
             "documented limitation.",
-            "Recombination is not accounted for either — a single imported tract can "
+            "Recombination is not accounted for either. A single imported tract can "
             "contribute hundreds of differences at once, so a large count can mean one "
             "transfer event rather than long independent divergence.",
             "The counts depend entirely on how large the core genome is, which depends on "
@@ -764,9 +767,9 @@ GUIDANCE: dict[str, Guidance] = {
             "the shared core for everybody. Values are not comparable between runs with "
             "different inputs.",
             "Only the core is measured, so the entire accessory genome is invisible. Two "
-            "genomes can show 0 SNPs and still differ by a plasmid or a resistance cassette "
-            "— check the pangenome matrix and the AMRFinder section before calling two "
-            "isolates the same.",
+            "genomes can show 0 SNPs and still differ by a plasmid or a resistance "
+            "cassette, so check the pangenome matrix and the AMRFinder section before "
+            "calling two isolates the same.",
             "Neither paper gives a threshold for 'same strain' or 'same outbreak'. Outbreak "
             "cutoffs are species-specific and come from the epidemiological literature, not "
             "from this pipeline.",
@@ -782,7 +785,7 @@ GUIDANCE: dict[str, Guidance] = {
               "program.",
         method="It starts from a heuristic neighbour-joining tree, improves it with "
                "minimum-evolution subtree-pruning-regrafting, then rearranges under "
-               "maximum likelihood using nearest-neighbour interchanges only — never ML SPR "
+               "maximum likelihood using nearest-neighbour interchanges only, never ML SPR "
                "moves, which is why the authors call it approximately-maximum-likelihood. "
                "Rate variation is handled by the CAT approximation, picking one of 20 fixed "
                "rates per site instead of integrating over a gamma distribution.",
@@ -836,16 +839,17 @@ GUIDANCE: dict[str, Guidance] = {
               "a machine-readable network of the reactions that organism can probably run. "
               "It answers what capabilities the annotation implies, not what the organism "
               "does in the lab.",
-        method="A manually curated universal bacterial model from BiGG — 4,383 reactions and "
-               "2,383 metabolites — is the starting point. Your proteins are aligned with "
-               "DIAMOND against 30,814 BiGG-derived sequences, alignment scores become "
-               "per-reaction confidence scores through gene-protein-reaction rules, and a "
+        method="A manually curated universal bacterial model from BiGG, with 4,383 "
+               "reactions and 2,383 metabolites, is the starting point. Your proteins are "
+               "aligned with DIAMOND against 30,814 BiGG-derived sequences, alignment "
+               "scores become per-reaction confidence scores through "
+               "gene-protein-reaction rules, and a "
                "mixed-integer program then 'carves': keep high-scoring reactions, drop "
                "low-scoring ones, enforce connectivity so no dead ends remain.",
         reading=(
             ("Reactions",
              "Counted from every reaction element in the SBML, so transporters, exchange and "
-             "spontaneous reactions and the biomass equation are included — the paper's "
+             "spontaneous reactions and the biomass equation are included. The paper's "
              "per-organism figures count only gene-associated reactions, so this number runs "
              "larger. For scale, across 5,587 RefSeq bacterial models the average was 1,308 "
              "reactions, the smallest 238 and the largest 2,472. A few hundred is expected "
@@ -859,7 +863,7 @@ GUIDANCE: dict[str, Guidance] = {
             ("Genes",
              "The genes from your annotation that matched a BiGG gene and survived carving. "
              "The 5,587-model average was 691, so this is a small subset of a bacterial CDS "
-             "complement — the rest of the genome has no BiGG counterpart and is invisible "
+             "complement; the rest of the genome has no BiGG counterpart and is invisible "
              "to the model."),
             ("Differences between genomes",
              "Annotation and database differences until shown otherwise. The paper says of "
@@ -871,7 +875,7 @@ GUIDANCE: dict[str, Guidance] = {
              "The carving problem enforces a minimum growth rate (default 0.1 h⁻¹), so the "
              "model is built to be capable of producing biomass, and in the paper's benchmark "
              "four of five organisms grew on minimal medium from genome data alone with no "
-             "gap-filling — the fifth needed one added reaction. Use these for network-level "
+             "gap-filling, and the fifth needed one added reaction. Use these for network-level "
              "comparison and as FBA starting points; do not report a growth rate, auxotrophy "
              "or cross-feeding interaction without first checking the model grows on a "
              "defined medium."),
@@ -880,9 +884,9 @@ GUIDANCE: dict[str, Guidance] = {
             "The authors call these drafts themselves: models \"should still be considered "
             "as drafts subject to further refinement, as they might require "
             "organism-specific curation to reproduce certain phenotypes\".",
-            "Coverage is bounded by BiGG — primary metabolism is \"essentially complete\" "
+            "Coverage is bounded by BiGG. Primary metabolism is \"essentially complete\" "
             "while \"peripheral pathways associated with secondary metabolism contain "
-            "multiple gaps\" — so a missing secondary-metabolite pathway is not evidence the "
+            "multiple gaps\", so a missing secondary-metabolite pathway is not evidence the "
             "organism lacks it.",
             "Transport is the known weak point: the paper attributes poorer "
             "substrate-utilisation performance to \"the lack of annotated transporters\", "
@@ -899,14 +903,14 @@ GUIDANCE: dict[str, Guidance] = {
 
     "biosynthesis": Guidance(
         blurb="Reads a high-level phenotype off each metabolic model: of 32 building "
-              "blocks — the twenty amino acids, ten vitamins and cofactors, two "
-              "quinones — which can this genome build for itself, and which must it "
+              "blocks (the twenty amino acids, ten vitamins and cofactors, two "
+              "quinones), which can this genome build for itself, and which must it "
               "take from its surroundings? A genome that makes everything can live "
               "alone; one that must acquire eleven of them is telling you about a "
               "host, a community or a rich medium.",
         method="Flux balance analysis on the CarveMe model. A drain reaction is added "
-               "for each compound and maximised on M9 minimal medium — salts, glucose, "
-               "ammonium, phosphate, sulfate, oxygen — with every compound capped at "
+               "for each compound and maximised on M9 minimal medium (salts, glucose, "
+               "ammonium, phosphate, sulfate, oxygen) with every compound capped at "
                "10 mmol/gDW/h, which is the uptake rate CarveMe's own phenotype-array "
                "protocol specifies. A compound that cannot be reached that way is "
                "tried again on M9 plus every other panel compound, which separates "
@@ -919,9 +923,9 @@ GUIDANCE: dict[str, Guidance] = {
             ("De novo",
              "A complete, connected route from the minimal medium. On the manually "
              "curated Escherichia coli model iML1515 this probe returns 31 of the 32 "
-             "compounds as de novo, the single exception being adenosylcobalamin — "
-             "which E. coli genuinely cannot synthesise, only salvage. That is the "
-             "calibration for how much weight the column carries."),
+             "compounds as de novo, the single exception being adenosylcobalamin, "
+             "which E. coli genuinely cannot synthesise and can only salvage. That is "
+             "the calibration for how much weight the column carries."),
             ("Blocked upstream",
              "The pathway to this compound is present, but it cannot run from the "
              "minimal medium because another compound on the panel is unavailable. "
@@ -940,22 +944,22 @@ GUIDANCE: dict[str, Guidance] = {
              "asparagine, which is not a described S. aureus requirement."),
             ("Not in the model",
              "The compound is not in this network at all, so there is nothing to ask. "
-             "Usually the whole pathway was dropped during carving — adenosylcobalamin "
-             "is absent from every Gram-positive draft measured — and it is not "
-             "evidence either way about the organism."),
+             "Usually the whole pathway was dropped during carving; adenosylcobalamin "
+             "is absent from every Gram-positive draft measured. It is not evidence "
+             "either way about the organism."),
             ("The compound grid",
              "Shaded by dependency, so the dark cells are what a genome has to be given. "
              "A column that is the same in every genome carries no comparative "
              "information and is flagged: in a set of one species that is most of the "
              "panel, and the interesting columns are the ones that differ. Ubiquinone-8 "
-             "is the worked example — unreachable or unrepresented in all eleven "
-             "Firmicute drafts, de novo in E. coli — so a uniform column can be a real "
-             "lineage character rather than a defect."),
+             "is the worked example: unreachable or unrepresented in all eleven "
+             "Firmicute drafts, de novo in E. coli. So a uniform column can be a real "
+             "lineage character and not a defect."),
             ("Growth on the reference media",
              "The check CarveMe's own section says to make before reporting anything "
              "quantitative, and it fails: none of eleven real drafts grows on M9, M9 "
              "anaerobic, LB or LB anaerobic, and every one grows only on the complete "
-             "medium. `Present` is why — those drafts carry exchange reactions for 48 "
+             "medium. `Present` is why: those drafts carry exchange reactions for 48 "
              "to 51 of LB's 65 compounds against iML1515's 62, and the missing ones are "
              "the vitamins and nucleosides. Growth is a single number that one "
              "unreachable metabolite sets to zero, which is the reason this section "
@@ -967,10 +971,10 @@ GUIDANCE: dict[str, Guidance] = {
             "further refinement, as they might require organism-specific curation to "
             "reproduce certain phenotypes\", and every verdict here inherits that.",
             "A missing route is more likely than a spurious one. Transport is the "
-            "weakest part of these models — the paper attributes poorer "
+            "weakest part of these models, and the paper attributes poorer "
             "substrate-utilisation performance to \"the lack of annotated "
-            "transporters\" — and a pathway with one unannotated step reads as no "
-            "route, so the count of dependencies is an upper bound.",
+            "transporters\". A pathway with one unannotated step reads as no route, so "
+            "the count of dependencies is an upper bound.",
             "The growth column is not a growth rate to quote. Every compound is capped "
             "at 10 mmol/gDW/h including oxygen, which is the paper's protocol and not a "
             "physiological condition: iML1515 comes out at 0.53 h⁻¹ on M9 glucose that "
@@ -984,7 +988,7 @@ GUIDANCE: dict[str, Guidance] = {
             "The probe target is the metabolite the cell needs, which is not always the "
             "one on the vitamin bottle: thiamine diphosphate rather than thiamine, "
             "tetrahydrofolate rather than folate, NAD rather than nicotinate. Free "
-            "thiamine, folate and lipoate are salvage substrates rather than "
+            "thiamine, folate and lipoate are salvage substrates and not "
             "biosynthetic products, and probing them called E. coli a thiamine "
             "auxotroph. A compound added to this panel needs its BiGG representation "
             "checked the same way.",
@@ -998,7 +1002,7 @@ GUIDANCE: dict[str, Guidance] = {
 def citations(names: list[str] | tuple[str, ...]) -> list[Citation]:
     """Every distinct paper behind `names`, primary first, in tool order.
 
-    Deduplicated by DOI, because the underlying methods are shared — DIAMOND is
+    Deduplicated by DOI, because the underlying methods are shared: DIAMOND is
     cited by three tools and Panaroo by three.
     """
     seen: dict[str, Citation] = {}
