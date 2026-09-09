@@ -13,24 +13,12 @@
 
   The site name stays as the image's alt text, and 404.html extends base.html
   directly rather than through main.html, so its bar keeps the plain text.
-
-  The size is inline, and that is deliberate. theme.css crops anything in this
-  bar to a 45px circle (`.wy-nav-top img`: height, width, padding,
-  border-radius, background-color, margin-right), so this <img> cannot be
-  looked at without the six declarations that undo it — and Read the Docs
-  serves `assets/extra.css` with `max-age=1800`, so a returning reader can get
-  new HTML against a half-hour-old stylesheet. That happened: the bar rendered
-  as a small blue disc on a phone while the same page was correct from a cold
-  cache. Inline, the element and the rules it cannot live without arrive in one
-  file. The sidebar logo stays in extra.css because that <img> comes from the
-  theme's own template, where CSS is the only hook.
 #}
 {% block mobile_nav %}
   <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
   <a href="{{ nav.homepage.url|url }}">
     {%- if config.theme.logo %}
-      <img src="{{ config.theme.logo|url }}" class="logo" alt="{{ config.site_name }}"
-           style="height:27px;width:auto;margin:0;padding:0;background:none;border-radius:0;vertical-align:middle"/>
+      <img src="{{ config.theme.logo|url }}" class="logo" alt="{{ config.site_name }}"/>
     {%- else %}
       {{ config.site_name }}
     {%- endif %}

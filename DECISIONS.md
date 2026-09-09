@@ -2306,3 +2306,24 @@ wordmark stays 160x27. Before this change that produced the disc.
 
 Inline style is not the house style for anything else here, and the comment in
 the template says why this one is the exception.
+
+## 2026-09-09 — and the inline size goes straight back out
+
+Reversed within the hour, Carl's call, and the reasoning is the file's own:
+**one home for presentation.** `extra.css` is where anyone looking for the
+docs' styling looks, and an inline `style` in a template sets a precedent the
+next change either copies or trips over. The thing it guarded against is a
+30-minute window per deploy, only for a reader who already had the page open,
+and it heals with no action from anyone.
+
+What stays is the diagnosis, because that is the part that costs an hour to
+re-derive: **if the docs chrome looks wrong on one device and right from a cold
+cache, suspect stylesheet skew before layout.** The colours localise it — a
+rule from an older commit rendering next to one from a newer commit, here the
+theme's `#2980b9` disc inside our `#2b6cb0` bar. `curl` the deployed
+`assets/extra.css` and grep for the rule; if it is there, the site is fine and
+the device is stale.
+
+The simulation is worth keeping too, for the next time an HTML/CSS pair has to
+land together: build, overwrite `site/assets/extra.css` with the previous
+commit's copy, reload.
