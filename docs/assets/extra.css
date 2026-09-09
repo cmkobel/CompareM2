@@ -1,40 +1,58 @@
 /* CompareM2 additions to the built-in `readthedocs` theme.
  *
- * The theme's sidebar header is built for a circular avatar: theme.css pins
- * `.wy-side-nav-search img` to 45x45 with `border-radius:100%` on a #2980b9
- * backdrop. The CompareM2 mark is a 5.9:1 wordmark in dark ink, so both have
- * to go — un-crop the image, and put a white panel behind it so the ink has
- * something to sit on. Nothing else about the theme changes.
+ * Everything here is the sidebar header. The theme builds that slot for a
+ * circular avatar — theme.css pins `.wy-side-nav-search img` to 45x45 with
+ * `border-radius:100%` — and the CompareM2 mark is a 5.9:1 wordmark, so the
+ * crop has to go. The first attempt un-cropped it onto a white panel, which
+ * left the header fighting the blue mobile bar directly above it; instead the
+ * header keeps a blue background and carries the on-blue wordmark
+ * (`comparem2-logo-badge.svg`, white ink and a tinted M2). Small and flush
+ * left above the search field, so it reads as a header rather than a hero —
+ * index.md already has the large one.
  *
- * Colours are the report's own palette (see report.py --accent/--fg):
- * #2b6cb0 accent, #c9d3de muted.
+ * Colours are the report's own palette (see report.py --accent): #2b6cb0
+ * accent, which replaces the theme's #2980b9 in both blue bars so the docs
+ * chrome and the report agree.
  */
 
+.wy-side-nav-search,
+.wy-nav-top {
+  background-color: #2b6cb0;
+}
+
 .wy-side-nav-search {
-  background-color: #fff;
-  padding-top: 1em;
-  border-bottom: 1px solid #c9d3de;
+  padding: 0.95em 0.809em 0.809em;
+  text-align: left;
 }
 
-.wy-side-nav-search > a,
-.wy-side-nav-search > a:hover {
-  background: none;
-  margin-bottom: 0.5em;
+/* No `:hover` here — the theme's own white-10% hover on this link is worth
+ * keeping now that the header is blue again, and it hugs the wordmark because
+ * the link is inline-block rather than the full sidebar width. */
+.wy-side-nav-search > a {
+  display: inline-block;
+  padding: 2px 4px;
+  /* the negative left margin cancels the padding, so the wordmark lines up
+   * with the search field below it rather than sitting 4px inside it */
+  margin: 0 0 0.6em -4px;
 }
 
-.wy-side-nav-search img.logo {
+/* `> a img.logo`, not `img.logo`: the theme's own rule for this slot is
+ * `.wy-side-nav-search > a img.logo`, and it re-asserts height and width, so
+ * anything less specific loses however late it loads. */
+.wy-side-nav-search > a img.logo {
+  display: block;
   width: auto;
-  height: auto;
-  max-width: 190px;
+  height: 27px;      /* cap height then lands near the nav text's, not 3x it */
+  max-width: 100%;
+  margin: 0;
   padding: 0;
-  margin: 0 auto 0.809em;
   background: none;
   border-radius: 0;
 }
 
-/* The search field's border was chosen against the blue header. */
+/* The theme's border was picked against #2980b9. */
 .wy-side-nav-search input[type="text"] {
-  border-color: #c9d3de;
+  border-color: #24578f;
 }
 
 /* Homepage hero. The wordmark carries the project name, so index.md has no

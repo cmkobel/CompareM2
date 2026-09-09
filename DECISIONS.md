@@ -2208,3 +2208,49 @@ the organism" does not survive being reworded to hit a count.
 Three stale test counts were fixed in passing. `README.md` said 276,
 `docs/10 installation.md` 269, `CLAUDE.md` 275; CI and a local run both say
 **274 passed, 2 skipped**.
+
+## 2026-09-09 — the sidebar wordmark shrinks, and the white panel is reversed
+
+Same day as the logo went in, and it undoes that entry's last move. Making the
+sidebar header white so dark ink had something to sit on solved the contrast
+problem and created a worse one: on a narrow screen the header sits directly
+under `.wy-nav-top`, the theme's blue mobile bar, and the two backgrounds met
+at a hard edge. Carl saw it on a phone. The panel was also carrying a 250 px
+wordmark, so the same lockup appeared twice on the homepage at nearly the same
+size.
+
+The header keeps blue and the wordmark changes instead. `make_logo.py` now
+renders a third lockup, `comparem2-logo-badge`, from the `badge` palette it
+already had for the icon — white ink, `#bcd8f5` for the `M2` and the middle
+contig row. That palette needed one new key, `wordmark_accent`, because
+`badge` sets `accent` to white for the mark and the `M2` would otherwise
+disappear into `Compare`. **The lockup leaves `bg` unused**: the blue comes
+from whatever it sits on, so the header and the mark cannot drift apart.
+
+Measured on the header blue, `#2b6cb0`: white 5.42:1, `#bcd8f5` 3.69:1 — above
+3:1, and the wordmark is large text (cap height 15 px at the rendered size,
+SemiBold). The reason the existing dark-background lockup could not be reused
+is the same table: its `#7fb3e8` `M2` reads **2.46:1** there, and its `#3f80c4`
+contig row is nearly invisible.
+
+Both blue bars are now `#2b6cb0` rather than the theme's `#2980b9`, so the docs
+chrome and the report agree on the accent, and white-on-blue goes from 4.30:1
+to 5.42:1.
+
+Size: 27 px tall, flush left, aligned to the search field's left edge (a −4px
+margin cancels the link's own padding). Header height 101 px against 128 px
+before. The homepage hero stays at 420 px — it is the page's title, and the
+duplication was two *large* copies, not two copies.
+
+**The theme's rule for that slot is `.wy-side-nav-search > a img.logo`.** A
+plainer `.wy-side-nav-search img.logo` loses on specificity no matter how late
+`extra.css` loads, and the first attempt at this change silently kept the
+theme's `height:auto` — the header looked untouched. If a size here stops
+taking effect, that is where to look. The `:hover` override went the other way:
+it is *removed*, so the theme's white-10% highlight comes back now that there
+is a blue background for it to lighten.
+
+Verified in a real build — `mkdocs build` into a temp dir, screenshotted at
+1280 and 390 px wide with the mobile nav both closed and open — rather than
+read off the CSS. mkdocs is not a project dependency, so that was a throwaway
+venv from `docs/requirements.txt`.

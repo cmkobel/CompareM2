@@ -24,8 +24,11 @@ THEMES = {
                   ribbon=("#a9c9ec", "#d3e4f6")),
     "dark":  dict(accent="#7fb3e8", tint="#3f80c4", muted="#454b52", fg="#e8e8e8",
                   ribbon=("#35608d", "#28466a")),
+    # On blue. `bg` is the badge icon's rounded square; the lockup leaves it
+    # transparent and takes the blue from whatever it sits on (the docs sidebar
+    # header), so only `wordmark_accent` keeps the M2 apart from the white ink.
     "badge": dict(accent="#ffffff", tint="#bcd8f5", muted="#6a9bd3", fg="#ffffff", bg="#2b6cb0",
-                  ribbon=("#6ea0d8", "#4f88c8")),
+                  wordmark_accent="#bcd8f5", ribbon=("#6ea0d8", "#4f88c8")),
 }
 
 
@@ -160,7 +163,7 @@ def lockup_svg(name, c):
     tx, ty = pad - left * sc, baseline - bottom * sc
     mark_w = (right - left) * sc
     x0 = pad + mark_w + gap
-    wm, wm_w = wordmark(c["fg"], c["accent"], size, x0, baseline)
+    wm, wm_w = wordmark(c["fg"], c.get("wordmark_accent", c["accent"]), size, x0, baseline)
     W, H = x0 + wm_w + pad, baseline + pad          # descender (0.2 em) fits inside pad
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W:.1f} {H:.1f}" width="{W:.1f}" height="{H:.1f}">\n'
             f'  <g transform="translate({tx:.3f},{ty:.3f}) scale({sc:.5f})">\n  {draw(c)}\n  </g>\n'
@@ -180,6 +183,7 @@ for name in WANTED:
     write(f"{p}-icon-badge", icon_svg(draw, THEMES["badge"]), png_scale=8)
     write(f"{p}-logo", lockup_svg(name, THEMES["light"]))
     write(f"{p}-logo-dark", lockup_svg(name, THEMES["dark"]))
+    write(f"{p}-logo-badge", lockup_svg(name, THEMES["badge"]))
     print("wrote", p)
 
 # Preview sheet: one row per concept, light + dark + small sizes
@@ -196,5 +200,8 @@ for name in WANTED:
   <div style="background:#161616;padding:28px 36px;display:flex;gap:32px;align-items:center">
     <img src="{name}-logo-dark.svg" height="60"> <img src="{name}-icon-dark.svg" width="64"> <img src="{name}-icon-badge.svg" width="48">
   </div>
+</div>
+<div style="background:#2b6cb0;padding:28px 36px;display:flex;gap:32px;align-items:center">
+  <img src="{name}-logo-badge.svg" height="60"> <img src="{name}-logo-badge.svg" height="27">
 </div>"""
 (OUT / "preview.html").write_text(f'<html><body style="margin:0">{rows}</body></html>')

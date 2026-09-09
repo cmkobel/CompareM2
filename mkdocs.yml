@@ -17,11 +17,13 @@ site_url: https://comparem2.readthedocs.io/
 theme:
   name: readthedocs
   highlightjs: true
-  # The sidebar wordmark. SVG so it stays sharp at any zoom; the theme styles
-  # this slot for a square avatar, which docs/assets/extra.css undoes. The
-  # favicon is docs/img/favicon.ico, which overrides the theme's own file —
-  # `site_favicon` is not a mkdocs option any more, so that path is the hook.
-  logo: assets/logo/comparem2-logo.svg
+  # The sidebar wordmark, in the on-blue variant: the header keeps the theme's
+  # blue backdrop, so the dark-ink wordmark cannot go there. SVG so it stays
+  # sharp at any zoom; the theme styles this slot for a square avatar, which
+  # docs/assets/extra.css undoes. The favicon is docs/img/favicon.ico, which
+  # overrides the theme's own file — `site_favicon` is not a mkdocs option any
+  # more, so that path is the hook.
+  logo: assets/logo/comparem2-logo-badge.svg
 extra_css:
   - assets/extra.css
 # Inputs to the documentation, not pages of it: the page generator, the logo
