@@ -71,6 +71,11 @@ novo* for D39 and 0 for R6, flipping 20 of the 32 in one direction, for two
 genomes 65 SNPs apart. Their CarveMe models share 1,048 reactions, with 530
 unique to R6 and 85 unique to D39.
 
+(This report was rendered with CompareM2 3.3.0, when the panel was 32
+compounds. It is 30 from 2026-09-10: biotin and ubiquinone-8 were dropped
+because they were *no route* in every CarveMe draft measured. Neither was ever
+*de novo* in a draft, so the counts above do not move — the denominator does.)
+
 The cause is in the model reconstruction and not in the panel, and it is
 specific: four of the eight models cannot take up ammonium. M9's only nitrogen
 source is ammonium, so a model missing a link in that uptake chain can build

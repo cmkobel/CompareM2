@@ -401,7 +401,7 @@ that closed that gap.
 | fasttree | 09-02 | at `threads=1`; duplicates at 0.0 branch length. `threads=1` is now measured, not assumed — FastTreeMP buys nothing here; see below |
 | carveme | 09-02, again 09-04 | 4/4 SBML models. `carve_scip.py` took one *E. faecium* genome from ~9 min and a truncated model to **50 s and 1,743 reactions** — but that fix **does not generalise**: measured 09-04, three of seven *S. aureus* genomes still hit the 600 s ceiling under both SCIP builds, at 1,236–1,263 reactions against 1,609–1,636. See below, twice |
 | gtdbtk | 09-02 | all four *E. faecium* at 99.0–99.2% ANI against a 95.0 radius, `ani_screen`; duplicates identical. Six defects had to be fixed first — see below |
-| biosynthesis | 09-03 | 13-step Snakemake run, `--until biosynthesis`, exit 0. **3 s a genome**, duplicate pair identical, and byte-identical to the same probe run against the PyPI wheel on macOS. The curated `iML1515` control returns **31 of 32 de novo**; a CarveMe draft of the same organism returns **29 of 32** — see below, and the 09-10 review |
+| biosynthesis | 09-03 | 13-step Snakemake run, `--until biosynthesis`, exit 0. **3 s a genome**, duplicate pair identical, and byte-identical to the same probe run against the PyPI wheel on macOS. Calibration re-measured 09-10 on the 30-compound panel: **29 of 30 for the curated `iML1515` and for CarveMe drafts of five prototrophs alike** — see below |
 
 ### GTDB-Tk: six defects, none of which a solve would show
 Found 2026-09-02 while making the tool runnable. Each was invisible because the
@@ -680,12 +680,39 @@ ship with the package.
 | `116_2` *E. faecium*, `COL` `N315` `TW20` *S. aureus* | 10–26 | 0.0000 | 0.0000 | 14.9–21.1 |
 
 Every prototroph draft lands on 29 and every one misses the same two, `btn` and
-`q8`. **The BiGG universe returns 32 of 32** — 25,348 reactions, bounds capped
-at ±1000, M9 exchanges added, all 34 solves `Optimal` — so the panel's targets
-are all reachable in the database and those two are carving losses. All ~1,400
+`q8`. **The BiGG universe reaches all 32** — 25,348 reactions, bounds capped
+at ±1000, M9 exchanges added, all 34 solves `Optimal` — so every target on the
+panel as it then stood is reachable in the database, and those two are carving
+losses rather than database limits. All ~1,400
 solves on drafts returned `Optimal`; `M9` and `LB` match carveme 1.6.6's
 `media_db.tsv` exactly; `MAX_UPTAKE = 10.0` on every compound matches
 `Environment.from_compounds`.
+
+**The `de novo` column above is over the 32-compound panel, which is what it
+was measured on.** `btn` and `q8` were dropped the same day, and because they
+were never `de novo` in any draft the counts do not move — only the
+denominator, to 30.
+
+### The calibration is an executable script now, and it was executed
+`upstream/panel_calibration.py`, run 2026-09-10 in the same environment. It
+carves the proteomes CarveMe bundles at `carveme/data/benchmark/fasta/` through
+this repo's own `carve_scip.py` and scores them, reusing any model already in
+the workdir. **The fresh-carve path was exercised**, not just the scoring:
+*B. subtilis* 168 re-carved from the proteome in **23.4 s** to a certified
+optimum at objective 1768, matching the earlier run exactly.
+
+| model | panel | de novo | not de novo |
+| --- | ---: | ---: | --- |
+| `iML1515`, curated | 30 | **29** | `adocbl` none |
+| `Ecoli_K12_MG1655`, carved here | 30 | **29** | `adocbl` absent |
+| `Bsubtilis_168`, carved here | 30 | **29** | `adocbl` absent |
+| `M_genitalium_G37`, carved here | 30 | **0** | 3 upstream, 24 none, 3 absent |
+
+*M. genitalium* is the negative control: a genome-reduced obligate parasite must
+not come out prototrophic. **It needs the environment activated, not just its
+interpreter** — `carve` shells out to DIAMOND, and running with only
+`<env>/bin/python` fails the carve step with "Unable to run diamond". Scoring
+existing models needs no DIAMOND.
 
 `~ghrunner/biosynth-review` is ~130 MB and deletable — the three fresh models
 are re-carvable in under six minutes from bundled proteomes.

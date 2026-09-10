@@ -4081,6 +4081,21 @@ def test_the_panel_avoids_salvage_only_probe_targets():
     assert {"thmpp", "thf"} <= ids
 
 
+def test_the_panel_avoids_targets_that_are_the_same_answer_for_every_genome():
+    """`btn` and `q8` were on the panel until 2026-09-10 and came out `none` or
+    `absent` in 12 of 12 CarveMe drafts across 8 species, `de novo` only in the
+    curated iML1515 — including drafts of four organisms that make biotin and
+    two that use ubiquinone-8. Both routes are in the reaction database and
+    carving does not keep them, so the columns were two false dependencies per
+    genome. Menaquinone-8 stays: it is de novo in four S. aureus drafts and
+    unreachable in every E. faecium one."""
+    from comparem2.biosynthesis import PANEL
+
+    ids = {c.bigg for c in PANEL}
+    assert {"btn", "q8"}.isdisjoint(ids)
+    assert "mqn8" in ids
+
+
 @pytest.mark.parametrize("family", [
     {"thm", "thmmp", "thmpp"},                          # thiamine
     {"nac", "ncam", "nmn", "nad", "nadp", "nadh"},       # niacin and NAD
@@ -4110,7 +4125,7 @@ def test_the_panel_is_unique_and_fully_grouped():
     from comparem2.biosynthesis import (AMINO_ACID, COFACTOR, PANEL, QUINONE)
 
     ids = [c.bigg for c in PANEL]
-    assert len(ids) == len(set(ids)) == 32
+    assert len(ids) == len(set(ids)) == 30
     assert sum(1 for c in PANEL if c.group == AMINO_ACID) == 20
     assert {c.group for c in PANEL} == {AMINO_ACID, COFACTOR, QUINONE}
     for compound in PANEL:
@@ -4212,8 +4227,8 @@ def test_biosynthesis_section_summarises_and_draws_the_grid(tmp_path):
                          ("A", "B")).read_text()
     assert "building blocks each genome can make" in body  # the figure
     assert "<h3>Growth on the reference media</h3>" not in body  # no media file
-    # A: 32 - 2 none - 1 upstream - 1 absent = 28 de novo.
-    assert ">28</td>" in body and ">2</td>" in body
+    # A: 30 - 2 none - 1 upstream - 1 absent = 26 de novo.
+    assert ">26</td>" in body and ">2</td>" in body
     # The differing columns are named while the list is short enough to read.
     assert "L-Tryptophan" in body and "L-Methionine" in body
 

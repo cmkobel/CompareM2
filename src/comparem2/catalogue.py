@@ -634,8 +634,8 @@ biosynthesis = Tool(
     # a result: `carveme` produces a network, and the question a reader has is
     # what the network implies. Answered per compound rather than by simulating
     # growth on a medium, because growth is a single bit that one unreachable
-    # metabolite destroys — measured: a *B. subtilis* draft answers 29 of 32
-    # compounds and still grows 0.0000 on every defined medium.
+    # metabolite destroys — measured: a *B. subtilis* draft answers 29 of the
+    # 30 compounds and still grows 0.0000 on every defined medium.
     # biosynthesis.py carries the numbers, the counter-example that keeps that
     # from being read as a property of CarveMe, and the validation against both
     # a curated model and the reaction database.

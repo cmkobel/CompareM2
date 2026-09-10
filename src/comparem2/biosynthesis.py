@@ -1,13 +1,13 @@
 """What each genome's metabolic model can build, and what it must acquire.
 
 CarveMe hands the pipeline a network. This reads a high-level phenotype off it:
-for each of 32 building blocks — the twenty amino acids, ten vitamins and
-cofactors, two quinones — is there a complete, connected route to that compound
+for each of 30 building blocks — the twenty amino acids, nine vitamins and
+cofactors, one quinone — is there a complete, connected route to that compound
 from a minimal medium?
 
 **Why not simulate growth on a medium.** Because growth is a single bit that one
 unreachable metabolite destroys. A CarveMe draft of *B. subtilis* 168 — an
-organism that grows on glucose and ammonium — answers **29 of 32 compounds
+organism that grows on glucose and ammonium — answers **29 of 30 compounds
 *de novo* and still returns exactly zero** on M9, M9 anaerobic, LB and LB
 anaerobic. On LB, `116_2` can make 52 of its 53 biomass precursors and fails on
 menaquinol-8; `COL` fails on asparagine alone. Per-compound, 29 bits survive
@@ -42,8 +42,9 @@ own missing pathway from one blocked by something else on the list. In `116_2`
 all six and in `E8202` all nine are rescued only by glycine, L-serine,
 L-threonine or L-methionine, and those models can make none of the four.
 
-"the model can take up" is the caveat on the background: six to eight of the 32
-have no `R_EX_*_e` in any model measured — the intracellular cofactors — so they
+"the model can take up" is the caveat on the background: six to eight of the
+panel have no `R_EX_*_e` in any model measured — the intracellular cofactors —
+so they
 cannot act as rescuers. Injecting all of them straight into the cytoplasm
 instead moved no verdict in six models, so it is a limit worth naming and not
 one that currently costs anything.
@@ -71,32 +72,39 @@ For the same reason no two panel members come from one nutrient family: if both
 `nac` and `nad` were on the panel, each would rescue the other and the pair
 would report a kinase rather than a pathway.
 
-**Validated at two levels, and they say different things.** The BiGG universe
-itself — every reaction capped at ±1000, exchanges added for M9 — returns 32 of
-32, so every target on the panel is a representation the database can actually
-reach and no verdict below is a badly chosen metabolite. `iML1515`, *E. coli*
-K-12 manually curated, returns 31 of 32; the exception is adenosylcobalamin,
-which *E. coli* genuinely cannot synthesise de novo.
+**Two more targets were rejected on a different test: they never vary.** `btn`
+and `q8` were on the panel until 2026-09-10 and came out `none` or `absent` in
+**12 of 12 CarveMe drafts across 8 species**, `de novo` only in the curated
+`iML1515`. Four of those organisms — *E. coli*, *B. subtilis*, *S. oneidensis*,
+*R. solanacearum* — are biotin prototrophs, and *E. coli* and *S. oneidensis*
+both use ubiquinone-8, so those are false negatives and not lineage. Traced on
+a fresh *E. coli* draft: the biotin chain dies at pimeloyl-CoA (`pmcoa_c`,
+which `iML1515` does not contain at all — it reaches biotin by the ACP route),
+and no reaction in the draft synthesises `q8`, only the eight quinol oxidations
+that cycle it. **The routes are in the database and carving does not keep
+them**, so a column that is always the same answer was costing every genome two
+false dependencies. Menaquinone-8 stays and does vary.
 
-**A draft of the same organism returns 29.** Carved from the *E. coli* K-12
-proteome CarveMe bundles, by this pipeline's own path, the probe misses biotin
-and ubiquinone-8 as well — and so does every other prototroph draft measured:
-*B. subtilis*, *P. aeruginosa*, *S. oneidensis*, *R. solanacearum*, all 29 of
-32, all missing the same two. The routes are in the universe and carving does
-not keep them. So `btn` and `q8` are the same answer for every genome and carry
-no comparative information; 29 is the number to calibrate against, not 31.
+**Validated at two levels.** The BiGG universe itself — every reaction capped
+at ±1000, exchanges added for M9, 25,348 reactions — reaches all 32 compounds
+that were on the panel then, so every target here is a representation the
+database can actually reach and no verdict below is a badly chosen metabolite.
+And the curated model and the drafts now agree: `iML1515` returns **29 of 30**,
+and so do drafts of *E. coli*, *B. subtilis*, *P. aeruginosa*, *S. oneidensis*
+and *R. solanacearum*. In every one the single miss is adenosylcobalamin —
+correct for *E. coli*, which cannot synthesise it de novo, and an honest "not in
+this draft" for the rest. **29 of 30 is the calibration**, and it is the same
+number whether the model was curated by hand or carved by this pipeline.
 
-On the drafts the rest of the probe recovers described requirements. All four
-*E. faecium* have no route to leucine, methionine, threonine, tryptophan,
-valine, riboflavin, pantothenate and NAD, and three of the four to arginine and
-histidine as well; all seven *S. aureus* to thiamine diphosphate and NAD.
-Menaquinone-8 is de novo in four *S. aureus* and unreachable in every
-*E. faecium*, which is right for the pair — but its partner is not the control
-it looks like: ubiquinone-8 is unreachable in the *E. coli* and *S. oneidensis*
-drafts too, and both organisms use Q8.
+On the drafts the probe recovers described requirements. All four *E. faecium*
+have no route to leucine, methionine, threonine, tryptophan, valine, riboflavin,
+pantothenate and NAD, and three of the four to arginine and histidine as well;
+all seven *S. aureus* to thiamine diphosphate and NAD. Menaquinone-8 is de novo
+in four *S. aureus* and unreachable in every *E. faecium*, which is a real
+lineage difference.
 
-It gets things wrong elsewhere, and visibly: all seven *S. aureus* come out with
-no route to asparagine, which is not a described requirement of that organism.
+It gets things wrong too, and visibly: all seven *S. aureus* come out with no
+route to asparagine, which is not a described requirement of that organism.
 Read a verdict as a statement about the draft model.
 
 **It runs in the tool's environment, under a bare `python`**, like
@@ -150,7 +158,7 @@ AEROBE = "o2"
 
 # M9's two elemental sources. The panel's `de_novo` verdict is measured on M9,
 # so a model that cannot get carbon or nitrogen into its cytoplasm from that
-# medium answers `de_novo` to nothing — one hole, thirty-two zeros — and the
+# medium answers `de_novo` to nothing — one hole, a zero in every row — and the
 # whole column then describes the model rather than the organism.
 #
 # **Probed in the cytoplasm, not as a membership test on the exchange set**,
@@ -208,12 +216,10 @@ PANEL = (
     Compound("nad", "NAD (B3)", COFACTOR),
     Compound("pnto__R", "Pantothenate (B5)", COFACTOR),
     Compound("pydx5p", "Pyridoxal 5'-phosphate (B6)", COFACTOR),
-    Compound("btn", "Biotin (B7)", COFACTOR),
     Compound("thf", "Tetrahydrofolate (B9)", COFACTOR),
     Compound("adocbl", "Adenosylcobalamin (B12)", COFACTOR),
     Compound("pheme", "Protoheme", COFACTOR),
     Compound("sheme", "Siroheme", COFACTOR),
-    Compound("q8", "Ubiquinone-8", QUINONE),
     Compound("mqn8", "Menaquinone-8", QUINONE),
 )
 
@@ -425,8 +431,8 @@ def media(probe: _Probe) -> list[tuple[str, ...]]:
     **A count was not enough**, so `missing` names them and `unreachable` says
     whether what is gone matters. On 2026-09-08 two models of one strain both
     read 17 of 20 for M9 while differing in which three they lacked — and one of
-    those three was ammonium, M9's only nitrogen source, which zeroed all 32 of
-    that model's panel verdicts. 17 of 20 looks fine; `nitrogen` does not.
+    those three was ammonium, M9's only nitrogen source, which zeroed every one
+    of that model's panel verdicts. 17 of 20 looks fine; `nitrogen` does not.
     """
     anaerobic = tuple(c for c in M9 if c != AEROBE)
     lb_anaerobic = tuple(c for c in LB if c != AEROBE)

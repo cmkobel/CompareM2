@@ -51,7 +51,7 @@ src/comparem2/
   steps.py      the small steps a rule runs around a command (GTDB-Tk's merge)
   carve_scip.py the wrapper in front of `carve` — see the solver convention below
   biosynthesis.py  the one tool that is ours: what each model can build, and
-                   the 32-compound panel the report reads from
+                   the 30-compound panel the report reads from
   demo/         six bundled E. faecium plasmids and what `--demo` runs on them.
                 `plasmids.zip` is the *only* non-Python file in the package, so
                 it needs its `[tool.setuptools.package-data]` entry to ship
@@ -103,7 +103,7 @@ move.
 
 ### Testing
 
-`tests/unit/test_v3.py`, 277 tests, ~6 s. This is the primary instrument: the
+`tests/unit/test_v3.py`, 278 tests, ~6 s. This is the primary instrument: the
 codebase is a generator, and a wrong wildcard produces a Snakefile that parses
 cleanly and builds the wrong DAG, which an end-to-end run catches slowly if at
 all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.
@@ -168,9 +168,13 @@ ANI, 0 SNPs, identical CDS counts.
   nutrient family.** `thmpp` not `thm`, `thf` not `fol`, and no `lipoate` at
   all — free thiamine, folate and lipoate are salvage substrates, and probing
   them called *E. coli* a thiamine auxotroph. Two members of one family rescue
-  each other and the pair then reports a kinase. Tests enforce both; the
-  calibration is `iML1515` at 31 of 32 de novo. Adding a compound means
-  checking its BiGG representation the same way.
+  each other and the pair then reports a kinase. **And a target that is the
+  same answer for every genome is not a target**: `btn` and `q8` were dropped
+  on 2026-09-10 after coming out `none` in 12 of 12 drafts across 8 species,
+  including organisms that make both. Tests enforce all three. The calibration
+  is **29 of 30**, the same for the curated `iML1515` and for CarveMe drafts of
+  five prototrophs — re-measure it with `upstream/panel_calibration.py`.
+  Adding a compound means checking its BiGG representation the same way.
 - **The documentation ships with the change, not after it.** A change that
   makes something in these files wrong is not finished until that file says so
   — in the same commit, so the two cannot drift apart between one session and

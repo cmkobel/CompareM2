@@ -902,9 +902,9 @@ GUIDANCE: dict[str, Guidance] = {
     ),
 
     "biosynthesis": Guidance(
-        blurb="Reads a high-level phenotype off each metabolic model: of 32 building "
-              "blocks (the twenty amino acids, ten vitamins and cofactors, two "
-              "quinones), which can this genome build for itself, and which must it "
+        blurb="Reads a high-level phenotype off each metabolic model: of 30 building "
+              "blocks (the twenty amino acids, nine vitamins and cofactors, one "
+              "quinone), which can this genome build for itself, and which must it "
               "take from its surroundings? A genome that makes everything can live "
               "alone; one that must acquire eleven of them is telling you about a "
               "host, a community or a rich medium.",
@@ -921,16 +921,14 @@ GUIDANCE: dict[str, Guidance] = {
                "salvage is not synthesis.",
         reading=(
             ("De novo",
-             "A complete, connected route from the minimal medium. On the manually "
-             "curated Escherichia coli model iML1515 this probe returns 31 of the 32 "
-             "compounds as de novo, the single exception being adenosylcobalamin, "
-             "which E. coli genuinely cannot synthesise and can only salvage. "
-             "Calibrate against 29 rather than 31, though: a CarveMe draft of the same "
-             "organism, carved by this pipeline from the proteome CarveMe bundles, "
-             "misses biotin and ubiquinone-8 as well, and so do drafts of B. subtilis, "
-             "P. aeruginosa, S. oneidensis and R. solanacearum. Both routes are present "
-             "in the reaction database, which returns 32 of 32; carving does not keep "
-             "them, in any draft measured."),
+             "A complete, connected route from the minimal medium. The calibration is "
+             "29 of 30, and it is the same number whether the model was curated by hand "
+             "or carved by this pipeline: the manually curated Escherichia coli model "
+             "iML1515 returns 29, and so do CarveMe drafts of E. coli, B. subtilis, "
+             "P. aeruginosa, S. oneidensis and R. solanacearum. In every one the single "
+             "miss is adenosylcobalamin, which E. coli genuinely cannot synthesise and "
+             "can only salvage. That agreement is what says how much weight the column "
+             "carries."),
             ("Blocked upstream",
              "The pathway to this compound is present, but it cannot run from the "
              "minimal medium because another compound on the panel is unavailable. "
@@ -948,12 +946,9 @@ GUIDANCE: dict[str, Guidance] = {
              "described requirements: all four E. faecium models return no route to "
              "leucine, methionine, threonine, tryptophan, valine, riboflavin, "
              "pantothenate and NAD, and all seven S. aureus models to thiamine "
-             "diphosphate and NAD. Two entries carry no information at all — biotin "
-             "and ubiquinone-8 are no route in every CarveMe draft measured, including "
-             "drafts of four organisms that make both. Treat the rest as a statement "
-             "about the model rather than the organism: the same seven S. aureus models "
-             "also return no route to asparagine, which is not a described requirement "
-             "of that organism."),
+             "diphosphate and NAD. Treat it as a statement about the model rather than "
+             "the organism: the same seven S. aureus models also return no route to "
+             "asparagine, which is not a described requirement of that organism."),
             ("Not in the model",
              "The compound is not in this network at all, so there is nothing to ask. "
              "Usually the whole pathway was dropped during carving; adenosylcobalamin "
@@ -966,18 +961,19 @@ GUIDANCE: dict[str, Guidance] = {
              "panel, and the interesting columns are the ones that differ. Menaquinone-8 "
              "is the worked example: de novo in four S. aureus drafts and unreachable in "
              "every E. faecium one, which is a real lineage difference and not a defect. "
-             "Its partner ubiquinone-8 is the counter-example and the reason to check "
-             "before reading one that way — it is unreachable in every CarveMe draft "
-             "measured, including drafts of E. coli and S. oneidensis, which both use "
-             "it."),
+             "Check before reading a uniform column that way, though. Its partner "
+             "ubiquinone-8 looked like the same kind of signal and was not — unreachable "
+             "in every CarveMe draft measured, including drafts of E. coli and "
+             "S. oneidensis, which both use it — and was dropped from the panel on "
+             "2026-09-10 for exactly that reason."),
             ("Growth on the reference media",
              "The check CarveMe's own section says to make before reporting anything "
              "quantitative. Eleven real Firmicute drafts fail it: none grows on M9, M9 "
              "anaerobic, LB or LB anaerobic, and every one grows only on the complete "
              "medium. That is a fact about those eleven genomes and not about the "
              "method — a draft of E. coli K-12 carved the same way grows 0.70 h⁻¹ on "
-             "M9 and 5.20 on LB. What it does show is why this section reports 32 "
-             "compounds instead of one number: a B. subtilis draft answers 29 of the 32 "
+             "M9 and 5.20 on LB. What it does show is why this section reports 30 "
+             "compounds instead of one number: a B. subtilis draft answers 29 of the 30 "
              "de novo and still returns exactly zero on all four defined media, because "
              "growth is a single bit that one unreachable metabolite destroys. "
              "`Present` — how many of a medium's compounds the model has an exchange "
@@ -1005,6 +1001,14 @@ GUIDANCE: dict[str, Guidance] = {
             "community-embedded lineages tend to have more of them, this pipeline does "
             "not test that and a high count is not evidence of where an organism lives "
             "(methodological caution, not a finding of any paper cited here).",
+            "Biotin and ubiquinone-8 are deliberately not on the panel. Both were, "
+            "until they turned out to be no route in every CarveMe draft measured — 12 "
+            "across 8 species, including drafts of four organisms that make biotin and "
+            "two that use ubiquinone-8 — and de novo only in a manually curated model. "
+            "Both routes are in the reaction database and carving does not keep them, "
+            "so the columns were two false dependencies per genome rather than a "
+            "signal (measured 2026-09-10 on this pipeline, not a finding of any paper "
+            "cited here).",
             "The probe target is the metabolite the cell needs, which is not always the "
             "one on the vitamin bottle: thiamine diphosphate rather than thiamine, "
             "tetrahydrofolate rather than folate, NAD rather than nicotinate. Free "

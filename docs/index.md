@@ -28,7 +28,7 @@ the design is built on, so a hundred genomes is an ordinary input.
   - **Pangenome.** Core and accessory gene content (Panaroo), SNP distances,
     core-genome tree (FastTree)
   - **Metabolism.** Draft genome-scale metabolic models (CarveMe), and which of
-    a 32-compound panel of amino acids, vitamins and cofactors each genome can
+    a 30-compound panel of amino acids, vitamins and cofactors each genome can
     build for itself instead of having to acquire
 
 [What analyses does it do](30 what analyses does it do.md) is the full

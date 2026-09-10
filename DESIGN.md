@@ -399,9 +399,17 @@ something already published. The post-mortems are in
   *S. aureus* unable to make the compound sulfonamides work by blocking, and
   probing `lipoate` returns "cannot make" for every organism there is. Two
   members of one family — `nac` and `nad`, say — rescue each other in the second
-  test and the pair then reports a kinase rather than a pathway. Both rules are
-  enforced by tests, and the calibration is `iML1515`: 31 of 32 de novo, the
-  exception being the one compound *E. coli* genuinely cannot synthesise.
+  test and the pair then reports a kinase rather than a pathway.
+- **A panel target that is the same answer for every genome is not a target.**
+  `btn` and `q8` were on the panel until 2026-09-10 and were `none` or `absent`
+  in 12 of 12 CarveMe drafts across 8 species, `de novo` only in a curated
+  model — including drafts of four organisms that make biotin and two that use
+  ubiquinone-8. Both routes are in the reaction database and carving does not
+  keep them, so the columns were two false dependencies a genome rather than a
+  signal. All three rules are enforced by tests, and the calibration is now
+  **29 of 30 for the curated `iML1515` and for CarveMe drafts of five
+  prototrophs alike**, adenosylcobalamin the only miss in any of them.
+  `upstream/panel_calibration.py` re-measures it from proteomes CarveMe bundles.
 
 ## Open questions
 
@@ -443,8 +451,8 @@ something already published. The post-mortems are in
 - **Gap-filling per medium, parked 2026-09-03.** The idea that started
   `biosynthesis` was scoring genomes by growth on media standing in for
   ecological niches. That failed on measurement — none of the eleven Firmicute
-  drafts grows on any defined medium, and a *B. subtilis* draft answers 29 of 32
-  compounds and still returns zero, so one metabolite decides the score
+  drafts grows on any defined medium, and a *B. subtilis* draft answers 29 of
+  the 30 compounds and still returns zero, so one metabolite decides the score
   (measured 2026-09-10; a draft of *E. coli* does grow, so this is about the
   genome and not about CarveMe) — and the salvage of it was to gap-fill each
   model on each medium and

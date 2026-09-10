@@ -2412,12 +2412,33 @@ can be a real lineage character and not a defect". It is the opposite, and
 menaquinone-8 — de novo in four *S. aureus*, unreachable in every *E. faecium* —
 is the example that argument wanted.
 
-**Dropping both is the plan and not yet done.** It takes the panel to 30, and
-the point of it is that `iML1515` and every prototroph draft then agree at
-**29 of 30, missing only adenosylcobalamin**: curated 31/32 → 29/30, and the
-*E. coli*, *B. subtilis*, *P. aeruginosa*, *S. oneidensis* and *R. solanacearum*
-drafts stay at 29. Deferred to its own commit because it changes the panel and
-the test count.
+**Both were dropped the same day** — the panel is 30. The point of it is that
+`iML1515` and every prototroph draft then agree at **29 of 30, missing only
+adenosylcobalamin**: curated 31/32 → 29/30, and the *E. coli*, *B. subtilis*,
+*P. aeruginosa*, *S. oneidensis* and *R. solanacearum* drafts stay at 29. The
+Firmicute drafts keep their de novo counts, since neither compound was ever
+de novo there, and lose two false dependencies each: `116_2` goes from 13
+`none` to 11, `COL` from 5 to 3.
+
+A test pins it, next to the salvage-target test and for the same reason: the
+rule is now three, not two — probe the form the pathway ends at, one member per
+nutrient family, **and no target that is the same answer for every genome**.
+
+**The calibration is a script rather than a paragraph.**
+`upstream/panel_calibration.py` carves the proteomes CarveMe bundles at
+`carveme/data/benchmark/fasta/` through this repo's own `carve_scip.py` and
+scores them, so 29 of 30 is re-measurable when CarveMe's version, universe or
+scoring changes. Executed on 09-10 including the fresh-carve path —
+*B. subtilis* re-carved in 23.4 s to a certified optimum at objective 1768,
+matching the earlier run. *M. genitalium* G37 is in the set as the negative
+control and returns 0 of 30.
+
+Considered and rejected: keeping both and flagging them in the guidance. That
+is a guard where a deletion works, and it leaves every genome's dependency
+count two too high. The universe result is what makes the deletion revisitable
+rather than final — the routes are there, so a future CarveMe that scores them
+differently would make the compounds informative again, and the script is how
+that gets noticed.
 
 ### "None of eleven drafts grows on any defined medium" was over-general
 It is a fact about eleven Firmicute genomes. A draft of *E. coli* K-12 carved
@@ -2463,5 +2484,5 @@ output yet. The causal claim is gone; the span stays as what it is.
   goes infeasible on a medium that cannot pay it), so it is deferred with a unit
   test rather than fixed in the prose commit.
 
-`CLAUDE.md` said 276 tests; with the `link_input` guard's test the count is
-**277**.
+`CLAUDE.md` said 276 tests; with the `link_input` guard's test and the one
+pinning the two dropped panel targets the count is **278**.
