@@ -2059,12 +2059,18 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
     if media:
         # Parsed defensively: the report is meant to survive a partial run, and
         # these files can be read while a rule is still writing them.
-        def cell(sample: str, medium: str, column: int) -> float | None:
+        def raw(sample: str, medium: str, column: int) -> str:
             row = media.get(sample, {}).get(medium)
             if row is None or len(row) <= column:
-                return None
+                return ""
+            return row[column].strip()
+
+        # `None` for anything that is not a number — which now includes a
+        # growth cell holding a solver status. That is the right reading for
+        # every arithmetic use below: an infeasible medium is not growth.
+        def cell(sample: str, medium: str, column: int) -> float | None:
             try:
-                return float(row[column])
+                return float(raw(sample, medium, column))
             except ValueError:
                 return None
 
@@ -2087,6 +2093,22 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
             _table(ordered, header=["Genome", *[label for _, label in _MEDIA_COLUMNS]]),
             _absent_note(missing, len(ctx.samples)),
         ]
+        # A cell that is a word rather than a number is a solver status, and on
+        # the complete medium it is the one result here that says the model is
+        # broken rather than fastidious — that row exists to show the model can
+        # be solved at all. Never seen on a real run: CarveMe drafts carry no
+        # maintenance floor. Said only when it happens.
+        unsolved = {s: raw(s, "complete", 3) for s in media
+                    if raw(s, "complete", 3) and cell(s, "complete", 3) is None}
+        if unsolved:
+            listed = ", ".join(f"{html.escape(s)} ({html.escape(v)})"
+                               for s, v in unsolved.items())
+            parts.append(
+                f'<p class="summary"><strong>{len(unsolved)} of {len(media)} '
+                "models could not be solved even on the complete medium</strong>, "
+                f"so nothing in this section describes those organisms: {listed}. "
+                "The usual cause is a maintenance reaction with a lower bound the "
+                "medium cannot pay.</p>")
         # How much of LB arrived, and deliberately no causal claim attached to
         # it. The note that used to stand here said a zero on a rich medium is
         # usually missing transport and cited this span as the evidence; it is

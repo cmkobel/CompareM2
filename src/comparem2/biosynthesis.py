@@ -235,9 +235,53 @@ MEDIA_HEADER = ("medium", "compounds", "present", "growth", "missing",
                 "unreachable")
 
 
+# ReFramed's `Status` enum, by value: Optimal, Unknown, Suboptimal, Unbounded,
+# Infeasible, "Infeasible or Unbounded". Only the first two matter here and
+# both are named, because the mapping from status to verdict is the part that
+# is easy to get silently wrong.
+OPTIMAL, UNBOUNDED = "Optimal", "Unbounded"
+
+
 def _status(solution) -> str:
     """reframed reports status as an enum; take its name either way."""
     return str(getattr(solution.status, "value", solution.status))
+
+
+def flux_from(status: str, value: float | None) -> float:
+    """What a solve reports as the demand's flux, read the way a verdict needs.
+
+    **`Unbounded` is not zero, it is the opposite of zero**, and treating every
+    non-optimal status as "no flux" turns it into `none`. Not a hypothetical:
+    pointed at the BiGG universe, whose 25,348 reactions ship bounded at ±inf,
+    this probe reported carbon *and* nitrogen unreachable and 29 of 32 panel
+    compounds `none` — every one of them an unbounded LP misread. With the
+    bounds capped the same model answers 32 of 32.
+
+    Every other non-optimal status is a zero. `Infeasible` genuinely is one;
+    `Unknown` and `Suboptimal` are not knowledge, and calling a compound
+    producible on a solve that failed would be worse than under-reporting it.
+    A pure function, so the mapping can be checked without a solver.
+    """
+    if status == UNBOUNDED:
+        return float("inf")
+    if status != OPTIMAL:
+        return 0.0
+    return value or 0.0
+
+
+def growth_cell(status: str, value: float | None) -> str:
+    """The media table's growth cell: a rate, or the reason there is not one.
+
+    `0.0000` for an infeasible LP is the wrong answer to a different question.
+    A model with a maintenance floor its medium cannot pay did not grow slowly,
+    it could not be solved — and the complete-medium row is the report's
+    control that the model is feasible at all, which a zero there cannot say.
+    `iML1515` carries `R_ATPM` at `lb = 6.86`; CarveMe drafts carry `0.0`,
+    which is why no run has hit this yet.
+    """
+    if status != OPTIMAL:
+        return status.lower()
+    return f"{max(0.0, value or 0.0):.4f}"
 
 
 def _demand(bigg: str) -> str:
@@ -335,6 +379,10 @@ class _Probe:
 
         self.model = model
         self.max_uptake = max_uptake
+        # Every status this probe's solves came back with, counted. Reported at
+        # the end of a run because a non-optimal solve is read as a zero and
+        # would otherwise be invisible in a table of zeros.
+        self.statuses: dict[str, int] = {}
         self.present = add_demands(model)
         self.sources = add_source_demands(model)
         self.exchanges = _exchanges(model)
@@ -358,23 +406,26 @@ class _Probe:
         return medium_constraints(self.exchanges, self._upper, self._drain_ub,
                                   compounds, self.max_uptake, open_drain)
 
-    def maximum(self, reaction: str, constraints: dict) -> float:
+    def _solve(self, objective, constraints: dict):
+        """One FBA, with its status counted. Returns (status, objective value)."""
         from reframed import FBA
 
-        solution = FBA(self.model, objective={reaction: 1},
+        solution = FBA(self.model, objective=objective,
                        constraints=constraints, solver=self.solver)
-        if _status(solution) != "Optimal":
-            return 0.0
-        return solution.fobj or 0.0
+        status = _status(solution)
+        self.statuses[status] = self.statuses.get(status, 0) + 1
+        return status, solution.fobj
 
-    def growth(self, constraints: dict) -> float:
-        """The model's own objective — biomass — under `constraints`."""
-        from reframed import FBA
+    def maximum(self, reaction: str, constraints: dict) -> float:
+        return flux_from(*self._solve({reaction: 1}, constraints))
 
-        solution = FBA(self.model, constraints=constraints, solver=self.solver)
-        if _status(solution) != "Optimal":
-            return 0.0
-        return max(0.0, solution.fobj or 0.0)
+    def growth(self, constraints: dict) -> tuple[str, float | None]:
+        """The model's own objective — biomass — under `constraints`.
+
+        Returns the status too, because `growth_cell` needs it: an infeasible
+        LP is not a growth rate of zero.
+        """
+        return self._solve(None, constraints)
 
 
 def verdicts(probe: _Probe, min_flux: float = MIN_FLUX) -> list[tuple[str, ...]]:
@@ -440,16 +491,16 @@ def media(probe: _Probe) -> list[tuple[str, ...]]:
     for name, compounds in (("M9", M9), ("M9[-O2]", anaerobic),
                             ("LB", LB), ("LB[-O2]", lb_anaerobic)):
         absent = tuple(c for c in compounds if c not in probe.exchanges)
-        growth = probe.growth(probe.medium(compounds))
+        growth = growth_cell(*probe.growth(probe.medium(compounds)))
         # M9 family only — see `SOURCES` on why LB gets no such claim.
         blocked = (unreachable_sources(probe, compounds)
                    if name.startswith("M9") else [])
         rows.append((name, str(len(compounds)),
-                     str(len(compounds) - len(absent)), f"{growth:.4f}",
+                     str(len(compounds) - len(absent)), growth,
                      " ".join(absent), " ".join(blocked)))
     every = list(probe.exchanges)
     rows.append(("complete", str(len(every)), str(len(every)),
-                 f"{probe.growth(probe.medium(every)):.4f}", "", ""))
+                 growth_cell(*probe.growth(probe.medium(every))), "", ""))
     return rows
 
 
@@ -497,6 +548,17 @@ def main(argv: list[str] | None = None) -> int:
     print(f"biosynthesis: {args.model.name} — "
           + ", ".join(f"{n} {k}" for k, n in sorted(counts.items())),
           file=sys.stderr)
+
+    # Said out loud, because a status other than `Optimal` becomes a zero in a
+    # table already full of them. Every solve on every draft measured so far
+    # has been optimal, so this line is normally the one word.
+    other = {k: n for k, n in probe.statuses.items() if k != OPTIMAL}
+    if other:
+        print(f"biosynthesis: {args.model.name} — "
+              + f"{sum(other.values())} of {sum(probe.statuses.values())} "
+              + "solves were not optimal: "
+              + ", ".join(f"{n} {k}" for k, n in sorted(other.items())),
+              file=sys.stderr)
     return 0
 
 

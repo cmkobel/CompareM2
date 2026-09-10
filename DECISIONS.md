@@ -2476,13 +2476,41 @@ output yet. The causal claim is gone; the span stays as what it is.
   and they are the intracellular cofactors. Injecting all of them straight into
   the cytoplasm instead **moved no verdict in six models**, so this is a wording
   fix. Recorded because the negative result is what makes it one.
-- **A non-`Optimal` LP is read as a zero.** `Unbounded` and `Infeasible` both
-  become `0.0`. Not latent — pointed at the universe before its bounds were
-  capped, the probe reported carbon *and* nitrogen unreachable and 29 of 32
-  compounds `none`, every one of them `Unbounded` misread. It cannot reach a
-  real run (CarveMe drafts carry `R_ATPM` at `lb = 0.0`; `iML1515` has 6.86 and
-  goes infeasible on a medium that cannot pay it), so it is deferred with a unit
-  test rather than fixed in the prose commit.
+- **A non-`Optimal` LP was read as a zero, and is not any more.** `Unbounded`
+  and `Infeasible` both became `0.0`. Not latent — pointed at the universe
+  before its bounds were capped, the probe reported carbon *and* nitrogen
+  unreachable and 29 of 32 compounds `none`, every one of them `Unbounded`
+  misread. Fixed the same day; see below.
 
-`CLAUDE.md` said 276 tests; with the `link_input` guard's test and the one
-pinning the two dropped panel targets the count is **278**.
+### `Unbounded` is the opposite of zero, and now reads as one
+
+`flux_from(status, value)` and `growth_cell(status, value)` are pure functions
+for exactly the reason `medium_constraints` is: the mapping from solver status
+to verdict is the part that fails silently, and it can be checked without a
+solver. `Unbounded` is `inf` — the demand carries arbitrary flux, which is more
+producible than optimal, not less. Everything else non-optimal stays a zero:
+`Infeasible` genuinely is one, and `Unknown` and `Suboptimal` are not
+knowledge, where inventing a route would be worse than missing one.
+
+**Verified on the case that produced it.** The uncapped universe, through the
+changed module: sources reachable, **30 of 30 de novo**, and the run's own
+status tally reads `{'Unbounded': 29, 'Optimal': 3}` — the 29 misreads are now
+counted and printed instead of becoming zeros. `_Probe` keeps that tally and
+`main()` prints a second stderr line when any solve was not optimal, because
+otherwise a bad solve is invisible in a table already full of zeros.
+
+The media table's growth cell now holds the status word rather than `0.0000`
+when there is no solution, and `report.py` says so when it happens on the
+complete medium — the row that exists to show the model can be solved at all.
+`iML1515` carries `R_ATPM` at `lb = 6.86` and goes infeasible on a medium that
+cannot pay it; CarveMe drafts carry `0.0`, which is why no real run has hit
+this. Re-ran against `iML1515`, a fresh *E. coli* draft and `116_2` after the
+change: every number identical to before it, and no non-optimal line printed.
+
+Rejected: making `verdicts()` raise on a non-optimal solve. A partial answer
+with the status reported is worth more than no report, and the pipeline's own
+rule is that a rule which produced output should say what it produced.
+
+`CLAUDE.md` said 276 tests; with the `link_input` guard's test, the one pinning
+the two dropped panel targets and three for the status handling the count is
+**281**.

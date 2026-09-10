@@ -714,6 +714,26 @@ interpreter** — `carve` shells out to DIAMOND, and running with only
 `<env>/bin/python` fails the carve step with "Unable to run diamond". Scoring
 existing models needs no DIAMOND.
 
+### The `Unbounded` fix, verified on the case that produced it
+The uncapped universe — 25,348 reactions at their shipped ±inf bounds — through
+the changed module: sources reachable, **30 of 30 de novo**, status tally
+`{'Unbounded': 29, 'Optimal': 3}`. Before the change the same input reported
+carbon *and* nitrogen unreachable and 29 of 32 compounds `none`. The 29
+misreads are now counted and printed rather than becoming zeros.
+
+Re-ran the module against `iML1515`, the fresh *E. coli* draft and `116_2`
+after the change. Every number is identical to before it and no non-optimal
+line was printed:
+
+| model | verdicts | M9 | M9[-O2] | LB | LB[-O2] | complete |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `iML1515` | 29 de novo, 1 none | 0.5315 | 0.1574 | 3.4309 | 2.7393 | 30.7595 |
+| *E. coli* K-12 draft | 29 de novo, 1 absent | 0.7033 | 0.2436 | 5.2002 | 4.5097 | 51.2313 |
+| `116_2` | 11 de novo, 6 upstream, 11 none, 2 absent | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 18.1086 |
+
+`116_2` was 11 / 6 / **13** / 2 on the 32-compound panel; the two that left are
+`btn` and `q8`, both `none`, so only the `none` count moves.
+
 `~ghrunner/biosynth-review` is ~130 MB and deletable — the three fresh models
 are re-carvable in under six minutes from bundled proteomes.
 

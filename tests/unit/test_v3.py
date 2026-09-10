@@ -4338,6 +4338,53 @@ class _StubProbe:
         return self._reach.get(reaction, 0.0)
 
 
+def test_an_unbounded_solve_is_producible_and_not_a_zero():
+    """`Unbounded` means the demand can carry arbitrary flux, so reading every
+    non-optimal status as zero flips the verdict to `none`. Measured, not
+    hypothetical: pointed at the BiGG universe, whose 25,348 reactions ship
+    bounded at ±inf, this probe reported carbon *and* nitrogen unreachable and
+    29 of 32 panel compounds `none` — every one an unbounded LP misread. With
+    the bounds capped the same model answers 32 of 32."""
+    from comparem2.biosynthesis import MIN_FLUX, flux_from
+
+    assert flux_from("Unbounded", None) == float("inf")
+    assert flux_from("Unbounded", 0.0) > MIN_FLUX
+    # Everything else is a zero: Infeasible genuinely is one, and Unknown and
+    # Suboptimal are not knowledge — under-reporting beats inventing a route.
+    for status in ("Infeasible", "Unknown", "Suboptimal",
+                   "Infeasible or Unbounded"):
+        assert flux_from(status, 10.0) == 0.0, status
+    assert flux_from("Optimal", 10.0) == 10.0
+    assert flux_from("Optimal", None) == 0.0
+
+
+def test_a_growth_cell_says_why_there_is_no_number():
+    """`0.0000` for an infeasible LP answers a different question. The
+    complete-medium row is the report's control that the model is solvable at
+    all, and a zero there cannot say so."""
+    from comparem2.biosynthesis import growth_cell
+
+    assert growth_cell("Optimal", 0.53152) == "0.5315"
+    assert growth_cell("Optimal", None) == "0.0000"
+    assert growth_cell("Optimal", -1e-14) == "0.0000"  # never a negative rate
+    assert growth_cell("Infeasible", None) == "infeasible"
+    assert growth_cell("Unbounded", 1e30) == "unbounded"
+
+
+def test_the_media_table_survives_a_status_where_a_number_goes(tmp_path):
+    """The report has to keep rendering, count an unsolved medium as no growth,
+    and say so where it matters — the complete medium."""
+    _biosynthesis_fixture(
+        tmp_path, {"A": {}, "B": {}},
+        media={"A": {"M9": ("infeasible", "", ""), "complete": "infeasible"},
+               "B": {"M9": ("0.0000", "", ""), "complete": "21.0601"}})
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A", "B")).read_text()
+    assert "infeasible" in body
+    assert "1 of 2 models could not be solved even on the complete medium" in body
+    assert "0 of 2 genomes grow on any defined medium" in body
+
+
 def test_a_source_with_an_exchange_can_still_be_unreachable():
     """The distinction is load-bearing and was measured. Of the four showcase
     models that could not reach ammonium, three carried no `EX_nh4_e` at all —
