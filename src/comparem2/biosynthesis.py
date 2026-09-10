@@ -5,15 +5,20 @@ for each of 32 building blocks — the twenty amino acids, ten vitamins and
 cofactors, two quinones — is there a complete, connected route to that compound
 from a minimal medium?
 
-**Why not simulate growth on a medium.** Because measured on eleven real draft
-models (four *E. faecium*, seven *S. aureus*), **none of them grows on any
-defined medium**: M9, M9 anaerobic, M9 glycerol, LB and LB anaerobic all return
-exactly zero, and every one of the eleven grows only on the complete medium.
-The reason is that growth is a single bit that one unreachable metabolite
-destroys: on LB, `116_2` can make 52 of its 53 biomass precursors and fails on
-menaquinol-8; `COL` fails on asparagine alone. Per-compound, 53 bits survive
-what kills the one. The `media` table below reports that check per genome
-rather than hiding it.
+**Why not simulate growth on a medium.** Because growth is a single bit that one
+unreachable metabolite destroys. A CarveMe draft of *B. subtilis* 168 — an
+organism that grows on glucose and ammonium — answers **29 of 32 compounds
+*de novo* and still returns exactly zero** on M9, M9 anaerobic, LB and LB
+anaerobic. On LB, `116_2` can make 52 of its 53 biomass precursors and fails on
+menaquinol-8; `COL` fails on asparagine alone. Per-compound, 29 bits survive
+what kills the one.
+
+**That zero is a property of the genome in front of it, not of the method.** A
+draft of *E. coli* K-12 carved the same way — CarveMe 1.6.6 through
+`carve_scip.py`, no gap-filling — grows 0.70 h⁻¹ on M9 and 5.20 on LB. All
+eleven Firmicute drafts measured here (four *E. faecium*, seven *S. aureus*)
+grow only on the complete medium, which is why the `media` table below reports
+the check per genome rather than generalising from it.
 
 **Three verdicts, not two.** A plain producibility scan on M9 cascades: no
 folate means no purines means no ATP means everything is blocked, and `116_2`
@@ -23,10 +28,25 @@ and is not. So each compound is tried twice —
     de_novo   reachable from M9 alone: salts, glucose, ammonium, phosphate,
               sulfate, oxygen. The genome can build it from scratch.
     upstream  not reachable from M9, but reachable from M9 plus every *other*
-              panel compound. The route exists; something else on the panel is
-              what is missing.
+              panel compound the model can take up. The route exists; something
+              else on the panel is what is missing.
     none      not reachable even then. No route in this draft model.
     absent    the compound is not in the model at all.
+
+**`upstream` says why, never whether.** If a compound were reachable from M9
+plus one the genome can already make, it would be reachable from M9 — so the
+transitive closure of the panel from the `de_novo` set is the `de_novo` set,
+measured and unchanged on thirteen models. On the minimal medium an `upstream`
+compound is a requirement too; the verdict separates a compound blocked by its
+own missing pathway from one blocked by something else on the list. In `116_2`
+all six and in `E8202` all nine are rescued only by glycine, L-serine,
+L-threonine or L-methionine, and those models can make none of the four.
+
+"the model can take up" is the caveat on the background: six to eight of the 32
+have no `R_EX_*_e` in any model measured — the intracellular cofactors — so they
+cannot act as rescuers. Injecting all of them straight into the cytoplasm
+instead moved no verdict in six models, so it is a limit worth naming and not
+one that currently costs anything.
 
 The background for `upstream` is M9 plus the panel, never the complete medium,
 and that is load-bearing: on a complete medium `COL` looks able to make
@@ -51,20 +71,32 @@ For the same reason no two panel members come from one nutrient family: if both
 `nac` and `nad` were on the panel, each would rescue the other and the pair
 would report a kinase rather than a pathway.
 
-**Validated against a curated model.** `iML1515` — *E. coli* K-12, manually
-curated — returns 31 of 32 de novo. The single exception is adenosylcobalamin,
+**Validated at two levels, and they say different things.** The BiGG universe
+itself — every reaction capped at ±1000, exchanges added for M9 — returns 32 of
+32, so every target on the panel is a representation the database can actually
+reach and no verdict below is a badly chosen metabolite. `iML1515`, *E. coli*
+K-12 manually curated, returns 31 of 32; the exception is adenosylcobalamin,
 which *E. coli* genuinely cannot synthesise de novo.
 
-On the drafts the same probe recovers described requirements. All four
-*E. faecium* have no route to leucine, methionine, threonine, tryptophan,
-valine, riboflavin, pantothenate, NAD and biotin, and three of the four to
-arginine and histidine as well; all seven *S. aureus* to thiamine diphosphate,
-NAD and biotin. Menaquinone-8 is de novo in four *S. aureus* and unreachable in
-every *E. faecium*, and ubiquinone-8 is unreachable or unrepresented in all
-eleven — both right for Firmicutes, which use menaquinone and not ubiquinone.
+**A draft of the same organism returns 29.** Carved from the *E. coli* K-12
+proteome CarveMe bundles, by this pipeline's own path, the probe misses biotin
+and ubiquinone-8 as well — and so does every other prototroph draft measured:
+*B. subtilis*, *P. aeruginosa*, *S. oneidensis*, *R. solanacearum*, all 29 of
+32, all missing the same two. The routes are in the universe and carving does
+not keep them. So `btn` and `q8` are the same answer for every genome and carry
+no comparative information; 29 is the number to calibrate against, not 31.
 
-It gets things wrong too, and visibly: all seven *S. aureus* come out with no
-route to asparagine, which is not a described requirement of that organism.
+On the drafts the rest of the probe recovers described requirements. All four
+*E. faecium* have no route to leucine, methionine, threonine, tryptophan,
+valine, riboflavin, pantothenate and NAD, and three of the four to arginine and
+histidine as well; all seven *S. aureus* to thiamine diphosphate and NAD.
+Menaquinone-8 is de novo in four *S. aureus* and unreachable in every
+*E. faecium*, which is right for the pair — but its partner is not the control
+it looks like: ubiquinone-8 is unreachable in the *E. coli* and *S. oneidensis*
+drafts too, and both organisms use Q8.
+
+It gets things wrong elsewhere, and visibly: all seven *S. aureus* come out with
+no route to asparagine, which is not a described requirement of that organism.
 Read a verdict as a statement about the draft model.
 
 **It runs in the tool's environment, under a bare `python`**, like
@@ -170,7 +202,7 @@ PANEL = (
     Compound("tyr__L", "L-Tyrosine", AMINO_ACID),
     Compound("val__L", "L-Valine", AMINO_ACID),
     # The active form in each case — see the module docstring on why the
-    # vitamin itself is the wrong target for thiamine, folate and niacin.
+    # vitamin itself is the wrong target for thiamine, folate and lipoate.
     Compound("thmpp", "Thiamine diphosphate (B1)", COFACTOR),
     Compound("ribflv", "Riboflavin (B2)", COFACTOR),
     Compound("nad", "NAD (B3)", COFACTOR),
@@ -381,8 +413,14 @@ def media(probe: _Probe) -> list[tuple[str, ...]]:
     `present` was the original diagnostic: a medium whose compounds the model
     has no exchange for is not the medium it was asked for. The eleven drafts
     measured carry exchanges for 48 to 51 of LB's 65, against 62 for the curated
-    `iML1515`, and the missing ones are the vitamins and nucleosides — which is
-    why a Gram-positive draft returns zero on a rich medium.
+    `iML1515`, and the missing ones are the vitamins and nucleosides.
+
+    **It does not explain a zero on a rich medium, and must not be read as
+    though it did.** A *R. solanacearum* draft and `COL` both carry 51 of LB's
+    65 and grow 0.7714 and 0.0000. What separates them is per-model and one
+    metabolite deep: `116_2` reaches 52 of its 53 biomass precursors on LB and
+    fails on menaquinol-8, `COL` on asparagine alone. That check is not an
+    output yet.
 
     **A count was not enough**, so `missing` names them and `unreachable` says
     whether what is gone matters. On 2026-09-08 two models of one strain both

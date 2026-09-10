@@ -401,7 +401,7 @@ that closed that gap.
 | fasttree | 09-02 | at `threads=1`; duplicates at 0.0 branch length. `threads=1` is now measured, not assumed — FastTreeMP buys nothing here; see below |
 | carveme | 09-02, again 09-04 | 4/4 SBML models. `carve_scip.py` took one *E. faecium* genome from ~9 min and a truncated model to **50 s and 1,743 reactions** — but that fix **does not generalise**: measured 09-04, three of seven *S. aureus* genomes still hit the 600 s ceiling under both SCIP builds, at 1,236–1,263 reactions against 1,609–1,636. See below, twice |
 | gtdbtk | 09-02 | all four *E. faecium* at 99.0–99.2% ANI against a 95.0 radius, `ani_screen`; duplicates identical. Six defects had to be fixed first — see below |
-| biosynthesis | 09-03 | 13-step Snakemake run, `--until biosynthesis`, exit 0. **3 s a genome**, duplicate pair identical, and byte-identical to the same probe run against the PyPI wheel on macOS. The curated `iML1515` control returns **31 of 32 de novo** — see below |
+| biosynthesis | 09-03 | 13-step Snakemake run, `--until biosynthesis`, exit 0. **3 s a genome**, duplicate pair identical, and byte-identical to the same probe run against the PyPI wheel on macOS. The curated `iML1515` control returns **31 of 32 de novo**; a CarveMe draft of the same organism returns **29 of 32** — see below, and the 09-10 review |
 
 ### GTDB-Tk: six defects, none of which a solve would show
 Found 2026-09-02 while making the tool runnable. Each was invisible because the
@@ -652,7 +652,43 @@ genome — negligible against the 50 s `carve` takes — and the `116_2` /
 
 The one non-de-novo verdict on `iML1515` is adenosylcobalamin, which *E. coli*
 genuinely cannot synthesise de novo. Every other call on the curated model is
-the described answer, which is the calibration for the section.
+the described answer — but see below: 31 is the curated number, and a draft of
+the same organism returns 29.
+
+### biosynthesis review, executed 2026-09-10 — six new models, one new ceiling
+Run on thylakoid from the `ghrunner` account (the `thylakoid` account still
+rejects the laptop key), in
+`/evo/postdoc/cm2-envs-two/6d67b6a4fe39c742e4d740c0d883faa6_` — reframed 1.6.0,
+carveme 1.6.6. Working directory `~ghrunner/biosynth-review`; probe scripts in
+`Claude outputs/`. Full account in
+`Claude outputs/biosynthesis_review_2026-09-10.md`.
+
+**Three genomes carved that day** with CarveMe 1.6.6 through this repo's own
+`carve_scip.py`, from the proteomes bundled at
+`carveme/data/benchmark/fasta/` — *E. coli* K-12 MG1655 (7.5 s solver, certified
+optimum), *B. subtilis* 168 (23.7 s, certified optimum), *M. genitalium* G37
+(274.9 s, gaplimit 6.9e-5). Plus the six CarveMe 1.5.0 benchmark drafts that
+ship with the package.
+
+| model | de novo / 32 | M9 | LB | complete |
+| --- | ---: | ---: | ---: | ---: |
+| `iML1515`, curated *E. coli* | 31 | 0.5315 | 3.4309 | 30.76 |
+| *E. coli* K-12, **1.6.6, this pipeline's path** | **29** | **0.7033** | **5.2002** | 51.23 |
+| *B. subtilis* 168, **1.6.6, this pipeline's path** | **29** | 0.0000 | 0.0000 | 28.80 |
+| *E. coli* / *B. subtilis* / *P. aeruginosa* / *S. oneidensis* / *R. solanacearum*, 1.5.0 | 29 | 0.24–0.67 | 0.77–4.83 | 6.5–47 |
+| *M. genitalium* G37, 1.6.6 | 0 | 0.0000 | 0.0000 | 1.65 |
+| `116_2` *E. faecium*, `COL` `N315` `TW20` *S. aureus* | 10–26 | 0.0000 | 0.0000 | 14.9–21.1 |
+
+Every prototroph draft lands on 29 and every one misses the same two, `btn` and
+`q8`. **The BiGG universe returns 32 of 32** — 25,348 reactions, bounds capped
+at ±1000, M9 exchanges added, all 34 solves `Optimal` — so the panel's targets
+are all reachable in the database and those two are carving losses. All ~1,400
+solves on drafts returned `Optimal`; `M9` and `LB` match carveme 1.6.6's
+`media_db.tsv` exactly; `MAX_UPTAKE = 10.0` on every compound matches
+`Environment.from_compounds`.
+
+`~ghrunner/biosynth-review` is ~130 MB and deletable — the three fresh models
+are re-carvable in under six minutes from bundled proteomes.
 
 ### biosynthesis through Snakemake, 13:51–14:03 on 2026-09-03
 `--until biosynthesis` over the four *E. faecium* genomes: bakta, carveme and

@@ -102,10 +102,18 @@ def link_input(faa: Path, output: Path) -> Path:
 
     Relative, so a results directory stays movable, and replaced rather than
     reused so a re-run cannot inherit a link to a genome that has moved.
+
+    The one case that must not reach the unlink is the input already being in
+    that directory, because then the link and the genome are the same path: the
+    unlink deletes the FASTA and what replaces it points at itself. Bakta's
+    directory is never CarveMe's, so the pipeline cannot get here — but the
+    wrapper is runnable by hand and this costs one comparison.
     """
     outdir = output.parent
     outdir.mkdir(parents=True, exist_ok=True)
     link = outdir / faa.name
+    if faa.parent.resolve() == outdir.resolve():
+        return faa
     if link.is_symlink() or link.exists():
         link.unlink()
     link.symlink_to(os.path.relpath(faa, outdir))

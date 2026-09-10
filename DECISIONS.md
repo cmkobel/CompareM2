@@ -2370,3 +2370,98 @@ diagnosis on an old run.
 `CLAUDE.md` said 274 tests; the measured count is **276**. The two arrived in
 `f4d033d` and `c258dd0` after the count was last written down, which is the
 failure mode that file's own note predicts.
+
+## 2026-09-10 — the biosynthesis panel keeps its design and loses three claims
+
+A critical review of `biosynthesis.py` on thylakoid, against 17 models: the
+curated `iML1515`, the six CarveMe 1.5.0 benchmark drafts that ship with
+CarveMe, three drafts carved that day with 1.6.6 through this repo's own
+`carve_scip.py`, five pipeline drafts, and the BiGG universe itself. Working
+notes and probe scripts are in `Claude outputs/biosynthesis_review_2026-09-10.md`
+and `biosynthesis_fixes_2026-09-10.md`.
+
+**Nothing was wrong with the linear programs.** `medium_constraints` does what
+its tests say, all ~1,400 solves on drafts returned `Optimal`, `M9` and `LB` are
+byte-faithful to CarveMe 1.6.6's `media_db.tsv` (and the anaerobic variants
+there really are the aerobic ones minus `o2`), and `MAX_UPTAKE = 10.0` on every
+compound including `h2o` and `h` is exactly what
+`Environment.from_compounds(compounds, max_uptake=10)` does — no drift from
+CarveMe. `iML1515` still returns 31 of 32. What went wrong was three sentences.
+
+**The probe targets are validated at the database level now, not just against
+one curated model.** The BiGG universe — 25,348 reactions, all 34 solves
+`Optimal` — returns **32 of 32 de novo** from M9, once its bounds are capped
+(it ships at ±inf) and M9 exchanges are added. Every panel target is a
+representation the database can reach, so `thmpp`, `thf` and `pydx5p` are the
+right metabolites and no verdict is an artefact of a badly chosen id.
+`Claude outputs/biosynth_universe_ceiling.py`, ~12 min.
+
+### `btn` and `q8` are the same answer for every genome
+Measured `none` or `absent` in **12 of 12 CarveMe drafts across 8 species**,
+`de novo` only in the curated `iML1515`. Four of those organisms — *E. coli*,
+*B. subtilis*, *S. oneidensis*, *R. solanacearum* — are biotin prototrophs, and
+*E. coli* and *S. oneidensis* both use ubiquinone-8. Traced on the fresh
+*E. coli* draft: the biotin chain dies at pimeloyl-CoA (`pmcoa_c`, which
+`iML1515` does not contain at all — it uses the ACP route), and no reaction in
+the draft synthesises `q8` at all, only the eight quinol oxidations that cycle
+it. Since the universe can make both, these are **carving losses, not database
+limits**.
+
+`guidance.py` had used ubiquinone-8 as its worked example of "a uniform column
+can be a real lineage character and not a defect". It is the opposite, and
+menaquinone-8 — de novo in four *S. aureus*, unreachable in every *E. faecium* —
+is the example that argument wanted.
+
+**Dropping both is the plan and not yet done.** It takes the panel to 30, and
+the point of it is that `iML1515` and every prototroph draft then agree at
+**29 of 30, missing only adenosylcobalamin**: curated 31/32 → 29/30, and the
+*E. coli*, *B. subtilis*, *P. aeruginosa*, *S. oneidensis* and *R. solanacearum*
+drafts stay at 29. Deferred to its own commit because it changes the panel and
+the test count.
+
+### "None of eleven drafts grows on any defined medium" was over-general
+It is a fact about eleven Firmicute genomes. A draft of *E. coli* K-12 carved
+the same way — 1.6.6, `carve_scip.py`, no gap-filling, certified optimum in
+7.5 s — grows **0.7033 h⁻¹ on M9 and 5.2002 on LB** (0.2436 / 4.5097
+anaerobic). The design decision it was offered as the reason for is unchanged
+and the better argument is *B. subtilis* 168: its draft answers **29 of 32
+de novo and still returns exactly 0.0000 on all four defined media**. That is
+"growth is a single bit one metabolite destroys" said where the reader knows
+the right answer.
+
+The proteomes are bundled at `carveme/data/benchmark/fasta/`, so both numbers
+are re-measurable in about a minute.
+
+### `upstream` says why, never whether
+`guidance.py` said "reading them as requirements would double the count". On the
+minimal medium they *are* requirements. If a compound were reachable from M9
+plus one the genome can already make, it would be reachable from M9 — so the
+transitive closure of the panel from the `de_novo` set **is** the `de_novo` set,
+measured and unchanged on 13 models. In `116_2` all six `upstream` compounds and
+in `E8202` all nine are rescued only by `gly`, `ser__L`, `thr__L` or `met__L`,
+and neither model can make any of the four.
+
+### A count of LB exchanges does not explain a zero on LB
+`report.py` said "a zero on a rich medium is usually missing transport" and
+cited the 48–51 of 65 span as evidence. A *R. solanacearum* draft and `COL` both
+carry **51 of 65** and grow **0.7714** and **0.0000**. The real answer is one
+metabolite deep and per-model — `116_2` reaches 52 of its 53 biomass precursors
+on LB and fails on menaquinol-8, `COL` on asparagine alone — and is not an
+output yet. The causal claim is gone; the span stays as what it is.
+
+### Two things left standing that were checked, not assumed
+- **Supplying `upstream` rescuers through exchanges** is narrower than the
+  docstring said: 6 to 8 of the 32 have no `R_EX_*_e` in any model measured,
+  and they are the intracellular cofactors. Injecting all of them straight into
+  the cytoplasm instead **moved no verdict in six models**, so this is a wording
+  fix. Recorded because the negative result is what makes it one.
+- **A non-`Optimal` LP is read as a zero.** `Unbounded` and `Infeasible` both
+  become `0.0`. Not latent — pointed at the universe before its bounds were
+  capped, the probe reported carbon *and* nitrogen unreachable and 29 of 32
+  compounds `none`, every one of them `Unbounded` misread. It cannot reach a
+  real run (CarveMe drafts carry `R_ATPM` at `lb = 0.0`; `iML1515` has 6.86 and
+  goes infeasible on a medium that cannot pay it), so it is deferred with a unit
+  test rather than fixed in the prose commit.
+
+`CLAUDE.md` said 276 tests; with the `link_input` guard's test the count is
+**277**.

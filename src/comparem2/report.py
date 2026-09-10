@@ -2026,11 +2026,13 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
 
     parts = [
         f'<p class="summary">{len(PANEL)} building blocks per genome. '
-        "<em>De novo</em> is a complete route from a minimal medium; "
-        "<em>upstream</em> means the route is there but another compound on the "
-        "list is what is missing; <em>no route</em> is what the genome has to be "
-        "given. These describe the draft model, not the organism — see the notes "
-        "above.</p>",
+        "<em>De novo</em> is a complete route from a minimal medium. "
+        "<em>Upstream</em> and <em>no route</em> are both things the genome has "
+        "to be given on that medium, and the difference between them is the "
+        "reason: <em>upstream</em> means the route is there and another compound "
+        "on the list is what is missing, <em>no route</em> means there is no "
+        "route at all. These describe the draft model, not the organism — see "
+        "the notes above.</p>",
         _table(rows, header=["Genome", "De novo", "Upstream", "No route",
                              "Not in model"]),
         _absent_note(absent, len(ctx.samples)),
@@ -2085,13 +2087,23 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
             _table(ordered, header=["Genome", *[label for _, label in _MEDIA_COLUMNS]]),
             _absent_note(missing, len(ctx.samples)),
         ]
+        # How much of LB arrived, and deliberately no causal claim attached to
+        # it. The note that used to stand here said a zero on a rich medium is
+        # usually missing transport and cited this span as the evidence; it is
+        # not evidence, because a *R. solanacearum* draft and an *S. aureus* one
+        # both carry 51 of LB's 65 and grow 0.7714 and 0.0000. What separates
+        # them is one biomass precursor, which is a per-model fact this table
+        # does not yet carry.
         if present:
             lo, hi = min(present), max(present)
             span = f"{lo}" if lo == hi else f"{lo}–{hi}"
             parts.append(
-                '<p class="note">A zero on a rich medium is usually missing '
-                "transport, not missing metabolism: these models carry exchange "
-                f"reactions for {span} of LB's {len(LB)} compounds.</p>")
+                '<p class="note">These models carry exchange reactions for '
+                f"{span} of LB's {len(LB)} compounds, so a zero on the rich "
+                "medium is partly a question of how much of it arrived. It does "
+                "not settle one: at equal coverage some drafts grow and others "
+                "do not, and which it is turns on a single biomass "
+                "precursor.</p>")
         # The compounds themselves, for the minimal medium only. A count cannot
         # distinguish a missing trace metal from a missing nitrogen source, and
         # the ids are what a reader checks against the medium definition.

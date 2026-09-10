@@ -442,8 +442,12 @@ something already published. The post-mortems are in
   user-facing artifact too, so dropping them is a trade, not a free win.
 - **Gap-filling per medium, parked 2026-09-03.** The idea that started
   `biosynthesis` was scoring genomes by growth on media standing in for
-  ecological niches. That failed on measurement — no draft grows on any defined
-  medium — and the salvage of it was to gap-fill each model on each medium and
+  ecological niches. That failed on measurement — none of the eleven Firmicute
+  drafts grows on any defined medium, and a *B. subtilis* draft answers 29 of 32
+  compounds and still returns zero, so one metabolite decides the score
+  (measured 2026-09-10; a draft of *E. coli* does grow, so this is about the
+  genome and not about CarveMe) — and the salvage of it was to gap-fill each
+  model on each medium and
   score by *how many reactions had to be added*. Parked rather than dropped: it
   is a MILP per medium per genome on top of carving, so the cost is unmeasured
   and the SCIP presolver defect applies to it as well, and the CarveMe paper has

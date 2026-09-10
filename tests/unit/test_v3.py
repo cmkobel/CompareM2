@@ -3820,6 +3820,22 @@ def test_link_input_points_into_the_output_directory(tmp_path):
     assert stale.resolve() == faa.resolve()
 
 
+def test_link_input_does_not_eat_an_input_already_in_the_output_directory(tmp_path):
+    """The link and the genome would be one path, so the unlink deletes the
+    FASTA and leaves a symlink pointing at itself. Bakta's directory is never
+    CarveMe's, so the pipeline cannot reach this — but the wrapper is runnable
+    by hand, and it destroyed a proteome that way on 2026-09-10."""
+    from comparem2.carve_scip import link_input
+
+    faa = tmp_path / "A.faa"
+    faa.write_text(">g\nMK\n")
+
+    link = link_input(faa, tmp_path / "A.xml")
+    assert link == faa
+    assert not link.is_symlink()
+    assert link.read_text() == ">g\nMK\n"
+
+
 def test_patch_solver_disables_the_presolver_after_carveme_sets_its_limits(monkeypatch):
     """CarveMe sets limits/time and limits/gap immediately before solving, so a
     parameter set any earlier is one it overwrites."""
