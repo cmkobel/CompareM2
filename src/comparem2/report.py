@@ -1967,6 +1967,52 @@ def _starved_note(starved: dict[str, list[str]], total: int) -> str:
         "<em>upstream</em> or <em>no route</em> at once.</p>")
 
 
+# How many blocked precursors are worth naming. Past a handful the model is
+# short of a pathway rather than a metabolite, and the list stops being a
+# diagnosis: `116_2` on M9 misses 26 of 53 and on LB exactly one.
+_PRECURSOR_NAME_BUDGET = 4
+
+
+def _closest_note(media: dict, raw) -> str:
+    """For a model that grew on nothing, the medium it came closest on.
+
+    Which is the question a column of zeros raises: growth is one bit, and the
+    thing worth knowing is what the model was short of. The closest medium is
+    the one with the fewest unreachable biomass precursors, because that is
+    where the answer is a metabolite rather than a pathway — `116_2` misses 26
+    of 53 on M9 and exactly one, menaquinol-8, on LB.
+
+    Read defensively: a media table written before these columns existed, or
+    while the rule is still writing one, simply has nothing to say here.
+    """
+    lines = []
+    for sample in media:
+        best = None
+        for medium in media[sample]:
+            reached = raw(sample, medium, 6)
+            if not reached or "/" not in reached:
+                continue
+            blocked = raw(sample, medium, 7).split()
+            # A medium that grew has no `precursors` cell at all, so anything
+            # reaching here failed, and fewest-blocked is the closest.
+            if best is None or len(blocked) < len(best[2]):
+                best = (medium, reached, blocked)
+        if best is None:
+            continue
+        medium, reached, blocked = best
+        named = (": " + ", ".join(html.escape(b) for b in blocked)
+                 if 0 < len(blocked) <= _PRECURSOR_NAME_BUDGET else "")
+        lines.append(f"{html.escape(sample)} reaches {html.escape(reached)} "
+                     f"on {html.escape(medium)}{named}")
+    if not lines:
+        return ""
+    return ('<p class="note">What each model that did not grow was short of, on '
+            "the medium it came closest on — the biomass precursors its own "
+            f"objective reaction needs and it cannot make. {'; '.join(lines)}. "
+            "A model missing one metabolite is a curation away from growing; "
+            "one missing a dozen is missing a pathway.</p>")
+
+
 def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
     """What each genome can build, and what it has to be given.
 
@@ -2109,13 +2155,13 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
                 f"so nothing in this section describes those organisms: {listed}. "
                 "The usual cause is a maintenance reaction with a lower bound the "
                 "medium cannot pay.</p>")
+        parts.append(_closest_note(media, raw))
         # How much of LB arrived, and deliberately no causal claim attached to
         # it. The note that used to stand here said a zero on a rich medium is
         # usually missing transport and cited this span as the evidence; it is
         # not evidence, because a *R. solanacearum* draft and an *S. aureus* one
         # both carry 51 of LB's 65 and grow 0.7714 and 0.0000. What separates
-        # them is one biomass precursor, which is a per-model fact this table
-        # does not yet carry.
+        # them is the biomass precursor named above.
         if present:
             lo, hi = min(present), max(present)
             span = f"{lo}" if lo == hi else f"{lo}–{hi}"
@@ -2124,8 +2170,7 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
                 f"{span} of LB's {len(LB)} compounds, so a zero on the rich "
                 "medium is partly a question of how much of it arrived. It does "
                 "not settle one: at equal coverage some drafts grow and others "
-                "do not, and which it is turns on a single biomass "
-                "precursor.</p>")
+                "do not.</p>")
         # The compounds themselves, for the minimal medium only. A count cannot
         # distinguish a missing trace metal from a missing nitrogen source, and
         # the ids are what a reader checks against the medium definition.

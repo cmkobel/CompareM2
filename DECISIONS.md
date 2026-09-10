@@ -2514,3 +2514,69 @@ rule is that a rule which produced output should say what it produced.
 `CLAUDE.md` said 276 tests; with the `link_input` guard's test, the one pinning
 the two dropped panel targets and three for the status handling the count is
 **281**.
+
+## 2026-09-10 — the media table says what a model that did not grow was short of
+
+The fourth item from the review, and the one that adds an output rather than
+correcting a sentence. `report.py` used to explain a zero on LB with the count
+of LB exchanges the model carries; that claim went in the prose commit because
+it is not evidence — a *R. solanacearum* draft and `COL` both carry **51 of
+65** and grow **0.7714** and **0.0000**. This is what replaces it.
+
+**The definition is mechanical and it reproduces the hand-computed figures.**
+A biomass precursor is a metabolite the model's own objective reaction
+consumes — taken off the objective, because CarveMe's biomass composition is
+the model's and not ours. Each gets a drain and is maximised on the medium,
+like a panel compound. Measured before it was written:
+
+| model | medium | precursors | blocked |
+| --- | --- | ---: | --- |
+| `116_2` | LB | **52/53** | `mql8` |
+| `116_2` | M9 | 27/53 | 26 of them |
+| `COL` | LB | **52/53** | `asn__L` |
+| `COL` | M9 | 49/53 | `asn__L nad nadp thmpp` |
+
+The docstring had claimed exactly "52 of 53 … menaquinol-8" and "asparagine
+alone", hand-computed on 09-03. The mechanical definition returns both without
+adjustment, which is the reason to trust it.
+
+**One caveat, and it is in the code.** A drain asks for *net* production, which
+is stricter than the biomass reaction needs for its maintenance term: `atp_c`
+is consumed and `adp_c` produced in the same reaction, so growth needs the ATP
+cycle rather than net synthesis of adenosine. It has not misled, because a
+model that cannot make adenosine also fails on `datp_c` and `gtp_c`, which
+biomass genuinely incorporates — `116_2` on M9 blocks all three together.
+Rejected: excluding the ATP/H2O maintenance pair by pattern. It is a
+hard-coded fudge, it would move the denominator off the 53 already in the
+record, and the simple definition reproduces the measurements.
+
+**Only on a medium that did not grow**, because the cost is real: 53 solves a
+medium against ~70 for the whole of the rest of the module. Measured end to
+end on thylakoid — a model that grows on everything pays nothing.
+
+| model | grows on | before | after |
+| --- | --- | ---: | ---: |
+| *E. coli* K-12 draft | all five | ~3 s | **3.4 s** |
+| `iML1515` | all five | ~3 s | **4.0 s** |
+| `116_2` | complete only | ~3 s | **6.2 s** |
+| `COL` | complete only | ~3 s | **6.6 s** |
+
+So the worst case roughly doubles, on the models where the answer is wanted,
+against `carve`'s 30–70 s ahead of it. Rejected: computing it on every medium
+unconditionally, which costs 265 solves and 6.5–14 s a genome to explain media
+that worked.
+
+**The report names the medium a model came closest on**, not every medium it
+failed. That is where the answer is a metabolite rather than a pathway —
+`116_2` misses 26 of 53 on M9 and exactly one on LB, and only the second is a
+diagnosis. Past four blocked precursors the list is counted and not named, for
+the same reason.
+
+**An existing workdir keeps its six-column `media.tsv`**, since Snakemake will
+not re-run the rule for a file that exists. `report.py` reads short rows as
+having nothing to say and renders without the note, which is the same
+behaviour the 09-09 entry describes for `missing` and `unreachable`. Delete the
+file to get the diagnosis on an old run.
+
+`CLAUDE.md` said 281 tests; with three for the closest-medium note the count is
+**284**.

@@ -231,8 +231,12 @@ PANEL_HEADER = ("compound", "name", "group", "verdict")
 # Both exist because the `present` count could not tell "no nickel" from "no
 # nitrogen source": on 2026-09-08 two models of one strain both read 17 of 20
 # for M9 and differed in which three were missing.
+# `precursors` and `blocked` answer the question a zero in `growth` raises and
+# nothing else here could: which of the things biomass needs is the model
+# unable to make. Filled only on a medium that did not grow — 53 solves each,
+# against 70 for the whole of the rest of this module.
 MEDIA_HEADER = ("medium", "compounds", "present", "growth", "missing",
-                "unreachable")
+                "unreachable", "precursors", "blocked")
 
 
 # ReFramed's `Status` enum, by value: Optimal, Unknown, Suboptimal, Unbounded,
@@ -337,6 +341,60 @@ def add_source_demands(model) -> list[tuple[str, str, str | None]]:
     return out
 
 
+PRECURSOR_PREFIX = "R_CM2_BM_"
+
+
+def biomass_precursors(model) -> list[str]:
+    """The metabolites the model's own objective reaction consumes.
+
+    Which is the question a zero in the growth column raises and the `present`
+    count cannot answer: *which* of the things biomass needs is the model
+    unable to make? Taken off the objective rather than from a list, because
+    CarveMe's biomass composition is the model's, not ours.
+
+    **A drain asks for net production, which is stricter than the biomass
+    reaction needs for its maintenance term.** `atp_c` is consumed and `adp_c`
+    produced in the same reaction, so growth needs the ATP cycle rather than
+    net synthesis of adenosine — and this check asks for the latter. It has
+    not misled yet, because a model that cannot make adenosine also fails on
+    `datp_c` and `gtp_c`, which biomass genuinely does incorporate. Read a
+    blocked `atp_c` alongside those rather than alone.
+    """
+    objective = [rid for rid, weight in model.get_objective().items() if weight]
+    consumed = []
+    for rid in objective:
+        for met, coefficient in model.reactions[rid].stoichiometry.items():
+            if coefficient < 0 and met not in consumed:
+                consumed.append(met)
+    return consumed
+
+
+def add_precursor_demands(model) -> dict[str, str]:
+    """One drain per biomass precursor, as metabolite id to reaction id.
+
+    Same contract as `add_demands` — before the solver is built. Keyed by the
+    full metabolite id because the objective is free to reach outside the
+    cytoplasm, even though every model measured stays inside it.
+    """
+    out = {}
+    for met in biomass_precursors(model):
+        rid = f"{PRECURSOR_PREFIX}{met.removeprefix('M_')}"
+        if rid in model.reactions:
+            raise SystemExit(f"biosynthesis: {rid} already exists in the model")
+        model.add_reaction_from_str(f"{rid}: {met} --> ")
+        out[met] = rid
+    return out
+
+
+def short_metabolite(met: str) -> str:
+    """`M_mql8_c` to `mql8`, for a column a reader checks against BiGG.
+
+    The compartment stays on anything that is not cytoplasmic, since then it is
+    the interesting part.
+    """
+    return met.removeprefix("M_").removesuffix("_c")
+
+
 def medium_constraints(by_compound: dict[str, str], upper: dict[str, float | None],
                        drain_ub: dict[str, float | None], compounds,
                        max_uptake: float = MAX_UPTAKE,
@@ -385,6 +443,7 @@ class _Probe:
         self.statuses: dict[str, int] = {}
         self.present = add_demands(model)
         self.sources = add_source_demands(model)
+        self.precursors = add_precursor_demands(model)
         self.exchanges = _exchanges(model)
         # After the drains, because the solver is built over the model as it
         # stands and would not know about a reaction added later.
@@ -397,10 +456,15 @@ class _Probe:
         # `None` here, not `inf`.
         self._drain_ub = {_demand(c.bigg): model.reactions[_demand(c.bigg)].ub
                           for c in self.present}
-        # The source drains are pinned shut with the rest, so probing one
-        # cannot leave another open as a free sink.
+        # The source and precursor drains are pinned shut with the rest, so
+        # probing one cannot leave another open as a free sink. The precursor
+        # ones matter most here: there are 53 of them on a CarveMe draft, and
+        # 53 open sinks would let the media table report growth the model
+        # cannot achieve.
         self._drain_ub.update({rid: model.reactions[rid].ub
                                for _, _, rid in self.sources if rid is not None})
+        self._drain_ub.update({rid: model.reactions[rid].ub
+                               for rid in self.precursors.values()})
 
     def medium(self, compounds, open_drain: str | None = None) -> dict:
         return medium_constraints(self.exchanges, self._upper, self._drain_ub,
@@ -464,20 +528,34 @@ def unreachable_sources(probe: _Probe, compounds,
     return blocked
 
 
-def media(probe: _Probe) -> list[tuple[str, ...]]:
-    """Growth on each reference medium, with how much of it the model can take.
+def blocked_precursors(probe: _Probe, compounds,
+                       min_flux: float = MIN_FLUX) -> list[str]:
+    """Which biomass precursors the model cannot produce on `compounds`."""
+    return [met for met, rid in probe.precursors.items()
+            if probe.maximum(rid, probe.medium(compounds, rid)) <= min_flux]
+
+
+def media(probe: _Probe, min_flux: float = MIN_FLUX) -> list[tuple[str, ...]]:
+    """Growth on each reference medium, and on a zero, what it was short of.
 
     `present` was the original diagnostic: a medium whose compounds the model
     has no exchange for is not the medium it was asked for. The eleven drafts
     measured carry exchanges for 48 to 51 of LB's 65, against 62 for the curated
     `iML1515`, and the missing ones are the vitamins and nucleosides.
 
-    **It does not explain a zero on a rich medium, and must not be read as
-    though it did.** A *R. solanacearum* draft and `COL` both carry 51 of LB's
-    65 and grow 0.7714 and 0.0000. What separates them is per-model and one
-    metabolite deep: `116_2` reaches 52 of its 53 biomass precursors on LB and
-    fails on menaquinol-8, `COL` on asparagine alone. That check is not an
-    output yet.
+    **It does not explain a zero on a rich medium**, and used to be offered as
+    though it did: a *R. solanacearum* draft and `COL` both carry 51 of LB's 65
+    and grow 0.7714 and 0.0000. `precursors` and `blocked` are the check that
+    does explain it, and they are one metabolite deep — `116_2` reaches 52 of
+    its 53 biomass precursors on LB and fails on menaquinol-8, `COL` on
+    asparagine alone. Both figures were hand-computed before this was an
+    output and are reproduced by it exactly, which is the reason to trust the
+    definition in `biomass_precursors`.
+
+    **Only on a medium that did not grow.** 53 solves a medium is eight times
+    the rest of this module put together — 6.5 s against 0.8 s on `116_2` —
+    and there is nothing to explain about a medium that worked. A model that
+    grows on all five pays nothing.
 
     **A count was not enough**, so `missing` names them and `unreachable` says
     whether what is gone matters. On 2026-09-08 two models of one strain both
@@ -487,20 +565,28 @@ def media(probe: _Probe) -> list[tuple[str, ...]]:
     """
     anaerobic = tuple(c for c in M9 if c != AEROBE)
     lb_anaerobic = tuple(c for c in LB if c != AEROBE)
+    every = tuple(probe.exchanges)
     rows = []
     for name, compounds in (("M9", M9), ("M9[-O2]", anaerobic),
-                            ("LB", LB), ("LB[-O2]", lb_anaerobic)):
+                            ("LB", LB), ("LB[-O2]", lb_anaerobic),
+                            ("complete", every)):
         absent = tuple(c for c in compounds if c not in probe.exchanges)
-        growth = growth_cell(*probe.growth(probe.medium(compounds)))
-        # M9 family only — see `SOURCES` on why LB gets no such claim.
-        blocked = (unreachable_sources(probe, compounds)
+        status, value = probe.growth(probe.medium(compounds))
+        # M9 family only — see `SOURCES` on why LB gets no such claim, and the
+        # complete medium is every exchange the model has rather than a recipe.
+        blocked = (unreachable_sources(probe, compounds, min_flux)
                    if name.startswith("M9") else [])
+        if status == OPTIMAL and (value or 0.0) > min_flux:
+            reached, short = "", ()
+        else:
+            missed = blocked_precursors(probe, compounds, min_flux)
+            reached = f"{len(probe.precursors) - len(missed)}/{len(probe.precursors)}"
+            short = tuple(short_metabolite(m) for m in missed)
         rows.append((name, str(len(compounds)),
-                     str(len(compounds) - len(absent)), growth,
-                     " ".join(absent), " ".join(blocked)))
-    every = list(probe.exchanges)
-    rows.append(("complete", str(len(every)), str(len(every)),
-                 growth_cell(*probe.growth(probe.medium(every))), "", ""))
+                     str(len(compounds) - len(absent)),
+                     growth_cell(status, value),
+                     " ".join(absent), " ".join(blocked),
+                     reached, " ".join(short)))
     return rows
 
 
@@ -538,7 +624,7 @@ def main(argv: list[str] | None = None) -> int:
     # The media table first, so its numbers are read off a model whose drains
     # are shut — which they are in every constraint set, but the ordering says
     # so without the reader having to check.
-    write_tsv(args.media, MEDIA_HEADER, media(probe))
+    write_tsv(args.media, MEDIA_HEADER, media(probe, min_flux=args.min_flux))
     rows = verdicts(probe, min_flux=args.min_flux)
     write_tsv(args.output, PANEL_HEADER, rows)
 

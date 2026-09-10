@@ -979,10 +979,17 @@ GUIDANCE: dict[str, Guidance] = {
              "`Present` — how many of a medium's compounds the model has an exchange "
              "for — is a check that the medium arrived, not an explanation of a zero: "
              "a R. solanacearum draft and an S. aureus one both carry 51 of LB's 65 and "
-             "grow 0.77 and 0.00. A cell holding a word rather than a number is the "
-             "solver's status: the linear program had no solution to report, which is "
-             "a different thing from a growth rate of zero, and on the complete medium "
-             "it means the model cannot be solved at all."),
+             "grow 0.77 and 0.00. What does explain it is the line beneath the table, "
+             "which names the biomass precursors a model cannot make on the medium it "
+             "came closest on. That is usually one metabolite: an E. faecium draft "
+             "reaches 52 of its 53 precursors on LB and fails on menaquinol-8, and an "
+             "S. aureus draft on asparagine alone, where both reach only 27 and 49 on "
+             "the minimal medium. A model short of one metabolite is a curation away "
+             "from growing; one short of a dozen is missing a pathway. Finally, a cell "
+             "holding a word rather than a number is the solver's status: the linear "
+             "program had no solution to report, which is a different thing from a "
+             "growth rate of zero, and on the complete medium it means the model "
+             "cannot be solved at all."),
         ),
         caveats=(
             "This is a property of the draft model, not of the organism. The CarveMe "

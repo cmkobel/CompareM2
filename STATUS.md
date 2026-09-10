@@ -401,7 +401,7 @@ that closed that gap.
 | fasttree | 09-02 | at `threads=1`; duplicates at 0.0 branch length. `threads=1` is now measured, not assumed — FastTreeMP buys nothing here; see below |
 | carveme | 09-02, again 09-04 | 4/4 SBML models. `carve_scip.py` took one *E. faecium* genome from ~9 min and a truncated model to **50 s and 1,743 reactions** — but that fix **does not generalise**: measured 09-04, three of seven *S. aureus* genomes still hit the 600 s ceiling under both SCIP builds, at 1,236–1,263 reactions against 1,609–1,636. See below, twice |
 | gtdbtk | 09-02 | all four *E. faecium* at 99.0–99.2% ANI against a 95.0 radius, `ani_screen`; duplicates identical. Six defects had to be fixed first — see below |
-| biosynthesis | 09-03 | 13-step Snakemake run, `--until biosynthesis`, exit 0. **3 s a genome**, duplicate pair identical, and byte-identical to the same probe run against the PyPI wheel on macOS. Calibration re-measured 09-10 on the 30-compound panel: **29 of 30 for the curated `iML1515` and for CarveMe drafts of five prototrophs alike** — see below |
+| biosynthesis | 09-03 | 13-step Snakemake run, `--until biosynthesis`, exit 0. **3 s a genome** then, 3.4–6.6 s after the 09-10 biomass-precursor columns, duplicate pair identical, and byte-identical to the same probe run against the PyPI wheel on macOS. Calibration re-measured 09-10 on the 30-compound panel: **29 of 30 for the curated `iML1515` and for CarveMe drafts of five prototrophs alike** — see below |
 
 ### GTDB-Tk: six defects, none of which a solve would show
 Found 2026-09-02 while making the tool runnable. Each was invisible because the
@@ -733,6 +733,26 @@ line was printed:
 
 `116_2` was 11 / 6 / **13** / 2 on the 32-compound panel; the two that left are
 `btn` and `q8`, both `none`, so only the `none` count moves.
+
+### The biomass-precursor columns, executed 2026-09-10
+The media TSV gained `precursors` and `blocked`, filled only on a medium that
+did not grow. Run against four models in the same environment:
+
+| model | grows on | LB precursors | blocked | M9 precursors | rule wall |
+| --- | --- | ---: | --- | ---: | ---: |
+| `116_2` *E. faecium* | complete only | **52/53** | `mql8` | 27/53 | **6.2 s** |
+| `COL` *S. aureus* | complete only | **52/53** | `asn__L` | 49/53 | **6.6 s** |
+| *E. coli* K-12 draft | all five | — | — | — | **3.4 s** |
+| `iML1515` curated | all five | — | — | — | **4.0 s** |
+
+**The two LB figures are the ones hand-computed on 09-03** and written into the
+module docstring — 52 of 53 on menaquinol-8 for `116_2`, asparagine alone for
+`COL`. The mechanical definition reproduces both without adjustment. `COL` on
+M9 blocks `asn__L nad nadp thmpp`, which is its panel row read a second way.
+
+The rule was ~3 s a genome and is 3.4–4.0 s where the model grows and 6.2–6.6 s
+where it does not, against `carve`'s 30–70 s ahead of it. A model that grows on
+every medium pays nothing, which is the point of the scoping.
 
 `~ghrunner/biosynth-review` is ~130 MB and deletable — the three fresh models
 are re-carvable in under six minutes from bundled proteomes.

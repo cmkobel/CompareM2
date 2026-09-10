@@ -4209,12 +4209,16 @@ def _biosynthesis_fixture(tmp_path, verdicts, media=None):
                   [(c.bigg, c.name, c.group, overrides.get(c.bigg, DE_NOVO))
                    for c in PANEL])
         if media is not None:
-            # A value may be a bare growth figure, or a
-            # (growth, missing, unreachable) triple for the source diagnostic.
+            # A value may be a bare growth figure, a
+            # (growth, missing, unreachable) triple for the source diagnostic,
+            # or that plus (precursors, blocked) for the biomass one. Padded
+            # rather than required, so a test says only what it is about.
+            def row(name, value):
+                rest = value if isinstance(value, tuple) else (value,)
+                return (name, "20", "18", *rest, *("",) * (5 - len(rest)))
+
             write_tsv(d / f"{sample}.media.tsv", MEDIA_HEADER,
-                      [(name, "20", "18", *(value if isinstance(value, tuple)
-                                            else (value, "", "")))
-                       for name, value in media[sample].items()])
+                      [row(name, value) for name, value in media[sample].items()])
 
 
 def test_biosynthesis_section_summarises_and_draws_the_grid(tmp_path):
@@ -4383,6 +4387,48 @@ def test_the_media_table_survives_a_status_where_a_number_goes(tmp_path):
     assert "infeasible" in body
     assert "1 of 2 models could not be solved even on the complete medium" in body
     assert "0 of 2 genomes grow on any defined medium" in body
+
+
+def test_the_report_names_what_a_model_that_did_not_grow_was_short_of(tmp_path):
+    """The medium with the fewest unreachable precursors is the one where the
+    answer is a metabolite rather than a pathway. Measured on the real thing:
+    `116_2` misses 26 of 53 on M9 and exactly one, menaquinol-8, on LB."""
+    _biosynthesis_fixture(
+        tmp_path, {"A": {}},
+        media={"A": {"M9": ("0.0000", "", "", "27/53", "atp gtp nad thf mql8"),
+                     "LB": ("0.0000", "", "", "52/53", "mql8"),
+                     "complete": "18.1086"}})
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A",)).read_text()
+    assert "A reaches 52/53 on LB: mql8" in body
+    assert "27/53" not in body  # M9 is not the closest, so it is not named
+    # A medium that grew has no precursor cell, so it cannot win by having
+    # nothing blocked.
+    assert "on complete" not in body
+
+
+def test_a_long_list_of_blocked_precursors_is_counted_and_not_named(tmp_path):
+    """Past a handful the model is short of a pathway, and the list stops
+    being a diagnosis."""
+    _biosynthesis_fixture(
+        tmp_path, {"A": {}},
+        media={"A": {"M9": ("0.0000", "", "", "27/53",
+                            "atp gtp nad thf mql8 coa fad")}})
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A",)).read_text()
+    assert "A reaches 27/53 on M9" in body
+    assert "mql8" not in body
+
+
+def test_the_closest_note_is_silent_when_every_model_grew(tmp_path):
+    """`precursors` is empty on a medium that grew — 53 solves is eight times
+    the rest of the module, and there is nothing to explain."""
+    _biosynthesis_fixture(
+        tmp_path, {"A": {}},
+        media={"A": {"M9": "0.7033", "LB": "5.2002", "complete": "51.2313"}})
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A",)).read_text()
+    assert "was short of" not in body
 
 
 def test_a_source_with_an_exchange_can_still_be_unreachable():
