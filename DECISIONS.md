@@ -2376,9 +2376,10 @@ failure mode that file's own note predicts.
 A critical review of `biosynthesis.py` on thylakoid, against 17 models: the
 curated `iML1515`, the six CarveMe 1.5.0 benchmark drafts that ship with
 CarveMe, three drafts carved that day with 1.6.6 through this repo's own
-`carve_scip.py`, five pipeline drafts, and the BiGG universe itself. Working
-notes and probe scripts are in `Claude outputs/biosynthesis_review_2026-09-10.md`
-and `biosynthesis_fixes_2026-09-10.md`.
+`carve_scip.py`, five pipeline drafts, and the BiGG universe itself. The two
+instruments worth keeping are in `upstream/`: `universe_ceiling.py` and
+`panel_calibration.py`. The rest were one-off probes and the measurements they
+produced are here and in STATUS.md rather than in a file of their own.
 
 **Nothing was wrong with the linear programs.** `medium_constraints` does what
 its tests say, all ~1,400 solves on drafts returned `Optimal`, `M9` and `LB` are
@@ -2394,7 +2395,7 @@ one curated model.** The BiGG universe — 25,348 reactions, all 34 solves
 (it ships at ±inf) and M9 exchanges are added. Every panel target is a
 representation the database can reach, so `thmpp`, `thf` and `pydx5p` are the
 right metabolites and no verdict is an artefact of a badly chosen id.
-`Claude outputs/biosynth_universe_ceiling.py`, ~12 min.
+`upstream/universe_ceiling.py`, ~12 min.
 
 ### `btn` and `q8` are the same answer for every genome
 Measured `none` or `absent` in **12 of 12 CarveMe drafts across 8 species**,

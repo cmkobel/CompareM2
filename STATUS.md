@@ -659,9 +659,10 @@ the same organism returns 29.
 Run on thylakoid from the `ghrunner` account (the `thylakoid` account still
 rejects the laptop key), in
 `/evo/postdoc/cm2-envs-two/6d67b6a4fe39c742e4d740c0d883faa6_` — reframed 1.6.0,
-carveme 1.6.6. Working directory `~ghrunner/biosynth-review`; probe scripts in
-`Claude outputs/`. Full account in
-`Claude outputs/biosynthesis_review_2026-09-10.md`.
+carveme 1.6.6. Working directory `~ghrunner/biosynth-review`. The two
+instruments kept are `upstream/universe_ceiling.py` and
+`upstream/panel_calibration.py`; everything below was measured with those or
+with one-off probes not worth keeping.
 
 **Three genomes carved that day** with CarveMe 1.6.6 through this repo's own
 `carve_scip.py`, from the proteomes bundled at

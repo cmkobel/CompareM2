@@ -17,13 +17,31 @@ The first two findings are in [../STATUS.md](../STATUS.md) (*CarveMe was nine
 minutes for the wrong reason*), [../DECISIONS.md](../DECISIONS.md) and
 `../src/comparem2/carve_scip.py`.
 
-## Three scripts, not drafts
+## Five scripts, not drafts
 
 `carve_longsolve.py`, `probe_akg.py` and `find_entry.py` are the instruments
 behind the strongest evidence the CarveMe and SCIP drafts have, and neither
-draft has been rewritten to use them yet. All three run under the tool
-environment's own python and import nothing from `comparem2`, like
-`carve_scip.py` and `biosynthesis.py`.
+draft has been rewritten to use them yet. `panel_calibration.py` and
+`universe_ceiling.py` came out of the 2026-09-10 review of `biosynthesis.py`
+and are the two checks that should be re-run when CarveMe moves. All five run
+under the tool environment's own python and import nothing from `comparem2`,
+like `carve_scip.py` and `biosynthesis.py`.
+
+**`panel_calibration.py`** carves the proteomes CarveMe bundles at
+`carveme/data/benchmark/fasta/` and scores them, so the panel's calibration is
+re-measurable rather than a paragraph: **29 of 30 de novo** for the curated
+`iML1515` and for drafts of *E. coli*, *B. subtilis*, *P. aeruginosa*,
+*S. oneidensis* and *R. solanacearum* alike, adenosylcobalamin the only miss in
+any of them. *M. genitalium* G37 is the negative control at 0 of 30. Needs the
+environment activated, not just its interpreter — `carve` shells out to DIAMOND.
+
+**`universe_ceiling.py`** asks whether a panel compound is out of reach for
+*every* possible draft, since a draft is a subnetwork of the universe it was
+carved from. On 2026-09-10 the answer was that nothing is: all 32 compounds on
+the panel as it then stood are reachable, which is what showed `btn` and `q8`
+to be carving losses rather than database limits and got them dropped. It is
+also the script that exposed `Unbounded` being read as zero flux — the universe
+ships every reaction at ±inf, and before the fix this returned 29 of 32 `none`.
 
 **`probe_akg.py` and `find_entry.py` found a second, sharper CarveMe defect than
 the one `carveme-205-comment.md` currently describes: a draft model that cannot
