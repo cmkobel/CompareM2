@@ -4198,15 +4198,21 @@ def test_a_medium_compound_the_model_cannot_transport_is_skipped():
 
 # --- the report section --------------------------------------------
 
-def _biosynthesis_fixture(tmp_path, verdicts, media=None):
-    """`verdicts` maps sample to {compound: verdict}; anything unnamed is de_novo."""
+def _biosynthesis_fixture(tmp_path, verdicts, media=None, rescues=None):
+    """`verdicts` maps sample to {compound: verdict}; anything unnamed is de_novo.
+
+    `rescues` maps sample to the compounds whose `rescues` flag is set.
+    """
     from comparem2.biosynthesis import (DE_NOVO, MEDIA_HEADER, PANEL,
                                         PANEL_HEADER, write_tsv)
 
+    rescues = rescues or {}
     for sample, overrides in verdicts.items():
         d = tmp_path / "samples" / sample / "biosynthesis"
+        helps = set(rescues.get(sample, ()))
         write_tsv(d / f"{sample}.tsv", PANEL_HEADER,
-                  [(c.bigg, c.name, c.group, overrides.get(c.bigg, DE_NOVO))
+                  [(c.bigg, c.name, c.group, overrides.get(c.bigg, DE_NOVO),
+                    "yes" if c.bigg in helps else "")
                    for c in PANEL])
         if media is not None:
             # A value may be a bare growth figure, a
@@ -4387,6 +4393,104 @@ def test_the_media_table_survives_a_status_where_a_number_goes(tmp_path):
     assert "infeasible" in body
     assert "1 of 2 models could not be solved even on the complete medium" in body
     assert "0 of 2 genomes grow on any defined medium" in body
+
+
+class _RescueProbe:
+    """Enough of `_Probe` to check `rescuers` without a solver.
+
+    `restores` maps a supplied compound to the blocked compounds it unblocks.
+    Every medium it is asked for is recorded, so the test can assert on which
+    compounds were *not* tried — which is the point of the proof below.
+    """
+
+    def __init__(self, present, restores):
+        from comparem2.biosynthesis import Compound
+
+        self.present = [Compound(b, b, "g") for b in present]
+        self._restores = restores
+        self.asked = []
+
+    def medium(self, compounds, open_drain=None):
+        from comparem2.biosynthesis import M9
+
+        # Everything the background adds on top of the minimal medium, which
+        # for this search is exactly the one compound under test.
+        return {"supplied": [c for c in compounds if c not in M9],
+                "drain": open_drain}
+
+    def maximum(self, reaction, constraints):
+        supplied = constraints["supplied"]
+        self.asked.append((tuple(supplied), reaction))
+        target = reaction.removeprefix("R_CM2_DM_")
+        return 10.0 if any(target in self._restores.get(s, ())
+                           for s in supplied) else 0.0
+
+
+def test_rescuers_never_asks_whether_a_de_novo_compound_rescues_anything():
+    """Not an optimisation but a proof: if X is reachable from M9 plus Y and Y
+    is reachable from M9, then X is reachable from M9 and would not be
+    `upstream`. Skipping them is what cuts the search from about 30 solves a
+    blocked compound to about 17, and to none for a model with nothing
+    blocked."""
+    from comparem2.biosynthesis import (DE_NOVO, NO_ROUTE, UPSTREAM, rescuers)
+
+    rows = [("ala__L", "", "", DE_NOVO), ("gly", "", "", UPSTREAM),
+            ("ser__L", "", "", UPSTREAM), ("thr__L", "", "", NO_ROUTE),
+            ("leu__L", "", "", NO_ROUTE)]
+    probe = _RescueProbe(["ala__L", "gly", "ser__L", "thr__L", "leu__L"],
+                         {"thr__L": ("gly", "ser__L"), "gly": ("ser__L",)})
+
+    assert rescuers(probe, rows) == {"thr__L", "gly"}
+    tried = {supplied[0] for supplied, _ in probe.asked}
+    assert "ala__L" not in tried  # de novo, so it cannot be the missing one
+    assert tried == {"gly", "ser__L", "thr__L", "leu__L"}
+
+
+def test_rescuers_stops_at_the_first_hit_and_skips_a_model_with_no_block():
+    """It is a yes-or-no about the compound, so one blocked compound restored
+    is enough. And a model with nothing `upstream` — which is most of them —
+    must not pay for the search at all."""
+    from comparem2.biosynthesis import DE_NOVO, NO_ROUTE, UPSTREAM, rescuers
+
+    rows = [("gly", "", "", UPSTREAM), ("ser__L", "", "", UPSTREAM),
+            ("thr__L", "", "", NO_ROUTE)]
+    probe = _RescueProbe(["gly", "ser__L", "thr__L"],
+                         {"thr__L": ("gly", "ser__L")})
+    assert rescuers(probe, rows) == {"thr__L"}
+    # thr__L unblocks gly, the first blocked compound tried, so ser__L is not
+    # asked about for it.
+    assert sum(1 for supplied, _ in probe.asked if supplied[0] == "thr__L") == 1
+
+    quiet = _RescueProbe(["gly"], {})
+    assert rescuers(quiet, [("gly", "", "", DE_NOVO)]) == set()
+    assert quiet.asked == []
+
+
+def test_the_report_names_what_would_unblock_the_upstream_compounds(tmp_path):
+    """One set per genome, not one list per blocked compound: in the E. faecium
+    drafts four of six and five of nine blocked compounds have the identical
+    rescuer list, so the per-compound column repeats itself."""
+    _biosynthesis_fixture(
+        tmp_path, {"A": {"cys__L": "upstream", "gly": "upstream",
+                         "thr__L": "none", "met__L": "none"},
+                   "B": {}},
+        rescues={"A": ["thr__L", "met__L"]})
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A", "B")).read_text()
+    # Panel order, not the order they were found in, so the sentence is stable.
+    assert "A — L-Methionine, L-Threonine" in body
+    assert "B —" not in body  # nothing blocked upstream, so nothing to say
+    assert "the block is shared rather than resolved" in body
+
+
+def test_the_rescuer_note_is_silent_when_nothing_is_blocked_upstream(tmp_path):
+    """Matched on the note's own wording rather than on "would unblock", which
+    the methods section also uses — an assertion broad enough to catch the
+    guidance text is not testing this function."""
+    _biosynthesis_fixture(tmp_path, {"A": {"trp__L": "none"}})
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A",)).read_text()
+    assert "if the genome were given it" not in body
 
 
 def test_the_report_names_what_a_model_that_did_not_grow_was_short_of(tmp_path):

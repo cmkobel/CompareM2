@@ -2581,3 +2581,88 @@ file to get the diagnosis on an old run.
 
 `CLAUDE.md` said 281 tests; with three for the closest-medium note the count is
 **284**.
+
+## 2026-09-11 — what would unblock an `upstream` compound is a sentence, not a column
+
+The last item from the 09-10 review. The plan was a `rescuers` column naming,
+per blocked compound, the single panel compounds that restore it. The data was
+measured first and argues against that shape:
+
+```
+116_2   cys__L ← gly ser__L thr__L      E8202   arg__L ← gly thr__L
+        gly    ← thr__L                         cys__L ← gly ser__L thr__L
+        ile__L ← met__L                         gly    ← thr__L
+        ser__L ← gly thr__L                     his__L ← gly ser__L thr__L
+        thmpp  ← gly ser__L thr__L               ile__L ← met__L
+        thf    ← gly ser__L thr__L               ser__L ← gly thr__L
+                                                thmpp  ← gly ser__L thr__L
+                                                thf    ← gly ser__L thr__L
+                                                pheme  ← gly ser__L thr__L
+```
+
+**Four of six rows identical, and five of nine**, and every rescuer in either
+model is one of four compounds. A column that repeats itself down the page is
+what took `btn` and `q8` off the panel two commits ago. Its content is one
+sentence: the whole upstream block in those models traces to threonine and
+methionine, and neither model can make either.
+
+**The per-compound version also has a hole the union does not.** `upstream` is
+decided on M9 plus *every* other panel compound, so a compound can pass that
+test and be rescued by no single one — `gln__L` in the *M. genitalium* draft
+needs two at once. A per-row list then prints an empty cell beside a verdict
+reading "blocked upstream", which reads as a contradiction. A union simply does
+not name it.
+
+So: one `rescues` flag per panel row, and one sentence per genome in the
+report. Cost is `|not de novo| x |upstream|` solves with a short-circuit, and
+**zero for a model with nothing blocked upstream**, which is most of them —
+`Sau_COL`, `Sau_N315` and `Eco_K12_MG1655` pay nothing in the run below.
+
+**Skipping `de_novo` candidates is a proof, not an optimisation.** If X is
+reachable from M9 plus Y and Y is reachable from M9, then X is reachable from
+M9 and is not `upstream`. A unit test asserts the search never asks about a
+`de_novo` compound, using a stub probe that records what it was asked — which
+is also how the short-circuit is checked without a solver.
+
+### The eight-genome review set, run 2026-09-11
+
+Built on thylakoid to exercise the section rather than to compare a clade —
+`Claude outputs/run_biosynth_report.py`, models under
+`~ghrunner/cm2-report-run`. Six models were already on the machine; *E. coli*
+K-12 and *M. genitalium* G37 were carved for it, 7.4 s and 275.6 s of solver.
+
+| genome | de novo | upstream | no route | absent | M9 | LB | complete |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `Efm_116_2` | 11 | 6 | 11 | 2 | 0.0000 | 0.0000 | 18.1086 |
+| `Efm_116_2_dup` | 11 | 6 | 11 | 2 | 0.0000 | 0.0000 | 18.1086 |
+| `Efm_E8202` | 10 | 9 | 9 | 2 | 0.0000 | 0.0000 | 17.7031 |
+| `Efm_SRR24` | 10 | 7 | 11 | 2 | 0.0000 | 0.0000 | 19.7474 |
+| `Sau_COL` | 26 | 0 | 3 | 1 | 0.0000 | 0.0000 | 21.0601 |
+| `Sau_N315` | 26 | 0 | 3 | 1 | 0.0000 | 0.0000 | 9.9381 |
+| `Eco_K12_MG1655` | **29** | 0 | **0** | 1 | **0.7033** | **5.2002** | 51.2313 |
+| `Mge_G37` | **0** | 3 | 24 | 3 | 0.0000 | 0.0000 | 1.6456 |
+
+**The duplicate pair is identical** — panel and media tables both, ignoring the
+sample-name column. The standing cross-check still holds with five columns
+where it used to hold with four.
+
+**All four *E. faecium* drafts return the same rescuer set**, `gly met__L
+ser__L thr__L`, and *M. genitalium* a different one, `ile__L val__L`. That the
+set is invariant across four independently carved *E. faecium* genomes is the
+argument for the sentence being the right unit: it is a property of the
+lineage's reconstruction, not of a compound.
+
+**The biomass-precursor line reads the same way**: all four *E. faecium* reach
+52/53 on LB and fail on `mql8`, both *S. aureus* 52/53 on `asn__L` — the
+documented false call — and `Mge_G37` 35/53, over the naming budget and
+correctly counted rather than listed.
+
+**`Mge_G37` cannot reach nitrogen from M9**, which `_starved_note` catches: *"1
+of 8 models cannot reach a source element from the minimal medium."* Its 0 of
+30 is therefore a statement about the reconstruction, the same defect class as
+the four pneumococci of 09-08. Worth knowing before anyone reads that row as
+biology, and it is the first time the note has fired on a model that was not
+part of the run that prompted it.
+
+`CLAUDE.md` said 284 tests; with four for the rescuer search and its note the
+count is **288**.

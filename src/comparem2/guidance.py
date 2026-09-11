@@ -937,9 +937,7 @@ GUIDANCE: dict[str, Guidance] = {
              "downstream reads as missing. It says why a compound is unreachable and "
              "never whether: a compound reachable from the minimal medium plus one the "
              "genome can already make would be reachable from the minimal medium, so on "
-             "that medium these are requirements too. In the four E. faecium drafts "
-             "every one of the 6 to 9 is rescued only by glycine, L-serine, L-threonine "
-             "or L-methionine, and those models can make none of the four."),
+             "that medium these are requirements too. What would unblock them is named beneath the grid, as one set per genome: in all four E. faecium drafts it is the same four compounds — glycine, L-serine, L-threonine and L-methionine — and none of the four is something those models can make. A rescuer never is, since a compound the genome could already make would not leave anything blocked."),
             ("No route",
              "Unreachable even with every other panel compound supplied, so the draft "
              "model has no path to it at all. Measured on real drafts this recovers "

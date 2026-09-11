@@ -2125,3 +2125,40 @@ it, a global install would break in exactly the documented way.
 `pixi global install` needs `--channel conda-forge --channel bioconda`
 explicitly unless the channels are already configured; without them it fails
 with "No candidates were found for comparem2 *".
+
+### The eight-genome biosynthesis review set, executed 2026-09-11
+Built to exercise the section across the panel's whole range rather than to
+compare a clade. Six models were already on thylakoid; `Eco_K12_MG1655` and
+`Mge_G37` were carved for it through `carve_scip.py` from the proteomes CarveMe
+bundles — 7.4 s solver to a certified optimum, and 275.6 s to a 6.9e-5 gap.
+Report at `~ghrunner/cm2-report-run/report.html`, 52,099 bytes, two sections.
+
+| genome | reactions | de novo | upstream | no route | absent | M9 | LB | complete |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `Efm_116_2` | 1,743 | 11 | 6 | 11 | 2 | 0.0000 | 0.0000 | 18.1086 |
+| `Efm_116_2_dup` | 1,743 | 11 | 6 | 11 | 2 | 0.0000 | 0.0000 | 18.1086 |
+| `Efm_E8202` | 1,813 | 10 | 9 | 9 | 2 | 0.0000 | 0.0000 | 17.7031 |
+| `Efm_SRR24` | 1,743 | 10 | 7 | 11 | 2 | 0.0000 | 0.0000 | 19.7474 |
+| `Sau_COL` | 1,632 | 26 | 0 | 3 | 1 | 0.0000 | 0.0000 | 21.0601 |
+| `Sau_N315` | 1,246 | 26 | 0 | 3 | 1 | 0.0000 | 0.0000 | 9.9381 |
+| `Eco_K12_MG1655` | 2,880 | **29** | 0 | **0** | 1 | **0.7033** | **5.2002** | 51.2313 |
+| `Mge_G37` | 872 | **0** | 3 | 24 | 3 | 0.0000 | 0.0000 | 1.6456 |
+
+**The duplicate pair is identical** in both tables, ignoring the sample-name
+column — the standing cross-check, now across five panel columns instead of
+four.
+
+**Rescuer sets**: `gly met__L ser__L thr__L` for all four *E. faecium*,
+`ile__L val__L` for *M. genitalium*, empty for both *S. aureus* and for
+*E. coli* because nothing is blocked upstream there. **Biomass precursors**:
+all four *E. faecium* reach 52/53 on LB and fail on `mql8`, both *S. aureus*
+52/53 on `asn__L`, `Mge_G37` 35/53.
+
+**`Mge_G37` cannot reach nitrogen from M9**, so its 0 of 30 describes the
+reconstruction rather than the organism — the same defect class as the four
+pneumococci of 09-08, and the first time `_starved_note` has fired on a model
+outside the run that prompted it. Everything else on that row should be read
+with it.
+
+`Eco_K12_MG1655` is the only model here that grows on a defined medium, and
+the only one with no `no route` at all.

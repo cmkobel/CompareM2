@@ -1972,6 +1972,45 @@ def _starved_note(starved: dict[str, list[str]], total: int) -> str:
 # diagnosis: `116_2` on M9 misses 26 of 53 and on LB exactly one.
 _PRECURSOR_NAME_BUDGET = 4
 
+# The measured rescuer sets hold four compounds at most. Past twice that the
+# sentence is longer than the block it describes.
+_RESCUER_NAME_BUDGET = 8
+
+
+def _rescuer_note(rescues: dict[str, list[str]], named: list[str]) -> str:
+    """What would unblock the compounds marked `upstream`, per genome.
+
+    One set per genome rather than one list per blocked compound, because the
+    per-compound version repeats itself: in the *E. faecium* drafts measured,
+    four of six and five of nine blocked compounds have the identical rescuer
+    list, and every rescuer in either model is one of four compounds. See
+    `biosynthesis.rescuers`.
+
+    Empty when nothing is blocked upstream anywhere, which is most sets — of
+    the models measured, only the *E. faecium* and *M. genitalium* drafts have
+    any.
+    """
+    by_name = {c.bigg: c.name for c in PANEL}
+    lines = []
+    for sample in named:
+        found = rescues.get(sample)
+        if not found:
+            continue
+        if len(found) <= _RESCUER_NAME_BUDGET:
+            which = ", ".join(html.escape(by_name.get(b, b)) for b in found)
+        else:
+            which = f"{len(found)} compounds on the panel"
+        lines.append(f"{html.escape(sample)} — {which}")
+    if not lines:
+        return ""
+    return ('<p class="note">What would unblock the compounds marked '
+            f"<em>upstream</em>, if the genome were given it: {'; '.join(lines)}. "
+            "Supplying any one of these on the minimal medium restores at least "
+            "one blocked compound. None of them is something the genome can "
+            "already make — if it were, the compound it rescues would not be "
+            "blocked — so each name here is itself <em>upstream</em> or "
+            "<em>no route</em>, and the block is shared rather than resolved.</p>")
+
 
 def _closest_note(media: dict, raw) -> str:
     """For a model that grew on nothing, the medium it came closest on.
@@ -2021,11 +2060,17 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
     reader wants is down a column — which genome differs from the others.
     """
     verdicts: dict[str, dict[str, str]] = {}
+    rescues: dict[str, list[str]] = {}
     media: dict[str, dict[str, list[str]]] = {}
     for sample in ctx.samples:
         panel = ctx.sample_out(sample, "biosynthesis", f"{sample}.tsv")
         if panel.exists():
-            verdicts[sample] = {r[0]: r[3] for r in _read_tsv(panel)[1:] if len(r) > 3}
+            table = _read_tsv(panel)[1:]
+            verdicts[sample] = {r[0]: r[3] for r in table if len(r) > 3}
+            # Written since 2026-09-11; an older table simply has no column 4.
+            found = [r[0] for r in table if len(r) > 4 and r[4].strip()]
+            if found:
+                rescues[sample] = found
         table = ctx.sample_out(sample, "biosynthesis", f"{sample}.media.tsv")
         if table.exists():
             media[sample] = {r[0]: r for r in _read_tsv(table)[1:] if len(r) > 3}
@@ -2101,6 +2146,7 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
             + " A column that is the same everywhere carries no comparative "
             "information, and can be a real lineage character as easily as a gap "
             "in the reaction database.</p>")
+    parts.append(_rescuer_note(rescues, named))
 
     if media:
         # Parsed defensively: the report is meant to survive a partial run, and

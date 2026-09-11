@@ -225,7 +225,10 @@ PANEL = (
 
 DE_NOVO, UPSTREAM, NO_ROUTE, ABSENT = "de_novo", "upstream", "none", "absent"
 
-PANEL_HEADER = ("compound", "name", "group", "verdict")
+# `rescues` is `yes` where supplying this compound alone on M9 unblocks some
+# other compound the model has marked `upstream` — see `rescuers` for why it is
+# one flag per compound rather than a list per blocked compound.
+PANEL_HEADER = ("compound", "name", "group", "verdict", "rescues")
 # `missing` names the medium's compounds the model has no exchange for, and
 # `unreachable` the elements of `SOURCES` it cannot get into the cytoplasm.
 # Both exist because the `present` count could not tell "no nickel" from "no
@@ -492,6 +495,50 @@ class _Probe:
         return self._solve(None, constraints)
 
 
+def rescuers(probe: _Probe, rows, min_flux: float = MIN_FLUX) -> set[str]:
+    """Which panel compounds, supplied alone on M9, unblock an `upstream` one.
+
+    **A set and not a per-compound list, deliberately.** Naming the rescuers of
+    each blocked compound was tried and measured first: in `116_2` four of the
+    six `upstream` rows come out `gly ser__L thr__L` and in `E8202` five of the
+    nine do, and every rescuer in both models is one of four compounds. A
+    column that repeats itself down the page is the defect that took `btn` and
+    `q8` off the panel, and the content of it is one sentence — the whole
+    upstream block in those models traces back to threonine and methionine.
+
+    The per-compound version also has a hole this does not. `upstream` is
+    decided on M9 plus *every* other panel compound, so a compound can pass
+    that test and be rescued by no single one: `gln__L` in a *M. genitalium*
+    draft needs two at once. A per-row list prints an empty cell next to a
+    verdict that says "blocked upstream", which reads as a contradiction. A
+    union simply does not name it.
+
+    **`de_novo` compounds are not candidates, and that is a proof rather than
+    an optimisation**: if X is reachable from M9 plus Y and Y is reachable from
+    M9, then X is reachable from M9 and would not be `upstream`. So the search
+    is over what the model *cannot* already make, which also cuts it from about
+    30 solves a blocked compound to about 17 — and to none at all for a model
+    with nothing blocked upstream, which is most of them.
+    """
+    verdict = {row[0]: row[3] for row in rows}
+    blocked = [bigg for bigg, value in verdict.items() if value == UPSTREAM]
+    if not blocked:
+        return set()
+    found = set()
+    for compound in probe.present:
+        if verdict.get(compound.bigg) not in (UPSTREAM, NO_ROUTE):
+            continue
+        for target in blocked:
+            if target == compound.bigg:
+                continue
+            drain = _demand(target)
+            background = list(M9) + [compound.bigg]
+            if probe.maximum(drain, probe.medium(background, drain)) > min_flux:
+                found.add(compound.bigg)
+                break  # one is enough; this is a yes-or-no about the compound
+    return found
+
+
 def verdicts(probe: _Probe, min_flux: float = MIN_FLUX) -> list[tuple[str, ...]]:
     """One row per panel compound, in panel order."""
     present = {c.bigg for c in probe.present}
@@ -626,11 +673,15 @@ def main(argv: list[str] | None = None) -> int:
     # so without the reader having to check.
     write_tsv(args.media, MEDIA_HEADER, media(probe, min_flux=args.min_flux))
     rows = verdicts(probe, min_flux=args.min_flux)
+    # After the verdicts, because the search is over what they say the model
+    # cannot make — and skipped entirely when nothing is blocked upstream.
+    helps = rescuers(probe, rows, min_flux=args.min_flux)
+    rows = [(*row, "yes" if row[0] in helps else "") for row in rows]
     write_tsv(args.output, PANEL_HEADER, rows)
 
     counts: dict[str, int] = {}
-    for _, _, _, verdict in rows:
-        counts[verdict] = counts.get(verdict, 0) + 1
+    for row in rows:
+        counts[row[3]] = counts.get(row[3], 0) + 1
     print(f"biosynthesis: {args.model.name} — "
           + ", ".join(f"{n} {k}" for k, n in sorted(counts.items())),
           file=sys.stderr)
