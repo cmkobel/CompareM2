@@ -17,15 +17,27 @@ The first two findings are in [../STATUS.md](../STATUS.md) (*CarveMe was nine
 minutes for the wrong reason*), [../DECISIONS.md](../DECISIONS.md) and
 `../src/comparem2/carve_scip.py`.
 
-## Five scripts, not drafts
+## Six scripts, not drafts
 
 `carve_longsolve.py`, `probe_akg.py` and `find_entry.py` are the instruments
 behind the strongest evidence the CarveMe and SCIP drafts have, and neither
 draft has been rewritten to use them yet. `panel_calibration.py` and
 `universe_ceiling.py` came out of the 2026-09-10 review of `biosynthesis.py`
-and are the two checks that should be re-run when CarveMe moves. All five run
-under the tool environment's own python and import nothing from `comparem2`,
-like `carve_scip.py` and `biosynthesis.py`.
+and are the two checks that should be re-run when CarveMe moves.
+`lifestyle_calibration.py` is the newest and the only one that has not been run
+at all. All six run under the tool environment's own python and import nothing
+from `comparem2`, like `carve_scip.py` and `biosynthesis.py`.
+
+**`lifestyle_ceiling.py` is the seventh, added 2026-09-15, and it is the one
+that produced a result.** It asks whether a lifestyle is out of reach for every
+possible draft, and the answer is that autotrophy, lithotrophy and
+methanogenesis are: `CODH_ACS`, `MCR`, `HDR`, `RNF`, `PSI` and `PSII` are in
+`bigg_universe` and in **none of the five universes `carve` can load**. That is
+a database limit and no scoring rescues it, which was the stopping condition
+[lifestyle.md](lifestyle.md) set for itself. It also found that **the carving
+universe is 5,532 reactions, not 25,348** — the larger number is
+`bigg_universe.xml.gz`, an input to CarveMe's build that `carve` never loads —
+and that `universe_ceiling.py` had been asking that wrong file. 15.8 s to run.
 
 **`panel_calibration.py`** carves the proteomes CarveMe bundles at
 `carveme/data/benchmark/fasta/` and scores them, so the panel's calibration is
@@ -35,6 +47,47 @@ re-measurable rather than a paragraph: **29 of 30 de novo** for the curated
 any of them. *M. genitalium* G37 is the negative control at 0 of 30. Needs the
 environment activated, not just its interpreter — `carve` shells out to DIAMOND.
 
+**`lifestyle_calibration.py`** has a companion, [lifestyle.md](lifestyle.md) —
+the development notes for the idea it measures: the claim against DRAM, what is
+verified and what is inference, the two positions reversed on 2026-09-15, the
+three experiments in the order that kills the idea fastest, and the gates a
+column has to pass to reach the report. Read that first; this paragraph is the
+summary.
+
+It asks whether a carved model still knows how its
+organism makes a living — the measurement that decides whether a carbon-and-
+energy lifestyle table can be built on CarveMe drafts at all. Fourteen models:
+seven curated BiGG reconstructions spanning six lifestyles, and drafts of the
+same seven organisms. Fifteen lifestyles, two probes each, both read as the
+difference between a medium and the same medium with the substrate removed —
+which is at once the guard against free-energy cycles, the reason a
+carbon-bearing acceptor like DMSO cannot be miscredited, and what makes
+autotrophy askable. A MEMOTE ATP-from-nothing gate runs first and voids the
+energy half of any model that fails it.
+
+**Written 2026-09-11, arms one to three implemented 2026-09-15, still not run** —
+`reframed` and `carve` are Linux-only on this machine, so its Results section is
+empty on purpose and its docstring says so. The expectation on record before
+running: most lifestyle columns come out `-` for every draft, for the same
+reason `btn` and `q8` left the panel — the routes are in the BiGG universe and
+carving does not keep them. The nine BiGG and UniProt identifiers it fetches
+were checked against the live endpoints on 2026-09-11.
+
+Two things the 09-15 review changed, both of which would have distorted that
+run. **An axis that could not be asked said no**: a model short one of the ten
+precursors, or missing a piece of the ATP drain, returned `-` rather than a
+"could not ask", and the free-energy gate reported `ok` when it had not run.
+Sparse drafts are where that bites, and it points the same way as the prediction
+— the run would have confirmed itself. And **`--benchmark`**: ten complete RefSeq
+genomes, one per way of making a living, accessions resolved against the NCBI
+API. They exist because `lac_so4` and `meoh_o2` had no positive anywhere in the
+seven-organism set, so those columns could only ever be confirmed negative.
+
+The benchmark set found a defect before it was run. *S. oneidensis* MR-1 has the
+whole acceptor axis — the only axis expected to reach the report — and does not
+catabolise glucose, which every acceptor column pairs its acceptor with. Details
+in [lifestyle.md](lifestyle.md).
+
 **`universe_ceiling.py`** asks whether a panel compound is out of reach for
 *every* possible draft, since a draft is a subnetwork of the universe it was
 carved from. On 2026-09-10 the answer was that nothing is: all 32 compounds on
@@ -42,6 +95,13 @@ the panel as it then stood are reachable, which is what showed `btn` and `q8`
 to be carving losses rather than database limits and got them dropped. It is
 also the script that exposed `Unbounded` being read as zero flux — the universe
 ships every reaction at ±inf, and before the fix this returned 29 of 32 `none`.
+
+**Corrected 2026-09-15: it had been asking `bigg_universe.xml.gz`**, which is
+4.6x larger than the universe `carve` loads, so it was not measuring a ceiling.
+Re-run against `universe_bacteria` the 09-10 conclusion survives — `btn` and
+`q8` are reachable there too — but **`adocbl` is a real ceiling**, absent from
+the carving universe entirely. That is why every prototroph misses exactly it
+and lands on 29 of 30, curated and carved alike, which nothing had explained.
 
 **`probe_akg.py` and `find_entry.py` found a second, sharper CarveMe defect than
 the one `carveme-205-comment.md` currently describes: a draft model that cannot

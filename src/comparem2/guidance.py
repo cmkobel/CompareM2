@@ -163,7 +163,7 @@ IML1515 = Citation("Monk JM, Lloyd CJ, Brunk E, et al. (2017) iML1515, a knowled
                    "10.1038/nbt.3956",
                    note="Not run by the pipeline. It is the manually curated model the "
                         "biosynthesis probe was validated against, and the reason the "
-                        "31-of-32 figure in that section can be checked.")
+                        "29-of-30 figure in that section can be checked.")
 
 
 GUIDANCE: dict[str, Guidance] = {
@@ -928,7 +928,9 @@ GUIDANCE: dict[str, Guidance] = {
              "P. aeruginosa, S. oneidensis and R. solanacearum. In every one the single "
              "miss is adenosylcobalamin, which E. coli genuinely cannot synthesise and "
              "can only salvage. That agreement is what says how much weight the column "
-             "carries."),
+             "carries — read as 29 of 29 comparable compounds, because the thirtieth "
+             "is not in the bacterial reaction database and could not have come out "
+             "any other way for any genome."),
             ("Blocked upstream",
              "The pathway to this compound is present, but it cannot run from the "
              "minimal medium because another compound on the panel is unavailable. "
@@ -949,9 +951,17 @@ GUIDANCE: dict[str, Guidance] = {
              "asparagine, which is not a described requirement of that organism."),
             ("Not in the model",
              "The compound is not in this network at all, so there is nothing to ask. "
-             "Usually the whole pathway was dropped during carving; adenosylcobalamin "
-             "is absent from every Gram-positive draft measured. It is not evidence "
-             "either way about the organism."),
+             "Usually the whole pathway was dropped during carving, and it is not "
+             "evidence either way about the organism. Adenosylcobalamin is the one "
+             "case that is not about carving at all: it is not in the reaction "
+             "database CarveMe builds bacterial models from, so no draft can contain "
+             "it whatever the genome, and that cell is the same for every organism. "
+             "The ceiling is specific to bacterial reconstructions — the compound is "
+             "in the archaeal reaction set — so a run carved with "
+             "--set carveme--universe=archaea is not subject to it. That is a "
+             "statement about the database and not a promise about the model: the one "
+             "archaeal draft measured, Methanosarcina barkeri carved from the archaeal "
+             "universe, still does not contain it."),
             ("The compound grid",
              "Shaded by dependency, so the dark cells are what a genome has to be given. "
              "A column that is the same in every genome carries no comparative "

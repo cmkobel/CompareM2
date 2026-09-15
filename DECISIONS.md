@@ -2666,3 +2666,460 @@ part of the run that prompted it.
 
 `CLAUDE.md` said 284 tests; with four for the rescuer search and its note the
 count is **288**.
+
+## 2026-09-11 — a carbon-and-energy lifestyle table is a measurement first, not a feature
+
+Carl's idea: extend the biosynthesis module to score a genome's model on the
+ways of harvesting carbon and energy — autotrophy, the acceptors, fermentation,
+lithotrophy — the way the panel scores biosynthetic capability. It is the right
+question to ask of a genome-scale model and nothing was built for it today, on
+purpose. `upstream/lifestyle_calibration.py` is what was written instead: the
+experiment that says whether the model-based version can work at all.
+
+**The panel is protected by mass balance and a lifestyle table is not.** A
+demand on `M_trp__L_c` carries flux only if the atoms came from the medium, so
+no spurious cycle can fake it — which is why 30 per-compound bits survive on a
+model whose growth is zero. ATP is not an atom. "Can this genome conserve
+energy from H2 and CO2" is exactly the question a thermodynamically infeasible
+cycle answers yes to for free, and draft models are not known to be free of
+them. So the first thing the script does is MEMOTE's ATP-from-nothing gate, and
+a model that fails it has its energy verdicts **voided rather than scored**.
+
+**Everything is read as a difference, never as a level**, and that one decision
+is doing three jobs at once. Each cell measures ATP and central-precursor
+production twice — on salts plus substrate plus acceptor, and again with the
+substrate removed — and credits the substrate only when removing it takes the
+answer away. That is the local guard against a free-energy cycle, since a cycle
+pays the same either way. It is also what keeps the carbon claim honest when
+the *acceptor* carries carbon: fumarate, DMSO and TMAO are all carbon
+compounds, and a plain producibility test on `glc + dmso` credits glucose for
+carbon that may have come from DMSO. And it is what makes autotrophy askable —
+on `h2 + co2`, dropping H2 leaves the carbon source in place and the precursors
+unreachable, which is the claim "this genome fixes CO2 and needs the donor".
+
+**Two probes per cell and not one, because the axes are orthogonal.** A single
+growth score collapses chemolithoheterotrophy — H2 for ATP, acetate for carbon
+— into a failure of autotrophy. Verdicts are `CE`, `E`, `C`, `-`, and `na` for
+a model with no exchange to ask through, which is the panel's `absent` and
+matters for the same reason: a strict anaerobe with no `EX_o2_e` was never
+asked the aerobic question.
+
+**No gap-filling, and the reason is worth writing down** because it looks like
+an obvious improvement. Gap-fill a model to a lifestyle medium and then test
+growth on that medium and the answer is yes by construction. The one
+non-circular variant, reactions-to-add as a distance metric, is a MILP per cell
+— and `carve_scip.py` already documents why *optimal* is not well defined on
+CarveMe's MILP.
+
+### Three things the design had to be told, that a reasonable version gets wrong
+
+**Ten central precursors, not the classic twelve.** `accoa` and `succoa` are
+off the list because a drain on them asks for net CoA synthesis — sulfur,
+pantothenate, a second pathway — rather than for carbon assimilation. Same trap
+as the `atp_c` note in `biomass_precursors`. The ten that remain are C/H/O/P.
+
+**Sulfate and ferric iron come out of the background medium.** M9 carries `so4`
+as the sulfur source and `fe3` as an iron source, which puts the acceptor of a
+sulfate reducer and of an iron reducer into every medium and makes both columns
+untestable. Dropping them costs nothing once `accoa` is off the precursor list:
+none of the ten contains sulfur, and `fe2` remains as the iron source.
+
+**A curated model has a second medium besides its exchanges.** Closing every
+`R_EX_*_e` to uptake is the whole medium for a CarveMe draft, but BiGG models
+also ship demand and sink reactions, and a sink with a negative lower bound is
+a compound arriving from nowhere. `iJN1463` has one — `R_SK_pqqA_kt_c` at
+`lb = -1`, a peptide's worth of carbon — out of 51 such reactions across the
+seven curated models. One is enough to feed a precursor probe, so they are
+pinned as sources and left alone as sinks.
+
+### The prediction, on record before the run
+
+Most lifestyle columns come out `-` for every draft. The reason is `btn` and
+`q8` from the day before: routes the BiGG universe contains and carving does
+not keep, wrong in 12 of 12 drafts across 8 species. Lifestyle reactions are
+precisely the rare ones with thin gene evidence in a universe built mostly from
+heterotrophs. If that is what the run says, the model-based version is dead and
+the honest instrument for the autotrophy and lithotrophy axes is marker genes
+off bakta's EC numbers and gene names — no new database, no new environment,
+and the prior art (METABOLIC, DRAM) wants tens of gigabytes for the same answer.
+
+**A related hole this exposed, and did not fix.** `catalogue.py` passes no
+`--universe` to `carve`, so every genome including every archaeon is carved
+from the default bacterial universe. Methanogenesis and the archaeal
+Wood–Ljungdahl variant are unreachable by construction today. That is a real
+defect independent of this idea, it caps anything built on it, and selecting
+the universe would make `carveme` depend on GTDB-Tk's taxonomy — which is a
+design cost worth weighing separately. Not touched here.
+
+The script is written and **not run**: `reframed` and `carve` are Linux-only on
+the laptop. Its Results section is empty on purpose and its docstring says so.
+
+## 2026-09-15 — the draft model is the wrong object to ask a lifestyle question of
+
+Carl's correction to the 09-11 entry: the point of doing this on a genome-scale
+model is to say what DRAM and METABOLIC structurally cannot, and a fallback to
+marker genes concedes exactly that. The full plan is in
+[upstream/lifestyle.md](upstream/lifestyle.md); this entry records what
+reversed and the evidence that moved it.
+
+**The pathways are in BiGG. What loses them is carving.** Checked in the
+downloaded curated models: `iJN678` — a *bacterium* — carries `RBPC`, `RBCh`,
+`PSI`, `PSII`; `iHN637`, also a bacterium, carries `CODH_ACS`, `CODH4`,
+`FTHFLi`, `MTHFC`, `MTHFD`, `MTHFR5`, `RNF` and `HYDFDN2r`, which is
+Wood–Ljungdahl entire with Rnf and a bifurcating hydrogenase. So for every
+bacterial lifestyle the reactions exist in the models CarveMe's universe is
+built from, and a draft that cannot do them lost them at the MILP. That is
+`btn` and `q8` again — 12 of 12 drafts across 8 species — one level up.
+
+**Caveat that has to stay attached**: reactions present in a BiGG *model* were
+verified; that they survive into `universe_bacteria` was **not**. It is a
+reasonable inference and not a measurement, and `universe_ceiling.py` against
+the lifestyle reaction sets is what settles it. That is now experiment one.
+
+**So: interrogate the evidence, not the draft.** Carving is a global parsimony
+MILP and a rare pathway loses to that objective; asking the result about
+Wood–Ljungdahl asks a question the MILP answered on other grounds.
+`carveme/<sample>.tsv` — the 12-column DIAMOND hit table, a declared output
+since it overwrote Bakta's feature table — is on disk for every genome the
+pipeline has ever run, and `reaction_scoring` turns it into a per-reaction
+evidence score over the whole universe. Restrict the universe to what the
+genome has evidence for, ask the question there, and report **how many
+evidence-free reactions the flux solution still needed**. No new tool, no new
+database, no recompute. That count degrades gracefully where a verdict on a
+draft collapses to `-`, and it is module completeness generalised from a linear
+pathway to a network.
+
+### Gap-fill distance is rehabilitated, and the 09-11 dismissal was too broad
+
+The circularity objection — gap-fill to a medium, test growth on that medium,
+yes by construction — applies to gap-fill-then-test-binary. It does not apply
+to cost-as-score: *k* = 0 and *k* = 12 are different answers and neither is
+assumed. The instability objection was about CarveMe's 25,348-reaction global
+MILP and its degenerate optima (947.4997 against 943; 1,579 reactions against
+1,135 on near-identical siblings). In a small per-lifestyle problem degeneracy
+means several equally short routes exist and the count is still the answer.
+
+### The archaeal universe is promoted from footnote to blocker
+
+`MCR` and `HDR` are in `iAF692`, an *archaeal* model, so they can only be in
+`universe_archaea`. `catalogue.py` passes no `--universe`, so methanogenesis is
+unreachable by construction today by any method built on this — not a scoring
+problem and not fixable downstream. Selecting the universe would make `carveme`
+depend on GTDB-Tk's taxonomy, which is a design cost to weigh separately. Still
+not touched.
+
+### Corrected
+
+The 09-11 entry and `lifestyle_calibration.py` both said 53 demand/sink
+reactions across the seven curated models. Recounted: **51** — 0, 2, 2, 33, 8,
+6, 0. The claim that mattered is unchanged, exactly one has a negative lower
+bound and it is `R_SK_pqqA_kt_c` in `iJN1463` at `lb = -1`.
+
+### Still not built, and still on purpose
+
+`grep -rn "lifestyle" src/ docs/ tests/` returns nothing. Three experiments
+stand between this and a report column, in the order that kills it fastest, and
+the fourth gate — does a column vary across the eight review-set genomes — can
+fail after the first three all pass.
+
+## 2026-09-15 (later) — the review of the lifestyle plan, and what it found before running anything
+
+Carl asked whether the lifestyle idea should go into CompareM2, then to work
+through the answer. Nothing ran: `reframed` and `carve` are Linux-only on the
+laptop and **no Linux host was reachable** — thylakoid refuses the key, GenomeDK
+wants keyboard-interactive. So all three experiments are still unrun and the
+work below is what could be done without them. The plan is
+[upstream/lifestyle.md](upstream/lifestyle.md); this entry is what changed.
+
+### The recommendation, and the objection that is not in the plan
+
+Worth measuring, not worth building yet. The plan already predicts that only the
+acceptor axis survives gate 4 — O₂, nitrate, fumarate, DMSO, TMAO, fermentation
+— because CompareM2's audience is heterotrophs. **Those six are exactly the
+lifestyles that are single well-conserved operons** (*nar*, *frd*, *dms*, *tor*,
+*nuo*, *cyd/cyo*), where marker-gene module completeness is already adequate.
+The network-level argument has its force on autotrophy, lithotrophy and
+methanogenesis, which are the columns gate 4 removes. The claim against DRAM and
+the shippable table are close to disjoint; the plan states both facts and does
+not put them together.
+
+Also: *no new tool, no new database, no recompute* is true of arm three's inputs
+and false of its compute. It loads the 25,348-reaction universe per genome
+against a draft's ~1,500, and binds this to CarveMe **internal** API —
+`reaction_scoring`, `load_diamond_results`, `minmax_reduction` — which a `>=`
+floor does not protect.
+
+### Two bugs that would have made the run confirm its own prediction
+
+`verdict` compared `probe.precursors(full)` to `len(PRECURSORS)` = 10, but
+`Probe.__init__` only builds drains for precursors the model actually has. **A
+model missing any one of the ten could never reach 10, so every carbon cell in
+its row read `-`** — not `na`. Same class on the energy side: no `M_atp_c` and
+`makes_atp` returns False, so the row reads `-` everywhere *and* `free_energy`
+reports `ok`, a gate that could not be run reported as one that passed.
+
+Sparse drafts are exactly where this bites, and it points the same way as the
+prediction on record — "most columns come out `-` for every draft". The run
+would have confirmed itself. Fixed: a new verdict `?`, suffixed so a claim that
+was established still reads (`E?` is "energy yes, carbon unaskable"), the gate is
+tri-state, and what each model was short of is named in the summary rather than
+left in the symbol.
+
+### The archaeal universe costs nothing, and the 09-11 framing was wrong
+
+`--set carveme--universe=archaea` **already works today with no code change**.
+`carve` has `-u/--universe` (`carveme/cli/carve.py:280`), CarveMe ships five
+universe files including `universe_archaea.xml.gz`, and `carve_scip.py` forwards
+unknown arguments to `carve` verbatim — `parse_known_args`, line 197. The 09-11
+and 09-15 entries both said fixing this "would make `carveme` depend on GTDB-Tk's
+taxonomy", which is true only of picking the universe *per sample*. Carl's call:
+the flag is the solution for now. `src/` is untouched; what remains is that a
+mixed bacteria-and-archaea run still gets one universe for all of it.
+
+### Arm three is implemented, and *k* is an upper bound
+
+`evidence()` and `gap_count()`. The differential is kept — the universe
+certainly contains free-energy cycles, being every reaction BiGG has, and the
+difference is the only thing that cancels them. **pFBA minimises total flux, not
+the number of evidence-free reactions**, so *k* = 0 is exact and means the
+genome's own evidence suffices, while *k* = 7 does not mean seven are needed.
+The exact count is a MILP per cell. Reported `k+t`, separating reactions BiGG
+knows a gene for from reactions no gene could ever explain, which is the least
+that can be done while their relative weight is unmeasured. Energy axis only:
+the carbon probe is an AND over ten solves with no single flux solution to count
+a support over.
+
+**The gates were left written on drafts** by the 09-15 revision that moved the
+object of study off drafts. Restated: arm three against curated is gate 3, and
+draft-versus-curated becomes the comparator arm three has to beat.
+
+### Ten benchmark genomes, and a defect they exposed with no solver running
+
+Downloaded to `~/postdoc/cm2-lifestyle/genomes/` — 44.0 Mbp, 42,412 proteins,
+63 MB, outside git — and the accessions are in `BENCHMARK` so `--benchmark`
+re-fetches them from nothing. Every one resolved against the NCBI datasets API,
+and **two would have been wrong from memory**: *G. metallireducens* GS-15 is
+`GCF_000012925.1`, and RefSeq has no *M. barkeri* Fusaro at all.
+
+They exist because `lac_so4` and `meoh_o2` had **no positive anywhere** in the
+seven-organism set — BiGG has no curated sulfate reducer or aerobic methylotroph
+— so those columns could only ever be confirmed negative. With `dvul` and
+`mext`, all fifteen columns have at least one organism expected to fire them.
+
+**And the set found this before it was run.** *S. oneidensis* MR-1 respires
+nitrate, fumarate, DMSO, TMAO and Fe(III) — the whole acceptor axis, the only
+axis expected to survive gate 4 — and does not catabolise glucose. Every
+acceptor column pairs its acceptor with glucose, so MR-1 answers `-` down that
+axis for a reason that is about the **donor**. `glc_fum`, `glc_dmso` and
+`glc_tmao` have exactly one organism expected to fire them, *E. coli*, and the
+natural second positive for all three is the organism the donor excludes. Three
+of the six columns expected to ship rest on one organism. A donor baked into the
+column is a design defect; which way to fix it is not decided here.
+
+### Still not built, and still on purpose
+
+`grep -rn "lifestyle" src/ docs/ tests/` still returns nothing.
+
+## 2026-09-15 (evening) — experiment 1 ran, and the model-based lifestyle table is dead above the acceptor axis
+
+thylakoid came back, so the experiment the plan put first — the one placed there
+because it can kill the idea outright rather than merely disappoint it — ran.
+It killed it. `upstream/lifestyle_ceiling.py`, 15.8 s, no carving and no solver.
+Numbers in [STATUS.md](STATUS.md), *the lifestyle ceiling*.
+
+**The inference the plan rested on is false.** The 09-15 entry above said that
+reactions present in a BiGG *model* surviving into CarveMe's universe was "a
+reasonable inference and not a measurement", and named `universe_ceiling.py` as
+what would settle it. Measured: it is false for precisely the reactions the idea
+needs. `CODH_ACS`, `MCR`, `HDR`, `FMFD_b`, `RNF`, `HYDFDN2r`, `PSI`, `PSII` are
+in `bigg_universe` and in **none of the five universes `carve` can load**. Only
+Wood–Ljungdahl's shared folate core — `FTHFLi`, `MTHFC`, `MTHFD` — survives,
+which is the part that is not carbon fixation.
+
+So autotrophy, lithotrophy and methanogenesis are unreachable by **any** draft of
+any genome. That is a database limit, and the plan's own stopping condition was
+"if the universe cannot reach CH₄ from H₂ + CO₂, that is a database limit and no
+scoring rescues it". The acceptor axis — O₂, nitrate, fumarate, DMSO, TMAO,
+sulfate, Fe(III) — is fully present.
+
+**Which is the two halves the wrong way round.** The morning's review argued
+that the contribution against DRAM is strongest exactly where gate 4 was
+expected to fail, and weakest where it was expected to pass. The ceiling makes
+that sharper than an argument: the columns carrying the network-over-markers
+claim cannot be built at all, and the columns that can be built are single
+well-conserved operons where marker genes are already adequate. Arm three does
+not change this — restricting a universe to a genome's evidence cannot add a
+reaction the universe does not have.
+
+### The archaeal universe decision is reversed on its rationale, kept on its merits
+
+`--set carveme--universe=archaea` was adopted this morning as the cheap fix for
+`MCR` and `HDR` living in an archaeal model. **`universe_archaea` does not
+contain them.** Checked as chemistry so it cannot be a naming difference:
+coenzyme M, coenzyme B and methanofuran are not metabolites of any of the five
+universes, so methanogenesis is not representable rather than merely unscored.
+`M_ch4_c` is in `universe_archaea` with nothing that makes it.
+
+Keep the flag — `iAF692` overlaps `universe_archaea` at 542 of 690 reactions
+against 431 for bacteria, so it is the right universe for an archaeon on general
+fit. It just does not buy the column it was adopted for, and the 09-11 framing
+of this as "the archaeal blocker" was wrong twice over: the flag was free, and
+the flag does not help.
+
+**New and undecided: `universe_cyanobacteria` does restore photosynthesis.** All
+five of `iJN678`'s photosynthesis reactions are there and four are in no other
+universe. Nothing has been decided about it.
+
+### Two numbers this repo had wrong
+
+**The carving universe is 5,532 reactions, not 25,348.** That figure is
+`bigg_universe.xml.gz`, an input to CarveMe's build; `config.cfg` points
+`default_universe` at `universe_bacteria.xml.gz`. 20,070 of BiGG's 25,348
+reactions are in no carving universe at all. Uses of 25,348 that describe
+`bigg_universe` — `biosynthesis.py`, the unit test — are correct and untouched;
+the ones describing what `carve` carves from were not.
+
+**`universe_ceiling.py` was asking `bigg_universe`**, a 4.6x superset of the
+thing a draft is a subnetwork of, so it was not measuring a ceiling. Corrected
+to read `default_universe` from the config. The 09-10 conclusion survives —
+`btn` and `q8` are reachable in the real universe too, so dropping them was
+right — but **`adocbl` turns out to be a genuine ceiling**, absent from the
+carving universe entirely. That is why every prototroph misses exactly it and
+lands on 29 of 30: curated `iML1515` and five carved drafts alike. The number
+was never a coincidence and nothing had explained it.
+
+### What is left of the idea
+
+The acceptor axis, on a database that supports it, scored by a method whose
+advantage over marker genes is smallest there. Experiments 2 and 3 are still
+unrun and still worth running — they say whether the surviving columns
+discriminate — but they can no longer prove the thesis, because the columns that
+carried it are not buildable. Nothing has been added to `src/`, `docs/` or
+`tests/`, and `grep -rn "lifestyle" src/ docs/ tests/` still returns nothing.
+
+## 2026-09-15 (evening, second) — the acceptor axis cannot be scored either, so the whole idea stops
+
+Experiment 1 killed autotrophy, lithotrophy and methanogenesis on a database
+limit. What it left was the acceptor axis, which is also the half this project's
+users actually have. That ran next, on the seven curated models — no carving, so
+it is the answer key checking itself, and drafts can only be worse. Numbers in
+[STATUS.md](STATUS.md), *the surviving axis cannot be scored either*.
+
+**Respiration is a yield, not a feasibility, and the design assumed otherwise.**
+The differential that makes the rest of the instrument honest removes the
+*donor*, which asks whether the donor is necessary — a different question from
+whether the acceptor is used. Measured: `iML1515` reads `lac_so4` positive
+because lactate is necessary while sulfate does nothing, so **E. coli is
+reported a sulfate reducer**. Removing the acceptor instead inverts the error:
+E. coli can ferment, so no acceptor is ever necessary and it stops being an
+aerobe, 2 of 7. E. coli ferments *and* is the textbook organism for the entire
+acceptor axis, so both binary tests fail on the case the axis exists for.
+
+The yield ratio fixes it — within one organism. On `iML1515`: 2.80 on O2, 3.00
+on nitrate, 1.50 on DMSO and TMAO, 1.40 on fumarate, and **exactly 1.00 on
+sulfate**. Seven of seven, the true negative landing precisely where it should.
+
+**And then it does not transfer.** Swept over all 31 testable cells in the seven
+curated models, **precision never exceeds 0.50** — 13 true against 13 false at
+the best threshold, worse in both directions. The cause is structural rather
+than a bad cutoff: **13 of the 18 expected-false cells return `inf`**, because a
+donor that yields no ATP alone makes any working acceptor an infinite ratio. No
+finite threshold excludes an infinity. `ac_fe3` fires `inf` for *E. coli*,
+*B. subtilis*, *Synechocystis* and *P. putida*; `FE3Ri` is in all five universes
+and any model will dump electrons on ferric iron if you put it in the medium.
+
+So the plan's open question — "is the ATP yield comparable across models, or
+only within? Probably only within" — is answered harder than it was asked: only
+within, and only within organisms that can ferment, which is where the ratio has
+a finite denominator.
+
+### The decision
+
+**Do not build it.** Not the autotrophy half, which the database cannot support;
+not the acceptor half, which cannot be scored to better than a coin flip on the
+curated models. Arm three is irrelevant to both: restricting a universe to a
+genome's evidence cannot add a missing reaction, and it cannot make a yield
+comparable across genomes.
+
+What was worth doing was the measuring, and that is now on disk rather than in
+anyone's head. `upstream/lifestyle_ceiling.py` and `lifestyle_calibration.py`
+are kept as the record; the ten benchmark genomes are kept because the set is
+useful to anything else that needs lifestyle diversity.
+
+The morning's review argued the contribution against DRAM was strongest exactly
+where gate 4 would fail. That was an argument. This is the measurement, and it
+is worse than the argument: the columns carrying the claim cannot be built, and
+the columns that can be built cannot be scored.
+
+### What is still open, and is not part of this
+
+- **`universe_cyanobacteria` restores photosynthesis** and nothing has been
+  decided about it. It is the one place a universe choice buys a real capability.
+- **`--set carveme--universe=archaea`** stays available and costs nothing. It is
+  the right universe for an archaeon on general fit — `iAF692` overlaps it at
+  542 of 690 reactions against 431 — it just never bought methanogenesis.
+- **`adocbl` is a genuine ceiling** in the carving universe, which explains the
+  29 of 30 every prototroph lands on. That one is a real finding about the
+  *panel*, not the lifestyle idea, and it is already in `universe_ceiling.py`.
+
+`grep -rn "lifestyle" src/ docs/ tests/` returns nothing and now always will.
+
+## 2026-09-15 (evening, third) — the report says when a compound was never the genome's to make
+
+The one thing from the lifestyle work that belonged in the shipped code. The
+ceiling experiment found that **`adocbl` is not in the carving universe at all**,
+so no bacterial draft can contain it whatever the genome — and the report
+rendered that as an ordinary `absent`, which is the verdict a reader is most
+likely to read as a fact about their organism.
+
+It also explains a number nothing had explained: **every prototroph lands on
+exactly 29 of 30**, curated `iML1515` and CarveMe drafts of five prototrophs
+alike, always missing adenosylcobalamin. That looked like agreement between the
+curated model and the drafts, and it is — but over 29 comparable compounds, not
+30. The thirtieth could not have come out any other way for any genome, so it
+was never evidence of anything. `guidance.py` now says so in the same sentence
+as the calibration figure.
+
+`biosynthesis.UNIVERSE_CEILING` carries the fact with the measurement attached;
+`report._ceiling_note` renders it, and only where such a compound actually came
+back negative, so the sentence means something when it appears.
+
+**Hedged on the universe rather than on the compound**, because that is where
+the uncertainty is: `M_adocbl_c` is in `universe_archaea` and in
+`bigg_universe`, and in none of `bacteria`, `gramneg`, `grampos` or
+`cyanobacteria`. A run carved with `--set carveme--universe=archaea` is not
+subject to it, and the note says that rather than overclaiming.
+
+Also corrected: `guidance.py` still advertised the **31-of-32** calibration
+figure in the `iML1515` citation note, stale since the panel went to 30 on
+2026-09-10 and the figure to 29. Nothing failed, which is the point — the
+generated docs were rebuilt in the same commit, and the doc-currency test is
+what caught that they needed to be.
+
+Three tests, 288 to **291**.
+
+### Corrected the same evening: the note claimed more than it had measured
+
+Carl's question — if `adocbl` is relevant for archaea, should it not stay in the
+panel? It does stay; nothing was removed, and the change was only a note. But
+the question exposed two things the note got wrong.
+
+**It fired on `any` genome scoring the compound negative while claiming "the
+same answer for every organism".** In a set carved with
+`--set carveme--universe=archaea`, or a mixed one, a genome can answer
+differently and the claim is then false — the note would explain away a real
+result. Changed to `all`, which is what the sentence asserts.
+
+**And "a run carved with `--universe archaea` is not affected" was too strong.**
+Measured: *M. barkeri* MS carved from `universe_archaea` — 9.04 s, certified
+optimal at objective 916.4 — still reports `adocbl` **absent**. The compound is
+in that universe and carving dropped it anyway. So the ceiling is a fact about
+the *database* and specific to bacterial reconstructions; it is not a promise
+that an archaeal draft will contain the compound. Both the note and
+`guidance.py` now say the narrower thing, and `guidance.py` names the one
+archaeal draft measured rather than leaving the reader to assume.
+
+This is the distinction the whole note exists to draw, one level down: `btn` and
+`q8` were carving losses and were dropped; `adocbl` is a database ceiling for
+bacteria and is kept, because for archaea it is a carving question and a carving
+question can come out either way.

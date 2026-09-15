@@ -14,6 +14,26 @@ and `q8` came out `none` in 12 of 12 drafts across 8 species, and since the
 routes are in the universe, that is carving and not the database. Both were
 dropped from the panel the same day. Re-run this when CarveMe's universe moves.
 
+**It was asking the wrong universe, corrected 2026-09-15.** The default was
+`bigg_universe.xml.gz` — 25,348 reactions — which is an *input* to CarveMe's
+build and not a file `carve` ever loads. `config.cfg` points `default_universe`
+at `universe_bacteria.xml.gz`, which is **5,532 reactions**, and a ceiling
+measured against a 4.6x superset is not a ceiling on anything. The conclusion
+survives the correction and one detail changes:
+
+    against bigg_universe (25,348)   32 of 32 reachable, no ceiling
+    against universe_bacteria (5,532)  29 de novo, `adocbl` **absent**
+
+So `btn` and `q8` were carving losses in the real universe too and dropping them
+was right. But **`adocbl` is a genuine ceiling**: it is not in the carving
+universe at all, so no draft of any genome can ever produce it. That is why it
+is the single miss in every prototroph — 29 of 30 for the curated `iML1515` and
+for five carved prototrophs alike — and that number was never a coincidence.
+
+The default is now `universe_bacteria.xml.gz`. Pass `--universe` for the others;
+`lifestyle_ceiling.py` is the version of this question asked about lifestyles
+rather than panel compounds, and it is where the five universes are compared.
+
 Two things the universe needs before it can be asked.
 
 - **It ships without exchange reactions.** `carve` adds them, so the M9 ones
@@ -59,11 +79,16 @@ def load_biosynthesis():
 
 
 def bundled_universe() -> Path:
-    """Where CarveMe keeps the universe in the installed package."""
-    import carveme
+    """The universe `carve` actually loads, per `config.cfg`'s `default_universe`.
 
-    return (Path(carveme.__file__).parent / "data" / "generated"
-            / "bigg_universe.xml.gz")
+    Read from the config rather than hardcoded, so a CarveMe that changes its
+    default is followed rather than second-guessed. This used to return
+    `bigg_universe.xml.gz`, which is 4.6x larger and never carved from — see the
+    module docstring.
+    """
+    from carveme import config, project_dir
+
+    return Path(project_dir) / config.get("generated", "default_universe")
 
 
 def main(argv: list[str] | None = None) -> int:

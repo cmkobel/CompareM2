@@ -225,6 +225,26 @@ PANEL = (
 
 DE_NOVO, UPSTREAM, NO_ROUTE, ABSENT = "de_novo", "upstream", "none", "absent"
 
+# Panel compounds the carving universe does not contain, so **no draft carved
+# from it can produce them, whatever the genome**. That is a limit of the
+# reaction database and not a finding about anybody's organism, and without
+# saying so it reads as an ordinary `absent` — the one verdict a reader is most
+# likely to take at face value.
+#
+# Measured 2026-09-15 with `upstream/universe_ceiling.py` against carveme
+# 1.6.6: `M_adocbl_c` is in `universe_archaea` and in `bigg_universe`, and in
+# none of `bacteria`, `gramneg`, `grampos`, `cyanobacteria`. It is the only one
+# of the thirty, and it is why every prototroph lands on exactly 29 — curated
+# `iML1515` and CarveMe drafts of five prototrophs all miss it and nothing else.
+#
+# **Universe-dependent, not absolute**, which is why the report hedges on the
+# universe rather than on the compound: a run with
+# `--set carveme--universe=archaea` is carved from the one universe that has it.
+# The earlier ceiling check read `bigg_universe.xml.gz`, 25,348 reactions, which
+# `carve` never loads — against the 5,532-reaction file it does load, this is
+# what comes out. Re-measure when CarveMe's universes move.
+UNIVERSE_CEILING = ("adocbl",)
+
 # `rescues` is `yes` where supplying this compound alone on M9 unblocks some
 # other compound the model has marked `upstream` — see `rescuers` for why it is
 # one flag per compound rather than a list per blocked compound.

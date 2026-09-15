@@ -694,6 +694,123 @@ was measured on.** `btn` and `q8` were dropped the same day, and because they
 were never `de novo` in any draft the counts do not move — only the
 denominator, to 30.
 
+### The lifestyle ceiling, executed 2026-09-15 — and it kills half the idea
+`upstream/lifestyle_ceiling.py`, on thylakoid in
+`/evo/postdoc/cm2-envs-two/f35bbb1ff167437785dcb4a2729c2beb_` — carveme 1.6.6,
+reframed 1.6.0. **15.8 s**, no carving, no solver. This is experiment 1 of
+`upstream/lifestyle.md`, the one placed first because it can kill the idea
+outright, and it did.
+
+**The universe `carve` loads is 5,532 reactions, not 25,348.** That figure is
+`bigg_universe.xml.gz`, an input to CarveMe's build; `config.cfg` points
+`default_universe` at `universe_bacteria.xml.gz`.
+
+| universe | reactions |
+| --- | ---: |
+| `universe_bacteria` (the default) | 5,532 |
+| `universe_gramneg` / `grampos` / `cyanobacteria` / `archaea` | 5,571 / 5,664 / 5,680 / 5,724 |
+| union of all five | 5,948 |
+| `bigg_universe` | 25,348 — **20,070 of them in no carving universe** |
+
+The inference the whole lifestyle plan rested on — that reactions in a BiGG
+model survive into the universe CarveMe carves from — is **false for exactly
+the reactions the idea needs.** All nineteen markers are in `bigg_universe`.
+
+| lifestyle | markers | bact | arch | cyano |
+| --- | --- | :-: | :-: | :-: |
+| photoautotrophy | `RBCh` `PSI` `PSII` `PSI_2` | no | no | **yes** |
+| Wood–Ljungdahl | `CODH_ACS` `CODH4` `MTHFR5` `RNF` `HYDFDN2r` `FDH7` | **no** | **no** | **no** |
+| methanogenesis | `MCR` `HDR` `FMFD_b` `CODHr` `CODH2r` | **no** | **no** | **no** |
+| acceptor axis | `FRD*` `NO3R*` `DMSOR*` `TMAOR*` `SULR*` `FE3Ri` | yes | yes | yes |
+
+Only the shared folate core of Wood–Ljungdahl survives — `FTHFLi`, `MTHFC`,
+`MTHFD` are in all five, and the six reactions that make it a carbon-fixation
+pathway are in none.
+
+**The archaeal universe does not restore methanogenesis**, which reverses the
+reason `--set carveme--universe=archaea` was adopted earlier the same day.
+Checked as chemistry so it cannot be a naming difference: **coenzyme M, coenzyme
+B and methanofuran are not metabolites of any of the five universes.**
+`M_ch4_c` is in `universe_archaea` with nothing that makes it. The flag is still
+right for archaea on general fit — `iAF692` overlaps `universe_archaea` at 542
+of 690 reactions against 431 for bacteria — it just does not buy the column.
+
+**Photoautotrophy is reachable, from `universe_cyanobacteria` only**: all five
+of `iJN678`'s photosynthesis reactions are there, four of them in no other
+universe. Not previously known and no decision taken.
+
+So autotrophy, lithotrophy and methanogenesis are out of reach for **any**
+CarveMe draft of any genome, which is a database limit and the plan's own
+stopping condition. The acceptor axis is fully supported — and those are the two
+halves the wrong way round from what the plan expected.
+
+### And the surviving axis cannot be scored either, executed 2026-09-15
+`upstream/lifestyle_calibration.py --curated-only`, same environment, seven
+curated BiGG models, no carving. **All 7 passed the free-energy gate.** This is
+gate 2 — does the answer key reproduce its own organisms — and the acceptor axis
+is what the ceiling left standing, so it is the whole remaining question.
+
+**Respiration is a yield, and no binary test finds it.** Three scorings, same
+models:
+
+| probe | E. coli vs literature | what breaks |
+| --- | --- | --- |
+| remove the **donor** | 6/7, **+1 extra** | `lac_so4` fires: lactate is necessary, sulfate does nothing. Every fermenter scores on every acceptor column |
+| remove the **acceptor** | **2/7** | E. coli stops being an aerobe — it ferments, so no acceptor is ever *necessary* |
+| **yield ratio** | **7/7** | nothing, for E. coli |
+
+Measured on `iML1515`, max ATP drain flux, uptake capped at 10.0 — donor plus
+acceptor over donor alone:
+
+    glc_o2 2.80   glc_no3 3.00   glc_dmso 1.50   glc_tmao 1.50
+    glc_fum 1.40  lac_so4 **1.00**
+
+Six true acceptors at 1.40–3.00 and the one true negative at exactly 1.00. E.
+coli ferments *and* is the textbook organism for the whole axis, which is why
+both binary tests fail on the case the axis exists for.
+
+**But the ratio does not transfer across organisms, and a sweep says no
+threshold exists.** Over all 31 testable cells in the seven curated models:
+
+| threshold | TP | FN | FP | TN | precision | recall |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| ≥1.05 | 13 | 0 | 14 | 4 | 0.48 | 1.00 |
+| **≥1.20** | 13 | 0 | 13 | 5 | **0.50** | 1.00 |
+| ≥1.40 | 13 | 0 | 13 | 5 | 0.50 | 1.00 |
+| ≥2.00 | 10 | 3 | 13 | 5 | 0.43 | 0.77 |
+| ≥3.00 | 8 | 5 | 13 | 5 | 0.38 | 0.62 |
+
+**Precision never exceeds 0.50**, and the reason is structural: **13 of the 18
+expected-false cells return `inf`**, because the donor alone yields no ATP and
+any acceptor that works at all then gives an infinite ratio. No finite threshold
+can exclude an infinity. A non-fermenter scores `inf` on every acceptor it can
+use and on several it cannot — `iJN1463` claims nitrate, sulfate, fumarate and
+methanol this way; `ac_fe3` fires `inf` for *E. coli*, *B. subtilis*,
+*Synechocystis* and *P. putida*, and `FE3Ri` is in all five universes.
+
+So the yield separates perfectly **within** a fermenter and carries no
+information across organisms — which answers the plan's open question ("probably
+only within") with a harder answer than it expected. A column wrong half the
+time **on the curated models that are supposed to be the answer key** cannot
+ship, and drafts can only be worse.
+
+### `universe_ceiling.py` had been asking a universe `carve` never loads
+Found and fixed 2026-09-15, same environment. Its default was
+`bigg_universe.xml.gz`; a ceiling measured against a 4.6x superset of the
+carving universe is not a ceiling. Re-run against `universe_bacteria`:
+
+| | panel | de novo | absent |
+| --- | ---: | ---: | --- |
+| `bigg_universe`, 25,348 — as measured 09-10 | 32 | 32 | none, "no ceiling" |
+| `universe_bacteria`, 5,532 — what `carve` loads | 29/30 present | **29** | **`adocbl`** |
+
+The 09-10 conclusion survives: `btn` and `q8` are reachable in the real universe
+too, so dropping them as carving losses was right. What changes is that
+**`adocbl` is a genuine ceiling** — not in the carving universe at all, so no
+draft of any genome can produce it. That is why it is the single miss in every
+prototroph, 29 of 30 for curated `iML1515` and five carved prototrophs alike.
+The default now reads `config.get('generated', 'default_universe')`.
+
 ### The calibration is an executable script now, and it was executed
 `upstream/panel_calibration.py`, run 2026-09-10 in the same environment. It
 carves the proteomes CarveMe bundles at `carveme/data/benchmark/fasta/` through
@@ -2162,3 +2279,29 @@ with it.
 
 `Eco_K12_MG1655` is the only model here that grows on a defined medium, and
 the only one with no `no route` at all.
+
+### The docs showcase report was re-rendered, 2026-09-15
+Not patched. The 2026-09-08 run is still at
+`/faststorage/project/PM_group/carl/comparem2/results_showcase` on GenomeDK and
+was **not re-run** — `render_report` was called over its existing outputs with
+3.4.0, title and command passed explicitly so the provenance header still names
+the command that produced the numbers. The header's version and timestamp move,
+which is correct: the rendering is new, the run is not.
+
+The checked-in copy had drifted four content changes across three weeks — no
+rescuers sentence, no precursor columns, no `adocbl` ceiling note, and the
+superseded "absent from every Gram-positive draft" guidance, plus biotin,
+ubiquinone-8 and a 32-compound panel. A surgical patch like 2026-09-09's would
+have put new text beside stale text, which is why that approach was dropped here.
+
+**158,052 → 159,906 bytes.** Every *de novo* count is unchanged — 17, 0, 18, 0,
+18, 0, 0, 18 — so the D39/R6 18-against-0 result the page is built on is intact;
+only the denominator and the *no route* column moved, which is what
+`docs/07 an example report.md` predicted when the panel went to 30.
+
+Rendering it found a real defect. The summary table tallied **whatever rows the
+TSV had** while the sentence above it and the grid below it used `PANEL`, so the
+re-render put "30 building blocks per genome" over a table whose rows summed to
+32. Only visible when a run's tables outlive the panel that wrote them — which
+is precisely what `--report-only` is for. Fixed to tally over `PANEL`, one test,
+292 total.

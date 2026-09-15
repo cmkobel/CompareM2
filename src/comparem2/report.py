@@ -42,7 +42,8 @@ from . import __version__
 # The panel is data the wrapper and the report have to agree on, so it lives in
 # one place. Importable from here because `biosynthesis.py` keeps its `reframed`
 # imports inside the functions that solve — this process has no solver.
-from .biosynthesis import ABSENT, DE_NOVO, LB, NO_ROUTE, PANEL, UPSTREAM
+from .biosynthesis import (ABSENT, DE_NOVO, LB, NO_ROUTE, PANEL,
+                           UNIVERSE_CEILING, UPSTREAM)
 from .guidance import GUIDANCE, citations
 from .tools import Context, Registry, Scope, Tool, completion
 
@@ -1967,6 +1968,48 @@ def _starved_note(starved: dict[str, list[str]], total: int) -> str:
         "<em>upstream</em> or <em>no route</em> at once.</p>")
 
 
+def _ceiling_note(named: list[str],
+                  verdicts: dict[str, dict[str, str]]) -> str:
+    """Compounds no draft could have made, because the database has no route.
+
+    Only rendered where such a compound actually came back negative, so a run
+    whose models somehow carry it says nothing. The distinction this draws is
+    the one a reader cannot make from the grid: `absent` on `adocbl` looks
+    identical to `absent` on anything else, and means something different —
+    every genome scores it, so it is not a comparison between these genomes at
+    all.
+
+    Hedged on the universe rather than on the compound because that is where the
+    uncertainty is: `M_adocbl_c` is in `universe_archaea`, so a run carved with
+    `--set carveme--universe=archaea` is not subject to this.
+    """
+    # Every genome, not any. The claim this makes is that the column carries no
+    # comparison, and that is only true when nothing in the run answered
+    # differently — `adocbl` is in `universe_archaea`, so a set carved with
+    # `--set carveme--universe=archaea`, or a mixed one, can have a genome that
+    # does make it. There the column is a real result and must not be explained
+    # away.
+    blocked = [c for c in PANEL if c.bigg in UNIVERSE_CEILING
+               and all(verdicts[s].get(c.bigg, ABSENT) in (NO_ROUTE, ABSENT)
+                       for s in named)]
+    if not blocked:
+        return ""
+    listed = ", ".join(f"<em>{html.escape(c.name)}</em>" for c in blocked)
+    many = len(blocked) > 1
+    verb, them, columns = (("are", "them", "these columns") if many
+                           else ("is", "it", "this column"))
+    return (
+        f'<p class="note">{listed} {verb} not in the reaction database CarveMe '
+        f"carves from, so <strong>no draft model can produce {them} whatever "
+        "the genome</strong>. That is a limit of the database rather than a "
+        "property of these genomes, and it is the same answer for every "
+        f"organism, so {columns} carries no comparison. The ceiling is specific "
+        "to bacterial reconstructions: the compound is in the archaeal reaction "
+        "set, so a run carved with "
+        "<code>--set carveme--universe=archaea</code> is not subject to it, "
+        "though carving may still drop it there.</p>")
+
+
 # How many blocked precursors are worth naming. Past a handful the model is
 # short of a pathway rather than a metabolite, and the list stops being a
 # diagnosis: `116_2` on M9 misses 26 of 53 and on LB exactly one.
@@ -2080,7 +2123,17 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
     counts: dict[str, list[str]] = {}
     for sample, found in verdicts.items():
         tally = {k: 0 for k in (DE_NOVO, UPSTREAM, NO_ROUTE, ABSENT)}
-        for verdict in found.values():
+        # Over `PANEL`, not over whatever rows the file happens to have, and
+        # defaulting the same way the grid does. The table is read as a
+        # breakdown of the count in the sentence above it, so it has to be over
+        # the same compounds: a run whose tables were written by an older
+        # biosynthesis.py carries rows for compounds since dropped, and tallying
+        # those put "30 building blocks per genome" above a table summing to 32.
+        # Found re-rendering the docs showcase, whose tables are from 2026-09-08
+        # when the panel still had biotin and ubiquinone-8 — which is exactly
+        # what `--report-only` invites.
+        for compound in PANEL:
+            verdict = found.get(compound.bigg, ABSENT)
             if verdict in tally:
                 tally[verdict] += 1
         counts[sample] = [sample, str(tally[DE_NOVO]), str(tally[UPSTREAM]),
@@ -2128,6 +2181,7 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
                              "Not in model"]),
         _absent_note(absent, len(ctx.samples)),
         _starved_note(starved, len(named)),
+        _ceiling_note(named, verdicts),
         "<h3>Building blocks per genome</h3>",
         '<p class="summary">Darkest is <em>no route</em> (×), mid is '
         "<em>upstream</em> (~), lightest is <em>de novo</em>, and an unshaded "

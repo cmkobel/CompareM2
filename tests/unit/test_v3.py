@@ -4307,6 +4307,80 @@ def test_a_model_that_cannot_reach_nitrogen_is_named_beside_its_de_novo_count():
     assert _starved_note({}, 8) == ""
 
 
+def test_the_summary_counts_only_panel_compounds(tmp_path):
+    """The table is the breakdown of the sentence above it, so both have to be
+    over the same compounds.
+
+    A run's tables outlive the panel that wrote them: the docs showcase was
+    rendered on 2026-09-08, when biotin and ubiquinone-8 were still on it, and
+    re-rendering it put `30 building blocks per genome` above a table whose rows
+    summed to 32. `--report-only` exists to re-render old runs, so this is the
+    expected case rather than an odd one.
+    """
+    from comparem2.biosynthesis import (DE_NOVO, PANEL, PANEL_HEADER,
+                                        write_tsv)
+
+    d = tmp_path / "samples" / "A" / "biosynthesis"
+    write_tsv(d / "A.tsv", PANEL_HEADER,
+              [(c.bigg, c.name, c.group, DE_NOVO, "") for c in PANEL]
+              # Two compounds this panel no longer has, as an older run would.
+              + [("btn", "Biotin", "Vitamin or cofactor", "none", ""),
+                 ("q8", "Ubiquinone-8", "Quinone", "none", "")])
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A",)).read_text()
+    assert f"{len(PANEL)} building blocks per genome" in body
+    # Every panel compound is de novo, and the dropped pair is not counted as
+    # two extra `no route`: the row is 30/0/0/0, not 30/0/2/0.
+    assert (f'<tr><td>A</td><td class="n">{len(PANEL)}</td><td class="n">0</td>'
+            '<td class="n">0</td><td class="n">0</td></tr>') in body
+
+
+def test_every_ceiling_compound_is_on_the_panel():
+    """A ceiling names a panel compound or it names nothing: the note is rendered
+    by looking the ids up in PANEL, so a typo would silently render no note at
+    all rather than fail."""
+    from comparem2.biosynthesis import PANEL, UNIVERSE_CEILING
+
+    assert set(UNIVERSE_CEILING) <= {c.bigg for c in PANEL}
+    # Measured 2026-09-15 against carveme 1.6.6 with universe_ceiling.py:
+    # `M_adocbl_c` is in universe_archaea and bigg_universe, and in none of
+    # bacteria, gramneg, grampos or cyanobacteria. It is the only one of the 30.
+    assert UNIVERSE_CEILING == ("adocbl",)
+
+
+def test_the_ceiling_note_fires_only_where_the_compound_came_back_negative():
+    """`adocbl` is not in the bacterial reaction database, so every draft scores
+    it `absent` and the cell is the same for every organism. Without the note it
+    reads as an ordinary `absent` — a finding about the genome — which is the one
+    verdict a reader is most likely to take at face value."""
+    from comparem2.report import _ceiling_note
+
+    body = _ceiling_note(["A", "B"], {"A": {"adocbl": "absent"},
+                                      "B": {"adocbl": "none"}})
+    assert "Adenosylcobalamin" in body
+    assert "no draft model can produce it whatever the genome" in body
+    assert "carries no comparison" in body
+    # Hedged on the universe, because the compound *is* in the archaeal one.
+    assert "--set carveme--universe=archaea" in body
+    # Silent when the models somehow carry it, so the sentence means something.
+    assert _ceiling_note(["A"], {"A": {"adocbl": "de_novo"}}) == ""
+    # And silent when *any* genome answered differently, because then the claim
+    # it makes — the same answer for every organism, so no comparison — is
+    # false. A set carved with `--universe archaea` can contain one that does.
+    assert _ceiling_note(["A", "B"], {"A": {"adocbl": "absent"},
+                                      "B": {"adocbl": "de_novo"}}) == ""
+
+
+def test_the_ceiling_note_reaches_a_rendered_report(tmp_path):
+    """Same wiring check as the starved note: rendered from PANEL rather than
+    from the TSV, so it has to survive the section actually assembling."""
+    _biosynthesis_fixture(tmp_path, {"A": {"adocbl": "absent"},
+                                     "B": {"adocbl": "absent"}})
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A", "B")).read_text()
+    assert "no draft model can produce it whatever the genome" in body
+
+
 def test_the_starved_note_reaches_a_rendered_report(tmp_path):
     """The units above are only worth having if the wiring holds: the column is
     read from the media table, which is written by a different program."""

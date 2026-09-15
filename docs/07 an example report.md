@@ -66,20 +66,23 @@ a genome outside it gets no ST instead of a wrong one.
 ## What the report gets wrong here
 
 The metabolism sections disagree with themselves on this set, and the D39/R6
-pair is what shows it. The biosynthesis panel calls 18 of 32 compounds *de
-novo* for D39 and 0 for R6, flipping 20 of the 32 in one direction, for two
+pair is what shows it. The biosynthesis panel calls 18 of 30 compounds *de
+novo* for D39 and 0 for R6, flipping 20 of the 30 in one direction, for two
 genomes 65 SNPs apart. Their CarveMe models share 1,048 reactions, with 530
 unique to R6 and 85 unique to D39.
 
-(This report was rendered with CompareM2 3.3.0, when the panel was 32
-compounds. It is 30 from 2026-09-10: biotin and ubiquinone-8 were dropped
-because they were *no route* in every CarveMe draft measured. Neither was ever
-*de novo* in a draft, so the counts above do not move — the denominator does.)
+(The run is from 2026-09-08 and the eight models are exactly as it left them;
+the report was re-rendered from those outputs with CompareM2 3.4.0 on
+2026-09-15, which is what its provenance header records. The panel was 32
+compounds at the time of the run and is 30 from 2026-09-10 — biotin and
+ubiquinone-8 were dropped for being *no route* in every CarveMe draft measured.
+Neither was ever *de novo* in a draft, so the *de novo* counts are unchanged;
+only the denominator and the *no route* column moved.)
 
 The cause is in the model reconstruction and not in the panel, and it is
 specific: four of the eight models cannot take up ammonium. M9's only nitrogen
 source is ammonium, so a model missing a link in that uptake chain can build
-nothing at all from a minimal medium. One hole, thirty-two zeros. The four
+nothing at all from a minimal medium. One hole, thirty zeros. The four
 affected are exactly the four reporting 0 de novo:
 
 | model | `EX_nh4_e` | `NH4tex` | `NH4tpp` | de novo |
