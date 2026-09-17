@@ -3123,3 +3123,57 @@ This is the distinction the whole note exists to draw, one level down: `btn` and
 `q8` were carving losses and were dropped; `adocbl` is a database ceiling for
 bacteria and is kept, because for archaea it is a carving question and a carving
 question can come out either way.
+
+---
+
+## 2026-09-17 — the TUI says which genomes it is over: one line, and `s` for the rest
+
+Carl asked for the input genomes to be listed, and asked the layout question
+first: is there room on the main screen, or does it belong behind a key. Both,
+and the split is forced by a number. The interface's fixed chrome is nine rows
+— header, the `#where` block, the cost line, the activity line, the progress
+bar, the footer — so at 80x24 the panes get 15 rows while the tool table needs
+19 (14 tools, 4 databases, a column header). It already scrolls. Anything whose
+height grows with the sample count makes that worse, and the sample count is
+the one quantity here with no bound: the bundled demo is 6 and a real set is
+hundreds.
+
+So the header gains **one row, and never two**: the names that fit in 48
+characters, then `+N more`, then the directory they came from in the same slot
+the other four rows use for the origin of their value. `sample_summary()`
+budgets by characters rather than by a count of names, because three
+accession-style names are wider than a terminal and ten short ones are not.
+
+`s` opens the full list — sample, size, filename — as a screen rather than a
+pane. A third pane was the other candidate and costs the log 20% of its width
+permanently, to show something that is read once at the start.
+
+**The list carries the rename that nothing else shows.** `canonicalise()`
+prints `note: '116_2 duplicate.fna' -> sample '116_2_duplicate'` to stderr, and
+the TUI then takes the alternate screen and wipes it — so under `--tui` the one
+statement of what every output file will be keyed on was unreadable. The
+heading counts them and the two columns show it.
+
+**Two geometry defects found by rendering it headless rather than by reading
+it**, both at 80x24 and neither visible at 110x34:
+
+- `Size` was the third column and a 32-character accession name pushed it off
+  the dialog entirely. Order is now sample, size, file: the last column is the
+  one that gets clipped, and a clipped filename loses its extension while a
+  clipped size loses the whole answer.
+- The table's cap was CSS, `max-height: 20`. At 24 rows that is six rows taller
+  than the dialog can show — and they are **clipped, not scrolled**: the widget
+  believes they are visible, so the cursor walks into rows that are off-screen
+  and the table never scrolls back. The cap is now computed from the screen
+  height in `SampleList.fit()`, on mount and on resize. 300 assemblies at 80x24
+  is the fixture that catches it.
+
+**`#where` is `text-wrap: nowrap` now**, which clips a long path with an
+ellipsis where it used to wrap. The block is auto-height above a table that
+already scrolls, so a wrapped path silently took a row from the tool list —
+and a visible ellipsis is a better loss than an invisible one. This is the
+reason the samples row can promise to be one line.
+
+Four tests, 292 to **296**. The screenshot in `docs/20 usage.md` predates the
+samples row; it is a capture of a real run on thylakoid and was not regenerated
+here.

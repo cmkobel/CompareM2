@@ -17,7 +17,23 @@ from enum import Enum
 from pathlib import Path
 
 __all__ = ["Completion", "Context", "Database", "Registry", "Scope", "Tool",
-           "completion", "contexts"]
+           "completion", "contexts", "human_bytes"]
+
+
+def human_bytes(size: int | float) -> str:
+    """A byte count in the units a person reads.
+
+    Free-standing rather than a method, because two unrelated things are
+    measured in bytes here: a database's download size and an input assembly's
+    file size. One ladder, so 60.8 GB and 2.1 MB cannot disagree about what a
+    kilobyte is.
+    """
+    n = float(size)
+    for unit in ("B", "kB", "MB", "GB", "TB"):
+        if n < 1000 or unit == "TB":
+            return f"{n:.1f} {unit}" if unit != "B" else f"{n:.0f} B"
+        n /= 1000
+    raise AssertionError("unreachable")
 
 
 class Scope(Enum):
@@ -113,14 +129,8 @@ class Database:
 
     @property
     def human_size(self) -> str:
-        if self.size is None:
-            return "unmeasured"
-        n = float(self.size)
-        for unit in ("B", "kB", "MB", "GB", "TB"):
-            if n < 1000 or unit == "TB":
-                return f"{n:.1f} {unit}" if unit != "B" else f"{n:.0f} B"
-            n /= 1000
-        raise AssertionError("unreachable")
+        # "unmeasured", never a guess: `size` is a `content-length` or nothing.
+        return "unmeasured" if self.size is None else human_bytes(self.size)
 
 
 @dataclass(frozen=True)

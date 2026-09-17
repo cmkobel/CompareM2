@@ -1645,6 +1645,141 @@ async def test_tui_opens_with_nothing_selected_and_r_says_so():
         assert "Nothing selected" in written
 
 
+def test_sample_summary_fits_one_line_and_counts_the_rest():
+    """The header's samples row is one line whatever the sample count is."""
+    pytest.importorskip("textual")
+    from comparem2.tui import SUMMARY_BUDGET, sample_summary
+
+    assert sample_summary(()) == "none"
+    assert sample_summary(("A", "B", "C")) == "A, B, C"
+
+    # Budgeted by width, not by a count of names: a set of accession-style
+    # names busts a terminal at three, and a set of short ones does not at ten.
+    long = tuple(f"GCF_00000584{i}_2_ASM584v2_genomic" for i in range(6))
+    line = sample_summary(long)
+    assert line.startswith(long[0]) and line.endswith(" more")
+    assert len(line) <= SUMMARY_BUDGET + len(" +9 more")
+    short = tuple("ABCDEFGHIJ")
+    assert sample_summary(short) == ", ".join(short)
+
+    # One name that alone busts the budget is still shown. A row saying only
+    # `+6 more` answers nothing at all; the CSS clips what does not fit.
+    huge = ("x" * 80, "y")
+    assert sample_summary(huge) == "x" * 80 + " +1 more"
+
+
+def test_sample_rows_pair_by_index_and_refuse_to_guess(tmp_path):
+    """Names against files, or names against nothing — never mispaired."""
+    pytest.importorskip("textual")
+    from comparem2.tui import renamed, sample_rows
+
+    one = tmp_path / "116_2.fna"
+    one.write_text(">c\n" + "A" * 4096 + "\n")
+    two = tmp_path / "116_2 duplicate.fna"
+    two.write_text(">c\n" + "A" * 4096 + "\n")
+    samples = ("116_2", "116_2_duplicate")
+
+    rows = sample_rows(samples, [one, two])
+    assert [name for name, _, _ in rows] == list(samples)
+    assert [source for _, source, _ in rows] == ["116_2.fna",
+                                                 "116_2 duplicate.fna"]
+    assert all(size.endswith(" kB") for _, _, size in rows)
+
+    # The rename is the thing `canonicalise` prints to stderr and the alternate
+    # screen then wipes, so the list is where it has to be visible.
+    assert renamed(samples, [one, two]) == 1
+
+    # A length mismatch drops the pairing rather than sliding it: the TUI is
+    # constructed with no inputs in several paths, and a sample shown against
+    # the wrong genome is worse than one shown against none.
+    assert sample_rows(samples, []) == [("116_2", "", ""),
+                                        ("116_2_duplicate", "", "")]
+    assert renamed(samples, []) == 0
+
+    # An input that has moved since the run started. Its symlink dangles, and
+    # saying so here beats finding out from inside a tool.
+    one.unlink()
+    assert sample_rows(samples, [one, two])[0][2] == "missing"
+
+
+@pytest.mark.asyncio
+async def test_tui_names_the_samples_in_the_header_and_lists_them_on_s(tmp_path):
+    """Which genomes this is over: a line always, the full list behind `s`."""
+    pytest.importorskip("textual")
+    from textual.widgets import DataTable, Static
+
+    from comparem2.tui import ComparemTUI, SampleList
+
+    paths = []
+    for name in ("116_2.fna", "116_2 duplicate.fna", "ecoli.fna"):
+        path = tmp_path / name
+        path.write_text(">c\nACGT\n")
+        paths.append(path)
+    samples = ("116_2", "116_2_duplicate", "ecoli")
+
+    app = ComparemTUI(paths, tmp_path, tmp_path / "db", samples, 4)
+    async with app.run_test() as pilot:
+        header = str(app.query_one("#where", Static).content)
+        assert "samples" in header
+        assert "116_2, 116_2_duplicate, ecoli" in header
+        # The origin column, same slot and same question as the other rows: a
+        # glob that matched the wrong directory is silent otherwise.
+        assert str(tmp_path.resolve()) in header
+        # One line per row and no more — the table below it already scrolls.
+        assert len(header.splitlines()) == 5
+
+        await pilot.press("s")
+        assert isinstance(app.screen, SampleList)
+        table = app.screen.query_one(DataTable)
+        assert table.row_count == len(samples)
+        assert table.get_cell("116_2_duplicate", "file") == "116_2 duplicate.fna"
+        heading = str(app.screen.query_one("#samples-heading", Static).content)
+        assert "3 assemblies" in heading
+        assert "1 name was changed" in heading
+
+        # Nothing is decided here, so every key leaves — including `q`, which
+        # closes the list rather than reaching the app's quit.
+        await pilot.press("q")
+        await pilot.pause()
+        assert not isinstance(app.screen, SampleList)
+        assert app.is_running
+
+
+@pytest.mark.asyncio
+async def test_sample_list_scrolls_rather_than_clipping_a_small_terminal():
+    """300 assemblies at 80x24, which is the size that catches it.
+
+    A CSS `max-height` that reads well at 40 rows makes the table taller than
+    the dialog can show at 24 — and those rows are clipped rather than
+    scrolled, so the cursor walks off the screen and never comes back. The
+    fixture is the geometry: the table has to be shorter than the box that
+    holds it, and the cursor has to stay inside the table.
+    """
+    pytest.importorskip("textual")
+    from textual.widgets import DataTable
+
+    from comparem2.tui import ComparemTUI
+
+    samples = tuple(f"genome_{i:03d}" for i in range(300))
+    app = ComparemTUI([], Path("results"), Path("databases"), samples, 4)
+    async with app.run_test(size=(80, 24)) as pilot:
+        await pilot.press("s")
+        await pilot.pause()
+        table = app.screen.query_one(DataTable)
+        dialog = app.screen.query_one("#samples")
+        assert dialog.size.height <= 24
+        # Strictly shorter, because the closing hint lives under it: a table
+        # that fills the dialog is one that has pushed the way out off-screen.
+        assert 0 < table.size.height < dialog.size.height
+
+        for _ in range(30):
+            await pilot.press("down")
+        await pilot.pause()
+        top = table.scroll_offset.y
+        assert top > 0
+        assert top <= table.cursor_row < top + table.size.height
+
+
 def _locked(workdir: Path) -> Path:
     """A directory holding a lock of the shape Snakemake leaves behind."""
     lock = workdir / ".snakemake" / "locks" / "0.output.lock"

@@ -113,10 +113,10 @@ comparem2 *.fna --tui
 
 ![The CompareM2 TUI: the tool table on the left, the run log on the right](assets/tui.png)
 
-The header names where output, databases and tool environments are going, and
-where each of those paths came from: `default`, an environment variable, a
-flag. The tool table is on the left, the run log on the right, and the footer
-carries the keys. Above, a run of mashtree has just finished and three more
+The header names the genomes the run is over, then where output, databases and
+tool environments are going and where each of those paths came from: `default`,
+an environment variable, a flag. The tool table is on the left, the run log on
+the right, and the footer carries the keys. Above, a run of mashtree has just finished and three more
 tools are starting; `carveme` is under the cursor and `bakta` is marked `▨`
 because something selected needs it.
 
@@ -126,8 +126,8 @@ drives Snakemake through its logger plugin system instead of scraping stdout,
 so the events are structured.
 
 `space` selects and deselects the tool under the cursor, `a` and `n` select all
-and none, `r` runs, `u` releases a lock, `q` quits and asks first if a run is
-going. `▣` is chosen, `▨` is pulled in as a dependency of something chosen, `▢`
+and none, `r` runs, `s` lists the input genomes, `u` releases a lock, `q` quits
+and asks first if a run is going. `▣` is chosen, `▨` is pulled in as a dependency of something chosen, `▢`
 is off.
 
 Below the fourteen tools are the four databases, which are rows in the same
@@ -185,7 +185,34 @@ announcing 60.8 GB it is not going to fetch. `unmeasured` means exactly that:
 Bakta and AMRFinder have no static URL to read a `content-length` from, so
 their size is not guessed.
 
-**Where the run's four locations come from.** Above the table:
+**Which genomes it is over.** The first header row, and `s` for the rest:
+
+```
+samples   116_2, 116_2_duplicate, ecoli_k12_MG1655 +3 more  ~/genomes/batch3
+```
+
+One line whatever the sample count is — the names that fit, then a count, then
+the directory they came from. The full list is behind `s`, which is where
+hundreds of assemblies can be scrolled without taking space from the table:
+
+```
+  6 assemblies from ~/genomes/batch3
+  1 name was changed to be usable as a path — outputs use the left column
+
+   Sample            Size    File
+   116_2             2.1 MB  116_2.fna
+   116_2_duplicate   2.1 MB  116_2 duplicate.fna
+   ecoli_k12_MG1655  4.6 MB  ecoli_k12_MG1655.fna
+```
+
+The left column is the sample name every output file, every rule and every
+report row is keyed on, and it is not always the filename: spaces and shell
+metacharacters are replaced, because a Snakemake wildcard containing a space
+produces a broken rule rather than an error. The CLI says the same on stderr as
+it happens, where the interface then covers it up. `missing` in the size column
+is a file that has moved since the run's output directory was created.
+
+**Where the run's four locations come from.** Below that:
 
 ```
 output    /faststorage/project/x/run/results_comparem2  given

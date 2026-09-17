@@ -372,6 +372,15 @@ something already published. The post-mortems are in
   `ansi_default`, the user's own terminal background — while `reverse` is SGR 7
   and inverts whatever is already there. Verified at the byte level: a
   `standard`-system console emits `\x1b[7;36;40m`.
+- **Nothing on the main screen may grow with the number of samples.** The
+  interface is nine rows of fixed chrome around one pane, and at 80x24 that
+  pane gets 15 rows while the tool table needs 19 — it scrolls already. A
+  sample count is the one quantity here with no upper bound, so the header
+  carries a single line of it (names until a character budget, then `+N more`)
+  and `s` opens the rest as a screen. The same budget is why `#where` is
+  `text-wrap: nowrap`: a wrapped path takes a row from the table silently,
+  while an ellipsis says what it cost. Anything a future feature wants to show
+  per sample belongs behind a key, not above the table.
 - **Stopping a run is done by this code, not by Snakemake.** Its scheduler
   reaches `executor.cancel()` only from a `KeyboardInterrupt` inside its own
   loop, and installs the SIGTERM handler that would get it there inside a

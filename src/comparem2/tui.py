@@ -19,7 +19,7 @@ from pathlib import Path
 from time import monotonic
 
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal
+from textual.containers import Horizontal, Vertical
 # textual, not rich: rich is textual's dependency rather than this package's.
 from textual.markup import escape
 from textual.screen import ModalScreen
@@ -31,7 +31,7 @@ from .cli import any_outputs_exist, lock_files, run_settings, unlock
 from .report import render_report
 from .runner import Event, run
 from .snakefile import prepare
-from .tools import completion
+from .tools import completion, human_bytes
 
 PENDING, RUNNING, DONE, FAILED, SKIPPED, NOT_RUN = "·", "▸", "✓", "✗", "–", "○"
 # Results found on disk when the interface opened, as against results this
@@ -81,10 +81,92 @@ WAITING = "no job running — waiting on Snakemake"
 REPORTING = "collecting outputs and writing the report"
 
 
+# How much of the header's samples row the names may take. The row has to stay
+# one line — `#where` is fixed chrome above a table that already scrolls on an
+# 80x24 terminal — and the label and the source directory need the rest of the
+# width. Anything past this is a count, and the full list is behind `s`.
+SUMMARY_BUDGET = 48
+
+
 def elapsed_text(seconds: float) -> str:
     """`3s`, `4m 12s`. Whole seconds, so a short run does not read `0m 3s`."""
     total = int(seconds)
     return f"{total}s" if total < 60 else f"{total // 60}m {total % 60:02d}s"
+
+
+def sample_summary(samples: tuple[str, ...], budget: int = SUMMARY_BUDGET) -> str:
+    """The sample names that fit on one line, and a count for the rest.
+
+    Budgeted by characters rather than by a fixed number of names: sample names
+    come from filenames, and three of `GCF_000005845_2_ASM584v2_genomic` is
+    already wider than a terminal. The first name is always shown even when it
+    alone busts the budget — a row that says only `+6 more` answers nothing.
+    """
+    if not samples:
+        return "none"
+    shown: list[str] = []
+    used = 0
+    for name in samples:
+        cost = len(name) + (2 if shown else 0)
+        if shown and used + cost > budget:
+            break
+        shown.append(name)
+        used += cost
+    rest = len(samples) - len(shown)
+    line = ", ".join(shown)
+    return f"{line} +{rest} more" if rest else line
+
+
+def file_size(path: Path) -> str:
+    """An input's size, or what is wrong with it.
+
+    `missing` is a real state rather than a defensive branch: every input is a
+    symlink into `<workdir>/samples/` by the time this runs, and a link left by
+    an earlier run whose assemblies have since moved dangles. Saying so here is
+    cheaper than finding out from inside a tool.
+    """
+    try:
+        return human_bytes(path.stat().st_size)
+    except OSError:
+        return "missing"
+
+
+def sample_rows(samples: tuple[str, ...],
+                inputs: list[Path]) -> list[tuple[str, str, str]]:
+    """One row per sample: the name every tool will use, its file, its size.
+
+    Paired by index, because `cli.canonicalise()` derives the names from the
+    inputs in that order. If the two lengths disagree the pairing is dropped
+    rather than guessed — a sample shown against the wrong file is worse than a
+    sample shown against none, and the TUI is constructed with no inputs in
+    several tests and from `--setup`-shaped paths.
+
+    The file column is a bare filename, which is unambiguous by construction:
+    `canonicalise()` refuses a run whose inputs slug to the same sample name,
+    so two rows cannot show the same one. The exception is inputs gathered from
+    several directories, where the parent is prepended — it is then the only
+    thing telling `batch1/ecoli.fna` from `batch2/ecoli.fasta`.
+    """
+    if len(inputs) != len(samples):
+        return [(name, "", "") for name in samples]
+    multiple = len({path.parent for path in inputs}) > 1
+    return [(name,
+             f"{path.parent.name}/{path.name}" if multiple else path.name,
+             file_size(path))
+            for name, path in zip(samples, inputs)]
+
+
+def renamed(samples: tuple[str, ...], inputs: list[Path]) -> int:
+    """How many sample names are not their file's stem.
+
+    `cli.canonicalise()` prints this to stderr as it happens — and the TUI then
+    takes the alternate screen and wipes it, so the one place a user could see
+    that `116_2 duplicate.fna` became `116_2_duplicate` was a scrollback they
+    never get back.
+    """
+    if len(inputs) != len(samples):
+        return 0
+    return sum(1 for name, path in zip(samples, inputs) if name != path.stem)
 
 
 class ConfirmUnlock(ModalScreen[bool]):
@@ -238,13 +320,112 @@ class ConfirmQuit(ModalScreen[str]):
         self.dismiss("stay")
 
 
+class SampleList(ModalScreen[None]):
+    """The genomes this run is over, in full.
+
+    A screen rather than a pane, because the one thing known about the number
+    of samples is that it is not bounded: the bundled demo is 6 and a real set
+    is hundreds. Everything else in the interface is fixed chrome around a
+    table that already scrolls at 80x24, so a list whose height is the sample
+    count is the one shape the main screen has no room for. The header carries
+    a one-line summary; this is where the rest of it lives.
+
+    Not a confirmation, which is the other kind of screen here — nothing is
+    decided, so every key closes it.
+    """
+
+    BINDINGS = [
+        ("escape", "close", "Close"),
+        ("s", "close", "Close"),
+        ("q", "close", "Close"),
+    ]
+
+    # Rows of the dialog that are not table: two of border, two of padding, two
+    # of heading, one of the closing hint, and a row of slack for a heading that
+    # wraps on a narrow terminal.
+    CHROME = 10
+
+    def __init__(self, samples: tuple[str, ...], inputs: list[Path],
+                 source: str) -> None:
+        super().__init__()
+        self.samples = samples
+        self.inputs = inputs
+        # The same string the header's samples row shows, passed in rather than
+        # recomputed: two answers to "where did these come from" that could
+        # disagree would be worse than one.
+        self.source = source
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="samples"):
+            yield Static(self.heading(), id="samples-heading")
+            yield DataTable(cursor_type="row", zebra_stripes=True)
+            yield Static("[dim]↑↓ scroll · s or esc close[/]")
+
+    def heading(self) -> str:
+        count = ("1 assembly" if len(self.samples) == 1
+                 else f"{len(self.samples)} assemblies")
+        where = f" [dim]from {escape(self.source)}[/]" if self.source else ""
+        changed = renamed(self.samples, self.inputs)
+        # Said only when it happened, and said in the imperative the user needs:
+        # the name in the first column is what every output file and every
+        # report row will be keyed on from here, not the name of their file.
+        note = ""
+        if changed:
+            which = "1 name was" if changed == 1 else f"{changed} names were"
+            note = (f"\n[yellow]{which} changed[/] to be usable as a path — "
+                    "outputs use the left column")
+        return f"[bold]{count}[/]{where}{note}"
+
+    def fit(self) -> None:
+        """Cap the table at the rows the screen actually has.
+
+        Measured rather than a CSS constant, and this is the difference between
+        scrolled and clipped: `max-height: 20` looks right at 40 rows, and at 24
+        it makes a table six rows taller than the dialog can show. Those rows
+        are not cut off — the widget believes they are visible, so the cursor
+        walks down into rows that are not on the screen and the table never
+        scrolls to bring them back. 300 assemblies is the case that shows it.
+        """
+        self.query_one(DataTable).styles.max_height = max(
+            5, self.app.size.height - self.CHROME)
+
+    def on_resize(self) -> None:
+        self.fit()
+
+    def on_mount(self) -> None:
+        self.fit()
+        table = self.query_one(DataTable)
+        # Size before file, which reads oddly and survives a narrow terminal:
+        # the columns are laid out left to right and whatever does not fit is
+        # clipped at the dialog's edge, so the last column is the one that
+        # disappears. An accession-style sample name is 32 characters and took
+        # `Size` off the screen entirely at 80 columns. A clipped filename
+        # loses its extension; a clipped size column loses the whole answer.
+        table.add_column("Sample", key="sample")
+        table.add_column("Size", key="size")
+        table.add_column("File", key="file")
+        for sample, source, size in sample_rows(self.samples, self.inputs):
+            # The file column is escaped and the other two are not: a cell given
+            # a `str` is parsed as Rich markup, and a filename may contain `[`.
+            # Sample names cannot — `cli.slug()` has already replaced it.
+            table.add_row(sample, size, escape(source), key=sample)
+
+    def action_close(self) -> None:
+        self.dismiss(None)
+
+
 class ComparemTUI(App):
     """Pick tools, watch them run, open the report."""
 
     CSS = """
     Screen { layout: vertical; }
     #cost { padding: 0 1; color: $text-muted; }
-    #where { padding: 0 1; }
+    /* Five rows and never six. Wrapping is what the height budget cannot
+       survive: `#where` is auto-height, so one long path on a narrow terminal
+       silently takes a row from a table that already scrolls — the tools and
+       databases need 19 and get 15 at 80x24. Clipped with an ellipsis is a
+       visible loss; a table one row shorter is not. */
+    #where { padding: 0 1; text-wrap: nowrap; text-overflow: ellipsis; }
     #panes { height: 1fr; }
     #activity { padding: 0 1; height: 1; }
     DataTable { width: 46%; border: round $primary; }
@@ -283,6 +464,22 @@ class ComparemTUI(App):
         width: 64; padding: 1 2;
         border: round $warning; background: $surface;
     }
+
+    /* $primary, not the dialogs' $warning: nothing here is a decision. */
+    SampleList { align: center middle; }
+    /* Wider than the dialogs, because this one is a table and they are
+       paragraphs: three columns over a 32-character accession name do not fit
+       in 64, and the width the terminal has is the width to use. */
+    #samples {
+        width: 90%; max-width: 92; height: auto; max-height: 90%; padding: 1 2;
+        border: round $primary; background: $surface;
+    }
+    #samples-heading { margin-bottom: 1; }
+    /* Overrides the 46% and the border the main screen's table carries — this
+       one is inside a dialog. `height: auto` so six samples get a six-row box;
+       the cap that keeps six hundred on the screen is set in `fit()`, which is
+       the only place that knows how tall the screen is. */
+    #samples DataTable { width: 1fr; height: auto; border: none; }
     """
 
     BINDINGS = [
@@ -290,6 +487,7 @@ class ComparemTUI(App):
         ("a", "all", "Select all"),
         ("n", "none", "Select none"),
         ("r", "start", "Run"),
+        ("s", "samples", "Samples"),
         ("u", "unlock", "Unlock directory"),
         ("q", "quit", "Quit"),
     ]
@@ -422,8 +620,25 @@ class ComparemTUI(App):
         yield ProgressBar(total=100, show_eta=False)
         yield Footer()
 
+    def source_text(self) -> str:
+        """Where the assemblies came from — the samples row's third column.
+
+        The same slot the other rows use for the origin of their value, and the
+        same question: a glob that matched the wrong directory is as quiet a
+        failure as a `$COMPAREM2_DATABASES` pointing somewhere unexpected, and
+        the names alone do not show it.
+
+        `N directories` rather than a common ancestor when the inputs are
+        spread: the common ancestor of two sibling directories is a path that
+        contains neither set of genomes, which is worse than a count.
+        """
+        if not self.inputs:
+            return ""
+        dirs = {path.resolve().parent for path in self.inputs}
+        return str(dirs.pop()) if len(dirs) == 1 else f"{len(dirs)} directories"
+
     def where_text(self) -> str:
-        """The four locations this run depends on, and where each came from.
+        """What this run is over, and the four locations it depends on.
 
         Databases, tool environments and execution are settable by environment
         variable, which makes them the three settings most likely to be wrong
@@ -432,9 +647,15 @@ class ComparemTUI(App):
         rather than an error; `$SNAKEMAKE_PROFILE` — Snakemake's own, honoured
         by `cli.resolve_profile()` — decides whether this is a queue run, which
         is why the row says where the value came from and not just what it is.
+
+        The samples row is first because it is the subject and the rest are
+        where its results go, and it is one line whatever the sample count is:
+        `#where` is fixed chrome above a table that already scrolls at 80x24.
+        `s` opens the full list.
         """
-        rows = run_settings(self.workdir, self.databases, self.conda_prefix,
-                            self.profile)
+        rows = [("samples", sample_summary(self.samples), self.source_text())]
+        rows += run_settings(self.workdir, self.databases, self.conda_prefix,
+                             self.profile)
         width = max(len(what) for what, _, _ in rows)
         # Escaped: a path may contain '[', which Rich reads as a markup tag.
         return "\n".join(
@@ -518,6 +739,15 @@ class ComparemTUI(App):
         self.left_mid_run = self.running
         self.stop_requested = decision == "stop"
         self.exit()
+
+    # --- the samples ------------------------------------------------
+
+    def action_samples(self) -> None:
+        # Allowed mid-run, unlike every other key here: it reads nothing the
+        # run is writing, and "which genome is this" is a question a run makes
+        # more pressing rather than less.
+        self.push_screen(SampleList(self.samples, self.inputs,
+                                    self.source_text()))
 
     # --- the lock ---------------------------------------------------
 
