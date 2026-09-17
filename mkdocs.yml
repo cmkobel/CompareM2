@@ -6,6 +6,10 @@ nav:
   # so its nav label is set here rather than taken from a first-level heading.
   - Home: "index.md"
   - "05 quick start.md"
+  # One page, two places: the file lives at the repository root, where GitHub
+  # shows it, and is included here the same way CONTRIBUTORS.md is. A copy
+  # would drift.
+  - Cheat sheet: "06 cheat sheet.md"
   - "07 an example report.md"
   - "10 installation.md"
   - "20 usage.md"
