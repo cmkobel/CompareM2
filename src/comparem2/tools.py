@@ -17,7 +17,19 @@ from enum import Enum
 from pathlib import Path
 
 __all__ = ["Completion", "Context", "Database", "Registry", "Scope", "Tool",
-           "completion", "contexts", "human_bytes"]
+           "completion", "contexts", "counted", "human_bytes"]
+
+
+def counted(n: int, singular: str, plural: str) -> str:
+    """`1 assembly`, `7 assemblies`.
+
+    Here rather than in one caller because three of them say these numbers and
+    all three were wrong together: the TUI's title read `1 assemblies` over a
+    single genome, its cost line `1 tools selected`, and the CLI's own opening
+    line `1 assemblies, 1 tools`. A run over one genome is an ordinary thing to
+    do, and English is not the pipeline's business to reinvent per call site.
+    """
+    return f"{n} {singular if n == 1 else plural}"
 
 
 def human_bytes(size: int | float) -> str:

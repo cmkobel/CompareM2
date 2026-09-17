@@ -18,9 +18,12 @@ import shlex
 from pathlib import Path
 from time import monotonic
 
+from rich.cells import cell_len
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
 # textual, not rich: rich is textual's dependency rather than this package's.
+# `cell_len` above is the exception — textual re-exports no equivalent, and the
+# question it answers is how wide a string draws, which is rich's to answer.
 from textual.markup import escape
 from textual.screen import ModalScreen
 from textual.timer import Timer
@@ -31,7 +34,7 @@ from .cli import any_outputs_exist, lock_files, run_settings, unlock
 from .report import render_report
 from .runner import Event, run
 from .snakefile import prepare
-from .tools import completion, human_bytes
+from .tools import completion, counted, human_bytes
 
 PENDING, RUNNING, DONE, FAILED, SKIPPED, NOT_RUN = "·", "▸", "✓", "✗", "–", "○"
 # Results found on disk when the interface opened, as against results this
@@ -94,20 +97,38 @@ def elapsed_text(seconds: float) -> str:
     return f"{total}s" if total < 60 else f"{total // 60}m {total % 60:02d}s"
 
 
+def one_line(text: str) -> str:
+    """A user-supplied string with nothing in it that can claim a second row.
+
+    A directory may contain a newline — it is a legal byte in a path — and the
+    header block is five rows on the promise that nothing in it wraps.
+    `text-wrap: nowrap` does not defend against this: the break is in the
+    content, not the layout, so it stole a row from the tool table and, in a
+    table cell, dropped everything after it.
+    """
+    return " ".join(text.split())
+
+
 def sample_summary(samples: tuple[str, ...], budget: int = SUMMARY_BUDGET) -> str:
     """The sample names that fit on one line, and a count for the rest.
 
-    Budgeted by characters rather than by a fixed number of names: sample names
-    come from filenames, and three of `GCF_000005845_2_ASM584v2_genomic` is
-    already wider than a terminal. The first name is always shown even when it
-    alone busts the budget — a row that says only `+6 more` answers nothing.
+    Budgeted by the width the names actually occupy rather than by a fixed
+    number of names: sample names come from filenames, and three of
+    `GCF_000005845_2_ASM584v2_genomic` is already wider than a terminal. The
+    first name is always shown even when it alone busts the budget — a row that
+    says only `+6 more` answers nothing.
+
+    Width, not `len()`: CJK names are one character and two cells each, so six
+    of them cost 40 against the budget and 70 on the screen, and the source
+    directory — the column that catches a glob pointing at the wrong place —
+    was pushed off the end by the ellipsis.
     """
     if not samples:
         return "none"
     shown: list[str] = []
     used = 0
     for name in samples:
-        cost = len(name) + (2 if shown else 0)
+        cost = cell_len(name) + (2 if shown else 0)
         if shown and used + cost > budget:
             break
         shown.append(name)
@@ -124,7 +145,14 @@ def file_size(path: Path) -> str:
     symlink into `<workdir>/samples/` by the time this runs, and a link left by
     an earlier run whose assemblies have since moved dangles. Saying so here is
     cheaper than finding out from inside a tool.
+
+    `directory` likewise. `cli.py` accepts any path that exists, so a glob that
+    matched a folder instead of its contents builds a whole DAG over it — and
+    `stat()` on a directory succeeds, so it arrived in this column as `4.1 kB`,
+    which is a plausible size for a small plasmid.
     """
+    if path.is_dir():
+        return "directory"
     try:
         return human_bytes(path.stat().st_size)
     except OSError:
@@ -146,13 +174,24 @@ def sample_rows(samples: tuple[str, ...],
     so two rows cannot show the same one. The exception is inputs gathered from
     several directories, where the parent is prepended — it is then the only
     thing telling `batch1/ecoli.fna` from `batch2/ecoli.fasta`.
+
+    And the parent *name* only when that is enough to tell them apart. Two
+    directories can share one: `a/batch` and `b/batch` both prefix `batch/`,
+    which disambiguates nothing while the header row asserts `2 directories`
+    over rows that appear to come from one. Then the whole parent path goes in,
+    which the dialog has the width for.
     """
     if len(inputs) != len(samples):
         return [(name, "", "") for name in samples]
-    multiple = len({path.parent for path in inputs}) > 1
-    return [(name,
-             f"{path.parent.name}/{path.name}" if multiple else path.name,
-             file_size(path))
+    parents = {path.parent for path in inputs}
+    ambiguous = len({parent.name for parent in parents}) < len(parents)
+
+    def label(path: Path) -> str:
+        if len(parents) == 1:
+            return path.name
+        return f"{path.parent if ambiguous else path.parent.name}/{path.name}"
+
+    return [(name, one_line(label(path)), file_size(path))
             for name, path in zip(samples, inputs)]
 
 
@@ -340,10 +379,9 @@ class SampleList(ModalScreen[None]):
         ("q", "close", "Close"),
     ]
 
-    # Rows of the dialog that are not table: two of border, two of padding, two
-    # of heading, one of the closing hint, and a row of slack for a heading that
-    # wraps on a narrow terminal.
-    CHROME = 10
+    # The dialog's own frame: two rows of border, two of padding. The only
+    # constant left, because it is the only part that cannot wrap.
+    FRAME = 4
 
     def __init__(self, samples: tuple[str, ...], inputs: list[Path],
                  source: str) -> None:
@@ -355,15 +393,22 @@ class SampleList(ModalScreen[None]):
         # disagree would be worse than one.
         self.source = source
 
+    # In the border rather than on a row of its own, which is not decoration:
+    # it is the only thing on screen that says how to close the dialog, and as
+    # a widget it was the row that got squeezed out first — at 40x12 a wrapped
+    # heading and a wrapped hint together left no room for the bottom border.
+    # A border subtitle costs nothing and cannot be pushed off, because the
+    # border is drawn whatever else fits. `←→` because a long sample name makes
+    # the table wider than the dialog, and nothing said so.
+    HINT = "↑↓ ←→ scroll · s or esc close"
+
     def compose(self) -> ComposeResult:
         with Vertical(id="samples"):
             yield Static(self.heading(), id="samples-heading")
             yield DataTable(cursor_type="row", zebra_stripes=True)
-            yield Static("[dim]↑↓ scroll · s or esc close[/]")
 
     def heading(self) -> str:
-        count = ("1 assembly" if len(self.samples) == 1
-                 else f"{len(self.samples)} assemblies")
+        count = counted(len(self.samples), "assembly", "assemblies")
         where = f" [dim]from {escape(self.source)}[/]" if self.source else ""
         changed = renamed(self.samples, self.inputs)
         # Said only when it happened, and said in the imperative the user needs:
@@ -377,23 +422,44 @@ class SampleList(ModalScreen[None]):
         return f"[bold]{count}[/]{where}{note}"
 
     def fit(self) -> None:
-        """Cap the table at the rows the screen actually has.
+        """Cap the table at the rows the dialog can actually draw.
 
-        Measured rather than a CSS constant, and this is the difference between
-        scrolled and clipped: `max-height: 20` looks right at 40 rows, and at 24
-        it makes a table six rows taller than the dialog can show. Those rows
-        are not cut off — the widget believes they are visible, so the cursor
-        walks down into rows that are not on the screen and the table never
-        scrolls to bring them back. 300 assemblies is the case that shows it.
+        This is the difference between scrolled and clipped. A table taller
+        than what encloses it is not cut off at the bottom — the widget
+        believes those rows are visible, so the cursor walks down into rows
+        that are not on the screen and the table never scrolls to bring them
+        back. The last sample becomes unreachable.
+
+        **One authority for the height, and this is it.** The first version had
+        two — a CSS `max-height: 20` on the table and a `max-height: 90%` on the
+        dialog — and they disagreed at both ends: 20 was six rows too many at
+        24 rows of terminal, and at 60 rows the 90% cap clipped a table this
+        method had sized to the full screen. Measured on thylakoid at 100x60,
+        two samples of 250 could never be shown. Whatever bounds this table has
+        to be the thing that draws it, so the dialog is auto-height and the
+        number is computed here.
+
+        **Everything that is not the table is measured, not counted.** Both of
+        them wrap: the heading runs to four lines at 80 columns with a long
+        output path, and the closing hint takes two at 40. Counting the hint as
+        one row put the dialog's bottom border off a 12-row screen — the same
+        defect as the constant it replaced, one level down.
         """
-        self.query_one(DataTable).styles.max_height = max(
-            5, self.app.size.height - self.CHROME)
+        table = self.query_one(DataTable)
+        others = sum(
+            child.outer_size.height + child.styles.margin.height
+            for child in self.query_one("#samples").children if child is not table)
+        table.styles.max_height = max(
+            3, self.app.size.height - self.FRAME - others)
 
     def on_resize(self) -> None:
-        self.fit()
+        # After the refresh, not during: the heading rewraps on the new width,
+        # and its height before that is the answer to the previous question.
+        self.call_after_refresh(self.fit)
 
     def on_mount(self) -> None:
-        self.fit()
+        self.query_one("#samples").border_subtitle = self.HINT
+        self.call_after_refresh(self.fit)
         table = self.query_one(DataTable)
         # Size before file, which reads oddly and survives a narrow terminal:
         # the columns are laid out left to right and whatever does not fit is
@@ -423,8 +489,8 @@ class ComparemTUI(App):
     /* Five rows and never six. Wrapping is what the height budget cannot
        survive: `#where` is auto-height, so one long path on a narrow terminal
        silently takes a row from a table that already scrolls — the tools and
-       databases need 19 and get 15 at 80x24. Clipped with an ellipsis is a
-       visible loss; a table one row shorter is not. */
+       databases need 19 rows and the pane gets 14 at 80x24, measured. Clipped
+       with an ellipsis is a visible loss; a table one row shorter is not. */
     #where { padding: 0 1; text-wrap: nowrap; text-overflow: ellipsis; }
     #panes { height: 1fr; }
     #activity { padding: 0 1; height: 1; }
@@ -469,12 +535,20 @@ class ComparemTUI(App):
     SampleList { align: center middle; }
     /* Wider than the dialogs, because this one is a table and they are
        paragraphs: three columns over a 32-character accession name do not fit
-       in 64, and the width the terminal has is the width to use. */
+       in 64, and the width the terminal has is the width to use.
+
+       No `max-height` here on purpose — see `SampleList.fit()`. A second cap
+       on the height is a second answer to the same question, and the one that
+       loses is the closing hint. */
     #samples {
-        width: 90%; max-width: 92; height: auto; max-height: 90%; padding: 1 2;
+        width: 90%; max-width: 92; height: auto; padding: 1 2;
         border: round $primary; background: $surface;
     }
-    #samples-heading { margin-bottom: 1; }
+    /* Capped, so that a heading which wraps far enough to leave no room takes
+       the loss itself. The hint line under the table is the only thing on
+       screen that says how to close the dialog; the heading's fourth line is
+       half a directory name. */
+    #samples-heading { margin-bottom: 1; max-height: 4; }
     /* Overrides the 46% and the border the main screen's table carries — this
        one is inside a dialog. `height: auto` so six samples get a six-row box;
        the cap that keeps six hundred on the screen is set in `fit()`, which is
@@ -635,7 +709,8 @@ class ComparemTUI(App):
         if not self.inputs:
             return ""
         dirs = {path.resolve().parent for path in self.inputs}
-        return str(dirs.pop()) if len(dirs) == 1 else f"{len(dirs)} directories"
+        return (one_line(str(dirs.pop())) if len(dirs) == 1
+                else counted(len(dirs), "directory", "directories"))
 
     def where_text(self) -> str:
         """What this run is over, and the four locations it depends on.
@@ -663,7 +738,7 @@ class ComparemTUI(App):
             for what, where, origin in rows)
 
     def on_mount(self) -> None:
-        self.title = f"CompareM2 v3 — {len(self.samples)} assemblies"
+        self.title = f"CompareM2 v3 — {counted(len(self.samples), 'assembly', 'assemblies')}"
         table = self.query_one(DataTable)
         # Explicit column keys: update_cell() matches on the key, not the label.
         table.add_column(" ", key="sel", width=3)
@@ -815,9 +890,11 @@ class ComparemTUI(App):
             cost += (" + " if known else "") + \
                 f"{len(unknown)} of unknown size ({', '.join(d.name for d in unknown)})"
         pulled = len(closure) - len(chosen)
-        extra = f", {pulled} pulled in as dependencies" if pulled > 0 else ""
+        extra = (f", {counted(pulled, 'pulled in as a dependency', 'pulled in as dependencies')}"
+                 if pulled > 0 else "")
         self.cost_text = (
-            f"{len(closure)} tools selected{extra} — databases to download: {cost}")
+            f"{counted(len(closure), 'tool', 'tools')} selected{extra}"
+            f" — databases to download: {cost}")
         self.query_one("#cost", Static).update(self.cost_text)
 
     def _row_key(self) -> str | None:

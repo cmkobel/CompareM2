@@ -192,25 +192,31 @@ samples   116_2, 116_2_duplicate, ecoli_k12_MG1655 +3 more  ~/genomes/batch3
 ```
 
 One line whatever the sample count is — the names that fit, then a count, then
-the directory they came from. The full list is behind `s`, which is where
-hundreds of assemblies can be scrolled without taking space from the table:
+the directory they came from, or `2 directories` when they are spread. The full
+list is behind `s`, which is where hundreds of assemblies can be scrolled
+without taking space from the table:
 
 ```
-  6 assemblies from ~/genomes/batch3
-  1 name was changed to be usable as a path — outputs use the left column
-
-   Sample            Size    File
-   116_2             2.1 MB  116_2.fna
-   116_2_duplicate   2.1 MB  116_2 duplicate.fna
-   ecoli_k12_MG1655  4.6 MB  ecoli_k12_MG1655.fna
+╭──────────────────────────────────────────────────────────╮
+│  6 assemblies from ~/genomes/batch3                      │
+│  1 name was changed to be usable as a path — outputs     │
+│  use the left column                                     │
+│                                                          │
+│   Sample            Size    File                         │
+│   116_2             2.1 MB  116_2.fna                    │
+│   116_2_duplicate   2.1 MB  116_2 duplicate.fna          │
+│   ecoli_k12_MG1655  4.6 MB  ecoli_k12_MG1655.fna         │
+╰──────── ↑↓ ←→ scroll · s or esc close ───────────────────╯
 ```
 
 The left column is the sample name every output file, every rule and every
 report row is keyed on, and it is not always the filename: spaces and shell
 metacharacters are replaced, because a Snakemake wildcard containing a space
 produces a broken rule rather than an error. The CLI says the same on stderr as
-it happens, where the interface then covers it up. `missing` in the size column
-is a file that has moved since the run's output directory was created.
+it happens, where the interface then covers it up. The size column is the other
+half of the check: `missing` is a file that has moved since the run's output
+directory was created, and `directory` is a glob that matched a folder instead
+of the genomes inside it.
 
 **Where the run's four locations come from.** Below that:
 

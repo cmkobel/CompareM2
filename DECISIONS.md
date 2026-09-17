@@ -3216,3 +3216,76 @@ taken deliberately: the point of the PDF is that it can be handed to someone.
 
 The documentation site stays English. The Danish sheet is in the repository,
 not in `mkdocs.yml`.
+
+## 2026-09-17 (later) — the sample list, driven on thylakoid, and what that found
+
+The 09-17 change above was tested by unit tests and by reading. Carl asked for
+it to be driven on a real terminal instead, so it was: over tmux on thylakoid,
+by five agents attacking layout, filenames, sample count, state and source
+directories, each finding then re-tested by an agent told to refute it.
+
+**The height fix was wrong at the other end, and that is the finding.** `fit()`
+capped the table from the screen height while the dialog was *also* capped by
+CSS `max-height: 90%`. Two authorities for one number, so the table was sized to
+rows the dialog could not draw — the same clipping the method was written to
+stop, now on tall terminals instead of short ones. Measured at 100x60 with 250
+assemblies: **`genome_249` and `genome_248` could never be shown**, and above
+30 rows the closing hint went with them. Confirmed independently twice.
+
+So: the dialog is auto-height, the CSS cap is gone, and `fit()` is the only
+thing that decides. It now **measures every child that is not the table**
+rather than counting rows, because both of them wrap — the heading runs to four
+lines at 80 columns with a long output path, the hint to two at 40 — and the
+first attempt at this, a `FIXED_CHROME = 6` with the heading measured and the
+hint counted, put the bottom border off a 12-row screen. The same defect one
+level down.
+
+**The closing hint moved into the border.** It is the only thing on screen that
+says how to leave, and as a widget it was the row that got squeezed out first.
+A border subtitle costs no rows and cannot be pushed off, because the border is
+drawn whatever else fits. That is what makes 40x12 work: frame, heading, and a
+table with genomes in it.
+
+Verified on thylakoid at 40x12, 60x20, 80x24, 100x31, 100x60 and 200x60, 250
+assemblies: last sample reachable, hint visible, at every one.
+
+Four smaller things, all of them mine:
+
+- **The 48-character budget was counted in characters and spent in cells.** Six
+  CJK names cost 40 by `len()` and **70 on the screen**, so the row overran and
+  the ellipsis ate the source directory — the column that exists to catch a
+  glob pointing at the wrong place. `rich.cells.cell_len` now.
+- **`a/batch` and `b/batch` both prefixed `batch/`**, disambiguating nothing
+  while the header said `2 directories`. Colliding parent names get the whole
+  path, which the dialog has the width for.
+- **A newline in a directory name stole a row from the tool table** and dropped
+  the filename from its cell. `text-wrap: nowrap` cannot help — the break is in
+  the content, not the layout — so user-supplied strings go through
+  `one_line()`.
+- **A directory globbed instead of its contents read `4.1 kB`**, a plausible
+  plasmid, because `stat()` on a directory succeeds. It says `directory`.
+
+And one that was not mine but is next door and wrong in three places at once:
+the title said **`1 assemblies`** over a single genome, the cost line `1 tools
+selected`, the CLI's own opening line `1 assemblies, 1 tools` — while the new
+sample list two keys away said `1 assembly`. `tools.counted()` now, beside
+`human_bytes` and for the same reason.
+
+**Reported, not fixed** — pre-existing, and none of them the sample list's
+business. A dangling symlink is reported by its resolved target, so the message
+names a file the user never typed. A symlink farm — the normal way to curate a
+genome set — loses the names the user chose, because `cli.resolve()` follows
+links before `canonicalise()` sees them; the samples row now makes this
+*visible*, which is an argument for the row rather than against it. A sample
+name whose tail is a 20x repeated unit aborts the whole run with Snakemake's
+`PeriodicWildcardError`, naming no input file. And `cli.py` accepts a directory
+as an assembly at all, because it tests `exists()` rather than `is_file()`.
+
+Also corrected: DESIGN.md said nine rows of chrome and 15 for the pane. That
+was the state *before* the samples row. Counted on thylakoid at 80x24: **ten
+and 14.**
+
+Ten tests, 296 to **306**. The five probe agents covered layout, names,
+scale, origins; the state-machine dimension did not return and is untested —
+open/close, `s` during a run, and quitting mid-run were exercised by hand
+instead, not exhaustively.

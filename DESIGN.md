@@ -373,8 +373,9 @@ something already published. The post-mortems are in
   and inverts whatever is already there. Verified at the byte level: a
   `standard`-system console emits `\x1b[7;36;40m`.
 - **Nothing on the main screen may grow with the number of samples.** The
-  interface is nine rows of fixed chrome around one pane, and at 80x24 that
-  pane gets 15 rows while the tool table needs 19 — it scrolls already. A
+  interface is ten rows of fixed chrome around one pane, and at 80x24 that
+  pane gets 14 rows while the tool table needs 19 — it scrolls already, and
+  the samples row is one of the ten. Measured on thylakoid, not derived. A
   sample count is the one quantity here with no upper bound, so the header
   carries a single line of it (names until a character budget, then `+N more`)
   and `s` opens the rest as a screen. The same budget is why `#where` is

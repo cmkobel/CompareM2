@@ -22,7 +22,7 @@ from . import demo
 from .catalogue import CATALOGUE
 from .report import render_report
 from .snakefile import prepare, render_envs
-from .tools import completion
+from .tools import completion, counted
 
 # Cores when the user names no number and no profile. Small on purpose: this is
 # a laptop-safe default, and the machines where a bigger one would help are the
@@ -627,7 +627,8 @@ def main(argv: list[str] | None = None) -> int:
     samples = canonicalise(inputs, workdir)
 
     tools = CATALOGUE.closure(args.until)
-    print(f"{len(samples)} assemblies, {len(tools)} tools", file=sys.stderr)
+    print(f"{counted(len(samples), 'assembly', 'assemblies')}, "
+          f"{counted(len(tools), 'tool', 'tools')}", file=sys.stderr)
 
     # Say it now rather than from inside DAG construction. Skipped where nothing
     # will be deployed: --report-only reads output that already exists.

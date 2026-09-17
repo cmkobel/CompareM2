@@ -1701,6 +1701,13 @@ def test_sample_rows_pair_by_index_and_refuse_to_guess(tmp_path):
     one.unlink()
     assert sample_rows(samples, [one, two])[0][2] == "missing"
 
+    # A folder globbed instead of its contents. `cli.py` takes any path that
+    # exists, and `stat()` on a directory succeeds — it read `4.1 kB`, which is
+    # a plausible size for a plasmid.
+    folder = tmp_path / "batch"
+    folder.mkdir()
+    assert sample_rows(("batch",), [folder])[0][2] == "directory"
+
 
 @pytest.mark.asyncio
 async def test_tui_names_the_samples_in_the_header_and_lists_them_on_s(tmp_path):
@@ -1746,38 +1753,164 @@ async def test_tui_names_the_samples_in_the_header_and_lists_them_on_s(tmp_path)
 
 
 @pytest.mark.asyncio
-async def test_sample_list_scrolls_rather_than_clipping_a_small_terminal():
-    """300 assemblies at 80x24, which is the size that catches it.
+@pytest.mark.parametrize("size", [(80, 24), (100, 31), (100, 40), (200, 60),
+                                  (60, 20), (40, 12)])
+async def test_sample_list_scrolls_rather_than_clipping_at_any_size(size, tmp_path):
+    """300 assemblies, at every terminal height that has broken it.
 
-    A CSS `max-height` that reads well at 40 rows makes the table taller than
-    the dialog can show at 24 — and those rows are clipped rather than
-    scrolled, so the cursor walks off the screen and never comes back. The
-    fixture is the geometry: the table has to be shorter than the box that
-    holds it, and the cursor has to stay inside the table.
+    A table taller than the dialog is not cut off at the bottom — the widget
+    believes those rows are visible, so the cursor walks into rows that are not
+    drawn and the table never scrolls to bring them back. It broke at both ends
+    and for opposite reasons: a CSS `max-height: 20` was six rows too many at
+    24, and then `fit()` sizing from the raw screen height was too many for a
+    dialog capped at `max-height: 90%`, which cost two of 250 samples at 100x60
+    and the closing hint at anything above 30 rows. Measured on thylakoid.
+
+    So the fixture is geometry, not a constant: the dialog fits on the screen,
+    the table fits in the dialog with the hint line under it, and the cursor
+    stays on a row the table is drawing.
     """
     pytest.importorskip("textual")
     from textual.widgets import DataTable
 
-    from comparem2.tui import ComparemTUI
+    from comparem2.tui import ComparemTUI, SampleList
 
+    # Real inputs under a long path, because the modal heading names the source
+    # directory and wraps to four lines when it is long — which is exactly the
+    # chrome that used to be counted wrong. An empty `inputs` hides the bug.
+    inputs = []
+    for i in range(300):
+        path = tmp_path / f"genome_{i:03d}.fna"
+        path.write_text(">c\nACGT\n")
+        inputs.append(path)
     samples = tuple(f"genome_{i:03d}" for i in range(300))
-    app = ComparemTUI([], Path("results"), Path("databases"), samples, 4)
-    async with app.run_test(size=(80, 24)) as pilot:
+    app = ComparemTUI(inputs, tmp_path, tmp_path / "db", samples, 4)
+    async with app.run_test(size=size) as pilot:
         await pilot.press("s")
+        await pilot.pause()
         await pilot.pause()
         table = app.screen.query_one(DataTable)
         dialog = app.screen.query_one("#samples")
-        assert dialog.size.height <= 24
-        # Strictly shorter, because the closing hint lives under it: a table
-        # that fills the dialog is one that has pushed the way out off-screen.
+        assert dialog.region.y >= 0
+        assert dialog.region.bottom <= size[1]
+        # Strictly shorter, because the heading is above it: a table that fills
+        # the dialog is one that has pushed everything else off the screen.
         assert 0 < table.size.height < dialog.size.height
+        # The way out is drawn in the border, so it cannot be squeezed out.
+        assert dialog.border_subtitle == SampleList.HINT
 
-        for _ in range(30):
+        # Past the bottom of the viewport, whatever the viewport is here.
+        for _ in range(table.size.height + 10):
             await pilot.press("down")
         await pilot.pause()
         top = table.scroll_offset.y
         assert top > 0
         assert top <= table.cursor_row < top + table.size.height
+
+
+@pytest.mark.asyncio
+async def test_sample_list_survives_a_resize_under_it():
+    """The cap is recomputed on resize, including when the heading rewraps."""
+    pytest.importorskip("textual")
+    from textual.widgets import DataTable
+
+    from comparem2.tui import ComparemTUI
+
+    samples = tuple(f"genome_{i:03d}" for i in range(120))
+    app = ComparemTUI([], Path("results"), Path("databases"), samples, 4)
+    async with app.run_test(size=(200, 60)) as pilot:
+        await pilot.press("s")
+        await pilot.pause()
+        for size in [(80, 24), (200, 60), (60, 20)]:
+            await pilot.resize_terminal(*size)
+            await pilot.pause()
+            await pilot.pause()
+            table = app.screen.query_one(DataTable)
+            dialog = app.screen.query_one("#samples")
+            assert dialog.size.height <= size[1], size
+            assert 0 < table.size.height < dialog.size.height, size
+
+
+def test_counted_says_one_assembly_not_one_assemblies():
+    """The title said `1 assemblies` while the sample list said `1 assembly`."""
+    from comparem2.tools import counted
+
+    assert counted(1, "assembly", "assemblies") == "1 assembly"
+    assert counted(7, "assembly", "assemblies") == "7 assemblies"
+    assert counted(0, "tool", "tools") == "0 tools"
+    assert counted(1, "tool", "tools") == "1 tool"
+
+
+def test_sample_summary_budgets_by_width_not_by_character_count():
+    """A CJK name is one character and two cells.
+
+    Six of them cost 40 of the 48-character budget by `len()` and 70 cells on
+    the screen, so the row overran and the ellipsis ate the source directory —
+    the column that is there to catch a glob pointing at the wrong place.
+    """
+    pytest.importorskip("textual")
+    from rich.cells import cell_len
+
+    from comparem2.tui import SUMMARY_BUDGET, sample_summary
+
+    wide = tuple(f"{n}菌三株" for n in "乳大放枯藍酵")
+    line = sample_summary(wide)
+    assert line.endswith(" more")
+    assert cell_len(line.split(" +")[0]) <= SUMMARY_BUDGET
+    # The same names in ASCII of the same *character* count are not truncated
+    # as hard — which is the whole point: the budget is about the screen.
+    narrow = tuple(f"{c}abc" for c in "abcdef")
+    assert sample_summary(narrow) == ", ".join(narrow)
+
+
+def test_one_line_keeps_a_path_with_a_newline_in_one_row(tmp_path):
+    """A newline in a directory name stole a row from the tool table.
+
+    `text-wrap: nowrap` cannot help: the break is in the content, not the
+    layout. In a table cell it was worse — everything after it was dropped, so
+    the File column showed a directory and no filename.
+    """
+    pytest.importorskip("textual")
+    from comparem2.tui import one_line, sample_rows
+
+    assert one_line("weird\ndir") == "weird dir"
+    assert one_line("/a/b") == "/a/b"
+
+    odd = tmp_path / "weird\ndir"
+    odd.mkdir()
+    one, two = odd / "a.fna", tmp_path / "plain" / "b.fna"
+    two.parent.mkdir()
+    for path in (one, two):
+        path.write_text(">c\nACGT\n")
+    rows = sample_rows(("a", "b"), [one, two])
+    assert all("\n" not in source for _, source, _ in rows)
+    assert rows[0][1].endswith("a.fna")
+
+
+def test_sample_rows_fall_back_to_the_full_path_when_parent_names_collide(tmp_path):
+    """`a/batch` and `b/batch` both prefix `batch/`, disambiguating nothing.
+
+    The header row asserts `2 directories` over rows that then appear to come
+    from one, and nothing on screen says which is which.
+    """
+    pytest.importorskip("textual")
+    from comparem2.tui import sample_rows
+
+    one, two = tmp_path / "a" / "batch" / "x.fna", tmp_path / "b" / "batch" / "y.fna"
+    for path in (one, two):
+        path.parent.mkdir(parents=True)
+        path.write_text(">c\nACGT\n")
+    sources = [source for _, source, _ in sample_rows(("x", "y"), [one, two])]
+    assert sources[0] != sources[1]
+    assert str(tmp_path / "a" / "batch") in sources[0]
+
+    # Distinct parent names still get the short form — the long one is for the
+    # case that needs it, not for every spread input.
+    three = tmp_path / "c" / "other" / "z.fna"
+    three.parent.mkdir(parents=True)
+    three.write_text(">c\nACGT\n")
+    short = sample_rows(("x", "z"), [one, three])
+    assert [source for _, source, _ in short] == ["batch/x.fna", "other/z.fna"]
 
 
 def _locked(workdir: Path) -> Path:
@@ -2061,7 +2194,7 @@ async def test_tui_seeds_its_selection_from_until():
                       selected=["mashtree"])
     async with app.run_test():
         assert app.selected == {"mashtree"}
-        assert "1 tools selected" in app.cost_text
+        assert "1 tool selected" in app.cost_text
         assert "no databases" in app.cost_text
 
 
