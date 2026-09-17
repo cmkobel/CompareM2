@@ -3177,3 +3177,42 @@ reason the samples row can promise to be one line.
 Four tests, 292 to **296**. The screenshot in `docs/20 usage.md` predates the
 samples row; it is a capture of a real run on thylakoid and was not regenerated
 here.
+
+## 2026-09-17 (later) — a cheat sheet, in one file and two places, and a Danish one
+
+Carl asked for a short reference that starts at `cd` and ends at `--set`, for
+people who will not read `docs/20 usage.md`. 512 words, five sections, and
+every number in it taken from `catalogue.py` or the pages generated from it
+rather than written fresh: `skani -c 70`, `treecluster --threshold 0.05`,
+60.8 GB of the 62.5 GB download.
+
+**It is one file.** `CHEATSHEET.md` sits at the repository root, where GitHub
+shows it in the listing, and `docs/06 cheat sheet.md` is a single
+`{!CHEATSHEET.md!}` line, the same `markdown_include` hook `82 contributors.md`
+already uses for `CONTRIBUTORS.md`. A page that a reader reaches two ways is
+otherwise two copies within a month. The one consequence to know about: a
+relative link inside that file has to work from both places, so the pointer to
+the analyses page is the absolute readthedocs URL. `docs/30 …` is right from
+the root and resolves to `docs/docs/…` once the same text is a page.
+
+Prose follows the em dash pass recorded above: 0 em dashes, and the two
+headings that wanted one take a colon instead. Nothing else about the pass
+applies here, because a cheat sheet is mostly code blocks.
+
+**The Danish version is tracked too**, at Carl's ask: `CHEATSHEET.da.md` and
+`CHEATSHEET.da.pdf`, two A4 pages. Commands, flags, paths and the program's own
+printed output are left in English, since they are what you type and what you
+read on the screen; the prose and the `#` comments are translated. The colophon
+carries the source file, the version and the date, which is the only thing
+standing between a translation and silent drift.
+
+The PDF is rendered pandoc → HTML → headless Chrome, because there is no TeX on
+this machine and Chrome's print path honours `@page`. The recipe is the header
+comment of `docs/assets/cheatsheet-print.css`, which is not loaded by the docs
+site. **A checked-in PDF is a generated file with nothing to fail when it goes
+stale**, so anyone editing `CHEATSHEET.da.md` has to run those two commands.
+That is the cost of shipping the artefact rather than the recipe, and it was
+taken deliberately: the point of the PDF is that it can be handed to someone.
+
+The documentation site stays English. The Danish sheet is in the repository,
+not in `mkdocs.yml`.

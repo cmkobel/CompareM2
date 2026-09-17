@@ -31,7 +31,7 @@ tool environments: 6 in ~/.comparem2/envs (none built yet)
 The first run is quiet for about a minute while those six conda environments
 solve. That is normal.
 
-## 3. Run a subset — the big saving
+## 3. Run a subset: the big saving
 
 `--until` names tools and pulls in their prerequisites.
 
@@ -73,7 +73,7 @@ comparem2 *.fna --keep-going       # don't stop the other tools when one fails
 ```
 
 
-## 5. `--set` — forwarding arguments to a tool
+## 5. `--set`: forwarding arguments to a tool
 
 `--set <tool><flag>=<value>`, repeatable. Spell the flag exactly as the tool
 does, dashes and all: TreeCluster's long options take two, skani's `-c` takes

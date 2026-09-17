@@ -1,0 +1,94 @@
+/* Print styling for CHEATSHEET.da.pdf. Not used by the docs site; mkdocs loads
+   assets/extra.css only, and the accent colours here are taken from it.
+
+   The PDF is regenerated from the repository root with:
+
+     pandoc CHEATSHEET.da.md -f markdown -t html5 -s \
+       -V pagetitle="Snydeark til CompareM2" \
+       --css docs/assets/cheatsheet-print.css --embed-resources \
+       -o /tmp/cheatsheet-da.html
+     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+       --headless --disable-gpu --no-pdf-header-footer \
+       --print-to-pdf=CHEATSHEET.da.pdf file:///tmp/cheatsheet-da.html
+
+   Chrome because there is no TeX on the machine the docs are written on, and
+   its print path is the one that honours @page. Two A4 pages at these sizes;
+   the second is half empty, so a paragraph can be added without repaginating.
+   Anyone editing CHEATSHEET.da.md has to run this, or the PDF goes stale
+   without anything failing. */
+
+@page {
+  size: A4;
+  margin: 17mm 15mm 15mm 15mm;
+}
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 10pt;
+  line-height: 1.45;
+  color: #1a1a1a;
+  max-width: none;
+  margin: 0;
+}
+
+h1 {
+  font-size: 19pt;
+  color: #24578f;
+  margin: 0 0 0.5em 0;
+  padding-bottom: 0.25em;
+  border-bottom: 2px solid #2980b9;
+}
+
+h2 {
+  font-size: 12.5pt;
+  color: #2b6cb0;
+  margin: 1.5em 0 0.4em 0;
+  /* A heading alone at the foot of a page, with its block over the fold, is
+     the one layout failure that matters on a reference sheet. */
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+p { margin: 0.5em 0; }
+
+code {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 8.6pt;
+  background: #f2f4f7;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}
+
+pre {
+  font-size: 8pt;
+  line-height: 1.35;
+  background: #f6f7f9;
+  border-left: 3px solid #2980b9;
+  padding: 0.6em 0.8em;
+  margin: 0.6em 0;
+  border-radius: 0 3px 3px 0;
+  /* Splitting a command across a page break costs more than a short page. */
+  break-inside: avoid;
+  page-break-inside: avoid;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+a { color: #2b6cb0; text-decoration: none; }
+
+hr {
+  border: none;
+  border-top: 1px solid #d7dbe0;
+  margin: 1.6em 0 1em 0;
+}
+
+hr + p {
+  font-size: 8.5pt;
+  color: #56606a;
+}
