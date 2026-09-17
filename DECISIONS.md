@@ -3286,6 +3286,43 @@ was the state *before* the samples row. Counted on thylakoid at 80x24: **ten
 and 14.**
 
 Ten tests, 296 to **306**. The five probe agents covered layout, names,
-scale, origins; the state-machine dimension did not return and is untested —
-open/close, `s` during a run, and quitting mid-run were exercised by hand
-instead, not exhaustively.
+scale and origins; the state-machine dimension did not return, and was driven
+by hand afterwards instead — see the next entry.
+
+## 2026-09-18 — the state machine, driven by hand, and the one claim it caught
+
+The dimension the fan-out never returned. Done over tmux on thylakoid, 250
+assemblies, four database-free tools, a run long enough to interrupt.
+
+**What holds.** Ten open/close cycles of the sample list with `s`, `esc` and
+`q` — `q` inside the list closes the list and does not reach the app's quit.
+`s` during a run: the list opens, the run keeps going to completion under it,
+and the activity line keeps spinning and keeps naming the rule that is running
+(`⠇ no…` → `⠏ se…` → `⠏ sk…` through one modal). `s` under the unlock dialog is
+inert and stacks nothing, because a `ModalScreen` takes the app's bindings out
+of the chain; `s` under the *quit* dialog quits and stops the jobs, which is
+that dialog's own binding and is printed on it. `r` on a locked directory
+refuses, `u` asks, `y` clears it — 1 lock file to 0. Reopening on a
+part-finished directory reads `4 of 14 tools already ran`.
+
+**And one false statement, which is the finding.** Quitting mid-run with `s`
+printed *The output directory is still locked: comparem2 --unlock --output …*
+over a directory holding **no lock files at all — 3 of 3 runs**. Stopping the
+tree gives Snakemake's own cleanup its grace period and it usually takes the
+lock with it, so the sentence sent the user to a command whose entire answer is
+`nothing to unlock`, at the moment they are deciding what to do next. It is
+read from the disk now rather than asserted. The `y` branch still says it
+unconditionally and is right to: that run is alive and holding its lock.
+
+Pre-existing, not part of the samples-row change — `departure()` has said this
+since it was written. It took driving the thing to see it, which is the general
+lesson of both these entries.
+
+One test, 306 to **307**.
+
+**Retired rather than found:** with the sample list open there are two
+`DataTable`s in the application, and `apply_event`, `sync_table` and `settle`
+all reach for `self.query_one(DataTable)` — which looked like a crash waiting
+for the first job event to arrive under an open modal. It is not:
+`App.query_one` scopes to the default screen, so it still resolves to the tool
+table while a modal is up. Checked directly rather than reasoned about.

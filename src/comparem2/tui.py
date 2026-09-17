@@ -1284,8 +1284,18 @@ def departure(mid_run: bool, stop: bool, profile: str | None,
     # four database downloads are `localrules` and run here on the login node —
     # a 60.8 GB GTDB fetch is a child of this process, not a job.
     lines.append(stop_local())
-    lines.append(f"The output directory is still locked: "
-                 f"comparem2 --unlock --output {shlex.quote(str(workdir))}")
+    # Read, not asserted. The `y` branch above says this unconditionally and is
+    # right to: that run is alive and holding its lock. Here the tree has just
+    # been signalled and given its grace period, which is usually long enough
+    # for Snakemake's own cleanup to remove the lock — measured 3 of 3 on
+    # thylakoid, 250 assemblies, quitting mid-run with `s`. Printing "still
+    # locked" over a directory that is not sends the user to a command whose
+    # whole answer is "nothing to unlock", at the moment they are deciding what
+    # to do next. It stays for the case where the kill was not clean, which is
+    # the case the sentence was written for.
+    if lock_files(workdir):
+        lines.append(f"The output directory is still locked: "
+                     f"comparem2 --unlock --output {shlex.quote(str(workdir))}")
     return lines
 
 

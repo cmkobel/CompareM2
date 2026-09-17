@@ -2573,6 +2573,27 @@ def test_departure_cancels_the_queue_and_the_local_tree(monkeypatch):
     assert calls == {"local": True}, "no profile, no queue to cancel"
 
 
+def test_departure_only_claims_a_lock_it_can_see(monkeypatch, tmp_path):
+    """Stopping the tree usually takes the lock with it, and then the line is
+    false — measured 3 of 3 on thylakoid, quitting a 250-assembly run with `s`,
+    which printed `still locked` over a directory holding no lock files. The
+    `y` branch keeps saying it unconditionally, because that run is still alive
+    and still holding one."""
+    from comparem2 import cancel as cancel_mod
+    from comparem2.tui import departure
+
+    monkeypatch.setattr(cancel_mod, "stop_local", lambda *a, **k: "stopped the tree")
+
+    stopped = "\n".join(departure(True, True, None, None, tmp_path))
+    assert "stopped the tree" in stopped
+    assert "still locked" not in stopped
+
+    _locked(tmp_path)
+    assert "still locked" in "\n".join(departure(True, True, None, None, tmp_path))
+    # Left going, so the lock is genuinely held whatever the disk says now.
+    assert "still locked" in "\n".join(departure(True, False, None, None, tmp_path))
+
+
 def test_departure_will_not_guess_at_job_ids(monkeypatch):
     """No run id means nothing was submitted yet, or the executor is
     cluster-generic and has no equivalent handle. Either way, saying so beats
