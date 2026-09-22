@@ -3380,3 +3380,59 @@ the `execution:` line — silent in the unremarkable case, loud when a variable
 exported months ago is about to do something.
 
 Ten tests, 309 to **319**.
+
+## 2026-09-22 — a bare `comparem2` runs on the directory you are standing in
+
+Carl asked whether v3 had lost v2's shortest invocation. It had. v2 shipped
+`input_genomes: "*.fna *.fa *.fasta *.fas"` as a default in `config.yaml` and
+Snakemake globbed it against the terminal's directory, so `comparem2` on its
+own analysed whatever was there. v3 deleted `config.yaml` and the default went
+with it — not as a decision, which is why nothing in this file recorded it.
+The behaviour survived only as the error message asking for more typing.
+
+**Restored, with the three things a shell glob did for free done explicitly.**
+`discover()` is not `*.fna` in a shell, and each difference was checked rather
+than assumed:
+
+- `Path.glob` matches a leading dot, unlike both the shell and `glob.glob`. A
+  mac writing to a shared volume leaves `._116_2.fna` beside `116_2.fna`, and
+  that would have arrived as a second sample.
+- It matches directories. `batch.fna/` is a plausible name and `stat()` on a
+  directory succeeds — the same defect that read a directory as a 4.1 kB
+  plasmid in the TUI's sample list on 2026-09-17.
+- A directory listing has no order. Sorted, so two runs over one directory
+  produce the same sample order.
+
+**One level deep, and that is not a limitation to fix later.** The workdir
+holds `samples/<sample>/<sample>.fna` as a symlink to each input, so a
+recursive search would feed a run its own output directory: the second bare
+run in a directory would find every genome twice, the duplicate names would
+collide in `canonicalise()`, and a `-o` outside the search path would be the
+only way out. Non-recursive means `-o` never has to be consulted to make
+discovery correct.
+
+**It searches `invocation_dir()`.** Under `pixi run` the cwd is the workspace
+manifest root, so globbing the cwd would have searched the checkout — the same
+bug `$INIT_CWD` already fixes for relative paths, and it would have been
+invisible in a git checkout that happens to contain no FASTA at the top level.
+
+**Announced, with the directory in the line.** `no assemblies named, so using
+the 4 assemblies in /data/genomes`. The count alone is not enough: the failure
+this feature can produce is a run over the wrong set of genomes, and only the
+path shows it. The empty case says where it looked and which four patterns it
+looked for, because the reader is usually one directory above their genomes,
+or holding `.fastq` and `.fna.gz` files that are deliberately not in the list.
+
+**Gzipped FASTA stays out.** `canonicalise()` links every input to
+`<sample>.fna` and each tool reads that path as plain text, so a `.fna.gz`
+picked up by a bare invocation would fail inside the first rule instead of on
+the command line. Naming one explicitly fails the same way — that is a
+separate question, and not one this change answers.
+
+**Discovery sits after `--setup`, `--demo` and `--unlock`**, all three of
+which return or fill `inputs` before it runs. Standing in a directory full of
+genomes must not turn `--demo` into "takes no assemblies", and `--unlock` must
+not gain a workdir of symlinks to canonicalise on its way to clearing a lock.
+A test holds that ordering.
+
+Six tests, 319 to **324** (one replaced: the old bare-invocation test).

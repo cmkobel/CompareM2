@@ -4,7 +4,7 @@ What is currently true of a real run. This file changes whenever something is
 re-run, which is why it is not in [DESIGN.md](DESIGN.md) — decisions should not
 need editing because a tool was verified again.
 
-Last updated **2026-09-09**. The tool numbers are from runs on thylakoid; the
+Last updated **2026-09-22**. The tool numbers are from runs on thylakoid; the
 pre-tag checks for v3.1.0 are from the laptop and say so.
 
 ## The docs showcase run: eight genomes, all fourteen tools, through SLURM
@@ -1254,6 +1254,24 @@ names the wrong thing — `conda env create` reads the base prefix's own
 
 ## Also verified
 
+- **A bare `comparem2` picks up the directory — executed on thylakoid
+  2026-09-22.** In a directory holding the four *E. faecium* test genomes
+  beside five things that must not be picked up (`._116_2.fna`,
+  `.hidden.fna`, a *directory* named `batch.fna/`, `E8202_reads.fna.gz` and
+  `reads.fastq`), `--until seqkit mashtree treecluster skani` with no
+  assemblies named ran on exactly the four: 8 of 8 steps, report written, and
+  the standing cross-check held — **0.00000 mash distance and 100.00% ANI**
+  between `116_2` and `116_2 duplicate`, which is also the filename-with-a-space
+  case going through discovery. Verified on both paths into `invocation_dir()`:
+  under `pixi run --manifest-path` from outside the workspace (`$INIT_CWD`) and
+  through the interpreter directly (the cwd). A second bare run in the same
+  directory found the same four and had nothing to do, so the output directory
+  is not re-ingested. `--demo` there still ran the seven bundled plasmids —
+  every sample symlinked into `demo_assemblies/`, 238 kB not 2.7 MB — and
+  `--setup` still deployed rather than refusing. The TUI, driven under tmux at
+  120x40, showed `4 assemblies`, the four names and the source directory in its
+  header, and the sizes and original filenames in its sample list. A dangling
+  `*.fna` symlink is skipped and a working one followed (`1 assembly`).
 - `pixi install` — re-solved 2026-09-03 without the thirteen tools, 8.8 GB
   down to 843 MB, one environment instead of two
 - **clean clone** — cloned fresh, environments built, tests pass,

@@ -10,9 +10,13 @@ cd /path/to/genomes        # relative paths resolve from here, even under pixi r
 ls *.fna                   # the shell expands the glob; this is exactly what gets passed
 ```
 
+Name no assemblies at all and CompareM2 uses the `*.fna`, `*.fa`, `*.fasta`
+and `*.fas` files in this directory, and prints which directory that was.
+
 ## 2. Run
 
 ```bash
+comparem2                          # the *.fna, *.fa, *.fasta and *.fas files in this directory
 comparem2 *.fna                    # all 14 tools -> ./results_comparem2/report.html
 comparem2 *.fna -o run1            # output directory
 comparem2 --demo                   # 6 bundled plasmids, no genomes or databases needed

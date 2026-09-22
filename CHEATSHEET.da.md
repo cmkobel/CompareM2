@@ -10,9 +10,14 @@ cd /sti/til/genomer        # relative stier løses herfra, også under pixi run
 ls *.fna                   # skallen udfolder mønsteret; det er præcis det, der sendes videre
 ```
 
+Nævner du slet ingen assemblies, bruger CompareM2 de `*.fna`-, `*.fa`-,
+`*.fasta`- og `*.fas`-filer, der ligger i denne mappe, og skriver hvilken
+mappe det var.
+
 ## 2. Kør
 
 ```bash
+comparem2                          # de *.fna-, *.fa-, *.fasta- og *.fas-filer, der ligger her
 comparem2 *.fna                    # alle 14 værktøjer -> ./results_comparem2/report.html
 comparem2 *.fna -o run1            # outputmappe
 comparem2 --demo                   # 6 medfølgende plasmider; ingen genomer, ingen databaser
@@ -106,7 +111,7 @@ der faktisk køres.
 
 ---
 
-*Oversat fra `CHEATSHEET.md`, CompareM2 v3.4.0, 17. september 2026. Kommandoer,
+*Oversat fra `CHEATSHEET.md`, CompareM2 v3.4.0, 22. september 2026. Kommandoer,
 flag, stier og programmets egne udskrifter står uoversat, fordi det er dem, du
 skal skrive og læse på skærmen. Som PDF til udlevering:
 [`CHEATSHEET.da.pdf`](CHEATSHEET.da.pdf), to A4-sider, gentegnet med opskriften

@@ -332,6 +332,19 @@ something already published. The post-mortems are in
 - **A tool's database location must be reachable.** Some tools take it only
   through the environment, which is what `Tool.env` is for — without it,
   `--databases` was silently ignored for the largest database in the pipeline.
+- **A bare `comparem2` runs on the directory the command was typed in, one
+  level deep.** v2 defaulted `input_genomes` to `*.fna *.fa *.fasta *.fas` and
+  let Snakemake glob it; the rewrite dropped it, and it came back on
+  2026-09-22 because it is the shortest correct invocation there is and v2's
+  users had it for years. Three parts of it are load-bearing. **It does not
+  recurse** — `results_comparem2/samples/<s>/<s>.fna` is a symlink to an input,
+  so a recursive search would feed a run its own output directory and find
+  every genome twice on the second run in a directory. **It searches
+  `invocation_dir()`**, not the cwd, for the reason relative paths resolve
+  there. And **it announces the directory it used**, because running over the
+  wrong set of genomes is the one thing this can get wrong and a count with no
+  path beside it does not show that. `Path.glob` is neither the shell nor
+  `glob.glob`, so the dotfile and directory filters are `discover()`'s own.
 - **The database directory defaults to a shared, home-relative location**
   (`~/.comparem2/databases`, or `$COMPAREM2_DATABASES`), never one relative to
   the cwd or the output directory. Databases outlive any one run's results, and

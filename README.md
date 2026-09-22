@@ -14,7 +14,7 @@
 pixi global install --channel conda-forge --channel bioconda comparem2
 # or: conda install -c conda-forge -c bioconda comparem2
 
-comparem2 *.fna
+comparem2 *.fna   # or plain `comparem2`, in the directory that holds them
 ```
 
 Give CompareM2 a set of microbial genome assemblies and it hands back a single

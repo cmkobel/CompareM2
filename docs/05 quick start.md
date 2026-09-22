@@ -30,6 +30,11 @@ On your own assemblies:
 comparem2 *.fna
 ```
 
+Or, standing in the directory that holds them, `comparem2` on its own — it
+runs on the `*.fna`, `*.fa`, `*.fasta` and `*.fas` files it finds there and
+prints which directory that was. See
+[naming none of them](20 usage.md#naming-none-of-them).
+
 Before fetching anything, CompareM2 says what it is about to do and what it
 will cost:
 

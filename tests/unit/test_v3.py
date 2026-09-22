@@ -1212,13 +1212,155 @@ def test_setup_refuses_assemblies_and_the_run_modes(tmp_path):
         assert "does not combine" in str(excinfo.value), flag
 
 
-def test_a_bare_invocation_says_what_is_missing():
-    """`inputs` is nargs="*" so --setup can take none, which means argparse no
-    longer catches an empty command line."""
+def test_a_bare_invocation_runs_on_the_directory_it_was_typed_in(
+        monkeypatch, tmp_path, capsys):
+    """v2 shipped `input_genomes: "*.fna *.fa *.fasta *.fas"` in `config.yaml`,
+    so a bare `comparem2` analysed the directory you were standing in. v3
+    answered that with an error message until 2026-09-22."""
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(cli_mod.shutil, "which", lambda exe: "/usr/bin/conda")
+    monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
+    monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: None)
+    monkeypatch.setattr(cli_mod.subprocess, "run",
+                        lambda cmd, *a, **k: subprocess.CompletedProcess(cmd, 0))
+
+    # All four extensions, because all four are what v2 globbed.
+    for name in ("b.fna", "a.fasta", "c.fas", "d.fa"):
+        (tmp_path / name).write_text(">c\nACGT\n")
+    (tmp_path / "notes.txt").write_text("not an assembly\n")
+    out = tmp_path / "out"
+
+    assert cli_mod.main(["-o", str(out), "--until", "seqkit"]) == 0
+    assert sorted(p.name for p in (out / "samples").iterdir()) == \
+        ["a", "b", "c", "d"]
+
+    # Announced, and with the directory named: analysing the wrong set of
+    # genomes is what this can get wrong, and a count on its own would not
+    # show it — the count plus the path does.
+    err = capsys.readouterr().err
+    assert "4 assemblies" in err and str(tmp_path.resolve()) in err
+
+
+def test_discovery_takes_what_a_shell_glob_would_and_sorts_it(tmp_path):
+    """`Path.glob` is neither the shell nor `glob.glob`, so three of the
+    shell's habits have to be reimplemented — and each was checked rather than
+    assumed. It matches a leading dot, which would make the AppleDouble file a
+    mac leaves on a shared volume into a sample. It matches a *directory*
+    named `batch.fna`, and `stat()` on one succeeds — that is how a directory
+    once showed up as a 4.1 kB plasmid in the TUI's sample list. And it returns
+    a directory listing's arbitrary order."""
+    for name in ("m.fna", "a.fasta", "z.fa"):
+        (tmp_path / name).write_text(">c\nACGT\n")
+    (tmp_path / "._m.fna").write_text("AppleDouble\n")
+    (tmp_path / ".hidden.fna").write_text(">c\nACGT\n")
+    (tmp_path / "batch.fna").mkdir()
+    # `.fastq` is the trap a prefix match would fall into, and gzipped FASTA is
+    # excluded on purpose: canonicalise() links every input to `<sample>.fna`.
+    (tmp_path / "reads.fastq").write_text("@r\nACGT\n+\n!!!!\n")
+    (tmp_path / "genome.fna.gz").write_bytes(b"\x1f\x8b")
+    (tmp_path / "deeper").mkdir()
+    (tmp_path / "deeper" / "nested.fna").write_text(">c\nACGT\n")
+    # A symlink to a genome is a genome; a dangling one is skipped rather than
+    # failing the run, and the announced count is what shows it went.
+    (tmp_path / "linked.fa").symlink_to(tmp_path / "m.fna")
+    (tmp_path / "dangling.fna").symlink_to(tmp_path / "gone.fna")
+
+    assert [p.name for p in cli_mod.discover(tmp_path)] == \
+        ["a.fasta", "linked.fa", "m.fna", "z.fa"]
+
+
+def test_discovery_looks_where_the_command_was_typed(monkeypatch, tmp_path):
+    """Under `pixi run` the cwd is the workspace manifest root, so globbing the
+    cwd would analyse the checkout — or, more often, find nothing — instead of
+    the genomes in the shell's directory. Same reason relative paths resolve
+    against `$INIT_CWD`; see invocation_dir()."""
+    typed_in = tmp_path / "genomes"
+    typed_in.mkdir()
+    (typed_in / "right.fna").write_text(">c\nACGT\n")
+    manifest_root = tmp_path / "workspace"
+    manifest_root.mkdir()
+    (manifest_root / "wrong.fna").write_text(">c\nACGT\n")
+
+    monkeypatch.chdir(manifest_root)
+    monkeypatch.setenv("INIT_CWD", str(typed_in))
+    monkeypatch.setattr(cli_mod.shutil, "which", lambda exe: "/usr/bin/conda")
+    monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
+    monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: None)
+    monkeypatch.setattr(cli_mod.subprocess, "run",
+                        lambda cmd, *a, **k: subprocess.CompletedProcess(cmd, 0))
+
+    out = tmp_path / "out"
+    assert cli_mod.main(["-o", str(out), "--until", "seqkit"]) == 0
+    assert [p.name for p in (out / "samples").iterdir()] == ["right"]
+
+
+def test_naming_assemblies_beats_the_directory(monkeypatch, tmp_path):
+    """Discovery is what happens when nothing was named, and nothing more: a
+    glob the shell expanded to one file must not quietly gain two."""
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(cli_mod.shutil, "which", lambda exe: "/usr/bin/conda")
+    monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
+    monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: None)
+    monkeypatch.setattr(cli_mod.subprocess, "run",
+                        lambda cmd, *a, **k: subprocess.CompletedProcess(cmd, 0))
+
+    for name in ("a.fna", "b.fna", "c.fna"):
+        (tmp_path / name).write_text(">c\nACGT\n")
+    out = tmp_path / "out"
+
+    assert cli_mod.main(["a.fna", "-o", str(out), "--until", "seqkit"]) == 0
+    assert [p.name for p in (out / "samples").iterdir()] == ["a"]
+
+
+def test_the_modes_that_take_no_assemblies_still_take_none(monkeypatch, tmp_path):
+    """Discovery sits after the three early returns, and has to stay there:
+    standing in a directory full of genomes must not turn `--setup` or
+    `--demo` into "takes no assemblies", and must not give `--unlock` a
+    workdir full of symlinks to canonicalise."""
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    (tmp_path / "b.fna").write_text(">c\nACGT\n")
+    monkeypatch.setattr(cli_mod, "missing_conda", lambda: None)
+    monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
+    monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: None)
+    monkeypatch.setattr(cli_mod.subprocess, "run",
+                        lambda cmd, *a, **k: subprocess.CompletedProcess(cmd, 0))
+
+    assert cli_mod.main(["--setup", "--conda-prefix", str(tmp_path / "envs")]) == 0
+
+    # --demo runs the bundled plasmids, not whatever is lying around.
+    demo_out = tmp_path / "demo_out"
+    assert cli_mod.main(["--demo", "-o", str(demo_out)]) == 0
+    assert sorted(p.name for p in (demo_out / "samples").iterdir()) != ["a", "b"]
+
+    # A lock belongs to an output directory and reads no assemblies at all.
+    locked = tmp_path / "out"
+    (locked / ".comparem2").mkdir(parents=True)
+    (locked / ".comparem2" / "Snakefile").write_text("rule all:\n    input: []\n")
+    assert cli_mod.main(["-o", str(locked), "--unlock"]) == 0
+    assert not (locked / "samples").exists()
+
+
+def test_a_bare_invocation_in_an_empty_directory_says_where_it_looked(
+        monkeypatch, tmp_path):
+    """`inputs` is nargs="*" so --setup can take none, which means argparse
+    never catches an empty command line. The message names the directory
+    because the reader is usually one directory above their genomes, and it
+    names the four patterns because `.fastq` and `.fna.gz` are not among
+    them."""
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "reads.fastq").write_text("@r\nACGT\n+\n!!!!\n")
+
     with pytest.raises(SystemExit) as excinfo:
         cli_mod.main([])
-    assert "no assemblies given" in str(excinfo.value)
-    assert "--setup" in str(excinfo.value)
+    message = str(excinfo.value)
+    assert str(tmp_path.resolve()) in message
+    assert "*.fna" in message and "*.fas" in message
+    assert "--demo" in message and "--setup" in message
 
 
 def test_a_tool_subset_shares_the_environments_of_a_full_run(tmp_path):

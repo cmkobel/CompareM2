@@ -33,6 +33,14 @@ DEFAULT_CORES = 4
 # `run_settings()` has to recognise the value it produced.
 DEFAULT_OUTPUT = Path("results_comparem2")
 
+# What a command that named no assemblies runs on — v2's `config.yaml` default
+# for `input_genomes`, the same four extensions in the same order. Compressed
+# FASTA is deliberately not here: `canonicalise()` links every input to
+# `<sample>.fna` and each tool reads that path as plain text, so a `.fna.gz`
+# picked up by a bare invocation would fail inside the first rule instead of on
+# the command line.
+ASSEMBLY_SUFFIXES = (".fna", ".fa", ".fasta", ".fas")
+
 
 def _invocation() -> str:
     """The command that produced this run, for the report's provenance line.
@@ -432,6 +440,38 @@ def parse_overrides(settings: list[str]) -> dict[str, tuple[tuple[str, str], ...
     }
 
 
+def discover(directory: Path) -> list[Path]:
+    """The assemblies in `directory`, for a command that named none.
+
+    v2 shipped `input_genomes: "*.fna *.fa *.fasta *.fas"` in `config.yaml` and
+    let Snakemake glob it, so a bare `comparem2` analysed the directory it was
+    typed in. That is the shortest useful thing to type, and it survived the
+    rewrite only as the error message telling you to type more.
+
+    Not the shell's glob, so three things it gets for free have to be done here
+    — all three measured rather than assumed:
+
+    - **Hidden files are skipped.** `Path.glob` is not `glob.glob` and not the
+      shell: it matches a leading dot, so `._116_2.fna` — the AppleDouble file
+      a mac leaves on a shared volume — would arrive as a sample of its own.
+    - **Directories are skipped.** `batch.fna/` matches the pattern and
+      `stat()` on it succeeds, which is how a directory once showed up as a
+      4.1 kB plasmid in the TUI's sample list.
+    - **The order is fixed.** Sorted, because a directory listing is not, and
+      two runs over the same directory should produce the same sample order.
+
+    It looks in the directory the command was *typed* in rather than the cwd
+    (see `invocation_dir()`), and it does not recurse: a results directory from
+    an earlier run in the same place cannot feed the next one, and `-o` is not
+    consulted to arrange that.
+    """
+    found = [path
+             for suffix in ASSEMBLY_SUFFIXES
+             for path in directory.glob(f"*{suffix}")
+             if path.is_file() and not path.name.startswith(".")]
+    return sorted(found)
+
+
 def canonicalise(inputs: list[Path], workdir: Path) -> tuple[str, ...]:
     """Link each input to <workdir>/samples/<sample>/<sample>.fna.
 
@@ -529,9 +569,12 @@ def setup_environments(selected: list[str] | None, databases: Path,
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="comparem2", description="A wide view of a set of assemblies.")
-    # `*` rather than `+` because --setup takes none. A bare invocation is
-    # checked below and still says what is missing.
-    p.add_argument("inputs", nargs="*", type=Path, help="assembly FASTA files")
+    # `*` rather than `+` because --setup takes none, and because naming none
+    # is an invocation in its own right: see discover().
+    p.add_argument("inputs", nargs="*", type=Path,
+                   help="assembly FASTA files (default: the "
+                        + ", ".join(f"*{suffix}" for suffix in ASSEMBLY_SUFFIXES)
+                        + " files in the directory you are in)")
     p.add_argument("-o", "--output", type=Path, default=DEFAULT_OUTPUT)
     p.add_argument("-d", "--databases", type=Path, default=None,
                    help="where databases live; shared across runs (default: "
@@ -671,7 +714,22 @@ def main(argv: list[str] | None = None) -> int:
               "the two should come out identical", file=sys.stderr)
 
     if not args.inputs:
-        raise SystemExit("no assemblies given — pass one or more FASTA files, "
+        # v2's behaviour, restored: a bare `comparem2` runs on the directory it
+        # was typed in. Announced rather than silent, and with the directory
+        # named, because the failure this can produce is running on the wrong
+        # set of genomes — which a count against a path catches immediately and
+        # a count alone does not. `--setup`, `--demo` and `--unlock` never get
+        # here; each returns or fills `inputs` above.
+        args.inputs = discover(base)
+        if args.inputs:
+            print(f"no assemblies named, so using the "
+                  f"{counted(len(args.inputs), 'assembly', 'assemblies')} "
+                  f"in {base}", file=sys.stderr)
+
+    if not args.inputs:
+        patterns = ", ".join(f"*{suffix}" for suffix in ASSEMBLY_SUFFIXES)
+        raise SystemExit(f"no assemblies given, and none found in {base} "
+                         f"({patterns}) — name one or more FASTA files, "
                          "--demo to run the bundled ones, or --setup to deploy "
                          "the tool environments")
 

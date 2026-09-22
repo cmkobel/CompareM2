@@ -1,8 +1,8 @@
 # Usage
 
 ```bash
-comparem2 <assemblies>... [options]            # conda, or pixi global
-pixi run comparem2 <assemblies>... [options]   # a pixi workspace, or a git checkout
+comparem2 [assemblies]... [options]            # conda, or pixi global
+pixi run comparem2 [assemblies]... [options]   # a pixi workspace, or a git checkout
 ```
 
 The examples below use the first form. Inside a pixi workspace or a git
@@ -20,6 +20,41 @@ includes under `pixi run`, which would otherwise resolve them against the
 workspace root instead of your shell's directory. Inputs, `--output` and
 `--databases` are all resolved against where you typed the command, so results
 land next to the genomes.
+
+### Naming none of them
+
+Standing in the directory that holds the genomes, the assemblies can be left
+off entirely:
+
+```bash
+cd genomes
+comparem2
+```
+
+That runs on the `*.fna`, `*.fa`, `*.fasta` and `*.fas` files in that
+directory, and says so before anything else happens:
+
+```
+no assemblies named, so using the 4 assemblies in /data/genomes
+4 assemblies, 14 tools
+```
+
+Read that line. It is the one place a run over the wrong set of genomes shows
+up, and the directory is printed for exactly that reason. Four things it does
+*not* pick up, each of them on purpose:
+
+- **Subdirectories.** The search is one directory deep, so `results_comparem2/`
+  from an earlier run in the same place cannot feed the next one.
+- **Hidden files.** Including the `._genome.fna` files a mac leaves on a shared
+  volume, which a shell glob would not have shown you either.
+- **Compressed FASTA.** `genome.fna.gz` is not an extension in the list; every
+  tool reads the file as plain text.
+- **Anything else.** `.fastq`, `.gbk`, `.txt` and the rest are ignored, so a
+  directory holding reads beside the assemblies is not a problem.
+
+Naming even one assembly turns the search off — it is what happens when nothing
+was named, and nothing more. In an empty directory the run stops and says where
+it looked.
 
 ## Options
 
