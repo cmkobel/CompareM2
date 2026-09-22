@@ -38,6 +38,7 @@ land next to the genomes.
 | `--keep-going` | off | keep running independent tools after a failure |
 | `--dry-run` | off | show what would run |
 | `--report-only` | off | re-render the report from existing outputs |
+| `--on-report COMMAND` | `$COMPAREM2_ON_REPORT` | shell command to run once the report is written |
 | `--unlock` | off | release a stale lock on `--output` and exit; takes no assemblies |
 | `--version` | | print the version and exit |
 
@@ -439,6 +440,55 @@ comparem2 *.fna --report-only
 
 Sections appear only when their outputs exist, so a partial run still gives a
 readable document.
+
+## Doing something with the report when it is ready
+
+`--on-report` takes a shell command and runs it once the report has been
+written. The report's location arrives in the environment, not in the command
+string:
+
+| Variable | What it holds |
+|---|---|
+| `$COMPAREM2_REPORT` | the absolute path of `report.html` |
+| `$COMPAREM2_OUTPUT` | the output directory it sits in |
+
+```bash
+comparem2 *.fna --on-report 'mutt -s "CompareM2" -a "$COMPAREM2_REPORT" -- you@example.org < /dev/null'
+```
+
+Note the **single** quotes: the variables are the hook's to expand, not your
+shell's. Quote `"$COMPAREM2_REPORT"` inside the command too, so an output
+directory with a space in its name survives.
+
+Set `$COMPAREM2_ON_REPORT` to make it every run, which is what a queue run
+nobody is watching needs:
+
+```bash
+export COMPAREM2_ON_REPORT='mutt -s "CompareM2" -a "$COMPAREM2_REPORT" -- you@example.org < /dev/null'
+```
+
+`--on-report` on the command line overrides the variable, and
+`COMPAREM2_ON_REPORT=` (empty) disarms it for one shell without unsetting it.
+Use the variable rather than a shell alias: aliases are not expanded in the
+non-interactive shell an `sbatch` script runs in, which is exactly the run
+worth being told about.
+
+Four things it is careful about:
+
+- **It runs on a partial run.** `--keep-going` salvaging twelve tools out of
+  thirteen still produces a report, and the hook still fires. This is what
+  `comparem2 … && mail …` cannot express, because the run exits nonzero.
+- **It does not run when no report was written.** A run that produced nothing
+  writes nothing, and the hook stays silent rather than mailing whatever an
+  earlier run left in that directory.
+- **Its exit status is reported, not adopted.** A mail server refusing a large
+  attachment does not turn a finished run into a failed one.
+- **`$COMPAREM2_ON_REPORT` is removed from the hook's own environment**, so a
+  hook that itself runs `comparem2` does not recurse.
+
+Mail is the example, not the limit — the command is yours, and `rsync`, a
+webhook or a `chmod` are all the same shape. Note that a self-contained
+`report.html` can exceed the 10–25 MB most mail relays accept.
 
 ## After a run is killed
 

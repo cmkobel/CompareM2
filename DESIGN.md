@@ -303,6 +303,16 @@ something already published. The post-mortems are in
 - **Commands are argument lists, never shell strings.** A tool that writes to
   stdout declares `stdout_to_output=True`; the redirect is added by whatever
   runs it. The same discipline applies to database `fetch` steps.
+
+  **One exception, and it is not a precedent: `run_hook()`.** `--on-report`
+  takes the user's own command and runs it under `shell=True`, because a hook
+  that could not hold a pipe or a redirect could not express the thing it
+  exists for. The rule above protects command lines *we* assemble from
+  `catalogue.py`, where a shell is an injection surface over data the user did
+  not write. Nothing else in the package may follow it, and the report's
+  location reaches the hook through `$COMPAREM2_REPORT` rather than by being
+  substituted into the string — which is also what makes an output directory
+  with a space in its name survive.
 - **"Has this already run" is answered from the declared outputs, by one
   function.** `tools.completion()`, counted per unit of work — per genome for a
   genome-scope tool. The TUI's opening state, `any_outputs_exist` and the

@@ -3326,3 +3326,57 @@ all reach for `self.query_one(DataTable)` — which looked like a crash waiting
 for the first job event to arrive under an open modal. It is not:
 `App.query_one` scopes to the default screen, so it still resolves to the tool
 table while a modal is up. Checked directly rather than reasoned about.
+
+## 2026-09-21 — `--on-report`, and why it is a variable rather than an alias
+
+Asked for as "run a command that is handed the report path", the mailing case
+in mind. **The path was never the missing piece.** `report.py` writes
+`workdir / "report.html"` and `workdir` is absolute by the time it gets there,
+so the location is fully determined before the run starts and both interfaces
+already print it — `report: <path>` on stderr, `Report:` in the TUI's log.
+`comparem2 *.fna -o out && mail … out/report.html` needs nothing new.
+
+What the shell cannot express is **whether this run wrote that report**:
+
+- `&&` skips the command on a partial run, which is the one `--keep-going`
+  exists to produce — twelve tools out of thirteen, a report describing all
+  twelve, and a nonzero exit.
+- `;` plus `[ -f out/report.html ]` fires on a report an earlier run left in
+  the same directory, because the nothing-ran branch returns before
+  `render_report` and never touches the old file.
+
+That distinction is one line inside `main()` and a fiddly, wrong-by-default
+guard outside it. The flag exists for that, not for path discovery.
+
+**The environment, not the string.** `$COMPAREM2_REPORT` and
+`$COMPAREM2_OUTPUT` are exported into the hook rather than substituted into it.
+A `{report}` interpolated into a shell string breaks the first time an output
+directory has a space in its name, and this project keeps `116_2
+duplicate.fna` around precisely because that case is not hypothetical.
+
+**`shell=True`, once.** The rule *commands are argument lists, never shell
+strings* governs the command lines we generate from `catalogue.py`, where a
+shell would be an injection surface over data we assembled. This one is the
+user's own and wants a pipe and a redirect. `run_hook()`'s docstring says
+which rule it is not violating; nothing else in the package may follow it.
+
+**`$COMPAREM2_ON_REPORT` over a shell alias.** Carl's first thought was an
+alias, and an alias is the one mechanism that fails in the case worth having:
+`sbatch` runs a non-interactive shell that never sources `.bashrc`, so the
+alias is gone for exactly the queue run nobody is watching. It also misses
+`cm2` and `pixi run comparem2`. The variable is the same shape as
+`$COMPAREM2_DATABASES` and `$COMPAREM2_CONDA_PREFIX`, with the flag winning
+over it. Empty is unset, so one shell can disarm it.
+
+**Three things it deliberately does not do.** Fire when no report was written;
+fold the hook's exit status into the run's (a relay refusing a 40 MB
+attachment is not a failed analysis); or pass `$COMPAREM2_ON_REPORT` down to
+the hook, so a hook that runs `comparem2` cannot recurse without a bound.
+
+Not surfaced in `run_settings()`: that row is four *locations*, sized for
+paths, and an arbitrary shell string would wrap the header it is drawn in. It
+is announced on its own line before the run instead, on the same principle as
+the `execution:` line — silent in the unremarkable case, loud when a variable
+exported months ago is about to do something.
+
+Ten tests, 309 to **319**.

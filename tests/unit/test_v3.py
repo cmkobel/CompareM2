@@ -3113,6 +3113,166 @@ def test_run_settings_recognises_the_default_output(monkeypatch, tmp_path):
     assert rows["tool envs"] == "unset", "None is not a path to print"
 
 
+# --- --on-report ---------------------------------------------------
+
+
+def _hook_main(monkeypatch, tmp_path, argv: list[str], out: Path) -> int:
+    """Run `main` through to the hook, with Snakemake and the report stubbed.
+
+    `--report-only` skips Snakemake, so the report is the only thing that has
+    to be faked — and faking it is what lets the test name the exact path the
+    hook is supposed to be handed.
+    """
+    out.mkdir(parents=True, exist_ok=True)
+    report = out / "report.html"
+    report.write_text("<html></html>")
+    monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
+    monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: report)
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    return cli_mod.main([str(tmp_path / "a.fna"), "-o", str(out),
+                         "--until", "seqkit", "--report-only", *argv])
+
+
+def test_the_hook_is_handed_the_report_and_the_output_directory(monkeypatch, tmp_path):
+    """Through the environment rather than by substitution, so an output
+    directory with a space in its name survives. A `{report}` interpolated
+    into a shell string would not, which is why `116_2 duplicate.fna` is in
+    the test genomes."""
+    import shlex
+
+    monkeypatch.delenv("COMPAREM2_ON_REPORT", raising=False)
+    out = tmp_path / "out dir"
+    witness = tmp_path / "witness"
+    code = _hook_main(
+        monkeypatch, tmp_path,
+        ["--on-report",
+         f'printf "%s\\n%s\\n" "$COMPAREM2_REPORT" "$COMPAREM2_OUTPUT" '
+         f"> {shlex.quote(str(witness))}"],
+        out)
+    assert code == 0
+    got = [Path(line).resolve() for line in witness.read_text().splitlines()]
+    assert got == [(out / "report.html").resolve(), out.resolve()]
+
+
+def test_the_hook_flag_beats_the_variable(monkeypatch, tmp_path):
+    """Precedence is --on-report, then $COMPAREM2_ON_REPORT, then nothing."""
+    import shlex
+
+    witness = tmp_path / "witness"
+    monkeypatch.setenv("COMPAREM2_ON_REPORT", f"echo env > {shlex.quote(str(witness))}")
+    assert _hook_main(monkeypatch, tmp_path,
+                      ["--on-report", f"echo flag > {shlex.quote(str(witness))}"],
+                      tmp_path / "out") == 0
+    assert witness.read_text().strip() == "flag"
+
+
+def test_the_variable_runs_the_hook_with_no_flag(monkeypatch, tmp_path):
+    import shlex
+
+    witness = tmp_path / "witness"
+    monkeypatch.setenv("COMPAREM2_ON_REPORT", f"echo env > {shlex.quote(str(witness))}")
+    assert _hook_main(monkeypatch, tmp_path, [], tmp_path / "out") == 0
+    assert witness.read_text().strip() == "env"
+
+
+def test_an_empty_variable_is_the_same_as_an_unset_one(monkeypatch):
+    """`COMPAREM2_ON_REPORT=` disarms it for one shell without unsetting it."""
+    monkeypatch.setenv("COMPAREM2_ON_REPORT", "")
+    assert cli_mod.default_on_report() is None
+    monkeypatch.setenv("COMPAREM2_ON_REPORT", "true")
+    assert cli_mod.default_on_report() == "true"
+
+
+def test_the_hook_does_not_inherit_the_variable_that_started_it(monkeypatch, tmp_path):
+    """A hook that itself runs comparem2 would otherwise recurse without a
+    bound."""
+    import shlex
+
+    witness = tmp_path / "witness"
+    monkeypatch.setenv("COMPAREM2_ON_REPORT", "echo should-not-be-seen")
+    assert _hook_main(
+        monkeypatch, tmp_path,
+        ["--on-report",
+         f'echo "[${{COMPAREM2_ON_REPORT-unset}}]" > {shlex.quote(str(witness))}'],
+        tmp_path / "out") == 0
+    assert witness.read_text().strip() == "[unset]"
+
+
+def test_a_failing_hook_does_not_make_a_finished_run_look_failed(monkeypatch, tmp_path,
+                                                                 capsys):
+    """Whether the analyses succeeded is a different question from whether the
+    mail was sent — a relay refusing a 40 MB attachment must not turn a
+    complete run into a nonzero exit."""
+    monkeypatch.delenv("COMPAREM2_ON_REPORT", raising=False)
+    assert _hook_main(monkeypatch, tmp_path, ["--on-report", "exit 3"],
+                      tmp_path / "out") == 0
+    assert "exited 3" in capsys.readouterr().err
+
+
+def test_a_run_that_produced_nothing_runs_no_hook(monkeypatch, tmp_path):
+    """The one thing the shell cannot express. `comparem2 && mail` skips the
+    mail on a partial run, and `comparem2; mail` cannot tell a report this run
+    wrote from one a previous run left in the same directory — so the hook has
+    to sit on the same side of the `nothing ran` branch the report does."""
+    import shlex
+    import types
+
+    witness = tmp_path / "mailed"
+    monkeypatch.delenv("COMPAREM2_ON_REPORT", raising=False)
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
+    monkeypatch.setattr(cli_mod, "missing_conda", lambda: None)
+    monkeypatch.setattr(cli_mod, "any_outputs_exist", lambda *a, **k: False)
+    monkeypatch.setattr(cli_mod, "render_report",
+                        lambda *a, **k: pytest.fail("no report was due"))
+    # The Snakemake call, failing. Patched on the module cli.py imported, and
+    # restored by monkeypatch.
+    monkeypatch.setattr(cli_mod.subprocess, "run",
+                        lambda *a, **k: types.SimpleNamespace(returncode=1))
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    code = cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"),
+                         "--until", "seqkit", "--profile", "none",
+                         "--on-report", f"touch {shlex.quote(str(witness))}"])
+    assert code == 1
+    assert not witness.exists(), "a run with no report must not fire the hook"
+
+
+def test_the_hooks_relative_paths_mean_where_the_command_was_typed(monkeypatch,
+                                                                   tmp_path):
+    """`invocation_dir()`'s reason: under `pixi run` the cwd is the manifest
+    root, not the directory the user typed in."""
+    typed_in = tmp_path / "typed in"
+    typed_in.mkdir()
+    code, out = cli_mod.run_hook("pwd", tmp_path / "report.html", tmp_path,
+                                 base=typed_in, capture=True)
+    assert code == 0
+    assert Path(out.strip()).resolve() == typed_in.resolve()
+
+
+def test_no_hook_is_not_a_subprocess(monkeypatch, tmp_path):
+    """`delete before guarding`: the unremarkable case runs nothing at all."""
+    import types
+
+    monkeypatch.setattr(cli_mod.subprocess, "run",
+                        lambda *a, **k: pytest.fail("nothing should be run"))
+    assert cli_mod.run_hook(None, tmp_path / "report.html", tmp_path) == (0, "")
+    assert cli_mod.run_hook("", tmp_path / "report.html", tmp_path) == (0, "")
+    del types
+
+
+def test_the_tui_carries_the_hook_too(tmp_path):
+    """Two call sites, one function — a report rendered by the interface is the
+    same event as one rendered by the CLI."""
+    from comparem2 import tui as tui_mod
+
+    assert tui_mod.run_hook is cli_mod.run_hook
+    app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                              on_report="echo hi", base=tmp_path)
+    assert app.on_report == "echo hi"
+    assert app.base == tmp_path
+
+
 def test_a_rejected_command_line_is_an_error_event(monkeypatch, tmp_path):
     """Snakemake refuses a command line by calling `exit()`, and SystemExit is
     not an Exception — so the runner's handler missed it and `threading`

@@ -30,7 +30,7 @@ from textual.timer import Timer
 from textual.widgets import DataTable, Footer, Header, ProgressBar, RichLog, Static
 
 from .catalogue import CATALOGUE
-from .cli import any_outputs_exist, lock_files, run_settings, unlock
+from .cli import any_outputs_exist, lock_files, run_hook, run_settings, unlock
 from .report import render_report
 from .runner import Event, run
 from .snakefile import prepare
@@ -573,7 +573,9 @@ class ComparemTUI(App):
                  keep_going: bool = False,
                  conda_prefix: Path | None = None,
                  command: str | None = None,
-                 profile: str | None = None) -> None:
+                 profile: str | None = None,
+                 on_report: str | None = None,
+                 base: Path | None = None) -> None:
         super().__init__()
         self.inputs = inputs
         self.workdir = workdir
@@ -591,6 +593,12 @@ class ComparemTUI(App):
         # Passed in rather than read from sys.argv here: the CLI already
         # renders it, and the TUI's job is to display what it was given.
         self.command = command
+        # `--on-report`, already resolved against `$COMPAREM2_ON_REPORT` by the
+        # CLI, and the directory its relative paths mean. Both arrive resolved
+        # for the same reason `command` does: precedence is one decision and it
+        # is made in one place.
+        self.on_report = on_report
+        self.base = base
         # Seeded from `--until` when given, and otherwise empty: the user
         # chooses. Selecting all fourteen by default put gtdbtk's 60.8 GB
         # download one keypress from a user who had not read the table yet, and
@@ -1134,6 +1142,22 @@ class ComparemTUI(App):
                                        self.databases, self.samples,
                                        command=self.command)
                 self.call_from_thread(log.write, f"[bold green]Report:[/] {report}")
+                if self.on_report:
+                    self.call_from_thread(
+                        log.write, f"[dim]on report: {escape(self.on_report)}[/]")
+                    # Captured, not inherited: this runs while a full-screen
+                    # interface owns the terminal, and a hook that printed one
+                    # line to stdout would draw it over the table. Into the log
+                    # instead, where the rest of the run's output already is.
+                    code, out = run_hook(self.on_report, report, self.workdir,
+                                         self.base, capture=True)
+                    for line in out.splitlines():
+                        self.call_from_thread(log.write, f"[dim]{escape(line)}[/]")
+                    if code:
+                        self.call_from_thread(
+                            log.write,
+                            f"[yellow]The on-report command exited {code}.[/] "
+                            f"The report is at {report}")
         finally:
             self.running = False
             self.call_from_thread(self.stop_activity)
@@ -1305,9 +1329,11 @@ def launch(inputs: list[Path], workdir: Path, databases: Path,
            overrides: dict[str, tuple[tuple[str, str], ...]] | None = None,
            keep_going: bool = False,
            conda_prefix: Path | None = None, command: str | None = None,
-           profile: str | None = None) -> None:
+           profile: str | None = None, on_report: str | None = None,
+           base: Path | None = None) -> None:
     app = ComparemTUI(inputs, workdir, databases, samples, cores, selected,
-                      overrides, keep_going, conda_prefix, command, profile)
+                      overrides, keep_going, conda_prefix, command, profile,
+                      on_report, base)
     app.run()
     for line in departure(app.left_mid_run, app.stop_requested, profile,
                           app.slurm_run_id, workdir):

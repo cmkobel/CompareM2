@@ -81,6 +81,66 @@ def default_conda_prefix() -> Path:
     return Path.home() / ".comparem2" / "envs"
 
 
+def default_on_report() -> str | None:
+    """A command to run once the report has been written, or None.
+
+    `$COMPAREM2_ON_REPORT` exists for the reason the two path variables do: it
+    is set once in a shell profile and then means *every* run, and `--on-report`
+    has to be retyped. The run worth mailing is the queue run nobody is
+    watching, and that one is submitted by a script whose command line was
+    written before anyone wanted a hook.
+
+    Empty is the same as unset, so `COMPAREM2_ON_REPORT=` disarms it for one
+    shell without unsetting it.
+    """
+    return os.environ.get("COMPAREM2_ON_REPORT") or None
+
+
+def run_hook(command: str | None, report: Path, workdir: Path,
+             base: Path | None = None, capture: bool = False,
+             ) -> tuple[int, str]:
+    """Run `--on-report`, with the report's location in its environment.
+
+    Through the environment rather than by substituting into the string:
+    `$COMPAREM2_REPORT` and `$COMPAREM2_OUTPUT` survive an output directory
+    with a space in its name, and a `{report}` interpolated into a shell string
+    does not. `116_2 duplicate.fna` is in the test genomes because that case is
+    not hypothetical.
+
+    `shell=True`, and the only place in this package where a command is a
+    string rather than an argument list. The rule that says otherwise governs
+    the command lines *we* generate from `catalogue.py`, where a shell is an
+    injection surface over data we assembled; this one is the user's own, and a
+    hook that could not hold a pipe or a redirect could not express the thing
+    it exists for.
+
+    The hook's exit status is returned and reported, never folded into the
+    run's. Whether the analyses succeeded is a different question from whether
+    the mail was sent, and a mail server refusing a 40 MB attachment must not
+    make a finished run look failed.
+
+    Returns `(returncode, output)`; `output` is empty unless `capture`, which
+    the TUI needs because a subprocess writing to an inherited stdout would
+    scribble over a full-screen interface.
+    """
+    if not command:
+        return 0, ""
+    env = {**os.environ,
+           "COMPAREM2_REPORT": str(report),
+           "COMPAREM2_OUTPUT": str(workdir)}
+    # Removed from the child, so a hook that itself runs comparem2 — a
+    # re-render, a second output directory — does not inherit the variable that
+    # started it and recurse without a bound.
+    env.pop("COMPAREM2_ON_REPORT", None)
+    # The hook's relative paths mean what they looked like they meant, for
+    # invocation_dir()'s reason: under `pixi run` the cwd is the manifest root.
+    base = base if base is not None else invocation_dir()
+    result = subprocess.run(command, shell=True, cwd=str(base), env=env,
+                            capture_output=capture, text=capture)
+    output = ((result.stdout or "") + (result.stderr or "")) if capture else ""
+    return result.returncode, output
+
+
 def _same(a: Path, b: Path) -> bool:
     """Two paths naming the same place, whether or not either exists."""
     return a.expanduser().resolve() == b.expanduser().resolve()
@@ -533,6 +593,14 @@ def main(argv: list[str] | None = None) -> int:
                         "then exit; needs no assemblies")
     p.add_argument("--report-only", action="store_true",
                    help="re-render the report from existing outputs")
+    # A shell string, unlike every other command this package builds — see
+    # run_hook(). Defaulted below rather than here, so that --help does not
+    # print whatever the user happens to have exported.
+    p.add_argument("--on-report", metavar="COMMAND", default=None,
+                   help="shell command to run once the report is written, with "
+                        "$COMPAREM2_REPORT and $COMPAREM2_OUTPUT naming the "
+                        "report and the output directory; does not run when no "
+                        "report was written (default: $COMPAREM2_ON_REPORT)")
     args = p.parse_args(argv)
 
     # Every path the user typed is relative to where they typed it, which under
@@ -624,6 +692,7 @@ def main(argv: list[str] | None = None) -> int:
     profile: str | None = resolve_profile(args.profile, base)
     databases: Path = resolve(args.databases or default_databases(), base)
     conda_prefix: Path = resolve(args.conda_prefix or default_conda_prefix(), base)
+    on_report: str | None = args.on_report or default_on_report()
     samples = canonicalise(inputs, workdir)
 
     tools = CATALOGUE.closure(args.until)
@@ -665,6 +734,13 @@ def main(argv: list[str] | None = None) -> int:
           + ("" if conda_prefix.exists() else " (none built yet)"),
           file=sys.stderr)
 
+    # Announced before the run, not after it. The variable's whole point is
+    # that it is exported once and then forgotten, and a run that is going to
+    # mail someone at the end should say so while there is still time to stop
+    # it. Silent when no hook is set, which is the unremarkable case.
+    if on_report:
+        print(f"on report: {on_report}", file=sys.stderr)
+
     overrides = parse_overrides(args.set)
 
     if args.tui:
@@ -681,7 +757,7 @@ def main(argv: list[str] | None = None) -> int:
                selected=args.until, overrides=overrides,
                keep_going=args.keep_going,
                conda_prefix=conda_prefix, command=_invocation(),
-               profile=profile)
+               profile=profile, on_report=on_report, base=base)
         return 0
 
     snakefile = prepare(CATALOGUE, args.until, workdir, databases, samples,
@@ -768,6 +844,15 @@ def main(argv: list[str] | None = None) -> int:
     report = render_report(CATALOGUE, args.until, workdir, databases, samples,
                            command=_invocation())
     print(f"report: {report}", file=sys.stderr)
+    # After the report exists and before the return, so it fires on a partial
+    # run too. That is the case the shell cannot express: `comparem2 && mail`
+    # skips the mail exactly when `--keep-going` has salvaged twelve tools out
+    # of thirteen, and `comparem2; mail` cannot tell that report from the one a
+    # previous run left behind.
+    hook, _ = run_hook(on_report, report, workdir, base)
+    if hook:
+        print(f"the --on-report command exited {hook}; the report is at "
+              f"{report}", file=sys.stderr)
     if failure:
         print("some tools failed — the report covers the ones that did not",
               file=sys.stderr)
