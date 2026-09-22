@@ -3358,6 +3358,46 @@ def test_pangenome_figure_stays_inside_its_viewbox(tmp_path):
     assert len(svg) < 400_000, f"{len(svg):,} bytes for a 60-genome figure"
 
 
+def test_pangenome_tooltip_describes_the_block_not_one_gene(tmp_path):
+    """A block is a pattern, and on a real set the widest one is thousands of
+    clusters — 2,169 of 3,558 on the seven-genome Staphylococcus run. So the
+    tooltip has to say which genomes, how many clusters, and how many of the
+    sampled names there were, or a handful of acronyms reads as the whole
+    block."""
+    from comparem2.report import draw_pangenome, _pattern_hint
+    genomes = ["A", "B", "C"]
+    patterns = [((True, True, True), 100), ((False, False, True), 40)]
+    hints = [
+        _pattern_hint(patterns[0][0], 100, 140, genomes, ["dnaA", "gyrB"], 30),
+        _pattern_hint(patterns[1][0], 40, 140, genomes, [], 0),
+    ]
+    assert "All 3 genomes" in hints[0] and "100 clusters (71.4%)" in hints[0]
+    assert "30 named: dnaA, gyrB, …" in hints[0], hints[0]
+    assert "Only C" in hints[1] and "No cluster here carries a gene name" in hints[1]
+
+    svg = draw_pangenome(genomes, patterns, hints=hints)
+    # One hover target per pattern, over the whole column: a target per filled
+    # cell is the million-element figure the row paths exist to avoid.
+    assert svg.count("<title>") == len(patterns)
+    assert svg.count("<path") == len(genomes)
+    assert "All 3 genomes" in svg
+
+
+def test_pangenome_tooltips_stay_bounded(tmp_path):
+    """Hover targets cannot be run-merged the way the row paths are, so a set
+    with more patterns than pixels must not turn each one into markup nobody
+    can point at."""
+    from comparem2.report import draw_pangenome
+    n, patterns = 60, []
+    for i in range(4000):
+        patterns.append((tuple((j + i) % 7 == 0 for j in range(n)), 1))
+    hints = [f"pattern {i} — 1 cluster" for i in range(len(patterns))]
+    svg = draw_pangenome([f"g{i}" for i in range(n)], patterns, hints=hints)
+    assert svg.count("<title>") == 0, \
+        "every block is sub-pixel here, so none of them is a hover target"
+    assert len(svg) < 400_000, f"{len(svg):,} bytes for a 60-genome figure"
+
+
 @pytest.mark.parametrize("value,expected", [
     ("2,091", True),    # was left-aligned: float("2,091") raises
     ("116_2", False),   # was right-aligned: float("116_2") == 1162.0

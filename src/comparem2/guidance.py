@@ -679,7 +679,14 @@ GUIDANCE: dict[str, Guidance] = {
              "many clusters share it. The solid block at the far left is the core; ragged "
              "middle blocks are subsets, which often follow phylogeny or a shared plasmid or "
              "prophage; blocks at the far right are genome-specific. A row visibly emptier "
-             "than the others usually means a fragmented assembly, not real gene loss."),
+             "than the others usually means a fragmented assembly, not real gene loss. "
+             "Hovering a block names the genomes it covers, how many clusters it holds, "
+             "and the first few of those that carry a gene name — a block is a whole "
+             "pattern rather than a gene, so on a set of a few thousand clusters the core "
+             "block alone is most of them, and Panaroo names a cluster only where the "
+             "annotations agreed, which on a typical accessory genome is a minority of "
+             "them. Blocks narrower than a pixel get no tooltip because nothing can point "
+             "at them; the table below covers those by pattern."),
             ("Pangenome partitions",
              "Which table you get depends on how many genomes you ran. From 20 genomes up "
              "you get the conventional Core/Soft core/Shell/Cloud bins. The ≥99% core "

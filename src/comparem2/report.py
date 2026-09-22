@@ -1607,6 +1607,18 @@ def _section_amrfinder(tool: Tool, ctx: Context, workdir: Path) -> str:
 # right way round: they were narrower than a pixel to begin with.
 _PANGENOME_SUBPATH_BUDGET = 12_000
 
+# Hover targets are one transparent rect per pattern, and unlike the row paths
+# they cannot be run-merged — so they need their own bound. A block narrower
+# than a pixel cannot be hit with a pointer anyway, which is what the floor
+# costs: on the seven-genome Staphylococcus set it drops 23 of 83 patterns and
+# the remaining 60 still cover 99.2% of the clusters.
+_PANGENOME_HOVER_MINIMUM = 1.0
+_PANGENOME_HOVER_BUDGET = 1_500
+
+# How much of a block's contents the tooltip names before it stops.
+_HOVER_GENE_EXAMPLES = 8
+_HOVER_MEMBER_LIMIT = 6
+
 
 def _coarsen(runs: list[list[float]], cap: int) -> list[list[float]]:
     """Merge the narrowest gaps until at most `cap` runs remain."""
@@ -1624,7 +1636,7 @@ def _coarsen(runs: list[list[float]], cap: int) -> list[list[float]]:
 
 
 def draw_pangenome(names: list[str], patterns: list[tuple[tuple[bool, ...], int]],
-                   width: int = WIDTH) -> str:
+                   width: int = WIDTH, hints: list[str] | None = None) -> str:
     """The pangenome presence matrix, as inline SVG.
 
     Genes sharing a presence pattern are drawn as one block whose width is
@@ -1639,6 +1651,12 @@ def draw_pangenome(names: list[str], patterns: list[tuple[tuple[bool, ...], int]
     never seen. And a row is one `<path>` whose subpaths are the maximal runs
     where that genome is present, rather than one `<rect>` per block, which at
     100 genomes x 10,000 patterns would be a million elements.
+
+    `hints` is one tooltip string per pattern, drawn as a transparent rect over
+    the whole column. Per column and not per filled cell, because a target per
+    cell is exactly the million-element figure the row paths exist to avoid —
+    so the blank half of a column answers too, which is why the text names the
+    genomes the pattern is in rather than assuming the pointer is on one.
     """
     if not names or not patterns:
         return '<p class="missing">No pangenome.</p>'
@@ -1691,6 +1709,20 @@ def draw_pangenome(names: list[str], patterns: list[tuple[tuple[bool, ...], int]
             d.append(f"M{x0:.2f},{y + 2:.1f}h{w:.2f}v{row - 4:.1f}h{-w:.2f}z")
         parts.append(
             f'<path d="{"".join(d)}" fill="#2b6cb0" fill-opacity="0.85"/>')
+
+    if hints:
+        # Widest first, so what survives the budget is what a pointer could
+        # plausibly have been aiming at.
+        targets = sorted(
+            ((x1 - x0, x0, hint) for (x0, x1), hint in zip(edges, hints)
+             if hint and x1 - x0 >= _PANGENOME_HOVER_MINIMUM),
+            key=lambda t: -t[0])
+        for w, x0, hint in targets[:_PANGENOME_HOVER_BUDGET]:
+            parts.append(
+                f'<rect x="{x0:.2f}" y="0" width="{w:.2f}" '
+                f'height="{n * row:.1f}" fill="transparent">'
+                f"<title>{html.escape(hint)}</title></rect>"
+            )
 
     parts.append(
         f'<line x1="{label_room:.1f}" y1="{n * row + 2:.1f}" x2="{width}" '
@@ -1760,6 +1792,44 @@ def _partitions(shared: dict[int, int], n: int, total: int) -> str:
     return _table(rows, header=["Shared by", "Gene clusters", "Share"])
 
 
+def _pattern_hint(pattern: tuple[bool, ...], count: int, total: int,
+                  names: list[str], examples: list[str], named: int) -> str:
+    """The tooltip for one block of the pangenome figure.
+
+    A block is a presence pattern, not a gene: the core block of the
+    seven-genome Staphylococcus set is 2,169 clusters, 61% of the pangenome, and
+    at full width one gene is 0.46 px. So the tooltip names the pattern and then
+    samples the gene names inside it, rather than pretending to name the gene
+    under the pointer.
+
+    Panaroo names a cluster only where the annotation agreed on one — 641 of
+    3,558 clusters in that set, and 143 of the 1,389 accessory ones — so most
+    blocks are mostly `group_NNNN`. The named count is printed rather than
+    implied, because a handful of acronyms out of hundreds otherwise reads as a
+    description of the block.
+    """
+    n = len(pattern)
+    members = [names[i] for i, p in enumerate(pattern) if p]
+    if len(members) == n:
+        who = f"All {n} genomes"
+    elif len(members) == 1:
+        who = f"Only {members[0]}"
+    elif len(members) <= _HOVER_MEMBER_LIMIT:
+        who = ", ".join(members)
+    else:
+        who = (f"{len(members)} of {n}: "
+               + ", ".join(members[:_HOVER_MEMBER_LIMIT]) + ", …")
+    share = 100 * count / total if total else 0.0
+    pct = f"{share:.1f}%" if share >= 0.05 else "<0.1%"
+    head = f"{who} — {count:,} cluster{'' if count == 1 else 's'} ({pct})"
+    if not named:
+        return f"{head}\nNo cluster here carries a gene name."
+    tail = ", ".join(examples)
+    if named > len(examples):
+        tail += ", …"
+    return f"{head}\n{named:,} named: {tail}"
+
+
 def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
     """Pangenome structure: the presence matrix, the overlaps, and the split."""
     path = ctx.out("panaroo", "gene_presence_absence.Rtab")
@@ -1786,12 +1856,23 @@ def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
     # both partition views below are derived from it, so neither can disagree
     # with the other or with the matrix.
     shared: dict[int, int] = {}
+    # Gene names for the tooltips. Only the named clusters, and only the first
+    # few per pattern: a thousand-genome run has hundreds of thousands of
+    # clusters and none of them belong in memory just to label a block.
+    examples: dict[tuple[bool, ...], list[str]] = {}
+    named: dict[tuple[bool, ...], int] = {}
     for rec in rows[1:]:
         raw = rec[1:1 + n]
         if len(raw) != n:
             continue
         pattern = tuple(raw[i].strip() == "1" for i in order)
         tally[pattern] = tally.get(pattern, 0) + 1
+        gene = rec[0].strip()
+        if gene and not gene.startswith("group_"):
+            named[pattern] = named.get(pattern, 0) + 1
+            seen = examples.setdefault(pattern, [])
+            if len(seen) < _HOVER_GENE_EXAMPLES:
+                seen.append(gene)
         k = sum(pattern)
         for i, present in enumerate(pattern):
             if present:
@@ -1806,11 +1887,17 @@ def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
     # Most-shared first, so the matrix reads core on the left.
     ordered = sorted(tally.items(), key=lambda kv: (-sum(kv[0]), -kv[1]))
 
+    hints = [_pattern_hint(pattern, cnt, total, names,
+                           examples.get(pattern, []), named.get(pattern, 0))
+             for pattern, cnt in ordered]
+
     parts = [
         f'<p class="summary">{total:,} gene clusters across {n} genomes, in '
         f"{len(tally):,} distinct presence patterns. Each block below is one "
-        "pattern, its width proportional to the number of genes sharing it.</p>",
-        draw_pangenome(names, ordered),
+        "pattern, its width proportional to the number of genes sharing it. "
+        "Hover a block for the genomes it covers and a sample of its gene "
+        "names.</p>",
+        draw_pangenome(names, ordered, hints=hints),
     ]
 
     if n <= _OVERLAP_VOCABULARY_MAXIMUM:
