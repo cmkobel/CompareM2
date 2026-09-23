@@ -6,10 +6,13 @@ nav:
   # so its nav label is set here rather than taken from a first-level heading.
   - Home: "index.md"
   - "05 quick start.md"
-  # One page, two places: the file lives at the repository root, where GitHub
-  # shows it, and is included here the same way CONTRIBUTORS.md is. A copy
-  # would drift.
+  # Both cheat sheets are pages here and nowhere else. They sat at the
+  # repository root until 2026-09-23, included into this page, so that GitHub
+  # would show them in the listing; README.md links to them instead now, and
+  # one location means the Danish one is on the site too rather than being
+  # reachable only from the repository.
   - Cheat sheet: "06 cheat sheet.md"
+  - "Snydeark (dansk)": "06 cheat sheet da.md"
   - "07 an example report.md"
   - "10 installation.md"
   - "20 usage.md"

@@ -3,19 +3,19 @@
 
    The PDF is regenerated from the repository root with:
 
-     pandoc CHEATSHEET.da.md -f markdown -t html5 -s \
+     pandoc "docs/06 cheat sheet da.md" -f markdown -t html5 -s \
        -V pagetitle="Snydeark til CompareM2" \
        --css docs/assets/cheatsheet-print.css --embed-resources \
        -o /tmp/cheatsheet-da.html
      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
        --headless --disable-gpu --no-pdf-header-footer \
-       --print-to-pdf=CHEATSHEET.da.pdf file:///tmp/cheatsheet-da.html
+       --print-to-pdf=docs/assets/CHEATSHEET.da.pdf file:///tmp/cheatsheet-da.html
 
    Chrome because there is no TeX on the machine the docs are written on, and
    its print path is the one that honours @page. Two A4 pages at these sizes;
    the second is half empty, so a paragraph can be added without repaginating.
-   Anyone editing CHEATSHEET.da.md has to run this, or the PDF goes stale
-   without anything failing. */
+   Anyone editing "docs/06 cheat sheet da.md" has to run this, or the PDF goes
+   stale without anything failing. */
 
 @page {
   size: A4;

@@ -102,7 +102,7 @@ section lists them for the run you did.
 ## Links
 
 - **Documentation**: [comparem2.readthedocs.io](https://comparem2.readthedocs.io)
-- **Cheat sheet**: [`CHEATSHEET.md`](CHEATSHEET.md). The commands on one page, from `cd` to `--set`. In Danish: [`CHEATSHEET.da.md`](CHEATSHEET.da.md), and [`CHEATSHEET.da.pdf`](CHEATSHEET.da.pdf) to hand out.
+- **Cheat sheet**: [`docs/06 cheat sheet.md`](<docs/06 cheat sheet.md>). The commands on one page, from `cd` to `--set`. In Danish: [`docs/06 cheat sheet da.md`](<docs/06 cheat sheet da.md>), and [`docs/assets/CHEATSHEET.da.pdf`](<docs/assets/CHEATSHEET.da.pdf>) to hand out.
 - **Design**: [`DESIGN.md`](DESIGN.md). What CompareM2 is and why it is shaped this way.
 - **Decision log**: [`DECISIONS.md`](DECISIONS.md). How it got here, including what was reversed and what went wrong.
 - **Status**: [`STATUS.md`](STATUS.md). What has actually been run.

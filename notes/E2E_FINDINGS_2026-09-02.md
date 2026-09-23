@@ -5,7 +5,7 @@ the three canonical docs. Every count and line reference below is as of
 2026-09-02 and several have moved since — the pipeline is 14 tools rather than
 13, the unit suite 212 tests rather than 171, and deployment is two shared
 environments rather than one per tool. Read it as a dated record, and check
-[STATUS.md](STATUS.md) before acting on anything in it.
+[STATUS.md](../STATUS.md) before acting on anything in it.
 
 Re-checked against the code on 2026-09-06. **Finding 1** is superseded by
 STATUS.md's *And it does not generalise* — the deficit is the genomes, not the

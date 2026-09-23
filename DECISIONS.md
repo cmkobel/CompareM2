@@ -3180,6 +3180,12 @@ here.
 
 ## 2026-09-17 (later) — a cheat sheet, in one file and two places, and a Danish one
 
+> **Reversed 2026-09-23.** Both sheets moved into `docs/`, the root copies and
+> the `{!CHEATSHEET.md!}` include are gone, and the Danish one is now in
+> `mkdocs.yml` — which the last paragraph below says it would not be. See the
+> 2026-09-23 entry for why. What held: it is still one file per language, and
+> the checked-in PDF still goes stale with nothing to fail.
+
 Carl asked for a short reference that starts at `cd` and ends at `--set`, for
 people who will not read `docs/20 usage.md`. 512 words, five sections, and
 every number in it taken from `catalogue.py` or the pages generated from it
@@ -3477,3 +3483,48 @@ Two tests, 324 to **326**. The first replaces fd 0 with a pipe holding a line
 and asserts the hook does not read it — checked against the unfixed code, where
 it fails with `SHOULD-NOT-BE-READ`. It is written that way on purpose: a test
 that asserted the hang would hang CI on a regression instead of failing it.
+
+## 2026-09-23 — the root is tidied, and the cheat sheets stop being root files
+
+Carl asked for the cheat sheets and "stuff" to go into `docs/`. Offered three
+readings — add the Danish sheet to the site with the files left where they
+were, move the cheat sheets, or tidy the whole root — and he took the third.
+
+**This reverses 2026-09-17's *one file, two places*,** which put `CHEATSHEET.md`
+at the root because GitHub shows root files in the listing, and made
+`docs/06 cheat sheet.md` a one-line `{!CHEATSHEET.md!}` include so a reader
+reaching it two ways could not be reading two copies. That reasoning was sound
+and the cost it avoided is real; what it bought was a GitHub listing entry,
+against a Danish sheet that was on no documentation site at all and reachable
+only by someone already browsing the repository. `README.md` links to both
+paths, so the listing entry was never the only way in.
+
+What moved:
+
+| from | to | why |
+| --- | --- | --- |
+| `CHEATSHEET.md` | `docs/06 cheat sheet.md` | replaces the include stub; its closing pointer to *usage* is kept |
+| `CHEATSHEET.da.md` | `docs/06 cheat sheet da.md` | and into `mkdocs.yml`, as *Snydeark (dansk)* |
+| `CHEATSHEET.da.pdf` | `docs/assets/CHEATSHEET.da.pdf` | beside the print CSS that renders it; mkdocs copies it, so it is downloadable from the site |
+| the Kobel et al. 2024 PDF | `papers/` | nothing referenced it, and `papers/` is what that directory is for |
+| `E2E_FINDINGS_2026-09-02.md` | `notes/` | its own first line calls it scratch notes and *not one of the three canonical docs*, so it is not documentation and not context |
+
+**One consequence is an improvement rather than a cost.** The 2026-09-17 entry
+records that the pointer to the analyses page had to be an absolute
+readthedocs URL, because a relative `docs/30 …` is right from the root and
+resolves to `docs/docs/…` once the same text is a page. With one location that
+constraint is gone, and both sheets now use `30 what analyses does it do.md`.
+
+`DESIGN.md`, `DECISIONS.md`, `STATUS.md`, `CLAUDE.md`, `README.md`, `LICENSE`,
+`citation.cff`, `CONTRIBUTORS.md` and the build files stay at the root. The
+first four are the context files `CLAUDE.md` names; the rest are read from
+there by GitHub, pip, pixi or Claude Code, and moving any of them breaks a
+tool rather than tidies anything.
+
+Every reference was followed rather than assumed: `README.md`, `STATUS.md`'s
+link to finding 3, the pandoc recipe in the header of
+`docs/assets/cheatsheet-print.css`, the Danish colophon's own two links, and
+the relative `STATUS.md` link inside the findings file, which is a directory
+deeper now. `mkdocs build --strict` is clean, which is what says the moved
+links resolve; the PDF lands at `assets/CHEATSHEET.da.pdf` in the built site,
+148 kB. 326 tests unchanged — nothing here is code.

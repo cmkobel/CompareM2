@@ -104,16 +104,15 @@ comparem2 *.fna --set bakta--force=
 Standardværdierne, du overskriver: `bakta --force`; `mashtree --genomesize
 5000000 --mindepth 5 --kmerlength 21 --sketch-size 10000`; `treecluster --method
 max_clade --threshold 0.05`; `skani -c 70`. Hvert værktøjs fulde kommandolinje
-står under [hvilke analyser laver
-den](https://comparem2.readthedocs.io/en/latest/30%20what%20analyses%20does%20it%20do/),
+står under [hvilke analyser laver den](30 what analyses does it do.md),
 genereret ud fra specifikationerne, så den ikke kan komme ud af trit med det,
 der faktisk køres.
 
 ---
 
-*Oversat fra `CHEATSHEET.md`, CompareM2 v3.4.0, 22. september 2026. Kommandoer,
-flag, stier og programmets egne udskrifter står uoversat, fordi det er dem, du
-skal skrive og læse på skærmen. Som PDF til udlevering:
-[`CHEATSHEET.da.pdf`](CHEATSHEET.da.pdf), to A4-sider, gentegnet med opskriften
-øverst i `docs/assets/cheatsheet-print.css`. Dokumentationen på
+*Oversat fra `docs/06 cheat sheet.md`, CompareM2 v3.4.0, 22. september 2026.
+Kommandoer, flag, stier og programmets egne udskrifter står uoversat, fordi det
+er dem, du skal skrive og læse på skærmen. Som PDF til udlevering:
+[`CHEATSHEET.da.pdf`](assets/CHEATSHEET.da.pdf), to A4-sider, gentegnet med
+opskriften øverst i `docs/assets/cheatsheet-print.css`. Dokumentationen på
 [comparem2.readthedocs.io](https://comparem2.readthedocs.io) er kun på engelsk.*
