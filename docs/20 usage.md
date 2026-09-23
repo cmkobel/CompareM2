@@ -488,7 +488,7 @@ string:
 | `$COMPAREM2_OUTPUT` | the output directory it sits in |
 
 ```bash
-comparem2 *.fna --on-report 'mutt -s "CompareM2" -a "$COMPAREM2_REPORT" -- you@example.org < /dev/null'
+comparem2 *.fna --on-report 'mutt -s "CompareM2" -a "$COMPAREM2_REPORT" -- you@example.org'
 ```
 
 Note the **single** quotes: the variables are the hook's to expand, not your
@@ -499,7 +499,7 @@ Set `$COMPAREM2_ON_REPORT` to make it every run, which is what a queue run
 nobody is watching needs:
 
 ```bash
-export COMPAREM2_ON_REPORT='mutt -s "CompareM2" -a "$COMPAREM2_REPORT" -- you@example.org < /dev/null'
+export COMPAREM2_ON_REPORT='mutt -s "CompareM2" -a "$COMPAREM2_REPORT" -- you@example.org'
 ```
 
 `--on-report` on the command line overrides the variable, and
@@ -508,7 +508,7 @@ Use the variable rather than a shell alias: aliases are not expanded in the
 non-interactive shell an `sbatch` script runs in, which is exactly the run
 worth being told about.
 
-Four things it is careful about:
+Five things it is careful about:
 
 - **It runs on a partial run.** `--keep-going` salvaging twelve tools out of
   thirteen still produces a report, and the hook still fires. This is what
@@ -520,6 +520,12 @@ Four things it is careful about:
   attachment does not turn a finished run into a failed one.
 - **`$COMPAREM2_ON_REPORT` is removed from the hook's own environment**, so a
   hook that itself runs `comparem2` does not recurse.
+- **Its stdin is `/dev/null`**, so a command that reads standard input gets end
+  of file instead of waiting for you. That is why the `mutt` line above needs
+  no `< /dev/null`: inheriting a terminal, it would have sat there after the
+  report was written with nothing on screen to say what it wanted. A hook that
+  does want you reads `< /dev/tty`, which reopens the terminal whatever stdin
+  is — and fails rather than hangs on a queue, where there is nobody to ask.
 
 Mail is the example, not the limit — the command is yours, and `rsync`, a
 webhook or a `chmod` are all the same shape. Note that a self-contained

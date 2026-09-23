@@ -127,6 +127,23 @@ def run_hook(command: str | None, report: Path, workdir: Path,
     the mail was sent, and a mail server refusing a 40 MB attachment must not
     make a finished run look failed.
 
+    **Stdin is `/dev/null`, and that is not a guard but the simpler
+    behaviour.** Inherited, the hook did four different things depending on how
+    the run was launched: with stdin `/dev/null` it returned in 0.07 s, on an
+    open pipe nobody closes — what an idle terminal looks like to a reader — it
+    was still running after 15 s, `sbatch` was safe because SLURM hands a job
+    `/dev/null`, and under `--tui` the child would have been reading a terminal
+    Textual holds in raw mode. That hang came *after* the report was written,
+    with nothing on screen to say what it was waiting for, and it reached the
+    documented example: `mutt -s X -a file -- addr` takes the message body from
+    stdin. Measured 2026-09-22, before release, which is why it could be
+    changed at all.
+
+    It removes no capability. A hook that genuinely wants the user reads
+    `< /dev/tty`, which reopens the controlling terminal whatever stdin is, and
+    fails cleanly under a queue where there is nobody to prompt. Interaction
+    becomes something asked for rather than something inherited by accident.
+
     Returns `(returncode, output)`; `output` is empty unless `capture`, which
     the TUI needs because a subprocess writing to an inherited stdout would
     scribble over a full-screen interface.
@@ -144,6 +161,7 @@ def run_hook(command: str | None, report: Path, workdir: Path,
     # invocation_dir()'s reason: under `pixi run` the cwd is the manifest root.
     base = base if base is not None else invocation_dir()
     result = subprocess.run(command, shell=True, cwd=str(base), env=env,
+                            stdin=subprocess.DEVNULL,
                             capture_output=capture, text=capture)
     output = ((result.stdout or "") + (result.stderr or "")) if capture else ""
     return result.returncode, output

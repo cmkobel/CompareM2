@@ -3436,3 +3436,44 @@ not gain a workdir of symlinks to canonicalise on its way to clearing a lock.
 A test holds that ordering.
 
 Six tests, 319 to **324** (one replaced: the old bare-invocation test).
+
+## 2026-09-23 — the `--on-report` hook gets `/dev/null` on stdin
+
+Found by auditing the flag for release rather than by a failure, which is the
+only reason it could still be changed: `--on-report` was committed in
+`6cd3d75` and not yet in a tag.
+
+Inherited stdin made the hook do four different things depending on how the run
+was launched. Measured 2026-09-22 with `--on-report 'cat > /dev/null'`:
+
+| stdin | result |
+| --- | --- |
+| `/dev/null` | returned in **0.07 s** |
+| an open pipe nobody closes — an idle terminal, to a reader | **still running after 15 s** |
+
+`sbatch` was safe, because SLURM hands a job `/dev/null`. An interactive run was
+not: it sat there *after* the report had been written, with nothing on screen
+saying what it wanted, and the only way out was Ctrl-D. It reached the
+documented example, because `mutt -s X -a file -- addr` takes the message body
+from stdin — which is why that example carried a `< /dev/null` nobody could
+have known was load-bearing. Under `--tui` inheritance is not a convention but
+a bug: the child would read a terminal Textual holds in raw mode.
+
+`stdin=subprocess.DEVNULL`. **Not a guard — the simpler behaviour**: one
+outcome instead of four, one sentence of documentation instead of a table. The
+objection considered and rejected is that a shell hook conventionally inherits
+stdin, the way `cmd1 && cmd2` does; the TUI settles it, since inheritance
+cannot be right on one path and wrong on the other. A timeout was rejected as
+an arbitrary number that trades a hang for a different surprise.
+
+**It removes no capability.** A hook that wants the user reads `< /dev/tty`,
+which reopens the controlling terminal whatever stdin is and fails rather than
+hangs on a queue. Interaction becomes something asked for.
+
+The `< /dev/null` came out of both examples in `docs/20 usage.md` in the same
+change: leaving it would have taught the incantation rather than the rule.
+
+Two tests, 324 to **326**. The first replaces fd 0 with a pipe holding a line
+and asserts the hook does not read it — checked against the unfixed code, where
+it fails with `SHOULD-NOT-BE-READ`. It is written that way on purpose: a test
+that asserted the hang would hang CI on a regression instead of failing it.

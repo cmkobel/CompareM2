@@ -3392,6 +3392,46 @@ def test_the_hooks_relative_paths_mean_where_the_command_was_typed(monkeypatch,
     assert Path(out.strip()).resolve() == typed_in.resolve()
 
 
+def test_the_hook_cannot_read_the_terminal(tmp_path):
+    """Stdin is `/dev/null`, so a hook that reads it gets EOF at once.
+
+    Inherited, it hung: measured 2026-09-22, a run whose stdin was an open pipe
+    nobody closes — an idle terminal, to a reader — was still going 15 s after
+    the report was written, with nothing on screen saying what it waited for.
+    `mutt -s X -a file -- addr` reads its body from stdin, so the documented
+    example was the case that hung.
+
+    fd 0 is replaced with a pipe holding a line, rather than trusting whatever
+    pytest left there: with the hook inheriting stdin this test reads that line
+    back and fails, which is the point of writing it this way.
+    """
+    r, w = os.pipe()
+    os.write(w, b"SHOULD-NOT-BE-READ\n")
+    os.close(w)
+    saved = os.dup(0)
+    try:
+        os.dup2(r, 0)
+        code, out = cli_mod.run_hook("cat", tmp_path / "report.html", tmp_path,
+                                     base=tmp_path, capture=True)
+    finally:
+        os.dup2(saved, 0)
+        os.close(saved)
+        os.close(r)
+    assert code == 0
+    assert out == "", "the hook read the parent's stdin"
+
+
+def test_a_hook_that_wants_the_user_still_has_a_way(tmp_path):
+    """`/dev/null` on stdin removes no capability: `< /dev/tty` reopens the
+    controlling terminal whatever stdin is. Asserted only as far as CI allows —
+    there is no terminal on a runner, so what is checked is that the hook fails
+    rather than hangs, which is the behaviour a queue run wants."""
+    code, out = cli_mod.run_hook("read x < /dev/tty", tmp_path / "report.html",
+                                 tmp_path, base=tmp_path, capture=True)
+    # A terminal, or none: either answer is fine and neither may block.
+    assert code in (0, 1, 2), out
+
+
 def test_no_hook_is_not_a_subprocess(monkeypatch, tmp_path):
     """`delete before guarding`: the unremarkable case runs nothing at all."""
     import types

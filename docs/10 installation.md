@@ -249,6 +249,13 @@ headroom; nothing else here has been measured on a cluster at all. Run
 comparem2 *.fna --profile ~/.config/snakemake/slurm
 ```
 
+A queue run is also the case
+[`$COMPAREM2_ON_REPORT`](20 usage.md#doing-something-with-the-report-when-it-is-ready)
+exists for — a command run once the report is written, so a job that finishes
+overnight can mail it to you or copy it somewhere you will look. It is the
+third variable worth exporting beside the two above, and unlike a shell alias
+it survives into the non-interactive shell an `sbatch` script runs in.
+
 A bare name works too: `--profile slurm` searches `~/.config/snakemake`, the
 way Snakemake's own `--profile` does. That directory is the default place for a
 profile because it is Snakemake's default place, not ours:
