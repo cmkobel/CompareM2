@@ -1,0 +1,78 @@
+name: environments
+
+# Builds every tool environment from scratch, weekly, and runs the tools in it.
+# The unit workflow deliberately never deploys one (see unit.yaml); this one
+# exists because the environments are re-solved by every new install, and
+# bioconda moves underneath them between releases. What a job checks, and why
+# a solve alone is not enough, is in tests/environments/check.py.
+#
+# Built with conda's `env create`, from the files the pipeline itself
+# generates, because that is what Snakemake does on a user's machine.
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"   # Mondays, 04:17 UTC
+  workflow_dispatch:
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    outputs:
+      names: ${{ steps.names.outputs.names }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - id: names
+        run: echo "names=$(PYTHONPATH=src python tests/environments/check.py list)" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: list
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJSON(needs.list.outputs.names) }}
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - name: Free disk space
+        # checkm2's environment is 9.0 GB and perl's 5.2 GB (thylakoid,
+        # 2026-10-08), against roughly 14 GB free on a stock runner.
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          auto-activate-base: true
+          activate-environment: ""
+
+      - name: Write the environment files
+        run: PYTHONPATH=src python tests/environments/check.py write "$RUNNER_TEMP/envs"
+
+      - name: Build ${{ matrix.environment }}
+        run: |
+          conda --version
+          conda env create --yes --quiet \
+            --file "$RUNNER_TEMP/envs/${{ matrix.environment }}.yaml" \
+            --prefix "$RUNNER_TEMP/env"
+          conda list --prefix "$RUNNER_TEMP/env" --explicit > "$RUNNER_TEMP/${{ matrix.environment }}.lock.txt"
+
+      - name: Run the tools in ${{ matrix.environment }}
+        run: python tests/environments/check.py run ${{ matrix.environment }} --prefix "$RUNNER_TEMP/env"
+
+      - name: Keep what was solved
+        # The explicit package list, so a failure can be compared with the
+        # last week that passed, package by package.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.environment }}-lock
+          path: ${{ runner.temp }}/${{ matrix.environment }}.lock.txt
+          if-no-files-found: ignore

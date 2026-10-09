@@ -48,7 +48,8 @@ src/comparem2/
                 for a queue, the process tree for a local one. Snakemake will
                 not do either for us — the docstring says why
   report.py     renders the HTML report
-  steps.py      the small steps a rule runs around a command (GTDB-Tk's merge)
+  steps.py      the small steps a rule runs around a command (GTDB-Tk's merge,
+                panaroo's stale resume state)
   carve_scip.py the wrapper in front of `carve` — see the solver convention below
   biosynthesis.py  the one tool that is ours: what each model can build, and
                    the 30-compound panel the report reads from
@@ -103,10 +104,19 @@ move.
 
 ### Testing
 
-`tests/unit/test_v3.py`, 326 tests, ~23 s. This is the primary instrument: the
+`tests/unit/test_v3.py`, 363 tests, ~24 s. This is the primary instrument: the
 codebase is a generator, and a wrong wildcard produces a Snakefile that parses
 cleanly and builds the wrong DAG, which an end-to-end run catches slowly if at
 all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.
+
+**The environments are checked weekly, by a different workflow.**
+`.github/workflows/environments.yaml` builds each of the six from the files
+`render_envs` generates, Mondays and on demand, and runs
+`tests/environments/check.py` in it: a version call per tool, a toy FastTree,
+and a real CarveMe carve of *E. coli* scored by `biosynthesis.py`, which must
+come out 29 of 30. Solving is not the test. On 2026-09-24 carveme solved,
+installed, and had no solver. A new environment needs an entry in `check.py`,
+and a unit test enforces that.
 
 **A green run on the laptop is not a green CI**, and anything touching
 processes, paths or signals is where they diverge: `cancel.py`'s walk read
@@ -138,7 +148,10 @@ ANI, 0 SNPs, identical CDS counts.
   the PyPI wheel's, on a byte-identical problem. `carve_scip.py` turns that
   presolver off; deleting the line costs nine minutes a genome *and* the model.
   Numbers, and the reasons "optimal" is not well defined on this problem, are in
-  the wrapper's docstring — re-measure before changing it.
+  the wrapper's docstring — re-measure before changing it. And `scip` is pinned
+  `<10.1` in `CARVEME_ENV`, the only ceiling in the catalogue, because
+  pyscipopt's conda-forge build accepts a SCIP it cannot load: on 2026-09-24 a
+  fresh solve left carveme with no solver.
 - **Six conda environments, grouped by dependency ecosystem.** `basic`
   (seqkit, skani, snp-dists, fasttree, treecluster, curl, tar), `perl`
   (mashtree, mlst, panaroo), `annotation` (bakta, amrfinder), `gtdbtk`,

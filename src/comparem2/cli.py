@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -109,11 +110,9 @@ def run_hook(command: str | None, report: Path, workdir: Path,
              ) -> tuple[int, str]:
     """Run `--on-report`, with the report's location in its environment.
 
-    Through the environment rather than by substituting into the string:
-    `$COMPAREM2_REPORT` and `$COMPAREM2_OUTPUT` survive an output directory
-    with a space in its name, and a `{report}` interpolated into a shell string
-    does not. `116_2 duplicate.fna` is in the test genomes because that case is
-    not hypothetical.
+    Through the environment rather than by substituting into the string, so
+    the hook's own shell does the quoting and the path is never parsed as
+    part of the command.
 
     `shell=True`, and the only place in this package where a command is a
     string rather than an argument list. The rule that says otherwise governs
@@ -333,6 +332,35 @@ def resolve(path: Path, base: Path) -> Path:
     nothing except the relative case it exists for.
     """
     return (base / path.expanduser()).resolve()
+
+
+# The characters a path may hold: what a tool's own shell can take unquoted.
+# Not only our Snakefile's problem, which quoting solved: three tools pass
+# paths to a shell themselves. With `--output 'efm fixed'` on 2026-09-24,
+# GTDB-Tk refused the genome paths outright ("contains a space, this is
+# unsupported by downstream applications"), CheckM2's prodigal call ran
+# `sh: cannot create /…/efm`, and Panaroo's cd-hit call (`shell=True`) split
+# the path. So a space, a quote, `$` or any other shell metacharacter cannot be
+# made to work from here, and `{`/`}` also fail DAG construction. Unicode
+# letters are fine — no shell treats them specially.
+#
+# Narrower than "what a shell can take": Panaroo refuses a `,` in a GFF path
+# (it writes paths into `gene_data.csv`), found on 2026-09-25 with
+# `--output 'kørsel+a=b,c:d@e%f'`, 27 of 31 steps. `+ = : @ %` never reached
+# Panaroo, snp-dists or FastTree in that run, so they are out too. What is left
+# is what has run end to end: `kørsel-2026.09_x`, 31 of 31.
+_UNSAFE_IN_PATH = re.compile(r"[^\w./-]")
+
+
+def refuse_unsafe(path: Path, flag: str) -> None:
+    """Stop before anything is written, rather than minutes into a run."""
+    bad = sorted(set(_UNSAFE_IN_PATH.findall(str(path))))
+    if bad:
+        shown = " ".join("a space" if c == " " else repr(c) for c in bad)
+        raise SystemExit(
+            f"{flag} {str(path)!r}: CompareM2 cannot use a path containing "
+            f"{shown}. Some of its tools pass paths through a shell unquoted, so "
+            "use only letters, digits and _ . / - in this path.")
 
 
 def resolve_profile(profile: Path | None, base: Path) -> str | None:
@@ -593,7 +621,10 @@ def main(argv: list[str] | None = None) -> int:
                    help="assembly FASTA files (default: the "
                         + ", ".join(f"*{suffix}" for suffix in ASSEMBLY_SUFFIXES)
                         + " files in the directory you are in)")
-    p.add_argument("-o", "--output", type=Path, default=DEFAULT_OUTPUT)
+    p.add_argument("-o", "--output", type=Path, default=DEFAULT_OUTPUT,
+                   help="output directory; letters, digits and _ . / - "
+                        "only, because some tools pass it through a shell unquoted "
+                        f"(default: {DEFAULT_OUTPUT})")
     p.add_argument("-d", "--databases", type=Path, default=None,
                    help="where databases live; shared across runs (default: "
                         f"{default_databases()}, overridden for every run by "
@@ -667,6 +698,16 @@ def main(argv: list[str] | None = None) -> int:
     # Every path the user typed is relative to where they typed it, which under
     # `pixi run` is not the cwd — see invocation_dir().
     base = invocation_dir()
+
+    # Before any branch writes anything: `--demo` unpacks into the output
+    # directory and `--setup` renders a Snakefile holding the database root.
+    # The conda prefix is not written into a Snakefile, so it is not checked,
+    # and neither is `--output` under `--setup`, which builds in a temporary
+    # directory and never touches it — the default output sits in the current
+    # directory, so checking it refused `--setup` run from a spaced path.
+    if not args.setup:
+        refuse_unsafe(resolve(args.output, base), "--output")
+    refuse_unsafe(resolve(args.databases or default_databases(), base), "--databases")
 
     if args.setup:
         # Rejected rather than ignored: a command naming genomes that are never
@@ -763,10 +804,10 @@ def main(argv: list[str] | None = None) -> int:
     # Absolute, because Snakemake is given this as its working directory (see
     # below) and every generated path has to survive that.
     workdir: Path = resolve(args.output, base)
+    databases: Path = resolve(args.databases or default_databases(), base)
     workdir.mkdir(parents=True, exist_ok=True)
     cores: int = args.cores if args.cores is not None else DEFAULT_CORES
     profile: str | None = resolve_profile(args.profile, base)
-    databases: Path = resolve(args.databases or default_databases(), base)
     conda_prefix: Path = resolve(args.conda_prefix or default_conda_prefix(), base)
     on_report: str | None = args.on_report or default_on_report()
     samples = canonicalise(inputs, workdir)

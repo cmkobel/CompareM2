@@ -90,11 +90,14 @@ def _rule(tool: Tool, workdir: Path, databases: Path, samples: tuple[str, ...],
     # directory — which is empty of the files it is meant to match.
     post = [" ".join(shlex.quote(a) for a in step)
             for step in (tool.post(ctx) if tool.post else ())]
+    pre = [" ".join(shlex.quote(a) for a in step)
+           for step in (tool.pre(ctx) if tool.pre else ())]
 
     # shlex.quote escapes the braces of {sample}; unescape so Snakemake sees it.
     for token in (WILDCARD, THREADS):
         command = command.replace(f"'{token}'", token)
         post = [p.replace(f"'{token}'", token) for p in post]
+        pre = [p.replace(f"'{token}'", token) for p in pre]
 
     log = str(ctx.out("logs", f"{tool.name}.log"))
 
@@ -119,11 +122,15 @@ def _rule(tool: Tool, workdir: Path, databases: Path, samples: tuple[str, ...],
         f"    conda: {_q('envs/' + tool.environment + '.yaml')}",
         "    shell:",
         f'        """',
-        f"        mkdir -p $(dirname {{log}})",
-        f"        exec > {{log}} 2>&1",
+        # Quoted like every other path here, although the CLI refuses a path
+        # that would need it (see `cli.refuse_unsafe`). No `mkdir` for the log:
+        # Snakemake creates its parent, and the unquoted `$(dirname {log})`
+        # that used to do it split a spaced path into two directories.
+        f"        exec > {{log:q}} 2>&1",
         *[f"        export {name}={shlex.quote(value)}"
           for name, value in (tool.env(ctx) if tool.env else ())],
         f"        mkdir -p {shellify(' '.join(_dirnames(outputs)))}",
+        *[f"        {shellify(step)}" for step in pre],
         f"        {shellify(command)}",
         *[f"        {shellify(step)}" for step in post],
         f'        """',
@@ -166,8 +173,7 @@ def _download_rule(db, databases: Path, workdir: Path) -> str:
         f"    conda: {_q('envs/' + db.environment + '.yaml')}",
         "    shell:",
         '        """',
-        "        mkdir -p $(dirname {log})",
-        "        exec > {log} 2>&1",
+        "        exec > {log:q} 2>&1",
         *[f"        {' '.join(shlex.quote(a) for a in step)}" for step in steps],
         '        """',
         "",

@@ -263,6 +263,11 @@ class Tool:
     # This is not a licence for arbitrary shell work: a tool needing several of
     # these is a tool whose spec is lying about what it does.
     post: Callable[[Context], Sequence[Sequence[str]]] | None = None
+    # Steps to run before the command, same discipline. For state a tool leaves
+    # behind that stops its own next run: panaroo 1.8.0 refuses to start while
+    # its previous alignment's resume manifest is in the output directory, and
+    # Snakemake removes only the declared outputs before re-running a rule.
+    pre: Callable[[Context], Sequence[Sequence[str]]] | None = None
     # Environment variables the tool needs, given its Context. Some tools take
     # their database location only this way: GTDB-Tk reads GTDBTK_DATA_PATH and
     # has no equivalent flag, so without this its `--databases` value would be

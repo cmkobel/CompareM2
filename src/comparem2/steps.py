@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import shutil
 from pathlib import Path
 
 
@@ -79,6 +80,19 @@ def merge_tsv(out: Path, patterns: list[str]) -> None:
     out.write_text("\n".join([header, *rows]) + "\n")
 
 
+def remove(paths: list[Path]) -> None:
+    """Delete each path that exists, file or directory; skip the rest.
+
+    For what a tool leaves behind that stops its own next run, so the caller
+    names exactly what goes. A missing path is the normal case on a first run.
+    """
+    for path in paths:
+        if path.is_dir() and not path.is_symlink():
+            shutil.rmtree(path)
+        elif path.exists() or path.is_symlink():
+            path.unlink()
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(
         prog="python -m comparem2.steps",
@@ -90,9 +104,14 @@ def main(argv: list[str] | None = None) -> int:
     merge.add_argument("patterns", nargs="+",
                        help="paths or globs; at least one must match")
 
+    rm = sub.add_parser("remove", help="delete these paths if they exist")
+    rm.add_argument("paths", nargs="+", type=Path)
+
     args = p.parse_args(argv)
     if args.step == "merge-tsv":
         merge_tsv(args.out, args.patterns)
+    elif args.step == "remove":
+        remove(args.paths)
     return 0
 
 

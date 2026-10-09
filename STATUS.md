@@ -4,10 +4,14 @@ What is currently true of a real run. This file changes whenever something is
 re-run, which is why it is not in [DESIGN.md](DESIGN.md) — decisions should not
 need editing because a tool was verified again.
 
-Last updated **2026-09-22**. The tool numbers are from runs on thylakoid; the
+Last updated **2026-10-09**. The tool numbers are from runs on thylakoid; the
 pre-tag checks for v3.1.0 are from the laptop and say so.
 
 ## The docs showcase run: eight genomes, all fourteen tools, through SLURM
+
+**Superseded as the checked-in report on 2026-10-09** by the 3.5.0 run (see
+*The 3.5.0 release check, on GenomeDK*). What follows describes the 2026-09-08
+run and its copies, which are still in `results_showcase` on GenomeDK.
 
 2026-09-08 on GenomeDK. Eight complete *Streptococcus mitis* group genomes
 (2.04–2.25 Mb, 1,992–2,242 CDS) fetched from RefSeq, `--profile` pointing at a
@@ -1434,6 +1438,147 @@ Not covered by this run: a download under `--profile`. It would change nothing
 — the four rules are `localrules` and run on the frontend either way — but that
 is reasoning, not an observation.
 
+### The 3.5.0 release check, on GenomeDK, 2026-10-09
+
+From the bumped, uncommitted tree, `CompareM2 3.5.0`, with the env and database
+directories from `hpc.env`.
+
+**`--demo` via `SNAKEMAKE_PROFILE=slurm`: 11 of 11 steps, exit 0, 151 s**. All
+10 SLURM jobs were COMPLETED under run id `d44b89e6`, and the report is 41,632
+bytes.
+
+**The showcase, all fourteen tools: 51 of 51 steps**, but only on the second
+invocation. The first stopped at 43 of 51 after 1,039 s, on one bakta job
+(`Spseudo_IS7493`, cn-1046). On that node alone, Snakemake's
+`conda config --get channel_priority --json` exited 1, and a Snakemake bug
+(`'str' object has no attribute 'decode'`) hid conda's message. The other 42
+jobs completed on 9 nodes. With `--keep-going`, that one failure cost panaroo,
+snp-dists and fasttree for every genome. The profile sets no `retries:`, so
+nothing absorbed it. Re-invoking the same command ran the 8 missing steps,
+exit 0, 1,171 s.
+
+carveme was a fresh environment (the SCIP pin changes its hash): scip 10.0.3.
+Against the 2026-09-08 showcase run:
+
+| | |
+| --- | --- |
+| CarveMe models | same reaction set, all 8; D39/R6 still 1,048 shared, 530 R6-only, 85 D39-only |
+| biosynthesis | same verdict on all 30 shared compounds, all 8 genomes |
+| panaroo | same summary, 3,764 clusters, 1,252 core |
+| core alignment | 1,183,231 → 1,077,439 columns filtered (8.9% fewer) |
+| snp-dists | 11.2–20.8% fewer SNPs per pair; D39/R6 65 → 55 |
+| fasttree | one of five splits moved: ATCC700669 is sister to P1031 (0.985–0.988 across re-runs), not to the Hungary19A/outgroup clade (1.000) |
+| everything else | identical once the output path is normalised, apart from timestamps and row order (bakta JSON run times, DIAMOND hit order, GTDB-Tk's related-reference lists) |
+
+The split is new information. S. aureus (2026-09-02) and E. faecium
+(2026-09-24) both kept their topology, and the FastTree guidance now says that
+this set did not. The report was rendered over the run with the title and
+command passed explicitly, as on 2026-09-15, and is checked in at
+`docs/assets/example-report.html` (172,503 bytes).
+
+**Then the issue #156 changes, and a defect 3.4.0 already had.** Adding
+`--remove-invalid-genes` re-ran panaroo, snp-dists and FastTree, and panaroo
+failed in 1 m 44 s: `Found an existing gene-alignment resume manifest`.
+Panaroo 1.8.0 leaves `alignment_resume_state.json` after every run and will
+not start while it is there. So any re-run of panaroo into an existing
+directory had been failing. With `Tool.pre` deleting it and the three
+alignment directories, the same directory, manifest still in place, re-ran
+4 of 4 steps, exit 0, 1,097 s. Panaroo found no invalid gene in this set, the
+summary was identical, all 64 snp-dists values were identical, and the tree
+was identical bar one support value (0.988 → 0.985). On thylakoid, the four
+*E. faecium* test genomes with the flag gave exit 0 in 70 s and the same
+summary as without it (3,780 clusters, 2,091 core). The checked-in report was
+re-rendered from these final outputs.
+
+Unit tests: 363 on the laptop. Not run on the cluster this time.
+
+### The 3.5.0 release check, before the bump — and CarveMe no longer builds
+Run on 2026-09-24 as `ghrunner` on thylakoid, from a fresh clone at `7a6f5b9`
+(still `3.4.0` in `__init__.py`), with a **fresh conda prefix** `~/rc/envs`, so
+every environment was solved that day. GenomeDK refused non-interactive SSH,
+so this is not the SLURM check earlier releases got. That one is still owed.
+
+- **Unit tests on Linux: exit 0 in 25 s.** The count was not printed: the
+  `pytest` pixi task already passes `-q`, and adding a second `-q` suppresses
+  the summary line.
+- **`--demo`: 11 of 11 steps, exit 0, 52 s** including building both
+  environments. The report is 41,759 bytes.
+- **`--on-report`, first execution anywhere.** The hook ran after the report
+  was on disk, and received `COMPAREM2_OUTPUT`, `COMPAREM2_REPORT`,
+  `COMPAREM2_DATABASES` and `COMPAREM2_CONDA_PREFIX`, with stdin at
+  `/dev/null`. A hook that exits 3 prints `the --on-report command exited 3;
+  the report is at …`, and `comparem2` itself exits 0.
+- **A bare `comparem2 --dry-run`** in a directory of four `.fna` files picked
+  up all four and planned 14 tools.
+- **A space in `--output` still breaks the run**: exit 1, `nothing ran; no
+  report written`. It also leaves a stray empty directory *outside* the
+  output: `--output ~/rc/with space` creates `~/rc/with/`. See *Known broken*.
+- **All fourteen tools over `tests/E._faecium/`: carveme failed for 4 of 4
+  genomes.** reframed raised `RuntimeError: No solver available.` because
+  `import pyscipopt` fails with `libscip.so.10.0: cannot open shared object
+  file`. The environment solved to `scip 10.1.0`, while conda-forge's
+  `pyscipopt 6.2.1` build links against 10.0's soname. The working
+  environments in `/evo/postdoc/cm2-envs-two` have the same carveme 1.6.6,
+  pyscipopt 6.2.1 and python 3.14.7, and differ only in `scip 10.0.3`. This is
+  upstream drift, not one of the 18 commits: **the published 3.4.0 renders the
+  same spec, so a new 3.4.0 user hits this today.** Everything else finished,
+  22 of 31 steps in 395 s.
+- **Adding `conda-forge::scip>=10.0.3,<10.1` to `CARVEME_ENV` fixes it.**
+  Tried in the scratch clone only, not committed. The environment solved to
+  scip 10.0.3, `get_default_solver()` returned `scip`, and the resumed run
+  finished the remaining **9 of 9 steps, exit 0, 75 s**. The report is 130,218
+  bytes.
+
+**The standing cross-check holds**, now through biosynthesis:
+`116_2` against `116_2_duplicate` gives 0 SNPs, mashtree distance 0.00000,
+skani 100.00 / 100.00, 2,588 CDS each, the same GTDB-Tk species
+(*Enterococcus_B faecium*), and biosynthesis tables identical outside the
+sample column. **The biosynthesis verdicts equal the 2026-09-11 review set**
+(de novo / upstream / no route / absent): `116_2` 11/6/11/2, `E8202` 10/9/9/2,
+`SRR24` 10/7/11/2. So the five biosynthesis commits since, `44e29f9`
+included, changed the prose and not the answers.
+
+### The fixes, run on thylakoid the same afternoon
+Working tree synced into the scratch clone, not a commit: `7a6f5b9` plus the
+four fixes in DECISIONS.md, 2026-09-24. Still `3.4.0` in `__init__.py`.
+
+- **Unit tests on Linux: 340 of 340 in 25.4 s.** Locally: 340 of 340, with
+  Snakemake 9.26.1 installed, so the new DAG test actually ran rather than
+  skipped. Nine of the new tests fail against `7a6f5b9`'s source, which is
+  what shows they test the fixes.
+- **The first version of the path fix was wrong, and this run is what said
+  so.** With `{log:q}` in and a space allowed, `--output 'efm fixed'` got
+  every rule's shell right and then failed **checkm2, gtdbtk and panaroo** in
+  the tools themselves. GTDB-Tk said: "The genome path contains a space, this
+  is unsupported by downstream applications". CheckM2 printed `sh: cannot
+  create /…/efm`. Panaroo's cd-hit command was split at the space. The same
+  run also showed that `--demo --output 'a{b}'` created `a{b}/demo_assemblies`
+  before the refusal fired. Both are fixed: the allowlist, and the check
+  moved to the top of `main()`.
+- **Refused in 0 s with nothing created:** `sp ace`, `q'uote` and `br{ace}`.
+  **Accepted:** `--demo --output demo_kørsel`, exit 0 in 4 s.
+- **All fourteen tools over `tests/E._faecium/` from scratch into
+  `efm_fixed`: 31 of 31 steps, exit 0, 249 s.** CarveMe used the pinned
+  environment (scip 10.0.3). The report is 131,424 bytes after a
+  `--report-only` with the final guidance.
+- **Cross-check, all holding:** 0 SNPs and FastTree branch length 0.0 for
+  the duplicate pair, mashtree 0.00000, 2,588 CDS each, one GTDB-Tk species
+  for all four, and biosynthesis 11/6/11/2, 10/9/9/2, 10/7/11/2 as before.
+- **snp-dists and FastTree are verified on the filtered alignment**, and it
+  moves the numbers more here than on *S. aureus*. Panaroo kept 1,826 of
+  2,091 core genes, 1,934,948 → 1,675,940 columns (−13%). Pairwise SNPs:
+  116_2–SRR24 8,193 → 2,645 (−68%), 116_2–E8202 6,190 → 1,893 (−69%),
+  SRR24–E8202 8,907 → 1,699 (−81%). **The order changed:** SRR24–E8202 was
+  the most distant pair and is now the closest. So most of the unfiltered
+  differences sat in the 13% of the alignment the entropy filter drops.
+  FastTree branches: 42–84% shorter, with the one split
+  `{116_2, 116_2_duplicate} | {SRR24, E8202}` unchanged.
+
+Not covered: the SLURM check on GenomeDK, which refused non-interactive SSH;
+and the TUI, which needs a terminal. Scratch left on thylakoid under
+`/home/ghrunner/rc/` is about 15 GB, most of it `envs/`, plus the old
+`with/` directory left by the unfixed run.
+
 ### The 3.3.0 release check
 From the bumped tree on GenomeDK, 2026-09-08, `SNAKEMAKE_PROFILE=slurm` and no
 `--profile` flag: `CompareM2 3.3.0`, **11 of 11 steps, 2m 58.95s**, report
@@ -1526,10 +1671,14 @@ unchecked), and what CarveMe's MILP costs on arm — every solver number in this
 file is from thylakoid.
 
 All three fixes are upstream, none of them local: an `osx-arm64` build on the
-intbitset feedstock, a bioconda PR relaxing gtdbtk's stale `alpha19` pin to the
+intbitset feedstock, a bioconda PR relaxing gtdbtk's `alpha19` pin to the
 alpha22 that arm already carries, and a report that mlst's *noarch* recipe
 declares a dependency on a Linux-only library. **The intbitset one is necessary
 but not sufficient** — see below.
+
+*Corrected 2026-10-05: the `alpha19` pin is deliberate, not stale*, and
+GTDB-Tk's maintainers own the recipe, so the route is evidence put to them
+rather than a PR around them. See *GTDB-Tk on arm* below.
 
 ### panaroo on arm: intbitset is not the only blocker
 
@@ -1572,7 +1721,7 @@ activity to 2026-09-03, two panaroo PRs merged 2026-07-02, a push to
 `bioconda/bioconda-recipes` on 2026-08-23. That matters for how PR #21 is
 handled — it is an argument for waiting rather than escalating.
 
-*The second blocker is prokka, and it cannot be fixed.* With a locally built arm
+*The second blocker is prokka.* With a locally built arm
 intbitset in a channel, `panaroo>=1.5` still does not solve: prokka requires
 `tbl2asn-forever >=25.7` (linux-64, linux-aarch64, osx-64), which repackages
 NCBI's **prebuilt** tbl2asn binary; there is no macOS-arm build of it, and
@@ -1580,6 +1729,18 @@ NCBI's **prebuilt** tbl2asn binary; there is no macOS-arm build of it, and
 (`bin/prokka:1429`), and its release notes (2025-12-14) call it the last
 release, recommending bakta. Drop prokka and the set solves: **128 packages** on
 `osx-arm64`.
+
+*Corrected 2026-09-28: prokka itself can run on arm.* "`table2asn` has none
+either" was true of bioconda only. NCBI's own `mac.table2asn` has been arm64
+since 2025-03-03. prokka 1.15.6 with every dependency but `tbl2asn-forever`
+installs natively (222 packages). A shim in front of `table2asn` 1.29.324
+translates three flags and maps its exit 2 to 0, and with it prokka exits 0 on
+the duplicate pair, **43 s a genome**, identical outputs. Against real tbl2asn
+25.7 under Rosetta on the same input: the same 2,675 features, 2,608 with
+identical qualifiers, and the 67 tRNAs lose their anticodon `/note`. Packaging
+it takes two upstream changes, none drafted. For panaroo, the one-line recipe
+change above is still cheaper. Details:
+[upstream/prokka-arm-table2asn.md](upstream/prokka-arm-table2asn.md).
 
 panaroo never invokes the prokka binary — `panaroo/prokka.py` is a GFF parser;
 only `run_prokka.py:119` shells out, and `run_prokka --help` still exits 0
@@ -1615,6 +1776,24 @@ failed the PR for a missing `{{ stdlib('c') }}`; adding it needed a second
 rerender and a local py3.13 rebuild, and the linter is green after that. The
 bioconda one has **not** been sent, and the pair is useless one at a time.
 
+**#21 merged 2026-09-25**, and conda-forge now carries intbitset 4.1.2 for
+`osx-arm64` at py3.11–3.14 — and for `linux-64` at the same four, which is what
+lifts the 3.11.16 cap below. Probed 2026-09-28 with `pixi lock`, solve only:
+`intbitset>=4.1` with python 3.13 resolves on `osx-arm64`, and `panaroo>=1.5`
+still does not — every 1.6.0–1.8.0 build requires `prokka`, whose 1.15.6 needs
+`tbl2asn-forever >=25.7`, still linux-64 / linux-aarch64 / osx-64 only; 1.5.x
+needs `mkl`, which has no arm build. The prediction above held exactly: the
+bioconda change is now the only thing missing. Checked against the published
+build rather than a local channel: panaroo's recipe `run:` list minus
+`prokka`, plus `snp-dists>=1.2.0` and `fasttree>=2.2.0`, solves on `osx-arm64`
+from conda-forge and bioconda alone — **140 packages**, intbitset 4.1.2,
+python 3.13.15. That `prokka` line is Tonkin-Hill's own, added in
+bioconda-recipes#21341 (2020-04-08).
+
+**The bioconda one was sent 2026-10-05 — [bioconda-recipes#69901](https://github.com/bioconda/bioconda-recipes/pull/69901)**, after Tonkin-Hill approved
+removing the line by email on 2026-10-04. Not yet merged; until it is, panaroo
+still does not solve on `osx-arm64`.
+
 *The cascade is three tools, not one.* Worth stating because the sections above
 do not: `snp-dists` and `fasttree` both take
 `panaroo/core_gene_alignment.aln` as input (`catalogue.py:512,526`), so
@@ -1643,14 +1822,14 @@ expired (HTTP 410).
 *Sufficient, not just necessary.* With those four artifacts in a local channel
 and panaroo's recipe carrying the one-line change, the catalogue's own specs
 `panaroo>=1.5`, `snp-dists>=1.2.0` and `fasttree>=2.2.0` solve on `osx-arm64`
-**from conda alone** — 278 packages, no pip, no `--no-deps`. panaroo 1.8.0
+**from conda alone** — 141 packages, no pip, no `--no-deps`. panaroo 1.8.0
 `py_1`, intbitset 4.1.2 `py313h2f2c7d1_0`, **python 3.13.15**, zero prokka.
 That python version is the other half of the prize: intbitset 4.1.2 lifts the
 cap holding the Linux environment at 3.11.16.
 
 *And it runs.* Installed and executed, because a solve says nothing:
 
-| | pip env (141 pkgs) | conda-only (278 pkgs) |
+| | pip env (141 pkgs) | conda-only (141 pkgs) |
 | --- | --- | --- |
 | panaroo wall clock | 180.96 s | 213.27 s |
 | gene clusters | 3,569 | 3,569 |
@@ -1659,6 +1838,18 @@ cap holding the Linux environment at 3.11.16.
 | duplicate pair, clusters differing | **0 of 3,569** | **0 of 3,569** |
 | `snp-dists` duplicate pair | **0** (4,111 to E8202) | **0** (4,111 to E8202) |
 | `FastTree -nt -gtr` duplicate pair | branch length 0.0 | branch length 0.0 |
+
+*Corrected 2026-09-28:* the conda-only environment was recorded as 278
+packages. It is 141: `pixi.lock` lists every package twice, and the figure
+was a `grep` of URL lines (282 in `solveproof/pixi.lock`, 141 package
+entries). The same miscount gave 280 for the 2026-09-28 solve above, until caught.
+
+*Re-run 2026-09-28 against the **published** intbitset.* The locally built
+`panaroo-1.8.0-py_1` alone in a fresh channel, everything else from
+conda-forge and bioconda: 141 packages, intbitset 4.1.2 `py313ha083069_0`.
+Same command, same prodigal GFFs: exit 0 in **191.66 s**, 3,569 clusters,
+2,146 core, snp-dists 0 for the pair and 4,111 to E8202, and
+`gene_presence_absence.Rtab` byte-identical to the 09-03 runs.
 
 `gene_presence_absence.Rtab` is **byte-identical between the two
 environments** (sha256 `0d0bebcc…`). `core_gene_alignment.aln` is not, and that
@@ -1670,6 +1861,31 @@ variation and is not worth a cause.
 FastTree had never been run on arm before this. Input is prodigal, not bakta,
 so **gene counts still are not comparable to thylakoid** — a bakta-annotated
 arm run needs the 1.3 GB light database. That has since been done; see below.
+
+### The intbitset merge moved linux-64 too, and panaroo still runs
+
+Since #21 merged, a fresh `perl` environment on `linux-64` resolves to
+**intbitset 4.1.2 and python 3.12.3**, where every environment built before it
+had intbitset 3.0.2 (thylakoid's from 2026-09-21: py3.11.9). Nothing on Linux
+had executed the new pair. On 2026-10-08, prompted by issue #156, a fresh pixi
+solve of `PERL_ENV` on thylakoid (panaroo 1.8.0, numpy 1.26.4, networkx 3.7)
+ran the catalogue's panaroo command on the four `test22` bakta GFF3s: exit 0,
+71 s, **3,780 clusters and 2,091 core**, matching the 09-02 row above. The
+Rtab is not byte-identical to `test22`'s (first difference in the header),
+which fits the cluster-naming nondeterminism already recorded and was not
+chased further. Probe directory: `~/panaroo-probe-2026-10-08` on thylakoid.
+
+The same day, the **published 3.4.0** (bioconda `pyhdfd78af_0`, which pixi
+resolves onto python 3.14.8, as #156 reports) ran `comparem2 --setup` into an
+empty `--conda-prefix` on thylakoid: **all six environments built, exit 0,
+136 s** (warm package cache). A version call in each passes for 13 of 14
+tools. **carveme does not:** the fresh solve took `scip 10.1.0` with
+`pyscipopt 6.2.1`, and `import pyscipopt` fails on `libscip.so.10.0` — the
+2026-09-24 break, live in the released package, because the `<10.1` ceiling
+has not shipped. Rebuilding `perl` under a condarc that adds `defaults` and `r`
+(as in #156's log), at strict and at flexible priority, changed nothing: all
+344 packages still came from conda-forge and bioconda. Probe directory:
+`~/setup-probe-2026-10-08`.
 
 ### bakta runs on arm, and gives thylakoid's numbers
 
@@ -1714,6 +1930,72 @@ environment at 3.11.16.
 Working material, outside git because it holds a `conda-bld` tree:
 `~/postdoc/cm2-macos/` — the prepared feedstock branch, the four `.conda`
 artifacts, the applied panaroo patch, and both runs.
+
+### GTDB-Tk on arm: it runs up to the ANI screen, and pplacer is a different problem
+
+Measured 2026-10-05 on the laptop, macOS 26.7 / Apple M5, 10 cores, **32 GB**.
+Working material `~/postdoc/cm2-macos/gtdbtk/`.
+
+*The pin is deliberate.* gtdbtk 2.5.2 required `pplacer >=1.1.alpha17`. 2.6.0
+narrowed that to `=1.1.alpha19` (bioconda-recipes#61248, 2025-12-10, by
+GTDB-Tk's own maintainer), and its release notes give two reasons: GTDB-Tk
+crashed under alpha20 with `Dune__exe__Multiprocessing.Child_error`
+(GTDBTk#668, #670, #674), and a fixed version "ensure[s] reproducibility of
+results". alpha19 is the 2016 upstream binary, built for linux-64 only.
+pplacer's alpha21 (2026-01-15) lists "Fix Child_error crash" (pplacer#391) and
+an OCaml 5 multiprocessing deadlock (#393). **Unverified that this is GTDB-Tk's
+crash**: #391 was reported against pplacer run directly. bioconda's arm builds
+are alpha20 and alpha22, and alpha22 was published 2026-01-30, after the pin.
+
+*Installed* from conda using the recipe's `run:` list verbatim except for
+`pplacer ==1.1.alpha22`. gtdbtk 2.7.2 went in with `pip install --no-deps`
+from the same PyPI sdist the recipe builds. The environment has python 3.13.15
+and skani 0.3.2, the same skani version thylakoid logs. Every other dependency
+has a native arm build. pplacer is `Mach-O 64-bit executable arm64`, but its
+`--version` prints `4d00f36-dirty`. pplacer#397 fixes that, merged 2026-09-02
+and not yet in a release.
+
+*Executed* with the catalogue's command line, against the r232 database already
+on the laptop (`~/postdoc/cm2-databases/gtdb`), on `116_2` and
+`116_2 duplicate`: exit 0, **20.3 s** wall, peak RSS **9.2 GB** (largest child,
+`/usr/bin/time -l`). Both came out `ani_screen` against `GCF_029023785.1` at
+99.18, AF 0.917, and every column matches thylakoid's 09-02 summary.
+
+**This run never reached pplacer, and no CompareM2 run has on any platform.**
+Every gtdbtk summary on disk says `ani_screen`: 4 *E. faecium* and 7
+*S. aureus*. The *Streptococcus* run above also records `ani_screen`, and the
+*Methanoflorens* run finished in 22 s, which is too fast for a placement.
+Genomes go to pplacer only when no species representative lies within the 95%
+radius, i.e. novel species and many MAGs. GTDB-Tk's documentation puts pplacer
+at ~140 GB of RAM for bacteria and ~100 GB for archaea, and its code warns
+below 55 and 40 GB. That puts it out of reach of this laptop on any
+architecture. `--scratch_dir` memory-maps the data to disk instead, using a
+file of roughly that size, and this laptop has 115 GB free. Not tried.
+
+So two things are still open, and only the first one is about arm:
+
+- **alpha19 against alpha22 placements**, which is the evidence GTDB-Tk's
+  maintainers would need before they lift the pin. It needs a machine with
+  ≥140 GB of RAM, i.e. thylakoid, and both pplacer builds exist for linux-64.
+  `--place_species` forces placement for genomes that the screen would
+  otherwise classify. Not run.
+- **Memory**, which no package fixes. A Mac with 32 GB can classify genomes of
+  described species, and nothing else.
+
+### panaroo on linux-aarch64 needs intbitset alone
+
+Measured 2026-10-05 on the laptop in native aarch64 containers. Note:
+[upstream/intbitset-linux-aarch64.md](upstream/intbitset-linux-aarch64.md).
+conda-forge has never built intbitset for linux-aarch64, and that is the only
+gap: prokka's chain solves there (453 packages), so #69901 is not needed on
+this platform. intbitset 4.1.2 py3.13 built in conda-forge's own aarch64 image
+with a one-line `conda-forge.yml` change, and bioconda's **published** panaroo
+1.8.0 against it — 456 packages — ran the prodigal test set to 3,569 clusters,
+0 of 3,569 differing for the duplicate pair, 0 SNPs, and a
+`gene_presence_absence.Rtab` byte-identical to the osx-arm64 runs. Native
+Windows is out on both architectures: five bioconda tools have no Windows
+build. All four aarch64 configs, py3.11–3.14, built locally and passed the
+import test; the change was sent the same day as [intbitset-feedstock#25](https://github.com/conda-forge/intbitset-feedstock/pull/25).
 
 ## Databases
 
@@ -2110,8 +2392,23 @@ carrying the code this tag ships.
 
 ## Known broken or unfinished
 
-- **snp-dists and fasttree read Panaroo's *unfiltered* core alignment**, and
-  nothing had recorded that this was a choice. `catalogue.py` hands both
+- ~~**CarveMe does not build from a fresh solve**~~ **Fixed 2026-09-24 for
+  3.5.0; still broken in the published 3.4.0 until 3.5.0 ships** (reconfirmed
+  on a fresh `--setup` of 3.4.0, 2026-10-08). Found the same day, in master and in 3.4.0. `scip 10.1.0` resolves against a `pyscipopt`
+  that links 10.0, so there is no solver. The fix, `scip>=10.0.3,<10.1` in
+  `CARVEME_ENV`, is now in `catalogue.py`. Existing environments
+  built before the drift are unaffected. See *The 3.5.0 release check* and
+  [notes/BUGFIX_PLAN_2026-09-24.md](notes/BUGFIX_PLAN_2026-09-24.md).
+- ~~**A space in `--output` breaks every rule**~~, in every release from 3.0.0
+  to 3.4.0. **Fixed 2026-09-24, in two halves.** `{log:q}`, with the `mkdir`
+  deleted, makes the Snakefile correct. The rerun then showed that GTDB-Tk,
+  CheckM2 and Panaroo cannot take a spaced path themselves, so the CLI now
+  refuses any `--output` or `--databases` a shell could not take unquoted.
+  See DECISIONS.md, 2026-09-24.
+- ~~**snp-dists and fasttree read Panaroo's *unfiltered* core alignment**~~
+  **Switched to `core_gene_alignment_filtered.aln` on 2026-09-24**; see
+  DECISIONS.md. What follows is the finding that prompted it. Nothing had
+  recorded the old input as a choice. `catalogue.py` hands both
   `core_gene_alignment.aln`; `-a core` also writes
   `core_gene_alignment_filtered.aln`, which Panaroo's own documentation calls
   the one "recommended for building core genome phylogenies". Re-run on the
@@ -2135,7 +2432,9 @@ carrying the code this tag ships.
   by accident, but not driven by hand since.
 - ~~**The four `download_*` rules are invisible to the TUI.**~~ **Fixed
   2026-09-07**, after 3.2.1 — see *The download rules have rows* below.
-- **`runner._profile_argv` deploys conda only when a prefix is set.** With
+- ~~**`runner._profile_argv` deploys conda only when a prefix is set.**~~
+  **Fixed 2026-09-24:** `deploy` is its own argument, and a test covers the
+  no-prefix case. With
   `deploy=True` and `conda_prefix=None` the profile branch omits
   `--software-deployment-method conda` entirely, where the API branch enables
   it unconditionally and lets Snakemake choose the prefix. Not reachable from

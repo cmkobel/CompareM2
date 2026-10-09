@@ -115,7 +115,14 @@ GTDBTK_ENV = (
 # Carries `biosynthesis` too, which reads CarveMe's model with ReFramed —
 # ReFramed comes with CarveMe and not with CompareM2. Alone because the solver
 # build is part of the pinned surface here; see `carve_scip.py`.
-CARVEME_ENV = ("bioconda::carveme>=1.6.6",)
+#
+# SCIP is pinned to a minor version, and is the one spec here with a ceiling.
+# conda-forge's pyscipopt 6.2.1 links `libscip.so.10.0` but accepts scip 10.1,
+# whose library is `libscip.so.10.1`; a fresh solve on 2026-09-24 took 10.1.0,
+# `import pyscipopt` failed, and reframed reported "No solver available." for
+# every genome. The ceiling is also honest on its own terms: the timings in
+# `carve_scip.py` were taken on 10.0.x, so a new minor is re-measured first.
+CARVEME_ENV = ("bioconda::carveme>=1.6.6", "conda-forge::scip>=10.0.3,<10.1")
 
 # Separate since 2026-09-01, before any of the above: CheckM2 pins DIAMOND
 # 2.1.x and a current Bakta needs 2.2.x, so no one environment holds both.
@@ -284,7 +291,7 @@ seqkit = Tool(
     conda=BASIC_ENV,
     environment="basic",
     command=lambda c: [
-        "seqkit", "fx2tab", "--name", "--length", "--gc",
+        "seqkit", "fx2tab", "--name", "--length", "--gc", *c.args(),
         str(c.assembly), "-o", str(c.out("seqkit", "contigs.tsv")),
     ],
     outputs=lambda c: [c.out("seqkit", "contigs.tsv")],
@@ -303,7 +310,7 @@ checkm2 = Tool(
     command=lambda c: [
         "checkm2", "predict", "--threads", str(c.threads),
         "--database_path", str(c.databases / "checkm2" / "checkm2.dmnd"),
-        "--output-directory", str(c.out("checkm2")),
+        "--output-directory", str(c.out("checkm2")), *c.args(),
         "--input", *[str(a) for a in c.assemblies],
     ],
     outputs=lambda c: [c.out("checkm2", "quality_report.tsv")],
@@ -345,7 +352,7 @@ gtdbtk = Tool(
     command=lambda c: [
         "gtdbtk", "classify_wf", "--cpus", str(c.threads),
         "--batchfile", str(c.workdir / ".comparem2" / "gtdbtk_batchfile.tsv"),
-        "--out_dir", str(c.out("gtdbtk")),
+        "--out_dir", str(c.out("gtdbtk")), *c.args(),
     ],
     # Two columns, tab separated, no header: FASTA path, then the genome id.
     # The id is the sample name, which is already wildcard-safe, and which is
@@ -445,7 +452,7 @@ mlst = Tool(
     scope=Scope.SET,
     conda=PERL_ENV,
     environment="perl",
-    command=lambda c: ["mlst", *[str(a) for a in c.assemblies]],
+    command=lambda c: ["mlst", *c.args(), *[str(a) for a in c.assemblies]],
     outputs=lambda c: [c.out("mlst", "mlst.tsv")],
     stdout_to_output=True,
 )
@@ -529,12 +536,40 @@ panaroo = Tool(
     needs=("bakta",),
     command=lambda c: [
         "panaroo", "--clean-mode", "strict", "-a", "core", "-t", str(c.threads),
-        "-o", str(c.out("panaroo")),
+        "-o", str(c.out("panaroo")), *c.args(),
         "-i", *[str(c.sample_out(s, "bakta", f"{s}.gff3")) for s in c.samples],
     ],
     outputs=lambda c: [
         c.out("panaroo", "gene_presence_absence.Rtab"),
-        c.out("panaroo", "core_gene_alignment.aln"),
+        # The filtered alignment, not `core_gene_alignment.aln`: Panaroo drops
+        # each core gene whose alignment entropy is a Tukey outlier, and its
+        # documentation recommends this file for core-genome phylogenies. On
+        # seven S. aureus (2026-09-02) it cut SNP counts 20-60% and branch
+        # lengths 26-71%, topology unchanged. Up to 3.4.0 both readers took the
+        # unfiltered file, which nothing had recorded as a choice.
+        c.out("panaroo", "core_gene_alignment_filtered.aln"),
+    ],
+    # Bakta writes a selenoprotein as one CDS read through its TGA
+    # (`transl_except=Sec`), and panaroo reads that as a premature stop. Without
+    # this flag it aborts the whole run on the first one, and every E. coli has
+    # three (fdnG, fdoG, fdhF). Issue #156, reproduced on thylakoid 2026-10-09:
+    # exit 1 in 1 s without it, exit 0 with 6 genes dropped. A run that already
+    # succeeds had no invalid gene to drop, so the flag changes nothing there:
+    # in 1.8.0's prokka.py its three uses each turn a raise into a skip.
+    params=(("--remove-invalid-genes", ""),),
+    # Panaroo 1.8.0 leaves `alignment_resume_state.json` behind even after a
+    # successful run, and refuses to start while it is there unless given
+    # `--resume`, which would reuse alignments made from a different genome set.
+    # So any re-run into an existing output directory failed: a genome added,
+    # a `--set`, or an upgrade that changed this rule. These are the four paths
+    # panaroo's own error message says to delete to start over. Found re-running
+    # the showcase on GenomeDK, 2026-10-09.
+    pre=lambda c: [
+        [sys.executable, steps.__file__, "remove",
+         str(c.out("panaroo", "alignment_resume_state.json")),
+         str(c.out("panaroo", "aligned_gene_sequences")),
+         str(c.out("panaroo", "aligned_protein_sequences")),
+         str(c.out("panaroo", "unaligned_dna_sequences"))],
     ],
     threads=16,
 )
@@ -547,7 +582,8 @@ snp_dists = Tool(
     environment="basic",
     needs=("panaroo",),
     command=lambda c: [
-        "snp-dists", str(c.out("panaroo", "core_gene_alignment.aln")),
+        "snp-dists", *c.args(),
+        str(c.out("panaroo", "core_gene_alignment_filtered.aln")),
     ],
     outputs=lambda c: [c.out("snp-dists", "snp-dists.tsv")],
     stdout_to_output=True,
@@ -561,8 +597,8 @@ fasttree = Tool(
     environment="basic",
     needs=("panaroo",),
     command=lambda c: [
-        "FastTree", "-nt", "-gtr",
-        str(c.out("panaroo", "core_gene_alignment.aln")),
+        "FastTree", "-nt", "-gtr", *c.args(),
+        str(c.out("panaroo", "core_gene_alignment_filtered.aln")),
     ],
     outputs=lambda c: [c.out("fasttree", "fasttree.newick")],
     stdout_to_output=True,

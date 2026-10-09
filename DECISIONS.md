@@ -3528,3 +3528,151 @@ the relative `STATUS.md` link inside the findings file, which is a directory
 deeper now. `mkdocs build --strict` is clean, which is what says the moved
 links resolve; the PDF lands at `assets/CHEATSHEET.da.pdf` in the built site,
 148 kB. 326 tests unchanged — nothing here is code.
+
+## 2026-09-24 — four fixes before 3.5.0, and the one found by looking
+
+Planned in `notes/BUGFIX_PLAN_2026-09-24.md` after the pre-bump release check
+on thylakoid; the numbers are in STATUS.md under *The 3.5.0 release check*.
+
+**SCIP gets a ceiling, `conda-forge::scip>=10.0.3,<10.1`.** This is the first
+upper bound in the catalogue, so it needs a reason, and it has two. First, a
+fresh solve that day took scip 10.1.0 under conda-forge's pyscipopt 6.2.1,
+which links `libscip.so.10.0`. Every carveme job died on `No solver
+available.`, in master and in the published 3.4.0. Second, the solver build
+is already part of the pinned surface (`carve_scip.py`), and its timings were
+taken on 10.0.x, so admitting a new minor unmeasured was never right. Lift the
+ceiling when a 10.1+ build has been *run*, not when one solves. The rejected
+alternative was pinning `pyscipopt` instead. The defect is that pyscipopt
+does not constrain which scip it accepts, so pinning pyscipopt still leaves
+that choice open.
+
+**`{log}` is quoted, and the `mkdir` that made its directory is gone.**
+Snakemake creates a log's parent itself, checked on 9.26.1 with a space in the
+path. So `mkdir -p $(dirname {log})` was a second opinion, and it was the one
+that split a spaced path into two directories. The rejected alternative was
+quoting both lines, which keeps a line that does nothing.
+
+**`--output` and `--databases` are refused unless a shell could take them
+unquoted.** That is one allowlist, `[^\w@%+=:,./-]`, with Unicode `\w`, so
+æøå pass. This reverses the same day's first version, which refused only
+`{`, `}`, `"` and `\` and let a space through. Quoting `{log}` made the
+Snakefile correct. The rerun on thylakoid with `--output 'efm fixed'` then
+failed three tools *of their own accord*. GTDB-Tk refuses a genome path with
+a space ("unsupported by downstream applications"). CheckM2's prodigal call
+ran `sh: cannot create /…/efm`: without that directory already there, it
+would have written a stray *file*. Panaroo runs cd-hit with `shell=True` on
+the unquoted path. The same holds for a quote, `$`, `&` or any other shell
+metacharacter, so a denylist of the characters *we* mishandle was the wrong
+boundary. Braces also fail DAG construction (`out{x}dir` dies with `'x'`).
+The refusal runs first in `main()`, because the first version fired after
+`--demo` had already unpacked into `a{b}/`. The rejected alternative is
+making every generated path relative to Snakemake's working directory, which
+would let the output path hold anything. It is a refactor of `Context`, and
+it cannot help `--databases`. Revisit it only if someone needs a path like
+that.
+
+**snp-dists and FastTree read `core_gene_alignment_filtered.aln`.** It is the
+file Panaroo's own documentation calls "recommended for building core genome
+phylogenies" (`docs/gettingstarted/output.md`, checked today). It drops each
+core gene whose alignment entropy is a Tukey outlier (`generate_output.py` in
+panaroo 1.8.0, read today). Until now the unfiltered file was used, and
+nothing recorded that as a choice. On seven *S. aureus* (2026-09-02) the
+switch cut pairwise SNPs 20–60% and branch lengths 26–71%, with the topology
+unchanged. Both tools move together so that the matrix and the tree describe
+one alignment. The guidance says so, and that counts from runs up to 3.4.0 are
+not comparable. **This changes results. It was implemented on Carl's
+instruction to implement the plan, which recommended it.** To revert, point
+three lines of `catalogue.py` back at the unfiltered file.
+
+**Measured after the switch, on the four *E. faecium* test genomes:**
+68–81% fewer SNPs from 13% less alignment, and the closest pair changed
+(SRR24–E8202, 8,907 → 1,699, went from most distant to closest). That is a
+bigger move than the *S. aureus* figures the plan relied on. It does not
+argue against the switch: those differences are concentrated in genes
+Panaroo's own filter flags. But it is why the guidance now carries both
+measurements, and why an old run's matrix must not be compared with a new
+one's.
+
+**`_profile_argv` takes `deploy` as its own argument.** "No prefix" and "do
+not deploy" had been encoded as the same `None`.
+
+**A test now hands a generated Snakefile to Snakemake**, over a plain path
+and a spaced one, and asserts per-rule job counts derived from the catalogue.
+CI installs `snakemake>=9,<10` for it, which also un-skips the two
+`runner.run()` tests. Until now no Snakemake process had ever started on CI.
+
+**Not done: every declared output checked three times at the end of a
+run.** It is unmeasured, and a refactor across three modules, so it waits for
+a measurement. On 2026-09-25 Carl decided it stays out of 3.5.0. The entry in
+STATUS.md's *Known broken* has the count (2,411 `exists()` calls a pass for
+300 genomes) and what would justify fixing it.
+
+## 2026-10-09 — the path allowlist narrows to `_ . / -`, and 3.5.0 over 3.4.1
+
+**`--output` and `--databases` may hold letters, digits and `_ . / -` only**
+(`[^\w./-]`), not 2026-09-24's `_ @ % + = : , . / -`. That reverses part of
+the entry above. The 2026-09-25 review ran `--output 'kørsel+a=b,c:d@e%f'` on
+thylakoid and got 27 of 31 steps: Panaroo raises on a `,` in a GFF path,
+because it writes paths into `gene_data.csv`. "What a shell can take
+unquoted" was the wrong boundary for the same reason the first denylist was:
+a tool can refuse something the shell accepts. `+ = : @ %` were dropped too,
+not because they failed but because they never reached Panaroo, snp-dists or
+FastTree in that run. The set that is left has run 31 of 31
+(`kørsel-2026.09_x`). Add a character back only after a full run with it.
+
+**`--setup` no longer checks `--output`.** It builds in a temporary directory
+and never touches the output, and the default output sits in the current
+directory, so the check refused `--setup` from any spaced path for nothing.
+
+**Ship the SCIP ceiling as 3.5.0, not a 3.4.1 hotfix.** Issue #156 prompted a
+fresh `--setup` of the published 3.4.0 on 2026-10-08, and its carveme is still
+broken. A hotfix could have been tagged that day. Carl chose 3.5.0 because
+bioconda's wait is the same either way, and a 3.4.1 tag would have blocked
+the 3.5.0 tag until its bioconda PR merged.
+
+**A weekly workflow builds and runs every tool environment.** That is
+`.github/workflows/environments.yaml` with `tests/environments/check.py`, and
+Carl asked for it. It builds, not just solves, because the carveme break solved
+cleanly. For carveme it carves *E. coli* K-12 from CarveMe's bundled proteome
+through `carve_scip.py` and requires `biosynthesis.py` to give the calibrated
+29 of 30. On thylakoid on 2026-10-09 the check failed the published 3.4.0's
+carveme with `No solver available.`. It passed a fresh build from the pinned
+file (scip 10.0.3, solve 7.6 s, 29 of 30) in 25 s. Every other tool gets only
+a version call. That catches a library that will not load, not a crash on real
+input. The rejected alternative was having `comparem2 --setup` run the same
+checks. It would tell a user at install time, but it moves test code into the
+package and lengthens setup. Revisit it if users keep meeting broken
+environments between releases.
+
+**Panaroo runs with `--remove-invalid-genes`, and `--set` reaches every
+tool.** Both come from issue #156. The diagnosis and reproduction are in
+`notes/ISSUE156_2026-10-09.md`, by a parallel session. Bakta writes a
+selenoprotein as one CDS read through its TGA. Panaroo reads that TGA as a
+premature stop and, without the flag, aborts the whole run. On thylakoid,
+*E. coli* K-12 + O157 Sakai exited 1 in 1 s without it and 0 with it, with 6
+genes dropped. The flag cannot change a run that already succeeds: in panaroo
+1.8.0's `prokka.py` all three of its uses turn a raise into a skip, so a set
+with no invalid gene is untouched. The rejected alternative was leaving it to
+`--set`, and that is where the second defect was: seven of fourteen command
+lambdas (seqkit, checkm2, gtdbtk, mlst, panaroo, snp-dists, fasttree) never
+spliced `c.args()`, so `--set` for them was accepted and silently ignored.
+The docs promised it worked for every tool, so the code was changed to match,
+not the docs. The splice comes before each tool's positional inputs, so with
+no overrides every command line is unchanged. A parametrised test now probes
+all fourteen.
+
+**A re-run of panaroo into an existing output directory failed, and `Tool.pre`
+exists to fix it.** This is in 3.4.0 too, and nobody had noticed. Re-running
+the showcase on GenomeDK after the flag change failed panaroo in 1 m 44 s:
+`Found an existing gene-alignment resume manifest … Re-run with --resume`.
+Panaroo 1.8.0 writes `alignment_resume_state.json` on every run, finished or
+not, and refuses to start while it exists. Snakemake removes only the declared
+outputs before a re-run. So adding a genome, changing a panaroo `--set`, or
+upgrading across a change to the rule broke panaroo, snp-dists and FastTree.
+3.5.0 changes that rule twice, so every user resuming a 3.4.0 directory would
+have hit it. The fix is a step before the command that deletes the four paths
+panaroo's message names. Rejected: `--resume`, which continues an alignment
+made from a different genome set. Also rejected: declaring the whole
+directory as the output, which would change what completion and the report
+read. `pre` mirrors `post` and has one user, and the existing test now holds
+it to that.

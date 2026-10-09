@@ -35,9 +35,12 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Install test dependencies
-        # textual is imported by tui.py, which two tests exercise. Everything
-        # else under test is standard library.
-        run: python -m pip install --quiet pytest pytest-asyncio textual
+        # textual is imported by tui.py, which two tests exercise. Snakemake,
+        # because a generated Snakefile is only checked by handing it to
+        # Snakemake: without it the DAG test and the two runner tests skip, and
+        # no Snakemake process ever started on CI. Everything else under test
+        # is standard library.
+        run: python -m pip install --quiet pytest pytest-asyncio textual "snakemake>=9,<10"
 
       - name: Run unit tests
         run: python -m pytest tests/unit -q

@@ -1,6 +1,6 @@
 # intbitset 4.1.2 + osx-arm64 builds
 
-**Sent 2026-09-04:
+**Sent 2026-09-04, merged 2026-09-25:
 [conda-forge/intbitset-feedstock#21](https://github.com/conda-forge/intbitset-feedstock/pull/21)**,
 from `cmkobel:osx-arm64-and-4.1.2`. Two commits: the recipe change, and the
 rerender separately so the human change stays reviewable on its own. The local
@@ -123,7 +123,7 @@ Not "should be" — checked. With those four artifacts in a local channel and
 bioconda's panaroo recipe carrying only the one-line change in
 [bioconda-panaroo-pr.md](bioconda-panaroo-pr.md), CompareM2's own specs
 `panaroo>=1.5`, `snp-dists>=1.2.0` and `fasttree>=2.2.0` solve on `osx-arm64`
-from conda alone — **278 packages**, no pip, no `--no-deps`, no local pin
+from conda alone — **141 packages**, no pip, no `--no-deps`, no local pin
 beyond the intbitset build itself. panaroo 1.8.0 `py_1`, intbitset 4.1.2
 `py313h2f2c7d1_0`, **python 3.13.15**, and zero mentions of prokka.
 

@@ -77,6 +77,14 @@ it looked.
 | `--unlock` | off | release a stale lock on `--output` and exit; takes no assemblies |
 | `--version` | | print the version and exit |
 
+`--output` and `--databases` may hold letters (æøå included), digits and
+`_ . / -`, and nothing else. A space, a quote, a comma, `$`, braces or any
+other punctuation is refused before anything is written, because GTDB-Tk,
+CheckM2 and Panaroo pass paths to a shell of their own unquoted, Panaroo also
+refuses a comma, and the run would fail partway through instead. Before 3.5.0, a space in `--output` made
+every rule fail. Input *filenames* are unaffected: `my genome.fna` is copied
+in under a safe name (see [sample names](#sample-names) below).
+
 There is no flag for *whether* to deploy the tools. Snakemake always does, into
 `--conda-prefix`; see [Installation](10 installation.md).
 
@@ -492,8 +500,8 @@ comparem2 *.fna --on-report 'mutt -s "CompareM2" -a "$COMPAREM2_REPORT" -- you@e
 ```
 
 Note the **single** quotes: the variables are the hook's to expand, not your
-shell's. Quote `"$COMPAREM2_REPORT"` inside the command too, so an output
-directory with a space in its name survives.
+shell's. Quote `"$COMPAREM2_REPORT"` inside the command too, as you would any
+path in a shell command.
 
 Set `$COMPAREM2_ON_REPORT` to make it every run, which is what a queue run
 nobody is watching needs:

@@ -1,14 +1,63 @@
 # Draft: drop `prokka` from panaroo's run dependencies
 
-**Unsent.** Destination: a PR against
+**Sent 2026-10-05 as [bioconda-recipes#69901](https://github.com/bioconda/bioconda-recipes/pull/69901)**, after the author approved by email 2026-10-04
+(below). The text was reworded before sending — it leads with Apple silicon and
+drops the email paragraph — so the PR, not the draft below, is the record of
+what was said. Destination: a PR against
 [bioconda/bioconda-recipes](https://github.com/bioconda/bioconda-recipes),
-`recipes/panaroo/meta.yaml`.
+`recipes/panaroo/meta.yaml`, from a fork branch.
 
-Measured 2026-09-03 on macOS 26.2 / Apple silicon, panaroo 1.8.0. This is the
-second of the two changes CompareM2 needs for panaroo on macOS; the other is
-[intbitset-feedstock-pr.md](intbitset-feedstock-pr.md). **Neither is sufficient
-alone** — with an arm `intbitset` in a local channel and this line still
-present, `panaroo>=1.5` still does not solve on `osx-arm64`.
+Measured 2026-09-03 on macOS 26.2 / Apple silicon, panaroo 1.8.0; re-run
+2026-09-28 on macOS 26.7 against the published intbitset. This was the second of
+two changes panaroo needs on arm. The first,
+[intbitset-feedstock-pr.md](intbitset-feedstock-pr.md), **merged 2026-09-25**,
+so this line is now the only blocker.
+
+## The PR as drafted (the sent text differs; see #69901)
+
+Everything below this section is the working note it was written from.
+
+**Title:** `Update panaroo: drop prokka from run requirements`
+
+**Body:**
+
+> panaroo's recipe lists `prokka` as a run requirement, but panaroo does not
+> need it:
+>
+> - upstream's `setup.py` does not declare it;
+> - `panaroo/prokka.py` is a GFF parser and runs nothing;
+> - the only call to the prokka binary is in the separate `run_prokka` helper
+>   (`panaroo/run_prokka.py`).
+>
+> That one line is what keeps panaroo off Apple silicon. prokka requires
+> `tbl2asn-forever`, which repackages NCBI's retired x86 tbl2asn and has no
+> `osx-arm64` build. intbitset, the other blocker, has had `osx-arm64` builds on
+> conda-forge since conda-forge/intbitset-feedstock#21.
+>
+> **Cost:** `conda install panaroo` no longer brings prokka on any platform, so
+> `run_prokka` users need `conda install prokka` alongside. All eight test
+> commands, `run_prokka --help` included, pass without prokka on PATH.
+>
+> @gtonkinhill — as agreed by email. You added prokka here in #21341; this
+> removes it rather than making it optional. If you'd rather keep a version
+> floor for `run_prokka` users, `run_constrained: - prokka >=1.14` does that
+> without installing it; happy to switch.
+>
+> **Tested** on osx-arm64 (macOS 26, Apple silicon), this recipe built locally
+> and everything else from conda-forge and bioconda: panaroo 1.8.0 on three
+> *E. faecium* genomes, one a byte-identical copy of another, exits 0 with
+> 3,569 gene clusters; the copy pair is identical in every cluster and 0 SNPs
+> apart in the core alignment.
+
+Every claim in it was checked 2026-09-28. The three facts about panaroo are
+from v1.8.0's source, 2026-09-03. The eight test commands plus
+`import panaroo` exit 0 with neither `prokka` nor `tbl2asn` on PATH. The run is
+the re-run in `../STATUS.md`: 141 packages, 191.66 s, and
+`gene_presence_absence.Rtab` byte-identical to 09-03. That the copy pair differs
+in 0 of 3,569 clusters is from 09-03; the identical Rtab carries it forward.
+
+After CI passes, bioconda wants `@BiocondaBot please add label` as a comment.
+CI builds `noarch` on linux-64 only, so the arm result above is ours, not CI's.
 
 ## The diff
 
@@ -27,8 +76,10 @@ present, `panaroo>=1.5` still does not solve on `osx-arm64`.
 
 `prokka` requires `tbl2asn-forever >=25.7`, which bioconda ships for
 `linux-64`, `linux-aarch64` and `osx-64`. It repackages NCBI's **prebuilt**
-tbl2asn binary, so there is nothing to rebuild for Apple silicon; `table2asn`
-has no arm build either. That one dependency makes panaroo uninstallable on
+tbl2asn binary, so there is nothing to rebuild for Apple silicon; bioconda's
+`table2asn` has no arm build either. (NCBI's own `table2asn` is arm64 on mac,
+and prokka runs on arm behind a shim — but packaging that is two further PRs;
+see [prokka-arm-table2asn.md](prokka-arm-table2asn.md).) That one dependency makes panaroo uninstallable on
 `osx-arm64`, and because panaroo's core gene alignment is the input to both
 `snp-dists` and `fasttree`, it costs three tools rather than one.
 
@@ -62,6 +113,22 @@ arm: a `conda install panaroo` on Linux stops pulling prokka too. Anyone using
 the `run_prokka` helper then has to `conda install prokka` alongside — which
 still works on Linux and `osx-64`, and which is where that dependency belongs,
 since it is a dependency of one optional entry point rather than of panaroo.
+
+**The line is Gerry Tonkin-Hill's own.** He added `prokka`, with `mash` and
+`intbitset`, in bioconda-recipes#21341 (2020-04-08, panaroo 1.2.0), and the
+recipe lists no `recipe-maintainers` — so a bioconda member could merge this
+without him, and should not. He merged intbitset-feedstock#21 himself on
+2026-09-25, the day he was asked.
+
+**He agreed, 2026-10-04.** Carl asked by email on 2026-09-28 ("Panaroo on
+Macos?"); the reply: *"If you're willing to submit a pull request to remove the
+prokka dependency (or make it optional) that would be great!"* So either form
+is approved; the diff below is the removal.
+
+If he wants to keep a floor for `run_prokka` users, conda's form of an optional
+dependency is `run_constrained: - prokka >=1.14` — it bounds prokka when
+installed and never pulls it in. Not tested whether bioconda's linter accepts it
+on a `noarch: python` recipe.
 
 `additional-platforms` is not an alternative here. Both panaroo (`noarch:
 python`) and prokka (`noarch: generic`) are architecture-independent already;
@@ -101,14 +168,17 @@ So these gene counts are **not** comparable to CompareM2's Linux runs, which
 annotate with bakta. What this shows is that panaroo runs correctly on arm, not
 that the pipeline's numbers reproduce there.
 
-## What this draft still needs before it is sent
+## What is left
 
-- A bakta-annotated arm run, so the counts *are* comparable to the Linux
-  reference. That needs bakta's 1.3 GB light database on the laptop and is the
-  natural next step; it is not a blocker for this PR.
-- A decision on whether to open this before or alongside the intbitset PR.
-  They are independent — neither blocks review of the other — but this one is
-  pointless in isolation, so the PR body should link the other and say so.
-- Whether to raise the EOL-prokka point as a separate bioconda issue. Several
-  recipes will have the same problem, and a one-line fix per recipe is not the
-  general answer.
+- Sent 2026-10-05 from `cmkobel/bioconda-recipes`, branch `panaroo-drop-prokka`,
+  commit `ac02471` on bioconda master `7074fb0`. Next: once CI passes, comment
+  `@BiocondaBot please add label`. The PR does not @-mention Gerry and the
+  recipe lists no maintainers, so GitHub will not notify him.
+- Resolved 2026-10-04: the author's approval, by email.
+- Not a blocker: a bakta-annotated arm run, so that gene counts are comparable
+  to the Linux reference. bakta runs on arm (STATUS.md, 2026-09-04), but no
+  bakta GFF has been fed to arm panaroo yet.
+- Resolved 2026-09-25: the intbitset PR, merged.
+- Optional, separate: a bioconda issue about recipes still pulling EOL prokka.
+  Several recipes will have the same problem, and a one-line fix per recipe is
+  not the general answer.

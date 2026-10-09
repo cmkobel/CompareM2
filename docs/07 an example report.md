@@ -34,9 +34,9 @@ contamination. Nothing below is an artefact of a poor assembly.
 ### D39 and R6 are the same strain, and most of the report says so
 
 R6 is a laboratory derivative of D39 that lost its capsule locus, and the
-report independently recovers that: 100.00% ANI, 65 SNPs across a
-1,183,231-column core alignment, the same ST595, branch lengths of 1.7e-5 and
-4.2e-5 from their common ancestor, and one AMR gene each. A near-identical pair
+report independently recovers that: 100.00% ANI, 55 SNPs across a
+1,077,439-column filtered core alignment, the same ST595, branch lengths of
+1.6e-5 and 3.7e-5 from their common ancestor, and one AMR gene each. A near-identical pair
 is the cheapest sanity check you can put in a run, and it is worth doing with
 your own data. See [what the report gets wrong
 here](#what-the-report-gets-wrong-here).
@@ -68,16 +68,18 @@ a genome outside it gets no ST instead of a wrong one.
 The metabolism sections disagree with themselves on this set, and the D39/R6
 pair is what shows it. The biosynthesis panel calls 18 of 30 compounds *de
 novo* for D39 and 0 for R6, flipping 20 of the 30 in one direction, for two
-genomes 65 SNPs apart. Their CarveMe models share 1,048 reactions, with 530
+genomes 55 SNPs apart. Their CarveMe models share 1,048 reactions, with 530
 unique to R6 and 85 unique to D39.
 
-(The run is from 2026-09-08 and the eight models are exactly as it left them;
-the report was re-rendered from those outputs with CompareM2 3.4.0 on
-2026-09-15, which is what its provenance header records. The panel was 32
-compounds at the time of the run and is 30 from 2026-09-10 — biotin and
-ubiquinone-8 were dropped for being *no route* in every CarveMe draft measured.
-Neither was ever *de novo* in a draft, so the *de novo* counts are unchanged;
-only the denominator and the *no route* column moved.)
+(The run is CompareM2 3.5.0 on GenomeDK, 2026-10-09. It replaced a
+2026-09-08 run, and the two agree everywhere except where 3.5.0 meant them to
+differ. The eight CarveMe models have the same reaction sets, and every
+biosynthesis verdict is the same. snp-dists and FastTree now read Panaroo's
+*filtered* core alignment: 8.9% fewer columns, 11–21% fewer SNPs per pair
+(D39/R6 went from 65 to 55), and one of the tree's five splits moved, with
+ATCC700669 now sister to P1031. The panel has been 30 compounds since
+2026-09-10. Biotin and ubiquinone-8 were dropped for being *no route* in every
+CarveMe draft measured, and neither was ever *de novo*.)
 
 The cause is in the model reconstruction and not in the panel, and it is
 specific: four of the eight models cannot take up ammonium. M9's only nitrogen

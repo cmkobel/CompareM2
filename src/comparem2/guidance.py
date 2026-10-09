@@ -666,8 +666,11 @@ GUIDANCE: dict[str, Guidance] = {
                "genes translated in different frames, re-collapsing over-split families at "
                "70% identity, deleting poorly supported degree-1 nodes, and re-searching for "
                "genes the annotator missed. This pipeline runs `--clean-mode strict` with "
-               "`-a core`, which also writes the core alignment that snp-dists and FastTree "
-               "consume.",
+               "`-a core`, which writes the core alignment twice: in full, and filtered, "
+               "dropping each core gene whose alignment entropy is an outlier by Tukey's "
+               "test. Panaroo's documentation calls the filtered one \"recommended for "
+               "building core genome phylogenies\", and it is the one snp-dists and "
+               "FastTree read.",
         reading=(
             ("The summary line",
              "Gene clusters is the pan genome: everything seen anywhere in this set. "
@@ -733,10 +736,12 @@ GUIDANCE: dict[str, Guidance] = {
 
     "snp-dists": Guidance(
         blurb="Counts, for every pair of genomes, how many positions differ in the core "
-              "gene alignment Panaroo built, which is the genes shared by nearly all "
-              "genomes in this run. Zero means indistinguishable across that shared core.",
-        method="Panaroo aligns the core clusters and concatenates them; snp-dists walks that "
-               "alignment column by column and counts, per pair, the columns where the bases "
+              "gene alignment Panaroo built: the genes shared by nearly all genomes in this "
+              "run, minus those whose alignment Panaroo flags as unreliable. Zero means "
+              "indistinguishable across that filtered core.",
+        method="Panaroo aligns the core clusters, concatenates them and drops the genes whose "
+               "alignment entropy is an outlier; snp-dists walks that filtered alignment "
+               "column by column and counts, per pair, the columns where the bases "
                "differ. It runs with no options, so the result is raw uncorrected counts: "
                "no evolutionary model, no distance transformation, no normalisation by "
                "alignment length.",
@@ -773,6 +778,13 @@ GUIDANCE: dict[str, Guidance] = {
             "which genomes are in the run: adding one distant or fragmented assembly shrinks "
             "the shared core for everybody. Values are not comparable between runs with "
             "different inputs.",
+            "From CompareM2 3.5.0, counted over Panaroo's filtered core alignment; up to "
+            "3.4.0 it was the full one, and a report re-rendered with --report-only over "
+            "an older run still shows the full one. On seven Staphylococcus aureus "
+            "genomes run through this pipeline on 2026-09-02, the filtered alignment gave "
+            "20-60% fewer SNPs per pair; on its four Enterococcus faecium test genomes on "
+            "2026-09-24, 68-81% fewer from 13% less alignment, and the closest pair was a "
+            "different one. Counts from an older run are not comparable with these.",
             "Only the core is measured, so the entire accessory genome is invisible. Two "
             "genomes can show 0 SNPs and still differ by a plasmid or a resistance "
             "cassette, so check the pangenome matrix and the AMRFinder section before "
@@ -786,7 +798,7 @@ GUIDANCE: dict[str, Guidance] = {
     ),
 
     "fasttree": Guidance(
-        blurb="Builds a phylogenetic tree from Panaroo's core-gene alignment, so relatedness "
+        blurb="Builds a phylogenetic tree from Panaroo's filtered core-gene alignment, so relatedness "
               "is by descent rather than by overall similarity. It stays fast on large sets "
               "by searching tree space less thoroughly than a full maximum-likelihood "
               "program.",
@@ -832,6 +844,16 @@ GUIDANCE: dict[str, Guidance] = {
             "shared genes and assumes one history for all of them. Recombination and "
             "horizontal transfer break that assumption and the paper addresses neither "
             "(general caution, not a FastTree finding).",
+            "The alignment is Panaroo's filtered one, the file its documentation recommends "
+            "for core-genome phylogenies, from CompareM2 3.5.0; up to 3.4.0 it was the full "
+            "one, and a report re-rendered with --report-only over an older run still "
+            "shows that tree. On seven "
+            "Staphylococcus aureus genomes run through this pipeline on 2026-09-02, the "
+            "filtered alignment shortened branches by 26-71% and left the topology "
+            "unchanged; on its four Enterococcus faecium test genomes on 2026-09-24, by "
+            "42-84%, with the one split unchanged. On eight Streptococcus mitis-group "
+            "genomes on 2026-10-09 it moved one of five splits, so the topology is not "
+            "guaranteed to survive the switch.",
             "Every benchmark in the paper is on protein families or 16S alignments; there is "
             "none on a concatenated bacterial core-gene alignment of the kind used here, and "
             "no stated minimum number of genomes below which the approximations stop being "

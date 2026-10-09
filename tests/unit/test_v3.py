@@ -185,6 +185,31 @@ def test_overrides_reach_the_rendered_command():
     assert "-c 70" in render(CATALOGUE, ["skani"], Path("res"), Path("db"), SAMPLES)
 
 
+@pytest.mark.parametrize("tool", [t.name for t in CATALOGUE.closure(None)])
+def test_every_command_carries_its_params(tool):
+    """`--set` reaches every tool, as the docs promise. Until 2026-10-09 seven
+    command lambdas never spliced `c.args()`, so `parse_overrides` accepted a
+    setting for seqkit, checkm2, gtdbtk, mlst, panaroo, snp-dists or fasttree
+    and the run silently ignored it. That left issue #156 with no workaround
+    for panaroo."""
+    spec = CATALOGUE[tool]
+    ctx = Context(Path("out"), Path("db"), 4, SAMPLES,
+                  sample=SAMPLES[0] if spec.scope is Scope.GENOME else None,
+                  params=(("--PROBE", "x"),))
+    argv = list(spec.command(ctx))
+    i = argv.index("--PROBE")
+    assert argv[i + 1] == "x"
+
+
+def test_panaroo_drops_invalid_genes_rather_than_aborting():
+    """Bakta's selenoprotein CDS (read through a TGA) is invalid to panaroo,
+    which aborts the whole run on it without this flag. Issue #156."""
+    assert ("--remove-invalid-genes", "") in CATALOGUE["panaroo"].params
+    text = render(CATALOGUE, ["panaroo"], Path("res"), Path("db"), SAMPLES)
+    panaroo = text.split("rule panaroo:")[1].split("\nrule ")[0]
+    assert "--remove-invalid-genes" in panaroo
+
+
 def test_shell_block_uses_wildcards_prefix():
     """Regression: bare {sample} in a shell block is a NameError at runtime.
 
@@ -258,6 +283,20 @@ def test_eighteen_rules_share_six_environments():
                   "checkm2.yaml", "gtdbtk.yaml"):
         for tool in ("mashtree", "mlst", "panaroo"):
             assert tool not in envs[other], (other, tool)
+
+
+def test_the_weekly_check_exercises_every_environment():
+    """`tests/environments/check.py` runs each environment's tools once a week.
+    An environment it has no entry for would be built and never exercised,
+    which is how a carveme with no solver passes a solve-only check."""
+    spec = importlib.util.spec_from_file_location(
+        "env_check", Path(__file__).parents[1] / "environments" / "check.py")
+    check = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(check)
+    names = {name.removesuffix(".yaml") for name in render_envs(CATALOGUE, None)}
+    assert set(check.VERSIONS) == names
+    assert set(check.environment_files()) == names
+    assert set(check.EXERCISES) <= names
 
 
 def test_environment_names_are_unambiguous():
@@ -559,6 +598,39 @@ def test_steps_runs_as_a_plain_script(tmp_path):
     assert out.read_text() == "a\tb\n1\t2\n"
 
 
+def test_remove_deletes_what_exists_and_skips_the_rest(tmp_path):
+    """As a script, like the rule runs it: a manifest file, a populated
+    directory, and a path that is not there (every first run)."""
+    import subprocess as sp
+    from comparem2 import steps as steps_mod
+
+    (tmp_path / "state.json").write_text("{}")
+    (tmp_path / "aligned" / "deep").mkdir(parents=True)
+    (tmp_path / "aligned" / "deep" / "g.fas").write_text(">a\nAC\n")
+    (tmp_path / "keep.txt").write_text("x")
+    done = sp.run([sys.executable, steps_mod.__file__, "remove",
+                   str(tmp_path / "state.json"), str(tmp_path / "aligned"),
+                   str(tmp_path / "never_made")],
+                  capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["keep.txt"]
+
+
+def test_panaroo_clears_its_previous_alignment_state_first():
+    """Panaroo 1.8.0 refuses to start while `alignment_resume_state.json` is in
+    its output directory, and leaves it there after every run, so a re-run
+    into an existing directory failed until 2026-10-09 (GenomeDK showcase)."""
+    text = render(CATALOGUE, ["panaroo"], Path("res"), Path("db"), SAMPLES)
+    rule = text.split("rule panaroo:")[1].split("\nrule ")[0]
+    shell = [line.strip() for line in rule.split('"""')[1].splitlines() if line.strip()]
+    step = next(i for i, line in enumerate(shell) if " remove " in line)
+    run = next(i for i, line in enumerate(shell) if line.startswith("panaroo "))
+    assert step < run
+    for name in ("alignment_resume_state.json", "aligned_gene_sequences",
+                 "aligned_protein_sequences", "unaligned_dna_sequences"):
+        assert f"res/panaroo/{name}" in shell[step]
+
+
 def test_merge_tsv_refuses_mismatched_headers(tmp_path):
     """Two files with different columns are not one table."""
     from comparem2.steps import merge_tsv
@@ -570,10 +642,11 @@ def test_merge_tsv_refuses_mismatched_headers(tmp_path):
     assert "different header" in str(excinfo.value)
 
 
-def test_only_gtdbtk_needs_steps_around_its_command():
-    """`files` and `post` are an exception, not a pattern to spread."""
+def test_only_gtdbtk_and_panaroo_need_steps_around_their_commands():
+    """`files`, `pre` and `post` are an exception, not a pattern to spread."""
     assert [t.name for t in CATALOGUE if t.files] == ["gtdbtk"]
     assert [t.name for t in CATALOGUE if t.post] == ["gtdbtk"]
+    assert [t.name for t in CATALOGUE if t.pre] == ["panaroo"]
     text = render(CATALOGUE, None, Path("/res"), Path("/db"), SAMPLES)
     assert text.count("merge-tsv") == 1
 
@@ -1021,6 +1094,163 @@ def test_profile_argv_carries_the_run_settings(tmp_path):
     assert "--rerun-incomplete" in argv
     assert "--cores" not in argv
     assert "--dry-run" not in argv
+
+
+def test_profile_argv_deploys_whether_or_not_a_prefix_is_set(tmp_path):
+    """Deploying and where to deploy are two settings, as in the API branch.
+
+    Until 2026-09-24 the caller passed `conda_prefix if deploy else None`, so a
+    missing prefix read as "do not deploy" and the profile branch dropped
+    `--software-deployment-method` where the API branch kept it.
+    """
+    from comparem2.runner import _profile_argv
+
+    def argv(prefix, deploy):
+        return _profile_argv(tmp_path / "Snakefile", "slurm", None, tmp_path,
+                             False, False, True, prefix, deploy)
+
+    bare = argv(None, True)
+    assert bare[bare.index("--software-deployment-method") + 1] == "conda"
+    assert "--conda-prefix" not in bare
+    assert "--software-deployment-method" not in argv(tmp_path / "envs", False)
+
+
+@pytest.mark.parametrize("name", ["out", "out dir"])
+def test_a_generated_snakefile_builds_its_whole_dag(tmp_path, name):
+    """The instrument for the failure this codebase is most exposed to: a
+    Snakefile that parses and builds the wrong DAG, or none. Every other test
+    reads the rendered text; this one hands it to Snakemake.
+
+    `prepare()`, not `render()`: the GTDB-Tk batchfile it writes is a declared
+    input, so the DAG does not close without it. No tools and no databases are
+    needed, and it takes about a second.
+
+    With a space in the output directory and the database root, too. The CLI
+    refuses such a path, because three tools cannot take one, but the Snakefile
+    still quotes every path it writes: until 2026-09-24 `{log}` was unquoted,
+    and `mkdir -p $(dirname {log})` made a stray directory beside the output.
+    So every shell word naming one of these paths must name all of it.
+    """
+    pytest.importorskip("snakemake")
+    from collections import Counter
+    import shlex
+    from comparem2.snakefile import prepare
+
+    samples = ("A", "B")
+    workdir, databases = tmp_path / name, tmp_path / name.replace("out", "db")
+    for s in samples:
+        (workdir / "samples" / s).mkdir(parents=True)
+        (workdir / "samples" / s / f"{s}.fna").write_text(">c\nACGT\n")
+    snakefile = prepare(CATALOGUE, None, workdir, databases, samples)
+
+    run = subprocess.run(
+        [sys.executable, "-m", "snakemake", "-s", str(snakefile), "-d", str(workdir),
+         "--dry-run", "--cores", "1", "--printshellcmds"],
+        capture_output=True, text=True)
+    out = run.stdout + run.stderr
+    assert run.returncode == 0, out[-2000:]
+
+    jobs = Counter(re.findall(r"^(?:local)?rule (\w+):", out, re.M))
+    expected = Counter({t.name.replace("-", "_"): len(samples) if t.scope is Scope.GENOME else 1
+                        for t in CATALOGUE.closure(None)})
+    expected.update({db.rule: 1 for db in CATALOGUE.databases(None)})
+    expected["all"] = 1
+    assert jobs == expected
+
+    shell = [line.strip() for line in out.splitlines()
+             if line.startswith("        ") and str(tmp_path) in line]
+    redirects = [shlex.split(line) for line in shell if line.startswith("exec >")]
+    assert len(redirects) == sum(expected.values()) - 1        # all but `all`
+    for words in redirects:
+        assert words[1] == ">" and words[3] == "2>&1", words
+        assert words[2].startswith((f"{workdir}/", f"{databases}/")), words
+    for line in shell:
+        for word in shlex.split(line):
+            if word.startswith(str(tmp_path)):
+                assert word.startswith((str(workdir), str(databases))), line
+
+
+def test_no_rule_makes_its_own_log_directory():
+    """Snakemake creates a log's parent before the job runs — checked on 9.26.1
+    with a log path holding a space — so the `mkdir` that used to do it was a
+    second opinion, and the one that got the quoting wrong."""
+    text = render(CATALOGUE, None, Path("/r e s"), Path("/d b"), SAMPLES)
+    rules = text.count("\nrule ") + text.startswith("rule ") - 1   # not `all`
+    assert "dirname" not in text
+    assert text.count("exec > {log:q} 2>&1") == rules
+
+
+@pytest.mark.parametrize("name", ["a b", "a'b", 'a"b', "a$b", "a{b}", "a\\b", "a(b)",
+                                  "a,b", "a+b=c", "a:b", "a@b%c"])
+def test_an_output_path_a_tool_cannot_take_is_refused(tmp_path, name):
+    """Refused before anything is created, not minutes into a run.
+
+    A space was the case that found it. With the Snakefile's own quoting fixed,
+    `--output 'efm fixed'` on thylakoid still failed three tools on 2026-09-24,
+    because GTDB-Tk rejects a space in a genome path and CheckM2 and Panaroo
+    hand paths to a shell unquoted. Braces also fail DAG construction. A comma
+    is Panaroo's own refusal (2026-09-25); `+ = : @ %` were never run past it.
+    """
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    with pytest.raises(SystemExit) as excinfo:
+        cli_mod.main([str(tmp_path / "a.fna"), "--output", str(tmp_path / name),
+                      "--dry-run"])
+    assert "cannot use a path containing" in str(excinfo.value.code)
+    assert not (tmp_path / name).exists()
+
+    # `--demo` unpacks into the output directory, so it is checked first:
+    # on thylakoid the refusal fired after `a{b}/demo_assemblies` was made.
+    with pytest.raises(SystemExit) as excinfo:
+        cli_mod.main(["--demo", "--output", str(tmp_path / name), "--dry-run"])
+    assert "cannot use a path containing" in str(excinfo.value.code)
+    assert not (tmp_path / name).exists()
+
+    # The message, not just the exit: without conda on PATH, `--setup` exits
+    # anyway, and would pass here for the wrong reason.
+    with pytest.raises(SystemExit) as excinfo:
+        cli_mod.main(["--setup", "--databases", str(tmp_path / name)])
+    assert "cannot use a path containing" in str(excinfo.value.code)
+    assert not (tmp_path / name).exists()
+
+
+def test_setup_does_not_check_an_output_it_never_uses(tmp_path, monkeypatch):
+    """`--setup` builds in a temporary directory, so the default `--output` —
+    which sits in the current directory — must not refuse it from a spaced
+    path. It gets as far as the conda check, which is the next thing it does."""
+    monkeypatch.setattr(cli_mod, "invocation_dir", lambda: tmp_path / "a b")
+    monkeypatch.setattr(cli_mod, "missing_conda", lambda: True)
+    with pytest.raises(SystemExit) as excinfo:
+        cli_mod.main(["--setup", "--databases", str(tmp_path / "db")])
+    assert "not on PATH: conda" in str(excinfo.value.code)
+
+
+def test_a_path_of_letters_digits_and_four_punctuation_marks_is_allowed():
+    """Unicode letters included: no shell treats them specially, and this is
+    written from a machine whose user writes Danish."""
+    for path in ("/home/me/results_2026-09-24", "/home/me/kørsel.v2", "/data/kørsel-2026.09_x"):
+        cli_mod.refuse_unsafe(Path(path), "--output")
+
+
+def test_carveme_pins_the_scip_minor_its_pyscipopt_links():
+    """conda-forge's pyscipopt 6.2.1 links `libscip.so.10.0` but accepts scip
+    10.1. A fresh solve on 2026-09-24 took 10.1.0 and every carveme job died on
+    "No solver available." The ceiling goes when a new minor has been run."""
+    scip = [s for s in CATALOGUE["carveme"].conda if s.split("::")[-1].startswith("scip")]
+    assert scip == ["conda-forge::scip>=10.0.3,<10.1"]
+    assert CATALOGUE["biosynthesis"].conda == CATALOGUE["carveme"].conda
+
+
+def test_snp_dists_and_fasttree_read_the_filtered_core_alignment(tmp_path):
+    """The file Panaroo's documentation recommends for core-genome
+    phylogenies, and the same one for both, so the SNP matrix and the tree
+    describe one alignment. Until 3.4.0 both read the unfiltered file."""
+    ctx = Context(tmp_path, tmp_path / "db", 1, SAMPLES)
+    filtered = str(ctx.out("panaroo", "core_gene_alignment_filtered.aln"))
+    assert filtered in [str(o) for o in CATALOGUE["panaroo"].outputs(ctx)]
+    for name in ("snp-dists", "fasttree"):
+        command = CATALOGUE[name].command(ctx)
+        assert filtered in command, name
+        assert not any(a.endswith("core_gene_alignment.aln") for a in command), name
 
 
 def test_use_conda_and_isolated_launcher_are_gone(tmp_path):
@@ -3277,14 +3507,14 @@ def _hook_main(monkeypatch, tmp_path, argv: list[str], out: Path) -> int:
 
 
 def test_the_hook_is_handed_the_report_and_the_output_directory(monkeypatch, tmp_path):
-    """Through the environment rather than by substitution, so an output
-    directory with a space in its name survives. A `{report}` interpolated
-    into a shell string would not, which is why `116_2 duplicate.fna` is in
-    the test genomes."""
+    """Through the environment rather than by substitution, so the command
+    is the user's own shell text and nothing of ours is spliced into it. (An
+    output directory with a space was the original case; the CLI has refused
+    one since 2026-09-24, because three tools cannot take it.)"""
     import shlex
 
     monkeypatch.delenv("COMPAREM2_ON_REPORT", raising=False)
-    out = tmp_path / "out dir"
+    out = tmp_path / "out"
     witness = tmp_path / "witness"
     code = _hook_main(
         monkeypatch, tmp_path,

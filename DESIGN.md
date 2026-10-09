@@ -100,6 +100,12 @@ fields that every tool could use and only it does.
 - **`Tool.post`** — argument lists run after the command, for turning what a
   tool writes into what its spec declared. GTDB-Tk writes `bac120` and `ar53`
   summaries separately and the pipeline declares one table.
+- **`Tool.pre`** — argument lists run before the command, for state a tool
+  leaves behind that stops its own next run. Panaroo is the one user: 1.8.0
+  leaves `alignment_resume_state.json` after every run and refuses to start
+  while it exists, and Snakemake removes only declared outputs before a
+  re-run. Its step deletes the four paths panaroo's own error message names,
+  and nothing else in the directory.
 
 CarveMe needs the third shape: a step *in front of* the command rather than
 around it. `carve_scip.py` is the whole of it — it turns off one SCIP presolver
@@ -140,9 +146,10 @@ that is hours of work triggered by a four-line file.
 deployment the rule's environment holds the tool, not CompareM2, so a bare
 `python -m comparem2.steps` would find the wrong interpreter.
 
-`Tool.post` is not a licence for shell work: a tool needing several steps is a
-tool whose spec is lying about what it does, and a test asserts that GTDB-Tk is
-the only tool using either field.
+`Tool.pre` and `Tool.post` are not a licence for shell work: a tool needing
+several steps is a tool whose spec is lying about what it does, and a test
+asserts that GTDB-Tk is the only tool using `files` or `post`, and panaroo the
+only one using `pre`.
 
 ## One deployment model, and six environments
 
@@ -296,6 +303,11 @@ something already published. The post-mortems are in
   removing that line costs nine minutes a genome *and* the model. Re-measure
   before touching it — the numbers are in the wrapper's docstring and in
   [STATUS.md](STATUS.md).
+
+  **SCIP is therefore the one spec with a ceiling, `<10.1`.** conda-forge's
+  pyscipopt accepts a SCIP whose library it was not linked against, and a
+  fresh solve that took 10.1 left CarveMe with no solver at all. Lift the
+  ceiling only after a new minor has been run, not because a solve accepts it.
 - **A database version is part of the tool's pin.** Both directions are runtime
   failures that no solve catches: GTDB-Tk 2.7 accepts only r232, Bakta 1.12
   only db 6.x. Moving either one alone is the bug. Which is why the URL, the
@@ -311,8 +323,18 @@ something already published. The post-mortems are in
   `catalogue.py`, where a shell is an injection surface over data the user did
   not write. Nothing else in the package may follow it, and the report's
   location reaches the hook through `$COMPAREM2_REPORT` rather than by being
-  substituted into the string — which is also what makes an output directory
-  with a space in its name survive.
+  substituted into the string.
+
+  **Every path in a shell block is quoted, `{log:q}` included** — and that is
+  necessary, not sufficient. GTDB-Tk, CheckM2 and Panaroo pass paths to a
+  shell of their own unquoted, so `--output` and `--databases` are held to
+  letters, digits and `_ . / -`, and anything else is refused before a byte is
+  written. That is narrower than what a shell takes unquoted: Panaroo refuses a
+  comma itself, and the rest of the shell-safe punctuation was never run. That is a limit set by
+  the tools, and it is the reason input filenames are canonicalised rather
+  than quoted. Do not "fix" it by quoting harder; the fix, if one is ever
+  wanted, is generated paths relative to the working directory, so the output
+  path never reaches a tool.
 - **"Has this already run" is answered from the declared outputs, by one
   function.** `tools.completion()`, counted per unit of work — per genome for a
   genome-scope tool. The TUI's opening state, `any_outputs_exist` and the

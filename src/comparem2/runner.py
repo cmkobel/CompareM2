@@ -108,7 +108,8 @@ class _Capture(logging.Handler):
 
 def _profile_argv(snakefile: Path, profile: str, cores: int | None,
                   workdir: Path | None, dry_run: bool, keep_going: bool,
-                  rerun_incomplete: bool, conda_prefix: Path | None) -> list[str]:
+                  rerun_incomplete: bool, conda_prefix: Path | None,
+                  deploy: bool = True) -> list[str]:
     """The command line the profile branch hands to Snakemake's own parser.
 
     Kept separate so it can be asserted in a test without a Snakemake install,
@@ -123,9 +124,12 @@ def _profile_argv(snakefile: Path, profile: str, cores: int | None,
             "--profile", profile]
     if workdir is not None:
         argv += ["--directory", str(workdir)]
+    # Two settings, as in the API branch: whether to deploy, and where. A
+    # missing prefix means Snakemake's default location, not no deployment.
+    if deploy:
+        argv += ["--software-deployment-method", "conda"]
     if conda_prefix is not None:
-        argv += ["--software-deployment-method", "conda",
-                 "--conda-prefix", str(conda_prefix)]
+        argv += ["--conda-prefix", str(conda_prefix)]
     # Omitted unless asked for, so a profile's own `cores:` survives. It does
     # not affect how many jobs reach the queue — see cli.py for the measurement.
     if cores is not None:
@@ -202,7 +206,7 @@ def run(snakefile: Path, cores: int | None, workdir: Path | None = None,
 
                 argv = _profile_argv(snakefile, profile, cores, workdir,
                                      dry_run, keep_going, rerun_incomplete,
-                                     conda_prefix if deploy else None)
+                                     conda_prefix, deploy)
                 parser, parsed = parse_args(argv)
                 if args_to_api(parsed, parser):
                     events.put(Event("done"))

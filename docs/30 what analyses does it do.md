@@ -323,13 +323,17 @@ skani triangle -t 8 --full-matrix -c 70 results_comparem2/samples/genome_A/genom
 
 Sorts every predicted gene into clusters and reports which are in all of the genomes, which in some, and which in only one. It answers what gene content these genomes share, while actively trying to undo the annotation errors that otherwise make that answer wrong.
 
-**How it works.** Genes are clustered with CD-HIT at 98% identity into a graph whose nodes are orthologue clusters and whose edges join genes that neighbour each other on a contig. That context is then used to correct annotation error: merging genes translated in different frames, re-collapsing over-split families at 70% identity, deleting poorly supported degree-1 nodes, and re-searching for genes the annotator missed. This pipeline runs `--clean-mode strict` with `-a core`, which also writes the core alignment that snp-dists and FastTree consume.
+**How it works.** Genes are clustered with CD-HIT at 98% identity into a graph whose nodes are orthologue clusters and whose edges join genes that neighbour each other on a contig. That context is then used to correct annotation error: merging genes translated in different frames, re-collapsing over-split families at 70% identity, deleting poorly supported degree-1 nodes, and re-searching for genes the annotator missed. This pipeline runs `--clean-mode strict` with `-a core`, which writes the core alignment twice: in full, and filtered, dropping each core gene whose alignment entropy is an outlier by Tukey's test. Panaroo's documentation calls the filtered one "recommended for building core genome phylogenies", and it is the one snp-dists and FastTree read.
 
 Runs once over the whole set · 16 threads · after `bakta` · conda environment `perl`, which holds `mlst`, `mashtree`, `panaroo`
 
 ```
-panaroo --clean-mode strict -a core -t 16 -o results_comparem2/panaroo -i results_comparem2/samples/genome_A/bakta/genome_A.gff3 results_comparem2/samples/genome_B/bakta/genome_B.gff3
+panaroo --clean-mode strict -a core -t 16 -o results_comparem2/panaroo --remove-invalid-genes -i results_comparem2/samples/genome_A/bakta/genome_A.gff3 results_comparem2/samples/genome_B/bakta/genome_B.gff3
 ```
+
+| Parameter | Default |
+|---|---|
+| `--set panaroo--remove-invalid-genes=…` | *(flag)* |
 
 **Reading the output**
 
@@ -351,14 +355,14 @@ panaroo --clean-mode strict -a core -t 16 -o results_comparem2/panaroo -i result
 
 ## snp-dists
 
-Counts, for every pair of genomes, how many positions differ in the core gene alignment Panaroo built, which is the genes shared by nearly all genomes in this run. Zero means indistinguishable across that shared core.
+Counts, for every pair of genomes, how many positions differ in the core gene alignment Panaroo built: the genes shared by nearly all genomes in this run, minus those whose alignment Panaroo flags as unreliable. Zero means indistinguishable across that filtered core.
 
-**How it works.** Panaroo aligns the core clusters and concatenates them; snp-dists walks that alignment column by column and counts, per pair, the columns where the bases differ. It runs with no options, so the result is raw uncorrected counts: no evolutionary model, no distance transformation, no normalisation by alignment length.
+**How it works.** Panaroo aligns the core clusters, concatenates them and drops the genes whose alignment entropy is an outlier; snp-dists walks that filtered alignment column by column and counts, per pair, the columns where the bases differ. It runs with no options, so the result is raw uncorrected counts: no evolutionary model, no distance transformation, no normalisation by alignment length.
 
 Runs once over the whole set · 1 thread · after `panaroo` · conda environment `basic`, which holds `seqkit`, `treecluster`, `skani`, `snp-dists`, `fasttree`
 
 ```
-snp-dists results_comparem2/panaroo/core_gene_alignment.aln > results_comparem2/snp-dists/snp-dists.tsv
+snp-dists results_comparem2/panaroo/core_gene_alignment_filtered.aln > results_comparem2/snp-dists/snp-dists.tsv
 ```
 
 **Reading the output**
@@ -373,6 +377,7 @@ snp-dists results_comparem2/panaroo/core_gene_alignment.aln > results_comparem2/
   - Raw counts with no evolutionary model: no correction for transition/transversion bias and none for multiple substitutions at one site, so this is a ballpark similarity measure rather than an evolutionary distance. snp-dists has no publication, so that is a methodological caveat and not a documented limitation.
   - Recombination is not accounted for either. A single imported tract can contribute hundreds of differences at once, so a large count can mean one transfer event rather than long independent divergence.
   - The counts depend entirely on how large the core genome is, which depends on which genomes are in the run: adding one distant or fragmented assembly shrinks the shared core for everybody. Values are not comparable between runs with different inputs.
+  - From CompareM2 3.5.0, counted over Panaroo's filtered core alignment; up to 3.4.0 it was the full one, and a report re-rendered with --report-only over an older run still shows the full one. On seven Staphylococcus aureus genomes run through this pipeline on 2026-09-02, the filtered alignment gave 20-60% fewer SNPs per pair; on its four Enterococcus faecium test genomes on 2026-09-24, 68-81% fewer from 13% less alignment, and the closest pair was a different one. Counts from an older run are not comparable with these.
   - Only the core is measured, so the entire accessory genome is invisible. Two genomes can show 0 SNPs and still differ by a plasmid or a resistance cassette, so check the pangenome matrix and the AMRFinder section before calling two isolates the same.
   - Neither paper gives a threshold for 'same strain' or 'same outbreak'. Outbreak cutoffs are species-specific and come from the epidemiological literature, not from this pipeline.
 
@@ -380,14 +385,14 @@ snp-dists results_comparem2/panaroo/core_gene_alignment.aln > results_comparem2/
 
 ## fasttree
 
-Builds a phylogenetic tree from Panaroo's core-gene alignment, so relatedness is by descent rather than by overall similarity. It stays fast on large sets by searching tree space less thoroughly than a full maximum-likelihood program.
+Builds a phylogenetic tree from Panaroo's filtered core-gene alignment, so relatedness is by descent rather than by overall similarity. It stays fast on large sets by searching tree space less thoroughly than a full maximum-likelihood program.
 
 **How it works.** It starts from a heuristic neighbour-joining tree, improves it with minimum-evolution subtree-pruning-regrafting, then rearranges under maximum likelihood using nearest-neighbour interchanges only, never ML SPR moves, which is why the authors call it approximately-maximum-likelihood. Rate variation is handled by the CAT approximation, picking one of 20 fixed rates per site instead of integrating over a gamma distribution.
 
 Runs once over the whole set · 1 thread · after `panaroo` · conda environment `basic`, which holds `seqkit`, `treecluster`, `skani`, `snp-dists`, `fasttree`
 
 ```
-FastTree -nt -gtr results_comparem2/panaroo/core_gene_alignment.aln > results_comparem2/fasttree/fasttree.newick
+FastTree -nt -gtr results_comparem2/panaroo/core_gene_alignment_filtered.aln > results_comparem2/fasttree/fasttree.newick
 ```
 
 **Reading the output**
@@ -403,6 +408,7 @@ FastTree -nt -gtr results_comparem2/panaroo/core_gene_alignment.aln > results_co
   - Support values are not bootstrap values and the authors write that they "may be biased upwards because they do not consider all of" the alternative topologies, so a 1.00 here is weaker evidence than a 100% bootstrap. The paper warns specifically that a well-supported node sitting inside a bush of short branches is not trustworthy.
   - Branch lengths come from the CAT approximation, and the paper states that where accurate branch lengths are essential neither CAT nor gamma-4 is sufficient. Use them for topology and relative divergence, not as a clock.
   - The input is a concatenated core-gene alignment, so the tree describes only shared genes and assumes one history for all of them. Recombination and horizontal transfer break that assumption and the paper addresses neither (general caution, not a FastTree finding).
+  - The alignment is Panaroo's filtered one, the file its documentation recommends for core-genome phylogenies, from CompareM2 3.5.0; up to 3.4.0 it was the full one, and a report re-rendered with --report-only over an older run still shows that tree. On seven Staphylococcus aureus genomes run through this pipeline on 2026-09-02, the filtered alignment shortened branches by 26-71% and left the topology unchanged; on its four Enterococcus faecium test genomes on 2026-09-24, by 42-84%, with the one split unchanged. On eight Streptococcus mitis-group genomes on 2026-10-09 it moved one of five splits, so the topology is not guaranteed to survive the switch.
   - Every benchmark in the paper is on protein families or 16S alignments; there is none on a concatenated bacterial core-gene alignment of the kind used here, and no stated minimum number of genomes below which the approximations stop being adequate.
 
 ---
