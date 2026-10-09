@@ -676,7 +676,8 @@ def main(argv: list[str] | None = None) -> int:
                         "(SLURM, PBS, SGE, LSF): a directory holding "
                         "config.yaml, or a name under ~/.config/snakemake. "
                         "Defaults to $SNAKEMAKE_PROFILE; --profile none runs "
-                        "locally despite it")
+                        "locally despite it. A failed job is retried once "
+                        "unless the profile sets retries")
     p.add_argument("--keep-going", action="store_true",
                    help="keep running independent tools after one fails")
     p.add_argument("--dry-run", action="store_true")

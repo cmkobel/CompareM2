@@ -96,6 +96,12 @@ which is Snakemake's own variable, so exporting it once submits every run from
 that shell. `--profile none` is how one run stays local anyway. There is a
 worked profile under [HPC](10 installation.md#hpc).
 
+Under a profile, a job that fails is retried once. On a shared cluster one bad
+node can fail a job that would succeed anywhere else, and with no retry that
+one job costs every tool downstream of it. A `retries:` in your profile
+replaces the default, except `retries: 0`, which reads the same as no setting.
+Runs on this machine are not retried.
+
 ## Running a subset
 
 `--until` takes tool names and pulls in whatever they need:

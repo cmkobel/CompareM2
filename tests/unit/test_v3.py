@@ -1115,6 +1115,27 @@ def test_profile_argv_deploys_whether_or_not_a_prefix_is_set(tmp_path):
     assert "--software-deployment-method" not in argv(tmp_path / "envs", False)
 
 
+@pytest.mark.parametrize("config, expected", [
+    ("executor: local\n", 1),                # silent profile: one retry
+    ("executor: local\nretries: 3\n", 3),    # the profile's own setting stands
+])
+def test_a_queued_run_retries_once_unless_its_profile_says(tmp_path, config, expected):
+    """Through Snakemake's own parser, which is what reads the profile, so this
+    checks the order that matters: profile first, our default after."""
+    pytest.importorskip("snakemake")
+    from snakemake.cli import parse_args
+    from comparem2.runner import _profile_argv, queue_retries
+
+    profile = tmp_path / "profile"
+    profile.mkdir()
+    (profile / "config.yaml").write_text(config)
+    (tmp_path / "Snakefile").write_text("")
+    _, parsed = parse_args(_profile_argv(tmp_path / "Snakefile", str(profile), None,
+                                         tmp_path, False, False, True, None))
+    queue_retries(parsed)
+    assert parsed.retries == expected
+
+
 @pytest.mark.parametrize("name", ["out", "out dir"])
 def test_a_generated_snakefile_builds_its_whole_dag(tmp_path, name):
     """The instrument for the failure this codebase is most exposed to: a

@@ -1492,6 +1492,10 @@ re-rendered from these final outputs.
 
 Unit tests: 363 on the laptop. Not run on the cluster this time.
 
+**After the tag, unreleased: one retry for a queued job** (`runner.queue_retries`).
+Checked only through Snakemake 9.26.1's own parser, with a profile with and
+without `retries:`. No queued run has exercised a retry yet.
+
 ### The 3.5.0 release check, before the bump — and CarveMe no longer builds
 Run on 2026-09-24 as `ghrunner` on thylakoid, from a fresh clone at `7a6f5b9`
 (still `3.4.0` in `__init__.py`), with a **fresh conda prefix** `~/rc/envs`, so

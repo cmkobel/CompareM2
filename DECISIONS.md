@@ -3676,3 +3676,17 @@ made from a different genome set. Also rejected: declaring the whole
 directory as the output, which would change what completion and the report
 read. `pre` mirrors `post` and has one user, and the existing test now holds
 it to that.
+
+## 2026-10-09 — a queued job is retried once (after v3.5.0)
+
+Carl's decision, after the 3.5.0 showcase lost its pangenome branch to one
+bakta job on one bad node (STATUS.md, *The 3.5.0 release check, on
+GenomeDK*). Under a profile, `runner.queue_retries` sets Snakemake's
+`retries` to 1 after Snakemake's own parser has read the profile, so a
+profile's own `retries:` stands. The cost is that a profile's explicit
+`retries: 0` reads the same as no setting, and is overridden. Rejected:
+passing `--retries 1` on the command line, or a per-rule `retries:`
+directive. Both override the profile, so a site profile's `retries: 3`
+would silently become 1. Local runs get no retry: on this machine a failure
+is the input's, and a retry only doubles the wait for it. Committed after
+the v3.5.0 tag, so it ships in the next release.

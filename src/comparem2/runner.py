@@ -143,6 +143,25 @@ def _profile_argv(snakefile: Path, profile: str, cores: int | None,
     return argv
 
 
+# A queued job is retried once unless the profile says otherwise. On GenomeDK
+# on 2026-10-09 one bakta job died on one node, where conda itself failed to
+# start; 42 jobs on 9 other nodes were fine. Without a retry that one job cost
+# panaroo, snp-dists and FastTree for every genome. Local runs get no retry:
+# there, a failure is the input's, and a retry only doubles the wait for it.
+QUEUE_RETRIES = 1
+
+
+def queue_retries(parsed) -> None:
+    """Give a profile run one retry, unless its profile set its own.
+
+    Applied after Snakemake's parser, which has already read the profile, so a
+    profile's `retries: 3` stands. The one case this cannot see is a profile
+    that sets `retries: 0` on purpose: it parses the same as no setting.
+    """
+    if not parsed.retries:
+        parsed.retries = QUEUE_RETRIES
+
+
 def run(snakefile: Path, cores: int | None, workdir: Path | None = None,
         dry_run: bool = False, keep_going: bool = False,
         rerun_incomplete: bool = True,
@@ -208,6 +227,7 @@ def run(snakefile: Path, cores: int | None, workdir: Path | None = None,
                                      dry_run, keep_going, rerun_incomplete,
                                      conda_prefix, deploy)
                 parser, parsed = parse_args(argv)
+                queue_retries(parsed)
                 if args_to_api(parsed, parser):
                     events.put(Event("done"))
                 else:
