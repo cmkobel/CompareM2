@@ -1492,6 +1492,12 @@ re-rendered from these final outputs.
 
 Unit tests: 363 on the laptop. Not run on the cluster this time.
 
+**The weekly environment check, first run, 2026-10-09** (workflow_dispatch,
+run 37971713173): all six built and passed in under 3 minutes each. carveme
+solved `optimal` in 8.9 s and scored *E. coli* K-12 29 of 30. The runner had
+105 GB free on a 145 GB disk, so the disk-freeing step written for an assumed
+14 GB was removed.
+
 **After the tag, unreleased: one retry for a queued job** (`runner.queue_retries`).
 Checked only through Snakemake 9.26.1's own parser, with a profile with and
 without `retries:`. No queued run has exercised a retry yet.
