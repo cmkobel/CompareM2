@@ -668,6 +668,9 @@ class ComparemTUI(App):
         # Set on the way out, and handed to `run()` so the worker stops reading
         # at once rather than at Snakemake's next event — see `departing()`.
         self.leaving = threading.Event()
+        # Whether the last run failed, for the exit status: a job that failed,
+        # or an error from Snakemake itself, as the command line counts it.
+        self.failed = False
 
     def scan(self) -> dict[str, str]:
         """Read the output directory: which tools already have results there.
@@ -1126,6 +1129,7 @@ class ComparemTUI(App):
             self.call_from_thread(self.settle, names)
             done = [n for n in names if self.state[n] == DONE]
             failed = [n for n in names if self.state[n] == FAILED]
+            self.failed = bool(failed) or self.run_error is not None
             # Is there anything to report? Asked of the files, and of the same
             # function the CLI asks, so the two paths cannot disagree about it.
             # Snakemake emits no job events for a rule it skips, so a directory that
@@ -1281,6 +1285,25 @@ class ComparemTUI(App):
 # How long leaving with `s` waits for Snakemake to notice its jobs are gone.
 SETTLE = 10.0
 
+# What a shell reports for a command stopped by Ctrl-C, and so what an
+# interrupted command-line run returns. Leaving the interface mid-run is the
+# same thing said with a different key.
+INTERRUPTED = 130
+
+
+def exit_status(left_mid_run: bool, failed: bool, return_code: int) -> int:
+    """The process's exit status, agreeing with the command line's.
+
+    A failed run under `--tui` said "Nothing ran. Failed: seqkit." and then
+    exited 0, where the same command without it exits 1. Textual's own
+    non-zero code, for an app that crashed, wins over either.
+    """
+    if return_code:
+        return return_code
+    if left_mid_run:
+        return INTERRUPTED
+    return 1 if failed else 0
+
 
 def departure(mid_run: bool, stop: bool, profile: str | None,
               slurm_run_id: str | None, workdir: Path) -> list[str]:
@@ -1365,7 +1388,7 @@ def launch(inputs: list[Path], workdir: Path, databases: Path,
            keep_going: bool = False,
            conda_prefix: Path | None = None, command: str | None = None,
            profile: str | None = None, on_report: str | None = None,
-           base: Path | None = None) -> None:
+           base: Path | None = None) -> int:
     app = ComparemTUI(inputs, workdir, databases, samples, cores, selected,
                       overrides, keep_going, conda_prefix, command, profile,
                       on_report, base)
@@ -1373,6 +1396,7 @@ def launch(inputs: list[Path], workdir: Path, databases: Path,
     for line in departure(app.left_mid_run, app.stop_requested, profile,
                           app.slurm_run_id, workdir):
         print(line)
+    status = exit_status(app.left_mid_run, app.failed, app.return_code or 0)
     if app.left_mid_run and snakemake_alive():
         # Snakemake is still on its thread, waiting for the jobs `y` left
         # running, or for a queue to report what `s` cancelled. An ordinary
@@ -1383,4 +1407,5 @@ def launch(inputs: list[Path], workdir: Path, databases: Path,
         # lines above say.
         sys.stdout.flush()
         sys.stderr.flush()
-        os._exit(0)
+        os._exit(status)
+    return status

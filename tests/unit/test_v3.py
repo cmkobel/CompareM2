@@ -2611,6 +2611,58 @@ async def test_tui_quit_mid_run_does_not_wait_for_the_next_event(tmp_path, monke
 
 
 @pytest.mark.asyncio
+async def test_tui_remembers_whether_its_last_run_failed(tmp_path, monkeypatch):
+    """The exit status comes from here, so a failed run cannot exit 0.
+
+    `--until seqkit --set seqkit--bogus-flag=1` under `--tui` on 2026-10-12
+    said "Nothing ran. Failed: seqkit." and then exited 0, where the same
+    command without `--tui` exits 1.
+    """
+    pytest.importorskip("textual")
+    from comparem2 import tui as tui_mod
+
+    monkeypatch.setattr(tui_mod, "render_report", lambda *a, **k: Path("report.html"))
+    outcomes = {}
+    for name, events in (("failed", [tui_mod.Event("job_error", rule="seqkit",
+                                                   message="unknown flag")]),
+                         ("done", [tui_mod.Event("job_finished", rule="seqkit")])):
+        monkeypatch.setattr(tui_mod, "run", lambda *a, _e=events, **k: iter(_e))
+        app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                                  selected=["seqkit"])
+        async with app.run_test() as pilot:
+            await pilot.press("r")
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+        outcomes[name] = app.failed
+
+    assert outcomes == {"failed": True, "done": False}
+
+
+def test_tui_exit_status_says_how_the_session_ended():
+    """1 for a failed run, as the command line gives; 130 for leaving one
+    mid-run, which is what an interrupted command-line run returns."""
+    pytest.importorskip("textual")
+    from comparem2.tui import exit_status
+
+    assert exit_status(left_mid_run=False, failed=False, return_code=0) == 0
+    assert exit_status(left_mid_run=False, failed=True, return_code=0) == 1
+    assert exit_status(left_mid_run=True, failed=False, return_code=0) == 130
+    # Textual's own code for a crashed app wins over the run's.
+    assert exit_status(left_mid_run=False, failed=False, return_code=1) == 1
+
+
+def test_cli_returns_the_interfaces_exit_status(monkeypatch, tmp_path):
+    pytest.importorskip("textual")
+    from comparem2 import tui as tui_mod
+
+    monkeypatch.setattr(cli_mod.shutil, "which", lambda exe: "/usr/bin/conda")
+    monkeypatch.setattr(tui_mod, "launch", lambda *a, **k: 1)
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    assert cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"),
+                         "--tui"]) == 1
+
+
+@pytest.mark.asyncio
 async def test_tui_settles_every_tool_to_a_terminal_state(tmp_path, monkeypatch):
     """A tool that never started is `not run`, not `pending` for ever.
 

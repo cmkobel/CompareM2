@@ -3790,3 +3790,14 @@ job may start, and the terminal stays yours until the current one ends" is
 not something a user who pressed quit wants to be told. Also rejected:
 injecting `KeyboardInterrupt` into Snakemake's thread, which reaches
 `executor.cancel()` and, for a local run, waits for the running jobs.
+
+## 2026-10-12 — `--tui` exits with the run's status
+
+Found by the 3.5.0 release check: `--until seqkit --set seqkit--bogus-flag=1`
+under `--tui` showed "Nothing ran. Failed: seqkit." and exited 0, because
+`cli.py`'s `--tui` branch returned 0 unconditionally. Without `--tui` the same
+command exits 1. Now `launch()` returns `tui.exit_status()`. That is 1 when the
+last run had a failed job or an error from Snakemake, which is how the command
+line counts it. Leaving mid-run gives 130, the code a command line interrupted
+by Ctrl-C returns, and Textual's own code for a crashed app overrides both.
+Only the last run counts, because a session can run several.

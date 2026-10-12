@@ -868,15 +868,15 @@ def main(argv: list[str] | None = None) -> int:
                 "the dry run, and it shows the download size too")
         from .tui import launch
 
-        launch(inputs, workdir, databases, samples,
-               # Same rule as the subprocess path: with a profile, a number
-               # nobody asked for would override the profile's own.
-               cores if (args.cores is not None or profile is None) else None,
-               selected=args.until, overrides=overrides,
-               keep_going=args.keep_going,
-               conda_prefix=conda_prefix, command=_invocation(),
-               profile=profile, on_report=on_report, base=base)
-        return 0
+        return launch(inputs, workdir, databases, samples,
+                      # Same rule as the subprocess path: with a profile, a
+                      # number nobody asked for would override the profile's.
+                      cores if (args.cores is not None or profile is None)
+                      else None,
+                      selected=args.until, overrides=overrides,
+                      keep_going=args.keep_going,
+                      conda_prefix=conda_prefix, command=_invocation(),
+                      profile=profile, on_report=on_report, base=base)
 
     snakefile = prepare(CATALOGUE, args.until, workdir, databases, samples,
                         overrides=overrides)

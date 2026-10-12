@@ -412,6 +412,9 @@ it survives the screen going away.
     so. There is no equivalent one-name handle to cancel by, so check with your
     own queue command.
 
+The exit status is the same as without `--tui`: 1 when the last run failed,
+and 130 when you quit with a run still going.
+
 Every other flag works the same way with `--tui` as without it. `--until` seeds
 the selection, and `--set`, `--keep-going` and `-d` are all honoured:
 
