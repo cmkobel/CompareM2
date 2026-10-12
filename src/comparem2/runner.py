@@ -34,6 +34,24 @@ THREAD = "comparem2-snakemake"
 # for one.
 STOP_POLL = 0.25
 
+# The first Snakemake whose log records say which event they are. Before it
+# `snakemake.logging.get_event` does not exist (9.13.7 has none), `_Capture`
+# drops every record, and a run under the interface shows no job at all.
+EVENTS_SINCE = "9.14.0"
+
+
+def events_unavailable() -> str | None:
+    """Why this Snakemake cannot be followed by the interface, or None."""
+    try:
+        from snakemake.logging import get_event  # noqa: F401
+    except ImportError:
+        from importlib.metadata import version
+
+        return (f"--tui needs Snakemake {EVENTS_SINCE} or newer to follow a "
+                f"run, and this is {version('snakemake')}. The same command "
+                "without --tui works.")
+    return None
+
 
 def stop_scheduling() -> bool:
     """Tell a running Snakemake to start nothing further. True if one was told.

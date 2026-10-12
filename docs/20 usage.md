@@ -173,7 +173,9 @@ because something selected needs it.
 It is a keyboard interface over the same run, showing per-tool progress, the
 download size before anything is fetched, and failures as they happen. It
 drives Snakemake through its logger plugin system instead of scraping stdout,
-so the events are structured.
+so the events are structured. That needs Snakemake 9.14.0 or newer, the first
+whose log records say which event they are. On an older one `--tui` says so and
+stops, and the same command without `--tui` runs as usual.
 
 `space` selects and deselects the tool under the cursor, `a` and `n` select all
 and none, `r` runs, `s` lists the input genomes, `u` releases a lock, `q` quits

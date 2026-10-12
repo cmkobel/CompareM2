@@ -2662,6 +2662,36 @@ def test_cli_returns_the_interfaces_exit_status(monkeypatch, tmp_path):
                          "--tui"]) == 1
 
 
+def test_tui_refuses_a_snakemake_too_old_to_follow_a_run(monkeypatch, tmp_path):
+    """Before 9.14.0 a log record does not say which event it is.
+
+    `snakemake.logging.get_event` arrived in 9.14.0 (9.13.7 has none), and
+    without it the runner drops every record: on 9.0–9.13 a run under `--tui`
+    showed no job at all and ended "Nothing ran". The recipe allows `>=9`, so
+    the interface says so instead of drawing an empty run. The command line is
+    unaffected and still runs.
+    """
+    pytest.importorskip("snakemake")
+    pytest.importorskip("textual")
+    import importlib.metadata
+
+    import snakemake.logging
+
+    from comparem2 import tui as tui_mod
+
+    monkeypatch.delattr(snakemake.logging, "get_event")
+    monkeypatch.setattr(cli_mod.shutil, "which", lambda exe: "/usr/bin/conda")
+    launched = []
+    monkeypatch.setattr(tui_mod, "launch", lambda *a, **k: launched.append(a) or 0)
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+
+    with pytest.raises(SystemExit) as excinfo:
+        cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"), "--tui"])
+    said = str(excinfo.value)
+    assert "9.14.0" in said and importlib.metadata.version("snakemake") in said
+    assert launched == []
+
+
 @pytest.mark.asyncio
 async def test_tui_settles_every_tool_to_a_terminal_state(tmp_path, monkeypatch):
     """A tool that never started is `not run`, not `pending` for ever.

@@ -3801,3 +3801,17 @@ last run had a failed job or an error from Snakemake, which is how the command
 line counts it. Leaving mid-run gives 130, the code a command line interrupted
 by Ctrl-C returns, and Textual's own code for a crashed app overrides both.
 Only the last run counts, because a session can run several.
+
+## 2026-10-12 — `--tui` refuses a Snakemake older than 9.14.0
+
+From the 3.5.0 code review. The recipe allows `snakemake-minimal >=9,<10`,
+but `snakemake.logging.get_event` arrived in 9.14.0 (9.13.7 has none).
+Without it `_Capture` drops every record, so on 9.0–9.13 a run under `--tui`
+showed no job at all and ended "Nothing ran". The command line does not read
+events and is unaffected. Raising the recipe's floor is the real fix, but it
+means a hand-written bioconda PR, and this one was due to merge itself the
+same evening. So `runner.events_unavailable()` checks for the function rather
+than a version number, and the CLI refuses `--tui` with one sentence naming
+both versions. Checked against real 9.13.7 (refused, exit 1) and 9.14.0
+(passes). A fresh install resolves 9.22 or 9.27 today, so this is for an
+environment pinned older.

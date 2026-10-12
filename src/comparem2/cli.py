@@ -866,6 +866,13 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit(
                 "--dry-run and --tui do not combine: the tool list is already "
                 "the dry run, and it shows the download size too")
+        # Refused here, not drawn: an interface that cannot see the jobs shows
+        # a run that never started and ends it "Nothing ran". The recipe
+        # allows any Snakemake 9, so this is a Snakemake a user can have.
+        from .runner import events_unavailable
+
+        if (why := events_unavailable()) is not None:
+            raise SystemExit(why)
         from .tui import launch
 
         return launch(inputs, workdir, databases, samples,
