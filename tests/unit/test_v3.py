@@ -36,12 +36,32 @@ from comparem2.tools import Context, Registry, Scope, Tool  # noqa: E402
 
 SAMPLES = ("A", "B", "C")
 
+# Snakemake's CLI loads its executor plugins on first import, and the SLURM
+# plugin runs `scontrol show config` while it does. Many tests below replace
+# `subprocess.run` process-wide, so whichever test first reached that import
+# did so under a fake: on GenomeDK, where `scontrol` exists, the plugin
+# crashed on the fake's `stdout=None` and left a half-built registry that
+# failed later tests (8 of 384 on 2026-10-12). So it is imported here, once,
+# for real.
+try:
+    import snakemake.cli  # noqa: E402, F401
+except ImportError:  # the suite also runs without Snakemake
+    pass
+
 
 @pytest.fixture(autouse=True)
 def _as_on_linux(monkeypatch):
     """`main()` refuses to deploy tools anywhere but Linux, and these tests run
     on a laptop too. The refusal itself is tested with this lifted."""
     monkeypatch.setattr(cli_mod, "unsupported_platform", lambda: None, raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _no_profile_from_the_shell(monkeypatch):
+    """A cluster user's exported `$SNAKEMAKE_PROFILE` turns every CLI test into
+    a queue run, with a retry flag nobody expected: 23 of 384 failed that way
+    on GenomeDK on 2026-10-12. A test that wants one sets it itself."""
+    monkeypatch.delenv("SNAKEMAKE_PROFILE", raising=False)
 
 
 # --- sample names --------------------------------------------------
