@@ -1438,6 +1438,82 @@ Not covered by this run: a download under `--profile`. It would change nothing
 — the four rules are `localrules` and run on the frontend either way — but that
 is reasoning, not an observation.
 
+### The 3.5.1 release check, thylakoid and GenomeDK, 2026-10-12
+
+3.5.0's bump PR (#70113) was due to merge itself at 19:46Z. The checks that
+morning found that 3.5.0 re-ran every job of an upgraded 3.4.0 output
+directory, and that re-runs into an existing directory failed in three tools
+in every v3 release. Carl's call: fix everything found, in 3.5.1, before the
+merge. 3.5.0 is a tag that was never published.
+
+**3.5.0 itself, as bioconda would ship it.** Built with conda-build from the
+PR's exact recipe on thylakoid, then a fresh environment and a fresh prefix:
+all fourteen tools over the *E. faecium* set ran 31 of 31 in 7 m 29 s, and 32
+of 33 baseline numbers matched. FastTree's branch lengths differed at about
+1e-7, because panaroo orders its alignment rows differently from run to run.
+On GenomeDK, through SLURM: `--demo` 11 of 11 in 221 s, the same fourteen
+tools exit 0 in 1,389 s. **Upgrading a 3.4.0 directory to 3.5.0 re-ran all 30
+jobs** (`Code has changed since last execution` on every rule that had
+completed) and failed checkm2, exit 1 after 642 s.
+
+**What was fixed, each verified where it was found:**
+
+| | before | after |
+| --- | --- | --- |
+| upgrade from 3.4.0, in place | 30 of 30 jobs re-run, checkm2 fails | 12 jobs (checkm2, snp-dists, FastTree, carveme ×4, biosynthesis ×4), no `download_*`, exit 0, 155 s |
+| checkm2, a genome added | exit 1 in 4 s, "Output directory must be empty" | exit 0, 51 s |
+| GTDB-Tk, a genome added | exit 1 after 676 s: old ANI screen reused, pplacer asked for 132 GB | exit 0, 22 s, all 3 ANI-screened |
+| SLURM retry, plain CLI | 1 submission, no restart | 2 submissions, "Trying to restart job 1."; a profile's `retries: 2` stands |
+| Ctrl-C, plain CLI, SLURM | traceback, lock left, next run "some tools failed" | exit 130, every job CANCELLED, no lock; resume 23 of 23, exit 0 |
+| `--tui`, `s` | jobs stopped after 58 s, a new job started meanwhile | shell back in 3.7 s locally and 14 s under SLURM, nothing started after the key |
+| `--tui`, `y` | new job started, terminal held about 3¾ min | shell back in 0.2 s locally and under 1 s under SLURM, running jobs finish on their own |
+| `--tui`, a failed run | exit 0 | exit 1 |
+
+Also refused up front now: `--tui` on Snakemake older than 9.14, a directory
+given as an assembly, `--report-only` over a directory with no results, and
+running tools off Linux. Why each was done this way is in DECISIONS.md,
+2026-10-12.
+
+**The final candidate, `5fcaacd`, end to end.**
+- **thylakoid, fresh install and fresh prefix:** Python 3.14.8, Snakemake
+  9.27.0. `--setup` built the six environments in 128 s. Three genomes, all
+  fourteen tools: 26 of 26 in 327 s. Adding the fourth to the same directory
+  ran 15 of 15 in 236 s, checkm2 and GTDB-Tk included, and a third invocation
+  had nothing to do. Every baseline number held: the duplicate pair at 0
+  SNPs, mashtree 0.00000 and skani 100.00 / 100.00, with 2,588 CDS each; one
+  GTDB-Tk species for all four; biosynthesis 11/6/11/2, 10/9/9/2 and
+  10/7/11/2; panaroo 3,780 / 2,091; SNPs 2,645 / 1,893 / 1,699.
+- **The upgrade, at the original path.** As a control, 3.4.0 planned only
+  its own 9 failed carveme and biosynthesis jobs. The candidate, installed
+  into the same environment, planned the 12 jobs in the table, and a second
+  run had nothing to do.
+  - **Panaroo did not re-run, which was not predicted.** Its newly declared
+    `core_gene_alignment_filtered.aln` already existed from 3.4.0 with no
+    metadata record, and Snakemake skips the code check in that case.
+    Harmless: panaroo had completed, so the new flag changes nothing.
+- **GenomeDK, SLURM:** strict channel priority gave Python 3.13.16 and
+  Snakemake 9.22.0. `--demo` ran 11 of 11 in 367 s (queue wait). The retry,
+  Ctrl-C and both TUI quit keys behaved as in the table, the TUI's under a
+  queue for the first time anywhere.
+  - **Unit tests on GenomeDK found a test defect.** 8 of 384 failed, 23 with
+    `SNAKEMAKE_PROFILE` exported. A fake `subprocess.run` met the SLURM
+    plugin's import-time `scontrol` call, which only GenomeDK has. Fixed in
+    the tests, `9885a56`. Then 384 of 384 passed on cn-1106, with and
+    without the profile exported.
+
+**Not covered:** GTDB-Tk on upgrade (the 3.4.0 run had none; that it re-runs
+is read from the rendered Snakefile, not executed), GTDB-Tk under SLURM, a
+driver killed by SIGHUP, and linux-aarch64. **Cosmetic, left:** under SLURM
+the quit dialog said "1 job started" while `squeue` showed 4 running. The
+checkm2 environment is 9.0 GB on a machine with a GPU, because the solve takes
+CUDA tensorflow. `--report-only` that refuses still leaves `samples/`.
+**Recipe floors**, `snakemake-minimal >=9.14` and `textual >=6`, need a
+hand-written bioconda PR. Fresh installs resolve 9.22–9.27 and textual 8.2.8.
+
+Bakta's "2,587 CDS" on GenomeDK against the baseline's 2,588 is not a
+difference. Bakta's summary counts 2,587 `CDSs` plus 1 `sORF`, and the
+GFF3, the `.faa` and this file all count 2,588.
+
 ### The 3.5.0 release check, on GenomeDK, 2026-10-09
 
 From the bumped, uncommitted tree, `CompareM2 3.5.0`, with the env and database
@@ -2050,6 +2126,9 @@ Measured 2026-09-03. Earlier note: 914 GB free on `/evo` (2026-09-02, before the
 | conda prefix | `/evo/postdoc/cm2-envs-two` — 7.7 GB, **2** environments (`main` 6.0 GB, `checkm2` 1.8 GB). The older `cm2-conda-envs` (8.6 GB, 8 single-tool environments) is orphaned and deletable |
 | pixi | `/home/thylakoid/.pixi/bin/pixi`. `conda` now comes from the pixi *environment* (a declared dependency, 26.7.1); the pixi **global** at `~/.pixi/bin/conda` is what the 09-03 failure was about and is no longer relied on |
 
+**As of 2026-10-12 `ssh thylakoid` logs in as `thylakoid` again**, with
+the key in `~/.ssh/config`. What follows is what was true before.
+
 **Getting in, as of 2026-09-09: the `thylakoid` account rejects the laptop's
 key** — `Permission denied (publickey)` on all three host aliases, with
 `~/.ssh/id_ed25519` offered and refused. The `ghrunner` account on the same
@@ -2449,9 +2528,9 @@ carrying the code this tag ships.
   *amrfinder under `--use-conda`*. Now shared: the database sits inside `main`,
   which every other tool also uses, so rebuilding it for any reason costs the
   refetch.
-- **`--tui` has not been run against a failing workflow interactively.** The
-  "Nothing ran / no report" path is covered by unit tests and was reached once
-  by accident, but not driven by hand since.
+- ~~**`--tui` has not been run against a failing workflow interactively.**~~
+  **Run 2026-10-12**, on thylakoid in tmux: a failing seqkit shows "1 of 2
+  failed: seqkit", and the exit status, 0 until then, is now 1.
 - ~~**The four `download_*` rules are invisible to the TUI.**~~ **Fixed
   2026-09-07**, after 3.2.1 — see *The download rules have rows* below.
 - ~~**`runner._profile_argv` deploys conda only when a prefix is set.**~~
