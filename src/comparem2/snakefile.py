@@ -21,6 +21,18 @@ from .tools import Context, Registry, Scope, Tool
 WILDCARD = "{sample}"
 THREADS = "{threads}"
 
+# Every rule's shell block opens with these two lines, and they are 3.4.0's
+# byte for byte. Snakemake re-runs a job whose shell text has changed — its
+# `code` trigger compares `rule.shellcmd` — so editing them re-runs every
+# completed job in every output directory a user upgrades into, downloads
+# included. 3.5.0 quoted `{log}` and dropped the `mkdir`, and 3.5.1 put both
+# back before 3.5.0 was published. The unquoted `{log}` is safe only because
+# `cli.refuse_unsafe` refuses any path a shell would split.
+LOG_LINES = (
+    "        mkdir -p $(dirname {log})",
+    "        exec > {log} 2>&1",
+)
+
 
 def _ctx(workdir: Path, databases: Path, samples: tuple[str, ...], tool: Tool,
          overrides: dict[str, tuple[tuple[str, str], ...]] | None = None) -> Context:
@@ -122,11 +134,7 @@ def _rule(tool: Tool, workdir: Path, databases: Path, samples: tuple[str, ...],
         f"    conda: {_q('envs/' + tool.environment + '.yaml')}",
         "    shell:",
         f'        """',
-        # Quoted like every other path here, although the CLI refuses a path
-        # that would need it (see `cli.refuse_unsafe`). No `mkdir` for the log:
-        # Snakemake creates its parent, and the unquoted `$(dirname {log})`
-        # that used to do it split a spaced path into two directories.
-        f"        exec > {{log:q}} 2>&1",
+        *LOG_LINES,
         *[f"        export {name}={shlex.quote(value)}"
           for name, value in (tool.env(ctx) if tool.env else ())],
         f"        mkdir -p {shellify(' '.join(_dirnames(outputs)))}",
@@ -173,7 +181,7 @@ def _download_rule(db, databases: Path, workdir: Path) -> str:
         f"    conda: {_q('envs/' + db.environment + '.yaml')}",
         "    shell:",
         '        """',
-        "        exec > {log:q} 2>&1",
+        *LOG_LINES,
         *[f"        {' '.join(shlex.quote(a) for a in step)}" for step in steps],
         '        """',
         "",

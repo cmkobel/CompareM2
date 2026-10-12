@@ -325,8 +325,8 @@ something already published. The post-mortems are in
   location reaches the hook through `$COMPAREM2_REPORT` rather than by being
   substituted into the string.
 
-  **Every path in a shell block is quoted, `{log:q}` included** — and that is
-  necessary, not sufficient. GTDB-Tk, CheckM2 and Panaroo pass paths to a
+  **Every path in a shell block is quoted except `{log}`** — and quoting is
+  not sufficient anyway. GTDB-Tk, CheckM2 and Panaroo pass paths to a
   shell of their own unquoted, so `--output` and `--databases` are held to
   letters, digits and `_ . / -`, and anything else is refused before a byte is
   written. That is narrower than what a shell takes unquoted: Panaroo refuses a
@@ -334,7 +334,17 @@ something already published. The post-mortems are in
   the tools, and it is the reason input filenames are canonicalised rather
   than quoted. Do not "fix" it by quoting harder; the fix, if one is ever
   wanted, is generated paths relative to the working directory, so the output
-  path never reaches a tool.
+  path never reaches a tool. The same refusal is what makes the unquoted
+  `{log}` safe.
+- **The two lines every rule's shell block opens with are frozen.**
+  `snakefile.LOG_LINES`, `mkdir -p $(dirname {log})` and `exec > {log} 2>&1`,
+  as 3.4.0 wrote them. Snakemake re-runs a job whose shell text changed, so an
+  edit there re-runs every completed job in every output directory a user
+  upgrades into, and fetches GTDB again where that directory downloaded it.
+  3.5.0 quoted `{log}` and dropped the `mkdir`, and 3.5.1 reverted both before
+  3.5.0 was published. The same holds for any one tool's command, which is
+  fine when the change is meant to reach old results and a cost when it is
+  cosmetic. A test spells the two lines out.
 - **"Has this already run" is answered from the declared outputs, by one
   function.** `tools.completion()`, counted per unit of work — per genome for a
   genome-scope tool. The TUI's opening state, `any_outputs_exist` and the

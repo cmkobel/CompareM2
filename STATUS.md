@@ -2419,11 +2419,14 @@ carrying the code this tag ships.
   built before the drift are unaffected. See *The 3.5.0 release check* and
   [notes/BUGFIX_PLAN_2026-09-24.md](notes/BUGFIX_PLAN_2026-09-24.md).
 - ~~**A space in `--output` breaks every rule**~~, in every release from 3.0.0
-  to 3.4.0. **Fixed 2026-09-24, in two halves.** `{log:q}`, with the `mkdir`
-  deleted, makes the Snakefile correct. The rerun then showed that GTDB-Tk,
-  CheckM2 and Panaroo cannot take a spaced path themselves, so the CLI now
-  refuses any `--output` or `--databases` a shell could not take unquoted.
-  See DECISIONS.md, 2026-09-24.
+  to 3.4.0. **Fixed 2026-09-24, in two halves, and the first half is
+  reverted in 3.5.1.** `{log:q}`, with the `mkdir` deleted, made the
+  Snakefile correct. The rerun then showed that GTDB-Tk, CheckM2 and Panaroo
+  cannot take a spaced path themselves, so the CLI now refuses any `--output`
+  or `--databases` a shell could not take unquoted. That refusal is the fix.
+  3.5.1 put the two log lines back as 3.4.0 wrote them, because changing them
+  re-runs every job of an upgraded output directory. See DECISIONS.md,
+  2026-09-24 and 2026-10-12.
 - ~~**snp-dists and fasttree read Panaroo's *unfiltered* core alignment**~~
   **Switched to `core_gene_alignment_filtered.aln` on 2026-09-24**; see
   DECISIONS.md. What follows is the finding that prompted it. Nothing had

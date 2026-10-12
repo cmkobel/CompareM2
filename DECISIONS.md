@@ -3707,3 +3707,37 @@ plasmids). It waits for a check that the plasmids give panaroo a non-empty
 core. CarveMe stays out of it either way: a small proteome can hit the 600 s
 solver ceiling (*M. genitalium* took 275 s), and the environment check already
 carves *E. coli*.
+
+## 2026-10-12 — 3.5.1 puts back 3.4.0's two log lines, before 3.5.0 ships
+
+Carl's decision, on the morning 3.5.0's bump PR (#70113) was due to merge
+itself. 3.5.0 replaced `mkdir -p $(dirname {log})` and `exec > {log} 2>&1`
+with `exec > {log:q} 2>&1` in all eighteen rules (2026-09-24, above).
+Snakemake's `code` trigger, on by default and never turned off here, compares
+`rule.shellcmd`. So in an output directory 3.4.0 had used, 3.5.0 re-runs every
+completed job, and fetches GTDB again (60.8 GB) where that directory had
+downloaded it. If that refetch fails, Snakemake deletes the shared
+`gtdb/.fetched` marker, so every other output directory sees GTDB as missing.
+The pre-release code review reproduced both against a fake `curl`. New
+installs were unaffected, and 3.5.0 was the first v3 release to touch those
+lines: 3.2.1→3.3.0 and 3.3.0→3.4.0 left them alone.
+
+The quoting bought nothing in 3.5.0 either. `cli.refuse_unsafe` already
+refuses any `--output` or `--databases` a shell would split. The lines are now
+`snakefile.LOG_LINES`, frozen at 3.4.0's text, and a test spells them out.
+With the 3.4.0, 3.5.0 and 3.5.1 sources rendered with the same arguments,
+**3.5.0 differs from 3.4.0 in all 18 rules' shell text, and 3.5.1 in six.**
+Three of those six are changes meant to reach old results: panaroo
+(`--remove-invalid-genes`, the stale-manifest step), and snp-dists and FastTree
+(the filtered alignment). The other three, carveme, biosynthesis and gtdbtk,
+embed the absolute path of the installed package or its Python. They differ
+only when that path does, as after an environment moves to a new Python minor
+version. That was already true of 3.4.0 and is not addressed here.
+
+Rejected: shipping 3.5.0 with a release note, which makes every upgrading user
+pay for a cosmetic change. Dropping `code` from the re-run triggers, which
+would also stop real fixes reaching old results, such as the filtered
+alignment above. That is a design change, not a release fix. Holding the PR,
+which restarts the three-day clock for nothing that 3.5.1 cannot do. 3.5.1 is
+cut from master, so it also carries the one retry for a queued job
+(2026-10-09, above).

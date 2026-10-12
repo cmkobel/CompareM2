@@ -1148,9 +1148,9 @@ def test_a_generated_snakefile_builds_its_whole_dag(tmp_path, name):
 
     With a space in the output directory and the database root, too. The CLI
     refuses such a path, because three tools cannot take one, but the Snakefile
-    still quotes every path it writes: until 2026-09-24 `{log}` was unquoted,
-    and `mkdir -p $(dirname {log})` made a stray directory beside the output.
-    So every shell word naming one of these paths must name all of it.
+    still quotes every path it writes except the log's: its two lines are
+    frozen at 3.4.0's text (see `LOG_LINES`), unquoted `{log}` and all. So
+    every other shell word naming one of these paths must name all of it.
     """
     pytest.importorskip("snakemake")
     from collections import Counter
@@ -1180,25 +1180,28 @@ def test_a_generated_snakefile_builds_its_whole_dag(tmp_path, name):
 
     shell = [line.strip() for line in out.splitlines()
              if line.startswith("        ") and str(tmp_path) in line]
-    redirects = [shlex.split(line) for line in shell if line.startswith("exec >")]
+    redirects = [line for line in shell if line.startswith("exec >")]
     assert len(redirects) == sum(expected.values()) - 1        # all but `all`
-    for words in redirects:
-        assert words[1] == ">" and words[3] == "2>&1", words
-        assert words[2].startswith((f"{workdir}/", f"{databases}/")), words
+    shell = [line for line in shell
+             if not line.startswith(("exec >", "mkdir -p $(dirname"))]
     for line in shell:
         for word in shlex.split(line):
             if word.startswith(str(tmp_path)):
                 assert word.startswith((str(workdir), str(databases))), line
 
 
-def test_no_rule_makes_its_own_log_directory():
-    """Snakemake creates a log's parent before the job runs — checked on 9.26.1
-    with a log path holding a space — so the `mkdir` that used to do it was a
-    second opinion, and the one that got the quoting wrong."""
-    text = render(CATALOGUE, None, Path("/r e s"), Path("/d b"), SAMPLES)
+def test_every_rule_opens_with_the_two_lines_3_4_0_wrote():
+    """Spelled out here rather than imported, so that editing `LOG_LINES` fails.
+
+    Snakemake re-runs a job whose shell text changed. 3.5.0 rewrote these two
+    lines in all eighteen rules, which would have re-run every completed job in
+    a 3.4.0 output directory, and fetched GTDB again where that directory had
+    downloaded it. If they must change one day, that is a release note saying
+    so, not a tidy-up."""
+    text = render(CATALOGUE, None, Path("/r"), Path("/d"), SAMPLES)
     rules = text.count("\nrule ") + text.startswith("rule ") - 1   # not `all`
-    assert "dirname" not in text
-    assert text.count("exec > {log:q} 2>&1") == rules
+    opening = '    shell:\n        """\n        mkdir -p $(dirname {log})\n        exec > {log} 2>&1\n'
+    assert text.count(opening) == rules == 18
 
 
 @pytest.mark.parametrize("name", ["a b", "a'b", 'a"b', "a$b", "a{b}", "a\\b", "a(b)",
