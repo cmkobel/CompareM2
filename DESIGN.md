@@ -440,9 +440,12 @@ something already published. The post-mortems are in
   `text-wrap: nowrap`: a wrapped path takes a row from the table silently,
   while an ellipsis says what it cost. Anything a future feature wants to show
   per sample belongs behind a key, not above the table.
-- **Stopping a run is done by this code, not by Snakemake.** Its scheduler
-  reaches `executor.cancel()` only from a `KeyboardInterrupt` inside its own
-  loop, and installs the SIGTERM handler that would get it there inside a
+- **Stopping a run under `--tui` is done by this code, not by Snakemake.** On
+  the plain command line it is the reverse: Ctrl-C reaches Snakemake on its own
+  main thread, it cancels and unlocks, and `cli.run_snakemake()` only has to
+  wait for that rather than kill it (2026-10-12). Under the interface its
+  scheduler reaches `executor.cancel()` only from a `KeyboardInterrupt` inside
+  its own loop, and installs the SIGTERM handler that would get it there inside a
   `try/except ValueError` that skips silently off the main thread — which is
   where `runner.run()` puts it. So `cancel.py` cancels a queue with
   `scancel --name <run_uuid>`, the name the SLURM plugin submits under for
