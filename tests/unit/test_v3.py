@@ -734,6 +734,7 @@ def _databases_main_used(monkeypatch, tmp_path, argv: list[str]) -> Path:
 
     monkeypatch.setattr(cli_mod, "prepare", fake_prepare)
     monkeypatch.setattr(cli_mod, "render_report", fake_report)
+    monkeypatch.setattr(cli_mod, "any_outputs_exist", lambda *a: True)
     # These cases are about the cwd, so pin the other end of the resolution.
     monkeypatch.delenv("INIT_CWD", raising=False)
     (tmp_path / "a.fna").write_text(">c\nACGT\n")
@@ -810,6 +811,7 @@ def test_inputs_and_output_resolve_against_init_cwd(monkeypatch, tmp_path):
     monkeypatch.setattr(cli_mod, "prepare", lambda r, s, w, d, *a, **k: seen.setdefault("workdir", w))
     monkeypatch.setattr(cli_mod, "render_report",
                         lambda r, s, w, d, *a, **k: w / "report.html")
+    monkeypatch.setattr(cli_mod, "any_outputs_exist", lambda *a: True)
 
     assert cli_mod.main(["116_2.fna", "--until", "seqkit", "--report-only"]) == 0
     assert seen["workdir"] == (typed_in / "results_comparem2").resolve()
@@ -817,6 +819,37 @@ def test_inputs_and_output_resolve_against_init_cwd(monkeypatch, tmp_path):
     assert link.resolve() == (typed_in / "116_2.fna").resolve()
     assert not (manifest_root / "results_comparem2").exists()
 
+
+
+def test_report_only_over_nothing_says_so(monkeypatch, tmp_path, capsys):
+    """It wrote an empty report, handed it to `--on-report`, and announced
+    "to download: ... (62.5 GB)" for a command that downloads nothing."""
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.delenv("COMPAREM2_ON_REPORT", raising=False)
+    monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
+    rendered: list[Path] = []
+    monkeypatch.setattr(cli_mod, "render_report",
+                        lambda *a, **k: rendered.append(tmp_path / "r.html") or rendered[-1])
+    monkeypatch.setattr(cli_mod, "run_hook", lambda *a, **k: pytest.fail("no hook"))
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    out = tmp_path / "out"
+    argv = [str(tmp_path / "a.fna"), "-o", str(out), "-d", str(tmp_path / "db"),
+            "--report-only", "--on-report", "true"]
+
+    with pytest.raises(SystemExit, match="nothing to report"):
+        cli_mod.main(argv)
+    assert rendered == []
+    assert "to download" not in capsys.readouterr().err
+
+    # With one tool's results present it renders, still without the download
+    # line: --report-only fetches nothing, whatever is missing.
+    seqkit = out / "samples" / "a" / "seqkit"
+    seqkit.mkdir(parents=True)
+    (seqkit / "contigs.tsv").write_text("c1\t4\t50.0\n")
+    monkeypatch.setattr(cli_mod, "run_hook", lambda *a, **k: (0, ""))
+    assert cli_mod.main(argv) == 0
+    assert len(rendered) == 1
+    assert "to download" not in capsys.readouterr().err
 
 def test_missing_input_names_the_directory_it_looked_in(monkeypatch, tmp_path):
     """"no such file: 116_2.fna" is least helpful exactly when the file is
@@ -1818,6 +1851,7 @@ def test_conda_preflight_is_skipped_where_nothing_deploys(monkeypatch, tmp_path)
     monkeypatch.setattr(cli_mod.subprocess, "run",
                         lambda cmd, *a, **k: subprocess.CompletedProcess(cmd, 0))
     monkeypatch.setattr(cli_mod, "run_snakemake", lambda cmd: 0)
+    monkeypatch.setattr(cli_mod, "any_outputs_exist", lambda *a: True)
     (tmp_path / "a.fna").write_text(">c\nACGT\n")
     base = [str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"), "--until", "seqkit"]
 
@@ -3813,6 +3847,7 @@ def _hook_main(monkeypatch, tmp_path, argv: list[str], out: Path) -> int:
     report.write_text("<html></html>")
     monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
     monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: report)
+    monkeypatch.setattr(cli_mod, "any_outputs_exist", lambda *a: True)
     monkeypatch.delenv("INIT_CWD", raising=False)
     (tmp_path / "a.fna").write_text(">c\nACGT\n")
     return cli_mod.main([str(tmp_path / "a.fna"), "-o", str(out),

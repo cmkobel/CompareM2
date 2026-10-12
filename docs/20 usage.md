@@ -501,7 +501,9 @@ comparem2 *.fna --report-only
 ```
 
 Sections appear only when their outputs exist, so a partial run still gives a
-readable document.
+readable document. Over a directory where no tool has finished, it says
+`nothing to report` and exits 1 rather than writing an empty report, and
+`--on-report` does not run.
 
 ## Doing something with the report when it is ready
 

@@ -3868,3 +3868,11 @@ as `samples/batch/batch.fna` and every tool failed on it. The TUI had grown a
 that a bare `comparem2` reads the directory it is typed in, so the CLI refuses
 it before anything is written, and the label, which nothing can now reach, is
 gone. `discover()` already skipped folders.
+
+## 2026-10-12 — `--report-only` over nothing is an error
+
+It wrote an empty report, fired `--on-report` on it, and printed "to download:
+… (62.5 GB)" for a command that fetches nothing. It now follows the rule a
+failed run already follows, that a report describing no results is worse than
+no report: `nothing to report`, exit 1, no hook. The download line is never
+printed under `--report-only`.

@@ -884,6 +884,14 @@ def main(argv: list[str] | None = None) -> int:
     print(f"{counted(len(samples), 'assembly', 'assemblies')}, "
           f"{counted(len(tools), 'tool', 'tools')}", file=sys.stderr)
 
+    # The rule a failed run already follows: a report describing no results is
+    # worse than no report. Here it was also announced with a download nobody
+    # was going to make and handed to `--on-report` as if it were a product.
+    if args.report_only and not any_outputs_exist(args.until, workdir,
+                                                  databases, samples):
+        raise SystemExit(f"nothing to report: no tool has finished in {workdir} "
+                         "yet. Run without --report-only to produce results.")
+
     # Say it now rather than from inside DAG construction. Skipped where nothing
     # will be deployed: --report-only reads output that already exists.
     # (--unlock never reaches here; it returns above.) A --dry-run *is* checked,
@@ -898,8 +906,10 @@ def main(argv: list[str] | None = None) -> int:
     # Only report what is actually going to be fetched. Announcing a total that
     # includes databases already on disk is how "databases: 143.2 GB" came to
     # be printed before a run that downloaded nothing at all.
+    # And nothing at all under --report-only, which fetches nothing.
     pending = [db for db in CATALOGUE.databases(args.until)
-               if not db.ready_path(databases, workdir).exists()]
+               if not args.report_only
+               and not db.ready_path(databases, workdir).exists()]
     if pending:
         known = sum(db.size for db in pending if db.size is not None)
         unmeasured = [db for db in pending if db.size is None]
