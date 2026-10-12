@@ -2567,6 +2567,50 @@ async def test_tui_writes_envs_and_withholds_the_report_when_nothing_ran(
 
 
 @pytest.mark.asyncio
+async def test_tui_quit_mid_run_does_not_wait_for_the_next_event(tmp_path, monkeypatch):
+    """`y` and `s` act on the keypress, not on Snakemake's next event.
+
+    On thylakoid on 2026-10-12 the worker sat in the event stream until the
+    running bakta finished: 58 s to stop under `s`, nearly four minutes of a
+    held terminal under `y`, and a new job started under both. Quitting now
+    tells Snakemake to schedule nothing further and ends the stream at once.
+    """
+    pytest.importorskip("textual")
+    import asyncio
+    import time
+
+    from comparem2 import tui as tui_mod
+
+    told = []
+    monkeypatch.setattr(tui_mod, "stop_scheduling", lambda: told.append(True) or True)
+
+    def quiet_run(*a, stop=None, **k):
+        yield tui_mod.Event("job_started", rule="bakta")
+        # A job that runs for minutes says nothing until it ends.
+        for _ in range(100):
+            if stop is not None and stop.is_set():
+                return
+            time.sleep(0.05)
+        yield tui_mod.Event("job_finished", rule="bakta")
+
+    monkeypatch.setattr(tui_mod, "run", quiet_run)
+    app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                              selected=["bakta"])
+    async with app.run_test() as pilot:
+        await pilot.press("r")
+        for _ in range(100):
+            if app.state["bakta"] == tui_mod.RUNNING:
+                break
+            await pilot.pause(0.02)
+        await pilot.press("q")
+        await pilot.press("y")
+        await asyncio.wait_for(app.workers.wait_for_complete(), 1.5)
+
+    assert app.left_mid_run and not app.stop_requested
+    assert told == [True]
+
+
+@pytest.mark.asyncio
 async def test_tui_settles_every_tool_to_a_terminal_state(tmp_path, monkeypatch):
     """A tool that never started is `not run`, not `pending` for ever.
 
@@ -3789,6 +3833,78 @@ async def test_tui_does_not_call_a_rejected_run_up_to_date(tmp_path, monkeypatch
     assert "already up to date" not in written
     assert "did not start" in written
     assert "rejected the command line" in written
+
+
+def test_runner_returns_when_asked_to_stop_without_waiting_for_an_event(tmp_path):
+    """Quitting must not wait for Snakemake's next word.
+
+    The interface reads events on a thread that `App.run()` joins on the way
+    out, and a job that runs for minutes says nothing for minutes. On thylakoid
+    on 2026-10-12, `s` took 58 s to stop anything, because the reader sat in
+    `events.get()` until the running bakta finished. Stopped from another
+    thread while no event is coming, as a quit is, the stream ends within a
+    poll.
+    """
+    pytest.importorskip("snakemake")
+    import threading
+    import time
+
+    from comparem2.runner import run, snakemake_alive, stop_scheduling
+
+    snakefile = tmp_path / "Snakefile"
+    snakefile.write_text(
+        'rule a:\n    output: "a.txt"\n    shell: "sleep 3 && touch {output}"\n')
+
+    stop = threading.Event()
+    kinds, asked = [], None
+    try:
+        for event in run(snakefile, 1, workdir=tmp_path, deploy=False, stop=stop):
+            kinds.append(event.kind)
+            if event.kind == "job_started":
+                asked = time.monotonic() + 0.3
+                threading.Timer(0.3, stop.set).start()
+        returned = time.monotonic() - asked
+    finally:
+        stop_scheduling()
+        snakemake_alive(wait=10)
+
+    assert "job_started" in kinds and "job_finished" not in kinds, kinds
+    assert returned < 1.0, f"{returned:.2f} s from the stop to the end of the stream"
+
+
+def test_stop_scheduling_lets_the_running_job_finish_and_starts_no_other(tmp_path):
+    """`y` and `s` both promise that nothing further starts.
+
+    Snakemake has a way to say so — `JobScheduler.exit_gracefully`, its SIGTERM
+    handler — which never gets installed, because the scheduler is not on the
+    main thread (see `cancel.py`). Called directly it does what the signal
+    would: the running job finishes, nothing else is started, and Snakemake
+    takes its lock away with it. Without it, a new bakta started after both
+    keys on thylakoid on 2026-10-12.
+    """
+    pytest.importorskip("snakemake")
+    from comparem2.runner import run, snakemake_alive, stop_scheduling
+    from comparem2.tui import lock_files
+
+    snakefile = tmp_path / "Snakefile"
+    snakefile.write_text(
+        'rule all:\n    input: "b.txt"\n\n'
+        'rule a:\n    output: "a.txt"\n    shell: "sleep 2 && touch {output}"\n\n'
+        'rule b:\n    input: "a.txt"\n    output: "b.txt"\n    shell: "touch {output}"\n')
+
+    told = False
+    started = []
+    for event in run(snakefile, 1, workdir=tmp_path, deploy=False):
+        if event.kind == "job_started":
+            started.append(event.rule)
+            if event.rule == "a":
+                told = stop_scheduling()
+
+    assert told, "no running Snakemake scheduler was found"
+    assert not snakemake_alive(wait=10)
+    assert started == ["a"], started
+    assert (tmp_path / "a.txt").exists() and not (tmp_path / "b.txt").exists()
+    assert not lock_files(tmp_path)
 
 
 def test_runner_names_the_rule_that_finished(tmp_path):

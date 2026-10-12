@@ -26,6 +26,54 @@ from typing import Callable, Iterator
 # line a test pins.
 SLURM_RUN_ID = "SLURM run ID:"
 
+# The thread `run()` puts Snakemake on, named so that leaving can find it.
+THREAD = "comparem2-snakemake"
+
+# How often a reader with nothing to read checks whether it has been told to
+# stop. A job can run for an hour without a log line, and a quit cannot wait
+# for one.
+STOP_POLL = 0.25
+
+
+def stop_scheduling() -> bool:
+    """Tell a running Snakemake to start nothing further. True if one was told.
+
+    `JobScheduler.exit_gracefully` is Snakemake's own SIGTERM handler: the jobs
+    running carry on, nothing new is scheduled, and when the last one ends
+    Snakemake shuts down and takes its lock with it. It is never installed
+    here, because the scheduler is not on the main thread (see `cancel.py`),
+    so it is called directly. The scheduler is found among live objects
+    because neither route into Snakemake hands one back: the profile branch
+    gets a bool from `args_to_api`.
+
+    Measured on 2026-10-12: without this, both of the quit dialog's options
+    let a new bakta start after the key that promised nothing would.
+    """
+    import gc
+
+    try:
+        from snakemake.scheduling.job_scheduler import JobScheduler
+    except ImportError:  # pragma: no cover - checked by events_unavailable
+        return False
+    told = False
+    for obj in gc.get_objects():
+        # `type()`, not `isinstance()`: JobScheduler derives from an ABC, whose
+        # check reads `__class__`, and some objects in a live process lie
+        # about theirs — `issubclass() arg 1 must be a class`.
+        if issubclass(type(obj), JobScheduler):
+            obj.exit_gracefully()
+            told = True
+    return told
+
+
+def snakemake_alive(wait: float = 0.0) -> bool:
+    """Whether `run()`'s Snakemake thread is still going, after up to `wait` s."""
+    for thread in threading.enumerate():
+        if thread.name == THREAD:
+            thread.join(wait)
+            return thread.is_alive()
+    return False
+
 
 @dataclass(frozen=True)
 class Event:
@@ -167,7 +215,8 @@ def run(snakefile: Path, cores: int | None, workdir: Path | None = None,
         rerun_incomplete: bool = True,
         conda_prefix: Path | None = None,
         deploy: bool = True,
-        profile: str | None = None) -> Iterator[Event]:
+        profile: str | None = None,
+        stop: threading.Event | None = None) -> Iterator[Event]:
     """Execute the workflow, yielding events as they happen.
 
     Snakemake runs on a worker thread so the caller — a TUI, usually — keeps
@@ -211,6 +260,12 @@ def run(snakefile: Path, cores: int | None, workdir: Path | None = None,
     conda even when no rule asks for an environment, and CI has no conda. No
     production path passes it, and a generated Snakefile has a directive on
     every rule.
+
+    `stop`, once set, ends the stream within `STOP_POLL` whether or not an
+    event arrives, and leaves Snakemake's thread to whoever set it. The TUI
+    sets it on quitting: the stream is read on a thread `App.run()` joins on
+    the way out, and waiting for the next event there was waiting for the
+    running job to finish — 58 s on thylakoid on 2026-10-12.
     """
     events: queue.Queue[Event | None] = queue.Queue()
     handler = _Capture(events.put)
@@ -303,14 +358,18 @@ def run(snakefile: Path, cores: int | None, workdir: Path | None = None,
         finally:
             events.put(None)
 
-    thread = threading.Thread(target=work, daemon=True, name="snakemake")
+    thread = threading.Thread(target=work, daemon=True, name=THREAD)
     thread.start()
     try:
-        while True:
-            event = events.get()
+        while stop is None or not stop.is_set():
+            try:
+                event = events.get(timeout=STOP_POLL)
+            except queue.Empty:
+                continue
             if event is None:
                 break
             yield event
     finally:
         logger.removeHandler(handler)
-        thread.join(timeout=5)
+        if stop is None or not stop.is_set():
+            thread.join(timeout=5)

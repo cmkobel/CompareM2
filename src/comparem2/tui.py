@@ -14,7 +14,10 @@ on startup is what a re-run would actually skip.
 
 from __future__ import annotations
 
+import os
 import shlex
+import sys
+import threading
 from pathlib import Path
 from time import monotonic
 
@@ -32,7 +35,7 @@ from textual.widgets import DataTable, Footer, Header, ProgressBar, RichLog, Sta
 from .catalogue import CATALOGUE
 from .cli import any_outputs_exist, lock_files, run_hook, run_settings, unlock
 from .report import render_report
-from .runner import Event, run
+from .runner import Event, run, snakemake_alive, stop_scheduling
 from .snakefile import prepare
 from .tools import completion, counted, human_bytes
 
@@ -272,6 +275,11 @@ class ConfirmQuit(ModalScreen[str]):
     queue that does not care that this process is gone, and without one they
     are child processes of it. `s` acts on either — see `cancel.py` for why
     each half has to be done by hand.
+
+    That probe's events kept arriving. With a real job running for minutes and
+    none arriving, neither the return nor the stop held, and Snakemake started
+    another job after the key. `ComparemTUI.departing()` is where both are now
+    made true.
 
     Returns `quit`, `stop` or `stay`.
     """
@@ -657,6 +665,9 @@ class ComparemTUI(App):
         # reading it after `run()` returns is a race.
         self.left_mid_run = False
         self.stop_requested = False
+        # Set on the way out, and handed to `run()` so the worker stops reading
+        # at once rather than at Snakemake's next event — see `departing()`.
+        self.leaving = threading.Event()
 
     def scan(self) -> dict[str, str]:
         """Read the output directory: which tools already have results there.
@@ -821,6 +832,16 @@ class ComparemTUI(App):
             return
         self.left_mid_run = self.running
         self.stop_requested = decision == "stop"
+        # Both options promise that nothing further starts, and both have to
+        # act on the key, not later. `App.run()` returns only when the worker
+        # does, and the worker was waiting in the event stream for the running
+        # job to finish: on thylakoid on 2026-10-12, `s` took 58 s to stop
+        # anything and `y` held the terminal for nearly four minutes, and under
+        # both Snakemake started another bakta in the meantime. So Snakemake is
+        # told to schedule nothing more, and the stream is told to end.
+        if self.running:
+            stop_scheduling()
+        self.leaving.set()
         self.exit()
 
     # --- the samples ------------------------------------------------
@@ -1089,8 +1110,12 @@ class ComparemTUI(App):
             for event in run(snakefile, self.cores, workdir=self.workdir,
                              keep_going=self.keep_going,
                              conda_prefix=self.conda_prefix,
-                             profile=self.profile):
+                             profile=self.profile, stop=self.leaving):
                 self.call_from_thread(self.apply_event, event)
+            if self.leaving.is_set():
+                # Quit mid-run: the screen this would settle and report on is
+                # gone, and `launch()` says what happened instead.
+                return
 
             # Rendering the report reads every output and takes seconds on a
             # real run, with no events left to arrive. Naming that phase is
@@ -1160,7 +1185,8 @@ class ComparemTUI(App):
                             f"The report is at {report}")
         finally:
             self.running = False
-            self.call_from_thread(self.stop_activity)
+            if not self.leaving.is_set():
+                self.call_from_thread(self.stop_activity)
 
     def settle(self, names: list[str]) -> None:
         """Once the run is over, a tool that never started reads `not run`.
@@ -1252,6 +1278,10 @@ class ComparemTUI(App):
             table.update_cell(name, "status", self.label(name, state))
 
 
+# How long leaving with `s` waits for Snakemake to notice its jobs are gone.
+SETTLE = 10.0
+
+
 def departure(mid_run: bool, stop: bool, profile: str | None,
               slurm_run_id: str | None, workdir: Path) -> list[str]:
     """What to do and to say once the interface has closed.
@@ -1308,6 +1338,11 @@ def departure(mid_run: bool, stop: bool, profile: str | None,
     # four database downloads are `localrules` and run here on the login node —
     # a 60.8 GB GTDB fetch is a child of this process, not a job.
     lines.append(stop_local())
+    # Snakemake was told to start nothing further when the key was pressed, so
+    # with its jobs gone it shuts down and removes its own lock — given the
+    # moment it needs to notice. A queue it learns about only at its next
+    # status check, so this is bounded and the lock is read either way.
+    snakemake_alive(wait=SETTLE)
     # Read, not asserted. The `y` branch above says this unconditionally and is
     # right to: that run is alive and holding its lock. Here the tree has just
     # been signalled and given its grace period, which is usually long enough
@@ -1338,3 +1373,14 @@ def launch(inputs: list[Path], workdir: Path, databases: Path,
     for line in departure(app.left_mid_run, app.stop_requested, profile,
                           app.slurm_run_id, workdir):
         print(line)
+    if app.left_mid_run and snakemake_alive():
+        # Snakemake is still on its thread, waiting for the jobs `y` left
+        # running, or for a queue to report what `s` cancelled. An ordinary
+        # exit waits for it too, because its job threads are not daemons, and
+        # that was the terminal held for nearly four minutes after `y`. It has
+        # already been told to start nothing, so ending the process here
+        # loses only the wait: the jobs carry on, and the lock stays, as the
+        # lines above say.
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(0)

@@ -382,8 +382,9 @@ squeue --name 4f1c9a02-…      # what is still queued
 scancel --name 4f1c9a02-…     # stop the run from anywhere
 ```
 
-Local jobs are stopped by signalling the process tree, SIGTERM, three seconds,
-then SIGKILL, because Snakemake's own local cancellation stops *scheduling* and
+Either key first tells Snakemake to start nothing further, so no new job
+begins once you have pressed it. Local jobs are then stopped by signalling the
+process tree, SIGTERM, three seconds, then SIGKILL, because Snakemake's own local cancellation stops *scheduling* and
 waits for what is running rather than ending it. Under a profile both happen:
 the analyses are queue jobs, but the four database downloads are `localrules`
 and run wherever Snakemake is, so a 60.8 GB GTDB fetch is a child process of
@@ -392,12 +393,19 @@ the interface and not a job.
 Either way the outcome is printed after the interface closes, not inside it, so
 it survives the screen going away.
 
-!!! warning "Cancelling leaves the directory locked, and half-written outputs"
-    Neither half can release Snakemake's lock, which outlives the process, so a
-    cancelled run is followed by `u` next time, or `comparem2 --unlock --output
-    <dir>`. The partial outputs are handled: CompareM2 runs with
-    `--rerun-incomplete`, so a rule that was interrupted is redone instead of
-    trusted.
+!!! warning "Leaving a run can leave the directory locked, and half-written outputs"
+    After `s`, Snakemake removes its own lock once it sees its jobs are gone,
+    and the interface waits up to ten seconds for that and then says whether
+    the directory is still locked. A queue may take longer to report a
+    cancelled job than that. After `y` the directory always stays locked: the
+    process holding the lock ends before the jobs it left running do. Either
+    way, a locked directory is released with `u` next time, or `comparem2
+    --unlock --output <dir>`.
+
+    The partial outputs are handled: CompareM2 runs with `--rerun-incomplete`,
+    so a rule that was interrupted is redone instead of trusted. That includes
+    a job `y` left running. It finishes, but Snakemake is no longer there to
+    record it, so the next run does it again.
 
     `s` under a profile whose executor is not the SLURM plugin
     (`cluster-generic` for PBS, SGE and LSF) leaves the queue alone and says

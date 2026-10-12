@@ -447,6 +447,15 @@ something already published. The post-mortems are in
   Snakemake's local `cancel()` is `pool.shutdown()` and waits rather than
   killing. Both halves run under a profile: the `download_*` rules are
   `localrules`, so a 60.8 GB fetch is a child process and not a job.
+
+  What Snakemake does offer is that SIGTERM handler itself,
+  `JobScheduler.exit_gracefully`, which stops *scheduling* and nothing else.
+  `runner.stop_scheduling()` calls it the moment either quit key is pressed,
+  because both promise that nothing further starts, and the event stream is
+  told to end at once rather than at Snakemake's next event. Then the process
+  ends without waiting on Snakemake's job threads, which are not daemons:
+  `os._exit` in `tui.launch()` is the only way to give the terminal back while
+  a job `y` left running is still going.
 - **Unit tests are the primary instrument.** The codebase is a generator, and a
   wrong wildcard yields a Snakefile that parses cleanly and builds the wrong
   DAG. An end-to-end run catches that slowly, if at all.

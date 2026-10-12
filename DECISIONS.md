@@ -3758,3 +3758,35 @@ else (`fileManager.py`, read in the 1.1.0 build), and the rule's log lives in
 panaroo has. That would hold a list of CheckM2's internal files that the flag
 already knows. The cost is one checkm2 re-run on upgrade, because its shell
 text changes, and that re-run is what the flag makes succeed.
+
+## 2026-10-12 — quitting the interface acts on the key, and tells Snakemake to stop scheduling
+
+Found by the 3.5.0 release check on thylakoid. The quit dialog's promises did
+not hold. Under `s`, the jobs stopped 58 s after the key and a new bakta
+started in between. Under `y` ("Nothing further starts"), a new bakta started
+two minutes after the key and the terminal stayed held for about 3¾ minutes.
+The cause was that `App.run()` joins the thread worker on the way out, and
+the worker sat in `events.get()` until Snakemake's next event, which is the
+end of the running job. Meanwhile Snakemake's thread kept scheduling, and an
+ordinary exit then waited on its non-daemon job threads.
+
+Three changes. `run()` takes a `stop` event and polls, so the stream ends
+within 0.25 s of a quit. Pressing either key calls
+`JobScheduler.exit_gracefully`, Snakemake's own SIGTERM handler, which was
+never installed because the scheduler is off the main thread. After that,
+nothing new is scheduled, and once its jobs are gone Snakemake releases its
+lock. And `tui.launch()` ends the process with `os._exit` if Snakemake's
+thread is still alive after departure, which is the only way to give the
+terminal back while a job `y` left running is going.
+
+The cost: a job `y` leaves running still finishes, but Snakemake has gone and
+does not record it, so the next run does it again. That is the behaviour the
+dialog was designed around: its docstring's probe "survived its parent and
+finished its work". In practice, the held terminal had bought the record
+instead, at the price of a job started after the key. The
+scheduler is found with `gc`, because neither route into Snakemake hands one
+back. Rejected: changing the dialog's text to match the old behaviour. "A new
+job may start, and the terminal stays yours until the current one ends" is
+not something a user who pressed quit wants to be told. Also rejected:
+injecting `KeyboardInterrupt` into Snakemake's thread, which reaches
+`executor.cancel()` and, for a local run, waits for the running jobs.
