@@ -564,8 +564,14 @@ Snakemake locks the output directory, so a run that died without releasing it
 (SIGKILL, a lost node, a power cut) leaves the next one refusing to start:
 
 ```
-LockException: Directory cannot be locked.
+/home/you/results_comparem2 is locked: another run is writing there, or one
+was stopped before it could clean up. If nothing else is running on it:
+comparem2 --unlock --output /home/you/results_comparem2
 ```
+
+Ctrl-C is not one of those. It stops the run cleanly: CompareM2 waits while
+Snakemake cancels its jobs (`scancel` on a queue) and releases the lock, which
+can take a moment, and then the same command picks up where it stopped.
 
 Nothing is wrong with the results. Release the lock and carry on:
 

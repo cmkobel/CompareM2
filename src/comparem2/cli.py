@@ -12,6 +12,7 @@ import os
 import re
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -289,6 +290,62 @@ def unlock(workdir: Path) -> str | None:
         tail = (result.stderr or result.stdout or "").strip().splitlines()
         return "snakemake --unlock failed: " + (tail[-1] if tail else
                                                 f"exit {result.returncode}")
+    return None
+
+
+def locked_message(workdir: Path) -> str:
+    """A lock is either a live run or a dead one, and nothing says which."""
+    return (f"{workdir} is locked: another run is writing there, or one was "
+            "stopped before it could clean up. If nothing else is running on it: "
+            f"comparem2 --unlock --output {shlex.quote(str(workdir))}")
+
+
+def _signalled_with_child() -> bool:
+    """Did the SIGINT we just took reach Snakemake as well?
+
+    Yes when it came from the terminal: Ctrl-C goes to the whole foreground
+    process group, which is ours and the child's. Not when someone signalled
+    this process alone (`kill -INT`, `timeout -s INT`), and then it has to be
+    passed on. Sending it twice is not harmless — a second SIGINT can cut
+    Snakemake's own cleanup short, which is the thing being waited for.
+    """
+    try:
+        tty = os.open("/dev/tty", os.O_RDONLY)
+    except OSError:
+        return False
+    try:
+        return os.tcgetpgrp(tty) == os.getpgrp()
+    except OSError:
+        return False
+    finally:
+        os.close(tty)
+
+
+def run_snakemake(cmd: list[str]) -> int | None:
+    """Run Snakemake to the end. None means the user stopped it.
+
+    Not `subprocess.run`, because of what that does on Ctrl-C: it gives the
+    child 0.25 s and then SIGKILLs it. Snakemake takes the same SIGINT and
+    starts cancelling — `scancel` for a queue, its job processes locally — and
+    is killed partway, so the lock stays behind and the next run refuses to
+    start. Measured on GenomeDK on 2026-10-12: all 13 jobs cancelled, the lock
+    left, and the re-run dying on `LockException`. So this waits, however long
+    the cancelling takes, and leaves further Ctrl-Cs to Snakemake.
+    """
+    child = subprocess.Popen(cmd)
+    try:
+        return child.wait()
+    except KeyboardInterrupt:
+        pass
+    print("stopping: Snakemake is cancelling its jobs and releasing the lock",
+          file=sys.stderr)
+    if not _signalled_with_child():
+        child.send_signal(signal.SIGINT)
+    previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    try:
+        child.wait()
+    finally:
+        signal.signal(signal.SIGINT, previous)
     return None
 
 
@@ -949,10 +1006,24 @@ def main(argv: list[str] | None = None) -> int:
             cmd.append("--keep-going")
         if args.dry_run:
             cmd.append("--dry-run")
-        result = subprocess.run(cmd)
+        # Asked here, not left to Snakemake, because Snakemake's answer is an
+        # exit code like any failed tool's: the run then went on to render a
+        # report over the old results and say "some tools failed" when none
+        # had run. A dry run takes no lock, so it is not refused.
+        elif lock_files(workdir):
+            raise SystemExit(locked_message(workdir))
+        returncode = run_snakemake(cmd)
+        if returncode is None:
+            # No report: Ctrl-C means stop, and the results are whatever the
+            # last finished job left, which the next run picks up from.
+            print("stopped; the same command picks up where this left off",
+                  file=sys.stderr)
+            if lock_files(workdir):
+                print(locked_message(workdir), file=sys.stderr)
+            return 130
         if args.dry_run:
-            return result.returncode
-        failure = result.returncode
+            return returncode
+        failure = returncode
     else:
         failure = 0
 

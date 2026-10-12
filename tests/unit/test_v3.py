@@ -866,6 +866,7 @@ def test_deployment_flags_go_to_snakemake_unconditionally(monkeypatch, tmp_path)
     monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
     monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: tmp_path / "r.html")
     monkeypatch.setattr(cli_mod.subprocess, "run", fake_run)
+    monkeypatch.setattr(cli_mod, "run_snakemake", lambda cmd: fake_run(cmd).returncode)
 
     prefix = tmp_path / "envs"
     assert cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"),
@@ -926,6 +927,7 @@ def _snakemake_cmd(monkeypatch, tmp_path, extra: list[str],
     monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
     monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: tmp_path / "r.html")
     monkeypatch.setattr(cli_mod.subprocess, "run", fake_run)
+    monkeypatch.setattr(cli_mod, "run_snakemake", lambda cmd: fake_run(cmd).returncode)
 
     assert cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"),
                          "--until", "seqkit", *extra]) == 0
@@ -1373,6 +1375,89 @@ def test_amrfinders_marker_lives_with_the_run_not_the_databases(tmp_path):
     assert "/db/amrfinder" not in block
 
 
+_FAKE_SNAKEMAKE = '''
+import pathlib, signal, sys, time
+out = pathlib.Path(sys.argv[sys.argv.index("--directory") + 1])
+def stop(*_):
+    time.sleep(0.5)                      # cancelling jobs, releasing the lock
+    (out / "cleaned-up").write_text("")
+    sys.exit(1)
+signal.signal(signal.SIGINT, stop)
+(out / "started").write_text("")
+time.sleep(30)
+'''
+
+
+def test_ctrl_c_waits_for_snakemake_to_clean_up(monkeypatch, tmp_path, capsys):
+    """CPython's `subprocess.run` SIGKILLs its child 0.25 s after a Ctrl-C, so
+    Snakemake was killed while cancelling and left its lock. On GenomeDK on
+    2026-10-12 the next run then died on `LockException`. A stand-in for
+    Snakemake that takes 0.5 s to clean up must get to finish."""
+    import signal
+    import threading
+    import time
+
+    fake = tmp_path / "fake" / "snakemake"
+    fake.mkdir(parents=True)
+    (fake / "__main__.py").write_text(_FAKE_SNAKEMAKE)
+    (fake / "__init__.py").write_text("")
+    monkeypatch.setenv("PYTHONPATH", str(tmp_path / "fake"))
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.delenv("SNAKEMAKE_PROFILE", raising=False)
+    monkeypatch.setattr(cli_mod, "missing_conda", lambda: None)
+    monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
+    monkeypatch.setattr(cli_mod, "render_report",
+                        lambda *a, **k: pytest.fail("Ctrl-C writes no report"))
+    # Signalled below as this process alone, so the CLI has to pass it on.
+    monkeypatch.setattr(cli_mod, "_signalled_with_child", lambda: False, raising=False)
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    out = tmp_path / "out"
+
+    def interrupt() -> None:
+        for _ in range(200):
+            if (out / "started").exists():
+                os.kill(os.getpid(), signal.SIGINT)
+                return
+            time.sleep(0.05)
+
+    threading.Thread(target=interrupt, daemon=True).start()
+    assert cli_mod.main([str(tmp_path / "a.fna"), "-o", str(out),
+                         "--until", "seqkit"]) == 130
+    assert (out / "cleaned-up").exists()
+    assert "Traceback" not in capsys.readouterr().err
+
+
+def test_a_locked_directory_is_refused_before_anything_runs(monkeypatch, tmp_path):
+    """Snakemake's `LockException` came back as an exit code like any failed
+    tool's, so the run rendered a report over the old results and said "some
+    tools failed" when nothing had run."""
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.delenv("SNAKEMAKE_PROFILE", raising=False)
+    monkeypatch.setattr(cli_mod, "missing_conda", lambda: None)
+    monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
+    ran: list[str] = []
+    monkeypatch.setattr(cli_mod, "run_snakemake",
+                        lambda cmd: ran.append("dry" if "--dry-run" in cmd else "run") or 1,
+                        raising=False)
+    monkeypatch.setattr(cli_mod.subprocess, "run",
+                        lambda cmd, *a, **k: ran.append("run") or
+                        subprocess.CompletedProcess(cmd, 1))
+    monkeypatch.setattr(cli_mod, "render_report",
+                        lambda *a, **k: pytest.fail("a locked run reports nothing"))
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    out = tmp_path / "out"
+    (out / ".snakemake" / "locks").mkdir(parents=True)
+    (out / ".snakemake" / "locks" / "0.input.lock").write_text("")
+    argv = [str(tmp_path / "a.fna"), "-o", str(out), "--until", "seqkit"]
+
+    with pytest.raises(SystemExit, match="is locked.*--unlock --output"):
+        cli_mod.main(argv)
+    assert ran == []
+    # A dry run takes no lock, so it still goes ahead.
+    cli_mod.main(argv + ["--dry-run"])
+    assert ran == ["dry"]
+
+
 def test_a_partial_run_still_renders_its_report(monkeypatch, tmp_path):
     """`--keep-going` finishes the tools that can finish, and the report is the
     product. Withholding it because one tool failed is not what it promises.
@@ -1392,6 +1477,7 @@ def test_a_partial_run_still_renders_its_report(monkeypatch, tmp_path):
     # Snakemake fails, as it does when one rule of many fails.
     monkeypatch.setattr(cli_mod.subprocess, "run",
                         lambda cmd, *a, **k: subprocess.CompletedProcess(cmd, 1))
+    monkeypatch.setattr(cli_mod, "run_snakemake", lambda cmd: 1)
 
     argv = [str(tmp_path / "a.fna"), "-o", str(out), "--until", "seqkit",
             "--keep-going"]
@@ -1539,6 +1625,7 @@ def test_a_bare_invocation_runs_on_the_directory_it_was_typed_in(
     monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: None)
     monkeypatch.setattr(cli_mod.subprocess, "run",
                         lambda cmd, *a, **k: subprocess.CompletedProcess(cmd, 0))
+    monkeypatch.setattr(cli_mod, "run_snakemake", lambda cmd: 0)
 
     # All four extensions, because all four are what v2 globbed.
     for name in ("b.fna", "a.fasta", "c.fas", "d.fa"):
@@ -1604,6 +1691,7 @@ def test_discovery_looks_where_the_command_was_typed(monkeypatch, tmp_path):
     monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: None)
     monkeypatch.setattr(cli_mod.subprocess, "run",
                         lambda cmd, *a, **k: subprocess.CompletedProcess(cmd, 0))
+    monkeypatch.setattr(cli_mod, "run_snakemake", lambda cmd: 0)
 
     out = tmp_path / "out"
     assert cli_mod.main(["-o", str(out), "--until", "seqkit"]) == 0
@@ -1620,6 +1708,7 @@ def test_naming_assemblies_beats_the_directory(monkeypatch, tmp_path):
     monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: None)
     monkeypatch.setattr(cli_mod.subprocess, "run",
                         lambda cmd, *a, **k: subprocess.CompletedProcess(cmd, 0))
+    monkeypatch.setattr(cli_mod, "run_snakemake", lambda cmd: 0)
 
     for name in ("a.fna", "b.fna", "c.fna"):
         (tmp_path / name).write_text(">c\nACGT\n")
@@ -1643,6 +1732,7 @@ def test_the_modes_that_take_no_assemblies_still_take_none(monkeypatch, tmp_path
     monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: None)
     monkeypatch.setattr(cli_mod.subprocess, "run",
                         lambda cmd, *a, **k: subprocess.CompletedProcess(cmd, 0))
+    monkeypatch.setattr(cli_mod, "run_snakemake", lambda cmd: 0)
 
     assert cli_mod.main(["--setup", "--conda-prefix", str(tmp_path / "envs")]) == 0
 
@@ -1727,6 +1817,7 @@ def test_conda_preflight_is_skipped_where_nothing_deploys(monkeypatch, tmp_path)
     monkeypatch.setattr(cli_mod, "render_report", lambda *a, **k: tmp_path / "r.html")
     monkeypatch.setattr(cli_mod.subprocess, "run",
                         lambda cmd, *a, **k: subprocess.CompletedProcess(cmd, 0))
+    monkeypatch.setattr(cli_mod, "run_snakemake", lambda cmd: 0)
     (tmp_path / "a.fna").write_text(">c\nACGT\n")
     base = [str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"), "--until", "seqkit"]
 
@@ -3813,6 +3904,7 @@ def test_a_run_that_produced_nothing_runs_no_hook(monkeypatch, tmp_path):
     # restored by monkeypatch.
     monkeypatch.setattr(cli_mod.subprocess, "run",
                         lambda *a, **k: types.SimpleNamespace(returncode=1))
+    monkeypatch.setattr(cli_mod, "run_snakemake", lambda cmd: 1)
     (tmp_path / "a.fna").write_text(">c\nACGT\n")
     code = cli_mod.main([str(tmp_path / "a.fna"), "-o", str(tmp_path / "out"),
                          "--until", "seqkit", "--profile", "none",

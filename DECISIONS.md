@@ -3844,3 +3844,18 @@ unset, so the two paths make one decision in one place. Rejected: reading
 `retries:` out of the profile's `config.yaml` by hand, which is a second
 spelling of Snakemake's profile lookup (names, XDG dirs, `$SNAKEMAKE_PROFILE`)
 and would drift from it.
+
+## 2026-10-12 — Ctrl-C waits for Snakemake, and a locked directory is refused
+
+On a plain CLI run, Ctrl-C printed a `KeyboardInterrupt` traceback and left
+the Snakemake lock. CPython's `subprocess.run` SIGKILLs its child 0.25 s after
+a SIGINT, while Snakemake, which took the same SIGINT from the terminal, was
+still cancelling. On GenomeDK all 13 jobs were cancelled, but the next run
+died on `LockException` and still rendered a report saying "some tools
+failed". `cli.run_snakemake()` now waits for the child however long it takes,
+forwards the SIGINT only when the terminal did not already deliver it, prints
+one line and exits 130 with no report. A directory with lock files is refused
+up front with the `--unlock` command, because Snakemake's refusal arrives as
+an exit code that is indistinguishable from a failed tool. Rejected: a
+timeout after which the child is killed anyway. That timeout is the bug, and
+a user who wants Snakemake gone has `kill`. Present since 3.0.0.
