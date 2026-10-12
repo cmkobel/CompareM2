@@ -2490,9 +2490,13 @@ carrying the code this tag ships.
 
 ## Known broken or unfinished
 
-- ~~**CarveMe does not build from a fresh solve**~~ **Fixed 2026-09-24 for
-  3.5.0; still broken in the published 3.4.0 until 3.5.0 ships** (reconfirmed
-  on a fresh `--setup` of 3.4.0, 2026-10-08). Found the same day, in master and in 3.4.0. `scip 10.1.0` resolves against a `pyscipopt`
+- ~~**CarveMe does not build from a fresh solve**~~ **Fixed 2026-09-24, and
+  shipping in 3.5.1, since 3.5.0 was never published. Still broken in the
+  published 3.4.0 until then.** Reconfirmed on a fresh `--setup` of 3.4.0 on
+  2026-10-08, and again on 2026-10-12, when carveme failed 4 of 4. PR #70113
+  has carried 3.5.1 since 10:34Z on 2026-10-12, with all three required checks
+  green at 10:49Z, and may merge from 19:46Z: read its `merged_at` before
+  saying it did. Found the same day, in master and in 3.4.0. `scip 10.1.0` resolves against a `pyscipopt`
   that links 10.0, so there is no solver. The fix, `scip>=10.0.3,<10.1` in
   `CARVEME_ENV`, is now in `catalogue.py`. Existing environments
   built before the drift are unaffected. See *The 3.5.0 release check* and
