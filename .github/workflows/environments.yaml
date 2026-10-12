@@ -101,12 +101,14 @@ jobs:
       - name: Run it again, which must find nothing to do
         run: |
           # `|| status=$?` because the shell runs with -e, and the log is
-          # wanted most when the command fails.
+          # wanted most when the command fails. Ended by `test`, not `exit`:
+          # in a login shell (`bash -el`) the exit builtin runs ~/.bash_logout,
+          # whose last test fails on a runner and turned an exit 0 into 1.
           status=0
           comparem2 --demo --output "$RUNNER_TEMP/demo" --conda-prefix "$RUNNER_TEMP/envs" \
             > "$RUNNER_TEMP/rerun.log" 2>&1 || status=$?
           cat "$RUNNER_TEMP/rerun.log"
-          exit $status
+          test "$status" -eq 0
 
       - name: Check the duplicate pair and the re-run
         run: python tests/environments/check.py demo "$RUNNER_TEMP/demo" --rerun-log "$RUNNER_TEMP/rerun.log"
