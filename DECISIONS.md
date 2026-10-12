@@ -3831,3 +3831,16 @@ into a run with no archaea. The cost is GTDB-Tk's own resume after a crash,
 which is the mechanism that was wrong here. Rejected: a GTDB-Tk flag, since
 2.7.2 has none that makes it ignore earlier results, and deleting only
 `classify/ani_screen`, which would keep a list of GTDB-Tk's internals.
+
+## 2026-10-12 — the queued-job retry reaches the plain CLI
+
+`queue_retries()` (2026-10-09, above) was applied only where the TUI calls
+Snakemake's parser in-process. The plain CLI hands Snakemake a command line,
+so on GenomeDK a failing SLURM job under `comparem2 --profile slurm` failed
+once and the run shut down, while `--help` and `docs/20 usage.md` promised a
+retry. `runner.queue_retries_flag()` now runs the same parser over the CLI's
+own argv and appends `--retries 1` only when the profile left `retries`
+unset, so the two paths make one decision in one place. Rejected: reading
+`retries:` out of the profile's `config.yaml` by hand, which is a second
+spelling of Snakemake's profile lookup (names, XDG dirs, `$SNAKEMAKE_PROFILE`)
+and would drift from it.

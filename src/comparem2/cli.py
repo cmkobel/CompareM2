@@ -22,6 +22,7 @@ from . import __version__
 from . import demo
 from .catalogue import CATALOGUE
 from .report import render_report
+from .runner import queue_retries_flag
 from .snakefile import prepare, render_envs
 from .tools import completion, counted
 
@@ -942,6 +943,8 @@ def main(argv: list[str] | None = None) -> int:
         # did not know was a queue run.
         if args.cores is not None or profile is None:
             cmd += ["--cores", str(cores)]
+        if profile is not None:
+            cmd += queue_retries_flag(cmd[3:])
         if args.keep_going:
             cmd.append("--keep-going")
         if args.dry_run:

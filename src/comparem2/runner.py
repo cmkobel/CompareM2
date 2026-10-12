@@ -228,6 +228,35 @@ def queue_retries(parsed) -> None:
         parsed.retries = QUEUE_RETRIES
 
 
+def queue_retries_flag(argv: list[str]) -> list[str]:
+    """`queue_retries()` for the CLI, which hands Snakemake a command line.
+
+    The same decision, made by the same parser over the same argv, so the two
+    paths cannot disagree about what a profile said. Until 2026-10-12 only the
+    TUI's path applied it, and a failed SLURM job under a plain `comparem2`
+    was not retried while `--help` promised it would be.
+
+    A command line Snakemake's parser rejects gets nothing added, and the
+    parser's complaint is swallowed here: the run about to start makes the same
+    complaint, once, in Snakemake's own words.
+    """
+    import contextlib
+    import io
+
+    from snakemake.cli import parse_args
+
+    try:
+        with contextlib.redirect_stdout(io.StringIO()), \
+                contextlib.redirect_stderr(io.StringIO()):
+            _, parsed = parse_args(argv)
+    except SystemExit:
+        return []
+    if parsed.retries:
+        return []
+    queue_retries(parsed)
+    return ["--retries", str(parsed.retries)]
+
+
 def run(snakefile: Path, cores: int | None, workdir: Path | None = None,
         dry_run: bool = False, keep_going: bool = False,
         rerun_incomplete: bool = True,

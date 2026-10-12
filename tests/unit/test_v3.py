@@ -1172,6 +1172,31 @@ def test_a_queued_run_retries_once_unless_its_profile_says(tmp_path, config, exp
     assert parsed.retries == expected
 
 
+@pytest.mark.parametrize("config, expected", [
+    ("executor: local\n", ["--retries", "1"]),
+    ("executor: local\nretries: 2\n", []),   # the profile's own, left to it
+])
+def test_the_plain_cli_retries_a_queued_job_too(monkeypatch, tmp_path, config, expected):
+    """The CLI hands Snakemake a command line, not a parsed namespace, so
+    `queue_retries()` never reached it: on GenomeDK on 2026-10-12 a failing
+    SLURM job under a plain `comparem2 --profile slurm` was not restarted,
+    while `--help` said it would be."""
+    pytest.importorskip("snakemake")
+    profile = tmp_path / "profile"
+    profile.mkdir()
+    (profile / "config.yaml").write_text(config)
+
+    cmd = _snakemake_cmd(monkeypatch, tmp_path, ["--profile", str(profile)])
+    tail = cmd[cmd.index("--retries"):cmd.index("--retries") + 2] \
+        if "--retries" in cmd else []
+    assert tail == expected
+
+
+def test_a_local_run_is_not_retried(monkeypatch, tmp_path):
+    cmd = _snakemake_cmd(monkeypatch, tmp_path, ["--profile", "none"])
+    assert "--retries" not in cmd
+
+
 @pytest.mark.parametrize("name", ["out", "out dir"])
 def test_a_generated_snakefile_builds_its_whole_dag(tmp_path, name):
     """The instrument for the failure this codebase is most exposed to: a
