@@ -3876,3 +3876,14 @@ It wrote an empty report, fired `--on-report` on it, and printed "to download:
 failed run already follows, that a report describing no results is worse than
 no report: `nothing to report`, exit 1, no hook. The download line is never
 printed under `--report-only`.
+
+## 2026-10-12 — off Linux, nothing is deployed
+
+On macOS `--demo` got 14 s into a conda solve and died on an
+"unsatisfiable" naming panaroo and prokka, which the demo does not use.
+The docs said Linux only; the program did not. `main()` now refuses, before
+`--demo` unpacks or `--setup` builds, on any platform that is not Linux,
+and lets `--dry-run`, `--report-only` and `--unlock` through because they
+deploy nothing. linux-aarch64 is not refused: some tools run there
+(STATUS.md, *Environments*), and which ones is a per-tool question this check
+cannot answer.

@@ -223,6 +223,19 @@ def run_settings(workdir: Path, databases: Path, conda_prefix: Path | None,
     ]
 
 
+def unsupported_platform() -> str | None:
+    """The platform's name if the tools cannot be installed on it, else None.
+
+    Every tool environment is a linux-64 build. On macOS, `--demo` used to get
+    14 s into a conda solve and die on an "unsatisfiable" naming panaroo and
+    prokka, which the demo does not even use (2026-10-12) — read as a broken
+    package rather than as the wrong machine.
+    """
+    if sys.platform.startswith("linux"):
+        return None
+    return {"darwin": "macOS", "win32": "Windows"}.get(sys.platform, sys.platform)
+
+
 def missing_conda() -> str | None:
     """The one preflight left, and the one that actually fires.
 
@@ -770,6 +783,15 @@ def main(argv: list[str] | None = None) -> int:
     if not args.setup:
         refuse_unsafe(resolve(args.output, base), "--output")
     refuse_unsafe(resolve(args.databases or default_databases(), base), "--databases")
+
+    # Before `--demo` unpacks anything. A dry run and a report only read; they
+    # deploy nothing, and both work here.
+    unsupported = unsupported_platform()
+    if unsupported and not (args.dry_run or args.report_only or args.unlock):
+        raise SystemExit(
+            f"CompareM2's tools are built for Linux only (conda's linux-64), so "
+            f"they cannot be installed on {unsupported}. --dry-run and "
+            "--report-only work here; run the analysis itself on a Linux machine.")
 
     if args.setup:
         # Rejected rather than ignored: a command naming genomes that are never

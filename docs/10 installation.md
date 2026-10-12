@@ -9,7 +9,8 @@ are needed. There is no flag for whether to do that. It always happens, into
 ## Requirements
 
   - **Linux.** The analysis tools are `linux-64` only. On macOS you can run the
-    unit tests and render reports, but not the pipeline.
+    unit tests, `--dry-run` and `--report-only`, but not the pipeline, and
+    `comparem2` says so before it tries to install anything.
   - **[pixi](https://pixi.prefix.dev/latest/#installation)** or **conda**, to
     install the package. You do not need a conda of your own: `conda` is a
     dependency *of* the package, because Snakemake shells out to it to build

@@ -37,6 +37,13 @@ from comparem2.tools import Context, Registry, Scope, Tool  # noqa: E402
 SAMPLES = ("A", "B", "C")
 
 
+@pytest.fixture(autouse=True)
+def _as_on_linux(monkeypatch):
+    """`main()` refuses to deploy tools anywhere but Linux, and these tests run
+    on a laptop too. The refusal itself is tested with this lifted."""
+    monkeypatch.setattr(cli_mod, "unsupported_platform", lambda: None, raising=False)
+
+
 # --- sample names --------------------------------------------------
 
 @pytest.mark.parametrize("stem,expected", [
@@ -862,6 +869,35 @@ def test_every_flag_says_what_it_does(capsys):
     assert flags == [], f"no help text: {flags}"
     databases = text.split("--databases DATABASES")[1].split(" -t ")[0]
     assert "letters, digits and _ . / - only" in databases
+
+
+@pytest.mark.parametrize("platform, name", [("darwin", "macOS"), ("win32", "Windows")])
+def test_no_tool_is_deployed_off_linux(monkeypatch, tmp_path, platform, name):
+    """On macOS `--demo` died 14 s into a conda solve, on an "unsatisfiable"
+    naming two tools the demo does not use. A dry run and a report only read,
+    so they go ahead."""
+    monkeypatch.undo()
+    monkeypatch.setattr(cli_mod.sys, "platform", platform)
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.setattr(cli_mod, "missing_conda", lambda: None)
+    monkeypatch.setattr(cli_mod, "prepare", lambda *a, **k: tmp_path / "Snakefile")
+    ran: list[list[str]] = []
+    monkeypatch.setattr(cli_mod, "run_snakemake", lambda cmd: ran.append(cmd) or 0,
+                        raising=False)
+    monkeypatch.setattr(cli_mod.subprocess, "run",
+                        lambda cmd, *a, **k: ran.append(cmd) or
+                        subprocess.CompletedProcess(cmd, 0))
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    out = tmp_path / "out"
+
+    for argv in (["--demo", "-o", str(out)], ["--setup"],
+                 [str(tmp_path / "a.fna"), "-o", str(out)]):
+        with pytest.raises(SystemExit, match=f"Linux only .* on {name}"):
+            cli_mod.main(argv)
+    assert ran == [] and not out.exists()
+
+    cli_mod.main([str(tmp_path / "a.fna"), "-o", str(out), "--dry-run"])
+    assert len(ran) == 1
 
 def test_missing_input_names_the_directory_it_looked_in(monkeypatch, tmp_path):
     """"no such file: 116_2.fna" is least helpful exactly when the file is
