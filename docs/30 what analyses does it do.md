@@ -84,7 +84,7 @@ Answers whether a genome is good enough to use, by estimating how much of the or
 Runs once over the whole set · 8 threads · database `checkm2` (1.7 GB) · **its own conda environment**, `checkm2`
 
 ```
-checkm2 predict --threads 8 --database_path ~/.comparem2/databases/checkm2/checkm2.dmnd --output-directory results_comparem2/checkm2 --input results_comparem2/samples/genome_A/genome_A.fna results_comparem2/samples/genome_B/genome_B.fna
+checkm2 predict --threads 8 --database_path ~/.comparem2/databases/checkm2/checkm2.dmnd --output-directory results_comparem2/checkm2 --force --input results_comparem2/samples/genome_A/genome_A.fna results_comparem2/samples/genome_B/genome_B.fna
 ```
 
 **Reading the output**

@@ -3726,10 +3726,11 @@ The quoting bought nothing in 3.5.0 either. `cli.refuse_unsafe` already
 refuses any `--output` or `--databases` a shell would split. The lines are now
 `snakefile.LOG_LINES`, frozen at 3.4.0's text, and a test spells them out.
 With the 3.4.0, 3.5.0 and 3.5.1 sources rendered with the same arguments,
-**3.5.0 differs from 3.4.0 in all 18 rules' shell text, and 3.5.1 in six.**
-Three of those six are changes meant to reach old results: panaroo
-(`--remove-invalid-genes`, the stale-manifest step), and snp-dists and FastTree
-(the filtered alignment). The other three, carveme, biosynthesis and gtdbtk,
+**3.5.0 differs from 3.4.0 in all 18 rules' shell text, and 3.5.1 in seven.**
+Four of those seven are changes meant to reach old results: panaroo
+(`--remove-invalid-genes`, the stale-manifest step), snp-dists and FastTree
+(the filtered alignment), and checkm2 (`--force`, below). The other three,
+carveme, biosynthesis and gtdbtk,
 embed the absolute path of the installed package or its Python. They differ
 only when that path does, as after an environment moves to a new Python minor
 version. That was already true of 3.4.0 and is not addressed here.
@@ -3741,3 +3742,19 @@ alignment above. That is a design change, not a release fix. Holding the PR,
 which restarts the three-day clock for nothing that 3.5.1 cannot do. 3.5.1 is
 cut from master, so it also carries the one retry for a queued job
 (2026-10-09, above).
+
+## 2026-10-12 — checkm2 runs with `--force`
+
+Found by the 3.5.0 upgrade check on thylakoid, and older than 3.5.0. CheckM2
+refuses an output directory that is not empty: `ERROR: Output directory must
+be empty … Use --force`. Snakemake deletes only the declared
+`quality_report.tsv` before a re-run, not the protein and DIAMOND files beside
+it. So any re-run of checkm2 failed, and adding a genome to a finished run is
+the common one: E8202 and SRR24, then the same plus 116_2, failed checkm2 in
+4 s. The command line is unchanged since 3.0.0, so every v3 release has this.
+`--force` is CheckM2's own answer: it empties the output directory and nothing
+else (`fileManager.py`, read in the 1.1.0 build), and the rule's log lives in
+`logs/`, outside it. Rejected: a `Tool.pre` step deleting the directory, as
+panaroo has. That would hold a list of CheckM2's internal files that the flag
+already knows. The cost is one checkm2 re-run on upgrade, because its shell
+text changes, and that re-run is what the flag makes succeed.

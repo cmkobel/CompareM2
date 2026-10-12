@@ -631,6 +631,21 @@ def test_panaroo_clears_its_previous_alignment_state_first():
         assert f"res/panaroo/{name}" in shell[step]
 
 
+def test_checkm2_may_write_into_a_directory_it_has_written_before():
+    """CheckM2 refuses an output directory that is not empty, and Snakemake
+    deletes only the declared report before a re-run. So adding a genome to a
+    finished run failed checkm2 in every release up to 3.5.0 (thylakoid,
+    2026-10-12). `--force` empties that directory, which holds nothing else."""
+    text = render(CATALOGUE, ["checkm2"], Path("/res"), Path("/db"), SAMPLES)
+    rule = text.split("rule checkm2:")[1].split("\nrule ")[0]
+    command = next(line.split() for line in rule.splitlines()
+                   if line.strip().startswith("checkm2 predict"))
+    assert "--force" in command
+    assert command[command.index("--output-directory") + 1] == "/res/checkm2"
+    log = next(line for line in rule.splitlines() if line.strip().startswith("log:"))
+    assert "/res/checkm2/" not in log
+
+
 def test_merge_tsv_refuses_mismatched_headers(tmp_path):
     """Two files with different columns are not one table."""
     from comparem2.steps import merge_tsv

@@ -307,18 +307,26 @@ checkm2 = Tool(
     # in; passing a directory fails with IsADirectoryError deep inside CheckM2.
     # The download step normalises the release's own name to checkm2.dmnd so
     # this path does not move when upstream renames the file.
+    #
+    # --force, because CheckM2 refuses an output directory that is not empty,
+    # and Snakemake deletes only the declared report before a re-run, not the
+    # protein and DIAMOND files beside it. Without it, adding a genome to a
+    # finished run failed checkm2 in every release up to 3.5.0 (thylakoid,
+    # 2026-10-12). It empties `checkm2/` and nothing else; the log is outside.
     command=lambda c: [
         "checkm2", "predict", "--threads", str(c.threads),
         "--database_path", str(c.databases / "checkm2" / "checkm2.dmnd"),
-        "--output-directory", str(c.out("checkm2")), *c.args(),
+        "--output-directory", str(c.out("checkm2")), "--force", *c.args(),
         "--input", *[str(a) for a in c.assemblies],
     ],
     outputs=lambda c: [c.out("checkm2", "quality_report.tsv")],
     database=CHECKM2_DB,
     threads=8,
     # CheckM2 is why every rule gets its own environment rather than sharing
-    # one. It pins an old DIAMOND (2.1.x) and cannot co-solve with a current
-    # Bakta, which needs 2.2.x. Verified 2026-09-01: bakta>=1.10 solves with
+    # one. It pinned an old DIAMOND (2.1.x) and could not co-solve with a
+    # current Bakta, which needs 2.2.x. That pin has since gone: on 2026-10-12
+    # a fresh solve gave checkm2 1.1.0 with DIAMOND 2.2.8, and nothing has
+    # re-tested a co-solve. Verified 2026-09-01: bakta>=1.10 solves with
     # all thirteen other tools, and fails only when checkm2 is added. Leaving
     # both unpinned "solves" by silently selecting bakta 1.8.1, which then
     # crashes on pyrodigal 3.x (OrfFinder was renamed GeneFinder). A single
