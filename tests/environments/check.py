@@ -19,13 +19,21 @@ alignment through FastTree. `carveme` carves a real model through the
 pipeline's own `carve_scip.py` and scores it with `biosynthesis.py`, because
 the solver is what broke, and only a solve shows that it works.
 
+The environments are built with conda directly, so none of that goes through
+the pipeline. `demo` checks what `comparem2 --demo` produced the way a user
+runs it: Snakemake deploying the environments, the generated rules, and the
+report. It checks the planted duplicate pair agrees with itself in every tool,
+and that a second run finds nothing to do. Panaroo's re-run failure in 3.4.0
+was that layer's kind of bug.
+
     PYTHONPATH=src python tests/environments/check.py list
     PYTHONPATH=src python tests/environments/check.py write <dir>
     python tests/environments/check.py run <name> --prefix <conda prefix>
+    python tests/environments/check.py demo <output dir> --rerun-log <file>
 
 `list` and `write` import CompareM2, so the environment files are the ones
-`snakefile.render_envs` generates, never a copy. `run` imports nothing from
-CompareM2, so any Python can drive it.
+`snakefile.render_envs` generates, never a copy. `run` and `demo` import
+nothing from CompareM2, so any Python can drive them.
 """
 
 from __future__ import annotations
@@ -33,6 +41,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -131,6 +140,50 @@ def run(name: str, prefix: Path) -> int:
     return 0
 
 
+# `--demo`'s planted pair: the first plasmid, and the same file again under a
+# name with a space, which canonicalisation turns into `116_2_duplicate`.
+PAIR = ("116_2", "116_2_duplicate")
+
+
+def demo(out: Path, rerun_log: Path) -> int:
+    """The demo ran all four tools, and the duplicate pair agrees everywhere.
+
+    Values seen on thylakoid on 2026-10-12, from 3.5.0 plus the retry commit:
+    the seqkit tables share md5 `e2ec2407…`, skani gives 100.00, and mashtree
+    joins the pair with two 0.00000 branches.
+    """
+    failed = []
+
+    def check(ok: bool, what: str) -> None:
+        print(f"  {'ok' if ok else 'FAILED'}: {what}", flush=True)
+        if not ok:
+            failed.append(what)
+
+    report = (out / "report.html").read_text()
+    check("4 of 4 tools produced output" in report, "report: 4 of 4 tools")
+
+    tables = [(out / "samples" / s / "seqkit" / "contigs.tsv").read_bytes() for s in PAIR]
+    check(tables[0] == tables[1] and len(tables[0]) > 0, "seqkit: pair identical")
+
+    # skani writes a square matrix: a count, then one row per genome, each
+    # named by its path.
+    rows = (out / "skani" / "ani.tsv").read_text().splitlines()[1:]
+    names = [Path(row.split("\t")[0]).stem for row in rows]
+    ani = rows[names.index(PAIR[0])].split("\t")[1:][names.index(PAIR[1])]
+    check(float(ani) == 100.0, f"skani: pair at {ani}% ANI")
+
+    newick = (out / "mashtree" / "mashtree.newick").read_text()
+    a, b = (re.escape(s) + r":0(\.0+)?" for s in PAIR)
+    check(bool(re.search(rf"\(({a},{b}|{b},{a})\)", newick)),
+          "mashtree: pair joined at distance 0")
+
+    check("Nothing to be done" in rerun_log.read_text(),
+          "re-run: nothing to do")
+
+    print("demo: " + ("FAILED " + ", ".join(failed) if failed else "ok"))
+    return 1 if failed else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="check", description=__doc__.split("\n\n")[0])
     sub = p.add_subparsers(dest="command", required=True)
@@ -140,6 +193,10 @@ def main(argv: list[str] | None = None) -> int:
     r = sub.add_parser("run", help="exercise one built environment")
     r.add_argument("name", choices=sorted(VERSIONS))
     r.add_argument("--prefix", type=Path, required=True)
+    d = sub.add_parser("demo", help="check what `comparem2 --demo` produced")
+    d.add_argument("output", type=Path)
+    d.add_argument("--rerun-log", type=Path, required=True,
+                   help="what a second `--demo` into the same output printed")
     args = p.parse_args(argv)
 
     if args.command == "list":
@@ -150,6 +207,8 @@ def main(argv: list[str] | None = None) -> int:
         for name, text in environment_files().items():
             (args.directory / f"{name}.yaml").write_text(text)
         return 0
+    if args.command == "demo":
+        return demo(args.output, args.rerun_log)
     return run(args.name, args.prefix)
 
 

@@ -116,7 +116,10 @@ all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.
 and a real CarveMe carve of *E. coli* scored by `biosynthesis.py`, which must
 come out 29 of 30. Solving is not the test. On 2026-09-24 carveme solved,
 installed, and had no solver. A new environment needs an entry in `check.py`,
-and a unit test enforces that.
+and a unit test enforces that. The same workflow's `demo` job runs
+`comparem2 --demo` as a user would, then again, and `check.py demo` requires
+the planted duplicate pair to agree in all four tools and the second run to
+find nothing to do. That is the only CI that runs the generated rules.
 
 **A green run on the laptop is not a green CI**, and anything touching
 processes, paths or signals is where they diverge: `cancel.py`'s walk read

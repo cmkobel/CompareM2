@@ -8,6 +8,12 @@ name: environments
 #
 # Built with conda's `env create`, from the files the pipeline itself
 # generates, because that is what Snakemake does on a user's machine.
+#
+# The `demo` job is the other half: `comparem2 --demo` as a user runs it, so
+# Snakemake deploys the environments and runs the generated rules, then the
+# same command again, which must find nothing to do. Four database-free tools
+# on the bundled plasmids; the tools take seconds and the two environment
+# builds take the rest.
 
 on:
   schedule:
@@ -69,3 +75,38 @@ jobs:
           name: ${{ matrix.environment }}-lock
           path: ${{ runner.temp }}/${{ matrix.environment }}.lock.txt
           if-no-files-found: ignore
+
+  demo:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          auto-activate-base: true
+          activate-environment: ""
+
+      - name: Install CompareM2 from this checkout
+        run: |
+          python -m pip install --quiet .
+          comparem2 --version
+
+      - name: Run the demo
+        run: comparem2 --demo --output "$RUNNER_TEMP/demo" --conda-prefix "$RUNNER_TEMP/envs"
+
+      - name: Run it again, which must find nothing to do
+        run: |
+          # `|| status=$?` because the shell runs with -e, and the log is
+          # wanted most when the command fails.
+          status=0
+          comparem2 --demo --output "$RUNNER_TEMP/demo" --conda-prefix "$RUNNER_TEMP/envs" \
+            > "$RUNNER_TEMP/rerun.log" 2>&1 || status=$?
+          cat "$RUNNER_TEMP/rerun.log"
+          exit $status
+
+      - name: Check the duplicate pair and the re-run
+        run: python tests/environments/check.py demo "$RUNNER_TEMP/demo" --rerun-log "$RUNNER_TEMP/rerun.log"

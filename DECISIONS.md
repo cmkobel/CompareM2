@@ -3690,3 +3690,20 @@ directive. Both override the profile, so a site profile's `retries: 3`
 would silently become 1. Local runs get no retry: on this machine a failure
 is the input's, and a retry only doubles the wait for it. Committed after
 the v3.5.0 tag, so it ships in the next release.
+
+## 2026-10-12 — the weekly workflow also runs the pipeline, on the demo
+
+The environment check builds each environment with conda directly and never
+goes through Snakemake. So the generated rules, Snakemake's own deployment and
+re-runs had no automatic check, and that is where this release's
+panaroo re-run failure lived. Carl chose tier 1 of two: `comparem2 --demo` in
+the weekly workflow, then the same command again, which must print `Nothing to
+be done`. The checks are the report's "4 of 4", identical seqkit tables for the
+planted pair, 100.00% skani ANI, and a zero-distance mashtree cherry. The tools
+took 4 s on thylakoid; the cost is two environment builds, estimated at 6–8
+minutes a week on a free runner. Deferred, tier 2: the pangenome branch
+(Bakta light, 1.3 GB, plus panaroo, snp-dists and FastTree on the demo
+plasmids). It waits for a check that the plasmids give panaroo a non-empty
+core. CarveMe stays out of it either way: a small proteome can hit the 600 s
+solver ceiling (*M. genitalium* took 275 s), and the environment check already
+carves *E. coli*.
