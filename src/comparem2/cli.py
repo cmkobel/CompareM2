@@ -684,7 +684,8 @@ def main(argv: list[str] | None = None) -> int:
                         "only, because some tools pass it through a shell unquoted "
                         f"(default: {DEFAULT_OUTPUT})")
     p.add_argument("-d", "--databases", type=Path, default=None,
-                   help="where databases live; shared across runs (default: "
+                   help="where databases live; shared across runs; letters, "
+                        "digits and _ . / - only, as for --output (default: "
                         f"{default_databases()}, overridden for every run by "
                         "$COMPAREM2_DATABASES)")
     # Defaulted below rather than here, because with `--profile` it matters
@@ -738,7 +739,9 @@ def main(argv: list[str] | None = None) -> int:
                         "unless the profile sets retries")
     p.add_argument("--keep-going", action="store_true",
                    help="keep running independent tools after one fails")
-    p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--dry-run", action="store_true",
+                   help="list the jobs a run would execute, and why, without "
+                        "running any")
     p.add_argument("--unlock", action="store_true",
                    help="release a stale lock left by a killed run on --output, "
                         "then exit; needs no assemblies")

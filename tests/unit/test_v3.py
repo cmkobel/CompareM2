@@ -851,6 +851,18 @@ def test_report_only_over_nothing_says_so(monkeypatch, tmp_path, capsys):
     assert len(rendered) == 1
     assert "to download" not in capsys.readouterr().err
 
+
+def test_every_flag_says_what_it_does(capsys):
+    """`--dry-run` had no help line at all, and `-d` did not say that it is
+    held to the same characters as `--output`."""
+    with pytest.raises(SystemExit):
+        cli_mod.main(["--help"])
+    text = " ".join(capsys.readouterr().out.split())
+    flags = re.findall(r"(--[a-z-]+)(?: [A-Z_|]+)? (?=--|$)", text)
+    assert flags == [], f"no help text: {flags}"
+    databases = text.split("--databases DATABASES")[1].split(" -t ")[0]
+    assert "letters, digits and _ . / - only" in databases
+
 def test_missing_input_names_the_directory_it_looked_in(monkeypatch, tmp_path):
     """"no such file: 116_2.fna" is least helpful exactly when the file is
     sitting in the directory the user is looking at."""
