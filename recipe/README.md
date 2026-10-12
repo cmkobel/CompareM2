@@ -123,6 +123,8 @@ would deploy the tool environments on first use, needing network and a writable
 
 **A hand-built image with all fourteen tools is not planned** (decided
 2026-09-02). pixi and conda both install this well enough that the image would
-be a third thing to keep in step, and it could not be one environment anyway —
-CheckM2 pins DIAMOND 2.1.x against Bakta's 2.2.x, so it would be two
-environments inside one image. If it is ever needed, that is the shape.
+be a third thing to keep in step. It also could not be one environment when
+that was decided: CheckM2 pinned DIAMOND 2.1.x against Bakta's 2.2.x, so it
+would have been two environments inside one image. That pin has since gone (a
+fresh solve on 2026-10-12 gave checkm2 1.1.0 with DIAMOND 2.2.8), and whether
+one environment would now solve has not been tried.

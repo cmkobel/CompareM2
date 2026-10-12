@@ -143,7 +143,8 @@ comparem2 showcase_genomes/*.fna -o results_showcase --profile profiles/showcase
 That is the command in the report's own provenance header, with the cluster's
 absolute path prefix removed so it reads as something you could type.
 
-CompareM2 3.3.0, 53 jobs, six conda environments deployed by Snakemake.
+The timings are from the 2026-09-08 run this one replaced: CompareM2 3.3.0,
+53 jobs, six conda environments deployed by Snakemake.
 Thirteen of the fourteen tools finished in 25 minutes of wall time
 (12:44:14 → 13:09) across the queue. GTDB-Tk then waited on its database: a
 one-time 60.8 GB download that took 2 h 15 m at a measured 10.8 MB/s, after

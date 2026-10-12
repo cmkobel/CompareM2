@@ -82,7 +82,7 @@ if at all.
 
 ```bash
 pip install pytest pytest-asyncio textual   # what CI installs; no pixi needed
-python -m pytest tests/unit -q              # 274 tests, ~6 s
+python -m pytest tests/unit -q              # 366 tests, ~25 s
 
 pixi install                                # linux only
 pixi run test-fast                          # 4 genomes, no databases needed
