@@ -267,8 +267,8 @@ metacharacters are replaced, because a Snakemake wildcard containing a space
 produces a broken rule rather than an error. The CLI says the same on stderr as
 it happens, where the interface then covers it up. The size column is the other
 half of the check: `missing` is a file that has moved since the run's output
-directory was created, and `directory` is a glob that matched a folder instead
-of the genomes inside it.
+directory was created. A folder named instead of the genomes inside it never
+gets this far; it is refused before anything runs.
 
 **Where the run's four locations come from.** Below that:
 

@@ -149,13 +149,9 @@ def file_size(path: Path) -> str:
     an earlier run whose assemblies have since moved dangles. Saying so here is
     cheaper than finding out from inside a tool.
 
-    `directory` likewise. `cli.py` accepts any path that exists, so a glob that
-    matched a folder instead of its contents builds a whole DAG over it — and
-    `stat()` on a directory succeeds, so it arrived in this column as `4.1 kB`,
-    which is a plausible size for a small plasmid.
+    No `directory`: `cli.py` refuses one before the interface opens. It used
+    to arrive here as `4.1 kB`, a plausible size for a small plasmid.
     """
-    if path.is_dir():
-        return "directory"
     try:
         return human_bytes(path.stat().st_size)
     except OSError:

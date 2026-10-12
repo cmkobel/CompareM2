@@ -3859,3 +3859,12 @@ up front with the `--unlock` command, because Snakemake's refusal arrives as
 an exit code that is indistinguishable from a failed tool. Rejected: a
 timeout after which the child is killed anyway. That timeout is the bug, and
 a user who wants Snakemake gone has `kill`. Present since 3.0.0.
+
+## 2026-10-12 — a directory named as an assembly is refused
+
+`cli.py` checked only `exists()`, so `comparem2 batch/` linked the folder in
+as `samples/batch/batch.fna` and every tool failed on it. The TUI had grown a
+`directory` label for this instead. Naming a folder is the natural slip now
+that a bare `comparem2` reads the directory it is typed in, so the CLI refuses
+it before anything is written, and the label, which nothing can now reach, is
+gone. `discover()` already skipped folders.

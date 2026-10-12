@@ -2249,12 +2249,23 @@ def test_sample_rows_pair_by_index_and_refuse_to_guess(tmp_path):
     one.unlink()
     assert sample_rows(samples, [one, two])[0][2] == "missing"
 
-    # A folder globbed instead of its contents. `cli.py` takes any path that
-    # exists, and `stat()` on a directory succeeds — it read `4.1 kB`, which is
-    # a plausible size for a plasmid.
-    folder = tmp_path / "batch"
-    folder.mkdir()
-    assert sample_rows(("batch",), [folder])[0][2] == "directory"
+
+def test_a_directory_named_as_an_assembly_is_refused(monkeypatch, tmp_path):
+    """A folder globbed instead of its contents passed `exists()`, was linked
+    in as `samples/batch/batch.fna`, and failed inside every tool. The TUI
+    showed it as `4.1 kB`, a plausible size for a plasmid."""
+    monkeypatch.delenv("INIT_CWD", raising=False)
+    monkeypatch.setattr(cli_mod, "missing_conda", lambda: None)
+    monkeypatch.setattr(cli_mod, "run_snakemake",
+                        lambda cmd: pytest.fail("nothing should run"), raising=False)
+    monkeypatch.setattr(cli_mod.subprocess, "run",
+                        lambda *a, **k: pytest.fail("nothing should run"))
+    (tmp_path / "batch").mkdir()
+    (tmp_path / "a.fna").write_text(">c\nACGT\n")
+    out = tmp_path / "out"
+    with pytest.raises(SystemExit, match="a directory, not an assembly: .*batch"):
+        cli_mod.main([str(tmp_path / "a.fna"), str(tmp_path / "batch"), "-o", str(out)])
+    assert not (out / "samples" / "batch").exists()
 
 
 @pytest.mark.asyncio

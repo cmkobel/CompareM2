@@ -859,6 +859,15 @@ def main(argv: list[str] | None = None) -> int:
     missing = [str(i) for i in inputs if not i.exists()]
     if missing:
         raise SystemExit(f"no such file: {', '.join(missing)}")
+    # A directory passes `exists()`, and was linked in as a genome that every
+    # tool then failed on. Naming one is the natural slip now that a bare
+    # `comparem2` reads the directory it is typed in — `discover()` already
+    # skips them; this is the same rule for a path that was typed.
+    folders = [str(i) for i in inputs if i.is_dir()]
+    if folders:
+        raise SystemExit(f"a directory, not an assembly: {', '.join(folders)} — "
+                         "name the FASTA files in it (e.g. dir/*.fna), or run "
+                         "comparem2 from inside it with no assemblies named")
 
     # Absolute, because Snakemake is given this as its working directory (see
     # below) and every generated path has to survive that.
