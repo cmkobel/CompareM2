@@ -1498,6 +1498,15 @@ solved `optimal` in 8.9 s and scored *E. coli* K-12 29 of 30. The runner had
 105 GB free on a 145 GB disk, so the disk-freeing step written for an assumed
 14 GB was removed.
 
+**The weekly demo job, first green run, 2026-10-12** (run 38210568614):
+`comparem2 --demo` from a pip install of master, conda from miniforge, Snakemake
+9.27.0, Python 3.14.7. **11 of 11 steps, then a re-run with "Nothing to be
+done"**, and all five checks in `check.py demo` passed. **1 m 59 s for the job**,
+against the 6–8 minutes estimated. The first attempt (run 38210366724) failed
+the re-run step with exit 1 after CompareM2 had finished cleanly. The step
+ended in `exit` inside a login shell, which runs `~/.bash_logout`. Ending it in
+`test` fixed it, which fits that cause but does not prove it.
+
 **After the tag, unreleased: one retry for a queued job** (`runner.queue_retries`).
 Checked only through Snakemake 9.26.1's own parser, with a profile with and
 without `retries:`. No queued run has exercised a retry yet.
