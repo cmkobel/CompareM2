@@ -101,11 +101,14 @@ fields that every tool could use and only it does.
   tool writes into what its spec declared. GTDB-Tk writes `bac120` and `ar53`
   summaries separately and the pipeline declares one table.
 - **`Tool.pre`** — argument lists run before the command, for state a tool
-  leaves behind that stops its own next run. Panaroo is the one user: 1.8.0
+  leaves behind that stops or misleads its own next run, since Snakemake
+  removes only declared outputs before a re-run. Two users. Panaroo 1.8.0
   leaves `alignment_resume_state.json` after every run and refuses to start
-  while it exists, and Snakemake removes only declared outputs before a
-  re-run. Its step deletes the four paths panaroo's own error message names,
-  and nothing else in the directory.
+  while it exists; its step deletes the four paths panaroo's own error
+  message names, and nothing else in the directory. GTDB-Tk resumes its ANI
+  screen from the previous run's files, so a genome added later was never
+  screened; its step empties `gtdbtk/`, which holds nothing of ours. CheckM2
+  has the same problem and its own flag for it, `--force`, so it has no step.
 
 CarveMe needs the third shape: a step *in front of* the command rather than
 around it. `carve_scip.py` is the whole of it — it turns off one SCIP presolver
@@ -148,8 +151,8 @@ deployment the rule's environment holds the tool, not CompareM2, so a bare
 
 `Tool.pre` and `Tool.post` are not a licence for shell work: a tool needing
 several steps is a tool whose spec is lying about what it does, and a test
-asserts that GTDB-Tk is the only tool using `files` or `post`, and panaroo the
-only one using `pre`.
+asserts that GTDB-Tk is the only tool using `files` or `post`, and GTDB-Tk and
+panaroo the only ones using `pre`.
 
 ## One deployment model, and six environments
 

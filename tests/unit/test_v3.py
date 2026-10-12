@@ -631,6 +631,24 @@ def test_panaroo_clears_its_previous_alignment_state_first():
         assert f"res/panaroo/{name}" in shell[step]
 
 
+def test_gtdbtk_starts_from_an_empty_directory():
+    """GTDB-Tk resumes its ANI screen from a previous run's files, so a genome
+    added to a finished run was never screened and went to pplacer instead,
+    which asked for 132 GB on thylakoid on 2026-10-12. Everything in `gtdbtk/`
+    goes first; the batchfile and the log, which must survive, live elsewhere."""
+    text = render(CATALOGUE, ["gtdbtk"], Path("/res"), Path("/db"), SAMPLES)
+    rule = text.split("rule gtdbtk:")[1].split("\nrule ")[0]
+    shell = [line.strip() for line in rule.split('"""')[1].splitlines() if line.strip()]
+    step = next(i for i, line in enumerate(shell) if " remove " in line)
+    run = next(i for i, line in enumerate(shell) if line.startswith("gtdbtk "))
+    assert step < run
+    assert shell[step].endswith(" remove /res/gtdbtk")
+    batchfile = shell[run].split("--batchfile ")[1].split()[0]
+    log = next(line for line in rule.splitlines() if line.strip().startswith("log:"))
+    for kept in (batchfile, log):
+        assert "/res/gtdbtk/" not in kept
+
+
 def test_checkm2_may_write_into_a_directory_it_has_written_before():
     """CheckM2 refuses an output directory that is not empty, and Snakemake
     deletes only the declared report before a re-run. So adding a genome to a
@@ -658,10 +676,13 @@ def test_merge_tsv_refuses_mismatched_headers(tmp_path):
 
 
 def test_only_gtdbtk_and_panaroo_need_steps_around_their_commands():
-    """`files`, `pre` and `post` are an exception, not a pattern to spread."""
+    """`files`, `pre` and `post` are an exception, not a pattern to spread.
+
+    Both `pre` steps clear state a tool resumes from on its own and refuses
+    or misreads on a re-run; checkm2 has a flag for that and needs none."""
     assert [t.name for t in CATALOGUE if t.files] == ["gtdbtk"]
     assert [t.name for t in CATALOGUE if t.post] == ["gtdbtk"]
-    assert [t.name for t in CATALOGUE if t.pre] == ["panaroo"]
+    assert [t.name for t in CATALOGUE if t.pre] == ["gtdbtk", "panaroo"]
     text = render(CATALOGUE, None, Path("/res"), Path("/db"), SAMPLES)
     assert text.count("merge-tsv") == 1
 

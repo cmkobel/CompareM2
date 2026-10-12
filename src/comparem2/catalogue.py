@@ -374,6 +374,16 @@ gtdbtk = Tool(
         c.workdir / ".comparem2" / "gtdbtk_batchfile.tsv": "".join(
             f"{c.sample_out(s, f'{s}.fna')}\t{s}\n" for s in c.samples),
     },
+    # A re-run starts from an empty directory. GTDB-Tk resumes its ANI screen
+    # from whatever is there ("The ani_screen step has already been completed,
+    # we load existing results"), so a genome added to a finished run was
+    # never screened, went to pplacer, and the class-level tree asked for
+    # 132 GB on a 125 GB machine (thylakoid, 2026-10-12). A stale
+    # `*.ar53.summary.tsv` would also be merged below. The batchfile and the
+    # log, which must survive, live outside this directory.
+    pre=lambda c: [
+        [sys.executable, steps.__file__, "remove", str(c.out("gtdbtk"))],
+    ],
     # GTDB-Tk writes `<prefix>.bac120.summary.tsv` and `<prefix>.ar53.summary.tsv`
     # separately, and an all-bacterial set produces no ar53 file at all. Both
     # candidate directories are passed because the documentation does not say

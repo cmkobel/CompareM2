@@ -3815,3 +3815,19 @@ than a version number, and the CLI refuses `--tui` with one sentence naming
 both versions. Checked against real 9.13.7 (refused, exit 1) and 9.14.0
 (passes). A fresh install resolves 9.22 or 9.27 today, so this is for an
 environment pinned older.
+
+## 2026-10-12 — GTDB-Tk starts every run from an empty directory
+
+Found while checking that the checkm2 fix was the whole story, and also in
+every v3 release. Two genomes classified in 55 s. Adding a third to the same
+run failed after 676 s. GTDB-Tk logged "The ani_screen step has already been
+completed, we load existing results", so the third genome was never
+ANI-screened and went to pplacer. pplacer's class-level tree then asked for
+132 GB on 125 GB. With the memory, it would still have been classified by a
+different method than if it had been there from the start. A `Tool.pre` step
+now removes `gtdbtk/` before the command; the batchfile and the log live
+outside it. That also stops a stale `*.ar53.summary.tsv` from being merged
+into a run with no archaea. The cost is GTDB-Tk's own resume after a crash,
+which is the mechanism that was wrong here. Rejected: a GTDB-Tk flag, since
+2.7.2 has none that makes it ignore earlier results, and deleting only
+`classify/ani_screen`, which would keep a list of GTDB-Tk's internals.
