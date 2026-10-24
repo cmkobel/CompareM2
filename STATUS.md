@@ -2141,8 +2141,9 @@ bioconda recipe the same day, still with `pplacer =1.1.alpha19` and
 `python <3.14`): the run list with alpha23 solves on linux-64, linux-aarch64
 and osx-arm64 (52, 52, 49 packages, as for 2.7.2), and on the laptop the mock
 database hangs as released under `spawn` (killed at 180 s) and exits 0 in
-5.2 s with the rename, summary byte-identical to the `fork` run. The Python
-3.14 run on Linux has not been repeated on 2.8.0. Re-reading pplacer for the
+5.2 s with the rename, summary byte-identical to the `fork` run; on GenomeDK
+under Python 3.14.9 it hangs as released (killed at 600 s) and exits 0 in
+30 s with the rename (job 5869055). Re-reading pplacer for the
 follow-up corrected one line of the evidence note: a query with every location
 skipped ends the run at `failwith "empty results"` (`core.ml:333`), not at the
 assert on line 353.

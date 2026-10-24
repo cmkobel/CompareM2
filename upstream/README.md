@@ -156,11 +156,10 @@ of those is a follow-up to matsen/pplacer, drafted 2026-10-24 as
 [pplacer-final-pass-issue.md](pplacer-final-pass-issue.md).
 
 GTDB-Tk 2.8.0 came out on 2026-10-13, the day after the check. Both drafts were
-moved to it on 2026-10-24: the recipe diff now sits on 2.8.0 build 0, the
-three-platform solve and the Mac mock-database run were repeated on 2.8.0 with
-the same results, and the Linux Python 3.14 run is still 2.7.2's (prepared,
-waiting on a GenomeDK login). The evidence note's *Re-check on GTDB-Tk 2.8.0*
-has the numbers.
+moved to it on 2026-10-24: the recipe diff now sits on 2.8.0 build 0, and the
+three-platform solve, the Mac mock-database run and the Linux Python 3.14 run
+were all repeated on 2.8.0 with the same results. The evidence note's
+*Re-check on GTDB-Tk 2.8.0* has the numbers.
 
 ## The two panaroo-on-macOS PRs are a pair
 

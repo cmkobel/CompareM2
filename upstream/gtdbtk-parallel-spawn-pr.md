@@ -30,10 +30,10 @@ while the parent waits for it forever. macOS defaults to `spawn`, and Python 3.1
 
 This renames the two methods to `_producer` and `_process_manager`. Nothing else in the package refers to them, and they are the only private methods passed to `mp.Process`.
 
-Tested on the r232 mock database (`classify_wf -x gz --place_species -f`):
+Tested with GTDB-Tk 2.8.0 on the r232 mock database (`classify_wf -x gz --place_species -f`):
 
-- Linux, GTDB-Tk 2.7.2, Python 3.14.8 (`forkserver`): as released, the `AttributeError` and then a hang, killed after 600 s. With this change, exit 0 in 24 s.
-- macOS on Apple silicon, GTDB-Tk 2.8.0, Python 3.13 (`spawn`), with pplacer 1.1.alpha23: as released, it hangs at "Running Prodigal". With this change, exit 0, with a summary byte-identical to the same run forced to `fork`.
+- Linux, Python 3.14.9 (`forkserver`): as released, the `AttributeError` and then a hang, killed after 600 s. With this change, exit 0 in 30 s.
+- macOS on Apple silicon, Python 3.13 (`spawn`), with pplacer 1.1.alpha23: as released, it hangs at "Running Prodigal". With this change, exit 0, with a summary byte-identical to the same run forced to `fork`.
 
 Best, Carl
 ````
@@ -116,11 +116,12 @@ and the diff applies to it unchanged. Working copies: `~/postdoc/cm2-macos/gtdbt
   day after this was drafted). The macOS run was repeated on 2.8.0 with Python
   3.13.17: as released, the same `AttributeError` and a hang at "Running
   Prodigal", killed at 180 s; renamed, exit 0 in 5.2 s, pplacer alpha23 step
-  included, summary byte-identical to the `fork` run (5.9 s). **The Linux
-  Python 3.14 run is still 2.7.2's** — the 2.8.0 job is prepared
-  (`solve-2.8.0/mock/py314-280/`) and needs a GenomeDK login. If it runs,
-  change the first bullet to 2.8.0 and its numbers; if not, the text is
-  accurate as it stands.
+  included, summary byte-identical to the `fork` run (5.9 s). The Linux run
+  was repeated on 2.8.0 the same day (GenomeDK job 5869055, Python 3.14.9,
+  `solve-2.8.0/mock/py314-280/`, remote copy under
+  `pplacer-compare/mock/py314-280/`): as released, the `AttributeError` and a
+  hang, killed at 600 s; renamed, exit 0 in 30 s (2.7.2: 24 s), same
+  classification. Both bullets in the text are now 2.8.0's.
 - **Scope.** Tested on `classify_wf` only, which covers identify, align and
   classify with pplacer. Other subcommands (`de_novo_wf`, `infer`, …) were not
   run under `spawn`; the text claims only `classify_wf`.

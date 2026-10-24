@@ -87,19 +87,24 @@ All at `v1.1.alpha23` (f60eef0f, which is also `master` on 2026-10-24).
   2026-10-12, which named `assert(sorted_ml_results <> [])` (line 353) as what
   such a query would reach; the `failwith` comes first, so the assert is
   unreachable on that path. The consequence — the run ends — is the same.
-- **"Never raised either exception"**: the 234-genome, 472-query and #391 runs
-  in the evidence note all exited 0 with alpha23, and pplacer prints a warning
-  when the first pass skips a location. *Not checked:* whether any of those
-  logs contain the first-pass "Skipped" warnings. Re-check before sending, or
-  soften the sentence to "never failed".
+- **"Never raised either exception"**: checked 2026-10-24 in all 19 alpha23
+  pplacer logs on GenomeDK under `pplacer-compare/` (725 KB: the ten
+  `run_alpha23s/classify/intermediate_results/pplacer/**/*.out`, its
+  `gtdbtk.log` and `gtdbtk.warnings.log`, `gtdb/out_alpha23/{ar53,c1,c4}.log`,
+  and `yiran/{out_alpha23_j0,out_alpha23_j8,kill_alpha23,one_alpha23}/pplacer.log`).
+  The first pass logs a warning whenever it catches either exception
+  (`couldn't find valid optimization start`, `invalid optimization bounds`):
+  **0 occurrences**, and 0 of `GSL problem` or `empty results`. The logs do
+  carry pplacer's default-level messages, so a warning would have shown. The
+  only optimiser messages are 5 `exceeded maximum number of iterations` on the
+  #391 reads, caught by design in `ml_optimize_location`, and the same 5 reads
+  give them under alpha19, 20 and 22.
 
 ## What is left
 
 - **Before sending:** the `NNN` is the bioconda pin PR's number. Re-check that
   `master` is still f60eef0f (otherwise re-read the three sites and update the
-  permalinks), and grep the alpha23 run logs on GenomeDK and the laptop for
-  `couldn't find valid optimization start` / `invalid optimization bounds`
-  (see the last bullet above).
+  permalinks).
 - **What it commits Carl to:** "Happy to open a PR" — a compiled, tested
   version of the sketch if matsen asks. That needs an OCaml 4.14 build
   environment, which bioconda's recipe (`recipes/pplacer/build.sh`) is the

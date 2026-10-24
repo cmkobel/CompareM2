@@ -254,9 +254,17 @@ are 2.7.2's line for line.
   | as released, forced `fork` | exit 0, 5.9 s, max RSS 228 MB |
   | `spawn`, the two methods renamed | exit 0, 5.2 s, "Running pplacer v1.1.alpha23"; summary byte-identical to the `fork` run |
 
-- **Python 3.14 on Linux: not re-run on 2.8.0.** Prepared in
-  `solve-2.8.0/mock/py314-280/` (Python 3.14.9 in the lock); needs a GenomeDK
-  login. The 2.7.2 result above stands.
+- **Python 3.14 on Linux** (GenomeDK job 5869055, `solve-2.8.0/mock/py314-280/`,
+  remote `pplacer-compare/mock/py314-280/`; gtdbtk 2.8.0 pip-installed
+  `--no-deps`, Python 3.14.9, default `forkserver`): as released,
+  `AttributeError` after "Running Prodigal" and a hang, killed at 600 s;
+  renamed, exit 0 in 30 s, same classification as on the Mac.
+- **The alpha23 logs carry no optimiser skip.** All 19 alpha23 pplacer logs
+  under `pplacer-compare/` (the 234-genome run, the 472 queries, the #391
+  data): 0 `couldn't find valid optimization start`, 0 `invalid optimization
+  bounds`, 0 `GSL problem`, 0 `empty results`. The only optimiser messages
+  are 5 `exceeded maximum number of iterations` on the #391 reads, which
+  every build including alpha19 gives for the same 5 reads.
 - **Not re-run, deliberately:** the 234-genome and 472-query comparisons. They
   compare pplacer builds on the same alignments under one GTDB-Tk version, and
   2.8.0 does not change how pplacer is called (`pplacer.py` untouched). It does
