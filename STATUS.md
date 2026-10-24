@@ -1773,7 +1773,9 @@ but not sufficient** — see below.
 
 *Corrected 2026-10-05: the `alpha19` pin is deliberate, not stale*, and
 GTDB-Tk's maintainers own the recipe, so the route is evidence put to them
-rather than a PR around them. See *GTDB-Tk on arm* below.
+rather than a PR around them. See *GTDB-Tk on arm* below. *Decided 2026-10-12:*
+the evidence goes as a PR addressed *to* them, asking for their approval —
+[upstream/gtdbtk-pplacer-pin-pr.md](upstream/gtdbtk-pplacer-pin-pr.md).
 
 ### panaroo on arm: intbitset is not the only blocker
 
@@ -2067,15 +2069,83 @@ below 55 and 40 GB. That puts it out of reach of this laptop on any
 architecture. `--scratch_dir` memory-maps the data to disk instead, using a
 file of roughly that size, and this laptop has 115 GB free. Not tried.
 
-So two things are still open, and only the first one is about arm:
+So two things were open, and only the first one is about arm:
 
 - **alpha19 against alpha22 placements**, which is the evidence GTDB-Tk's
-  maintainers would need before they lift the pin. It needs a machine with
-  ≥140 GB of RAM, i.e. thylakoid, and both pplacer builds exist for linux-64.
-  `--place_species` forces placement for genomes that the screen would
-  otherwise classify. Not run.
+  maintainers would need before they lift the pin. *Run since; see below.*
 - **Memory**, which no package fixes. A Mac with 32 GB can classify genomes of
   described species, and nothing else.
+
+### pplacer alpha19 against alpha20, 22 and 23: the crash is found, and fixed
+
+Run on GenomeDK (linux-64), 2026-10-05 and 2026-10-12, with bioconda's own
+builds. Every number, and where the raw data lives:
+[upstream/gtdbtk-pplacer-evidence.md](upstream/gtdbtk-pplacer-evidence.md).
+
+*Placements agree.* 234 genomes — 232 GTDB r232 non-representatives (192
+bacterial, 40 archaeal; 116 isolates ≥ 95.9 % complete, 116 MAGs at 52.9–80 %)
+plus the *E. faecium* duplicate pair — through `gtdbtk classify
+--place_species`, the same alignments for every build: **0 of 234
+classifications differ** alpha19 → alpha20 / alpha22 / alpha23 (alpha23 with
+skani held at 0.3.2), 0 of 428 placements change top edge, max |ΔlogL| 0.0013;
+alpha22 and alpha23 placements are numerically identical. alpha22 took 72 min against 101 min for
+each of two alpha19 runs. 472 further queries built to stress the optimiser
+(copies of leaves on edges < 1e-5, masked to 50–90 %, 20 %-mutated and
+chimeric rows) on ar53 and class-level trees 1 and 4: same top edge for all
+but two, and those two are exact ties.
+
+*The alpha20 crash is an assertion, fixed in alpha22.* The error in GTDB-Tk
+#674 (and a comment on #670), `Dune__exe__Multiprocessing.Child_error(_)`, is
+pplacer's wrapper for any exception in a worker. pplacer#391's own data
+reproduces it with bioconda's alpha20; single-process (`-j 0`) it is
+`three_tax.ml, line 43: Assertion failed` — `assert(prox_bl >= 0.)`, which
+pplacer#394 (alpha22) replaced with a clamp. One read is enough: alpha20 exits
+2, alpha19 / 22 / 23 exit 0 and place it identically. Over all 7,825 reads,
+alpha22 and 23 put every read on alpha19's top edge. The alpha19 → alpha20
+diff is a port to current OCaml, gsl-ocaml and Batteries with no change to
+placement logic; why alpha19 survives the same read is not established.
+
+*#668, where the pin was decided, is a different failure*: pplacer exited and
+wrote a JSON with no placements. A worker that dies without raising (a signal)
+is dropped silently and its query lost — the event loop treats the closed pipe
+as done. Killing one worker 40 s into the #391 data: alpha19 and alpha23 both
+exit 0 with 4,885 of 4,886 placements. So the pin does not guard against it;
+why #668's worker died is unknown.
+
+*Not shown:* that #670 / #674 crashed on this assertion rather than on the two
+optimiser exceptions alpha21 catches. No GTDB-Tk input tried — the 234, nor
+the 472 — crashed alpha20. And alpha23 catches those exceptions in the first
+optimisation pass only, not the final one (`core.ml:373` at v1.1.alpha23);
+from reading the source, never observed.
+
+*On Apple silicon GTDB-Tk reaches pplacer, after one code fix.* 2026-10-12, on
+the laptop: gtdbtk 2.7.2's run requirements with `pplacer =1.1.alpha23` solve
+on linux-64, linux-aarch64 and osx-arm64 (52, 52, 49 packages). On GTDB's r232
+mock database (`classify_wf --place_species -f`) the osx-arm64 run hangs at
+"Running Prodigal": `biolib_lite/parallel.py` hands name-mangled private
+methods to `mp.Process`, which cannot be pickled under macOS's `spawn`
+(`'Parallel' object has no attribute '__process_manager'`). Renamed to single
+underscores it exits 0, pplacer step included, with a summary byte-identical
+to the run forced to `fork` (6.0 s, 233 MB peak). The same bug is live on Linux under Python 3.14's
+`forkserver` (GenomeDK, 3.14.8): released code hangs, killed at 600 s; renamed,
+exit 0 in 24 s. It is why bioconda caps gtdbtk at `python <3.14`. Mock data
+only: no real genome has been placed on arm. Both upstream changes are drafted,
+checked and unsent: [upstream/gtdbtk-parallel-spawn-pr.md](upstream/gtdbtk-parallel-spawn-pr.md)
+first, then [upstream/gtdbtk-pplacer-pin-pr.md](upstream/gtdbtk-pplacer-pin-pr.md),
+then the pplacer follow-up the second one promises,
+[upstream/pplacer-final-pass-issue.md](upstream/pplacer-final-pass-issue.md)
+(drafted 2026-10-24).
+
+*Re-checked on GTDB-Tk 2.8.0, 2026-10-24* (released 2026-10-13, in the
+bioconda recipe the same day, still with `pplacer =1.1.alpha19` and
+`python <3.14`): the run list with alpha23 solves on linux-64, linux-aarch64
+and osx-arm64 (52, 52, 49 packages, as for 2.7.2), and on the laptop the mock
+database hangs as released under `spawn` (killed at 180 s) and exits 0 in
+5.2 s with the rename, summary byte-identical to the `fork` run. The Python
+3.14 run on Linux has not been repeated on 2.8.0. Re-reading pplacer for the
+follow-up corrected one line of the evidence note: a query with every location
+skipped ends the run at `failwith "empty results"` (`core.ml:333`), not at the
+assert on line 353.
 
 ### panaroo on linux-aarch64 needs intbitset alone
 

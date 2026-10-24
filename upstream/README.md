@@ -14,6 +14,9 @@ column is the record of which.
 | [bioconda-panaroo-pr.md](bioconda-panaroo-pr.md) | PR against [bioconda/bioconda-recipes](https://github.com/bioconda/bioconda-recipes) `recipes/panaroo` | **sent 2026-10-05** — [PR #69901](https://github.com/bioconda/bioconda-recipes/pull/69901); author approved by email 2026-10-04 |
 | [prokka-arm-table2asn.md](prokka-arm-table2asn.md) | two PRs against [bioconda/bioconda-recipes](https://github.com/bioconda/bioconda-recipes): `recipes/table2asn`, then `recipes/tbl2asn-forever` (route A) or `recipes/prokka` | not drafted — measurements only. Route A (`tbl2asn-forever` arm build over `table2asn`) would make the panaroo PR unnecessary |
 | [intbitset-linux-aarch64.md](intbitset-linux-aarch64.md) | PR against [conda-forge/intbitset-feedstock](https://github.com/conda-forge/intbitset-feedstock) | **sent 2026-10-05** — [PR #25](https://github.com/conda-forge/intbitset-feedstock/pull/25); all four configs built locally first. It alone puts panaroo on linux-aarch64 |
+| [gtdbtk-parallel-spawn-pr.md](gtdbtk-parallel-spawn-pr.md) | PR against [Ecogenomics/GTDBTk](https://github.com/Ecogenomics/GTDBTk) `gtdbtk/biolib_lite/parallel.py` | unsent, drafted and checked 2026-10-12. **Send first** — fixes GTDB-Tk on macOS and on Python 3.14 |
+| [gtdbtk-pplacer-pin-pr.md](gtdbtk-pplacer-pin-pr.md) | PR against [bioconda/bioconda-recipes](https://github.com/bioconda/bioconda-recipes) `recipes/gtdbtk` | unsent, drafted and checked 2026-10-12, moved to gtdbtk 2.8.0 2026-10-24. Send the same day as the one above, with its number in place of `#NNN` |
+| [pplacer-final-pass-issue.md](pplacer-final-pass-issue.md) | issue on [matsen/pplacer](https://github.com/matsen/pplacer) | unsent, drafted 2026-10-24. The follow-up the pin PR promises; send after it, with its number in place of `NNN` |
 
 The first two findings are in [../STATUS.md](../STATUS.md) (*CarveMe was nine
 minutes for the wrong reason*), [../DECISIONS.md](../DECISIONS.md) and
@@ -132,6 +135,32 @@ full 3 h, still `timelimit` at a 2.01% gap, 1,135 reactions against 1,134 at
 in 15.4 s. So the sparse model is not a truncated dense one, which is the claim
 `carveme-205-comment.md` currently cannot make. Full numbers in
 [../STATUS.md](../STATUS.md), *the docs showcase run*.
+
+## The two GTDB-Tk PRs are a pair, in order
+
+[gtdbtk-parallel-spawn-pr.md](gtdbtk-parallel-spawn-pr.md) first, then
+[gtdbtk-pplacer-pin-pr.md](gtdbtk-pplacer-pin-pr.md) the same day, citing it.
+The pin draft asks GTDB-Tk's maintainers to move `pplacer =1.1.alpha19` to
+`=1.1.alpha23`, which alone makes gtdbtk solvable on osx-arm64 and
+linux-aarch64; the spawn fix is what lets it get past gene calling on a Mac,
+and on its own it fixes Python 3.14 on Linux, so it is the one that asks
+nothing of them. ANI-screen classification works on a Mac with the pin alone.
+
+Both texts were checked sentence by sentence on 2026-10-12; that pass changed
+seven things, the largest being that #668 — where the pin was decided — is not
+the crash the rest of the evidence explains. Every number, where the raw data
+lives on the laptop and on GenomeDK, and what is still not shown:
+[gtdbtk-pplacer-evidence.md](gtdbtk-pplacer-evidence.md). Each draft's last
+section says what to re-check before sending and what the text commits to — one
+of those is a follow-up to matsen/pplacer, drafted 2026-10-24 as
+[pplacer-final-pass-issue.md](pplacer-final-pass-issue.md).
+
+GTDB-Tk 2.8.0 came out on 2026-10-13, the day after the check. Both drafts were
+moved to it on 2026-10-24: the recipe diff now sits on 2.8.0 build 0, the
+three-platform solve and the Mac mock-database run were repeated on 2.8.0 with
+the same results, and the Linux Python 3.14 run is still 2.7.2's (prepared,
+waiting on a GenomeDK login). The evidence note's *Re-check on GTDB-Tk 2.8.0*
+has the numbers.
 
 ## The two panaroo-on-macOS PRs are a pair
 
