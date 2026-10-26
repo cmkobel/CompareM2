@@ -71,9 +71,9 @@ genomes in favour of skani sketches. **A tool's database version is part of its
 pin.** The catalogue had been carrying an r226 URL that the installed tool
 would have rejected — after the download.
 
-**Two environments, and CheckM2 is why there are two.** It pins DIAMOND 2.1.x
-while current Bakta needs 2.2.x, so they cannot co-solve. Everything else shares
-`main`. Snakemake deploys both; nothing expects a tool on PATH.
+**Six environments, not one.** Tools share an environment only with what they
+depend on alongside — *Eighteen rules, six environments* below says which and
+why. Snakemake deploys all six; nothing expects a tool on PATH.
 
 **Databases fetch themselves, as workflow rules.** Each `Database` declares a
 `fetch` and a `ready` path, and a `download_<name>` rule is generated whose
@@ -179,10 +179,12 @@ gone; see DECISIONS.md.
 - `annotation` — bakta, amrfinder, and both of their database fetches.
 - `gtdbtk` — one tool.
 - `carveme` — carveme and biosynthesis, which imports `carveme` and `reframed`.
-- `checkm2` — one tool, for one reason. CheckM2 pins DIAMOND 2.1.x and a
-  current Bakta needs 2.2.x, so an environment holding all fourteen does not
-  exist. Verified 2026-09-01: `bakta>=1.10` solves with all thirteen others and
-  fails only when checkm2 joins.
+- `checkm2` — one tool. It was split out first, because CheckM2 pinned
+  DIAMOND 2.1.x against current Bakta's 2.2.x: on 2026-09-01 `bakta>=1.10`
+  solved with all thirteen others and failed only when checkm2 joined. That pin
+  went in checkm2's October 2026 rebuild. It stays alone because it is the
+  TensorFlow stack — the deepest dependency tree here, and the one with a
+  ceiling — and anything sharing its environment would share its fate.
 
 **This was two until 2026-09-07, when the thirteen-tool `main` stopped solving
 at all.** Not on one machine and not from new configuration: the identical spec
@@ -307,10 +309,16 @@ something already published. The post-mortems are in
   before touching it — the numbers are in the wrapper's docstring and in
   [STATUS.md](STATUS.md).
 
-  **SCIP is therefore the one spec with a ceiling, `<10.1`.** conda-forge's
+  **SCIP therefore has a ceiling, `<10.1`.** conda-forge's
   pyscipopt accepts a SCIP whose library it was not linked against, and a
   fresh solve that took 10.1 left CarveMe with no solver at all. Lift the
   ceiling only after a new minor has been run, not because a solve accepts it.
+- **TensorFlow has the only other ceiling, `<2.19` in `checkm2`.** A clean
+  solve and install say nothing about the host it lands on: conda-forge's x86-64
+  TensorFlow 2.19 builds ask for an executable stack, and glibc 2.41 and later
+  refuse to load them, so checkm2 installed and then died on import on every
+  new distribution. The ceiling holds checkm2 on 2.18, which does not ask. It
+  goes on the same terms as SCIP's: when a newer release has been run.
 - **A database version is part of the tool's pin.** Both directions are runtime
   failures that no solve catches: GTDB-Tk 2.7 accepts only r232, Bakta 1.12
   only db 6.x. Moving either one alone is the bug. Which is why the URL, the

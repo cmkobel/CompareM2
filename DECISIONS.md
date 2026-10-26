@@ -3887,3 +3887,51 @@ and lets `--dry-run`, `--report-only` and `--unlock` through because they
 deploy nothing. linux-aarch64 is not refused: some tools run there
 (STATUS.md, *Environments*), and which ones is a per-tool question this check
 cannot answer.
+
+## 2026-10-26 — TensorFlow gets a ceiling, `<2.19`, in `checkm2`
+
+The weekly environments run failed on checkm2 the week its runner moved to
+Ubuntu 26.04. conda-forge's x86-64 TensorFlow 2.19 builds link
+`libtensorflow_cc.so.2` asking for an executable stack, glibc 2.41 and later
+refuse to `dlopen` one, and `checkm2 --version` died on import. The solve was
+the same as the green week before; the host was not. Users get the same on
+Debian 13 and Ubuntu 25.04 on. Numbers in STATUS.md, *Known broken in 3.5.1*.
+
+**`conda-forge::tensorflow>=2.17,<2.19` in `CHECKM2_ENV`.** 2.18 is the newest
+release below the bad builds that checkm2 1.1.0 accepts, it has an aarch64
+build where 2.17 has none, and checkm2's `quality_report.tsv` was
+byte-identical on 2.17, 2.18 and 2.19.1 on thylakoid. A changed environment
+file is a new environment hash, so an upgraded install rebuilds checkm2 on its
+next run and nobody has to delete anything. `check.py` now also loads
+CheckM2's three models and predicts once, because `--version` loads none of
+them and the ceiling moves keras, numpy and scikit-learn along with TensorFlow.
+
+Rejected:
+
+- **Pinning the runner to `ubuntu-24.04`.** CI green, users broken. The runner
+  drifting forward is what found this.
+- **`GLIBC_TUNABLES=glibc.rtld.execstack=2`.** The value that covers a
+  `dlopen`ed library arrived in glibc 2.42 (its NEWS); Debian 13 ships 2.41.
+  It also switches the protection off for the whole process instead of
+  avoiding the one library that needs it.
+- **`patchelf --clear-execstack` after deployment.** Works on any glibc and
+  keeps 2.19, but edits a vendor binary in place and needs a post-deploy hook
+  that `check.py` would have to replicate. Kept as the fallback if 2.18 stops
+  solving.
+
+**When it goes.** 2.21.0's builds are clean, but checkm2's bioconda recipe
+stops at `<2.20` (widened from `2.17.*` on 2026-10-04, bioconda-recipes#69866,
+which is how 2.19 got in). Lift the ceiling when checkm2 admits a clean
+release above 2.19 and a real run has used it. Upstream, the TensorFlow
+problem is conda-forge/tensorflow-feedstock#455, open since 2025-10-23; neither
+2.19's nor 2.21's build script sets `-z noexecstack`, so 2.21 being clean is
+not a guarantee for 2.22.
+
+**And CheckM2's DIAMOND pin is gone, which was why `checkm2` was split out on
+2026-09-01.** The same 2026-10-04 rebuild accepts `diamond >=2.1.11`; the
+thylakoid comparison had 2.1.11 in one environment and 2.2.8 in the other, with
+identical output. It stays split anyway: it is the TensorFlow stack, now behind
+a ceiling, and merging it into `annotation` would put bakta and amrfinder
+behind that ceiling too. A co-solve has not been tried. `DESIGN.md`, the
+catalogue comment and `docs/10 installation.md` said the pin still held, and
+`DESIGN.md` still described two environments and a `main`; all corrected.

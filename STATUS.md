@@ -4,7 +4,7 @@ What is currently true of a real run. This file changes whenever something is
 re-run, which is why it is not in [DESIGN.md](DESIGN.md) — decisions should not
 need editing because a tool was verified again.
 
-Last updated **2026-10-09**. The tool numbers are from runs on thylakoid; the
+Last updated **2026-10-26**. The tool numbers are from runs on thylakoid; the
 pre-tag checks for v3.1.0 are from the laptop and say so.
 
 ## The docs showcase run: eight genomes, all fourteen tools, through SLURM
@@ -290,6 +290,59 @@ on a different machine. Neither number includes the package cache. Treat the
 
 The database downloads did not run — `--demo` needs none — so the four
 `download_*` rules remain unexercised under a profile, `localrules` and all.
+
+## Known broken in 3.5.1: checkm2 on glibc 2.41 and later
+
+Found 2026-10-26 by the weekly environments run (40304322202), the first on
+the `ubuntu-26.04` runner image: `checkm2 --version` exit 1,
+`libtensorflow_cc.so.2: cannot enable executable stack as shared object
+requires: Invalid argument`. The solve matched the green 2026-10-19 run —
+`libtensorflow_cc-2.19.1-cpu_h944eb50_55` both weeks, then on `ubuntu-24.04`.
+The host changed, not the environment. **Every 3.5.1 install on glibc 2.41+
+(Debian 13, Ubuntu 25.04 on) has a checkm2 that cannot start.** thylakoid
+(glibc 2.36) and GenomeDK's login node (2.34) are unaffected.
+
+**Which builds ask for an executable stack**, read from `PT_GNU_STACK` in the
+shared objects of the conda packages themselves:
+
+| `libtensorflow_cc` | linux-64 | linux-aarch64 |
+| --- | --- | --- |
+| 2.17.0 (build 3), 2.18.0 (builds 2 and 52) | RW | RW (2.18.0) |
+| 2.19.0 (build 53), 2.19.1 (build 55) | **RWE** | RW (2.19.1) |
+| 2.21.0 (builds 0 and 50) | RW | no build |
+
+The rest of the 2.18.0 stack is RW too — `libtensorflow_framework` and the 69
+objects in `tensorflow-base`, CPU and CUDA 12.6 builds alike — and so is every
+shared object in the capped environment's solve: 680, across 136 of its 137
+packages (prodigal was not fetched; it is a program, not a library). checkm2
+reached 2.19 on 2026-10-04, when its bioconda build 2 widened `2.17.*` to
+`>=2.17,<2.20`; the 3.5.1 release check on 2026-10-12 ran on thylakoid, which
+loads it.
+
+**The fix, `conda-forge::tensorflow>=2.17,<2.19`, executed on thylakoid
+2026-10-26.** CPU builds, `checkm2 predict` over 116_2, E8202 and SRR24 against
+the same database:
+
+| | TensorFlow | keras | numpy | scikit-learn | DIAMOND |
+| --- | --- | --- | --- | --- | --- |
+| A, the 2026-09-02 environment | 2.17.0 | 3.11.2 | 1.26.4 | 1.6.1 | 2.1.11 |
+| B, with the ceiling | 2.18.0 | 3.15.1 | 2.5.4 | 1.9.1 | 2.2.8 |
+| C, without (what 3.5.1 solves) | 2.19.1 | 3.15.1 | 2.5.4 | 1.9.1 | 2.2.8 |
+
+**`quality_report.tsv` byte-identical in all three**: completeness 100.0 for
+each genome, contamination 0.47, 3.42 and 1.54. So the ceiling changes nothing
+on a host that could already load 2.19. The new `check.py` exercise gave
+`general 6.38 contamination 4.30 specific 2.17` in all three. B and C print
+scikit-learn's `InconsistentVersionWarning` unpickling a scaler saved under
+1.6.1 — checkm2's own `scikit-learn >=1.6.1`, not the ceiling, and the output is
+unchanged. Called directly, CheckM2 dropped `116_2 duplicate.fna` (`File does
+not exist: …/116_2 duplicate.gff.4`); the pipeline renames it first, so this
+was not the duplicate-pair check.
+
+**Not yet executed:** the capped environment on glibc 2.41+ (the environments
+workflow on the 26.04 runner), the CUDA 2.18 build beyond its stack flags, and
+the pipeline's checkm2 rule with the ceiling. **Not released:** 3.5.1 ships
+without it.
 
 ## Known broken: the `main` environment no longer solves, anywhere
 

@@ -104,7 +104,7 @@ move.
 
 ### Testing
 
-`tests/unit/test_v3.py`, 384 tests, ~31 s. This is the primary instrument: the
+`tests/unit/test_v3.py`, 385 tests, ~31 s. This is the primary instrument: the
 codebase is a generator, and a wrong wildcard produces a Snakefile that parses
 cleanly and builds the wrong DAG, which an end-to-end run catches slowly if at
 all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.
@@ -113,9 +113,12 @@ all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.
 `.github/workflows/environments.yaml` builds each of the six from the files
 `render_envs` generates, Mondays and on demand, and runs
 `tests/environments/check.py` in it: a version call per tool, a toy FastTree,
-and a real CarveMe carve of *E. coli* scored by `biosynthesis.py`, which must
-come out 29 of 30. Solving is not the test. On 2026-09-24 carveme solved,
-installed, and had no solver. A new environment needs an entry in `check.py`,
+a real CarveMe carve of *E. coli* scored by `biosynthesis.py`, which must
+come out 29 of 30, and CheckM2's three bundled models loaded and run on a zero
+vector, which must give the numbers measured on thylakoid. Solving is not the
+test. On 2026-09-24 carveme solved, installed, and had no solver. The runner is
+`ubuntu-latest` on purpose: its move to 26.04 is what caught checkm2 failing
+on glibc 2.41+, on 2026-10-26. A new environment needs an entry in `check.py`,
 and a unit test enforces that. The same workflow's `demo` job runs
 `comparem2 --demo` as a user would, then again, and `check.py demo` requires
 the planted duplicate pair to agree in all four tools and the second run to
@@ -152,9 +155,15 @@ ANI, 0 SNPs, identical CDS counts.
   presolver off; deleting the line costs nine minutes a genome *and* the model.
   Numbers, and the reasons "optimal" is not well defined on this problem, are in
   the wrapper's docstring — re-measure before changing it. And `scip` is pinned
-  `<10.1` in `CARVEME_ENV`, the only ceiling in the catalogue, because
+  `<10.1` in `CARVEME_ENV`, one of the catalogue's two ceilings, because
   pyscipopt's conda-forge build accepts a SCIP it cannot load: on 2026-09-24 a
   fresh solve left carveme with no solver.
+- **The other ceiling is `tensorflow<2.19` in `CHECKM2_ENV`.** conda-forge's
+  x86-64 2.19.x builds ask for an executable stack, which glibc 2.41+ (Debian
+  13, Ubuntu 25.04 on) refuses to load, so checkm2 died on import. 2.17, 2.18,
+  2.21 and the aarch64 builds do not; checkm2 gave identical output on 2.17,
+  2.18 and 2.19.1 on thylakoid. Lift it when checkm2 admits a clean release
+  above 2.19, not when a solve accepts one.
 - **Six conda environments, grouped by dependency ecosystem.** `basic`
   (seqkit, skani, snp-dists, fasttree, treecluster, curl, tar), `perl`
   (mashtree, mlst, panaroo), `annotation` (bakta, amrfinder), `gtdbtk`,

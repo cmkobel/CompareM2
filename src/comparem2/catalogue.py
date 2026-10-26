@@ -116,17 +116,27 @@ GTDBTK_ENV = (
 # ReFramed comes with CarveMe and not with CompareM2. Alone because the solver
 # build is part of the pinned surface here; see `carve_scip.py`.
 #
-# SCIP is pinned to a minor version, and is the one spec here with a ceiling.
-# conda-forge's pyscipopt 6.2.1 links `libscip.so.10.0` but accepts scip 10.1,
-# whose library is `libscip.so.10.1`; a fresh solve on 2026-09-24 took 10.1.0,
+# SCIP is pinned to a minor version, with a ceiling. conda-forge's pyscipopt
+# 6.2.1 links `libscip.so.10.0` but accepts scip 10.1, whose library is
+# `libscip.so.10.1`; a fresh solve on 2026-09-24 took 10.1.0,
 # `import pyscipopt` failed, and reframed reported "No solver available." for
 # every genome. The ceiling is also honest on its own terms: the timings in
 # `carve_scip.py` were taken on 10.0.x, so a new minor is re-measured first.
 CARVEME_ENV = ("bioconda::carveme>=1.6.6", "conda-forge::scip>=10.0.3,<10.1")
 
-# Separate since 2026-09-01, before any of the above: CheckM2 pins DIAMOND
-# 2.1.x and a current Bakta needs 2.2.x, so no one environment holds both.
-CHECKM2_ENV = ("bioconda::checkm2>=1.1.0",)
+# Separate since 2026-09-01, before any of the above, because CheckM2 pinned
+# DIAMOND 2.1.x against current Bakta's 2.2.x. That pin went in checkm2's
+# 2026-10-04 rebuild, which accepts >=2.1.11. It stays separate as the
+# TensorFlow stack: the deepest dependency tree here, and the one with a ceiling.
+#
+# TensorFlow has a ceiling. conda-forge's x86-64 builds of 2.19.0 and 2.19.1
+# link `libtensorflow_cc.so.2` asking for an executable stack, which glibc 2.41
+# and later refuse to load — Debian 13, Ubuntu 25.04 on — so checkm2 died on
+# import (conda-forge/tensorflow-feedstock#455). 2.17, 2.18 and 2.21 do not ask,
+# nor do the aarch64 builds, and checkm2 1.1.0 accepts >=2.17,<2.20, so this
+# leaves 2.18 on both architectures. Lift it when checkm2 admits a clean release
+# above 2.19 and a real run has used it, not because a solve accepts one.
+CHECKM2_ENV = ("bioconda::checkm2>=1.1.0", "conda-forge::tensorflow>=2.17,<2.19")
 
 # --- Databases -----------------------------------------------------
 # Sizes are measured, not estimated. `None` means nobody has measured it yet.

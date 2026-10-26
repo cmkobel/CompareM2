@@ -17,7 +17,10 @@ that is missing, and is all this checks: a tool that crashes only on real
 input (bakta 1.8.1 on pyrodigal 3.x) would still pass. `basic` aligns a toy
 alignment through FastTree. `carveme` carves a real model through the
 pipeline's own `carve_scip.py` and scores it with `biosynthesis.py`, because
-the solver is what broke, and only a solve shows that it works.
+the solver is what broke, and only a solve shows that it works. `checkm2`
+loads the three models CheckM2 ships and predicts once: its version call
+imports TensorFlow but loads no model, and a real run needs the 1.7 GB
+database.
 
 The environments are built with conda directly, so none of that goes through
 the pipeline. `demo` checks what `comparem2 --demo` produced the way a user
@@ -124,7 +127,32 @@ def carveme(path: str) -> bool:
     return de_novo == ECOLI_DE_NOVO
 
 
-EXERCISES = {"basic": fasttree, "carveme": carveme}
+# What CheckM2's models answer for an all-zero feature vector, measured on
+# thylakoid on 2026-10-26 under TensorFlow 2.17.0 and 2.18.0 alike. A zero
+# vector is no genome, so the numbers mean nothing biologically; they pin that
+# the models a run would use still load and still compute the same function.
+CHECKM2_ZERO = "general 6.38 contamination 4.30 specific 2.17"
+
+_CHECKM2_PROBE = """\
+import numpy as np
+from checkm2.modelProcessing import modelProcessor
+m = modelProcessor(1)
+x = np.zeros((1, m.general_model_comp.num_feature()))
+comp, cont = m.run_prediction_general(x)
+nn, _ = m.run_prediction_specific(x, m.specific_model_comp_nn.input_shape[1])
+print(f"general {comp[0]:.2f} contamination {cont[0]:.2f} specific {nn[0]:.2f}")
+"""
+
+
+def checkm2(path: str) -> bool:
+    """Both LightGBM models, the Keras network and the pickled scaler."""
+    done = call(["python", "-c", _CHECKM2_PROBE], path)
+    print(f"  zero vector: {done.stdout.strip() or '(nothing)'} "
+          f"(measured: {CHECKM2_ZERO})", flush=True)
+    return done.returncode == 0 and done.stdout.strip() == CHECKM2_ZERO
+
+
+EXERCISES = {"basic": fasttree, "carveme": carveme, "checkm2": checkm2}
 
 
 def run(name: str, prefix: Path) -> int:

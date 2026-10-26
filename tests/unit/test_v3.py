@@ -1428,6 +1428,15 @@ def test_carveme_pins_the_scip_minor_its_pyscipopt_links():
     assert CATALOGUE["biosynthesis"].conda == CATALOGUE["carveme"].conda
 
 
+def test_checkm2_keeps_tensorflow_below_the_executable_stack_builds():
+    """conda-forge's x86-64 TensorFlow 2.19.x asks for an executable stack, and
+    glibc 2.41 and later refuse to load it: checkm2 died on import on the
+    ubuntu-26.04 runner on 2026-10-26. The ceiling goes when checkm2 admits a
+    clean release above 2.19 and a real run has used it."""
+    tf = [s for s in CATALOGUE["checkm2"].conda if s.split("::")[-1].startswith("tensorflow")]
+    assert tf == ["conda-forge::tensorflow>=2.17,<2.19"]
+
+
 def test_snp_dists_and_fasttree_read_the_filtered_core_alignment(tmp_path):
     """The file Panaroo's documentation recommends for core-genome
     phylogenies, and the same one for both, so the SNP matrix and the tree

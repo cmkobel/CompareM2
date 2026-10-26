@@ -83,12 +83,14 @@ packages that several environments share, so the total is well under the sum of
 independent installs, and correspondingly the per-environment figures do not
 add up to it.
 
-Why six and not one? CheckM2 pins DIAMOND 2.1.x while current Bakta needs
-2.2.x, so no single environment ever held all fourteen. The rest of the split
-is newer. In September 2026 the thirteen-tool environment stopped solving
-because the Perl stack broke upstream and took every other tool with it. Tools
-that share an environment share its fate, so they are grouped by what they
-actually depend on. An environment per *tool* would be the opposite mistake.
+Why six and not one? Until October 2026 CheckM2 pinned DIAMOND 2.1.x while
+current Bakta needs 2.2.x, so no single environment ever held all fourteen.
+CheckM2 stays on its own as the TensorFlow stack, the heaviest of the six. The
+rest of the split is newer. In September 2026 the thirteen-tool environment
+stopped solving because the Perl stack broke upstream and took every other tool
+with it. Tools that share an environment share its fate, so they are grouped by
+what they actually depend on. An environment per *tool* would be the opposite
+mistake.
 
 They go to `~/.comparem2/envs`, shared across runs, moved with `--conda-prefix`
 or `$COMPAREM2_CONDA_PREFIX`.
