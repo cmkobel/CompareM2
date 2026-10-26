@@ -2,7 +2,7 @@
 
 Drafts of things this project found in software it depends on, kept here so they
 do not evaporate with the session that wrote them. Each file says what it is,
-where it goes, and what it still needs. **Three have been sent** — the status
+where it goes, and what it still needs. **Four have been sent** — the status
 column is the record of which.
 
 | draft | destination | status |
@@ -11,7 +11,8 @@ column is the record of which.
 | [scip-question.md](scip-question.md) | issue or discussion on [scipopt/scip](https://github.com/scipopt/scip) | unsent |
 | [panaroo-intbitset-note.md](panaroo-intbitset-note.md) | issue or discussion on [gtonkinhill/panaroo](https://github.com/gtonkinhill/panaroo) | unsent, and incomplete on purpose — see its last section |
 | [intbitset-feedstock-pr.md](intbitset-feedstock-pr.md) | PR against [conda-forge/intbitset-feedstock](https://github.com/conda-forge/intbitset-feedstock) | **sent 2026-09-04, merged 2026-09-25** — [PR #21](https://github.com/conda-forge/intbitset-feedstock/pull/21) |
-| [bioconda-panaroo-pr.md](bioconda-panaroo-pr.md) | PR against [bioconda/bioconda-recipes](https://github.com/bioconda/bioconda-recipes) `recipes/panaroo` | **sent 2026-10-05** — [PR #69901](https://github.com/bioconda/bioconda-recipes/pull/69901); author approved by email 2026-10-04 |
+| [bioconda-panaroo-pr.md](bioconda-panaroo-pr.md) | PR against [bioconda/bioconda-recipes](https://github.com/bioconda/bioconda-recipes) `recipes/panaroo` | **sent 2026-10-05, merged 2026-10-19** — [PR #69901](https://github.com/bioconda/bioconda-recipes/pull/69901); author approved by email 2026-10-04 |
+| [panaroo-cdhit-aS.md](panaroo-cdhit-aS.md) | PR against [gtonkinhill/panaroo](https://github.com/gtonkinhill/panaroo) `panaroo/cdhit.py` | **sent 2026-10-20** — [PR #382](https://github.com/gtonkinhill/panaroo/pull/382). Three-character fix; without it arm64 skips gene-family collapsing (4,060 vs 3,780 clusters) |
 | [prokka-arm-table2asn.md](prokka-arm-table2asn.md) | two PRs against [bioconda/bioconda-recipes](https://github.com/bioconda/bioconda-recipes): `recipes/table2asn`, then `recipes/tbl2asn-forever` (route A) or `recipes/prokka` | not drafted — measurements only. Route A (`tbl2asn-forever` arm build over `table2asn`) would make the panaroo PR unnecessary |
 | [intbitset-linux-aarch64.md](intbitset-linux-aarch64.md) | PR against [conda-forge/intbitset-feedstock](https://github.com/conda-forge/intbitset-feedstock) | **sent 2026-10-05** — [PR #25](https://github.com/conda-forge/intbitset-feedstock/pull/25); all four configs built locally first. It alone puts panaroo on linux-aarch64 |
 | [gtdbtk-parallel-spawn-pr.md](gtdbtk-parallel-spawn-pr.md) | PR against [Ecogenomics/GTDBTk](https://github.com/Ecogenomics/GTDBTk) `gtdbtk/biolib_lite/parallel.py` | unsent, drafted and checked 2026-10-12. **Send first** — fixes GTDB-Tk on macOS and on Python 3.14 |

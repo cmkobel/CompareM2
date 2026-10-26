@@ -1888,8 +1888,11 @@ python 3.13.15. That `prokka` line is Tonkin-Hill's own, added in
 bioconda-recipes#21341 (2020-04-08).
 
 **The bioconda one was sent 2026-10-05 — [bioconda-recipes#69901](https://github.com/bioconda/bioconda-recipes/pull/69901)**, after Tonkin-Hill approved
-removing the line by email on 2026-10-04. Not yet merged; until it is, panaroo
-still does not solve on `osx-arm64`.
+removing the line by email on 2026-10-04. **Merged 2026-10-19 00:33 UTC**, and
+bioconda published `panaroo 1.8.0 pyhdfd78af_1`, without prokka, two minutes
+later. panaroo now installs and runs on `osx-arm64` — and gives a different
+pangenome there; see *panaroo installs on arm, and its cleaning stage does
+nothing there* below.
 
 *The cascade is three tools, not one.* Worth stating because the sections above
 do not: `snp-dists` and `fasttree` both take
@@ -1935,6 +1938,12 @@ cap holding the Linux environment at 3.11.16.
 | duplicate pair, clusters differing | **0 of 3,569** | **0 of 3,569** |
 | `snp-dists` duplicate pair | **0** (4,111 to E8202) | **0** (4,111 to E8202) |
 | `FastTree -nt -gtr` duplicate pair | branch length 0.0 | branch length 0.0 |
+
+*Corrected 2026-10-20: every arm panaroo number in this file was produced with
+panaroo's cleaning stage inert*, by a panaroo typo that CD-HIT resolves
+differently on arm64 than on x86. The duplicate-pair checks above hold; the
+cluster counts are not what x86 gives. See *panaroo installs on arm, and its
+cleaning stage does nothing there* below.
 
 *Corrected 2026-09-28:* the conda-only environment was recorded as 278
 packages. It is 141: `pixi.lock` lists every package twice, and the figure
@@ -2162,6 +2171,77 @@ with a one-line `conda-forge.yml` change, and bioconda's **published** panaroo
 Windows is out on both architectures: five bioconda tools have no Windows
 build. All four aarch64 configs, py3.11–3.14, built locally and passed the
 import test; the change was sent the same day as [intbitset-feedstock#25](https://github.com/conda-forge/intbitset-feedstock/pull/25).
+
+*Corrected 2026-10-20:* "byte-identical to the osx-arm64 runs" was two arm64
+builds agreeing on the same wrong answer — see the next section. linux-aarch64
+is the same ISA, so #25 would carry the problem to it.
+
+### panaroo installs on arm, and its cleaning stage does nothing there
+
+Measured 2026-10-19 and 10-20, laptop (`osx-arm64`) against thylakoid
+(`linux-64`): the catalogue's panaroo command on the four bakta GFF3s in
+`results_full13/samples/`, the files thylakoid's 09-02 run read.
+
+*It installs and runs.* `PERL_ENV` as the catalogue declares it solves and
+installs natively on `osx-arm64` from conda alone: panaroo `pyhdfd78af_1`,
+intbitset 4.1.2, mlst 2.33.1, python 3.12.15. Exit 0, and the duplicate pair
+differs in 0 of 4,060 clusters.
+
+*It gives a different pangenome.* **4,060 clusters / 1,974 core on arm against
+3,780 / 2,091 on linux-64** — the 09-02 run, and a rerun on 2026-10-19 in the
+3.5.1 release check's `perl` environment, which has the same networkx 3.7 and
+intbitset 4.1.2 as arm. Pinning arm to linux's numpy 1.26.4 and scipy 1.17.1
+changed nothing. Both platforms build the same pre-filter graph (4,290 nodes,
+4,711 edges) from a byte-identical first CD-HIT clustering (4,063 clusters),
+and part in the cleaning stage.
+
+*The cause is a typo in panaroo meeting undefined behaviour in CD-HIT.*
+`iterative_cdhit` passes `aS=AS` where it means `aS=aS` (`panaroo/cdhit.py`
+lines 333, 417 and 431 on master, checked 2026-10-20; lines 193 and 206 are
+right), so every clustering in the cleaning stage runs `cd-hit -aS 99999999` —
+a coverage *fraction*. CD-HIT 4.8.1 computes `min_aln_lenS = (int)(double(len)
+* options.short_coverage)` (`cdhit-common.c++:2700`), which overflows `int`, and
+an out-of-range double→int conversion is undefined. x86's `cvttsd2si` returns
+INT_MIN, so the filter passes everything; arm64's `fcvtzs` saturates to
+INT_MAX, so it rejects every alignment. Which instruction each build emits is
+inferred, not disassembled; the behaviour is measured — `cd-hit -c 0.9` on
+panaroo's 11,187 proteins:
+
+| `-aS` | linux-64 | osx-arm64 |
+| --- | --- | --- |
+| 0.0, what panaroo means | 3,578 | 3,578, byte-identical |
+| 0.0001 | 3,582 | 3,582, byte-identical |
+| 0.5 | 3,598 | 3,598, byte-identical |
+| 21.69, impossible but no overflow | 11,174 | — |
+| 99999999, what panaroo passes | **3,582**, byte-identical to 0.0001 | **11,174**, byte-identical to 21.69 |
+
+So on arm the iterative clustering that collapses gene families merges nothing.
+
+*It is the whole difference.* With the three lines patched in a shadow copy on
+`PYTHONPATH`, neither environment touched, both platforms give **3,778 clusters
+/ 2,092 core**, identical gene-to-cluster partitions, a byte-identical
+`gene_presence_absence.Rtab`, and all 1,826 per-gene blocks of the filtered core
+alignment identical. The alignment files still differ, in concatenation order
+only: panaroo orders genes by `os.listdir()` (`generate_output.py:405`), which
+is filesystem order. Pairwise SNPs counted off both are 0 / 1,893 / 2,645 /
+1,699, the 09-02 snp-dists figures.
+
+*The typo moves linux-64 too, slightly*: 3,780 → 3,778 clusters, 2,091 → 2,092
+core. Any positive `-aS` enters CD-HIT's coverage branch (line 2698), and that
+alone moves four short sequences (141–198 aa) out of clusters with longer
+representatives. Why that branch rejects them at a zero threshold was not
+traced.
+
+The typo was reported in 2024 as panaroo#303. The author confirmed it but
+judged it harmless, on the grounds that global alignment overrides `-aS`. CD-HIT
+4.8.1 does not do that: line 2698 enables coverage control regardless of `-G`,
+and every measurement above ran in global mode. Only the two reported lines were
+fixed (`1662aed`, 2024-09-20).
+
+CompareM2 runs on linux-64 only and is not affected. The fix is three
+characters in panaroo, **sent 2026-10-20 as
+[gtonkinhill/panaroo#382](https://github.com/gtonkinhill/panaroo/pull/382)**; note in
+[upstream/panaroo-cdhit-aS.md](upstream/panaroo-cdhit-aS.md).
 
 ## Databases
 
