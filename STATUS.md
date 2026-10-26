@@ -291,7 +291,7 @@ on a different machine. Neither number includes the package cache. Treat the
 The database downloads did not run — `--demo` needs none — so the four
 `download_*` rules remain unexercised under a profile, `localrules` and all.
 
-## Known broken in 3.5.1: checkm2 on glibc 2.41 and later
+## Broken in 3.5.1, fixed in 3.5.2: checkm2 on glibc 2.41 and later
 
 Found 2026-10-26 by the weekly environments run (40304322202), the first on
 the `ubuntu-26.04` runner image: `checkm2 --version` exit 1,
@@ -339,10 +339,35 @@ unchanged. Called directly, CheckM2 dropped `116_2 duplicate.fna` (`File does
 not exist: …/116_2 duplicate.gff.4`); the pipeline renames it first, so this
 was not the duplicate-pair check.
 
-**Not yet executed:** the capped environment on glibc 2.41+ (the environments
-workflow on the 26.04 runner), the CUDA 2.18 build beyond its stack flags, and
-the pipeline's checkm2 rule with the ceiling. **Not released:** 3.5.1 ships
-without it.
+### The 3.5.2 release check, 2026-10-26
+
+3.5.2 is 3.5.1 plus the ceiling and nothing else: master carried no code
+change between the v3.5.1 tag and this branch.
+
+- **On the runner image that broke 3.5.1, the environments workflow on the
+  branch (40404794452), `ubuntu-26.04`: 8 of 8 jobs green**, demo included. checkm2 solved
+  `libtensorflow_cc-2.18.0-cpu_h032bec7_52`, `checkm2 --version` exit 0, and
+  the model exercise gave exactly thylakoid's `general 6.38 contamination 4.30
+  specific 2.17`.
+- **The upgrade, on thylakoid**: 3.5.1 from a fresh clone of the tag with a
+  fresh conda prefix, `--until checkm2` over 116_2, its spaced duplicate, E8202
+  and SRR24, exit 0 in 132 s; then the branch over the same `--output` and
+  prefix, exit 0 in 76 s. **The upgrade re-ran checkm2 and nothing else** —
+  `--dry-run` gave the reason as "software environment definition has changed
+  since last execution", and `download_checkm2` did not run. The two
+  `quality_report.tsv` are byte-identical, and the duplicate pair agrees at
+  100.0 / 0.47.
+- **A GPU host gets CUDA builds**: 3.5.1 solved `tensorflow-base
+  2.19.1-cuda128…_255`, the branch `2.18.0-cuda126…_251`. readelf over every
+  shared object installed: **none of the 706 in the 2.18 environment asks for
+  an executable stack; in the 2.19.1 one, four do** — `libtensorflow_cc`,
+  `libtensorflow` and the two TFLite wrappers, the list
+  conda-forge/tensorflow-feedstock#455 gives.
+
+**Not covered:** GenomeDK under SLURM, which earlier release checks got. The
+change is one environment's spec, and GenomeDK's glibc (2.34) loads both
+TensorFlows; the CPU build it would solve is the one CI ran. linux-aarch64:
+2.18.0's `libtensorflow_cc` is RW there, read from the package, not run.
 
 ## Known broken: the `main` environment no longer solves, anywhere
 

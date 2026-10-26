@@ -3895,7 +3895,7 @@ Ubuntu 26.04. conda-forge's x86-64 TensorFlow 2.19 builds link
 `libtensorflow_cc.so.2` asking for an executable stack, glibc 2.41 and later
 refuse to `dlopen` one, and `checkm2 --version` died on import. The solve was
 the same as the green week before; the host was not. Users get the same on
-Debian 13 and Ubuntu 25.04 on. Numbers in STATUS.md, *Known broken in 3.5.1*.
+Debian 13 and Ubuntu 25.04 on. Numbers in STATUS.md, *Broken in 3.5.1, fixed in 3.5.2*.
 
 **`conda-forge::tensorflow>=2.17,<2.19` in `CHECKM2_ENV`.** 2.18 is the newest
 release below the bad builds that checkm2 1.1.0 accepts, it has an aarch64
@@ -3935,3 +3935,15 @@ a ceiling, and merging it into `annotation` would put bakta and amrfinder
 behind that ceiling too. A co-solve has not been tried. `DESIGN.md`, the
 catalogue comment and `docs/10 installation.md` said the pin still held, and
 `DESIGN.md` still described two environments and a `main`; all corrected.
+
+## 2026-10-26 — 3.5.2 ships the ceiling alone
+
+Cut as soon as it was verified rather than held for anything else, because
+3.5.1 installs a checkm2 that cannot start on every new distribution. master
+carried no code change since v3.5.1, so 3.5.2 is 3.5.1 plus the ceiling.
+
+Upgrading re-runs checkm2 in an existing output directory: Snakemake's
+software-environment trigger sees the changed file. Accepted, unlike 3.5.0's
+re-run of everything: it is one tool, the environment really did change, the
+result is byte-identical, and the whole upgraded run took 76 s for four
+genomes on thylakoid, the new environment's build included. No database is fetched again. Release check in STATUS.md.
