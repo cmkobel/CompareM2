@@ -2240,8 +2240,12 @@ fixed (`1662aed`, 2024-09-20).
 
 CompareM2 runs on linux-64 only and is not affected. The fix is three
 characters in panaroo, **sent 2026-10-20 as
-[gtonkinhill/panaroo#382](https://github.com/gtonkinhill/panaroo/pull/382)**; note in
-[upstream/panaroo-cdhit-aS.md](upstream/panaroo-cdhit-aS.md).
+[gtonkinhill/panaroo#382](https://github.com/gtonkinhill/panaroo/pull/382)**, merged
+2026-10-22 and released in panaroo v1.8.1 on 2026-10-26; note in
+[upstream/panaroo-cdhit-aS.md](upstream/panaroo-cdhit-aS.md). The bioconda
+update to 1.8.1, [bioconda-recipes#70730](https://github.com/bioconda/bioconda-recipes/pull/70730),
+was open on 2026-10-26. Until a run on 1.8.1 is measured, the arm numbers above
+describe 1.8.0.
 
 ## Databases
 

@@ -1,6 +1,6 @@
 # Draft: `aS=AS` typo in `panaroo/cdhit.py` makes arm64 skip gene-family collapsing
 
-**Sent 2026-10-20 as [gtonkinhill/panaroo#382](https://github.com/gtonkinhill/panaroo/pull/382)**, verbatim from [panaroo-cdhit-aS-pr.md](panaroo-cdhit-aS-pr.md), from `cmkobel:fix-aS-typo` (commit `963bac6`). Destination: a PR against
+**Sent 2026-10-20 as [gtonkinhill/panaroo#382](https://github.com/gtonkinhill/panaroo/pull/382); merged 2026-10-22, released in v1.8.1 on 2026-10-26.** Sent verbatim from [panaroo-cdhit-aS-pr.md](panaroo-cdhit-aS-pr.md), from `cmkobel:fix-aS-typo` (commit `963bac6`). Destination: a PR against
 [gtonkinhill/panaroo](https://github.com/gtonkinhill/panaroo), `panaroo/cdhit.py`,
 from a fork branch. Measured 2026-10-19 and 10-20; the full record is in
 `STATUS.md`, *panaroo installs on arm, and its cleaning stage does nothing
