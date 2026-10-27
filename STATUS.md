@@ -573,8 +573,9 @@ failed, as it should.
 
 **Covers the ANI-screen path only.** Every genome here clears the screen, so
 identify, align and pplacer never run, and the package has nothing for them.
-**Not yet run in CI**: the `gtdbtk` job in `environments.yaml` fetches the
-package from the `ci-data` release, which does not exist yet.
+**Green in CI** on 2026-10-27, run 40501843644: the `gtdbtk` job fetched the
+package from the `ci-data` release (md5 `4f155d4b…`), and `check.py gtdbtk`
+passed on all four genomes, 72 s for the job.
 
 ### The gtdbtk report section is written, and now validated on real output
 `_section_gtdbtk` exists and renders: the lineage every genome shares stated
