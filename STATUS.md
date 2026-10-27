@@ -364,10 +364,17 @@ change between the v3.5.1 tag and this branch.
   `libtensorflow` and the two TFLite wrappers, the list
   conda-forge/tensorflow-feedstock#455 gives.
 
-**Not covered:** GenomeDK under SLURM, which earlier release checks got. The
-change is one environment's spec, and GenomeDK's glibc (2.34) loads both
-TensorFlows; the CPU build it would solve is the one CI ran. linux-aarch64:
-2.18.0's `libtensorflow_cc` is RW there, read from the package, not run.
+- **On GenomeDK through SLURM, 2026-10-27**: master at 7a7248c (`__version__`
+  read back as 3.5.2) from a fresh clone, a fresh conda prefix, the `slurm`
+  profile, the frontend on `fe-open-02`. **`--demo` 11 of 11 steps, exit 0, 10
+  SLURM jobs, report 41,617 bytes**, in 705 s — slower than 3.5.1's 183 s
+  because every environment was built, not reused. **`--until checkm2` over
+  the E. faecium set, exit 0 in 869 s**: SLURM 6493783 `COMPLETED 0:0` on
+  `cn-1053`, 5 m 03 s on 8 CPUs, `tensorflow-base 2.18.0-cpu…_52`, and the
+  `quality_report.tsv` **byte-identical to thylakoid's**.
+
+**Not covered:** linux-aarch64, where 2.18.0's `libtensorflow_cc` is RW, read
+from the package, not run.
 
 ## Known broken: the `main` environment no longer solves, anywhere
 
