@@ -2786,6 +2786,13 @@ carrying the code this tag ships.
   genomes on a network filesystem that is the case where the spinner freezes
   and, by its own docstring, means "genuinely wedged". One `{tool: Completion}`
   map computed in a worker would serve all three.
+- **The panaroo section drops its overlap table without saying so.** Above
+  `_OVERLAP_VOCABULARY_MAXIMUM` (12 genomes, `report.py`) the *Shared gene
+  content* table, the `●··●` presence patterns, is skipped and its `else`
+  branch prints nothing. A user who has seen the 8-genome example report reads
+  the absence as a failure: Patrick did on #156, at 139 *E. coli*, on
+  2026-10-27. The cap stays; the fix is one sentence in that branch pointing at
+  the partition table, plus a test that a 13-genome matrix renders it.
 - **`/evo/postdoc/cm2v3`** is the old rsync scratch directory, now redundant,
   holding an 8.5 GB pixi environment that can be deleted.
 - **The bioconda package exists** — 3.0.0, published 2026-09-04, so this bullet
