@@ -3947,3 +3947,31 @@ software-environment trigger sees the changed file. Accepted, unlike 3.5.0's
 re-run of everything: it is one tool, the environment really did change, the
 result is byte-identical, and the whole upgraded run took 76 s for four
 genomes on thylakoid, the new environment's build included. No database is fetched again. Release check in STATUS.md.
+
+## 2026-10-27 — GTDB-Tk gets a weekly CI job, against a trimmed database
+
+The real reference package is 60.8 GB and a free runner has about 14 GB of
+disk, so GTDB-Tk was the one tool no CI could run. But the four test genomes
+are all classified by the ANI screen, and GTDB-Tk 2.7 skips identify and align
+when every genome is (read in `main.py`, then seen in the log). So a package
+that keeps only what that path reads — everything but `msa/`, `pplacer/`,
+`split/`, with the skani database cut to five species representatives — gives
+the same answer in all 20 summary columns, at 40 MB. `gtdb_mock.sh` builds it;
+it is a release asset rather than a file in the repository, because it is
+derived GTDB data that only CI should ever download.
+
+**Why it should not raise false alarms.** The package is frozen; a failure
+means GTDB-Tk, skani or the pipeline moved. The two likeliest moves — a
+GTDB-Tk that no longer accepts r232 (2.7.2 lists exactly one compatible
+release), and a skani that cannot read 0.3-format sketches — break a user
+holding the real r232 just the same. The one false alarm it can raise is a
+GTDB-Tk that starts checking for a file the package leaves out, and that error
+names the file.
+
+**What it does not cover**, and must not be read as covering: prodigal, hmmer
+and pplacer. A genome skani cannot place takes GTDB-Tk to the files this
+package does not have. A pruned pplacer reference package was considered and
+not tried: it means pruning and refitting the decorated backbone and
+class-level trees and keeping the RED tables consistent with them, the real
+class-level tree asked for 132 GB on thylakoid, and pplacer is pinned to one
+build that has not moved.

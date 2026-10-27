@@ -29,10 +29,16 @@ report. It checks the planted duplicate pair agrees with itself in every tool,
 and that a second run finds nothing to do. Panaroo's re-run failure in 3.4.0
 was that layer's kind of bug.
 
+`gtdbtk` checks the one database tool CI can run: `--until gtdbtk` against a
+40 MB trimmed GTDB package that `gtdb_mock.sh` builds, which classifies the
+four test genomes exactly as the real 60.8 GB one does — by ANI screen only,
+so prodigal, hmmer and pplacer are never reached.
+
     PYTHONPATH=src python tests/environments/check.py list
     PYTHONPATH=src python tests/environments/check.py write <dir>
     python tests/environments/check.py run <name> --prefix <conda prefix>
     python tests/environments/check.py demo <output dir> --rerun-log <file>
+    python tests/environments/check.py gtdbtk <output dir>
 
 `list` and `write` import CompareM2, so the environment files are the ones
 `snakefile.render_envs` generates, never a copy. `run` and `demo` import
@@ -212,6 +218,45 @@ def demo(out: Path, rerun_log: Path) -> int:
     return 1 if failed else 0
 
 
+# What GTDB-Tk 2.7.2 says of the four E. faecium test genomes, against the real
+# r232 package and the trimmed one `gtdb_mock.sh` builds alike — identical in
+# all 20 columns, thylakoid, 2026-10-27. ANI to GCF_029023785.1, the species
+# representative.
+GTDBTK_SPECIES = "s__Enterococcus_B faecium"
+GTDBTK_ANI = {"116_2": 99.18, "116_2_duplicate": 99.18, "E8202": 99.13, "SRR24": 99.03}
+
+
+def gtdbtk(out: Path) -> int:
+    """`--until gtdbtk` against the trimmed package gave the measured answer.
+
+    Only the ANI-screen path: every genome here is classified by skani, so
+    GTDB-Tk skips identify and align and the package has no pplacer trees.
+    """
+    failed = []
+
+    def check(ok: bool, what: str) -> None:
+        print(f"  {'ok' if ok else 'FAILED'}: {what}", flush=True)
+        if not ok:
+            failed.append(what)
+
+    report = (out / "report.html").read_text()
+    check("1 of 1 tools produced output" in report, "report: 1 of 1 tools")
+
+    lines = (out / "gtdbtk" / "gtdbtk.summary.tsv").read_text().splitlines()
+    header = lines[0].split("\t")
+    rows = {r[0]: dict(zip(header, r)) for r in (line.split("\t") for line in lines[1:])}
+    check(sorted(rows) == sorted(GTDBTK_ANI), f"summary: {', '.join(sorted(rows))}")
+    for genome, ani in GTDBTK_ANI.items():
+        row = rows.get(genome, {})
+        got = (row.get("classification", "").rsplit(";", 1)[-1],
+               row.get("classification_method"), row.get("closest_genome_ani"))
+        check(got == (GTDBTK_SPECIES, "ani_screen", f"{ani:.2f}"),
+              f"{genome}: {' · '.join(str(g) for g in got)}")
+
+    print("gtdbtk: " + ("FAILED " + ", ".join(failed) if failed else "ok"))
+    return 1 if failed else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="check", description=__doc__.split("\n\n")[0])
     sub = p.add_subparsers(dest="command", required=True)
@@ -225,6 +270,8 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("output", type=Path)
     d.add_argument("--rerun-log", type=Path, required=True,
                    help="what a second `--demo` into the same output printed")
+    g = sub.add_parser("gtdbtk", help="check `--until gtdbtk` against the trimmed GTDB")
+    g.add_argument("output", type=Path)
     args = p.parse_args(argv)
 
     if args.command == "list":
@@ -237,6 +284,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "demo":
         return demo(args.output, args.rerun_log)
+    if args.command == "gtdbtk":
+        return gtdbtk(args.output)
     return run(args.name, args.prefix)
 
 

@@ -14,6 +14,9 @@ name: environments
 # same command again, which must find nothing to do. Four database-free tools
 # on the bundled plasmids; the tools take seconds and the two environment
 # builds take the rest.
+#
+# The `gtdbtk` job is the one database tool that fits on a runner, and only
+# because its database is trimmed to 40 MB — see the job.
 
 on:
   schedule:
@@ -112,3 +115,48 @@ jobs:
 
       - name: Check the duplicate pair and the re-run
         run: python tests/environments/check.py demo "$RUNNER_TEMP/demo" --rerun-log "$RUNNER_TEMP/rerun.log"
+
+  gtdbtk:
+    # GTDB-Tk through the pipeline, against a trimmed reference package: 40 MB
+    # instead of 60.8 GB. It holds five species, so it classifies the four test
+    # genomes exactly as the real one does, but only by ANI screen — prodigal,
+    # hmmer and pplacer are never reached. How it is built, and what it leaves
+    # out, is in tests/environments/gtdb_mock.sh.
+    runs-on: ubuntu-latest
+    env:
+      GTDB_CI_URL: https://github.com/cmkobel/CompareM2/releases/download/ci-data/gtdbtk_r232_ci.tar.gz
+      GTDB_CI_MD5: 4f155d4bee65613370b35adbc1637977
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          auto-activate-base: true
+          activate-environment: ""
+
+      - name: Install CompareM2 from this checkout
+        run: python -m pip install --quiet .
+
+      - name: Fetch the trimmed GTDB package
+        # Unpacked the way the pipeline unpacks the real one, and stamped the
+        # way its fetch rule stamps it, so the pipeline takes it as fetched.
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/gtdb.tar.gz" "$GTDB_CI_URL"
+          echo "$GTDB_CI_MD5  $RUNNER_TEMP/gtdb.tar.gz" | md5sum -c -
+          mkdir -p "$RUNNER_TEMP/db/gtdb"
+          tar -xzf "$RUNNER_TEMP/gtdb.tar.gz" -C "$RUNNER_TEMP/db/gtdb" --strip-components=1
+          touch "$RUNNER_TEMP/db/gtdb/.fetched"
+
+      - name: Run GTDB-Tk on the four test genomes
+        run: |
+          unzip -o -q tests/E._faecium/fna.zip -d tests/E._faecium
+          comparem2 tests/E._faecium/*.fna --until gtdbtk \
+            --databases "$RUNNER_TEMP/db" --output "$RUNNER_TEMP/out" \
+            --conda-prefix "$RUNNER_TEMP/envs"
+
+      - name: Check the classification
+        run: python tests/environments/check.py gtdbtk "$RUNNER_TEMP/out"

@@ -122,7 +122,12 @@ on glibc 2.41+, on 2026-10-26. A new environment needs an entry in `check.py`,
 and a unit test enforces that. The same workflow's `demo` job runs
 `comparem2 --demo` as a user would, then again, and `check.py demo` requires
 the planted duplicate pair to agree in all four tools and the second run to
-find nothing to do. That is the only CI that runs the generated rules.
+find nothing to do. Its `gtdbtk` job runs `--until gtdbtk` against a 40 MB
+trimmed GTDB that `tests/environments/gtdb_mock.sh` builds, published as the
+`ci-data` release asset; `check.py gtdbtk` requires the four test genomes to
+come out as the real 60.8 GB package classifies them. That covers the ANI
+screen only — prodigal, hmmer and pplacer are never reached. Those two jobs
+are the only CI that runs the generated rules.
 
 **A green run on the laptop is not a green CI**, and anything touching
 processes, paths or signals is where they diverge: `cancel.py`'s walk read

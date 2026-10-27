@@ -4,7 +4,7 @@ What is currently true of a real run. This file changes whenever something is
 re-run, which is why it is not in [DESIGN.md](DESIGN.md) — decisions should not
 need editing because a tool was verified again.
 
-Last updated **2026-10-26**. The tool numbers are from runs on thylakoid; the
+Last updated **2026-10-27**. The tool numbers are from runs on thylakoid; the
 pre-tag checks for v3.1.0 are from the laptop and say so.
 
 ## The docs showcase run: eight genomes, all fourteen tools, through SLURM
@@ -558,6 +558,23 @@ The four questions this file said to ask, answered against the real file:
 The summary carries **20 columns, not the 18 the documentation lists** —
 `closest_placement_radius` and `translation_table` are extra. Reading columns
 by name rather than by position is why that cost nothing.
+
+### GTDB-Tk against a trimmed package, for CI — 2026-10-27
+`tests/environments/gtdb_mock.sh` built a **40 MB** package (157 MB unpacked)
+from the r232 one on thylakoid: the real marker HMMs, taxonomy, radii, masks
+and RED tables, a skani database of five species representatives in place of
+the 80 GB one, and no `msa/`, `pplacer/` or `split/`. Against it, GTDB-Tk 2.7.2
+classified the four test genomes in 2 s, and its summary was **identical in all
+20 columns** to the real package's — `other_related_references` included,
+because *E. lactis* at 94.35% is the only neighbour either one reports. Then
+through the pipeline, `--until gtdbtk`, 19 s, report written, and
+`check.py gtdbtk` passed; against an older run missing `116_2_duplicate` it
+failed, as it should.
+
+**Covers the ANI-screen path only.** Every genome here clears the screen, so
+identify, align and pplacer never run, and the package has nothing for them.
+**Not yet run in CI**: the `gtdbtk` job in `environments.yaml` fetches the
+package from the `ci-data` release, which does not exist yet.
 
 ### The gtdbtk report section is written, and now validated on real output
 `_section_gtdbtk` exists and renders: the lineage every genome shares stated
