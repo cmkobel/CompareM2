@@ -2260,6 +2260,28 @@ follow-up corrected one line of the evidence note: a query with every location
 skipped ends the run at `failwith "empty results"` (`core.ml:333`), not at the
 assert on line 353.
 
+*Re-checked 2026-10-27, before sending; nothing has moved.* The bioconda
+recipe is byte-identical to the base the recipe diff was made against (blob
+`6e27d0d`: 2.8.0, build 0, `pplacer =1.1.alpha19`, `python <3.14`), with no
+open gtdbtk PR. pplacer is still at alpha23 (`master` f60eef0f) with no issue
+activity since 10-20. GTDB-Tk's latest release is still 2.8.0, its `master`
+`parallel.py` is byte-identical to the draft's `.orig` (unchanged since 2020)
+and the rename diff applies cleanly, and no PR there touches it. The one
+maintainer statement the pin PR paraphrases is accurate: pchaumeil on #668,
+2025-11-27, "for the time being while investigating … `v1.1.alpha20`". Two
+GTDB-Tk issues since the drafts were written, #709 (PplacerException on r232)
+and #716 (pplacer on the mock database), are memory and a missing `-f`, and bear
+on neither draft. Both PRs are still unsent.
+
+*The rename is pushed, with a test, 2026-10-27*: [cmkobel/GTDBTk:parallel-spawn](https://github.com/cmkobel/GTDBTk/tree/parallel-spawn), one commit on GTDB-Tk's `staging`, which their CONTRIBUTING.md names as the PR
+target. The added unit test runs `Parallel` under every start method: with the
+rename it passes on the laptop (Python 3.14.3) and on thylakoid (3.11.2,
+3.11.16); against `staging` as is, `spawn` and `forkserver` time out at 60 s
+and `fork` passes, on both. **Sent 2026-10-27 as
+[Ecogenomics/GTDBTk#723](https://github.com/Ecogenomics/GTDBTk/pull/723)**, framed
+around Linux on Python 3.14 first and macOS second. The pin PR is still unsent;
+its `#NNN` is now #723.
+
 ### panaroo on linux-aarch64 needs intbitset alone
 
 Measured 2026-10-05 on the laptop in native aarch64 containers. Note:
@@ -2278,6 +2300,15 @@ import test; the change was sent the same day as [intbitset-feedstock#25](https:
 *Corrected 2026-10-20:* "byte-identical to the osx-arm64 runs" was two arm64
 builds agreeing on the same wrong answer — see the next section. linux-aarch64
 is the same ISA, so #25 would carry the problem to it.
+
+*#25 merged 2026-10-25*, and conda-forge now publishes intbitset 4.1.2 for
+linux-aarch64 (checked on anaconda.org 2026-10-27, beside linux-64, osx-64,
+osx-arm64 and win-64). So "never built" above is history: panaroo should now
+install on linux-aarch64 from published channels alone. **Not run** — no install
+from the published packages has been tried. Until bioconda carries panaroo 1.8.1
+([bioconda-recipes#70730](https://github.com/bioconda/bioconda-recipes/pull/70730),
+still open on 2026-10-27; the channel's latest is 1.8.0), what installs there
+is 1.8.0 with the `-aS` typo.
 
 ### panaroo installs on arm, and its cleaning stage does nothing there
 

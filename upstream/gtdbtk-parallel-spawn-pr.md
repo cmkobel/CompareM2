@@ -1,8 +1,12 @@
 # Draft: make GTDB-Tk's `Parallel` work under `spawn` and `forkserver`
 
-**Unsent.** Destination: a PR against
-[Ecogenomics/GTDBTk](https://github.com/Ecogenomics/GTDBTk), `master`, file
-`gtdbtk/biolib_lite/parallel.py`, from a fork branch. **Send this one first**:
+**Sent 2026-10-27 as [Ecogenomics/GTDBTk#723](https://github.com/Ecogenomics/GTDBTk/pull/723)**, to `staging`, with the text below. Reframed before sending to lead with Linux on Python 3.14, which breaks on x86 today, so it stands even if macOS is not their concern. Destination: a PR against
+[Ecogenomics/GTDBTk](https://github.com/Ecogenomics/GTDBTk), **`staging`**, from
+[cmkobel/GTDBTk:parallel-spawn](https://github.com/cmkobel/GTDBTk/tree/parallel-spawn)
+(commit `70497b7`, pushed 2026-10-27, one commit on `staging`'s `e552e6e`).
+`staging` and not `master`: their CONTRIBUTING.md asks for branches based on
+`staging` and PRs to it, and `parallel.py` is the same blob on both (`cbf0882`).
+**Send this one first**:
 it is the easy yes (it fixes Python 3.14 for their Linux users and asks nothing
 of them), and [gtdbtk-pplacer-pin-pr.md](gtdbtk-pplacer-pin-pr.md) cites its
 number.
@@ -15,27 +19,33 @@ the ANI screen does not classify. The ANI-screen-only path is not affected
 
 ## The PR as drafted
 
-**Title:** `Make Parallel work under spawn and forkserver (macOS, Python 3.14)`
+**Title:** `Fix Parallel hanging on Python 3.14 and macOS`
 
 **Body:**
 
 ````markdown
-`biolib_lite.Parallel` passes two private methods, `self.__producer` and `self.__process_manager`, as `mp.Process` targets. Under `fork` that works, but under `spawn` and `forkserver` the target has to be pickled, and a bound method is pickled by its unmangled name. The child can't find it and dies with
+Hi,
+
+GTDB-Tk hangs on Python 3.14. At "Running Prodigal" a child process dies with
 
 ```
 AttributeError: 'Parallel' object has no attribute '__process_manager'
 ```
 
-while the parent waits for it forever. macOS defaults to `spawn`, and Python 3.14 changed the Linux default to `forkserver`, so this is the error in #619 and #683, and the reason the bioconda recipe caps Python below 3.14 (bioconda/bioconda-recipes#61837).
+and the main process waits for it forever. This is the error in #683, and I believe it's why the bioconda recipe caps Python below 3.14 (bioconda/bioconda-recipes#61837).
 
-This renames the two methods to `_producer` and `_process_manager`. Nothing else in the package refers to them, and they are the only private methods passed to `mp.Process`.
+The cause is in `biolib_lite.Parallel`, which passes its two private methods, `__producer` and `__process_manager`, to `mp.Process`. That works with `fork`, but with `spawn` and `forkserver` the target has to be pickled, and Python pickles a bound method by its unmangled name, so the child can't find it. Python 3.14 changed the default on Linux from `fork` to `forkserver`, which is why this shows up now. macOS has defaulted to `spawn` since Python 3.8, which is #619 and how I ran into it.
 
-Tested with GTDB-Tk 2.8.0 on the r232 mock database (`classify_wf -x gz --place_species -f`):
+The fix is just renaming the two methods to `_producer` and `_process_manager`. Nothing else in the package refers to them. I've also added a small test that runs `Parallel` under each start method. It times out under `spawn` and `forkserver` without the fix.
 
-- Linux, Python 3.14.9 (`forkserver`): as released, the `AttributeError` and then a hang, killed after 600 s. With this change, exit 0 in 30 s.
-- macOS on Apple silicon, Python 3.13 (`spawn`), with pplacer 1.1.alpha23: as released, it hangs at "Running Prodigal". With this change, exit 0, with a summary byte-identical to the same run forced to `fork`.
+I've tested it with 2.8.0 on the mock database (`classify_wf -x gz --place_species -f`):
 
-Best, Carl
+- Linux (x86-64), Python 3.14: hangs as released (I killed it after 10 minutes), finishes in 30 s with the fix.
+- macOS (Apple silicon), Python 3.13, with pplacer 1.1.alpha23 since alpha19 has no arm build: hangs as released, finishes with the fix, and gives the same summary as forcing `fork`.
+
+Let me know if you'd like anything done differently.
+
+Kind regards, Carl
 ````
 
 ## The diff
@@ -125,6 +135,17 @@ and the diff applies to it unchanged. Working copies: `~/postdoc/cm2-macos/gtdbt
 - **Scope.** Tested on `classify_wf` only, which covers identify, align and
   classify with pplacer. Other subcommands (`de_novo_wf`, `infer`, …) were not
   run under `spawn`; the text claims only `classify_wf`.
+- **The unit test, added 2026-10-27** because CONTRIBUTING.md asks for tests
+  "where applicable". It sums `abs` over `[-1, -2, 3]` with two workers, one
+  subprocess per start method, 60 s timeout. Measured: with the rename, OK on
+  the laptop (macOS, Python 3.14.3, 0.3–0.7 s) and on thylakoid (Linux x86_64,
+  Python 3.11.2 and 3.11.16, 0.2 s); against `staging` as is, `spawn` and
+  `forkserver` time out and `fork` passes, on both machines (120 s). No orphaned
+  processes after the timeouts. Written to run on 3.6, which their
+  `__python_requires__` still admits (no `capture_output`/`text`); not run on
+  anything older than 3.11. Their CI runs no tests — only the docs build.
+- **CONTRIBUTING.md also asks for an issue first.** None opened: #619 and #683
+  already describe the bug, and the PR cites both. Both are closed.
 - **Not done by this PR:** lifting the recipe's `python <3.14` cap. That is
   theirs, once a release carries the fix.
 - **After sending:** record the number in [README.md](README.md), in
