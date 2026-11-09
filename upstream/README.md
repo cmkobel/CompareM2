@@ -2,7 +2,7 @@
 
 Drafts of things this project found in software it depends on, kept here so they
 do not evaporate with the session that wrote them. Each file says what it is,
-where it goes, and what it still needs. **Four have been sent** — the status
+where it goes, and what it still needs. **Seven have been sent** — the status
 column is the record of which.
 
 | draft | destination | status |
@@ -16,8 +16,9 @@ column is the record of which.
 | [prokka-arm-table2asn.md](prokka-arm-table2asn.md) | two PRs against [bioconda/bioconda-recipes](https://github.com/bioconda/bioconda-recipes): `recipes/table2asn`, then `recipes/tbl2asn-forever` (route A) or `recipes/prokka` | not drafted — measurements only. Route A (`tbl2asn-forever` arm build over `table2asn`) would make the panaroo PR unnecessary |
 | [intbitset-linux-aarch64.md](intbitset-linux-aarch64.md) | PR against [conda-forge/intbitset-feedstock](https://github.com/conda-forge/intbitset-feedstock) | **sent 2026-10-05, merged 2026-10-25** — [PR #25](https://github.com/conda-forge/intbitset-feedstock/pull/25); all four configs built locally first. It alone puts panaroo on linux-aarch64 |
 | [gtdbtk-parallel-spawn-pr.md](gtdbtk-parallel-spawn-pr.md) | PR against [Ecogenomics/GTDBTk](https://github.com/Ecogenomics/GTDBTk) `gtdbtk/biolib_lite/parallel.py` | **sent 2026-10-27, merged 2026-11-09**, in the next release after 2.8.0. [PR #723](https://github.com/Ecogenomics/GTDBTk/pull/723), to `staging`, from [cmkobel/GTDBTk:parallel-spawn](https://github.com/cmkobel/GTDBTk/tree/parallel-spawn), with a unit test — fixes GTDB-Tk on macOS and on Python 3.14 |
-| [gtdbtk-pplacer-pin-pr.md](gtdbtk-pplacer-pin-pr.md) | PR against [bioconda/bioconda-recipes](https://github.com/bioconda/bioconda-recipes) `recipes/gtdbtk` | unsent, drafted and checked 2026-10-12, moved to gtdbtk 2.8.0 2026-10-24, re-checked 2026-10-27 and 2026-11-09. Cites #723 as merged. **Next to send** |
-| [pplacer-final-pass-issue.md](pplacer-final-pass-issue.md) | issue on [matsen/pplacer](https://github.com/matsen/pplacer) | unsent, drafted 2026-10-24. The follow-up the pin PR promises; send after it, with its number in place of `NNN` |
+| [pplacer-recipe-version-pr.md](pplacer-recipe-version-pr.md) | PR against [bioconda/bioconda-recipes](https://github.com/bioconda/bioconda-recipes) `recipes/pplacer` | **sent 2026-11-09** — [PR #71400](https://github.com/bioconda/bioconda-recipes/pull/71400). One `export` so bioconda's Linux builds stop reporting `--version` as `dev`; the pin PR waits for it |
+| [gtdbtk-pplacer-pin-pr.md](gtdbtk-pplacer-pin-pr.md) | PR against [bioconda/bioconda-recipes](https://github.com/bioconda/bioconda-recipes) `recipes/gtdbtk` | **sent 2026-11-09** — [PR #71426](https://github.com/bioconda/bioconda-recipes/pull/71426), before #71400 merged (the two are independent; the body says so). Evidence: [gist](https://gist.github.com/cmkobel/527f5b02932f5eac7d6604fb52515f8d) |
+| [pplacer-final-pass-issue.md](pplacer-final-pass-issue.md) | issue on [matsen/pplacer](https://github.com/matsen/pplacer) | unsent, drafted 2026-10-24. The follow-up the pin PR promises; its number (#71426) is filled in. **Next to send** |
 
 The first two findings are in [../STATUS.md](../STATUS.md) (*CarveMe was nine
 minutes for the wrong reason*), [../DECISIONS.md](../DECISIONS.md) and

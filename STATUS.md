@@ -2206,7 +2206,13 @@ from the same PyPI sdist the recipe builds. The environment has python 3.13.15
 and skani 0.3.2, the same skani version thylakoid logs. Every other dependency
 has a native arm build. pplacer is `Mach-O 64-bit executable arm64`, but its
 `--version` prints `4d00f36-dirty`. pplacer#397 fixes that, merged 2026-09-02
-and not yet in a release.
+and not yet in a release. *Corrected 2026-11-09:* it shipped in alpha23
+(2026-10-07), whose osx-arm64 binary reports `v1.1.alpha23`. bioconda's
+**Linux** alpha20 and alpha23 still report `dev` — on GenomeDK's linux-64
+and on linux-aarch64 — because #397 reads `PPLACER_VERSION` at build time
+and `recipes/pplacer/build.sh` never sets it; fix sent 2026-11-09 as
+[bioconda-recipes#71400](https://github.com/bioconda/bioconda-recipes/pull/71400)
+([upstream/pplacer-recipe-version-pr.md](upstream/pplacer-recipe-version-pr.md)).
 
 *Executed* with the catalogue's command line, against the r232 database already
 on the laptop (`~/postdoc/cm2-databases/gtdb`), on `116_2` and
@@ -2331,6 +2337,38 @@ the next GTDB-Tk release; he wrote that it should also resolve #619 and #683,
 both now closed. Not released that day: the latest is still 2.8.0, and the
 bioconda recipe still caps `python <3.14` and pins alpha19. The pin PR's body
 now cites #723 as merged, and is the next thing to send.
+
+*#668's genome, 2026-11-09.* The genome behind GTDB-Tk #668, the issue where
+the alpha19 pin was decided, is attached to it (`bin.1.txt`, a 6-contig
+metabat bin). Run on GenomeDK (jobs 7741880–83) with the reporter's settings
+against r232, identify and align once, then `classify --place_species
+--pplacer_cpus 5` under alpha19, alpha20 and alpha23: all three exit 0, place
+it in class-level tree 5 on the same edge with the same likelihood, and call it
+*Mycobacterium abscessus*. alpha20 does not reproduce #668 on r232; r226, the
+reporter's release, was not tried. The same pass found the pin PR's bare
+`#668`-style references would have linked to 2015–16 bioconda PRs, and that
+bioconda's Linux pplacer reports `dev` (above), so a recipe PR for that now
+goes first: sent as
+[bioconda-recipes#71400](https://github.com/bioconda/bioconda-recipes/pull/71400).
+
+*linux-aarch64, 2026-11-09.* This laptop is linux-aarch64. gtdbtk 2.8.0's run
+list with `pplacer ==1.1.alpha23` installs natively (53 packages) and
+**unpatched** gtdbtk 2.8.0 runs GTDB's r232 mock database end to end, pplacer
+included: exit 0, 8.6 s, 205 MB, summary byte-identical to the Mac and
+Python 3.14 runs. Linux uses `fork`, so the #723 rename is not needed there
+below Python 3.14 — the pin alone opens linux-aarch64. Mock data only; no real
+genome has been placed on arm. Details: *Result 6* in
+[upstream/gtdbtk-pplacer-evidence.md](upstream/gtdbtk-pplacer-evidence.md).
+
+*On GTDB-Tk 2.8.0, 2026-11-09.* The 234-genome comparison, re-run on 2.8.0
+(the version the pin PR changes) with alpha19 and alpha23: 0 of 234
+classifications and 0 of 428 top edges differ, max |ΔlogL| 0.0013, as on 2.7.2.
+All the evidence, every table regenerated from the run directories, is public
+at https://gist.github.com/cmkobel/527f5b02932f5eac7d6604fb52515f8d, and the pin
+PR now links it. **The pin PR was sent the same day as
+[bioconda-recipes#71426](https://github.com/bioconda/bioconda-recipes/pull/71426)**, before
+[bioconda-recipes#71400](https://github.com/bioconda/bioconda-recipes/pull/71400)
+merged: the two are independent, and the body says #71400 fixes `dev`.
 
 ### panaroo on linux-aarch64 needs intbitset alone
 

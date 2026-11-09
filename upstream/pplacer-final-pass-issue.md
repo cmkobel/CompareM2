@@ -22,7 +22,7 @@ local clone at `~/postdoc/cm2-macos/gtdbtk/alpha-crash/pplacer/`.
 **Body:**
 
 ````markdown
-Thanks for the quick fixes in #391 and #394. I've been checking whether GTDB-Tk could move from alpha19 to alpha23 (bioconda-recipes PR NNN), and while reading `core.ml` I noticed one path that #391's fix doesn't reach. I haven't seen it happen, so this is from the source only.
+Thanks for the quick fixes in #391 and #394. I've been checking whether GTDB-Tk could move from alpha19 to alpha23 (bioconda/bioconda-recipes#71426), and while reading `core.ml` I noticed one path that #391's fix doesn't reach. I haven't seen it happen, so this is from the source only.
 
 alpha21 catches `Minimization.FindStartFailure` and `InvalidStartValues` in the first optimisation pass and skips the location ([core.ml#L285-L310](https://github.com/matsen/pplacer/blob/f60eef0fe2e536dba0264060c056a41993ab6ae2/pplacer_src/core.ml#L285-L310)). The final branch-length refinement calls the same `safe_ml_optimize_location`, but catches only `Gsl.Error.Gsl_exn` ([core.ml#L369-L382](https://github.com/matsen/pplacer/blob/f60eef0fe2e536dba0264060c056a41993ab6ae2/pplacer_src/core.ml#L369-L382)). Either exception raised there would leave the worker and come back as `Child_error`, ending the run.
 
@@ -102,7 +102,8 @@ All at `v1.1.alpha23` (f60eef0f, which is also `master` on 2026-10-24).
 
 ## What is left
 
-- **Before sending:** the `NNN` is the bioconda pin PR's number. Re-check that
+- **Before sending:** the pin PR is bioconda/bioconda-recipes#71426, filled in
+  2026-11-09. Re-check that
   `master` is still f60eef0f (otherwise re-read the three sites and update the
   permalinks).
 - **What it commits Carl to:** "Happy to open a PR" — a compiled, tested

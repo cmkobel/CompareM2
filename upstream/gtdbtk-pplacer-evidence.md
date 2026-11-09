@@ -265,19 +265,92 @@ are 2.7.2's line for line.
   bounds`, 0 `GSL problem`, 0 `empty results`. The only optimiser messages
   are 5 `exceeded maximum number of iterations` on the #391 reads, which
   every build including alpha19 gives for the same 5 reads.
-- **Not re-run, deliberately:** the 234-genome and 472-query comparisons. They
+- **The 234-genome comparison was re-run on 2.8.0 on 2026-11-09** (below
+  this list), which settles the point the next bullet argued. **Not re-run,
+  deliberately (as of 2026-10-24):** the 234-genome and 472-query comparisons. They
   compare pplacer builds on the same alignments under one GTDB-Tk version, and
   2.8.0 does not change how pplacer is called (`pplacer.py` untouched). It does
   rewrite top-hit selection in `files/marker/tophit.py` and `copy_number.py`
   (`sorted(…, reverse=True)[0]` → `max(…)`), which feeds the alignment; that
   should pick the same hit, and is not checked.
 
+## Result 5: #668's own genome, 2026-11-09
+
+The reporter attached the genome to #668 (`bin.1.txt`, 5.0 MB, 6 contigs, a
+metabat bin; md5 `47a07fe9304d0b428aeed7205b261b61`). Their run: GTDB-Tk
+2.4.1, r226, `classify_wf --skip_ani_screen --cpus 10 --pplacer_cpus 5`;
+pplacer `dev` (alpha20) ran 3 h 04 min on class-level tree 5 and wrote no
+placements. They later reported that a pip install of 2.4.1 with alpha19
+(and Python 3.10, hmmer 3.3.2) put it through; pchaumeil could not reproduce.
+
+GenomeDK, `pplacer-compare/issue668/run.sh`, jobs 7741880 (identify + align
+once, env_alpha19) and 7741881–83 (`gtdbtk classify --place_species --cpus 10
+--pplacer_cpus 5`, 2.7.2's equivalent of `--skip_ani_screen`, in env_alpha19,
+env_alpha20, env_alpha23s), r232, 10 CPUs and 250 GB each:
+
+| build | `--version` | classify wall | backbone: edge, logL, distal, pendant | class-level tree 5: edge, logL, distal, pendant |
+| --- | --- | --- | --- | --- |
+| alpha19 | `v1.1.alpha19-0-g807f6f3` | 1,011 s | 3917, −19182386.0294, 0.245169, 0.0624994 | 28954, −16607059.6889, 0.000533, 0.000823552 |
+| alpha20 | `dev` | 655 s | 3917, −19182386.0294, 0.245168, 0.0624987 | identical to alpha19 |
+| alpha23 | `dev` | 651 s | identical to alpha20 | identical to alpha19 |
+
+One placement per tree, LWR 1.0, in all three; all three classify it
+*s__Mycobacterium abscessus* (ANI 97.28, AF 0.903 to GCF_000069185.1). MaxRSS
+~130 GB each. **alpha20 does not reproduce #668 on r232.** r226 was not tried;
+r232's tree 5 shares the number with the reporter's, which is not
+checked to mean the same tree (the class-level trees are re-estimated each
+release).
+
+## Result 6: linux-aarch64 runs it with no code change, 2026-11-09
+
+On the laptop that does the Linux-side work, which is **linux-aarch64**
+(15 GB RAM, 8 cores): a pixi environment of gtdbtk 2.8.0's bioconda run list
+with `pplacer ==1.1.alpha23` (53 packages; Python 3.13.18, skani 0.4.0,
+pplacer `dev`, an `ELF 64-bit … ARM aarch64` binary), gtdbtk 2.8.0
+pip-installed `--no-deps` and **not patched**; multiprocessing start method
+`fork`. GTDB's r232 mock database, the HOWTO's command
+(`classify_wf --genome_dir genomes/ -x gz --place_species -f`, `--cpus 4`):
+exit 0, 8.6 s, largest process 205 MB (`RUSAGE_CHILDREN` `ru_maxrss`, the
+same measure as macOS `time -l`), "Running pplacer dev analysis" in the log.
+`gtdbtk.bac120.summary.tsv` md5 `77d051ab28f0ee056e1df1c29008b84b`,
+byte-identical to the osx-arm64 runs (forced `fork`; `spawn` with the rename)
+and to linux-64 under Python 3.14 with the rename (`py314-280/out_fixed`).
+So linux-aarch64 needs only the pin; #723 matters there only on Python 3.14.
+Mock data only: still no real genome placed by pplacer on any arm machine.
+
+## Result 7: the 234 genomes on GTDB-Tk 2.8.0, and the published evidence, 2026-11-09
+
+GenomeDK jobs 7752342 (identify + align on 2.8.0, 11 min), 7752343 (alpha19)
+and 7752344 (alpha23), `pplacer-compare/v280/`: the October locks of
+env_alpha19 and env_alpha23s (same `pplacer-1.1.alpha23-h01ede22_0`,
+`gsl-2.7-he838d99_0`; skani 0.3.2 in both) with gtdbtk 2.8.0 pip-installed
+`--no-deps`, `classify --place_species --cpus 32`. Against alpha19: 234 of 234
+genomes, **0 classifications differ, 0 of 428 top edges differ**, max
+|ΔlogL| 0.0013, |Δdistal| 1.71e-5, |Δpendant| 9.92e-6, |ΔLWR| 5.89e-8 — the
+2.7.2 figures to the digit. Unlike 2.7.2, no `other_related_references`
+difference. Classify wall 7,108 s (alpha19), 4,852 s (alpha23). The alpha23
+binary's md5 differs from env_alpha23s's (`28bb3f5e…` against `38bc8c9e…`)
+because each install writes its own prefix into it; the package is the same.
+
+Every table was then regenerated from the run directories on GenomeDK
+(`pplacer-compare/gist/`; `jplace_compare.py` new for the stress queries and
+the #391 runs) and matches this note: #391 7,825 names, 0 top-edge
+differences, max |ΔlogL| 5e-6; stress ar53 176/176, c4 100/100, c1 194/196
+with both differences ties, max |ΔlogL| 0.0114 / 0.0002 / 0.0005; 234 genomes
+on 2.7.2 0 / 0 of 428 / 0.0013, two genomes differing in
+`other_related_references` in every run including alpha19b; kill test
+4,885 records / 7,824 names for alpha19 and alpha23; one-read input 932
+reference rows plus `SRR7629282.41436329`. Published with scripts, locks,
+accessions and the #668 and linux-aarch64 results as
+https://gist.github.com/cmkobel/527f5b02932f5eac7d6604fb52515f8d (31 files).
+
 ## Not shown
 
 - That #670 and #674 crashed on the line-43 assertion rather than on one of the
   two exceptions alpha21 catches. No GTDB-Tk input tried (234 genomes, 472
   queries) crashed alpha20; it would take one of their inputs.
-- Why #668's worker died.
+- Why #668's worker died. Its genome does not reproduce the failure on r232
+  under alpha20 (Result 5); r226 untried.
 - Why alpha19 survives the read that kills alpha20.
 - From the source, never observed: alpha23's final branch-length pass
   (`core.ml:373–381`) still catches only `Gsl.Error.Gsl_exn`, so
