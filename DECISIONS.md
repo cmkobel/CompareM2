@@ -4111,3 +4111,14 @@ added to this theme. Whether it supports `readthedocs` was not checked. MkDocs
 2.0 would drop the theme, the includes and the admonitions. Sphinx and MyST are
 more than ten pages need. Revisit if 1.6.1 stops building on a current Python
 or Markdown.
+
+## 2026-11-09 — the Danish cheat sheet leaves the menu
+
+Carl asked for *Snydeark (dansk)* to be taken out of the site's menu. **This
+partly reverses 2026-09-23**, which moved `CHEATSHEET.da.md` into
+`docs/06 cheat sheet da.md` and added it to `mkdocs.yml`'s nav. Only the nav
+entry is gone. The file stays where it is, MkDocs still builds it at
+`/06 cheat sheet da/`, it is still in the search index, `README.md` still links
+to it, and `docs/assets/CHEATSHEET.da.pdf` is untouched. MkDocs reports a page
+left out of nav at INFO, so `mkdocs build --strict` stays clean. That was checked
+with 1.6.1.

@@ -8,11 +8,12 @@ nav:
   - "05 quick start.md"
   # Both cheat sheets are pages here and nowhere else. They sat at the
   # repository root until 2026-09-23, included into this page, so that GitHub
-  # would show them in the listing; README.md links to them instead now, and
-  # one location means the Danish one is on the site too rather than being
-  # reachable only from the repository.
+  # would show them in the listing; README.md links to them instead now.
+  # The Danish one, `06 cheat sheet da.md`, is deliberately left out of this
+  # menu (2026-11-09). It is still built, at its own URL, and in the search
+  # index. A page left out of nav is reported at INFO, which `--strict` does
+  # not count.
   - Cheat sheet: "06 cheat sheet.md"
-  - "Snydeark (dansk)": "06 cheat sheet da.md"
   - "07 an example report.md"
   - "10 installation.md"
   - "20 usage.md"
