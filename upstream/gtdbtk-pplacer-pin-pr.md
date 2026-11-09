@@ -48,7 +48,7 @@ alpha22 and alpha23 gave identical placements throughout, and an exact pin keeps
 
 **What I couldn't show.** None of the GTDB-Tk inputs crashed alpha20, so I can't say whether #670 and #674 hit this assertion or one of the two exceptions alpha21 catches. One path is still open in alpha23: the final branch-length pass (`core.ml:373`) catches only GSL errors, so those two exceptions could still escape from there. I haven't seen that happen, and I'll take it up with pplacer.
 
-**Why I'm asking.** alpha19 only exists for linux-64, while alpha23 has bioconda builds for linux-64, linux-aarch64 and osx-arm64, and this recipe is `noarch: python`, so with this change gtdbtk's run requirements solve on all three. On Apple silicon it also needs one code change, which I've sent as Ecogenomics/GTDBTk#723: `biolib_lite/parallel.py` hands the private methods `__producer` and `__process_manager` to `mp.Process`, and under name mangling they can't be pickled. That's the `'Parallel' object has no attribute '__process_manager'` in Ecogenomics/GTDBTk#619 and #683. macOS starts processes with `spawn` and Python 3.14 on Linux with `forkserver`, so the same bug is behind the `python <3.14` cap from #61837. With that change, GTDB-Tk 2.8.0 and alpha23 run your r232 mock database end to end on an Apple silicon Mac, pplacer step included. Full placements still need the memory they need on Linux, so a 32 GB laptop will only get through genomes the ANI screen classifies. That's still very useful to be able to do: on my 32 GB laptop, two *E. faecium* genomes went through the ANI screen in 20 s, with the largest process at 9.2 GB.
+**Why I'm asking.** alpha19 only exists for linux-64, while alpha23 has bioconda builds for linux-64, linux-aarch64 and osx-arm64, and this recipe is `noarch: python`, so with this change gtdbtk's run requirements solve on all three. On Apple silicon it also needs one code change, which you merged as Ecogenomics/GTDBTk#723 this week (thank you), so it will be in the next release: `biolib_lite/parallel.py` hands the private methods `__producer` and `__process_manager` to `mp.Process`, and under name mangling they can't be pickled. That's the `'Parallel' object has no attribute '__process_manager'` in Ecogenomics/GTDBTk#619 and #683. macOS starts processes with `spawn` and Python 3.14 on Linux with `forkserver`, so the same bug is behind the `python <3.14` cap from #61837. With that change, GTDB-Tk 2.8.0 and alpha23 run your r232 mock database end to end on an Apple silicon Mac, pplacer step included. Full placements still need the memory they need on Linux, so a 32 GB laptop will only get through genomes the ANI screen classifies. That's still very useful to be able to do: on my 32 GB laptop, two *E. faecium* genomes went through the ANI screen in 20 s, with the largest process at 9.2 GB.
 
 I'm happy to share the scripts and outputs.
 
@@ -88,6 +88,7 @@ build number moved.
 ## What the text commits Carl to
 
 - **Done 2026-10-27:** the GTDB-Tk PR is open as #723, and the body above cites it.
+  **Merged 2026-11-09**; the body now says so, and that it is in the next release.
 - **"I'll take it up with pplacer"**: an issue to
   [matsen/pplacer](https://github.com/matsen/pplacer) about the final
   branch-length pass (`core.ml:373` at v1.1.alpha23) catching only `Gsl_exn`,
@@ -117,6 +118,10 @@ build number moved.
   on GTDB-Tk 2.8.0*). The 234-genome comparison was not re-run: it is between
   pplacer builds on the same alignments under one GTDB-Tk, which the text now
   names, and 2.8.0 does not touch `pplacer.py`.
+- **Re-checked 2026-11-09**, after #723 merged: the recipe is still blob
+  `6e27d0d` (2.8.0, build 0, `pplacer =1.1.alpha19`, `python <3.14`) with no
+  open gtdbtk PR; pplacer is still alpha23 (`f60eef0f`), with no issue since
+  #396; neither open path is fixed. #619 and #683 are closed.
 - **After sending:** the PR number goes in the table in [README.md](README.md)
   and in [../STATUS.md](../STATUS.md), and the `#NNN` in this file.
 - **Unverified, and the text does not claim it:** no real genome has been placed

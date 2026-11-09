@@ -2326,6 +2326,12 @@ and `fork` passes, on both. **Sent 2026-10-27 as
 around Linux on Python 3.14 first and macOS second. The pin PR is still unsent;
 its `#NNN` is now #723.
 
+*Merged 2026-11-09* at 08:08Z by pchaumeil, into `staging` as `5f13497`, for
+the next GTDB-Tk release; he wrote that it should also resolve #619 and #683,
+both now closed. Not released that day: the latest is still 2.8.0, and the
+bioconda recipe still caps `python <3.14` and pins alpha19. The pin PR's body
+now cites #723 as merged, and is the next thing to send.
+
 ### panaroo on linux-aarch64 needs intbitset alone
 
 Measured 2026-10-05 on the laptop in native aarch64 containers. Note:

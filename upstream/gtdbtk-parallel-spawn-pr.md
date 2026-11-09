@@ -1,6 +1,6 @@
 # Draft: make GTDB-Tk's `Parallel` work under `spawn` and `forkserver`
 
-**Sent 2026-10-27 as [Ecogenomics/GTDBTk#723](https://github.com/Ecogenomics/GTDBTk/pull/723)**, to `staging`, with the text below. Reframed before sending to lead with Linux on Python 3.14, which breaks on x86 today, so it stands even if macOS is not their concern. Destination: a PR against
+**Sent 2026-10-27 as [Ecogenomics/GTDBTk#723](https://github.com/Ecogenomics/GTDBTk/pull/723)**, to `staging`, with the text below. **Merged 2026-11-09 at 08:08Z** by pchaumeil, as `5f13497` on `staging`, with: "the fix will be available in the next GTDB-Tk release. This should also resolve #619 and #683". Not released as of that day; the latest is 2.8.0. Reframed before sending to lead with Linux on Python 3.14, which breaks on x86 today, so it stands even if macOS is not their concern. Destination: a PR against
 [Ecogenomics/GTDBTk](https://github.com/Ecogenomics/GTDBTk), **`staging`**, from
 [cmkobel/GTDBTk:parallel-spawn](https://github.com/cmkobel/GTDBTk/tree/parallel-spawn)
 (commit `70497b7`, pushed 2026-10-27, one commit on `staging`'s `e552e6e`).
