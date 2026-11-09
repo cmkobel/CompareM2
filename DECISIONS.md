@@ -4076,3 +4076,38 @@ Checked by building with `mkdocs build --strict` (clean) and screenshotting
 headless Chromium with the dark preference forced: the home page, Installation
 (warning and danger admonitions, a table, highlighted code) and the same page
 in light mode, unchanged.
+
+## 2026-11-09 — MkDocs stays, below 2.0
+
+Weighed whether the docs should move to another framework, and decided they
+should not: ten pages, the built-in `readthedocs` theme, one template override,
+`extra.css`, `markdown_include` and `admonition`. Nothing there needs more than
+MkDocs 1.6.1 provides. 1.6.1 is from August 2024 and nothing newer in the 1.x
+line has been released, but a static site generator that still builds this site
+correctly does not need releases, and `--strict` says when it stops doing so.
+
+**What did need doing was a ceiling, `mkdocs<2`.** `docs/requirements.txt` was
+`mkdocs>=1.6`, floors only (see *The docs requirements are floors, not a lock*).
+MkDocs 2.0 is on PyPI as pre-releases since 2026-08-28 (`2.0.dev6` on
+2026-09-15), and it is a rewrite: a single module, one built-in template, no
+theme choice, no plugins, and three fixed Markdown extensions. Run against this
+repository, `2.0.dev6` stops at once with
+`Exception: Found mkdocs.yml config, but mkdocs 2.0 pre-release is installed`.
+pip skips pre-releases, so nothing is broken today. The first Read the Docs
+build after a final 2.0 would have failed. Same reasoning as `scip<10.1` and
+`tensorflow<2.19`: lift it by migrating, not because a solve accepts it.
+
+**And CI builds the site now.** `unit.yaml` checked that the generated pages
+were current but never ran `mkdocs build`, so a broken docs build would have
+shown up only on Read the Docs. A `mkdocs build --strict` step on the 3.13 leg
+installs `docs/requirements.txt` and builds. Checked locally with
+`mkdocs>=1.6,<2` (1.6.1) and `markdown-include` 0.8.1: clean. On Python 3.14,
+markdown-include logs a `codecs.open()` DeprecationWarning, which `--strict`
+does not count. That is the next thing to rot, not a failure yet.
+
+Alternatives, not taken: Zensical (from the Material for MkDocs authors) reads
+`mkdocs.yml` but targets the Material look, which would undo the dark mode just
+added to this theme. Whether it supports `readthedocs` was not checked. MkDocs
+2.0 would drop the theme, the includes and the admonitions. Sphinx and MyST are
+more than ten pages need. Revisit if 1.6.1 stops building on a current Python
+or Markdown.

@@ -16,5 +16,13 @@
 # The extensions mkdocs.yml asks for are `markdown_include.include`, which is
 # markdown-include, and `admonition`, which ships with Markdown itself.
 
-mkdocs>=1.6
+#
+# One ceiling, `<2`. MkDocs 2.0 is a rewrite, not an upgrade: it has no theme
+# choice, no plugins and a fixed set of extensions, and it refuses outright to
+# build a directory that has an mkdocs.yml. Without the ceiling, Read the Docs
+# would install it the day it leaves pre-release and the site would stop
+# building. See DECISIONS.md, 2026-11-09. Lift it only by migrating, not by
+# finding that a solve accepts it.
+
+mkdocs>=1.6,<2
 markdown-include>=0.8
