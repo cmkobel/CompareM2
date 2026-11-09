@@ -173,7 +173,7 @@ Reports which known antimicrobial-resistance genes are present in each genome, a
 Runs once per genome · 4 threads · after `bakta` · database `amrfinder` (unmeasured) · conda environment `annotation`, which holds `bakta`, `amrfinder`
 
 ```
-amrfinder -p results_comparem2/samples/genome_A/bakta/genome_A.faa --plus --threads 4 > results_comparem2/samples/genome_A/amrfinder/amrfinder.tsv
+amrfinder -p results_comparem2/samples/genome_A/bakta/genome_A.faa -d ~/.comparem2/databases/amrfinder/latest --plus --threads 4 > results_comparem2/samples/genome_A/amrfinder/amrfinder.tsv
 ```
 
 **Reading the output**

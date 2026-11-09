@@ -37,7 +37,7 @@ from .cli import any_outputs_exist, lock_files, run_hook, run_settings, unlock
 from .report import render_report
 from .runner import Event, run, snakemake_alive, stop_scheduling
 from .snakefile import prepare
-from .tools import completion, counted, human_bytes
+from .tools import Completion, completions, counted, human_bytes
 
 PENDING, RUNNING, DONE, FAILED, SKIPPED, NOT_RUN = "·", "▸", "✓", "✗", "–", "○"
 # Results found on disk when the interface opened, as against results this
@@ -347,8 +347,8 @@ class ConfirmQuit(ModalScreen[str]):
                 f"\n\n[bold]{which} in progress.[/]")
         return (
             f"[bold]Quit while a run is going?[/]\n\n{where}{fetching}\n\n"
-            f"{what} No report is written, and the output directory stays "
-            f"locked — [dim]u releases it[/].\n\n"
+            f"{what} No report is written. [dim]y[/] leaves the output "
+            f"directory locked; [dim]s[/] releases it.\n\n"
             f"[dim]y[/] quit, leave the run going\n{stop}\n[dim]n[/] stay")
 
     def action_quit(self) -> None:
@@ -645,6 +645,11 @@ class ComparemTUI(App):
         # bar has nothing to show, and a bar parked at 0% was the other half of
         # this same complaint.
         self.progress_seen = False
+        # The jobs Snakemake has said began and not yet said ended, by id. The
+        # quit dialog counts these, not rows: a genome-scope tool is one row
+        # and a job per genome, so four running bakta jobs read "1 job started"
+        # on GenomeDK on 2026-11-08, on the screen deciding whether to cancel.
+        self.live_jobs: set[int] = set()
         # Whether an `error` event arrived. Read at the end of a run, because
         # "no job events" has two causes that look identical from the table —
         # everything was already up to date, or Snakemake never got as far as a
@@ -668,19 +673,21 @@ class ComparemTUI(App):
         # or an error from Snakemake itself, as the command line counts it.
         self.failed = False
 
-    def scan(self) -> dict[str, str]:
+    def scan(self, found: dict[str, Completion] | None = None) -> dict[str, str]:
         """Read the output directory: which tools already have results there.
 
         Opening the interface on a directory that had been run in showed
         fourteen rows of `pending`, so the only way to find out what was already
         done was to run it again and watch Snakemake skip things.
+
+        `found` is a `completions()` map read elsewhere — at the end of a run,
+        by the worker, so the walk happens off the UI thread and once.
         """
-        found = {}
-        for tool in CATALOGUE:
-            done = completion(tool, self.workdir, self.databases, self.samples)
-            found[tool.name] = EXISTS if done.done else (
-                PARTIAL if done.partial else PENDING)
-        return found
+        if found is None:
+            found = completions(CATALOGUE, None, self.workdir, self.databases,
+                                self.samples)
+        return {name: EXISTS if done.done else (PARTIAL if done.partial else PENDING)
+                for name, done in found.items()}
 
     def scan_databases(self) -> dict[str, str]:
         """Which databases are already here, keyed by download rule name.
@@ -690,8 +697,7 @@ class ComparemTUI(App):
         construction rather than by care. There is no PARTIAL: a half-fetched
         database has no marker, which is the whole design of `ready`.
         """
-        return {db.rule: (EXISTS if db.ready_path(self.databases,
-                                                  self.workdir).exists()
+        return {db.rule: (EXISTS if db.ready_path(self.databases).exists()
                           else PENDING)
                 for db in self.dbs}
 
@@ -819,7 +825,10 @@ class ComparemTUI(App):
         # only live job was a 60.8 GB download reported "no job has started
         # yet" — the exact wording this dialog exists to avoid, offered over
         # the most expensive thing the pipeline does.
-        running = sum(1 for n in self.row_order if self.state.get(n) == RUNNING)
+        rows = sum(1 for n in self.row_order if self.state.get(n) == RUNNING)
+        # Jobs, with the rows as a floor: every running row is at least one
+        # job, whether or not its start event carried an id.
+        running = max(len(self.live_jobs), rows)
         downloads = sum(1 for n in self.download_rules
                         if self.state.get(n) == RUNNING)
         self.push_screen(
@@ -1080,6 +1089,7 @@ class ComparemTUI(App):
         self.frame = 0
         self.phase = STARTING
         self.progress_seen = False
+        self.live_jobs.clear()
         self.run_error = None
         self.started_at = monotonic()
         # Indeterminate until Snakemake says how many jobs there are: a bar
@@ -1120,9 +1130,15 @@ class ComparemTUI(App):
             # real run, with no events left to arrive. Naming that phase is
             # what keeps the spinner's line true to the end.
             self.phase = REPORTING
+            # The output tree, read once and here, in the worker. `settle`,
+            # `any_outputs_exist` and `render_report` all want it, and each used
+            # to walk it for itself — the first on the UI thread, which on a
+            # large run over a network filesystem froze the spinner.
+            found = completions(CATALOGUE, None, self.workdir, self.databases,
+                                self.samples)
             # Safe to read self.state here: call_from_thread blocks until the UI
             # thread has applied the update, so every event above has landed.
-            self.call_from_thread(self.settle, names)
+            self.call_from_thread(self.settle, names, found)
             done = [n for n in names if self.state[n] == DONE]
             failed = [n for n in names if self.state[n] == FAILED]
             self.failed = bool(failed) or self.run_error is not None
@@ -1131,7 +1147,8 @@ class ComparemTUI(App):
             # Snakemake emits no job events for a rule it skips, so a directory that
             # was already current produced none at all, every row settled to
             # `not run`, and the report was withheld over a complete set of outputs.
-            have = any_outputs_exist(chosen, self.workdir, self.databases, self.samples)
+            have = any_outputs_exist(chosen, self.workdir, self.databases,
+                                     self.samples, found)
 
             if not have:
                 reason = f" Failed: {', '.join(failed)}." if failed else ""
@@ -1165,7 +1182,7 @@ class ComparemTUI(App):
                         f"[yellow]{len(failed)} of {len(names)} failed:[/] {', '.join(failed)}")
                 report = render_report(CATALOGUE, chosen, self.workdir,
                                        self.databases, self.samples,
-                                       command=self.command)
+                                       command=self.command, found=found)
                 self.call_from_thread(log.write, f"[bold green]Report:[/] {report}")
                 if self.on_report:
                     self.call_from_thread(
@@ -1188,7 +1205,8 @@ class ComparemTUI(App):
             if not self.leaving.is_set():
                 self.call_from_thread(self.stop_activity)
 
-    def settle(self, names: list[str]) -> None:
+    def settle(self, names: list[str],
+               found: dict[str, Completion] | None = None) -> None:
         """Once the run is over, a tool that never started reads `not run`.
 
         Leaving twelve rows at `pending` after the workflow had aborted was how
@@ -1203,7 +1221,7 @@ class ComparemTUI(App):
         as what it left behind rather than as `not run`.
         """
         table = self.query_one(DataTable)
-        self.disk = self.scan()
+        self.disk = self.scan(found)
         for name in names:
             if self.state[name] == PENDING:
                 self.state[name] = (self.disk[name] if self.disk[name] != PENDING
@@ -1238,6 +1256,11 @@ class ComparemTUI(App):
     def apply_event(self, event: Event) -> None:
         log = self.query_one(RichLog)
         table = self.query_one(DataTable)
+
+        if event.kind == "job_started" and event.jobid is not None:
+            self.live_jobs.add(event.jobid)
+        elif event.kind in ("job_finished", "job_error") and event.jobid is not None:
+            self.live_jobs.discard(event.jobid)
 
         if event.kind == "job_started" and event.rule:
             self.mark(table, event.rule, RUNNING)
@@ -1371,9 +1394,22 @@ def departure(mid_run: bool, stop: bool, profile: str | None,
     # whole answer is "nothing to unlock", at the moment they are deciding what
     # to do next. It stays for the case where the kill was not clean, which is
     # the case the sentence was written for.
+    #
+    # And under `s` the lock that is left is stale by construction, so it is
+    # released rather than reported. Nothing will hold it: the queue is
+    # cancelled, the tree is stopped, and `launch()` ends this process, the
+    # Snakemake inside it included, right after. Nothing else can have taken it
+    # either, since a second run on a locked directory is refused. Under a
+    # profile this is the usual case, not the rare one: Snakemake learns the
+    # jobs are gone at its next poll of the queue, after SETTLE, so on GenomeDK
+    # on 2026-11-08 every `s` left the lock behind and a command to clear it.
     if lock_files(workdir):
-        lines.append(f"The output directory is still locked: "
-                     f"comparem2 --unlock --output {shlex.quote(str(workdir))}")
+        problem = unlock(workdir)
+        if problem is None and not lock_files(workdir):
+            lines.append("Released the output directory's lock.")
+        else:
+            lines.append(f"The output directory is still locked: "
+                         f"comparem2 --unlock --output {shlex.quote(str(workdir))}")
     return lines
 
 

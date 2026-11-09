@@ -411,8 +411,7 @@ def test_biosynthesis_shares_carvemes_environment():
 
 
 def test_database_ready_paths_are_distinct_and_under_the_root():
-    paths = [db.ready_path(Path("/db"), Path("/res"))
-             for db in CATALOGUE.databases() if not db.out_of_tree]
+    paths = [db.ready_path(Path("/db")) for db in CATALOGUE.databases()]
     assert len(paths) == len(set(paths))
     for p in paths:
         assert str(p).startswith("/db/")
@@ -441,13 +440,28 @@ def test_only_selected_databases_get_download_rules():
     assert "download_" not in text
 
 
-def test_amrfinder_database_is_marked_out_of_tree():
-    """`amrfinder -u` rejects -d, so its data cannot live under --databases.
-    Recording that is the difference between a known limitation and a lie."""
+def test_amrfinder_database_lives_under_databases():
+    """Fetched by `amrfinder_update -d`, read by `amrfinder -d <dir>/latest`.
+
+    Until 2026-11-07 it was `amrfinder -u`, which refuses `-d`, so the data sat
+    in the conda prefix and was refetched whenever the environment was rebuilt.
+    `amrfinder -u` must not come back: it would write where the tool, now
+    pointed at `--databases`, no longer looks.
+    """
     db = CATALOGUE["amrfinder"].database
-    assert db.out_of_tree is True
-    assert not any(db.out_of_tree for db in CATALOGUE.databases()
-                   if db.name != "amrfinder")
+    assert db.ready_path(Path("/db")) == Path("/db/amrfinder/.fetched")
+
+    text = render(CATALOGUE, ["amrfinder"], Path("/res"), Path("/db"), SAMPLES)
+    block = text.split("rule download_amrfinder:")[1].split("\nrule ")[0]
+    assert "amrfinder_update -d /db/amrfinder\n" in block
+    assert "amrfinder -u" not in text
+    # The stamp comes after the update, so an interrupted fetch is redone.
+    assert block.index("amrfinder_update") < block.index("touch /db/amrfinder/.fetched")
+    assert "/res" not in block
+
+    rule = text.split("rule amrfinder:")[1].split("\nrule ")[0]
+    assert '"/db/amrfinder/.fetched",' in rule.split("output:")[0]
+    assert "-d /db/amrfinder/latest" in rule
 
 
 # --- steps around a command (GTDB-Tk) ------------------------------
@@ -1458,31 +1472,6 @@ def test_use_conda_and_isolated_launcher_are_gone(tmp_path):
         with pytest.raises(SystemExit) as excinfo:
             cli_mod.main([str(tmp_path / "a.fna"), flag])
         assert excinfo.value.code == 2, flag
-
-
-def test_amrfinders_marker_lives_with_the_run_not_the_databases(tmp_path):
-    """Its data is in the tool's conda prefix, so a marker under `--databases`
-    outlives it.
-
-    Measured 2026-09-02: a thirteen-tool run failed on `No valid AMRFinder
-    database is found` against a stamp four hours old, because the environment
-    had been rebuilt in between. The download rule was skipped on the strength
-    of a marker describing data that no longer existed.
-    """
-    amr = CATALOGUE["amrfinder"].database
-    assert amr.out_of_tree is True
-    assert amr.ready_path(Path("/db"), Path("/res")) == Path("/res/amrfinder/.updated")
-
-    # Everything that really does live under --databases still does.
-    checkm2 = CATALOGUE["checkm2"].database
-    assert checkm2.ready_path(Path("/db"), Path("/res")) == Path("/db/checkm2/checkm2.dmnd")
-
-    # And the rule writes its stamp where the marker is, not into a shared
-    # directory it does not populate.
-    text = render(CATALOGUE, ["amrfinder"], Path("/res"), Path("/db"), SAMPLES)
-    block = text.split("rule download_amrfinder:")[1].split("\nrule ")[0]
-    assert "/res/amrfinder/.updated" in block
-    assert "/db/amrfinder" not in block
 
 
 _FAKE_SNAKEMAKE = '''
@@ -2976,6 +2965,71 @@ async def test_tui_settles_every_tool_to_a_terminal_state(tmp_path, monkeypatch)
 
 
 @pytest.mark.asyncio
+async def test_tui_end_of_run_walks_the_outputs_once_off_the_ui_thread(
+        tmp_path, monkeypatch):
+    """`settle`, `any_outputs_exist` and `render_report` share one walk.
+
+    Each used to read every declared output for itself, three walks in a row,
+    and `settle`'s on the UI thread — which on a few hundred genomes over a
+    network filesystem is the case where the spinner freezes.
+    """
+    pytest.importorskip("textual")
+    import threading
+    from comparem2 import tools as tools_mod
+    from comparem2 import tui as tui_mod
+
+    # Something on disk, so the run has a report to render.
+    tool = CATALOGUE["mashtree"]
+    for out in tool.outputs(Context(tmp_path, tmp_path / "db", 1, SAMPLES)):
+        Path(out).parent.mkdir(parents=True, exist_ok=True)
+        Path(out).write_text("")
+
+    walked: list[str] = []
+    real = tools_mod.completion
+
+    def counting(tool, *a, **k):
+        if threading.current_thread() is not threading.main_thread():
+            walked.append(tool.name)
+        return real(tool, *a, **k)
+
+    monkeypatch.setattr(tools_mod, "completion", counting)
+    reports: list[dict] = []
+    monkeypatch.setattr(tui_mod, "run", lambda *a, **k: iter(
+        [tui_mod.Event("job_finished", rule="mashtree")]))
+    monkeypatch.setattr(tui_mod, "render_report",
+                        lambda *a, **k: reports.append(k) or Path("report.html"))
+
+    app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                              selected=["mashtree"])
+    async with app.run_test() as pilot:
+        walked.clear()   # the opening scan and the one on `r` are not the end
+        await pilot.press("r")
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+
+    assert sorted(walked) == sorted(t.name for t in CATALOGUE), \
+        "one walk of every tool, in the worker"
+    assert len(reports) == 1 and set(reports[0]["found"]) >= {"mashtree"}
+
+
+def test_report_and_any_outputs_exist_take_a_walk_already_made(tmp_path, monkeypatch):
+    """Handed a `completions()` map, neither reads the directory again."""
+    from comparem2 import tools as tools_mod
+    from comparem2.cli import any_outputs_exist
+    from comparem2.tools import completions
+
+    found = completions(CATALOGUE, ["seqkit"], tmp_path, Path("db"), SAMPLES)
+
+    def refuse(*a, **k):
+        raise AssertionError("walked the output tree a second time")
+
+    monkeypatch.setattr(tools_mod, "completion", refuse)
+    assert not any_outputs_exist(["seqkit"], tmp_path, Path("db"), SAMPLES, found)
+    assert render_report(CATALOGUE, ["seqkit"], tmp_path, Path("db"), SAMPLES,
+                         found=found).exists()
+
+
+@pytest.mark.asyncio
 async def test_tui_seeds_its_selection_from_until():
     """`--tui --until mashtree` must not open with gtdbtk's 60.8 GB armed.
 
@@ -3057,7 +3111,8 @@ def test_quit_dialog_says_what_happens_to_the_jobs():
     assert "2 jobs running" in local
     assert "not killed on the way out" in local
     assert "No report is written" in local
-    assert "u releases it" in local, "the lock outlives the process"
+    assert "leaves the output directory locked" in local, "y: the lock outlives the process"
+    assert "releases it" in local, "s: and departure() releases it"
 
     queued = ConfirmQuit(True, 2, "slurm").text()
     assert "profile slurm" in queued
@@ -3069,6 +3124,29 @@ def test_quit_dialog_says_what_happens_to_the_jobs():
     # "0 jobs running" would read as nothing to lose at exactly that moment.
     early = ConfirmQuit(True, 0, None).text()
     assert "no job has started yet" in early
+
+
+@pytest.mark.asyncio
+async def test_quit_dialog_counts_jobs_not_rows(tmp_path):
+    """Four bakta jobs are one row and four jobs.
+
+    On GenomeDK on 2026-11-08, with four bakta jobs running through SLURM, the
+    dialog deciding whether to cancel them said "1 job started": it counted
+    rows in the `running` state.
+    """
+    pytest.importorskip("textual")
+    from comparem2 import tui as tui_mod
+
+    app = tui_mod.ComparemTUI([], tmp_path, tmp_path / "db", SAMPLES, 4,
+                              selected=["bakta"], profile="slurm")
+    async with app.run_test() as pilot:
+        app.running = True
+        for jobid in (1, 2, 3, 4):
+            app.apply_event(tui_mod.Event("job_started", rule="bakta", jobid=jobid))
+        app.apply_event(tui_mod.Event("job_finished", rule="bakta", jobid=2))
+        await app.action_quit()
+        await pilot.pause()
+        assert "3 jobs started" in app.screen.text()
 
 
 def test_quit_dialog_names_a_running_download():
@@ -3167,7 +3245,7 @@ async def test_tui_cost_line_ignores_databases_already_here(tmp_path):
         assert "60.8 GB" in app.cost_text
 
     # Now put it on disk, at the path the rule would have written.
-    ready = CATALOGUE["gtdbtk"].database.ready_path(db, tmp_path)
+    ready = CATALOGUE["gtdbtk"].database.ready_path(db)
     ready.parent.mkdir(parents=True)
     ready.touch()
     app = tui_mod.ComparemTUI([], tmp_path, db, SAMPLES, 4, selected=["gtdbtk"])
@@ -3194,8 +3272,8 @@ async def test_tui_database_row_says_whether_the_selection_needs_it(tmp_path):
 
     db = tmp_path / "db"
     have = [d for d in CATALOGUE.databases(None) if d.name == "bakta-light"][0]
-    have.ready_path(db, tmp_path).parent.mkdir(parents=True)
-    have.ready_path(db, tmp_path).touch()
+    have.ready_path(db).parent.mkdir(parents=True)
+    have.ready_path(db).touch()
 
     app = tui_mod.ComparemTUI([], tmp_path, db, SAMPLES, 4, selected=["gtdbtk"])
     async with app.run_test():
@@ -3221,7 +3299,7 @@ async def test_tui_cost_line_moves_when_a_run_fetches_a_database(tmp_path):
     async with app.run_test():
         assert "60.8 GB" in app.cost_text
         # What the download rule writes.
-        ready = CATALOGUE["gtdbtk"].database.ready_path(db, tmp_path)
+        ready = CATALOGUE["gtdbtk"].database.ready_path(db)
         ready.parent.mkdir(parents=True)
         ready.touch()
         app.settle(["gtdbtk"])
@@ -3384,10 +3462,42 @@ def test_departure_only_claims_a_lock_it_can_see(monkeypatch, tmp_path):
     assert "stopped the tree" in stopped
     assert "still locked" not in stopped
 
-    _locked(tmp_path)
-    assert "still locked" in "\n".join(departure(True, True, None, None, tmp_path))
     # Left going, so the lock is genuinely held whatever the disk says now.
+    _locked(tmp_path)
     assert "still locked" in "\n".join(departure(True, False, None, None, tmp_path))
+
+
+def test_departure_releases_the_lock_a_stop_leaves_behind(monkeypatch, tmp_path):
+    """Under `s` a surviving lock is stale, so it is released, not reported.
+
+    On GenomeDK on 2026-11-08 every `s` under SLURM left the lock: Snakemake
+    learns its jobs are gone at its next queue poll, after `SETTLE`, and the
+    process then exits. Only if releasing it fails is the user sent to
+    `--unlock`.
+    """
+    from comparem2 import cancel as cancel_mod
+    from comparem2 import tui as tui_mod
+    from comparem2.tui import departure
+
+    monkeypatch.setattr(cancel_mod, "stop_local", lambda *a, **k: "stopped the tree")
+    monkeypatch.setattr(cancel_mod, "stop_slurm", lambda *a, **k: "cancelled the queue")
+    monkeypatch.setattr(tui_mod, "snakemake_alive", lambda wait=0: False)
+
+    def release(workdir):
+        for lock in tui_mod.lock_files(workdir):
+            lock.unlink()
+
+    _locked(tmp_path)
+    monkeypatch.setattr(tui_mod, "unlock", release)
+    text = "\n".join(departure(True, True, "slurm", "abc-123", tmp_path))
+    assert "Released the output directory's lock." in text
+    assert "still locked" not in text
+    assert not tui_mod.lock_files(tmp_path)
+
+    _locked(tmp_path)
+    monkeypatch.setattr(tui_mod, "unlock", lambda workdir: "snakemake said no")
+    text = "\n".join(departure(True, True, "slurm", "abc-123", tmp_path))
+    assert "still locked" in text and "--unlock" in text
 
 
 def test_departure_will_not_guess_at_job_ids(monkeypatch):
@@ -4527,6 +4637,25 @@ def test_panaroo_section_reports_overlaps(tmp_path):
     assert "all genomes" in body      # the 5 core genes
     assert "A, B" in body             # the 3 shared by A and B
     assert "pangenome presence matrix" in body
+
+
+def test_panaroo_overlap_table_absence_is_explained(tmp_path):
+    """Above the cap the table is dropped, and the report has to say so (#156).
+
+    It used to print nothing, and a user at 139 genomes read the missing table
+    as a failure. Twelve still renders it; thirteen explains why it does not.
+    """
+    from comparem2.report import _OVERLAP_VOCABULARY_MAXIMUM as cap
+    for n, shown in ((cap, True), (cap + 1, False)):
+        d = tmp_path / str(n)
+        genomes = [f"G{i}" for i in range(n)]
+        _write_rtab(d, genomes, [(True,) * n, (True,) + (False,) * (n - 1)])
+        body = render_report(CATALOGUE, ["panaroo"], d, Path("db"),
+                             tuple(genomes)).read_text()
+        assert "<h3>Shared gene content</h3>" in body
+        assert ("Reading order:" in body) is shown
+        assert (f"Not shown for {n} genomes" in body) is not shown
+        assert "<h3>Pangenome partitions</h3>" in body
 
 
 def test_panaroo_section_survives_single_genome(tmp_path):

@@ -235,16 +235,15 @@ Six consequences worth knowing:
   verified on linux-64, and a test enforces it. The versions every verification
   run on thylakoid ran on: seqkit 2.13.0, bakta 1.12.1, panaroo 1.8.0,
   gtdbtk 2.7.2, DIAMOND 2.2.5.
-- **AMRFinder depends on the sharing.** `amrfinder -u` writes into
-  `$CONDA_PREFIX`, so its download rule and its analysis rules must land in the
-  same deployed environment. They do — both name `annotation`, as `main` before
-  it. **Executed 2026-09-03**, when they were still separate single-tool
-  environments sharing a spec string: five rules, one directory, the database
-  inside it, and AMRFinder's own log naming that directory as both its software
-  and its database path. This is a constraint on any future regrouping: bakta
-  and amrfinder may move, but not apart. See STATUS.md.
+- ~~**AMRFinder depends on the sharing.**~~ No longer, since 2026-11-07.
+  `amrfinder -u` wrote into `$CONDA_PREFIX`, so its download rule and its
+  analysis rules had to land in the same deployed environment, and bakta and
+  amrfinder could not be regrouped apart. The fetch is now `amrfinder_update -d
+  <databases>/amrfinder` and the tool is handed `-d <databases>/amrfinder/latest`,
+  so the data lives where every other database does and the constraint is gone.
+  See DECISIONS.md.
 - **A database fetch is a rule and needs an environment too.** Two of the four
-  run a tool binary rather than curl (`bakta_db download`, `amrfinder -u`, both
+  run a tool binary rather than curl (`bakta_db download`, `amrfinder_update`, both
   in `annotation`) and the other two need only curl and tar (`basic`), so
   `Database` declares `conda` and `environment` exactly as `Tool` does. Under a
   cluster profile they are additionally `localrules` — a compute node with no
@@ -514,9 +513,9 @@ something already published. The post-mortems are in
   through `carve_scip.py`, on one core, against Bakta's 77 s on eight for the
   same genome. Whether it should be opt-in anyway is a smaller question than it
   was, and no longer a performance one.
-- **AMRFinder's database cannot live under `--databases`.** `amrfinder -u`
-  rejects `-d`, so its data goes into the conda prefix and all that can be
-  recorded is a stamp — which does not survive the environment being rebuilt.
+- ~~**AMRFinder's database cannot live under `--databases`.**~~ Closed
+  2026-11-07: `amrfinder -u` rejects `-d`, but the standalone `amrfinder_update`
+  takes it. Same output, byte for byte, on 116_2.
 - ~~**FastTree runs single-threaded.**~~ Closed 2026-09-03: `FastTreeMP` and
   `Tool.env` would make the switch reachable, and it was measured to be worth
   nothing — **including at hundreds of genomes**, which was the obvious

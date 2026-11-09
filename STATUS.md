@@ -4,7 +4,7 @@ What is currently true of a real run. This file changes whenever something is
 re-run, which is why it is not in [DESIGN.md](DESIGN.md) — decisions should not
 need editing because a tool was verified again.
 
-Last updated **2026-10-27**. The tool numbers are from runs on thylakoid; the
+Last updated **2026-11-07**. The tool numbers are from runs on thylakoid; the
 pre-tag checks for v3.1.0 are from the laptop and say so.
 
 ## The docs showcase run: eight genomes, all fourteen tools, through SLURM
@@ -234,8 +234,43 @@ four minutes and every job dies. The installation docs carry this as a warning.
 **The CLI path is no longer unverified** — that was written while the
 environments below were unsolvable, and the next section is the run that closed
 it: `comparem2 --demo --profile <slurm>`, 11 of 11 steps through the queue.
-What is still unverified is the TUI's *rendering* under a profile, which needs
-a terminal, and `cancel.stop_slurm()`, which no run has called.
+~~What is still unverified is the TUI's *rendering* under a profile, which needs
+a terminal, and `cancel.stop_slurm()`, which no run has called.~~ **Both run on
+GenomeDK on 2026-11-08**; see *The TUI under SLURM, and `s`* below.
+
+### The TUI under SLURM, and `s` — 2026-11-08
+
+On `fe-open-02`, reached through thylakoid's ControlMaster socket, from the
+uncommitted working tree in
+`/faststorage/project/PM_group/carl/comparem2/gaps-1108`, the `slurm`
+profile, the TUI in a detached tmux session read with `capture-pane`.
+`--tui --until bakta` over the four *E. faecium* genomes:
+
+- **Rendering:** the header, the table, the `SLURM run id …` line, four
+  `▸ bakta` lines, the spinner and the indeterminate bar all drew as they do
+  locally. Four jobs were running on `cn-1040`, `cn-1057` and `cn-1060` 15 s
+  after `r`.
+- **`q` then `s`:** `Asked SLURM to cancel run e0003c50-…`, exit 130. `sacct`:
+  all four `CANCELLED by 6768`, ending at 14:22:08, the second `s` was pressed.
+  `squeue` showed them in `CG` for under a minute after.
+- **Two defects, both fixed the same day and re-run:**
+  - the dialog said **"1 job started"** over four running jobs. It counted
+    rows, and a genome-scope tool is one row. It now counts live job ids, with
+    the rows as a floor. Re-run: "4 jobs started".
+  - **every `s` left the lock behind**, with "The output directory is still
+    locked". Snakemake learns the jobs are gone at its next poll of the queue,
+    after the 10 s `SETTLE`, and the process then exits. `departure()` now
+    releases a lock that survives `s` through `unlock()`. Re-run: `Released the
+    output directory's lock.`, no `.snakemake/locks`, and all four cancelled.
+- **The stopped directory then resumed**, plain CLI, `--until amrfinder`
+  through SLURM into a fresh `--databases` holding only a link to `bakta`:
+  exit 0 in 244 s, 10 of 10 steps, 8 SLURM jobs `COMPLETED`. `download_amrfinder`
+  ran on the login node into `dbroot/amrfinder/2026-10-29.1`; AMRFinder's log
+  names it. 8 / 8 / 12 / 9 lines, the 2026-09-03 counts; the duplicate pair
+  identical; 116_2's md5 `a2d53fef…` the same as thylakoid's.
+
+**Not covered:** `y` under SLURM, and `s` while a download is running on the
+login node.
 
 **`$SNAKEMAKE_PROFILE` submits, verified on GenomeDK 2026-09-08** against
 Snakemake 9.16.3 — the pinned version — with `SNAKEMAKE_PROFILE=slurm` and no
@@ -376,6 +411,10 @@ change between the v3.5.1 tag and this branch.
 **Not covered:** linux-aarch64, where 2.18.0's `libtensorflow_cc` is RW, read
 from the package, not run.
 
+**Published 2026-10-27 at 20:24:48Z**, when
+[bioconda-recipes#70819](https://github.com/bioconda/bioconda-recipes/pull/70819)
+merged. 3.5.2 is what `conda install comparem2` gives.
+
 ## Known broken: the `main` environment no longer solves, anywhere
 
 *Superseded by the split above; kept because the diagnosis is what justified
@@ -480,7 +519,7 @@ that closed that gap.
 | seqkit | 09-02 | per-contig lengths and GC; identical stats for the duplicate pair |
 | checkm2 | 09-02, 09-03 | 100% complete all four, 0.47% contamination for the duplicate pair; `--database_path` wants the `.dmnd` **file**, not its directory. First run via the since-deleted `--isolated-launcher`; now the one tool with its own deployed environment |
 | bakta | 09-02 | 4/4 against db v6.0 light; db `software-min` 1.11 against bakta 1.12.1 |
-| amrfinder | 09-02, again 09-03 | 7 / 7 / 11 / 8 genes; database fetched by the pipeline itself. Re-run under `--use-conda` on 09-03 — byte-identical output, and the fetch and analysis rules shared one deployed environment; see below |
+| amrfinder | 09-02, 09-03, 11-07 | 7 / 7 / 11 / 8 genes; database fetched by the pipeline itself. Re-run under `--use-conda` on 09-03 — byte-identical output, and the fetch and analysis rules shared one deployed environment; see below. On 11-07 with the database under `--databases`, byte-identical again; see *Known broken or unfinished* |
 | mlst | 09-02 | ST32 / ST32 / ST117 / ST78 — duplicates agree |
 | mashtree | 09-02 | duplicate pair at distance 0.00000 |
 | treecluster | 09-02 | needed `--threshold`; v2's defaults adopted |
@@ -1108,6 +1147,11 @@ environment sharing actually has to carry. It has now been executed too; see
 below.
 
 ### amrfinder under `--use-conda`: the environment sharing is real
+
+*Superseded 2026-11-07: the database now lives under `--databases`, so the
+sharing below is no longer load-bearing — see* AMRFinder's database under
+`--databases` *in Known broken or unfinished. Kept as the record of how the old
+arrangement was verified.*
 Run 15:02:33–15:08:40 on 2026-09-03 from `/evo/postdoc/CompareM2` at `e792d5a`,
 exit 0, 10 of 10 steps: `download_amrfinder`, 4 × `bakta`, 4 × `amrfinder`.
 Four genomes from `tests/E._faecium/`, `--cores 8`, a **fresh `--output`**
@@ -2308,7 +2352,9 @@ install on linux-aarch64 from published channels alone. **Not run** — no insta
 from the published packages has been tried. Until bioconda carries panaroo 1.8.1
 ([bioconda-recipes#70730](https://github.com/bioconda/bioconda-recipes/pull/70730),
 still open on 2026-10-27; the channel's latest is 1.8.0), what installs there
-is 1.8.0 with the `-aS` typo.
+is 1.8.0 with the `-aS` typo. *#70730 merged 2026-10-27 at 20:37:26Z*, so 1.8.1
+is now what the channel offers; an install on linux-aarch64 from published
+packages alone has still not been tried.
 
 ### panaroo installs on arm, and its cleaning stage does nothing there
 
@@ -2812,15 +2858,27 @@ carrying the code this tag ships.
   pipeline should say which it means, or switch. From
   [notes/E2E_FINDINGS_2026-09-02.md](notes/E2E_FINDINGS_2026-09-02.md), finding 3, still
   true on 2026-09-06.
-- **AMRFinder's database still lives in the conda prefix**, so it is refetched
-  whenever the environment is rebuilt. What is fixed is the *lie*: the marker
-  now lives with the run, so a rebuilt environment no longer leaves a stale
-  marker claiming the data is there. The refetch was **measured at 27 s** on
-  2026-09-03, and the 241 MB it writes sits inside the deployed environment
-  rather than under `--databases`. This is a cost, not a defect — see
-  *amrfinder under `--use-conda`*. Now shared: the database sits inside `main`,
-  which every other tool also uses, so rebuilding it for any reason costs the
-  refetch.
+- ~~**AMRFinder's database still lives in the conda prefix**~~ **Moved under
+  `--databases` 2026-11-07**, fetched by `amrfinder_update -d` — not by
+  `amrfinder -u`, which is the binary that refuses `-d`. The old bullet called
+  this a cost: 241 MB inside the environment, refetched whenever it was rebuilt,
+  and by every fresh output directory, since the stamp lived with the run.
+  **Executed on thylakoid**, from the working tree in
+  `/evo/postdoc/cm2-amrdb-test` with the main checkout's pixi environment and
+  `/evo/postdoc/cm2-envs-two`, AMRFinder 4.2.7:
+  - by hand: `amrfinder_update -d` exit 0 in 24 s, database 2026-10-29.1,
+    245 MB on disk. `amrfinder -d <dir>/latest` over 116_2's Bakta proteins gave
+    output **byte-identical** to the in-prefix database's, which was 2026-08-07.1.
+  - through the pipeline: `--until amrfinder` over 116_2 and its spaced
+    duplicate into an empty `--databases` with only `bakta` linked in, exit 0 in
+    110 s. `dbroot/amrfinder/` holds `2026-10-29.1/`, `latest` and `.fetched`;
+    the two `amrfinder.tsv` are identical to each other and to the hand run;
+    AMRFinder's log names the prefix as its software directory and
+    `dbroot/amrfinder/2026-10-29.1` as its database. A second run: "Nothing to
+    be done".
+
+  **Not run:** the upgrade of an existing output directory, which by
+  construction re-runs the fetch and AMRFinder (DECISIONS.md, 2026-11-07).
 - ~~**`--tui` has not been run against a failing workflow interactively.**~~
   **Run 2026-10-12**, on thylakoid in tmux: a failing seqkit shows "1 of 2
   failed: seqkit", and the exit status, 0 until then, is now 1.
@@ -2836,19 +2894,20 @@ carrying the code this tag ships.
   path passes None — but the two branches disagree, and the docstring's "conda
   deployment is on by default and nothing in the pipeline turns it off" is
   true of only one of them.
-- **The end of a run walks the output tree three times** — `settle()`'s
-  `scan()`, then `any_outputs_exist()`, then `render_report()`'s per-tool
-  `completion()` — and `scan()` runs on the UI thread. On a few hundred
-  genomes on a network filesystem that is the case where the spinner freezes
-  and, by its own docstring, means "genuinely wedged". One `{tool: Completion}`
-  map computed in a worker would serve all three.
-- **The panaroo section drops its overlap table without saying so.** Above
-  `_OVERLAP_VOCABULARY_MAXIMUM` (12 genomes, `report.py`) the *Shared gene
-  content* table, the `●··●` presence patterns, is skipped and its `else`
-  branch prints nothing. A user who has seen the 8-genome example report reads
-  the absence as a failure: Patrick did on #156, at 139 *E. coli*, on
-  2026-10-27. The cap stays; the fix is one sentence in that branch pointing at
-  the partition table, plus a test that a 13-genome matrix renders it.
+- ~~**The end of a run walks the output tree three times**~~ **Once, since
+  2026-11-07**, and in the worker: `tools.completions()` is computed after the
+  event stream ends and handed to `settle`, `any_outputs_exist` and
+  `render_report`. A unit test counts the walk's calls by thread. **Not
+  measured** on the case that prompted it — a few hundred genomes on a network
+  filesystem — so the freeze it described is removed by construction, not
+  observed gone.
+- ~~**The panaroo section drops its overlap table without saying so.**~~
+  **Says so since 2026-11-07.** Above `_OVERLAP_VOCABULARY_MAXIMUM` (12
+  genomes, `report.py`) the *Shared gene content* heading still appears, with
+  one sentence saying why the table is not shown and pointing at the partition
+  table and `gene_presence_absence.Rtab`. Prompted by Patrick on #156, at 139
+  *E. coli*, 2026-10-27. A test renders 12 and 13 genomes. Unit-tested only; no
+  report over more than 12 genomes has been rendered with it.
 - **`/evo/postdoc/cm2v3`** is the old rsync scratch directory, now redundant,
   holding an 8.5 GB pixi environment that can be deleted.
 - **The bioconda package exists** — 3.0.0, published 2026-09-04, so this bullet

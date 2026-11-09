@@ -348,8 +348,8 @@ Quit while a run is going?
 3 jobs started · profile slurm
 
 Jobs already submitted keep running — the queue does not care that this
-process is gone. Nothing further is submitted. No report is written, and
-the output directory stays locked — u releases it.
+process is gone. Nothing further is submitted. No report is written. y
+leaves the output directory locked; s releases it.
 
 y  quit, leave the run going
 s  quit and cancel this run's queued jobs
@@ -395,14 +395,15 @@ the interface and not a job.
 Either way the outcome is printed after the interface closes, not inside it, so
 it survives the screen going away.
 
-!!! warning "Leaving a run can leave the directory locked, and half-written outputs"
-    After `s`, Snakemake removes its own lock once it sees its jobs are gone,
-    and the interface waits up to ten seconds for that and then says whether
-    the directory is still locked. A queue may take longer to report a
-    cancelled job than that. After `y` the directory always stays locked: the
-    process holding the lock ends before the jobs it left running do. Either
-    way, a locked directory is released with `u` next time, or `comparem2
-    --unlock --output <dir>`.
+!!! warning "Leaving with `y` leaves the directory locked, and half-written outputs"
+    After `s`, the interface waits up to ten seconds for Snakemake to see its
+    jobs are gone and remove its own lock. Under a profile it usually has not
+    by then, because Snakemake only learns at its next poll of the queue, so
+    the interface releases the lock itself (`Released the output directory's
+    lock.`): nothing is left that could hold it. After `y` the directory always
+    stays locked, because the process holding the lock ends before the jobs it
+    left running do. Release it with `u` next time, or `comparem2 --unlock
+    --output <dir>`.
 
     The partial outputs are handled: CompareM2 runs with `--rerun-incomplete`,
     so a rule that was interrupted is redone instead of trusted. That includes
@@ -481,13 +482,10 @@ what is actually missing:
 to download: checkm2, gtdb, bakta-light, amrfinder (62.5 GB + 2 of unknown size) -> /evo/postdoc/cm2-databases
 ```
 
-Two databases are not under this root, and cannot be:
-
-- **AMRFinder** rejects `-d` on update. `amrfinder -u -d <dir>` exits with
-  *"only operates on the default database directory"*, so its data lands in
-  `$CONDA_PREFIX` and only a marker file is recorded here.
-- **GTDB-Tk** has no flag for its database at all; it is passed
-  `GTDBTK_DATA_PATH=<root>/gtdb` instead.
+All four live under this root. GTDB-Tk is the one handed its database
+differently: it has no flag for it, so it is passed
+`GTDBTK_DATA_PATH=<root>/gtdb` instead. (Up to 3.5.2, AMRFinder's database was
+the exception, kept inside its conda environment.)
 
 Sizes are in [Installation](10 installation.md#databases).
 

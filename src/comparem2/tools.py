@@ -84,7 +84,7 @@ class Database:
     # What the fetch itself needs installed. A download step is a rule like any
     # other, so it gets an environment like any other — which it must, because
     # two of these fetches run a tool binary rather than curl (`bakta_db
-    # download`, `amrfinder -u`) and the other two need curl and tar. Omitting
+    # download`, `amrfinder_update`) and the other two need curl and tar. Omitting
     # it means the download rule runs in the pipeline's own environment, where
     # none of those exist.
     conda: tuple[str, ...] = ()
@@ -97,34 +97,14 @@ class Database:
     # is already complete and re-runs one that is half-finished. Prefer a real
     # file the tool itself needs over a stamp: a stamp can outlive the data.
     ready: str = ""
-    # Set when the fetch cannot write under the database root because the tool
-    # forbids it. amrfinder is the only one — `amrfinder -u` rejects `-d` with
-    # "only operates on the default database directory", verified 2026-09-02 —
-    # so its data lands in the conda prefix and `ready` is only a stamp. Which
-    # means it does not survive the environment being rebuilt.
-    out_of_tree: bool = False
+    def ready_path(self, databases: Path) -> Path:
+        """The file that proves this database is usable.
 
-    def marker_root(self, databases: Path, workdir: Path) -> Path:
-        """Where this database's readiness marker lives.
-
-        Under `--databases` for everything that stores its data there. For an
-        out-of-tree database it is the **run's output directory**, and that is
-        not cosmetic: AMRFinder's data lives in the tool's conda prefix, so a
-        marker under `--databases` outlives the thing it describes. Rebuild the
-        environment and the marker still says ready while the data is gone.
-
-        Verified the hard way 2026-09-02: a thirteen-tool run failed with
-        `No valid AMRFinder database is found` against a four-hour-old stamp,
-        because the environment had been rebuilt in between. Per-run readiness
-        means at most one run can be wrong about it, and a fresh output
-        directory is always right.
+        Always under `--databases`. Until 2026-11-07 AMRFinder's was a stamp in
+        the run's output directory, because its data lived in the conda prefix
+        and a shared stamp outlived it — see DECISIONS.md.
         """
-        return workdir if self.out_of_tree else databases
-
-    def ready_path(self, databases: Path, workdir: Path) -> Path:
-        """The file that proves this database is usable."""
-        root = self.marker_root(databases, workdir)
-        return root / (self.ready or f"{self.name}/.fetched")
+        return databases / (self.ready or f"{self.name}/.fetched")
 
     @property
     def rule(self) -> str:
@@ -412,3 +392,20 @@ class Registry:
             needed.add(name)
             stack.extend(self._tools[name].needs)
         return [t for t in self if t.name in needed]
+
+
+def completions(registry: Registry, selected: Sequence[str] | None,
+                workdir: Path, databases: Path,
+                samples: Sequence[str]) -> dict[str, Completion]:
+    """`completion` for every tool in `selected`'s closure, keyed by name.
+
+    One walk of the output tree for all three callers. The end of a run asked
+    the same question three times — the TUI's `scan`, `cli.any_outputs_exist`
+    and `render_report`, one `stat` per declared output each — and the first of
+    them on the UI thread, which on a few hundred genomes over a network
+    filesystem froze the spinner at the moment it is meant to say "reporting".
+    Nothing writes to the directory between those three reads, so computing the
+    map once and handing it to each gives the same answers.
+    """
+    return {tool.name: completion(tool, workdir, databases, samples)
+            for tool in registry.closure(selected)}

@@ -33,6 +33,7 @@ import csv
 import html
 import math
 import re
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from itertools import count
 from pathlib import Path
@@ -45,7 +46,7 @@ from . import __version__
 from .biosynthesis import (ABSENT, DE_NOVO, LB, NO_ROUTE, PANEL,
                            UNIVERSE_CEILING, UPSTREAM)
 from .guidance import GUIDANCE, citations
-from .tools import Context, Registry, Scope, Tool, completion
+from .tools import Completion, Context, Registry, Scope, Tool, completions
 
 # The content column, in CSS pixels: 62rem of body minus 1.5rem of padding on
 # each side. Figures are drawn in these units and scaled with `max-width`, so
@@ -1940,6 +1941,18 @@ def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
                        header=["Pattern", "Present in", "Gene clusters", "Share"],
                        numeric_columns={2, 3}),
         ]
+    else:
+        # Said, not just skipped: a reader who has seen the small example
+        # report takes a missing table for a failed run (#156).
+        parts += [
+            "<h3>Shared gene content</h3>",
+            f'<p class="summary">Not shown for {n} genomes. This table names '
+            "the genomes in each presence pattern, which stops being readable "
+            f"above {_OVERLAP_VOCABULARY_MAXIMUM}. The partition table below "
+            "answers the same question by how many genomes share a gene "
+            "rather than which ones, and the full matrix is in Panaroo's "
+            "<code>gene_presence_absence.Rtab</code>.</p>",
+        ]
 
     parts.append("<h3>Pangenome partitions</h3>")
     if n < _PARTITION_VOCABULARY_MINIMUM:
@@ -2486,8 +2499,15 @@ def _fallback(tool: Tool, ctx: Context, workdir: Path, samples: int = 0) -> str:
 
 def render_report(registry: Registry, selected: list[str] | None, workdir: Path,
                   databases: Path, samples: tuple[str, ...],
-                  title: str | None = None, command: str | None = None) -> Path:
-    """Write the report and return its path."""
+                  title: str | None = None, command: str | None = None,
+                  found: Mapping[str, Completion] | None = None) -> Path:
+    """Write the report and return its path.
+
+    `found` is a `completions()` map the caller has already read from this
+    directory; without one, the report reads it itself.
+    """
+    if found is None:
+        found = completions(registry, selected, workdir, databases, samples)
     sections: list[str] = []
     toc: list[str] = []
     shown = 0
@@ -2499,7 +2519,7 @@ def render_report(registry: Registry, selected: list[str] | None, workdir: Path,
         # `started`, not `done`: a section appears as soon as anything is there,
         # so a partial run stays readable. Each renderer checks the file it
         # reads for itself.
-        if not completion(tool, workdir, databases, samples).started:
+        if not found[tool.name].started:
             continue
         shown += 1
         ran.append(tool.name)

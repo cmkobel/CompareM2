@@ -95,8 +95,7 @@ PERL_ENV = (
 )
 
 # The two BLAST/DIAMOND annotators. Both also own a database fetch that runs a
-# tool binary — `bakta_db` and `amrfinder -u` — so those rules land here too,
-# and AMRFinder's data lives inside this prefix.
+# tool binary — `bakta_db` and `amrfinder_update` — so those rules land here too.
 ANNOTATION_ENV = (
     # db 6.x is required by bakta 1.12.x and refused by nothing else, so a
     # drifted pin would fetch a database the tool then rejects at runtime.
@@ -266,29 +265,30 @@ BAKTA_DB = Database(
 
 AMRFINDER_DB = Database(
     name="amrfinder",
-    url="amrfinder -u",
+    url="amrfinder_update",
+    # No static URL: the updater reads NCBI's directory listing and fetches
+    # some 60 files. 245 MB on disk for 2026-10-29.1, measured with `du` on
+    # thylakoid 2026-11-07 — not a content-length, so not recorded as a size.
     size=None,
-    # This one cannot go under --databases. `amrfinder -u -d <dir>` exits with
-    # "AMRFinder update option (-u/--update) only operates on the default
-    # database directory. The -d/--database option is not permitted" —
-    # verified 2026-09-02. So the data lands in $CONDA_PREFIX and all we can
-    # record here is that the update ran.
+    # `amrfinder_update -d <dir>`, not `amrfinder -u`. The second refuses `-d`
+    # ("only operates on the default database directory", verified 2026-09-02),
+    # which is why this database lived inside the conda prefix until
+    # 2026-11-07. The standalone updater takes it: it writes
+    # `<dir>/<version>/` and points `<dir>/latest` at it, and the tool is then
+    # handed `-d <dir>/latest`. Output byte-identical to the in-prefix
+    # database's on 116_2, verified on thylakoid 2026-11-07.
+    #
+    # The stamp, not `latest/version.txt`: the updater makes the symlink after
+    # the download and *before* indexing, about 2 s ahead of the last BLAST
+    # index file, so the real file would call an interrupted fetch ready.
     fetch=lambda db: [
-        ["amrfinder", "-u"],
-        ["mkdir", "-p", str(db / "amrfinder")],
-        ["touch", str(db / "amrfinder" / ".updated")],
+        ["amrfinder_update", "-d", str(db / "amrfinder")],
+        ["touch", str(db / "amrfinder" / ".fetched")],
     ],
-    # The fetch *is* the tool, so under `--use-conda` the data lands in the
-    # environment Snakemake built for *this rule* — and the analysis rules have
-    # to end up in that same environment or they will not find it. They do,
-    # because Snakemake addresses a deployed environment by
-    # md5(realpath(envs_dir) + env file content) (read from conda.py in 9.26.1),
-    # so byte-identical env files under one --conda-prefix are one directory on
-    # disk. Sharing the spec string is what keeps them byte-identical.
+    # `amrfinder_update` ships with the tool, and indexes with the tool's own
+    # BLAST and HMMER, so the fetch runs where the tool does.
     conda=ANNOTATION_ENV,
     environment="annotation",
-    ready="amrfinder/.updated",
-    out_of_tree=True,
 )
 
 
@@ -466,6 +466,7 @@ amrfinder = Tool(
     needs=("bakta",),
     command=lambda c: [
         "amrfinder", "-p", str(c.out("bakta", f"{c.sample}.faa")),
+        "-d", str(c.databases / "amrfinder" / "latest"),
         "--plus", "--threads", str(c.threads), *c.args(),
     ],
     outputs=lambda c: [c.out("amrfinder", "amrfinder.tsv")],

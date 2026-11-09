@@ -3975,3 +3975,70 @@ not tried: it means pruning and refitting the decorated backbone and
 class-level trees and keeping the RED tables consistent with them, the real
 class-level tree asked for 132 GB on thylakoid, and pplacer is pinned to one
 build that has not moved.
+
+## 2026-11-07 — AMRFinder's database moves under `--databases`
+
+Recorded as impossible since 2026-09-02, on the strength of `amrfinder -u -d
+<dir>` refusing with *"only operates on the default database directory"*. That
+was true of the wrong binary. The package also ships `amrfinder_update`, whose
+`-d DATABASE_DIR` is documented as "Directory for all versions of AMRFinder
+databases": it writes `<dir>/<version>/`, indexes it with the tool's own BLAST
+and HMMER, and points `<dir>/latest` at it. `amrfinder -d <dir>/latest` then
+reads it. Nobody had read `amrfinder_update --help`.
+
+What the old arrangement cost: the 245 MB lived in the `annotation`
+environment and was fetched again whenever that environment was rebuilt; the
+readiness stamp had to live in each run's output directory, so every new output
+directory fetched it again too; `Database.out_of_tree` existed for this one
+database; and bakta and amrfinder could never be regrouped into different
+environments (DESIGN.md). All of that is gone, `out_of_tree` and
+`marker_root` with it. `ready_path` takes only the database root now.
+
+**The stamp, not `latest/version.txt`.** The updater makes the `latest` symlink
+after the download and before indexing, measured about 2 s ahead of the last
+BLAST index file. A real file would call an interrupted fetch ready, so the
+rule touches `amrfinder/.fetched` after the updater exits 0.
+
+**Verified on thylakoid**, 4.2.7: output byte-identical to the in-prefix
+database's on 116_2 (8 lines), across database versions 2026-08-07.1 and
+2026-10-29.1; then `--until amrfinder` through the pipeline into an empty
+databases root, the duplicate pair identical, AMRFinder's log naming the new
+database directory, and a second run with nothing to do. Upgrading costs one
+24 s fetch and an AMRFinder re-run, seconds a genome, because the rule's input
+and command line both changed. Accepted, like 3.5.2's checkm2 re-run: it is one
+cheap tool and the database path really did change.
+
+## 2026-11-07 — the end of a run walks the output tree once
+
+`tools.completions()` returns `{tool: Completion}` for a closure, and
+`any_outputs_exist` and `render_report` take it as `found=`. The TUI computes it
+in the worker after the event stream ends and hands it to `settle`, so the walk
+that used to run on the UI thread, three times in a row, now runs once and off
+it. The CLI shares one walk between its two readers the same way. Nothing writes
+to the directory between those reads, so the answers are the ones three walks
+gave. Both readers still walk for themselves when not handed a map, so no other
+caller had to change.
+
+## 2026-11-08 — the quit dialog counts jobs, and `s` releases the lock
+
+Both found by the first run of the TUI under SLURM, on GenomeDK (STATUS.md,
+*The TUI under SLURM, and `s`*).
+
+**Jobs, not rows.** The dialog said "1 job started" over four running bakta
+jobs, because it counted table rows in the `running` state. It is the screen on
+which the user decides whether to cancel, so the number is the point of it. The
+TUI now keeps the ids of jobs that started and have not finished or failed, and
+the dialog shows that count, never fewer than the running rows.
+
+**`s` releases a lock that survives it.** 2026-10-12 made `departure()` read the
+lock from disk instead of asserting it, because locally Snakemake's own cleanup
+usually removed it within `SETTLE` (3 of 3 on thylakoid). Under SLURM it never
+does: Snakemake learns its jobs are gone at its next poll of the queue, after
+`SETTLE`, and `launch()` then ends the process. So every `s` printed a
+`--unlock` command for a lock nothing could still hold. Under `s` the queue is
+cancelled, the tree is stopped and the process is about to exit, and a second
+run cannot have taken the lock because a locked directory is refused. So the
+lock is stale by construction, and `departure()` releases it through `unlock()`,
+the same call `u` and `--unlock` make. Only if that fails is the user sent to
+`--unlock`. `y` is unchanged: that run's jobs are alive, and its lock is
+reported, not released.

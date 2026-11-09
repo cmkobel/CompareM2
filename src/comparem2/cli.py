@@ -16,7 +16,7 @@ import signal
 import subprocess
 import sys
 import tempfile
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from . import __version__
@@ -25,7 +25,7 @@ from .catalogue import CATALOGUE
 from .report import render_report
 from .runner import queue_retries_flag
 from .snakefile import prepare, render_envs
-from .tools import completion, counted
+from .tools import Completion, completions, counted
 
 # Cores when the user names no number and no profile. Small on purpose: this is
 # a laptop-safe default, and the machines where a bigger one would help are the
@@ -82,9 +82,9 @@ def default_conda_prefix() -> Path:
 
     It is more load-bearing than it looks. Snakemake addresses a deployed
     environment by md5(realpath(envs_dir) + env file content), so moving this
-    directory invalidates every environment — and with them AMRFinder's
-    database, which lives inside its environment rather than under
-    `--databases`.
+    directory invalidates every environment. (Until 2026-11-07 it took
+    AMRFinder's database with them, which lived inside its environment; it is
+    under `--databases` now.)
     """
     override = os.environ.get("COMPAREM2_CONDA_PREFIX")
     if override:
@@ -363,7 +363,8 @@ def run_snakemake(cmd: list[str]) -> int | None:
 
 
 def any_outputs_exist(selected: list[str] | None, workdir: Path,
-                      databases: Path, samples: tuple[str, ...]) -> bool:
+                      databases: Path, samples: tuple[str, ...],
+                      found: Mapping[str, Completion] | None = None) -> bool:
     """Did any selected tool leave a complete set of declared outputs?
 
     The question behind "is there anything to report". Asked of the declared
@@ -372,8 +373,13 @@ def any_outputs_exist(selected: list[str] | None, workdir: Path,
 
     One finished unit of work is enough — a single genome's annotation is worth
     reporting — which is why this reads `complete > 0` and not `Completion.done`.
+
+    `found` is a `completions()` map already read from the same directory, so a
+    caller that is about to render the report walks the tree once, not twice.
     """
-    return any(completion(tool, workdir, databases, samples).complete
+    if found is None:
+        found = completions(CATALOGUE, selected, workdir, databases, samples)
+    return any(found[tool.name].complete
                for tool in CATALOGUE.closure(selected))
 
 
@@ -934,7 +940,7 @@ def main(argv: list[str] | None = None) -> int:
     # And nothing at all under --report-only, which fetches nothing.
     pending = [db for db in CATALOGUE.databases(args.until)
                if not args.report_only
-               and not db.ready_path(databases, workdir).exists()]
+               and not db.ready_path(databases).exists()]
     if pending:
         known = sum(db.size for db in pending if db.size is not None)
         unmeasured = [db for db in pending if db.size is None]
@@ -1080,12 +1086,14 @@ def main(argv: list[str] | None = None) -> int:
     # The one case that stays silent is a run that produced nothing: a report
     # describing no results is worse than no report, which is the rule the TUI
     # settled on.
-    if failure and not any_outputs_exist(args.until, workdir, databases, samples):
+    found = completions(CATALOGUE, args.until, workdir, databases, samples)
+    if failure and not any_outputs_exist(args.until, workdir, databases, samples,
+                                         found):
         print("nothing ran; no report written", file=sys.stderr)
         return failure
 
     report = render_report(CATALOGUE, args.until, workdir, databases, samples,
-                           command=_invocation())
+                           command=_invocation(), found=found)
     print(f"report: {report}", file=sys.stderr)
     # After the report exists and before the return, so it fires on a partial
     # run too. That is the case the shell cannot express: `comparem2 && mail`

@@ -155,13 +155,14 @@ missing, not a total that includes what you already have:
 to download: amrfinder (1 of unknown size) -> /home/you/.comparem2/databases
 ```
 
-!!! warning "AMRFinder ignores `-d`"
-    `amrfinder -u` refuses the `--database` option (*"only operates on the
-    default database directory"*), so its data lands inside the deployed
-    environment rather than under `--databases`. CompareM2 records that the
-    update ran, and that record lives with the run, so a rebuilt environment no
-    longer leaves a marker claiming data that is gone. Rebuilding the
-    environment does mean fetching it again: 241 MB, timed at 26 and 27 s.
+!!! note "AMRFinder's database moved in after 3.5.2"
+    Up to 3.5.2 AMRFinder's database lived inside the deployed `annotation`
+    environment, because `amrfinder -u` refuses a target directory, so it was
+    fetched again whenever that environment was rebuilt. It is now fetched
+    with `amrfinder_update -d` into `<databases>/amrfinder`, like the other
+    three: about 245 MB, 24 s on thylakoid. The first run after upgrading
+    fetches it once and re-runs AMRFinder, which takes seconds a genome. The
+    old copy inside the environment is no longer read.
 
 ### The two choices behind those numbers
 

@@ -48,7 +48,7 @@ Of that 62.5 GB, GTDB-Tk accounts for 60.8 GB. If you do not need taxonomic
 assignment, name the analyses you do want and the download drops to roughly
 3 GB; see [running a subset](20 usage.md#running-a-subset). The figure printed
 there reads 1.7 GB, because Bakta's and AMRFinder's databases publish no size.
-They cost 1.3 GB and 241 MB.
+They cost 1.3 GB and about 245 MB.
 
 The first run is also quiet for about a minute while Snakemake builds those six
 tool environments. That is expected, and `comparem2 --setup` does it in advance.
