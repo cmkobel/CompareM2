@@ -4042,3 +4042,37 @@ lock is stale by construction, and `departure()` releases it through `unlock()`,
 the same call `u` and `--unlock` make. Only if that fails is the user sent to
 `--unlock`. `y` is unchanged: that run's jobs are alive, and its lock is
 reported, not released.
+
+## 2026-11-09 — the docs get a dark mode, on the theme they already use
+
+The site had none: the built-in `readthedocs` theme is light-only and has no
+toggle. Two routes were weighed. Material for MkDocs has a built-in toggle
+(`palette`, `scheme: slate`), but it is a theme migration: `overrides/main.html`
+redefines a block only this theme has, and `extra.css` would need re-checking
+against new markup. The other route is a `prefers-color-scheme: dark` block in
+`docs/assets/extra.css`, which keeps the site exactly as it is in light mode,
+and that is what went in.
+
+**It follows the system setting; there is no toggle.** A toggle needs script
+and a stored preference; the report has neither, and it follows the system the
+same way. **The colours are the report's dark palette** (`report.py`, `CSS`), so
+the docs and the report a reader opens from them match.
+
+**There is no variable to flip.** theme.css and theme_extra.css set literal
+colours, so the block re-states each one the docs actually use: page, sidebar,
+tables, admonitions, code, search fields, and the previous/next buttons, which
+the theme sets with `!important`. A mkdocs upgrade that renames a selector lets
+the light colour through in that one place and fails nothing, so after one,
+build and look at a page with a table, an admonition and a code block.
+
+**Code highlighting is a second stylesheet, not more rules.** The
+`extrahead` block in `overrides/main.html` loads highlight.js's `github-dark`
+under the same media query, after the theme's `github`, at the same version
+base.html pins (11.8.0). The homepage hero uses `<picture>` to switch to
+`comparem2-logo-dark.svg`, as the README already did. The sidebar wordmark
+needs nothing: it sits on the blue header in both modes.
+
+Checked by building with `mkdocs build --strict` (clean) and screenshotting
+headless Chromium with the dark preference forced: the home page, Installation
+(warning and danger admonitions, a table, highlighted code) and the same page
+in light mode, unchanged.

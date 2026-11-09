@@ -1,6 +1,7 @@
 /* CompareM2 additions to the built-in `readthedocs` theme.
  *
- * Everything here is the sidebar header. The theme builds that slot for a
+ * Most of this is the sidebar header; the homepage hero and a dark-mode block
+ * follow it, the latter at the end with its own note. The theme builds that slot for a
  * circular avatar — theme.css pins `.wy-side-nav-search img` to 45x45 with
  * `border-radius:100%` — and the CompareM2 mark is a 5.9:1 wordmark, so the
  * crop has to go. The first attempt un-cropped it onto a white panel, which
@@ -80,4 +81,161 @@
   width: 100%;
   max-width: 420px;
   height: auto;
+}
+
+/* Dark mode, following the reader's system setting. The readthedocs theme has
+ * none and no toggle, so this is every colour theme.css and theme_extra.css set
+ * on something the docs actually use, re-stated for dark — there is no
+ * variable to flip. The palette is the report's dark one (report.py, `CSS`):
+ * #161616 page, #e8e8e8 text, #9a9a9a muted, #333 rules, #7fb3e8 accent, so a
+ * reader moving between the two sees the same colours.
+ *
+ * Kept as the theme sets them: both blue bars (the white wordmark needs them)
+ * and the admonition title strips, which are saturated with white text and
+ * read on either background.
+ *
+ * Code highlighting is the one part not here: overrides/main.html loads
+ * highlight.js's github-dark under the same media query, after the theme's
+ * github, so only the block background below is ours.
+ *
+ * The sidebar's current page is drawn in the page's own background in light
+ * mode (#fcfcfc on both), so it reads as a tab joined to the page. The same
+ * holds here: #161616 on both. If a selector below stops matching after a
+ * mkdocs upgrade, the light colour shows through in that one place — rebuild
+ * and look at a page with a table, an admonition and a code block. */
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark; }
+
+  body,
+  .wy-body-for-nav,
+  .wy-nav-content-wrap,
+  .wy-nav-content {
+    background: #161616;
+  }
+  body { color: #e8e8e8; }
+  hr { border-top-color: #333; }
+  footer,
+  .wy-breadcrumbs-extra,
+  #search-results .context {
+    color: #9a9a9a;
+  }
+
+  a, a code { color: #7fb3e8; }
+  a:hover, a:hover code { color: #a9c9ec; }
+  a:visited, a:visited code { color: #c39bd3; }
+
+  /* Sidebar. Neutral grey rather than the theme's warm #343131, which sits
+   * oddly beside a neutral page. */
+  .wy-nav-side { background: #1f1f1f; }
+  .wy-menu-vertical a:hover { background-color: #2e2e2e; }
+  .wy-menu-vertical li.current,
+  .wy-menu-vertical .current-section p {
+    background: #262626;
+  }
+  .wy-menu-vertical li.current a {
+    color: #b8b8b8;
+    border-right-color: #333;
+  }
+  .wy-menu-vertical li.current a:hover { background: #333; }
+  .wy-menu-vertical li.current > a,
+  .wy-menu-vertical li.current > a:hover,
+  .wy-menu-vertical li.on a,
+  .wy-menu-vertical li.on a:hover {
+    color: #e8e8e8;
+    background: #161616;
+  }
+  .wy-menu-vertical li.toctree-l1.current > a {
+    border-top-color: #333;
+    border-bottom-color: #333;
+  }
+  .wy-menu-vertical li.toctree-l2.current > a,
+  .wy-menu-vertical li.toctree-l2.current li.toctree-l3 > a {
+    background: #1c1c1c;
+  }
+  .wy-menu-vertical li.toctree-l3.current > a,
+  .wy-menu-vertical li.toctree-l3.current li.toctree-l4 > a {
+    background: #222;
+  }
+  .wy-menu-vertical li.current > a button.toctree-expand,
+  .wy-menu-vertical li.on a button.toctree-expand {
+    color: #9a9a9a;
+  }
+
+  /* Search fields: the sidebar's, on the blue header, and the results page's. */
+  input[type="text"],
+  input[type="search"],
+  form .search-query {
+    background: #1f1f1f;
+    color: #e8e8e8;
+    border-color: #333;
+    box-shadow: none;
+  }
+  .wy-side-nav-search input[type="text"] { border-color: #24578f; }
+  #search-results .search li,
+  #search-results .search li:first-child {
+    border-color: #333;
+  }
+
+  /* Code. Inline code keeps the theme's red, lightened to hold contrast. */
+  .rst-content code,
+  .rst-content tt,
+  code {
+    background: #1f1f1f;
+    border-color: #333;
+    color: #f28b82;
+  }
+  .rst-content pre code {
+    background: #1e1e1e;
+    color: #e8e8e8;
+  }
+  .rst-content .admonition code {
+    background: rgba(0, 0, 0, 0.25);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #e8e8e8;
+  }
+
+  /* Tables. */
+  .rst-content table.docutils,
+  .rst-content table.docutils td,
+  .rst-content table.docutils th,
+  .rst-content table.docutils thead th,
+  td, th {
+    border-color: #333 !important;
+  }
+  .rst-content table.docutils thead,
+  .rst-content table.docutils caption {
+    color: #e8e8e8;
+  }
+  .rst-content table.docutils:not(.field-list) tr:nth-child(2n-1) td {
+    background-color: #1f1f1f;
+  }
+
+  /* Admonition bodies: each the theme's hue, dimmed. */
+  .rst-content .admonition,
+  .rst-content .note,
+  .rst-content .seealso {
+    background: #182634;
+  }
+  .rst-content .warning,
+  .rst-content .attention,
+  .rst-content .caution {
+    background: #33271a;
+  }
+  .rst-content .danger,
+  .rst-content .error {
+    background: #351e1c;
+  }
+  .rst-content .tip,
+  .rst-content .hint,
+  .rst-content .important {
+    background: #15302b;
+  }
+
+  /* Previous / Next. The theme sets these with !important. */
+  .btn-neutral,
+  .btn-neutral:visited {
+    background-color: #262626 !important;
+    color: #e8e8e8 !important;
+  }
+  .btn-neutral:hover { background-color: #333 !important; }
 }

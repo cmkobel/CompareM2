@@ -1,5 +1,8 @@
 <p class="comparem2-hero">
-  <img src="assets/logo/comparem2-logo.svg" alt="CompareM2" width="420">
+  <picture>
+    <source srcset="assets/logo/comparem2-logo-dark.svg" media="(prefers-color-scheme: dark)">
+    <img src="assets/logo/comparem2-logo.svg" alt="CompareM2" width="420">
+  </picture>
 </p>
 
 CompareM2 takes microbial genome assemblies, isolates or MAGs and from any

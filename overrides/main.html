@@ -24,3 +24,17 @@
     {%- endif %}
   </a>
 {% endblock %}
+
+{#
+  Dark mode follows the reader's system setting; the rules are in
+  docs/assets/extra.css. This block adds the two things CSS cannot: the
+  color-scheme hint, so the browser draws scrollbars and form controls dark,
+  and highlight.js's dark GitHub style. It loads after the theme's light one
+  (`extrahead` follows the `styles` block in base.html), with the same
+  selectors, so under the media query it wins and otherwise is ignored. Same
+  highlight.js version as base.html pins — bump both together.
+#}
+{% block extrahead %}
+  <meta name="color-scheme" content="light dark" />
+  <link rel="stylesheet" media="(prefers-color-scheme: dark)" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" />
+{% endblock %}
