@@ -12,13 +12,13 @@ which is which saves everyone an issue.
   - **Read-level processing.** Mapping, assembly and binning are highly
     dependent on sequencing technology. CompareM2 works strictly downstream of
     them, which is what makes it technology-independent.
-  - **Biosynthetic gene clusters.** antiSMASH was considered and left out: it
-    pins `biopython 1.78` and `diamond 2.1.11` against the newer versions
-    CheckM2, Bakta and GTDB-Tk need, and a solvable environment was judged
-    worth more than one BGC caller.
 
-Left out for the same reason: eggNOG-mapper, InterProScan, dbCAN, gapseq,
-IQ-TREE, clusterProfiler and Prokka.
+Left out of v3, each for a reason of its own: eggNOG-mapper, InterProScan and
+dbCAN, which are the deep functional annotation above; gapseq, because CarveMe
+builds the same kind of model in minutes rather than hours; Prokka, because
+Bakta is the one annotator and weighs about half as much; clusterProfiler, an R
+package in a pipeline that no longer has R; and IQ-TREE, with FastTree building
+the core-genome tree.
 
 ## Candidates
 
@@ -43,10 +43,20 @@ Genuinely wanted, not yet in:
   - **Horizontally transferred gene identification.** The pangenome section can
     already point at candidates: a gene pattern shared by genomes that are not
     neighbours in the tree.
+  - **Biosynthetic gene clusters**, with antiSMASH. It was selected for v3 and
+    then dropped, because it pins `biopython 1.78` and `diamond 2.1.11` against
+    newer versions other tools here need, and at the time every tool had to
+    share one environment. They no longer do. A dependency set that conflicts
+    with the others is the kind of reason a seventh environment needs, so the
+    conflict is no longer what keeps it out. Its databases would have to be
+    measured first.
 
-Anything added has to declare its database size in bytes and solve into one of
-the existing conda environments. Both are hard constraints and not
-preferences; see `DESIGN.md`.
+Anything added declares its database's download size, measured from
+`content-length` where the database has one and declared unmeasured where it
+does not, so that the cost printed before a run stays honest. It joins one of
+the six conda environments, unless it brings a dependency ecosystem of its own,
+which is a reason for a seventh, written down with the measurement that
+justified it. An environment per tool is not. See `DESIGN.md`.
 
 Please [open an issue](https://github.com/cmkobel/CompareM2/issues) if you have
 ideas or requests.

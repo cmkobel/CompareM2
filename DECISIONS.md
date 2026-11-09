@@ -4122,3 +4122,61 @@ entry is gone. The file stays where it is, MkDocs still builds it at
 to it, and `docs/assets/CHEATSHEET.da.pdf` is untouched. MkDocs reports a page
 left out of nav at INFO, so `mkdocs build --strict` stays clean. That was checked
 with 1.6.1.
+
+## 2026-11-09 — on-disk sizes are given in decimal GB
+
+A documentation review found the database volume understated by 7 GB. The
+download sizes are decimal GB, from `content-length`, and `human_bytes` prints
+decimal. The on-disk sizes came from `du -h`, which counts in binary units and
+rounds up, and the two sat in one table under one unit. The database root was
+recorded as both "101 GB" and 107,812,346,055 bytes, which is 107.8 GB. So
+"plan volumes around 101 GB" was 7 GB short.
+
+Carl chose decimal GB everywhere. The root is now 107.8 GB, which is exact. GTDB
+r232 on disk is about 101 GB: `du -h` printed 94G, which is at most 100.9 GB,
+and the root's byte count pins it at 100.4–100.9. CheckM2 is about 3.1 GB and
+Bakta light about 4.3 GB, both converted from `du -h` and marked approximate
+until someone re-measures them with `du -sb`. **The environment sizes (1.4 GB,
+55 MB and so on) were left alone**: they are "by `du`" with no flags recorded,
+so their unit is not known, and converting them would be a guess. The same goes
+for AMRFinder's 245 MB. The fetch deletes GTDB's tarball only after extracting
+it, so `docs/` now also gives the peak while that happens, about 169 GB. That is
+arithmetic from the fetch steps, not a measurement. Earlier entries in this file
+keep the figures they were written with.
+
+## 2026-11-09 — the recipe rule outlives its DIAMOND reason
+
+DESIGN.md said the bioconda recipe could not list the tools because it "would
+have to drop CheckM2 or Bakta". That stopped being true with checkm2's
+2026-10-04 rebuild, which accepts DIAMOND >=2.1.11. **The rule stands** on the
+two reasons that remain, as Carl confirmed. A recipe listing all fourteen is a
+single co-solve, the shape that stopped solving on 2026-09-07, so one bad month
+in bioconda would leave CompareM2 itself uninstallable. And it would pin the
+tools in a second place, which is how `pixi.toml` drifted from `catalogue.py`
+until 2026-09-03.
+
+## 2026-11-09 — antiSMASH is a candidate again
+
+**This reverses the reasoning of the first tool selection**, which dropped
+antiSMASH because it pins `biopython 1.78` and `diamond 2.1.11` and "one
+environment was judged worth more than one BGC caller". There has not been one
+environment since 2026-09-07, and DESIGN.md allows a seventh for a dependency
+set that conflicts with the rest. So the conflict no longer keeps it out, and
+Carl moved it from *What CompareM2 deliberately does not do* to *Candidates*.
+Nothing is added to the catalogue. Its databases are unmeasured, and that comes
+first.
+
+The same page said "Left out for the same reason" of eggNOG-mapper,
+InterProScan, dbCAN, gapseq, IQ-TREE, clusterProfiler and Prokka. That sentence
+had stopped being accurate before antiSMASH moved. The selection entry above
+gives other reasons for those tools: *wide, not deep*, CarveMe over gapseq,
+Prokka's package weight, R. The page now gives each tool's own reason. **IQ-TREE
+has none recorded**, so the page only says that FastTree builds the core-genome
+tree.
+
+The same page also called two rules for a new tool "hard constraints": a
+database size in bytes, and solving into an existing environment. Two shipped
+databases are `size=None`, and DESIGN.md allows a seventh environment. The page
+now matches DESIGN.md: a measured download size where there is a
+`content-length`, otherwise declared unmeasured, and a new environment only for
+a new ecosystem, with its reason written down.

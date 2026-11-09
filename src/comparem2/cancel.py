@@ -29,9 +29,10 @@ So each half is done here, directly, and the two halves are not symmetric:
 Both leave partial output files behind. That is what `--rerun-incomplete`
 handles, which `runner.run()` passes by default, so the next run redoes a rule
 that was interrupted rather than trusting half a result. Neither releases
-Snakemake's lock on the output directory — nothing here can, because the lock
-outlives the process — so a cancelled run is followed by `--unlock`, or `u` in
-the interface.
+Snakemake's lock on the output directory. Snakemake usually removes it itself
+once its jobs are gone, and what it leaves behind after `s` is stale by
+construction, so `tui.departure()` releases that one. A run left going with `y`
+keeps its lock, and is followed by `--unlock`, or `u` in the interface.
 """
 
 from __future__ import annotations

@@ -51,7 +51,7 @@ Want to see a report before committing any genomes of your own? There is
 [an example report](07 an example report.md) here, all fourteen tools over
 eight *Streptococcus mitis* group genomes. And once installed,
 `comparem2 --demo` runs four analyses over six bundled *Enterococcus faecium*
-plasmids and downloads nothing.
+plasmids and needs no databases.
 
   - [Quick start](05 quick start.md): install and run
   - [An example report](07 an example report.md): a real run, all 14 tools

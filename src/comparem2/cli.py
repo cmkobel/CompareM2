@@ -63,8 +63,8 @@ def default_databases() -> Path:
     used to be `./databases`, which meant the same command run from two
     directories silently fetched a second copy of up to 143 GB.
 
-    `$COMPAREM2_DATABASES` exists because home is the wrong place for 143 GB on
-    a cluster with a home quota, and it is the only way to move the location
+    `$COMPAREM2_DATABASES` exists because home is the wrong place for GTDB on a
+    cluster with a home quota, and it is the only way to move the location
     once for every run — `-d` has to be retyped on each invocation.
     """
     override = os.environ.get("COMPAREM2_DATABASES")
@@ -199,7 +199,7 @@ def run_settings(workdir: Path, databases: Path, conda_prefix: Path | None,
     `(what, where, origin)` triples, for the TUI's header. Three of these are
     settable by environment variable, and each one decides something a run
     cannot report on its own: a `$COMPAREM2_DATABASES` pointing somewhere
-    unexpected re-downloads up to 143 GB, a `$COMPAREM2_CONDA_PREFIX` that
+    unexpected re-downloads up to 62.5 GB, a `$COMPAREM2_CONDA_PREFIX` that
     moved means every tool environment solves again — Snakemake keys a deployed
     environment on the prefix's realpath — and `$SNAKEMAKE_PROFILE` decides
     whether this is a queue run at all. None of the three is visible anywhere
@@ -738,7 +738,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--demo", action="store_true",
                    help="run the four database-free analyses over six bundled "
                         "Enterococcus faecium plasmids; takes no assemblies, "
-                        "and downloads nothing")
+                        "and needs no databases")
     # A Snakemake profile directory or name, handed straight through. Cluster
     # submission is Snakemake's, not CompareM2's: the profile names the
     # executor (`slurm`, `cluster-generic`) and carries the account, partition
@@ -949,7 +949,7 @@ def main(argv: list[str] | None = None) -> int:
             size += (" + " if size else "") + f"{len(unmeasured)} of unknown size"
         names = ", ".join(db.name for db in pending)
         # Say where, because the default is no longer in sight of the cwd and
-        # this is the line that precedes a download of up to 143 GB.
+        # this is the line that precedes a download of up to 62.5 GB.
         print(f"to download: {names} ({size}) -> {databases}", file=sys.stderr)
 
     # One file per environment, so this is the number Snakemake will build: six

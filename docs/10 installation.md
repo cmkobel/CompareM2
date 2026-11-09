@@ -18,7 +18,7 @@ are needed. There is no flag for whether to do that. It always happens, into
     a machine with no conda on `PATH` at all, where both pixi routes ran a dry
     run to completion (2026-09-04).
   - **Disk.** 1.4 GB of tool environments, plus databases (see below). GTDB-Tk
-    alone is 60.8 GB to download and 94 GB unpacked.
+    alone is 60.8 GB to download and about 101 GB unpacked.
   - **RAM.** GTDB-Tk's classify step is the peak; its own paper reports under
     55 GB for GTDB-Tk 2's divide-and-conquer placement. Without GTDB-Tk, far
     less.
@@ -97,8 +97,8 @@ or `$COMPAREM2_CONDA_PREFIX`.
 
 !!! warning "Keep that path stable"
     Snakemake identifies an environment by a hash that includes the *realpath*
-    of the prefix, so moving it rebuilds all six, and re-fetches AMRFinder's
-    database, which lives inside `annotation`.
+    of the prefix, so moving it rebuilds all six. The databases are not
+    affected; they live under `--databases`.
 
     A **relative** `--conda-prefix` is the sharp edge. It resolves against the
     directory you typed the command in, so the same relative path from two
@@ -134,17 +134,23 @@ attempt was interrupted. Nothing needs to be placed by hand.
 
 | Database | Download | On disk | Needed by |
 |---|---:|---:|---|
-| GTDB r232 | **60.8 GB** | 94 GB | `gtdbtk` |
-| CheckM2 | 1.7 GB | 2.9 GB | `checkm2` |
-| Bakta light | 1.3 GB *(documented)* | 4.0 GB | `bakta` |
-| AMRFinder | unmeasured | — | `amrfinder` |
+| GTDB r232 | **60.8 GB** | ~101 GB | `gtdbtk` |
+| CheckM2 | 1.7 GB | ~3.1 GB | `checkm2` |
+| Bakta light | 1.3 GB *(documented)* | ~4.3 GB | `bakta` |
+| AMRFinder | unmeasured | ~245 MB | `amrfinder` |
 
 The 62.5 GB CompareM2 prints is GTDB plus CheckM2 and nothing else. Downloads
 are measured from `content-length`; Bakta's 1.3 GB is Bakta's own documented
 figure and AMRFinder publishes none, so both are counted as "of unknown size"
-instead of being folded into a total that would then look measured. **Plan
-volumes around 101 GB, not 62.5**, since extraction inflates GTDB from 60.8 GB
-to 94 GB.
+instead of being folded into a total that would then look measured. The
+on-disk column is approximate: the three GB figures were taken with `du -h`,
+which counts in binary units and rounds up, and are converted here to the
+decimal GB the downloads use.
+
+**Plan volumes around 108 GB, not 62.5.** That is what a full database root
+measured, 107,812,346,055 bytes, because extraction inflates GTDB from 60.8 GB
+to about 101 GB. The fetch deletes GTDB's 60.8 GB tarball only once it is
+extracted, so while that is happening the volume needs about 169 GB.
 
 Databases go to `~/.comparem2/databases` unless you pass `-d` or set
 `$COMPAREM2_DATABASES`. Before running, CompareM2 prints what is actually
@@ -174,7 +180,7 @@ is the authoritative answer to "what is this genome", but if you do not need
 taxonomy, leaving it out is the single biggest saving available. See
 [running a subset](20 usage.md#running-a-subset).
 
-Bakta uses the light database (1.3 GB, 4.0 GB on disk) instead of the full one
+Bakta uses the light database (1.3 GB, about 4.3 GB on disk) instead of the full one
 (30 GB, 84 GB on disk). That saves 29 GB for less specific functional
 annotation, which a wide view can absorb. Note though that the Bakta paper's
 annotation-quality figures are measured on the full database, a 53 GB version
@@ -308,7 +314,7 @@ jobs starting and finishing as the queue runs them.
 git clone https://github.com/cmkobel/CompareM2.git
 cd CompareM2
 pixi install
-pixi run pytest        # 384 unit tests, no databases and no tools needed
+pixi run pytest        # 389 unit tests, no databases and no tools needed
 pixi run comparem2 --help
 ```
 

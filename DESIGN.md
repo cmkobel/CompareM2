@@ -14,7 +14,7 @@ and metabolic analysis is where DRAM and nf-core/funcscan are already strong; a
 fast wide sweep is not well served, and it is what v2's benchmark result —
 near-linear scaling with input count — actually supports.
 
-Every other decision follows from that one. Fourteen tools instead of 30+, two
+Every other decision follows from that one. Fourteen tools instead of 30+, six
 conda environments instead of 25, one runtime instead of two.
 
 ## The shape
@@ -29,11 +29,16 @@ src/comparem2/
   tools.py      the contract: Tool, Database, Context, Registry, Scope
   catalogue.py  the fourteen specs — command lines and outputs
   guidance.py   what each tool does and how to read it, for the report
-  snakefile.py  generates the Snakefile and the two env files
+  snakefile.py  generates the Snakefile and the six env files
   cli.py        arguments, input canonicalisation, hands off to Snakemake
   runner.py     drives Snakemake's API, emits structured events
   tui.py        Textual interface over those events
+  cancel.py     stops a run already going: the queue, or the process tree
   report.py     renders the HTML report
+  steps.py      the small steps a rule runs around a command
+  carve_scip.py the wrapper in front of `carve`
+  biosynthesis.py  the one tool that is ours
+  demo/         the bundled plasmids behind `--demo`
 ```
 
 The trick that makes generation work: `Context` renders every path from a sample
@@ -89,8 +94,9 @@ stamp can outlive the data it claims.
 ## Steps around a command
 
 Eleven of the fourteen tools are one command: arguments in, declared files out.
-GTDB-Tk is not, and rather than let it become a hand-written rule it gets two
-fields that every tool could use and only it does.
+GTDB-Tk is not, and rather than let it become a hand-written rule it gets three
+fields that every tool could use. Only it uses the first two; the third it
+shares with panaroo.
 
 - **`Tool.files`** — input files the tool needs that are nobody's output, as a
   mapping of path to content rendered from the `Context`. `prepare()` writes
@@ -204,9 +210,10 @@ uninstallable, and it is what two was trading away for a disk saving.
 makes easy and it is v2's 25 environments in another form: fourteen solves cost
 fourteen copies of DIAMOND, python and numpy, and the user pays on first run.
 Six is the number of distinct ecosystems, not a compromise between one and
-fourteen — and per-rule deployment remains the only distribution model that can
-work at all, because a recipe listing the tools as run dependencies would still
-have to drop CheckM2 or Bakta.
+fourteen — and per-rule deployment remains the only distribution model that
+keeps that separation, because a recipe listing the tools as run dependencies
+is all fourteen in one co-solve: the shape that stopped solving on 2026-09-07,
+with CompareM2 itself as the package left uninstallable.
 
 Six consequences worth knowing:
 
@@ -365,9 +372,10 @@ something already published. The post-mortems are in
   about what a re-run will skip rather than a guess. Results found on disk are
   a *different state* from results this session produced.
 - **Every environment must carry its reason in `catalogue.py`.** There are six,
-  each one an ecosystem: the DIAMOND conflict for `checkm2`, the 2026-09-07 Perl
-  breakage for the rest, both written above the specs with the measurement that
-  justified them. A test enforces the list. v2 reached 25 environments by making
+  each one an ecosystem: the TensorFlow stack for `checkm2` (split out first,
+  over a DIAMOND conflict that has since gone), the 2026-09-07 Perl breakage for
+  the rest, both written above the specs with the measurement that justified
+  them. A test enforces the list. v2 reached 25 environments by making
   isolation the default rather than the exception, and an environment per *tool*
   is that mistake in a cheaper disguise — six is the count of ecosystems, and a
   seventh needs a reason of the same kind, not a preference.
@@ -390,12 +398,12 @@ something already published. The post-mortems are in
 - **The database directory defaults to a shared, home-relative location**
   (`~/.comparem2/databases`, or `$COMPAREM2_DATABASES`), never one relative to
   the cwd or the output directory. Databases outlive any one run's results, and
-  a per-run default silently buys a second copy of 143 GB.
+  a per-run default silently buys a second copy of every one of them, GTDB's
+  60.8 GB download included.
 - **The conda prefix defaults the same way** (`~/.comparem2/envs`, or
   `$COMPAREM2_CONDA_PREFIX`), for a sharper version of the same reason:
   Snakemake includes the prefix's realpath in each environment's hash, so
-  moving it re-solves all six environments *and* re-fetches AMRFinder's
-  database, which lives inside `annotation`.
+  moving it re-solves all six environments.
 - **Cluster submission is Snakemake's, and so is the variable that turns it
   on.** `--profile` defaults from `$SNAKEMAKE_PROFILE`, declared `env_var=` on
   Snakemake's own `--profile`, and there is deliberately no
@@ -407,10 +415,15 @@ something already published. The post-mortems are in
   the *effective* profile, not on `args.profile`, which is what it did for as
   long as the variable went unread here.
 - **The bioconda package must not grow tool dependencies.** It ships the
-  pipeline; Snakemake deploys the tools. Adding them to the recipe would
-  require dropping CheckM2 or Bakta — see *One deployment model*. The same
-  rule applies to `pixi.toml`, which listed them until 2026-09-03 and drifted
-  from `catalogue.py` while it did.
+  pipeline; Snakemake deploys the tools. Listing them in the recipe would make
+  every install one co-solve of all fourteen, the shape that stopped solving on
+  2026-09-07, so one bad month in bioconda would leave CompareM2 itself
+  uninstallable — see *One deployment model*. It would also pin the tools in a
+  second place, and a second place drifts: the same rule applies to
+  `pixi.toml`, which listed them until 2026-09-03 and drifted from
+  `catalogue.py` while it did. Until CheckM2's 2026-10-04 rebuild it would also
+  have meant dropping CheckM2 or Bakta over DIAMOND; that reason has gone, and
+  these two have not.
 - **Snakemake is invoked as `sys.executable -m snakemake`**, never as a bare
   `snakemake`. It is this package's own dependency, so the correct one is the
   one beside the running interpreter; by name it was simply not found when a
@@ -556,5 +569,7 @@ something already published. The post-mortems are in
   audit. What ships instead is the panel and its compound classes; the
   aggregation that would name niches sits on top of per-compound calls, so it
   can be added when a citable source is.
-- **Report sections** still to write from scratch: v2 never displayed fasttree or
-  treecluster, so those are new rather than ports.
+- ~~**Report sections** still to write from scratch: v2 never displayed fasttree or
+  treecluster, so those are new rather than ports.~~ Closed 2026-09-02: every
+  tool has its own section, fasttree's drawn by the same phylogram renderer as
+  mashtree's.

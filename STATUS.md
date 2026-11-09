@@ -4,7 +4,7 @@ What is currently true of a real run. This file changes whenever something is
 re-run, which is why it is not in [DESIGN.md](DESIGN.md) — decisions should not
 need editing because a tool was verified again.
 
-Last updated **2026-11-07**. The tool numbers are from runs on thylakoid; the
+Last updated **2026-11-09**. The tool numbers are from runs on thylakoid; the
 pre-tag checks for v3.1.0 are from the laptop and say so.
 
 ## The docs showcase run: eight genomes, all fourteen tools, through SLURM
@@ -2437,19 +2437,30 @@ describe 1.8.0.
 
 | Database | Download | On disk | Note |
 | -------- | -------: | ------: | ---- |
-| GTDB r232 | 60.8 GB | **94 GB** | download measured; on-disk measured 2026-09-03 when the root was moved. 97% of the measured download total. **r226 was wrong**: gtdbtk 2.7.2 accepts only r232 |
-| CheckM2 | 1.7 GB | 2.9 GB | measured |
-| Bakta light | 1.3 GB | 4.0 GB | download figure is Bakta's documented one; on-disk measured |
-| AMRFinder | unmeasured | — | version `2026-08-07.1`, 26 s to fetch. Lands in `$CONDA_PREFIX`, **not** under `--databases` |
+| GTDB r232 | 60.8 GB | **~101 GB** | download measured; on-disk measured 2026-09-03 when the root was moved, as `du -h` 94G. 97% of the measured download total. **r226 was wrong**: gtdbtk 2.7.2 accepts only r232 |
+| CheckM2 | 1.7 GB | ~3.1 GB | measured, as `du -h` 2.9G |
+| Bakta light | 1.3 GB | ~4.3 GB | download figure is Bakta's documented one; on-disk measured, as `du -h` 4.0G |
+| AMRFinder | unmeasured | ~245 MB | by `du`, flags not recorded; version `2026-10-29.1`, 24 s to fetch with `amrfinder_update -d`, measured on thylakoid 2026-11-07. Under `--databases` since then; it lived in `$CONDA_PREFIX` before. No static URL, so no `content-length` to record as a download size |
 
-Software is 7.7 GB deployed against 62.5 GB of measured downloads, and GTDB-Tk
-is 60.8 GB of it. (This line said 1.58 GB until 2026-09-04; that was the
+On-disk figures in this table are converted to decimal GB, the unit the
+downloads are in. `du -h` counts in binary units and rounds up, so 94G is at
+most 100.9 GB, and the root's byte count below pins GTDB at 100.4–100.9 GB.
+They were recorded in binary units until 2026-11-09, which understated the
+volume to plan by 7 GB. Re-measure with `du -sb` before quoting any of them
+more precisely.
+
+Software was 7.7 GB deployed in the two-environment layout (1.4 GB by `du`
+for the six since 2026-09-07; see *Environments*) against 62.5 GB of measured
+downloads, and GTDB-Tk is 60.8 GB of it. (This line said 1.58 GB until 2026-09-04; that was the
 superseded pixi-manifest figure recorded under *Environments* above, measured
 with sylph still in the set, and it contradicted the two-environment table on
 this same page.) It was 143 GB until the release changed. **On disk the root is
-101 GB** (107,812,346,055 bytes, measured when it was moved to `/midifiler`) —
-extraction inflates GTDB from 60.8 to 94 GB, which is the figure to plan a
-volume around rather than the download size.
+107.8 GB** (107,812,346,055 bytes, measured when it was moved to `/midifiler`,
+before AMRFinder's database moved in; `du -h` printed 101G) — extraction
+inflates GTDB from 60.8 to about 101 GB, which is the figure to plan a volume
+around rather than the download size. The fetch deletes the tarball only after
+extracting it, so the peak while GTDB extracts is about 169 GB (not measured;
+the root plus the tarball).
 
 ## Where things live on thylakoid
 
@@ -2463,7 +2474,7 @@ Measured 2026-09-03. Earlier note: 914 GB free on `/evo` (2026-09-02, before the
 | --- | --- |
 | checkout | `/evo/postdoc/CompareM2` — a real clone, current with `origin/master` as of 2026-09-03, and **the only one with a `.pixi`** (843 MB now that the tools are Snakemake's job, down from 8.8 GB). **The path followed the repository rename**; the old lowercase path does not exist |
 | scratch clone | `/evo/postdoc/cm2-biosynth-check` — at `e5b181a`, one behind, no `.pixi` of its own; the biosynthesis verification ran here, and it is now deletable |
-| databases | `/midifiler/carl/cm2_db_v3` — **101 GB** (94 of it GTDB r232), deliberately **outside** any checkout so deleting a checkout does not cost a re-download. Moved off `/evo` on 2026-09-03 at Carl's call: `/midifiler` is 13 T where `/evo` had 785 G free. 12m23s at 138 MB/s, verified byte-identical at 107,812,346,055 |
+| databases | `/midifiler/carl/cm2_db_v3` — **107.8 GB** (about 101 of it GTDB r232; `du -h` 101G and 94G), deliberately **outside** any checkout so deleting a checkout does not cost a re-download. Moved off `/evo` on 2026-09-03 at Carl's call: `/midifiler` is 13 T where `/evo` had 785 G free. 12m23s at 138 MB/s, verified byte-identical at 107,812,346,055 |
 | conda prefix | `/evo/postdoc/cm2-envs-two` — 7.7 GB, **2** environments (`main` 6.0 GB, `checkm2` 1.8 GB). The older `cm2-conda-envs` (8.6 GB, 8 single-tool environments) is orphaned and deletable |
 | pixi | `/home/thylakoid/.pixi/bin/pixi`. `conda` now comes from the pixi *environment* (a declared dependency, 26.7.1); the pixi **global** at `~/.pixi/bin/conda` is what the 09-03 failure was about and is no longer relied on |
 

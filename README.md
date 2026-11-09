@@ -81,7 +81,8 @@ parses cleanly and builds the wrong DAG, which an end-to-end run catches slowly
 if at all.
 
 ```bash
-pip install pytest pytest-asyncio textual   # what CI installs; no pixi needed
+# what CI installs; no pixi needed
+pip install pytest pytest-asyncio textual "snakemake>=9,<10"
 python -m pytest tests/unit -q              # 389 tests, ~31 s
 
 pixi install                                # linux only

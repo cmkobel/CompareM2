@@ -468,8 +468,8 @@ Two inputs that reduce to the same name is an error, not a silent overwrite.
 
 Databases are shared across runs and not stored per-run, so deleting a checkout
 does not cost a re-download. Precedence is `-d`, then `$COMPAREM2_DATABASES`,
-then `~/.comparem2/databases`. A home directory is the wrong place for 101 GB
-on a cluster with a quota:
+then `~/.comparem2/databases`. A home directory is the wrong place for about
+108 GB on a cluster with a quota:
 
 ```bash
 export COMPAREM2_DATABASES=/evo/postdoc/cm2-databases
@@ -611,8 +611,6 @@ results_comparem2/
 A log sits beside the results it describes, so a per-genome tool leaves one log
 per genome rather than one for the run. Database downloads are the exception:
 they log to `<databases>/logs/`, next to the data instead of next to the run.
-All but AMRFinder's, which has no directory of its own under `--databases` and
-writes to `logs/download_amrfinder.log` here.
 
 The generated `Snakefile` is a normal Snakemake workflow. If something fails,
 that file plus the matching log is where to look, and you can run Snakemake
