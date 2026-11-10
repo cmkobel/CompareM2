@@ -2369,6 +2369,12 @@ PR now links it. **The pin PR was sent the same day as
 [bioconda-recipes#71426](https://github.com/bioconda/bioconda-recipes/pull/71426)**, before
 [bioconda-recipes#71400](https://github.com/bioconda/bioconda-recipes/pull/71400)
 merged: the two are independent, and the body says #71400 fixes `dev`.
+*#71400 merged 2026-11-10* (bgruening); bioconda's alpha23 build 1 reports
+`v1.1.alpha23` on linux-64 and linux-aarch64, checked with `pixi exec`. At his
+request the root cause went upstream as
+[matsen/pplacer#399](https://github.com/matsen/pplacer/issues/399). #71426 is
+labelled and waits for pchaumeil and aaronmussig; its body's `dev` sentence is
+now history.
 
 ### panaroo on linux-aarch64 needs intbitset alone
 

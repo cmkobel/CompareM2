@@ -112,6 +112,27 @@ passing on `pplacer-1.1.alpha23-h01ede22_1` — the fix verified in a real
 bioconda build, not only in the minimal dune project. `@BiocondaBot please add
 label` posted the same day.
 
+## Merged, 2026-11-10
+
+Approved and merged by bgruening at 06:49Z ("Danke!"). bioconda published
+`pplacer-1.1.alpha23` build 1 for linux-64 (`h01ede22_1`), linux-aarch64
+(`h9b329fd_1`) and osx-arm64 (`h4f1019d_1`) within four minutes, and
+`pixi exec … pplacer==1.1.alpha23=*_1 -- pplacer --version` prints
+`v1.1.alpha23` on GenomeDK (linux-64) and on the laptop (linux-aarch64).
+
+Before approving he commented on the `export` line: "That is a nice fake ;)
+The problem is that the installed version then always reports `dev` isn't it?
+Can you create an upstream issue that fixes that, please." Done the same
+morning as [matsen/pplacer#399](https://github.com/matsen/pplacer/issues/399),
+"`--version` reports `dev` when built from a release tarball": the fallback
+chain, the bioconda workaround, and two fixes — a `VERSION` file read before
+`dev`, or `export-subst` with `$Format:%(describe:tags)$`. The second was
+checked on setuptools-scm's GitHub tarball (tag `vcs-versioning-v2.6.0`): the
+first `.git_archival.txt` came out expanded, a second copy in the same archive
+did not, because git expands one `%(describe)` per archive. Replied in his
+thread with the answer (before: always `dev`; now `v1.1.alpha23`) and the
+issue link.
+
 ## What is left
 
 - **Before sending:** re-check both blobs, and that no other pplacer PR is open.
