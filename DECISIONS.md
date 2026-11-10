@@ -4180,3 +4180,47 @@ databases are `size=None`, and DESIGN.md allows a seventh environment. The page
 now matches DESIGN.md: a measured download size where there is a
 `content-length`, otherwise declared unmeasured, and a new environment only for
 a new ecosystem, with its reason written down.
+
+## 2026-11-10 — the weekly environment check runs on arm too
+
+**The goal is now full arm support, on Linux and on macOS** (Carl, 2026-11-10).
+Nothing is supported yet. This is the first step: a check that says, every
+week, how far off it is.
+
+`build` in `environments.yaml` now runs on `ubuntu-26.04-arm` and
+`macos-latest` (Apple silicon) as well as `ubuntu-latest`, and `demo` on the
+two Linux runners. macOS gets no `demo` because `comparem2` refuses to start
+there (2026-10-12, below); the environments are checked anyway, because that
+check does not go through the CLI. Until today the only arm evidence was hand
+runs on the laptop, each one stale the week after, because bioconda moves
+underneath the environments. A solve on 2026-11-10 found a change nobody had
+seen. bakta 1.12 needs `blast >=2.17`, and bioconda has no linux-aarch64 build
+of that, so the solver falls back to bakta 1.11.4 with pyhmmer 0.12, and that
+pair crashes on the first genome (STATUS.md, *linux-aarch64, end to end*).
+
+**gtdbtk is left out of the arm builds rather than left failing.** Every
+gtdbtk >=2.7 pins `pplacer 1.1.alpha19`, which is linux-64 only, until
+bioconda-recipes#71426 is merged. A job everyone expects to be red teaches
+everyone to ignore the workflow. So `gtdbtk-arm` inverts the test, on both
+arm runners: it dry-runs the solve and fails when the solve *succeeds*, which
+turns #71426 landing into a red run that says what to delete. It also
+requires the failure to name pplacer alpha19, so a channel outage cannot pass
+as "still blocked".
+
+The lock artifacts are now named `<environment>-<os>-<arch>-lock`, because two
+uploads with one name fail, and both arm runners report `ARM64`. The x86 names
+changed with them, so comparing with a week before this one means matching
+`basic-lock` against `basic-Linux-X64-lock`.
+
+Rejected:
+
+- **`ubuntu-24.04-arm`**, which is generally available where 26.04-arm is
+  still a public preview (runner-images#14226). `ubuntu-latest` moves to 26.04
+  this month (#14748). On 26.04 the two Linux jobs differ in architecture
+  alone, and arm gets the newest glibc, which is what caught checkm2 on x86.
+- **An arm `gtdbtk` job now.** It cannot get past building the environment.
+  Add it on Linux arm when `gtdbtk-arm` goes red. On macOS, also wait for a
+  GTDB-Tk release that carries #723.
+- **Lifting the macOS refusal so `demo` can run there — not yet, rather than
+  never.** Lifting it says macOS works, and nothing has run there through the
+  pipeline. It is the next step once a run on the laptop under macOS has.

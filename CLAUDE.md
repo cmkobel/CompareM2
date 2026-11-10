@@ -118,8 +118,13 @@ come out 29 of 30, and CheckM2's three bundled models loaded and run on a zero
 vector, which must give the numbers measured on thylakoid. Solving is not the
 test. On 2026-09-24 carveme solved, installed, and had no solver. The runner is
 `ubuntu-latest` on purpose: its move to 26.04 is what caught checkm2 failing
-on glibc 2.41+, on 2026-10-26. A new environment needs an entry in `check.py`,
-and a unit test enforces that. The same workflow's `demo` job runs
+on glibc 2.41+, on 2026-10-26. `build` also runs on `ubuntu-26.04-arm` and
+`macos-latest` (Apple silicon), and `demo` on the Linux arm runner — every
+environment but gtdbtk, which no gtdbtk >=2.7 solves on arm until
+bioconda-recipes#71426; the `gtdbtk-arm` job goes red when that changes,
+saying what to delete. Full arm support on Linux and macOS is the goal; arm is
+checked there, not yet supported. A new environment needs an entry in
+`check.py`, and a unit test enforces that. The same workflow's `demo` job runs
 `comparem2 --demo` as a user would, then again, and `check.py demo` requires
 the planted duplicate pair to agree in all four tools and the second run to
 find nothing to do. Its `gtdbtk` job runs `--until gtdbtk` against a 40 MB
