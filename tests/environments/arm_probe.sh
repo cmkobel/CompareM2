@@ -20,6 +20,15 @@
 # the summary at the end says which expectations held.
 
 set -u
+
+# A Mac that idle-sleeps mid-run stops every tool at once and the seconds keep
+# counting: on 2026-11-10 two sleeps put 21 minutes into a 40-minute run and
+# read as panaroo stalling. `-i` holds off idle sleep on battery too, though not
+# a closed lid.
+if [ "$(uname -s)" = Darwin ] && [ -z "${CM2_PROBE_CAFFEINATED:-}" ]; then
+  CM2_PROBE_CAFFEINATED=1 exec caffeinate -i "$0" "$@"
+fi
+
 here=$(cd "$(dirname "$0")/../.." && pwd)
 work=${1:-$HOME/cm2-arm-probe}
 mkdir -p "$work"

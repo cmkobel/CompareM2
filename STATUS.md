@@ -2568,7 +2568,62 @@ pyrodigal 3.x). Catching this needs bakta on real input, which needs the
 1.8.1. 16 KiB pages on Linux, which only this laptop has (GitHub's Linux arm
 runner is 4 KiB). macOS through the pipeline: `comparem2` refuses there, and
 CI checks only the environments. `tests/environments/arm_probe.sh` is the
-script for running it there.
+script for running it there. *Run on macOS the same day: see the next section.*
+
+### macOS arm64, end to end — 2026-11-10
+
+The first pipeline run under macOS. The same M1 laptop, booted into macOS
+(Darwin 27.2.0, 16 KiB pages), `arm_probe.sh` at `1c68c93`, which calls
+`main()` with the platform refusal switched off. Working material, outside git:
+`~/cm2-arm-probe/`. osx-arm64 resolves bakta 1.12.2, mlst 2.33.1, panaroo
+1.8.1, carveme 1.6.6, and checkm2 1.1.0 on Python 3.12.15.
+
+*`--demo`, twice:* 4 of 4 tools, `check.py demo` passes, and the second run
+found nothing to do. *The thirteen tools other than GTDB-Tk* over
+`tests/E._faecium`, with databases and environments already in place: **exit 1,
+on checkm2 alone.** Against thylakoid, **19 of 20 hold**: bakta CDS, AMRFinder,
+mlst, skani, panaroo 3,780 / 2,092 (the 1.8.1 figure, as on linux-aarch64),
+snp-dists, FastTree, and CarveMe and biosynthesis for all four genomes. The
+duplicate pair agrees in every tool that ran.
+
+*The wall time is not a measurement.* 2,385 s, of which **about 1,285 s was the
+laptop asleep**: `pmset -g log` has idle sleep at 14:16:05 for 595 s and
+maintenance sleep at 14:26:09 for 690 s, matching to the second the two gaps in
+panaroo's alignment step, after which all four genes in flight finished
+together. Awake, the run was about 18 minutes at `--cores 4` and panaroo's
+alignments about 4. The probe now restarts itself under `caffeinate -i` on
+Darwin.
+
+**checkm2 fails under `spawn`, macOS's default start method.** The same bug
+GTDB-Tk had (#723): `predictQuality.py` hands four name-mangled methods,
+`__set_up_prodigal_thread`, `__reportProgress`, `__set_up_metadata_thread` and
+`__report_progress_metadata`, to `mp.Process`, and the child process cannot look
+them up again by name. Every prodigal worker dies, and the run ends at `No
+protein files were generated`. Reproduced outside Snakemake, then run from a
+shadow copy with the four renamed to one underscore, on 116_2:
+
+| | `spawn` | `forkserver` | `fork` |
+| --- | --- | --- | --- |
+| as released | AttributeError, 10 s | AttributeError, 10 s | 100.0 / 0.47, 49 s |
+| renamed | 100.0 / 0.47, 56 s | 100.0 / 0.47, 56 s | 100.0 / 0.47, 50 s |
+
+Renamed, over all four genomes: **completeness 100.0, contamination 0.47 /
+0.47 / 3.42 / 1.54**, thylakoid's numbers, in 1 min 54 s.
+
+It is known upstream and not moving. Issue
+[chklovski/CheckM2#97](https://github.com/chklovski/CheckM2/issues/97) has been
+open since 2024-02; [#164](https://github.com/chklovski/CheckM2/pull/164), open
+since 2026-10-30 and unreviewed, makes the same four renames plus `== None` to
+`is None`. The last commit to CheckM2's `main` is 2025-03-20, and the release
+is still 1.1.0. The bioconda recipe is `noarch: python` with no patches, so a
+recipe patch would reach every platform at once. Linux is not exposed while
+the environment stays below Python 3.14, where `forkserver` becomes the
+default. *Unverified:* whether anything holds the checkm2 environment below
+3.14.
+
+**CI is blind to it.** `check.py`'s CheckM2 check loads the three models on a
+zero vector and never reaches `predict`'s prodigal stage, which is why
+`macos-latest` passes.
 
 ## Databases
 
