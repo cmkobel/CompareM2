@@ -17,6 +17,18 @@ name: environments
 #
 # The `gtdbtk` job is the one database tool that fits on a runner, and only
 # because its database is trimmed to 40 MB — see the job.
+#
+# `build` runs on three platforms: x86-64 Linux, linux-aarch64, and macOS on
+# Apple silicon (`macos-latest` is arm64). `demo` runs on the two Linux ones;
+# on macOS `comparem2` refuses to start, so only the environments are checked
+# there. GitHub has no `-latest` label for Linux arm, so that runner is named
+# by version, and 26.04 is what `ubuntu-latest` moves to in November 2026
+# (runner-images#14748): the two then differ in architecture alone, and arm
+# gets the newest glibc, which is what caught checkm2 on x86 (STATUS.md). The
+# arm image was still a public preview when this was written
+# (runner-images#14226). Move it by hand. None of this makes arm supported; it
+# is the check that says whether it could be. gtdbtk is the one environment
+# that cannot be built on either arm platform yet — see `gtdbtk-arm`.
 
 on:
   schedule:
@@ -38,11 +50,19 @@ jobs:
 
   build:
     needs: list
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         environment: ${{ fromJSON(needs.list.outputs.names) }}
+        runner: [ubuntu-latest, ubuntu-26.04-arm, macos-latest]
+        exclude:
+          # No gtdbtk >=2.7 solves on arm — see `gtdbtk-arm`, which says when
+          # to delete these.
+          - environment: gtdbtk
+            runner: ubuntu-26.04-arm
+          - environment: gtdbtk
+            runner: macos-latest
     defaults:
       run:
         shell: bash -el {0}
@@ -60,6 +80,10 @@ jobs:
 
       - name: Build ${{ matrix.environment }}
         run: |
+          # The page size too: the laptop the arm runs were first made on is
+          # Asahi Linux, at 16 KiB, and a binary built for 4 KiB can fail there
+          # and nowhere else.
+          echo "$(uname -m), page size $(getconf PAGESIZE)"
           conda --version
           conda env create --yes --quiet \
             --file "$RUNNER_TEMP/envs/${{ matrix.environment }}.yaml" \
@@ -75,12 +99,16 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.environment }}-lock
+          name: ${{ matrix.environment }}-${{ runner.os }}-${{ runner.arch }}-lock
           path: ${{ runner.temp }}/${{ matrix.environment }}.lock.txt
           if-no-files-found: ignore
 
   demo:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-26.04-arm]
     defaults:
       run:
         shell: bash -el {0}
@@ -160,3 +188,44 @@ jobs:
 
       - name: Check the classification
         run: python tests/environments/check.py gtdbtk "$RUNNER_TEMP/out"
+
+  gtdbtk-arm:
+    # A job that fails when it ought to start passing. Every gtdbtk >=2.7 pins
+    # pplacer 1.1.alpha19, which bioconda builds for linux-64 only, so the
+    # environment does not solve on arm and is left out of the arm builds
+    # above. bioconda-recipes#71426 moves the pin to alpha23, which has
+    # linux-aarch64 and osx-arm64 builds. This solves the environment without
+    # building it, and fails once the solve succeeds: the signal to delete this
+    # job and the exclusions. Linux arm then gets the `gtdbtk` job too. macOS
+    # does not until a GTDB-Tk release carries Ecogenomics/GTDBTk#723, without
+    # which it hangs at gene calling under `spawn`. A solve that fails for any
+    # other reason fails this as well, rather than passing as "still blocked".
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-26.04-arm, macos-latest]
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          auto-activate-base: true
+          activate-environment: ""
+
+      - name: gtdbtk must still be blocked on pplacer alpha19, and only on that
+        run: |
+          PYTHONPATH=src python tests/environments/check.py write "$RUNNER_TEMP/envs"
+          status=0
+          conda env create --dry-run --quiet --file "$RUNNER_TEMP/envs/gtdbtk.yaml" \
+            --prefix "$RUNNER_TEMP/env" > "$RUNNER_TEMP/solve.log" 2>&1 || status=$?
+          cat "$RUNNER_TEMP/solve.log"
+          if [ "$status" -eq 0 ]; then
+            echo "::error::gtdbtk now solves on $(uname -sm). Delete this job and the gtdbtk exclusions in build."
+            false
+          fi
+          grep -qE "pplacer.*1\.1\.alpha19" "$RUNNER_TEMP/solve.log"
