@@ -926,7 +926,7 @@ def test_no_tool_is_deployed_off_linux(monkeypatch, tmp_path, platform, name):
 
     for argv in (["--demo", "-o", str(out)], ["--setup"],
                  [str(tmp_path / "a.fna"), "-o", str(out)]):
-        with pytest.raises(SystemExit, match=f"Linux only .* on {name}"):
+        with pytest.raises(SystemExit, match=f"does not run on {name} yet"):
             cli_mod.main(argv)
     assert ran == [] and not out.exists()
 

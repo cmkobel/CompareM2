@@ -51,7 +51,7 @@ what the report gets wrong on that set and how it says so.
 
 ## Installing
 
-Linux only, since the analysis tools are `linux-64`. What you install is the
+Linux on x86-64 only; arm is not supported yet. What you install is the
 pipeline, not the tools. Snakemake deploys those into six conda environments
 (1.4 GB) the first time a rule needs one, and fetches four databases (62.5 GB
 measured, of which GTDB-Tk alone is 60.8 GB) as the workflow reaches them. Both

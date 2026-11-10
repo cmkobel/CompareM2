@@ -1,6 +1,6 @@
 # Quick start
 
-Linux only. The analysis tools are `linux-64`.
+Linux on x86-64 only, for now: arm is not supported yet.
 
 With [pixi](https://pixi.prefix.dev/latest/#installation):
 
