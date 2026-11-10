@@ -4224,3 +4224,48 @@ Rejected:
 - **Lifting the macOS refusal so `demo` can run there — not yet, rather than
   never.** Lifting it says macOS works, and nothing has run there through the
   pipeline. It is the next step once a run on the laptop under macOS has.
+
+## 2026-11-10 — CheckM2 on macOS: what to do is paused, to see where CheckM1 goes
+
+The first macOS pipeline run (STATUS.md, *macOS arm64, end to end*) failed
+only at checkm2, on its name-mangled `mp.Process` targets under `spawn`.
+Renaming four methods fixes it with thylakoid's numbers. What to do about it is
+**deliberately undecided** (Carl, 2026-11-10), because the landscape around
+CheckM moved this week, and the right answer depends on where it settles.
+
+What was found, so it need not be looked up again:
+
+- **CheckM2 is dormant, not dead.** Last commit 2025-03-20, release 1.1.0,
+  55 open issues, most of them TensorFlow/Keras drift. The fix is open as
+  chklovski/CheckM2#164 (2026-10-30), for #97 (2024-02). Only chklovski can
+  merge, release or transfer: wwood's own #138 has waited since 2025-03.
+  chklovski last answered an issue 2026-01-21. His public profiles place him
+  at QUT's Centre for Microbiome Research. PyPI's `checkm2` is 1.0.1 (2023).
+- **CheckM1 is moving.** 82 commits by Parks in November 2026 after two years
+  of almost none, three releases in three days, and 1.3.0 (2026-11-10)
+  replaces pplacer with Chaumeil's gPlace, results identical on 1,128 genomes.
+  Its 2015 reference data will not be updated, by design (Ecogenomics/CheckM#219),
+  and in 2024 Parks called v1 "largely deprecated" and pointed to v2 (#398).
+  Parks and Chaumeil are at Aalborg University.
+- **gPlace bears on the GTDB-Tk blocker.** It reproduces pplacer's placements
+  and ships linux-aarch64 wheels, no macOS build yet. GTDB-Tk #728 asks for it.
+  If GTDB-Tk adopts it, the pplacer pin stops mattering on Linux arm.
+
+The options weighed, and where each stands:
+
+- **A bioconda recipe patch carrying #164.** Bioconda's guidelines allow it
+  once the fix is upstream and linked. The only route reviewed by someone else.
+  The 2026-10-04 rebuild (bioconda-recipes#69888) is *not* precedent for it:
+  that changed dependency ranges, not CheckM2's code.
+- **A maintained fork**, as an organisation (`<org>/CheckM2`), pooling fixes
+  with predictions held byte-identical on reference genomes. Ask the authors
+  first: chklovski, wwood, Parks.
+- **Rejected: our own channel, or pip from #164's commit.** Both ship code no
+  one else has reviewed. pip only spares the hosting.
+- **Rejected: replacing CheckM2 with CheckM1.** Its author says v2 is more
+  accurate, its data is fixed at 2015, and 1.3.0 needs gPlace, which has no
+  macOS build. **Running both, as GTDB has since R226 (2025-04-18), is still
+  open**: two independent estimates, and a hedge on CheckM2's decay.
+
+Not affected: Linux, which uses `fork` while the checkm2 environment stays
+below Python 3.14. macOS stays refused regardless, until this is settled.
