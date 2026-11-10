@@ -132,7 +132,10 @@ trimmed GTDB that `tests/environments/gtdb_mock.sh` builds, published as the
 `ci-data` release asset; `check.py gtdbtk` requires the four test genomes to
 come out as the real 60.8 GB package classifies them. That covers the ANI
 screen only — prodigal, hmmer and pplacer are never reached. Those two jobs
-are the only CI that runs the generated rules.
+are the only CI that runs the generated rules. For a machine CI cannot stand in
+for — macOS on the laptop, Linux at 16 KiB pages — `tests/environments/arm_probe.sh`
+runs the pipeline whole, with `--keep-going`, and sets its numbers beside
+thylakoid's.
 
 **A green run on the laptop is not a green CI**, and anything touching
 processes, paths or signals is where they diverge: `cancel.py`'s walk read

@@ -15,8 +15,8 @@
 # refuses to start, so the probe calls `main()` with that check replaced. That
 # is the one difference from what a user runs, and the reason this is a probe.
 #
-# It never stops on a failed step: a probe that dies on the first failure
-# tells you about one tool. Everything lands in workdir, logs included, and
+# It never stops on a failed step, and runs the pipeline with --keep-going: a
+# probe that dies on the first failure tells you about one tool. Everything lands in workdir, logs included, and
 # the summary at the end says which expectations held.
 
 set -u
@@ -66,7 +66,7 @@ timed "$work/demo2.log" cm2 --demo --output "$work/demo"
 
 echo "== thirteen tools over tests/E._faecium"
 (cd "$here" && unzip -o -q tests/E._faecium/fna.zip -d tests/E._faecium)
-timed "$work/full.log" cm2 "$here"/tests/E._faecium/*.fna --output "$work/full" \
+timed "$work/full.log" cm2 "$here"/tests/E._faecium/*.fna --output "$work/full" --keep-going \
   --until seqkit checkm2 bakta amrfinder mlst mashtree treecluster skani \
           panaroo snp-dists fasttree carveme biosynthesis
 grep -E "error in rule|Error in rule" "$work/full.log" | sort -u
@@ -75,10 +75,12 @@ echo "== against thylakoid"
 pixi run --manifest-path "$work/pixi/pixi.toml" python - "$work/full" <<'EOF'
 """Each line: what this run gave, what thylakoid gave, and whether they agree.
 
-Thylakoid's numbers are the ones STATUS.md records for these four genomes
-(linux-64; bakta 1.12.1, checkm2 1.1.0, panaroo with the -aS fix, which 1.8.1
-carries). CarveMe's reaction counts are printed but not judged: the MILP has
-many optima, and which one a solver build returns is not a defect.
+The expected numbers are thylakoid's, as STATUS.md records them for these
+four genomes (linux-64; bakta 1.12.1, checkm2 1.1.0), except panaroo's: 1.8.1
+carries two fixes, and 3,780 / 2,092 is what it gave on linux-aarch64 on
+2026-11-10 — 3,778 without #381, on arm and x86 alike. x86 has not run 1.8.1.
+CarveMe's reaction counts are printed but not judged: the MILP has many
+optima, and which one a solver build returns is not a defect.
 """
 import re
 import sys
@@ -93,7 +95,7 @@ def expect(what, got, want):
     global held, failed
     ok = got == want
     held, failed = held + ok, failed + (not ok)
-    print(f"  {'ok  ' if ok else 'DIFF'} {what}: {got}" + ("" if ok else f" (thylakoid: {want})"))
+    print(f"  {'ok  ' if ok else 'DIFF'} {what}: {got}" + ("" if ok else f" (expected: {want})"))
 
 
 def read(path):
@@ -132,7 +134,7 @@ else:
     expect("skani", "missing", "present")
 
 stats = {l.split("\t")[0]: l.split("\t")[-1] for l in read("panaroo/summary_statistics.txt").splitlines()}
-expect("panaroo clusters / core", (stats.get("Total genes"), stats.get("Core genes")), ("3778", "2092"))
+expect("panaroo clusters / core", (stats.get("Total genes"), stats.get("Core genes")), ("3780", "2092"))
 
 d = rows("snp-dists/snp-dists.tsv")
 if d:

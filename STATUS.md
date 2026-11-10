@@ -1884,6 +1884,11 @@ sylph still in the set.
 
 ### macOS on Apple silicon: three packages missing
 
+*Re-solved 2026-11-10, see linux-aarch64, end to end.* Of the three below, only
+pplacer still stands: intbitset is built for arm, panaroo no longer needs
+prokka, and mlst still resolves to 2.33.1. Five of six environments solve on
+osx-arm64, and CI builds and exercises all five there.
+
 Solved 2026-09-02 from the laptop, `pixi lock` probes against conda-forge and
 bioconda for `osx-arm64` — one per tool plus a combined solve, pixi 0.78.0.
 **Nothing was installed and nothing was run**, so this says only what the solver
@@ -2485,6 +2490,85 @@ characters in panaroo, **sent 2026-10-20 as
 update to 1.8.1, [bioconda-recipes#70730](https://github.com/bioconda/bioconda-recipes/pull/70730),
 was open on 2026-10-26. Until a run on 1.8.1 is measured, the arm numbers above
 describe 1.8.0.
+
+### linux-aarch64, end to end — 2026-11-10
+
+**The goal is now full arm support on Linux and macOS.** This is the first
+pipeline run on arm. Measured on the laptop, an M1 MacBook Pro running Asahi
+Linux: aarch64, **16 KiB pages**, 8 cores, 16 GB. Also measured by CI on the
+`arm-support` branch, run 42813563765: `ubuntu-26.04-arm` at 4 KiB pages and
+`macos-latest` (arm64) at 16 KiB. Working material, outside git:
+`~/cm2-aarch64/` on the laptop.
+
+*Solve*, the six files `render_envs` writes, `pixi lock` per platform. **Five
+of six on linux-aarch64, and five of six on osx-arm64.** gtdbtk fails on both,
+on `pplacer 1.1.alpha19` (bioconda-recipes#71426). Versions that differ from
+linux-64: linux-aarch64 gets **bakta 1.11.4**, because bakta 1.12 needs
+`blast >=2.17` and bioconda's blast recipe has linux-aarch64 commented out
+(CircleCI timeouts, bioconda-recipes#58217). osx-arm64 gets bakta 1.12.2, and
+mlst 2.33.1 as on 2026-09-02.
+
+*As shipped.* `--demo`: 11 of 11, exit 0, 53 s. A second run found nothing to
+do, and `check.py demo` passes. The thirteen tools other than GTDB-Tk, over
+`tests/E._faecium`, with the pipeline fetching its own databases (bakta light
+1.34 GB in 3:01 at 7.4 MB/s): **exit 1 at bakta, 414 s.** bakta 1.11.4 came
+with pyhmmer 0.12.3, and `orf.py` calls `hit.name.decode()` on what pyhmmer
+0.12 made a `str`: `AttributeError: 'str' object has no attribute 'decode'`.
+bioconda's 1.11.4 allows any `pyhmmer >=0.10.15`. Draft:
+[upstream/bakta-linux-aarch64.md](upstream/bakta-linux-aarch64.md). Run again
+with `--keep-going` by `tests/environments/arm_probe.sh` (exit 1, 511 s): mlst,
+CheckM2 and skani match thylakoid, and **nothing downstream of bakta runs** —
+AMRFinder, panaroo, snp-dists, FastTree, CarveMe and biosynthesis. One crash
+costs seven of the thirteen tools.
+
+*bakta 1.11.4 itself is sound.* With pyhmmer 0.11.4, on the four genomes,
+93–110 s each at 8 threads: **every count in the summary and every `.faa` is
+identical to thylakoid's bakta 1.12.1** (`results_two_envs`), and the
+duplicate pair is identical to itself.
+
+*With the annotation environment patched*: `pyhmmer <0.12` installed into it,
+in a separate conda prefix. That is the one departure from what a user gets.
+**29 of 29 steps, exit 0, 923 s**, at `--cores 4`:
+
+| | linux-aarch64 | thylakoid |
+| --- | --- | --- |
+| bakta CDS | 2,588 / 2,588 / 3,180 / 2,815 | same |
+| AMRFinder genes | 7 / 7 / 11 / 8 | same |
+| mlst | ST32 / ST32 / ST117 / ST78 | same |
+| CheckM2 | 100.0 at 0.47 / 0.47 / 3.42 / 1.54 | same |
+| skani, 116_2 to its pair / E8202 / SRR24 | 100.00 / 99.14 / 98.91 | same |
+| snp-dists | pair 0; strains 1,699 / 1,893 / 2,645 | same |
+| FastTree | pair joined at 0.0 | same |
+| CarveMe reactions | 1,743 / 1,743 / 1,813 / 1,743 | same, 2026-09-03 |
+| biosynthesis, de novo / upstream / none / absent | 11/6/11/2 twice, 10/9/9/2, 10/7/11/2 | same |
+| panaroo clusters / core | **3,780** / 2,092 | 3,778 / 2,092 |
+
+*panaroo's 3,780 is 1.8.1, not arm.* 1.8.1 carries #382, the `-aS` fix, and a
+second fix, #381, where `find_missing.py` used a stale `sid` and assigned every
+merged node to one genome. 3,778 was measured on 2026-10-20 with the `-aS` fix
+alone. With #381 reverted in a shadow copy, 1.8.1 on arm gives **3,778 /
+2,092**, and thylakoid's own bakta 1.12.1 GFF3s give 3,780 here as well, so
+neither the annotations nor the architecture are the cause. x86 on 1.8.1 is
+inferred to give 3,780. **Not run**: the probe on thylakoid was not executed in
+this session.
+
+*The CI checks, on three platforms.* `check.py run` against the laptop's
+deployed environments passes all five. In CI all 22 jobs pass. CarveMe's
+*E. coli* carve reaches the same optimum, **primal 1951.8, on x86 (7.1 s),
+Linux arm (10.9 s), macOS arm64 (10.0 s)** and the laptop (7.7 s), and comes
+out 29 of 30 on each. CheckM2's zero vector gives thylakoid's `general 6.38
+contamination 4.30 specific 2.17` on all of them. The Linux arm demo passes.
+
+**The annotation check passes on a bakta that crashes.** It only calls
+`--version`, the blind spot check.py's docstring names (bakta 1.8.1 on
+pyrodigal 3.x). Catching this needs bakta on real input, which needs the
+1.3 GB database. Not added.
+
+**Not covered:** GTDB-Tk, which cannot be installed on arm. x86 on panaroo
+1.8.1. 16 KiB pages on Linux, which only this laptop has (GitHub's Linux arm
+runner is 4 KiB). macOS through the pipeline: `comparem2` refuses there, and
+CI checks only the environments. `tests/environments/arm_probe.sh` is the
+script for running it there.
 
 ## Databases
 

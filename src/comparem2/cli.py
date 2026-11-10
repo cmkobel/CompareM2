@@ -224,12 +224,16 @@ def run_settings(workdir: Path, databases: Path, conda_prefix: Path | None,
 
 
 def unsupported_platform() -> str | None:
-    """The platform's name if the tools cannot be installed on it, else None.
+    """The platform's name if the pipeline is refused on it, else None.
 
-    Every tool environment is a linux-64 build. On macOS, `--demo` used to get
-    14 s into a conda solve and die on an "unsatisfiable" naming panaroo and
-    prokka, which the demo does not even use (2026-10-12) — read as a broken
-    package rather than as the wrong machine.
+    Not every tool installs off Linux: on macOS five of the six environments
+    do, but no gtdbtk >=2.7 does (2026-11-10), and on Windows five tools have
+    no build at all. On macOS, `--demo` used to get 14 s into a conda solve and
+    die on an "unsatisfiable" naming panaroo and prokka, which the demo does
+    not even use (2026-10-12) — read as a broken package rather than as the
+    wrong machine. Linux on arm is let through: which tools work there is a
+    per-tool question this cannot answer (STATUS.md, *linux-aarch64, end to
+    end*).
     """
     if sys.platform.startswith("linux"):
         return None
@@ -795,9 +799,9 @@ def main(argv: list[str] | None = None) -> int:
     unsupported = unsupported_platform()
     if unsupported and not (args.dry_run or args.report_only or args.unlock):
         raise SystemExit(
-            f"CompareM2's tools are built for Linux only (conda's linux-64), so "
-            f"they cannot be installed on {unsupported}. --dry-run and "
-            "--report-only work here; run the analysis itself on a Linux machine.")
+            f"CompareM2 does not run on {unsupported} yet: not all of its tools "
+            "can be installed there. --dry-run and --report-only work here; run "
+            "the analysis itself on a Linux machine.")
 
     if args.setup:
         # Rejected rather than ignored: a command naming genomes that are never
