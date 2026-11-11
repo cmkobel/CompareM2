@@ -3,8 +3,9 @@
 
 Every concept is a function returning SVG elements inside a 64x64 box, drawn
 in two colours: `c1` for the thing the comparison finds (shared / homologous /
-the operator) and `c2` for everything else. Colours match report.py:
---accent #2b6cb0 (light) / #7fb3e8 (dark).
+the operator) and `c2` for everything else. Colours are report.py's blue
+--accent of before 2026-11-11, #2b6cb0 (light) / #7fb3e8 (dark); the accent is
+green now, and make_logo.py carries it.
 
 Usage: python logo_concepts.py OUTDIR
 Writes per-concept SVG+PNG (light, dark, badge, lockup) and a preview sheet.

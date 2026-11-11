@@ -55,46 +55,66 @@ from .tools import Completion, Context, Registry, Scope, Tool, completions
 # up by 1.31, which is why their labels came out larger than the prose.
 WIDTH = 944
 
-# The CompareM2 mark: three rows of contigs, differing in length and in how
-# fragmented they are. Each bar is (x, y, width, solid?) in a 64-unit box; the
-# solid ones take the accent, the rest the tint. Height 10, fully rounded.
+# The light-scheme accent ("Agar" green), as a literal for the places that
+# cannot read `--accent`: the favicon, and figure fills that predate the
+# property. It is not the "good" green of the quality columns (#2f855a), which
+# is semantic and stays; the two sit 1.18:1 apart, so a status colour must
+# never be drawn from this. The tree's cluster PALETTE is categorical, and
+# keeps its own blue for the same reason in reverse.
+ACCENT = "#1d7a3e"
+
+# The CompareM2 mark: one circular chromosome assembled from three contigs of
+# differing length, the wider break between last and first making it a C. Each
+# arc is (start, end, solid?) in degrees clockwise from three o'clock, on a
+# ring of radius 21 and stroke 10 centred in a 64-unit box, with round caps;
+# the solid one takes the accent, the rest the tint. On the badge the ring is
+# drawn at 0.8 so the panel keeps a margin.
 #
 # The geometry is duplicated from `docs/assets/logo/make_logo.py`, which renders
 # the same shape to the files the documentation uses. It is copied rather than
 # imported or read because `docs/` is not in the package — `plasmids.zip` is the
 # only non-Python file that ships — and drawing it in Python keeps that true.
-MARK_BARS = ((8, 11, 27, True), (40, 11, 16, True),
-             (8, 27, 13, False), (26, 27, 30, False),
-             (8, 43, 36, True))
+MARK_ARCS = ((50, 158, True), (200, 252, False), (294, 320, False))
+
+
+def _arc(a0: float, a1: float, r: float = 21) -> str:
+    def at(a: float) -> tuple[float, float]:
+        t = math.radians(a)
+        return 32 + r * math.cos(t), 32 + r * math.sin(t)
+    (x0, y0), (x1, y1) = at(a0), at(a1)
+    large = 1 if (a1 - a0) % 360 > 180 else 0
+    return f"M{x0:.2f} {y0:.2f} A{r} {r} 0 {large} 1 {x1:.2f} {y1:.2f}"
 
 
 def _mark(accent: str, tint: str, *, panel: str | None = None, cls: str = "") -> str:
     """The mark as inline SVG. `accent`/`tint` may be CSS `var()` references."""
-    bg = f'<rect width="64" height="64" rx="14" fill="{panel}"/>' if panel else ""
-    bars = "".join(
-        f'<rect x="{x}" y="{y}" width="{w}" height="10" rx="5" '
-        f'fill="{accent if solid else tint}"/>'
-        for x, y, w, solid in MARK_BARS)
+    arcs = "".join(
+        f'<path d="{_arc(a0, a1)}" fill="none" stroke="{accent if solid else tint}" '
+        f'stroke-width="10" stroke-linecap="round"/>'
+        for a0, a1, solid in MARK_ARCS)
+    if panel:
+        arcs = (f'<rect width="64" height="64" rx="14" fill="{panel}"/>'
+                f'<g transform="translate(32 32) scale(.8) translate(-32 -32)">{arcs}</g>')
     attr = f' class="{cls}"' if cls else ""
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"'
-            f'{attr} aria-hidden="true">{bg}{bars}</svg>')
+            f'{attr} aria-hidden="true">{arcs}</svg>')
 
 
 # The favicon is the badge variant — the mark on its own blue panel — because at
-# 16 px a transparent mark on browser chrome is three faint bars of unknown
+# 16 px a transparent mark on browser chrome is a faint ring of unknown
 # colour. Its colours are literals, not `var()`: a data URI is a separate
 # document and does not see the page's custom properties, which is also why it
 # cannot follow the reader's colour scheme. Safari may ignore an SVG favicon
 # and fall back to its own default. Inline, so the report stays one file.
 FAVICON = "data:image/svg+xml," + quote(
-    _mark("#ffffff", "#bcd8f5", panel="#2b6cb0"), safe="/:=")
+    _mark("#ffffff", "#b6ecc3", panel=ACCENT), safe="/:=")
 
 CSS = """
-:root { --fg:#1a1a1a; --mut:#666; --line:#e3e3e3; --accent:#2b6cb0; --bg:#fff;
-        --tint:#7fb3e8; --measure:40em; }
+:root { --fg:#1a1a1a; --mut:#666; --line:#e3e3e3; --accent:#1d7a3e; --bg:#fff;
+        --tint:#7ccf8f; --measure:40em; }
 @media (prefers-color-scheme: dark) {
-  :root { --fg:#e8e8e8; --mut:#9a9a9a; --line:#333; --accent:#7fb3e8; --bg:#161616;
-          --tint:#3f80c4; }
+  :root { --fg:#e8e8e8; --mut:#9a9a9a; --line:#333; --accent:#6fdc8c; --bg:#161616;
+          --tint:#2a8a4a; }
 }
 * { box-sizing: border-box; }
 body { font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -1709,7 +1729,7 @@ def draw_pangenome(names: list[str], patterns: list[tuple[tuple[bool, ...], int]
             x0 = min(x0, label_room + span - w)
             d.append(f"M{x0:.2f},{y + 2:.1f}h{w:.2f}v{row - 4:.1f}h{-w:.2f}z")
         parts.append(
-            f'<path d="{"".join(d)}" fill="#2b6cb0" fill-opacity="0.85"/>')
+            f'<path d="{"".join(d)}" fill="{ACCENT}" fill-opacity="0.85"/>')
 
     if hints:
         # Widest first, so what survives the budget is what a pointer could
@@ -1921,13 +1941,13 @@ def _section_panaroo(tool: Tool, ctx: Context, workdir: Path) -> str:
             share = 100 * cnt / total
             overlap_rows.append([
                 f'<span class="dots">{dots}</span>', label, f"{cnt:,}",
-                _bar(share, "#2b6cb0", width=60) + f"{share:.1f}%",
+                _bar(share, ACCENT, width=60) + f"{share:.1f}%",
             ])
         if rest:
             other = sum(c for _, c in rest)
             overlap_rows.append([
                 "", f"{len(rest):,} further patterns", f"{other:,}",
-                _bar(100 * other / total, "#2b6cb0", width=60)
+                _bar(100 * other / total, ACCENT, width=60)
                 + f"{100 * other / total:.1f}%",
             ])
         legend = " ".join(

@@ -2,33 +2,42 @@
 """Generate CompareM2 logo concepts as SVG (text outlined to paths) and PNG.
 
 Usage: python make_logo.py [outdir] [concept ...]
-Concepts: synteny, dotplot, pangenome (default: all).
-Requires: fonttools, cairosvg, and Inter (OFL) at FONT.
+Concepts: ring (the logo, and the default), contigs, synteny, dotplot, pangenome.
+Requires: fonttools, cairosvg, Pillow, and Space Grotesk (OFL) at FONT, or at
+$LOGO_FONT. The committed files were made from google/fonts'
+ofl/spacegrotesk/SpaceGrotesk[wght].ttf, the variable font, instanced at
+WEIGHT here; a static Bold works too and skips the instancing.
 """
+import math
+import os
 import sys
 from pathlib import Path
 
 import cairosvg
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.ttLib import TTFont
+from fontTools.varLib.instancer import instantiateVariableFont
 
-FONT = "/tmp/inter/extras/otf/Inter-SemiBold.otf"
+FONT = os.environ.get("LOGO_FONT", "/tmp/spacegrotesk/SpaceGrotesk[wght].ttf")
+WEIGHT = 700
 args = sys.argv[1:]
 OUT = Path(args[0] if args else "out")
 OUT.mkdir(parents=True, exist_ok=True)
-WANTED = args[1:] or ["contigs"]
+WANTED = args[1:] or ["ring"]
 
-# Colours shared with report.py (--accent light/dark, --fg light/dark)
+# Colours shared with report.py (--accent and --tint, light/dark; --fg) and
+# docs/assets/extra.css (the bar colour). "Agar" since 2026-11-11, blue before.
+# `muted` and `ribbon` only serve the concepts that lost, and stay as they were.
 THEMES = {
-    "light": dict(accent="#2b6cb0", tint="#7fb3e8", muted="#c9d3de", fg="#1a1a1a",
+    "light": dict(accent="#1d7a3e", tint="#7ccf8f", muted="#c9d3de", fg="#1a1a1a",
                   ribbon=("#a9c9ec", "#d3e4f6")),
-    "dark":  dict(accent="#7fb3e8", tint="#3f80c4", muted="#454b52", fg="#e8e8e8",
+    "dark":  dict(accent="#6fdc8c", tint="#2a8a4a", muted="#454b52", fg="#e8e8e8",
                   ribbon=("#35608d", "#28466a")),
-    # On blue. `bg` is the badge icon's rounded square; the lockup leaves it
-    # transparent and takes the blue from whatever it sits on (the docs sidebar
+    # On green. `bg` is the badge icon's rounded square; the lockup leaves it
+    # transparent and takes the green from whatever it sits on (the docs sidebar
     # header), so only `wordmark_accent` keeps the M2 apart from the white ink.
-    "badge": dict(accent="#ffffff", tint="#bcd8f5", muted="#6a9bd3", fg="#ffffff", bg="#2b6cb0",
-                  wordmark_accent="#bcd8f5", ribbon=("#6ea0d8", "#4f88c8")),
+    "badge": dict(accent="#ffffff", tint="#b6ecc3", muted="#6a9bd3", fg="#ffffff", bg="#1d7a3e",
+                  wordmark_accent="#b6ecc3", ribbon=("#6ea0d8", "#4f88c8")),
 }
 
 
@@ -89,7 +98,7 @@ def pangenome(c):
     return "\n  ".join(els)
 
 
-# Concept D — contigs (chosen): three genomes as rows of contigs, lengths and
+# Concept D — contigs (the logo 2026-09-09 to 2026-11-11): three genomes as rows of contigs, lengths and
 # fragmentation differ; rows alternate accent/tint so neighbours read apart.
 ROWS = [(11, [(8, 27), (40, 16)]),
         (27, [(8, 13), (26, 30)]),
@@ -105,26 +114,78 @@ def contigs(c):
     return "\n  ".join(els)
 
 
-CONCEPTS = {"contigs": contigs, "synteny": synteny, "dotplot": dotplot, "pangenome": pangenome}
+# Concept E — contig ring (chosen 2026-11-11): one circular chromosome
+# assembled from three contigs of differing length. The break between the last
+# contig and the first is wider than the other two, so the ring reads as a C.
+# Each arc is (start, end, accent?) in degrees clockwise from three o'clock.
+# The geometry is copied into report.py's MARK_ARCS — change both.
+RING_R, RING_W = 21, 10
+ARCS = ((50, 158, True), (200, 252, False), (294, 320, False))
+
+
+def arc_d(a0, a1, r=RING_R, cx=32, cy=32):
+    def at(a):
+        t = math.radians(a)
+        return cx + r * math.cos(t), cy + r * math.sin(t)
+    (x0, y0), (x1, y1) = at(a0), at(a1)
+    large = 1 if (a1 - a0) % 360 > 180 else 0
+    return f"M{x0:.2f} {y0:.2f} A{r} {r} 0 {large} 1 {x1:.2f} {y1:.2f}"
+
+
+def ring(c):
+    return "\n  ".join(
+        f'<path d="{arc_d(a0, a1)}" fill="none" stroke="{c["accent"] if solid else c["tint"]}" '
+        f'stroke-width="{RING_W}" stroke-linecap="round"/>' for a0, a1, solid in ARCS)
+
+
+def ring_ink():
+    """Ink bounds of the ring: both stroke edges along each arc, plus the round caps."""
+    pts, h = [], RING_W / 2
+    for a0, a1, _ in ARCS:
+        for i in range(int((a1 - a0) * 4) + 1):
+            t = math.radians(a0 + i / 4)
+            pts += [(32 + r * math.cos(t), 32 + r * math.sin(t)) for r in (RING_R - h, RING_R + h)]
+        for a in (a0, a1):
+            t = math.radians(a)
+            x, y = 32 + RING_R * math.cos(t), 32 + RING_R * math.sin(t)
+            pts += [(x - h, y), (x + h, y), (x, y - h), (x, y + h)]
+    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+CONCEPTS = {"ring": ring, "contigs": contigs, "synteny": synteny, "dotplot": dotplot, "pangenome": pangenome}
 # ink bounds (left, top, right, bottom) in the 64-unit box, used to align the
-# mark to the wordmark: bottom of ink sits on the baseline, top on cap height
-INK = {"contigs": (8, ROWS[0][0], 56, ROWS[-1][0] + BAR_H),
+# mark to the wordmark: ink height is cap height times LOCKUP_SCALE, centred on
+# the cap height, so at 1 the bottom of ink sits on the baseline
+INK = {"ring": ring_ink(), "contigs": (8, ROWS[0][0], 56, ROWS[-1][0] + BAR_H),
        "synteny": (6, 8, 58, 56), "dotplot": (4.5, 4.5, 59.5, 59.5), "pangenome": (6, 9, 60, 55)}
+# A round shape has to overshoot flat letters to look the same size beside them.
+LOCKUP_SCALE = {"ring": 1.25}
+# On the badge the ring is drawn smaller, so its blue square keeps a margin.
+BADGE_INSET = {"ring": 0.8}
 
 
-def icon_svg(draw, c, size=64):
-    bg = f'<rect width="64" height="64" rx="14" fill="{c["bg"]}"/>\n  ' if c.get("bg") else ""
+def icon_svg(name, c, size=64):
+    body = CONCEPTS[name](c)
+    bg = ""
+    if c.get("bg"):
+        bg = f'<rect width="64" height="64" rx="14" fill="{c["bg"]}"/>\n  '
+        if name in BADGE_INSET:
+            body = (f'<g transform="translate(32 32) scale({BADGE_INSET[name]}) translate(-32 -32)">'
+                    f'\n  {body}\n  </g>')
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="{size}" height="{size}">\n'
-            f'  {bg}{draw(c)}\n</svg>\n')
+            f'  {bg}{body}\n</svg>\n')
 
 
-# --- wordmark: Inter SemiBold outlines ------------------------------------
+# --- wordmark: Space Grotesk Bold outlines --------------------------------
 font = TTFont(FONT)
+if "fvar" in font:
+    font = instantiateVariableFont(font, {"wght": WEIGHT})
 glyphset = font.getGlyphSet()
 cmap = font.getBestCmap()
 UPM = font["head"].unitsPerEm
 hmtx = font["hmtx"]
-TRACK = -0.01 * UPM
+TRACK = -0.035 * UPM
 
 
 def text_path(text, size):
@@ -150,7 +211,7 @@ def wordmark(fg, accent, size, x0, baseline):
     return "\n  ".join(svg), w1 + w2
 
 
-CAP = font["OS/2"].sCapHeight / UPM   # Inter: 0.727 em
+CAP = font["OS/2"].sCapHeight / UPM
 
 
 def lockup_svg(name, c):
@@ -158,9 +219,10 @@ def lockup_svg(name, c):
     size, pad, gap = 44, 12, 12
     cap_px = CAP * size
     left, top, right, bottom = INK[name]
-    sc = cap_px / (bottom - top)              # ink height == cap height
+    k = LOCKUP_SCALE.get(name, 1)
+    sc = k * cap_px / (bottom - top)          # ink height == k x cap height
     baseline = pad + cap_px
-    tx, ty = pad - left * sc, baseline - bottom * sc
+    tx, ty = pad - left * sc, baseline - cap_px / 2 - (top + bottom) / 2 * sc
     mark_w = (right - left) * sc
     x0 = pad + mark_w + gap
     wm, wm_w = wordmark(c["fg"], c.get("wordmark_accent", c["accent"]), size, x0, baseline)
@@ -175,21 +237,32 @@ def write(name, svg, png_scale=4):
     cairosvg.svg2png(bytestring=svg.encode(), write_to=str(OUT / f"{name}.png"), scale=png_scale)
 
 
+def write_ico(svg, sizes=(16, 32, 48, 64, 128, 256)):
+    """docs/img/favicon.ico is this file: the badge, rasterised at each size
+    rather than downscaled from one, so 16 px is drawn for 16 px."""
+    import io
+    from PIL import Image
+    imgs = [Image.open(io.BytesIO(cairosvg.svg2png(bytestring=svg.encode(), output_width=n, output_height=n)))
+            for n in sizes]
+    imgs[-1].save(OUT / "favicon.ico", sizes=[(n, n) for n in sizes], append_images=imgs[:-1])
+
+
 for name in WANTED:
-    draw = CONCEPTS[name]
-    p = "comparem2" if name == "contigs" else name   # the chosen mark gets the project name
-    write(f"{p}-icon", icon_svg(draw, THEMES["light"]))
-    write(f"{p}-icon-dark", icon_svg(draw, THEMES["dark"]))
-    write(f"{p}-icon-badge", icon_svg(draw, THEMES["badge"]), png_scale=8)
+    p = "comparem2" if name == "ring" else name   # the chosen mark gets the project name
+    write(f"{p}-icon", icon_svg(name, THEMES["light"]))
+    write(f"{p}-icon-dark", icon_svg(name, THEMES["dark"]))
+    write(f"{p}-icon-badge", icon_svg(name, THEMES["badge"]), png_scale=8)
     write(f"{p}-logo", lockup_svg(name, THEMES["light"]))
     write(f"{p}-logo-dark", lockup_svg(name, THEMES["dark"]))
     write(f"{p}-logo-badge", lockup_svg(name, THEMES["badge"]))
+    if p == "comparem2":
+        write_ico(icon_svg(name, THEMES["badge"]))
     print("wrote", p)
 
 # Preview sheet: one row per concept, light + dark + small sizes
 rows = ""
 for name in WANTED:
-    name = "comparem2" if name == "contigs" else name
+    name = "comparem2" if name == "ring" else name
     rows += f"""
 <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #ccc">
   <div style="background:#fff;padding:28px 36px;display:flex;gap:32px;align-items:center">
@@ -201,7 +274,7 @@ for name in WANTED:
     <img src="{name}-logo-dark.svg" height="60"> <img src="{name}-icon-dark.svg" width="64"> <img src="{name}-icon-badge.svg" width="48">
   </div>
 </div>
-<div style="background:#2b6cb0;padding:28px 36px;display:flex;gap:32px;align-items:center">
+<div style="background:{THEMES['badge']['bg']};padding:28px 36px;display:flex;gap:32px;align-items:center">
   <img src="{name}-logo-badge.svg" height="60"> <img src="{name}-logo-badge.svg" height="27">
 </div>"""
 (OUT / "preview.html").write_text(f'<html><body style="margin:0">{rows}</body></html>')

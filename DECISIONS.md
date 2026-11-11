@@ -4269,3 +4269,69 @@ The options weighed, and where each stands:
 
 Not affected: Linux, which uses `fork` while the checkm2 environment stays
 below Python 3.14. macOS stays refused regardless, until this is settled.
+
+## 2026-11-11 — the logo becomes a contig ring, and the accent goes green
+
+Carl was not happy with the mark of 2026-09-09: three left-aligned rows of
+equal-height bars read as a list or "align text" icon before they read as
+contigs. Asked for something "cool and simple" that kept the contig idea, he
+chose among four contig arrangements and then, in a second round, ten palettes
+and ten typefaces, both shown as a lockup on light and dark, the badge at 64,
+32 and 16 px, the docs sidebar and the report heading. His pick, verbatim:
+`ring original · Agar · Space Grotesk 700 · M2 by colour`.
+
+**The mark** is one circular chromosome assembled from three contigs of
+differing length; the break between last and first is wider than the other
+two, so it reads as a C. Arcs `(50,158) (200,252) (294,320)` degrees clockwise
+from three o'clock, radius 21, stroke 10, round caps, in the 64-unit box, the
+long one in the accent. `make_logo.py` draws it as concept `ring` (now the
+default); the losing `contigs` concept stays drawable. Two numbers are
+judgement, not measurement: the lockup sets the ring's ink at **1.25× cap
+height**, because a round shape at exactly cap height looks small beside flat
+letters, and the badge draws it at **0.8** so the square keeps a margin. At
+16 px the C still reads; checked on the rendered ICO, not assumed.
+
+Known and kept: in the badge, the two short upper contigs and the long lower
+one can read as a smiling face. "Flipped" and "turned" variants were offered
+alongside; Carl chose the original orientation with them on screen.
+
+**The wordmark is Space Grotesk Bold**, tracking −0.035 em, from google/fonts'
+variable `SpaceGrotesk[wght].ttf` instanced at 700 inside the script (a static
+Bold works too). Before switching, the toolchain was checked by re-running the
+unchanged script with Inter 4.1's `Inter-SemiBold.otf`: byte-identical to the
+committed SVGs, so the diff in these files is the new design and nothing else.
+The font path is now `$LOGO_FONT`, not a hardcoded `/tmp`.
+
+**`favicon.ico` is now written by `make_logo.py`**, from the badge rasterised
+separately at 16, 32, 48, 64, 128 and 256 px — the same six sizes as the file
+it replaces, which had been made by hand. Pillow joins the script's
+requirements for it.
+
+**Green is the accent everywhere, not only in the logo** — Carl's call, with
+"logo and docs only" offered as the smaller option. "Agar": `#1d7a3e` accent
+and `#7ccf8f` tint in light, `#6fdc8c` and `#2a8a4a` in dark, `#b6ecc3` for the
+M2 and the minor contigs on green. Measured: accent on white 5.38:1 (the blue
+was 5.42:1), white on the green bar 5.38:1 (5.42:1), `#b6ecc3` on it 4.04:1
+(3.69:1), dark accent on `#161616` 10.59:1. In the report that is `--accent`,
+`--tint`, the favicon, and the two figure fills that drew the accent as a
+literal: the pangenome blocks and the overlap table's bars, now through a
+module constant `ACCENT`. In the docs, both bars, the sidebar search border
+(`#155e2f`), and links in both schemes; light-mode links were the theme's
+`#2980b9` and now take the accent too, visited keeping the theme's purple.
+
+**Two blues stay, on purpose.** The tree's cluster `PALETTE` is categorical,
+not the accent: it already holds two greens (`#2f855a`, `#276749`), and turning
+its blue green would put three near-identical greens in one legend. And
+`#2f855a` is the *semantic* "good" colour of the CheckM2 and ANI columns. The
+new accent sits **1.18:1** from it — indistinguishable — which is why `ACCENT`'s
+comment says never to draw a status colour from it. The overlap table's neutral
+bars and the quality table's "good" bars are now the same hue, and get away
+with it only because they never share a table. If they ever do, one of them has to move, and it should not be the semantic one.
+
+**`cheatsheet-print.css` and `CHEATSHEET.da.pdf` are still blue.** Rebuilding
+the PDF needs pandoc and Chrome, neither on the machine this was done on, and
+changing the CSS alone would leave it disagreeing with the PDF it describes.
+Its header comment says so; switch both together.
+
+`docs/assets/example-report.html` was patched again, not re-rendered — the
+method and the counts are in `STATUS.md`.
