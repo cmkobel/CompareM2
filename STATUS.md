@@ -3184,6 +3184,12 @@ carrying the code this tag ships.
   Its `results_biosynth/` is still the baseline the 2026-09-03 two-environment
   run's biosynthesis output was compared against, so delete the clone and keep
   nothing else in mind.
+- **iML1515's "~0.88 h⁻¹ with oxygen unconstrained" in the report has never
+  been measured or sourced** (`guidance.py`, biosynthesis's growth caveat).
+  The 0.53 next to it is this file's 2026-09-10 measurement. Not run yet: solve
+  iML1515 on M9 with `EX_o2_e` unconstrained on thylakoid, then reword. See
+  [notes/PAPERS_PLAN_2026-11-11.md](notes/PAPERS_PLAN_2026-11-11.md), which
+  also holds the `papers/README.md` fixes and a fetch script.
 
 ## Deliberately left alone
 
