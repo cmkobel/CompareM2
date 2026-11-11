@@ -1163,6 +1163,26 @@ The old closest-medium note listed R6 among the models that "did not grow",
 in the same section. R6 is gone from the note, and the other seven read
 exactly as before.
 
+**End to end, through Snakemake, with the branch.** On thylakoid, the
+rc-3.5.1-final-A install with the branch first on `PYTHONPATH` (CompareM2
+3.5.2, snakemake 9.27.0), its own conda prefix, databases at
+`/midifiler/carl/cm2_db_v3`. `--until biosynthesis` over the four
+*E. faecium* genomes, fresh output:
+- **13 of 13 steps, exit 0, 434 s**, and nothing in the log is a traceback
+  or an error.
+- All eight biosynthesis tables are **byte-identical** to the stored 3.5.1
+  run's, and the duplicate pair agrees.
+- The report is 54,105 bytes. Its biosynthesis prose reads as above, with no
+  `nan` or `None`.
+
+`comparem2 --demo` then ran twice into the same directory, and `check.py demo`
+passed every check, the "nothing to do" re-run included. The unit suite
+passes on Python 3.11.2 (thylakoid) and 3.14.8 (laptop), 399 tests each.
+`universe_ceiling.py` and `lifestyle_calibration.py --curated-only`, both of
+which drive the refactored probe, reproduce their 2026-09-15 results:
+- 29 *de novo* in `universe_bacteria`, with `adocbl` absent;
+- 7 of 7 through the free-energy gate.
+
 **The independent reading is an instrument now.**
 `upstream/biosynthesis_crosscheck.py` re-ran the cobrapy comparison against
 this branch's tables: **0 of 1,620 verdicts differ across 54 models, with HiGHS
