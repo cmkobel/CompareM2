@@ -835,6 +835,12 @@ ship with the package.
 | *M. genitalium* G37, 1.6.6 | 0 | 0.0000 | 0.0000 | 1.65 |
 | `116_2` *E. faecium*, `COL` `N315` `TW20` *S. aureus* | 10–26 | 0.0000 | 0.0000 | 14.9–21.1 |
 
+`iML1515`'s M9 figure is with oxygen capped at 10 like every other compound.
+**With oxygen unconstrained it is 0.8770**, measured 2026-11-11 through the
+same probe, and identical whether CarveMe's ±1000 bounds are read as ±1000 or
+as unbounded. That is the figure the guidance used to give as "~0.88, usually
+simulated", with no source.
+
 Every prototroph draft lands on 29 and every one misses the same two, `btn` and
 `q8`. **The BiGG universe reaches all 32** — 25,348 reactions, bounds capped
 at ±1000, M9 exchanges added, all 34 solves `Optimal` — so every target on the
@@ -1129,6 +1135,33 @@ annotation. *K. pneumoniae* and *S. aureus* annotate the whole Men pathway,
 and the four with none annotate only `UbiE`, which ubiquinone synthesis
 shares. `tests/environments/check.py` now requires *E. coli*'s misses to be
 exactly `{adocbl}`; run on thylakoid against a fresh carve, it passes.
+
+**The prose says what was measured.** In the guidance, the module docstring
+and the report:
+- *No route* no longer means "no path at all". For a cofactor it is often a
+  salvage-only route: the panel never offers the vitamin, and the *S. aureus*
+  drafts (`COL`, `N315` tested) make thiamine diphosphate from thiamine and NAD
+  from nicotinate.
+- Asparagine is explained. The *S. aureus*, *R. solanacearum* and
+  *A. baumannii* proteomes annotate GatCAB and no asparagine synthetase. The
+  carving universes hold no asparaginyl-tRNA at all; their one tRNA species is
+  glutamyl-tRNA, for heme.
+- The growth caveat now cites `iML1515`'s 0.88 h⁻¹ as the measurement above,
+  and says why the complete-medium figure runs high.
+
+**The example report was re-rendered, not patched.** `render_report` ran with
+this branch over a copy of `results_showcase_350` on GenomeDK, with the title
+and command passed explicitly; the run itself was not touched. **172,596 →
+174,142 bytes.** The style block, the favicon and all seven figures are
+identical. The extracted text differs in six places: the header's version and
+time, the guidance readings, the summary sentence, the starved note's
+wording, the closest-medium note, and the `iML1515` citation.
+
+The re-render shows finding 1 on the real report. Its summary says "1 of 8
+genomes grow on any defined medium", which is `Spn_R6`, at 0.4604 h⁻¹ on LB.
+The old closest-medium note listed R6 among the models that "did not grow",
+in the same section. R6 is gone from the note, and the other seven read
+exactly as before.
 
 **The independent reading is an instrument now.**
 `upstream/biosynthesis_crosscheck.py` re-ran the cobrapy comparison against
@@ -1813,7 +1846,9 @@ The split is new information. S. aureus (2026-09-02) and E. faecium
 (2026-09-24) both kept their topology, and the FastTree guidance now says that
 this set did not. The report was rendered over the run with the title and
 command passed explicitly, as on 2026-09-15, and is checked in at
-`docs/assets/example-report.html` (172,503 bytes).
+`docs/assets/example-report.html` (172,503 bytes). It was re-rendered over the
+same run on 2026-11-11 (174,142 bytes); see *biosynthesis review, executed
+2026-11-11*.
 
 **Then the issue #156 changes, and a defect 3.4.0 already had.** Adding
 `--remove-invalid-genes` re-ran panaroo, snp-dists and FastTree, and panaroo

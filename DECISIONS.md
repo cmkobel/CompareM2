@@ -4506,3 +4506,39 @@ The two review instruments are committed beside it:
 `biosynthesis_crosscheck.py`, the cobrapy reading. Both claims, 0 of 42
 drafts making what they should not and 0 of 1,620 verdicts differing, are
 re-measurable, not remembered.
+
+## 2026-11-11 — the biosynthesis prose says what was measured, and the example report is re-rendered
+
+The last of the review's changes, and the only one that is prose.
+
+- **"No route means there is no route at all" was false for cofactors.** The
+  panel probes the form a pathway ends at, which has no exchange, so the
+  vitamin it is salvaged from is never offered. The *S. aureus* drafts make
+  thiamine diphosphate from thiamine and NAD from nicotinate, and read `none`
+  for both. The verdict is right, since the genome has to be given the
+  vitamin, but the sentence was not. Rejected again, as on 2026-09-10: a fifth
+  `salvage` verdict. It would offer the vitamin forms, and the
+  one-member-per-family rule exists to keep them out.
+- **The asparagine call is explained, not apologised for.** "Not a described
+  requirement of that organism" was true and incomplete. The genomes annotate
+  GatCAB and no asparagine synthetase. The carving universes have no
+  asparaginyl-tRNA at all, only glutamyl-tRNA for heme, so "no free
+  asparagine" is the faithful reading. Rejected: dropping `asn__L` from the
+  panel, as `btn` and `q8` were. It is *de novo* in *E. coli*,
+  *K. pneumoniae* and *L. monocytogenes*, so it varies, and it fails that test.
+- **The growth caveat's "~0.88 h⁻¹, usually simulated" is now a measurement.**
+  It is `iML1515` through this probe with oxygen unconstrained, 0.8770. This
+  is `notes/PAPERS_PLAN_2026-11-11.md` item 1, done here because it is the
+  same sentence. The caveat also says why the complete-medium figure runs
+  above a COBRA tool's: ReFramed reads ±1000 as unbounded. `main()` now
+  passes `use_infinity=True` explicitly, with the reason. Rejected: `False`.
+  It is CarveMe's own reading, no verdict depends on it, and it would move
+  every complete-medium number in the record.
+
+**`docs/assets/example-report.html` was re-rendered, not patched.** It had
+been patched twice since 3.5.0. A patch here would have put four new
+paragraphs beside the old ones, which is the 2026-09-15 reason for
+re-rendering. It ran over a copy of the GenomeDK run, with the title and
+command passed explicitly. The only differences are in the biosynthesis
+section, and they include finding 1 caught on the real report: `Spn_R6`
+grows on LB and was listed as a model that did not grow.

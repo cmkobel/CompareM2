@@ -2425,9 +2425,10 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
         "<em>Upstream</em> and <em>no route</em> are both things the genome has "
         "to be given on that medium, and the difference between them is the "
         "reason: <em>upstream</em> means the route is there and another compound "
-        "on the list is what is missing, <em>no route</em> means there is no "
-        "route at all. These describe the draft model, not the organism — see "
-        "the notes above.</p>",
+        "on the list is what is missing, <em>no route</em> means nothing on the "
+        "medium or the list leads to it — for a cofactor, often that the genome "
+        "can use the vitamin but not make it. These describe the draft model, not "
+        "the organism — see the notes above.</p>",
         _table(rows, header=["Genome", "De novo", "Upstream", "No route",
                              "Not in model"]),
         _absent_note(absent, len(ctx.samples)),

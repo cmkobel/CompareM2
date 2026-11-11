@@ -162,8 +162,9 @@ IML1515 = Citation("Monk JM, Lloyd CJ, Brunk E, et al. (2017) iML1515, a knowled
                    "that computes Escherichia coli traits. Nature Biotechnology 35:904–908",
                    "10.1038/nbt.3956",
                    note="Not run by the pipeline. It is the manually curated model the "
-                        "biosynthesis probe was validated against, and the reason the "
-                        "29-of-30 figure in that section can be checked.")
+                        "biosynthesis probe was validated against: the E. coli drafts in "
+                        "that section are checked against its answer, adenosylcobalamin "
+                        "the one compound neither makes.")
 
 
 GUIDANCE: dict[str, Guidance] = {
@@ -975,14 +976,24 @@ GUIDANCE: dict[str, Guidance] = {
              "genome can already make would be reachable from the minimal medium, so on "
              "that medium these are requirements too. What would unblock them is named beneath the grid, as one set per genome: in all four E. faecium drafts it is the same four compounds — glycine, L-serine, L-threonine and L-methionine — and none of the four is something those models can make. A rescuer never is, since a compound the genome could already make would not leave anything blocked."),
             ("No route",
-             "Unreachable even with every other panel compound supplied, so the draft "
-             "model has no path to it at all. Measured on real drafts this recovers "
-             "described requirements: all four E. faecium models return no route to "
-             "leucine, methionine, threonine, tryptophan, valine, riboflavin, "
-             "pantothenate and NAD, and all seven S. aureus models to thiamine "
-             "diphosphate and NAD. Treat it as a statement about the model rather than "
-             "the organism: the same seven S. aureus models also return no route to "
-             "asparagine, which is not a described requirement of that organism."),
+             "Unreachable even with every other panel compound supplied, so the genome "
+             "has to be given it, or something it is made from. The second case is "
+             "the usual one for a cofactor. The panel probes the form a pathway ends "
+             "at, which no model takes up, so the vitamin it is salvaged from is "
+             "never offered. All seven S. aureus drafts return no route to thiamine "
+             "diphosphate and NAD, and the two tested make both from thiamine and "
+             "nicotinate, just not from scratch. Measured on real drafts this "
+             "recovers described requirements: all four E. faecium models also return "
+             "no route to leucine, methionine, threonine, tryptophan, valine, "
+             "riboflavin and pantothenate. Asparagine needs care. The same seven "
+             "S. aureus drafts return no route to free asparagine, which is not a "
+             "described requirement of that organism, and yet the call reads the "
+             "genome correctly. The S. aureus genomes checked annotate no asparagine "
+             "synthetase and do annotate GatCAB, which makes asparaginyl-tRNA "
+             "directly, a route the reaction database CarveMe carves from does not "
+             "contain. So this one means 'no free asparagine', not 'needs "
+             "asparagine' (measured 2026-11-11 on this pipeline's drafts and the "
+             "genomes' RefSeq annotation, not a finding of any paper cited here)."),
             ("Not in the model",
              "The compound is not in this network at all, so there is nothing to ask. "
              "Usually the whole pathway was dropped during carving, and it is not "
@@ -1046,8 +1057,12 @@ GUIDANCE: dict[str, Guidance] = {
             "The growth column is not a growth rate to quote. Every compound is capped "
             "at 10 mmol/gDW/h including oxygen, which is the paper's protocol and not a "
             "physiological condition: iML1515 comes out at 0.53 h⁻¹ on M9 glucose that "
-            "way, against the ~0.88 h⁻¹ it is usually simulated at with oxygen "
-            "unconstrained. Use it as a feasibility check, which is what it is for.",
+            "way, and at 0.88 h⁻¹ with oxygen unconstrained. The complete medium is "
+            "further from a rate still. The models' ±1000 flux bounds are read as "
+            "unbounded, so the figure there runs higher than a COBRA tool that keeps "
+            "them reports: iML1515 gives 30.76 against 20.73. All three figures are "
+            "iML1515 through this pipeline's probe, measured on thylakoid 2026-11-11. "
+            "Use the column as a feasibility check, which is what it is for.",
             "Nothing here is a habitat prediction. The number of dependencies is a "
             "statement about biosynthetic autonomy, and while host-associated and "
             "community-embedded lineages tend to have more of them, this pipeline does "

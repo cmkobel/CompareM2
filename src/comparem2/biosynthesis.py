@@ -30,8 +30,16 @@ and is not. So each compound is tried twice —
     upstream  not reachable from M9, but reachable from M9 plus every *other*
               panel compound the model can take up. The route exists; something
               else on the panel is what is missing.
-    none      not reachable even then. No route in this draft model.
+    none      not reachable even then. Nothing on M9 or the panel leads to it.
     absent    the compound is not in the model at all.
+
+**`none` is not "no path at all" for a cofactor.** The panel probes the form a
+pathway ends at, and that form has no exchange, so the vitamin it is salvaged
+from is never offered. A draft that cannot make a cofactor but can salvage it
+therefore reads `none`. The *S. aureus* drafts make thiamine diphosphate from
+thiamine and NAD from nicotinate, and neither from scratch, and the verdict is
+right: the genome has to be given the vitamin. The sentence a reader needs is
+"has to be given it", not "has no route to it".
 
 **`upstream` says why, never whether.** If a compound were reachable from M9
 plus one the genome can already make, it would be reachable from M9 — so the
@@ -44,10 +52,9 @@ L-threonine or L-methionine, and those models can make none of the four.
 
 "the model can take up" is the caveat on the background: six to eight of the
 panel have no `R_EX_*_e` in any model measured — the intracellular cofactors —
-so they
-cannot act as rescuers. Injecting all of them straight into the cytoplasm
-instead moved no verdict in six models, so it is a limit worth naming and not
-one that currently costs anything.
+so they cannot act as rescuers. Injecting all of them straight into the
+cytoplasm instead moved no verdict in six models, so it is a limit worth naming
+and not one that currently costs anything.
 
 The background for `upstream` is M9 plus the panel, never the complete medium,
 and that is load-bearing: on a complete medium `COL` looks able to make
@@ -109,11 +116,33 @@ have no route to leucine, methionine, threonine, tryptophan, valine, riboflavin,
 pantothenate and NAD, and three of the four to arginine and histidine as well;
 all seven *S. aureus* to thiamine diphosphate and NAD. Menaquinone-8 is de novo
 in four *S. aureus* and unreachable in every *E. faecium*, which is a real
-lineage difference.
+lineage difference. The four ubiquinone-only Proteobacteria measured
+(*P. aeruginosa*, *R. solanacearum*, *A. baumannii*, *P. putida*) are also
+unreachable for it, and correctly.
 
-It gets things wrong too, and visibly: all seven *S. aureus* come out with no
-route to asparagine, which is not a described requirement of that organism.
-Read a verdict as a statement about the draft model.
+**Asparagine is the verdict to read carefully.** All seven *S. aureus* drafts
+have no route to free asparagine, as do the *R. solanacearum* and
+*A. baumannii* drafts and the curated *S. aureus* `iYS854`. It is not a
+described requirement of *S. aureus*. But it is not a carving error either.
+The *S. aureus* proteomes checked (N315, USA300 TCH1516) annotate no
+asparagine synthetase, and neither do *R. solanacearum*'s and
+*A. baumannii*'s, while all four annotate GatCAB, which makes Asn-tRNA from
+Asp-tRNA. The reaction database CarveMe carves from has no asparaginyl-tRNA at
+all; its only tRNA chemistry is glutamyl-tRNA, for heme. So the verdict reads
+the genome faithfully, and what it says is "no free asparagine", not "needs
+asparagine". The same gap is why `COL`'s biomass stops at `asn__L` on LB: the
+biomass reaction asks for the free amino acid. Read a verdict as a statement
+about the draft model.
+
+**The complete-medium figure is ReFramed's convention, not COBRA's.**
+`load_cbmodel` reads CarveMe's ±1000 bounds as ±∞, which is CarveMe's own
+reading too (`carve` loads its universe with the defaults), and that is kept.
+No verdict depends on it — all 30 come out the same either way on `iML1515`,
+the 1.5.0 *E. coli* draft, `116_2` and a *P. putida* draft — and neither do
+M9 or LB, where the uptake caps bind first. On the complete medium nothing
+caps internal flux, so the growth there runs higher than a ±1000 tool
+reports: `iML1515` 30.76 against 20.73 (measured 2026-11-11). It is a
+feasibility control, never a rate.
 
 **It runs in the tool's environment, under a bare `python`**, like
 `carve_scip.py` and for the same reason: it imports `reframed`, which comes
@@ -769,8 +798,10 @@ def main(argv: list[str] | None = None) -> int:
     from reframed import load_cbmodel
 
     # flavor='bigg' is what gives the R_/M_ prefixes every id here assumes, and
-    # it is what CarveMe writes.
-    model = load_cbmodel(str(args.model), flavor="bigg")
+    # it is what CarveMe writes. use_infinity is the default, said out loud: it
+    # reads ±1000 as unbounded, which only the complete-medium figure notices —
+    # see the module docstring.
+    model = load_cbmodel(str(args.model), flavor="bigg", use_infinity=True)
     probe = _Probe(model, max_uptake=args.max_uptake, min_flux=args.min_flux)
 
     # The media table first, so its numbers are read off a model whose drains
