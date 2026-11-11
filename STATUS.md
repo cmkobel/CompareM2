@@ -1070,6 +1070,18 @@ first.
 it. It now completes, with the 18 counted as `error` on stderr, and the other
 54 models' tables are byte-identical before and after.
 
+**Checked, and left alone: boundaries other than the exchanges.**
+`upstream/biosynthesis_controls.py`, on all 55:
+- **42 of 42 drafts are clean** and carry nothing the medium does not govern.
+- **Four of 13 curated models leak.** `iIT341` makes cysteine with no sulfate
+  through its `SK_ahcys_c` sink. `iYS854`, `iCN718` and `iCN900` leak through
+  reactions that do not balance (`iYS854`'s `SRK` creates a nitrogen,
+  `iCN900`'s `GLNSCP` a phosphate).
+- **Closing every other boundary was tried and dropped.** It moved no verdict
+  in 55 models, and it stopped `iJN1463` and `iYS854` growing on any medium,
+  because their sinks stand in for a peptide and a protein the network cannot
+  make.
+
 ### biosynthesis through Snakemake, 13:51–14:03 on 2026-09-03
 `--until biosynthesis` over the four *E. faecium* genomes: bakta, carveme and
 biosynthesis, **13 of 13 steps, exit 0**, report written. The rule takes **3 s**

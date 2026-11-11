@@ -4362,3 +4362,37 @@ that fails. Catching there keeps every other answer the model gives.
 The report's note for a model unsolved on the complete medium gave one cause,
 a maintenance floor. That explains `infeasible` and is false of `error`, so the
 cause now follows the status.
+
+## 2026-11-11 — the medium governs the exchanges; closing the other boundaries was tried and dropped
+
+The review planned to make `medium_constraints` total. Every one-sided
+reaction that is neither an `R_EX_*_e` exchange nor a drain would have its
+supply direction shut, so that "exactly `compounds` available" held of any
+model. The change was written, unit-tested and run on all 55 review models
+before it was dropped.
+
+**What it changed:**
+- No verdict, in any of the 55.
+- No table of any CarveMe draft, since no draft has such a reaction.
+- The media table of three curated models, two of them for the worse:
+  `iJN1463` and `iYS854` stopped growing on every medium, the complete one
+  included.
+
+Their sinks are not leaks. `SK_pqqA_kt_c`, `SK_apoACP_c` and `SK_2fe1s_c`
+stand in for a peptide, a protein and a cluster the network has no way to
+make, and the modellers put them there so that it could grow. Code cannot
+tell those from a real leak, and neither could a list.
+
+**It would not have fixed the leaks that exist, either.** The negative
+controls (`upstream/biosynthesis_controls.py`) catch four curated models
+making a panel compound from a medium that lacks one of its elements. Only
+`iIT341`'s goes through a sink. `iYS854`, `iCN718` and `iCN900` keep theirs
+with every sink shut, because the leak is an imbalanced reaction: `iYS854`'s
+`SRK` creates a nitrogen, and `iCN900`'s `GLNSCP` a phosphate. No medium
+closes that. The review had put `iYS854`'s leak down to its sinks, which was
+an inference, and this run is what disproved it.
+
+So the scope is written where it applies: `medium_constraints` says "exactly"
+means through the exchanges. The instrument is committed, because it finds a
+leak of either kind. If CarveMe ever emits a sink, the instrument's first run
+on that draft is where it shows.

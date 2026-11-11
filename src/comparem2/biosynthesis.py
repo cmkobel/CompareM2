@@ -450,6 +450,17 @@ def medium_constraints(by_compound: dict[str, str], upper: dict[str, float | Non
     Upper bounds are left as the model has them: this decides what is available
     for uptake, and secretion is not ours to re-decide.
 
+    **"Exactly" means through the `R_EX_*_e` exchanges.** Any other boundary
+    reaction keeps the model's own bounds. No CarveMe draft has one that can
+    supply — none in 42, measured 2026-11-11 with
+    `upstream/biosynthesis_controls.py`. Curated models do, and closing them was
+    tried and dropped the same day: it moved no verdict in 55 models, and it
+    stopped `iJN1463` and `iYS854` growing on any medium at all, because their
+    sinks stand in for what the network cannot make — acyl-carrier protein, the
+    PQQ precursor peptide. And of the four curated models the controls catch
+    making something from nothing, three keep doing it with every sink shut:
+    the leak is an imbalanced reaction, which no medium closes.
+
     **Every drain is pinned shut and at most one reopened.** A drain left open
     is a free sink, and a free sink can relieve a steady-state constraint
     elsewhere in the network — which would let one compound's probe change
