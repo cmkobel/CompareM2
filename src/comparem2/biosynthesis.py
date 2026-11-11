@@ -173,10 +173,18 @@ REFERENCE_MEDIA = (
 )
 COMPLETE = "complete"
 
+class Source(NamedTuple):
+    """An element M9 supplies, the compound it comes in, and what counts as arrival."""
+
+    element: str
+    compound: str           # the M9 compound that carries it
+    forms: tuple[str, ...]  # its first cytoplasmic forms; reaching any one will do
+
+
 # M9's two elemental sources. The panel's `de_novo` verdict is measured on M9,
 # so a model that cannot get carbon or nitrogen into its cytoplasm from that
 # medium answers `de_novo` to nothing — one hole, a zero in every row — and the
-# whole column then describes the model rather than the organism.
+# column then says nothing about the genome.
 #
 # **Probed in the cytoplasm, not as a membership test on the exchange set**,
 # because the two differ and the difference is not hypothetical. Of the eight
@@ -187,10 +195,28 @@ COMPLETE = "complete"
 # as the other three — it was the one that reached a certified optimum with the
 # most reactions in the set.
 #
+# **Glucose arrives as glucose or as glucose 6-phosphate**, and only probing
+# the first called a model starved that was not. The phosphotransferase system
+# delivers glucose already phosphorylated, so a model whose only uptake is PTS
+# never has free glucose in its cytoplasm: the curated *S. aureus* `iSB619`
+# reaches g6p and pyruvate, makes 25 of 30 compounds de novo, and was reported
+# as having no carbon. g6p is also where a permease's glucose goes next, by
+# hexokinase, so the pair covers both routes measured. Not covered, and no
+# model measured needs it: glucose oxidised in the periplasm and taken up as
+# gluconate, which enters at 6-phosphogluconate.
+#
+# **Rejected: pyruvate instead**, which every glucose route reaches. It is
+# downstream, so a model could fail to reach it while still making compounds
+# from glucose, and the report's claim that a starved model makes nothing on M9
+# would stop being true. The first cytoplasmic forms keep it true.
+#
 # Only the M9 family gets this. LB carries nitrogen in every amino acid and
 # carbon in most of them, so no single compound is its source and a missing
 # `nh4` there is not a defect.
-SOURCES = (("glc__D", "carbon"), ("nh4", "nitrogen"))
+SOURCES = (
+    Source("carbon", "glc__D", ("glc__D", "g6p")),
+    Source("nitrogen", "nh4", ("nh4",)),
+)
 
 
 class Compound(NamedTuple):
@@ -389,10 +415,10 @@ def short_metabolite(met: str) -> str:
 class Drains(NamedTuple):
     """Every metabolite this module asks about, and the drain it asks through."""
 
-    present: list[Compound]                     # panel compounds the model carries
-    sources: list[tuple[str, str, str | None]]  # (compound, element, metabolite)
-    precursors: list[str]                       # what the objective consumes
-    reactions: dict[str, str]                   # metabolite id to its drain
+    present: list[Compound]               # panel compounds the model carries
+    sources: list[tuple[str, list[str]]]  # element, and which forms it carries
+    precursors: list[str]                 # what the objective consumes
+    reactions: dict[str, str]             # metabolite id to its drain
 
 
 def add_drains(model) -> Drains:
@@ -400,10 +426,10 @@ def add_drains(model) -> Drains:
 
     Must run before the solver is built, which would not know about a reaction
     added later. `add_reaction_from_str` would silently invent a metabolite
-    that is missing, so membership is checked rather than assumed. A source
-    compound the model does not carry is kept, with `None` for its metabolite,
-    because "the metabolite is not in the network" is one of the ways a source
-    is unreachable and has to reach the report as such.
+    that is missing, so membership is checked rather than assumed. An element
+    none of whose forms the model carries is kept, with no metabolites,
+    because "not in the network" is one of the ways a source is unreachable
+    and has to reach the report as such.
 
     **One drain per metabolite, not one per question.** The amino acids are
     both panel compounds and biomass precursors, and used to get a drain for
@@ -422,12 +448,13 @@ def add_drains(model) -> Drains:
         reactions[met] = rid
 
     present = [c for c in PANEL if cytoplasmic(c.bigg) in model.metabolites]
-    sources = [(bigg, element,
-                cytoplasmic(bigg) if cytoplasmic(bigg) in model.metabolites else None)
-               for bigg, element in SOURCES]
+    sources = [(source.element,
+                [cytoplasmic(f) for f in source.forms
+                 if cytoplasmic(f) in model.metabolites])
+               for source in SOURCES]
     precursors = biomass_precursors(model)
     for met in (*(cytoplasmic(c.bigg) for c in present),
-                *(met for _, _, met in sources if met is not None),
+                *(met for _, forms in sources for met in forms),
                 *precursors):
         drain(met)
     return Drains(present, sources, precursors, reactions)
@@ -641,10 +668,11 @@ def unreachable_sources(probe: _Probe, compounds) -> list[str]:
 
     The check that has to pass before any verdict on this medium means
     anything about the organism. See `SOURCES` for why it is a flux probe and
-    not a lookup in `probe.exchanges`.
+    not a lookup in `probe.exchanges`, and why an element has more than one
+    form that counts.
     """
-    return [element for _, element, met in probe.sources
-            if met is None or not probe.reaches(met, compounds)]
+    return [element for element, forms in probe.sources
+            if not any(probe.reaches(met, compounds) for met in forms)]
 
 
 def blocked_precursors(probe: _Probe, compounds) -> list[str]:

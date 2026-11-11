@@ -2065,27 +2065,49 @@ def _biosynthesis_naming(varying: list) -> str:
     return "."
 
 
-def _starved_note(starved: dict[str, list[str]], total: int) -> str:
-    """Which models cannot reach a source element on the minimal medium.
+# The reason a model cannot use M9 when it is the LP rather than an element:
+# no solution on the medium at all, which makes every compound `no route`.
+INFEASIBLE = "infeasible"
 
-    Empty when none are, so the sentence only appears when it applies. The
-    element names come from `biosynthesis.SOURCES` and are not translated here:
-    what the report can say is that the model has no route to carbon or to
-    nitrogen, which is a fact about the network rather than an interpretation.
+
+def _starved_note(starved: dict[str, list[str]], total: int) -> str:
+    """Which models the minimal medium says nothing about, and why.
+
+    `starved` maps a sample to its reasons: the elements of
+    `biosynthesis.SOURCES` it cannot get into its cytoplasm from M9, and
+    `INFEASIBLE` when it has no solution on M9 at all — a maintenance floor or a
+    fixed flux the medium cannot meet. The curated `iNF517` is one, and reads
+    `no route` for every compound with nothing else to say why. Empty when no
+    model is starved, so the sentence only appears when it applies.
+
+    **It says what is known and no further.** A model whose glucose never
+    arrives may be of an organism that does not live on glucose — none of six
+    Methanoflorens drafts makes anything from CO2 and H2 or from acetate either
+    — or a draft that lost the route, as four pneumococci lost `NH4tpp`. The
+    grid cannot tell those apart, and the note used to pick the second.
     """
     if not starved:
         return ""
-    listed = ", ".join(
-        f"{html.escape(sample)} (no {' or '.join(elements)})"
-        for sample, elements in starved.items())
+
+    def why(reasons: list[str]) -> str:
+        elements = [r for r in reasons if r != INFEASIBLE]
+        said = [f"no {' or '.join(elements)}"] if elements else []
+        if INFEASIBLE in reasons:
+            said.append("no solution on M9")
+        return "; ".join(said)
+
+    listed = ", ".join(f"{html.escape(sample)} ({why(reasons)})"
+                       for sample, reasons in starved.items())
     return (
         f'<p class="summary"><strong>{len(starved)} of {total} models cannot '
-        "reach a source element from the minimal medium</strong>, so for those "
-        "the <em>de novo</em> column above is a property of the reconstruction "
-        f"and not of the organism: {listed}. A draft model with no uptake route "
-        "for carbon or nitrogen can build nothing from M9 whatever else it "
-        "contains, and that shows up as every compound falling to "
-        "<em>upstream</em> or <em>no route</em> at once.</p>")
+        "use the minimal medium</strong>, so for those the <em>de novo</em> "
+        f"column above says nothing about the genome: {listed}. A model whose "
+        "glucose or ammonium never reaches the cytoplasm, or that has no "
+        "solution on M9 at all, cannot build from it anything that needs what "
+        "is missing — on this panel, everything without carbon and everything "
+        "but menaquinone-8 without nitrogen. That can be the organism, which "
+        "may not live on glucose, or the draft, which may have lost the route; "
+        "the grid cannot say which.</p>")
 
 
 def _ceiling_note(named: list[str],
@@ -2307,18 +2329,24 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
                if len({verdicts[s].get(c.bigg, ABSENT) for s in named}) > 1]
 
     # M9 is the medium `de_novo` is measured on, so a model that cannot reach
-    # carbon or nitrogen from it answers `de_novo` to nothing and its whole row
-    # describes the reconstruction. Said here, beside the counts a reader would
-    # quote, rather than left to the media table further down: on 2026-09-08
-    # four of eight models could not reach ammonium and all four reported 0 of
-    # 32, while the media table's `present` count read a reassuring 17 of 20.
+    # carbon or nitrogen from it, or has no solution on it, answers `de_novo`
+    # to nothing and its row says nothing about the genome. Said here, beside
+    # the counts a reader would quote, rather than left to the media table
+    # further down: on 2026-09-08 four of eight models could not reach
+    # ammonium and all four reported 0 of 32, while the media table's
+    # `present` count read a reassuring 17 of 20.
     # Read defensively — a table written before this column existed, or while
     # the rule is still writing it, simply has nothing to say here.
     starved = {}
     for sample in named:
         row = media.get(sample, {}).get("M9")
-        if row is not None and len(row) > 5 and row[5].strip():
-            starved[sample] = row[5].split()
+        if row is None:
+            continue
+        reasons = row[5].split() if len(row) > 5 else []
+        if len(row) > 3 and row[3].strip() == INFEASIBLE:
+            reasons.append(INFEASIBLE)
+        if reasons:
+            starved[sample] = reasons
 
     parts = [
         f'<p class="summary">{len(PANEL)} building blocks per genome. '

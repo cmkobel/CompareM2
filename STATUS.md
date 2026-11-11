@@ -1082,6 +1082,19 @@ it. It now completes, with the 18 counted as `error` on stderr, and the other
   because their sinks stand in for a peptide and a protein the network cannot
   make.
 
+**Fixed: the carbon check missed glucose that arrives phosphorylated.** It
+drained free `glc__D_c`. The curated *S. aureus* `iSB619` takes glucose up by
+PTS only, so it never has free glucose. It read `carbon` unreachable beside
+25 of 30 *de novo*, and the report's note would have said every compound fell
+at once. Glucose 6-phosphate now counts too. Across all 55 models the only
+table that changes is `iSB619`'s media table, whose `carbon` empties. No
+CarveMe draft measured is PTS-only.
+
+The note itself now also names a model with no solution on M9 (`iNF517`, whose
+fixed fluxes M9 cannot meet). It no longer calls a starved row "a property of
+the reconstruction": the six Methanoflorens drafts make nothing from CO2 and H2
+or from acetate either, so for them it is at least as much the organism.
+
 ### biosynthesis through Snakemake, 13:51–14:03 on 2026-09-03
 `--until biosynthesis` over the four *E. faecium* genomes: bakta, carveme and
 biosynthesis, **13 of 13 steps, exit 0**, report written. The rule takes **3 s**

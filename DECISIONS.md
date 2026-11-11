@@ -4396,3 +4396,38 @@ So the scope is written where it applies: `medium_constraints` says "exactly"
 means through the exchanges. The instrument is committed, because it finds a
 leak of either kind. If CarveMe ever emits a sink, the instrument's first run
 on that draft is where it shows.
+
+## 2026-11-11 — glucose has arrived when it is glucose 6-phosphate, too
+
+The carbon half of `SOURCES` drained `glc__D_c`. A model whose only glucose
+uptake is the phosphotransferase system never has free glucose in its
+cytoplasm, since PTS hands it over as glucose 6-phosphate. The curated
+*S. aureus* `iSB619` is one. It read `carbon` unreachable while making 25 of 30
+panel compounds *de novo*, and the report's starved note would have put it
+beside a claim that every compound fell at once.
+
+`SOURCES` is now a `Source(element, compound, forms)`. Carbon is reached when
+`glc__D_c` or `g6p_c` is. g6p is also where a permease's glucose goes next,
+by hexokinase, so the pair covers both routes measured. The test pins the
+compound itself as the first form, so the original meaning is kept and an
+extra form has to be argued for in the comment.
+
+**Rejected: pyruvate as the one probe.** Every glucose route reaches it, and
+so it would cover the periplasmic route too. But it is downstream: a model
+could fail to reach pyruvate and still make compounds from glucose, and then
+the note's claim that a starved model builds nothing would be false. The
+first cytoplasmic forms keep that claim true.
+
+**Left uncovered, on purpose: glucose oxidised in the periplasm** and taken up
+as gluconate, which enters at 6-phosphogluconate. No measured model depends on
+it. The comment says so, which is where the next case will be noticed.
+
+**The starved note no longer picks a cause.** It said a starved row was "a
+property of the reconstruction and not of the organism". That is true of the
+four pneumococci that lost `NH4tpp`. It is not clearly true of the six
+Methanoflorens drafts: they make nothing from CO2 and H2 or from acetate
+either, and methanogens do not live on glucose. Measured 2026-11-11 by
+swapping M9's carbon source. The note now says the column says nothing about
+the genome, and that the grid cannot tell organism from draft. It also names
+a model with no solution on M9 at all, such as `iNF517`. That model read
+`no route` for every compound, with nothing beside the count to say why.

@@ -5827,12 +5827,33 @@ def test_a_model_that_cannot_reach_nitrogen_is_named_beside_its_de_novo_count():
     from comparem2.report import _starved_note
 
     body = _starved_note({"R6": ["nitrogen"], "T4": ["carbon", "nitrogen"]}, 8)
-    assert "2 of 8 models cannot reach a source element" in body
+    assert "2 of 8 models cannot use the minimal medium" in body
     assert "R6 (no nitrogen)" in body
     assert "T4 (no carbon or nitrogen)" in body
-    assert "not of the organism" in body
+    assert "says nothing about the genome" in body
+    # It does not decide between the organism and the draft, because it
+    # cannot: the Methanoflorens drafts do not live on glucose at all, and the
+    # pneumococci lost a transporter.
+    assert "the grid cannot say which" in body
+    assert "not of the organism" not in body
     # Silent when every model can eat, so the sentence means something.
     assert _starved_note({}, 8) == ""
+
+
+def test_a_model_with_no_solution_on_m9_is_named_with_the_starved_ones(tmp_path):
+    """The curated iNF517 is infeasible on M9 — fixed fluxes the medium cannot
+    meet — and read `no route` for every compound with nothing beside the count
+    to say why. That is the same failure as an unreachable element: the column
+    says nothing about the genome."""
+    _biosynthesis_fixture(
+        tmp_path, {"A": {}, "B": {}},
+        media={"A": {"M9": ("infeasible", "", ""), "complete": "5.2018"},
+               "B": {"M9": ("0.0000", "", "carbon"), "complete": "1.0000"}})
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A", "B")).read_text()
+    assert "2 of 2 models cannot use the minimal medium" in body
+    assert "A (no solution on M9)" in body
+    assert "B (no carbon)" in body
 
 
 def test_the_summary_counts_only_panel_compounds(tmp_path):
@@ -5920,7 +5941,7 @@ def test_the_starved_note_reaches_a_rendered_report(tmp_path):
                      "complete": "21.0601"}})
     body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
                          ("A", "B")).read_text()
-    assert "1 of 2 models cannot reach a source element" in body
+    assert "1 of 2 models cannot use the minimal medium" in body
     assert "A (no nitrogen)" in body
     assert "B (no" not in body  # B can eat; only A is named
     # And the compounds themselves, which is what a reader checks the medium
@@ -5939,7 +5960,8 @@ class _StubProbe:
     def __init__(self, reach, exchanges):
         from comparem2.biosynthesis import SOURCES, cytoplasmic
 
-        self.sources = [(b, e, cytoplasmic(b)) for b, e in SOURCES]
+        self.sources = [(s.element, [cytoplasmic(f) for f in s.forms])
+                        for s in SOURCES]
         self.exchanges = exchanges
         self._reach = reach
 
@@ -6191,15 +6213,34 @@ def test_a_source_with_an_exchange_can_still_be_unreachable():
     assert unreachable_sources(probe, M9) == []
 
 
+def test_glucose_that_arrives_phosphorylated_has_arrived():
+    """The phosphotransferase system hands glucose to the cytoplasm as glucose
+    6-phosphate, so a model whose only uptake is PTS never has free glucose
+    there. Probing only `glc__D_c` reported the curated S. aureus iSB619 as
+    having no carbon beside 25 of 30 compounds made de novo."""
+    from comparem2.biosynthesis import M9, unreachable_sources
+
+    pts = _StubProbe({"M_g6p_c", "M_nh4_c"},
+                     {"glc__D": "R_EX_glc__D_e", "nh4": "R_EX_nh4_e"})
+    assert unreachable_sources(pts, M9) == []
+    neither = _StubProbe({"M_nh4_c"}, {"glc__D": "R_EX_glc__D_e"})
+    assert unreachable_sources(neither, M9) == ["carbon"]
+
+
 def test_the_source_elements_are_m9s_own_and_carry_their_element():
     """M9 has exactly one carbon source and one nitrogen source, which is what
     makes the claim checkable. LB gets no such claim — every amino acid in it
     carries nitrogen — and the code must not invent one."""
     from comparem2.biosynthesis import LB, M9, SOURCES
 
-    assert dict(SOURCES) == {"glc__D": "carbon", "nh4": "nitrogen"}
-    for bigg, _ in SOURCES:
-        assert bigg in M9, bigg
+    assert {s.element: s.compound for s in SOURCES} == {
+        "carbon": "glc__D", "nitrogen": "nh4"}
+    for source in SOURCES:
+        assert source.compound in M9, source
+        # The compound itself always counts as arrival; anything else is the
+        # form it takes on the way in, and must be justified in SOURCES.
+        assert source.forms[0] == source.compound, source
+    assert dict((s.element, s.forms) for s in SOURCES)["carbon"] == ("glc__D", "g6p")
     # The reason LB is excluded, stated as a fact about LB rather than a
     # comment: it carries many nitrogen sources beyond ammonium.
     assert len([c for c in LB if c.endswith("__L")]) > 1
@@ -6235,9 +6276,8 @@ def test_a_source_compound_absent_from_the_model_gets_no_metabolite():
     unreachable, and dropping it would report the model as fine."""
     from comparem2.biosynthesis import add_drains
 
-    out = add_drains(_DrainModel(["M_glc__D_c"]))  # no M_nh4_c
-    assert out.sources == [("glc__D", "carbon", "M_glc__D_c"),
-                           ("nh4", "nitrogen", None)]
+    out = add_drains(_DrainModel(["M_glc__D_c"]))  # no M_g6p_c, no M_nh4_c
+    assert out.sources == [("carbon", ["M_glc__D_c"]), ("nitrogen", [])]
     assert "M_nh4_c" not in out.reactions
 
 
