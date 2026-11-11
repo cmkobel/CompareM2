@@ -37,14 +37,15 @@ from collections.abc import Mapping
 from datetime import datetime, timezone
 from itertools import count
 from pathlib import Path
+from typing import NamedTuple
 from urllib.parse import quote
 
 from . import __version__
 # The panel is data the wrapper and the report have to agree on, so it lives in
 # one place. Importable from here because `biosynthesis.py` keeps its `reframed`
 # imports inside the functions that solve — this process has no solver.
-from .biosynthesis import (ABSENT, DE_NOVO, LB, NO_ROUTE, PANEL,
-                           UNIVERSE_CEILING, UPSTREAM)
+from .biosynthesis import (ABSENT, COMPLETE, DE_NOVO, LB, NO_ROUTE, PANEL,
+                           REFERENCE_MEDIA, UNIVERSE_CEILING, UPSTREAM)
 from .guidance import GUIDANCE, citations
 from .tools import Completion, Context, Registry, Scope, Tool, completions
 
@@ -2039,9 +2040,13 @@ _SHADE_BY_VERDICT = {DE_NOVO: 0.12, UPSTREAM: 0.55, NO_ROUTE: 1.0}
 # absent is the same mark the tables use for a cell a tool produced nothing for.
 _GLYPH_BY_VERDICT = {DE_NOVO: "", UPSTREAM: "~", NO_ROUTE: "×", ABSENT: "·"}
 
-_MEDIA_COLUMNS = (("M9", "M9"), ("M9[-O2]", "M9 anaerobic"),
-                  ("LB", "LB"), ("LB[-O2]", "LB anaerobic"),
-                  ("complete", "Complete"))
+# The media table's columns, in the order biosynthesis.py writes its rows. A
+# medium added there without a label here fails at import, not in a report.
+_DEFINED_MEDIA = tuple(name for name, _, _ in REFERENCE_MEDIA)
+_MEDIA_LABEL = {"M9": "M9", "M9[-O2]": "M9 anaerobic", "LB": "LB",
+                "LB[-O2]": "LB anaerobic", COMPLETE: "Complete"}
+_MEDIA_COLUMNS = tuple((name, _MEDIA_LABEL[name])
+                       for name in (*_DEFINED_MEDIA, COMPLETE))
 
 # How many compound names are worth spelling out in a note. Past this the
 # sentence is longer than the grid it describes.
@@ -2229,8 +2234,79 @@ def _unsolved_note(unsolved: dict[str, str], total: int) -> str:
             f"exists to show a model can be solved at all: {listed}. {causes}</p>")
 
 
-def _closest_note(media: dict, raw) -> str:
-    """For a model that grew on nothing, the medium it came closest on.
+class _MediumRow(NamedTuple):
+    """One row of a biosynthesis media table, read by `MEDIA_HEADER` name."""
+
+    cell: str              # the growth cell as written: a rate, or a status
+    growth: float | None   # the rate, or None where the cell is a status
+    present: int | None    # how many of the medium's compounds have an exchange
+    missing: list[str]     # the ones that do not
+    unreachable: list[str]  # `SOURCES` elements, M9 family only
+    reached: str           # e.g. "52/53"; empty on a medium that grew
+    blocked: list[str]     # the biomass precursors it could not make
+
+
+def _read_named(path: Path) -> list[dict[str, str]]:
+    """A TSV's rows as dicts keyed by the file's own header row.
+
+    By name rather than by position, so a table written before a column
+    existed, or one a rule is still writing, simply lacks that key; the fields
+    a short row does not reach are empty. This is the one place the
+    biosynthesis tables are read defensively.
+    """
+    rows = _read_tsv(path)
+    if not rows:
+        return []
+    header = rows[0]
+    return [{name: row[i].strip() if i < len(row) else ""
+             for i, name in enumerate(header)} for row in rows[1:]]
+
+
+def _number(text: str) -> float | None:
+    try:
+        return float(text)
+    except ValueError:
+        return None
+
+
+def _read_media(path: Path) -> dict[str, _MediumRow]:
+    """A model's media table, by medium. A row with no growth cell is skipped."""
+    out = {}
+    for row in _read_named(path):
+        cell = row.get("growth", "")
+        if not row.get("medium") or not cell:
+            continue
+        present = _number(row.get("present", ""))
+        out[row["medium"]] = _MediumRow(
+            cell, _number(cell), None if present is None else int(present),
+            row.get("missing", "").split(), row.get("unreachable", "").split(),
+            row.get("precursors", ""), row.get("blocked", "").split())
+    return out
+
+
+def _read_panel(path: Path) -> tuple[dict[str, str], list[str]]:
+    """A model's verdicts by compound, and the compounds flagged as rescuers.
+
+    An older table has no `rescues` column and so flags none.
+    """
+    rows = [r for r in _read_named(path) if r.get("compound") and r.get("verdict")]
+    return ({r["compound"]: r["verdict"] for r in rows},
+            [r["compound"] for r in rows if r.get("rescues")])
+
+
+def _grew(rows: dict[str, _MediumRow]) -> bool:
+    """Whether a model grows on any defined medium.
+
+    The complete medium is not one: it is the control that the model can be
+    solved at all, and almost every draft grows on it. The summary's count and
+    `_closest_note` both use this, so they cannot disagree about a model.
+    """
+    return any((rows[name].growth or 0.0) > 0 for name in _DEFINED_MEDIA
+               if name in rows)
+
+
+def _closest_note(media: dict[str, dict[str, _MediumRow]]) -> str:
+    """For each model that grew on no defined medium, the one it came closest on.
 
     Which is the question a column of zeros raises: growth is one bit, and the
     thing worth knowing is what the model was short of. The closest medium is
@@ -2238,59 +2314,56 @@ def _closest_note(media: dict, raw) -> str:
     where the answer is a metabolite rather than a pathway — `116_2` misses 26
     of 53 on M9 and exactly one, menaquinol-8, on LB.
 
-    Read defensively: a media table written before these columns existed, or
-    while the rule is still writing one, simply has nothing to say here.
+    **Only models that grew nowhere.** It used to take any model with a medium
+    it failed on, under a sentence calling them models that did not grow: the
+    1.5.0 *E. coli* draft, at 4.83 h⁻¹ on LB, was listed for failing
+    anaerobically. Five of the six benchmark drafts were, and so would any
+    strict aerobe be.
     """
     lines = []
-    for sample in media:
-        best = None
-        for medium in media[sample]:
-            reached = raw(sample, medium, 6)
-            if not reached or "/" not in reached:
-                continue
-            blocked = raw(sample, medium, 7).split()
-            # A medium that grew has no `precursors` cell at all, so anything
-            # reaching here failed, and fewest-blocked is the closest.
-            if best is None or len(blocked) < len(best[2]):
-                best = (medium, reached, blocked)
-        if best is None:
+    for sample, rows in media.items():
+        if _grew(rows):
             continue
-        medium, reached, blocked = best
-        named = (": " + ", ".join(html.escape(b) for b in blocked)
-                 if 0 < len(blocked) <= _PRECURSOR_NAME_BUDGET else "")
-        lines.append(f"{html.escape(sample)} reaches {html.escape(reached)} "
-                     f"on {html.escape(medium)}{named}")
+        # A medium that grew has no `precursors` cell, so these all failed.
+        failed = [(name, row) for name, row in rows.items() if "/" in row.reached]
+        if not failed:
+            continue
+        name, row = min(failed, key=lambda item: len(item[1].blocked))
+        named = (": " + ", ".join(html.escape(b) for b in row.blocked)
+                 if 0 < len(row.blocked) <= _PRECURSOR_NAME_BUDGET else "")
+        lines.append(f"{html.escape(sample)} reaches {html.escape(row.reached)} "
+                     f"on {html.escape(name)}{named}")
     if not lines:
         return ""
-    return ('<p class="note">What each model that did not grow was short of, on '
-            "the medium it came closest on — the biomass precursors its own "
-            f"objective reaction needs and it cannot make. {'; '.join(lines)}. "
-            "A model missing one metabolite is a curation away from growing; "
-            "one missing a dozen is missing a pathway.</p>")
+    return ('<p class="note">What each model that grew on no defined medium was '
+            "short of, on the medium it came closest on — the biomass "
+            "precursors its own objective reaction needs and it cannot make. "
+            f"{'; '.join(lines)}. A model missing one metabolite is a curation "
+            "away from growing; one missing a dozen is missing a pathway.</p>")
 
 
 def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
     """What each genome can build, and what it has to be given.
 
     Three states per compound rather than two, and a grid rather than a table:
-    32 compounds is more columns than a table holds, and the comparison a
+    30 compounds is more columns than a table holds, and the comparison a
     reader wants is down a column — which genome differs from the others.
+
+    Both tables are read by column name (`_read_named`), because a run's tables
+    outlive the code that wrote them and `--report-only` re-renders old runs.
     """
     verdicts: dict[str, dict[str, str]] = {}
     rescues: dict[str, list[str]] = {}
-    media: dict[str, dict[str, list[str]]] = {}
+    media: dict[str, dict[str, _MediumRow]] = {}
     for sample in ctx.samples:
         panel = ctx.sample_out(sample, "biosynthesis", f"{sample}.tsv")
         if panel.exists():
-            table = _read_tsv(panel)[1:]
-            verdicts[sample] = {r[0]: r[3] for r in table if len(r) > 3}
-            # Written since 2026-09-11; an older table simply has no column 4.
-            found = [r[0] for r in table if len(r) > 4 and r[4].strip()]
+            verdicts[sample], found = _read_panel(panel)
             if found:
                 rescues[sample] = found
         table = ctx.sample_out(sample, "biosynthesis", f"{sample}.media.tsv")
         if table.exists():
-            media[sample] = {r[0]: r for r in _read_tsv(table)[1:] if len(r) > 3}
+            media[sample] = _read_media(table)
     if not verdicts:
         return '<p class="missing">No capability tables.</p>'
 
@@ -2335,16 +2408,14 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
     # further down: on 2026-09-08 four of eight models could not reach
     # ammonium and all four reported 0 of 32, while the media table's
     # `present` count read a reassuring 17 of 20.
-    # Read defensively — a table written before this column existed, or while
-    # the rule is still writing it, simply has nothing to say here.
     starved = {}
     for sample in named:
-        row = media.get(sample, {}).get("M9")
-        if row is None:
+        m9 = media.get(sample, {}).get("M9")
+        if m9 is None:
             continue
-        reasons = row[5].split() if len(row) > 5 else []
-        if len(row) > 3 and row[3].strip() == INFEASIBLE:
-            reasons.append(INFEASIBLE)
+        # On an infeasible M9 every probe fails, the source check with them, so
+        # only the infeasibility is the reason.
+        reasons = [INFEASIBLE] if m9.cell == INFEASIBLE else m9.unreachable
         if reasons:
             starved[sample] = reasons
 
@@ -2383,30 +2454,12 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
     parts.append(_rescuer_note(rescues, named))
 
     if media:
-        # Parsed defensively: the report is meant to survive a partial run, and
-        # these files can be read while a rule is still writing them.
-        def raw(sample: str, medium: str, column: int) -> str:
-            row = media.get(sample, {}).get(medium)
-            if row is None or len(row) <= column:
-                return ""
-            return row[column].strip()
-
-        # `None` for anything that is not a number — which now includes a
-        # growth cell holding a solver status. That is the right reading for
-        # every arithmetic use below: an infeasible medium is not growth.
-        def cell(sample: str, medium: str, column: int) -> float | None:
-            try:
-                return float(raw(sample, medium, column))
-            except ValueError:
-                return None
-
-        grew = [s for s in named
-                if any((cell(s, m, 3) or 0.0) > 0 for m, _ in _MEDIA_COLUMNS[:4])]
-        present = [int(v) for v in (cell(s, "LB", 2) for s in media) if v is not None]
-        mrows = {}
-        for sample in media:
-            mrows[sample] = [sample] + [media[sample].get(key, ["", "", "", "—"])[3]
-                                        for key, _ in _MEDIA_COLUMNS]
+        grew = [s for s in named if _grew(media.get(s, {}))]
+        present = [rows["LB"].present for rows in media.values()
+                   if "LB" in rows and rows["LB"].present is not None]
+        mrows = {sample: [sample, *(rows[name].cell if name in rows else "—"
+                                    for name, _ in _MEDIA_COLUMNS)]
+                 for sample, rows in media.items()}
         ordered, missing = _in_sample_order(mrows, ctx.samples, 6)
         parts += [
             "<h3>Growth on the reference media</h3>",
@@ -2418,12 +2471,13 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
             "feasible at all.</p>",
             _table(ordered, header=["Genome", *[label for _, label in _MEDIA_COLUMNS]]),
             _absent_note(missing, len(ctx.samples)),
+            # A growth cell that is a word is a solver status: on the complete
+            # medium, a model that cannot be solved at all.
+            _unsolved_note({s: rows[COMPLETE].cell for s, rows in media.items()
+                            if COMPLETE in rows and rows[COMPLETE].growth is None},
+                           len(media)),
+            _closest_note(media),
         ]
-        parts.append(_unsolved_note(
-            {s: raw(s, "complete", 3) for s in media
-             if raw(s, "complete", 3) and cell(s, "complete", 3) is None},
-            len(media)))
-        parts.append(_closest_note(media, raw))
         # How much of LB arrived, and deliberately no causal claim attached to
         # it. The note that used to stand here said a zero on a rich medium is
         # usually missing transport and cited this span as the evidence; it is
@@ -2442,11 +2496,8 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
         # The compounds themselves, for the minimal medium only. A count cannot
         # distinguish a missing trace metal from a missing nitrogen source, and
         # the ids are what a reader checks against the medium definition.
-        gone = {}
-        for sample in media:
-            row = media[sample].get("M9")
-            if row is not None and len(row) > 4 and row[4].strip():
-                gone[sample] = row[4].split()
+        gone = {sample: rows["M9"].missing for sample, rows in media.items()
+                if "M9" in rows and rows["M9"].missing}
         if gone:
             listed = ", ".join(
                 f"{html.escape(s)} ({', '.join(html.escape(c) for c in ids)})"

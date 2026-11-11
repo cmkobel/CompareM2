@@ -5847,7 +5847,10 @@ def test_a_model_with_no_solution_on_m9_is_named_with_the_starved_ones(tmp_path)
     says nothing about the genome."""
     _biosynthesis_fixture(
         tmp_path, {"A": {}, "B": {}},
-        media={"A": {"M9": ("infeasible", "", ""), "complete": "5.2018"},
+        # Every probe fails on an infeasible medium, the source check too, so
+        # the elements it reports are not the reason and are not named.
+        media={"A": {"M9": ("infeasible", "", "carbon nitrogen"),
+                     "complete": "5.2018"},
                "B": {"M9": ("0.0000", "", "carbon"), "complete": "1.0000"}})
     body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
                          ("A", "B")).read_text()
@@ -6178,6 +6181,56 @@ def test_a_long_list_of_blocked_precursors_is_counted_and_not_named(tmp_path):
                          ("A",)).read_text()
     assert "A reaches 27/53 on M9" in body
     assert "mql8" not in body
+
+
+def test_a_model_that_grew_aerobically_is_not_a_model_that_did_not_grow(tmp_path):
+    """The note used to take any model with a medium it failed on, under a
+    sentence calling them models that did not grow. Rendered from real tables,
+    it listed the 1.5.0 E. coli draft — 4.83 h⁻¹ on LB — for failing
+    anaerobically, and five of six benchmark drafts with it. Any strict aerobe
+    would be. Whether a model grew is one test, shared with the summary."""
+    _biosynthesis_fixture(
+        tmp_path, {"ecol": {}, "efm": {}},
+        media={"ecol": {"M9": "0.6744",
+                        "M9[-O2]": ("0.0000", "", "", "57/60", "pe161 pe161_p pydx5p"),
+                        "LB": "4.8299",
+                        "LB[-O2]": ("0.0000", "", "", "58/60", "pe161 pe161_p"),
+                        "complete": "47.1264"},
+               "efm": {"M9": ("0.0000", "", "", "27/53", "atp gtp nad thf mql8"),
+                       "LB": ("0.0000", "", "", "52/53", "mql8"),
+                       "complete": "18.1086"}})
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("ecol", "efm")).read_text()
+    assert "1 of 2 genomes grow on any defined medium" in body
+    assert "efm reaches 52/53 on LB: mql8" in body
+    assert "ecol reaches" not in body
+
+
+def test_the_media_columns_are_the_media_biosynthesis_writes():
+    from comparem2.biosynthesis import COMPLETE, REFERENCE_MEDIA
+    from comparem2.report import _MEDIA_COLUMNS
+
+    assert [name for name, _ in _MEDIA_COLUMNS] == [
+        *(name for name, _, _ in REFERENCE_MEDIA), COMPLETE]
+
+
+def test_an_older_media_table_is_read_by_name(tmp_path):
+    """A table from before the precursor columns has six, and one a rule is
+    still writing may stop mid-row. Read by the file's own header, both simply
+    lack the later fields."""
+    from comparem2.report import _read_media
+
+    path = tmp_path / "A.media.tsv"
+    path.write_text("medium\tcompounds\tpresent\tgrowth\tmissing\tunreachable\n"
+                    "M9\t20\t17\t0.0000\tna1 nh4 ni2\tnitrogen\n"
+                    "LB\t65\t50\tinfeasible\n"
+                    "complete\t225\n")
+    rows = _read_media(path)
+    assert set(rows) == {"M9", "LB"}  # no growth cell yet, so no row
+    assert rows["M9"].unreachable == ["nitrogen"] and rows["M9"].reached == ""
+    assert rows["M9"].growth == 0.0 and rows["M9"].present == 17
+    assert rows["LB"].growth is None and rows["LB"].cell == "infeasible"
+    assert rows["LB"].missing == [] and rows["LB"].blocked == []
 
 
 def test_the_closest_note_is_silent_when_every_model_grew(tmp_path):

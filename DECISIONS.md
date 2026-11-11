@@ -4431,3 +4431,32 @@ swapping M9's carbon source. The note now says the column says nothing about
 the genome, and that the grid cannot tell organism from draft. It also names
 a model with no solution on M9 at all, such as `iNF517`. That model read
 `no route` for every compound, with nothing beside the count to say why.
+
+## 2026-11-11 — the report reads the biosynthesis tables by column name
+
+The closest-medium note was meant for "a model that grew on nothing", and its
+sentence said so. It took any model with a medium it had failed on. Rendered
+from the review's real tables it listed 16 models that grow, the 1.5.0
+*E. coli* draft (4.83 h⁻¹ on LB) and five of the six benchmark drafts among
+them, each for failing anaerobically. Any strict aerobe would be listed too.
+The unit tests had a model that failed everything and one that grew
+everywhere, and no model in between.
+
+The cause was structural. "Did this model grow" was worked out once, inline,
+for the summary sentence, and the note never asked. Both tables were read by
+column index: `raw(sample, medium, 6)`, `len(row) > 5`, and `cell(s, m, 3)`,
+spread through the section.
+
+- `_read_named` reads a TSV by the file's own header. A table written before a
+  column existed, or one a rule is still writing, simply lacks that key. It is
+  the one place the section reads defensively.
+- `_read_media` returns a `_MediumRow` per medium, and `_read_panel` returns
+  the verdicts and rescuers.
+- `_grew` is the one test of whether a model grew. The summary sentence counts
+  with it and `_closest_note` skips with it, so the two cannot disagree again.
+- The table's columns come from `biosynthesis.REFERENCE_MEDIA`, so a medium
+  added there without a label fails at import.
+
+The starved note's reason for a model with no solution on M9 is the
+infeasibility alone. Every probe fails on such a medium, the source check
+with it, so the unreachable elements it reports are not a second reason.

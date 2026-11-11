@@ -1090,6 +1090,14 @@ at once. Glucose 6-phosphate now counts too. Across all 55 models the only
 table that changes is `iSB619`'s media table, whose `carbon` empties. No
 CarveMe draft measured is PTS-only.
 
+**Fixed: the report called models that grew "models that did not grow".** The
+closest-medium note took any model with a medium it failed on. Rendered from
+the 55 models' real tables, it listed 16 that grow on some defined medium,
+the 1.5.0 *E. coli* draft (4.83 h⁻¹ on LB) among them, for failing
+anaerobically. It now takes only models that grew on no defined medium, by
+the same test the summary counts them with. Re-rendered, the 16 are gone and
+nothing else in the section moves but the starved note's wording.
+
 The note itself now also names a model with no solution on M9 (`iNF517`, whose
 fixed fluxes M9 cannot meet). It no longer calls a starved row "a property of
 the reconstruction": the six Methanoflorens drafts make nothing from CO2 and H2
