@@ -33,6 +33,15 @@ section previously said 155,829 bytes, which matches neither the committed file
 nor its character count; where that figure came from is unknown, so it is
 replaced by a measured one rather than explained.
 
+**Patched again on 2026-11-11**, for the contig-ring logo and the move from blue
+to green (`DECISIONS.md`, same date), by the same method: each substitution is
+a string the old renderer provably emitted, swapped for what the new one emits,
+with its expected count asserted first. The `<style>` block, favicon and mark
+again, plus the colour of the 13 bars in the overlap table and the 8 blocks of
+the pangenome figure, which drew in the accent as a literal. Colours only;
+the run's numbers and geometry did not move. 172,503 → 172,596 bytes. The 8
+tree labels still in `#2b6cb0` are the cluster palette, which stays blue.
+
 | | |
 | --- | --- |
 | thirteen tools | **25 min** wall across the queue, 12:44:14 → 13:09 |

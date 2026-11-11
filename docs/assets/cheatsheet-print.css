@@ -1,5 +1,8 @@
 /* Print styling for CHEATSHEET.da.pdf. Not used by the docs site; mkdocs loads
-   assets/extra.css only, and the accent colours here are taken from it.
+   assets/extra.css only, and the accent colours here were taken from it. They
+   are still the blue of before 2026-11-11, when extra.css went "Agar" green
+   (#1d7a3e, darker #155e2f): the PDF was not rebuilt then, and this file
+   matches the PDF. Switch them together, with the commands below.
 
    The PDF is regenerated from the repository root with:
 

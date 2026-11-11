@@ -2041,7 +2041,7 @@ def test_report_mark_follows_the_colour_scheme(tmp_path):
     h1 = re.search(r"<h1>(.*?)</h1>", body, re.DOTALL).group(1)
     assert 'class="mark"' in h1
     assert "var(--accent)" in h1 and "var(--tint)" in h1
-    assert h1.count("<rect") == len(report_mod.MARK_BARS)
+    assert h1.count("<path") == len(report_mod.MARK_ARCS)
     assert 'href="data:image/svg+xml,' in body
     assert "var(" not in report_mod.FAVICON
 

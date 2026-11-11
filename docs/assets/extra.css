@@ -6,20 +6,25 @@
  * `border-radius:100%` — and the CompareM2 mark is a 5.9:1 wordmark, so the
  * crop has to go. The first attempt un-cropped it onto a white panel, which
  * left the header fighting the blue mobile bar directly above it; instead the
- * header keeps a blue background and carries the on-blue wordmark
+ * header keeps a coloured background and carries the on-colour wordmark
  * (`comparem2-logo-badge.svg`, white ink and a tinted M2). Small and flush
  * left above the search field, so it reads as a header rather than a hero —
  * index.md already has the large one.
  *
- * Colours are the report's own palette (see report.py --accent): #2b6cb0
- * accent, which replaces the theme's #2980b9 in both blue bars so the docs
- * chrome and the report agree.
+ * Colours are the report's own palette (see report.py --accent): #1d7a3e
+ * accent ("Agar" green, blue until 2026-11-11), which replaces the theme's
+ * #2980b9 in both bars and in links so the docs chrome and the report agree.
  */
 
 .wy-side-nav-search,
 .wy-nav-top {
-  background-color: #2b6cb0;
+  background-color: #1d7a3e;
 }
+
+/* Links in the accent. The theme's are #2980b9, hover #3091d1; visited keeps
+ * the theme's purple, which still reads as visited against green. */
+a, a code { color: #1d7a3e; }
+a:hover, a:hover code { color: #155e2f; }
 
 .wy-side-nav-search {
   padding: 0.95em 0.809em 0.809em;
@@ -27,7 +32,7 @@
 }
 
 /* No `:hover` here — the theme's own white-10% hover on this link is worth
- * keeping now that the header is blue again, and it hugs the wordmark because
+ * keeping now that the header is coloured again, and it hugs the wordmark because
  * the link is inline-block rather than the full sidebar width. */
 .wy-side-nav-search > a {
   display: inline-block;
@@ -53,7 +58,7 @@
 
 /* The theme's border was picked against #2980b9. */
 .wy-side-nav-search input[type="text"] {
-  border-color: #24578f;
+  border-color: #155e2f;
 }
 
 /* The mobile bar shows the same wordmark at the same height (the <img> is put
@@ -87,10 +92,10 @@
  * none and no toggle, so this is every colour theme.css and theme_extra.css set
  * on something the docs actually use, re-stated for dark — there is no
  * variable to flip. The palette is the report's dark one (report.py, `CSS`):
- * #161616 page, #e8e8e8 text, #9a9a9a muted, #333 rules, #7fb3e8 accent, so a
+ * #161616 page, #e8e8e8 text, #9a9a9a muted, #333 rules, #6fdc8c accent, so a
  * reader moving between the two sees the same colours.
  *
- * Kept as the theme sets them: both blue bars (the white wordmark needs them)
+ * Kept as light mode sets them: both green bars (the white wordmark needs them)
  * and the admonition title strips, which are saturated with white text and
  * read on either background.
  *
@@ -120,8 +125,8 @@
     color: #9a9a9a;
   }
 
-  a, a code { color: #7fb3e8; }
-  a:hover, a:hover code { color: #a9c9ec; }
+  a, a code { color: #6fdc8c; }
+  a:hover, a:hover code { color: #a3ecb6; }
   a:visited, a:visited code { color: #c39bd3; }
 
   /* Sidebar. Neutral grey rather than the theme's warm #343131, which sits
@@ -161,7 +166,7 @@
     color: #9a9a9a;
   }
 
-  /* Search fields: the sidebar's, on the blue header, and the results page's. */
+  /* Search fields: the sidebar's, on the green header, and the results page's. */
   input[type="text"],
   input[type="search"],
   form .search-query {
@@ -170,7 +175,7 @@
     border-color: #333;
     box-shadow: none;
   }
-  .wy-side-nav-search input[type="text"] { border-color: #24578f; }
+  .wy-side-nav-search input[type="text"] { border-color: #155e2f; }
   #search-results .search li,
   #search-results .search li:first-child {
     border-color: #333;

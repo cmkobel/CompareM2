@@ -432,7 +432,7 @@ something already published. The post-mortems are in
   file.** The mark in the heading is inline SVG painted from `var(--accent)`
   and `var(--tint)`, so it inverts with the reader's colour scheme — an `<img>`
   or a `background-image` cannot see a custom property and would sit in
-  light-mode blue on a dark page. The favicon is the exception that shows the
+  light-mode green on a dark page. The favicon is the exception that shows the
   reason: a `data:` URI is a separate document, does not see the page's
   properties, and so carries literal colours and cannot follow the scheme.
   Shipping either as an asset would break the other invariant too —
