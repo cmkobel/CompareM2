@@ -5961,7 +5961,7 @@ def test_an_unbounded_solve_is_producible_and_not_a_zero():
     # Everything else is a zero: Infeasible genuinely is one, and Unknown and
     # Suboptimal are not knowledge — under-reporting beats inventing a route.
     for status in ("Infeasible", "Unknown", "Suboptimal",
-                   "Infeasible or Unbounded"):
+                   "Infeasible or Unbounded", "Error"):
         assert flux_from(status, 10.0) == 0.0, status
     assert flux_from("Optimal", 10.0) == 10.0
     assert flux_from("Optimal", None) == 0.0
@@ -5978,6 +5978,48 @@ def test_a_growth_cell_says_why_there_is_no_number():
     assert growth_cell("Optimal", -1e-14) == "0.0000"  # never a negative rate
     assert growth_cell("Infeasible", None) == "infeasible"
     assert growth_cell("Unbounded", 1e30) == "unbounded"
+    assert growth_cell("Error", None) == "error"
+
+
+def test_a_solver_that_raises_is_a_status_and_a_fresh_solver():
+    """SCIP gives up on an LP now and then — 18 of the curated iAF692's 818
+    solves, every time — and pyscipopt raises a bare Exception. That used to end
+    the rule. It is a zero now, counted and named like any status that is not
+    Optimal, and the solver is rebuilt, because reframed restores its temporary
+    bounds without a try/finally and the failed solve's are still applied."""
+    from comparem2.biosynthesis import ERROR, OPTIMAL, _Probe
+
+    probe = object.__new__(_Probe)  # no reframed here, so no __init__
+    probe.statuses, probe.errors, built = {}, [], []
+    outcomes = [RuntimeError("SCIP: error in LP solver!"), (OPTIMAL, 2.5)]
+
+    def fba(objective, constraints):
+        outcome = outcomes.pop(0)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    probe._fba = fba
+    probe._build_solver = lambda: built.append(True)
+
+    assert probe._solve({"R_x": 1}, {}) == (ERROR, None)
+    assert built == [True]
+    assert probe.errors == ["SCIP: error in LP solver!"]
+    assert probe._solve({"R_x": 1}, {}) == (OPTIMAL, 2.5)
+    assert probe.statuses == {ERROR: 1, OPTIMAL: 1}
+
+
+def test_the_unsolved_note_gives_the_cause_its_status_has():
+    """"A maintenance reaction it cannot pay" explains `infeasible` and is
+    false of `error`, which is the solver giving up."""
+    from comparem2.report import _unsolved_note
+
+    assert _unsolved_note({}, 3) == ""
+    infeasible = _unsolved_note({"A": "infeasible"}, 3)
+    assert "1 of 3 models could not be solved" in infeasible
+    assert "maintenance reaction" in infeasible and "giving up" not in infeasible
+    error = _unsolved_note({"A": "error"}, 3)
+    assert "giving up" in error and "maintenance" not in error
 
 
 def test_the_media_table_survives_a_status_where_a_number_goes(tmp_path):

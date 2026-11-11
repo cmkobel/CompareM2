@@ -284,6 +284,9 @@ MEDIA_HEADER = ("medium", "compounds", "present", "growth", "missing",
 # both are named, because the mapping from status to verdict is the part that
 # is easy to get silently wrong.
 OPTIMAL, UNBOUNDED = "Optimal", "Unbounded"
+# Ours, not reframed's: the solver raised instead of returning a status. See
+# `_Probe._solve`.
+ERROR = "Error"
 
 
 def _status(solution) -> str:
@@ -474,8 +477,6 @@ class _Probe:
 
     def __init__(self, model, max_uptake: float = MAX_UPTAKE,
                  min_flux: float = MIN_FLUX):
-        from reframed.solvers import solver_instance
-
         self.model = model
         self.max_uptake = max_uptake
         self.min_flux = min_flux
@@ -483,6 +484,8 @@ class _Probe:
         # the end of a run because a non-optimal solve is read as a zero and
         # would otherwise be invisible in a table of zeros.
         self.statuses: dict[str, int] = {}
+        # What the solver said when it raised, for the end-of-run line.
+        self.errors: list[str] = []
         drains = add_drains(model)
         self.present = drains.present
         self.sources = drains.sources
@@ -491,7 +494,7 @@ class _Probe:
         self.exchanges = _exchanges(model)
         # After the drains, because the solver is built over the model as it
         # stands and would not know about a reaction added later.
-        self.solver = solver_instance(model)
+        self._build_solver()
         self._upper = {rid: model.reactions[rid].ub
                        for rid in self.exchanges.values()}
         # Each drain's own upper bound, to restore when it is the one being
@@ -508,15 +511,47 @@ class _Probe:
         return medium_constraints(self.exchanges, self._upper, self._drain_ub,
                                   compounds, self.max_uptake, open_drain)
 
-    def _solve(self, objective, constraints: dict):
-        """One FBA, with its status counted. Returns (status, objective value)."""
+    def _build_solver(self) -> None:
+        from reframed.solvers import solver_instance
+
+        self.solver = solver_instance(self.model)
+
+    def _fba(self, objective, constraints: dict):
         from reframed import FBA
 
         solution = FBA(self.model, objective=objective,
                        constraints=constraints, solver=self.solver)
-        status = _status(solution)
+        return _status(solution), solution.fobj
+
+    def _solve(self, objective, constraints: dict):
+        """One FBA, with its status counted. Returns (status, objective value).
+
+        **A solver that raises is a status, not a crash.** SCIP gives up on an
+        LP now and then — "unresolved numerical troubles in LP" — and pyscipopt
+        raises a bare `Exception` from `optimize()`. Uncaught, that ended the
+        rule and with it the genome's whole section; caught, it is one zero
+        among the rest, counted and named on stderr like any other status that
+        is not `Optimal`. Measured on the curated `iAF692`: 18 of its 818 solves
+        raise, every time, all on media it is infeasible on anyway. Never on a
+        CarveMe draft, across 42 of them.
+
+        **The solver is rebuilt after it, as a precaution.** reframed's
+        `Solver.solve` applies the temporary bounds, solves, and restores them
+        with no `try/finally`, so a solve that raises leaves its bounds applied
+        and SCIP in whatever stage it stopped. Every medium here sets every
+        bound any medium changes, so the stale ones would be overwritten — on
+        `iAF692` the rebuild changes no output — but a solver in an unknown
+        state is not one to keep asking. The fresh one is built from the model,
+        whose own bounds were never touched.
+        """
+        try:
+            status, value = self._fba(objective, constraints)
+        except Exception as error:  # pyscipopt raises nothing more specific
+            self.errors.append(str(error))
+            self._build_solver()
+            status, value = ERROR, None
         self.statuses[status] = self.statuses.get(status, 0) + 1
-        return status, solution.fobj
+        return status, value
 
     def reaches(self, met: str, compounds) -> bool:
         """Can the model make net `met` on a medium of exactly `compounds`?"""
@@ -716,6 +751,10 @@ def main(argv: list[str] | None = None) -> int:
               + f"{sum(other.values())} of {sum(probe.statuses.values())} "
               + "solves were not optimal: "
               + ", ".join(f"{n} {k}" for k, n in sorted(other.items())),
+              file=sys.stderr)
+    if probe.errors:
+        print(f"biosynthesis: {args.model.name} — the solver raised "
+              f"{len(probe.errors)} time(s), first: {probe.errors[0]}",
               file=sys.stderr)
     return 0
 

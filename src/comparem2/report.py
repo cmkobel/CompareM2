@@ -2175,6 +2175,38 @@ def _rescuer_note(rescues: dict[str, list[str]], named: list[str]) -> str:
             "<em>no route</em>, and the block is shared rather than resolved.</p>")
 
 
+# What a status in a growth cell means, for the two a real model produces.
+# `infeasible` is a fact about the model; `error` is the solver giving up, and
+# says nothing about it — see `biosynthesis._Probe._solve`.
+_STATUS_CAUSE = {
+    "infeasible": "An infeasible model has a constraint no medium here can meet, "
+                  "usually a maintenance reaction with a lower bound it cannot "
+                  "pay, so nothing in this section describes it.",
+    "error": "An error is the solver giving up on the problem rather than "
+             "finding no solution: it says nothing about the model, and the "
+             "rest of that model's rows can still stand.",
+}
+
+
+def _unsolved_note(unsolved: dict[str, str], total: int) -> str:
+    """Models whose complete-medium growth cell holds a status, not a number.
+
+    On the complete medium a status is the one result here that says the model
+    is broken rather than fastidious — that row exists to show the model can be
+    solved at all. Never seen on a CarveMe draft, which carries no maintenance
+    floor and has never made the solver raise. Said only when it happens.
+    """
+    if not unsolved:
+        return ""
+    listed = ", ".join(f"{html.escape(s)} ({html.escape(v)})"
+                       for s, v in unsolved.items())
+    causes = " ".join(_STATUS_CAUSE[v] for v in sorted(set(unsolved.values()))
+                      if v in _STATUS_CAUSE)
+    return (f'<p class="summary"><strong>{len(unsolved)} of {total} models could '
+            "not be solved even on the complete medium</strong>, the row that "
+            f"exists to show a model can be solved at all: {listed}. {causes}</p>")
+
+
 def _closest_note(media: dict, raw) -> str:
     """For a model that grew on nothing, the medium it came closest on.
 
@@ -2359,22 +2391,10 @@ def _section_biosynthesis(tool: Tool, ctx: Context, workdir: Path) -> str:
             _table(ordered, header=["Genome", *[label for _, label in _MEDIA_COLUMNS]]),
             _absent_note(missing, len(ctx.samples)),
         ]
-        # A cell that is a word rather than a number is a solver status, and on
-        # the complete medium it is the one result here that says the model is
-        # broken rather than fastidious — that row exists to show the model can
-        # be solved at all. Never seen on a real run: CarveMe drafts carry no
-        # maintenance floor. Said only when it happens.
-        unsolved = {s: raw(s, "complete", 3) for s in media
-                    if raw(s, "complete", 3) and cell(s, "complete", 3) is None}
-        if unsolved:
-            listed = ", ".join(f"{html.escape(s)} ({html.escape(v)})"
-                               for s, v in unsolved.items())
-            parts.append(
-                f'<p class="summary"><strong>{len(unsolved)} of {len(media)} '
-                "models could not be solved even on the complete medium</strong>, "
-                f"so nothing in this section describes those organisms: {listed}. "
-                "The usual cause is a maintenance reaction with a lower bound the "
-                "medium cannot pay.</p>")
+        parts.append(_unsolved_note(
+            {s: raw(s, "complete", 3) for s in media
+             if raw(s, "complete", 3) and cell(s, "complete", 3) is None},
+            len(media)))
         parts.append(_closest_note(media, raw))
         # How much of LB arrived, and deliberately no causal claim attached to
         # it. The note that used to stand here said a zero on a rich medium is

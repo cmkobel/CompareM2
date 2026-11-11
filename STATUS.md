@@ -1030,6 +1030,46 @@ every medium pays nothing, which is the point of the scoping.
 `~ghrunner/biosynth-review` is ~130 MB and deletable — the three fresh models
 are re-carvable in under six minutes from bundled proteomes.
 
+### biosynthesis review, executed 2026-11-11 — what held, and what was fixed
+On thylakoid, in `/evo/postdoc/cm2-envs-two/6d67b6a4fe39c742e4d740c0d883faa6_`
+(carveme 1.6.6, reframed 1.6.0, SCIP 10.0), working directory
+`/evo/postdoc/cm2-biosynth-review-1111`. 55 models:
+
+| set | models | |
+| --- | ---: | --- |
+| curated BiGG | 13 | `iML1515` `iYO844` `iJN1463` `iSB619` `iYS854` `iNF517` `iCN900` `iIT341` `iNJ661` `iPC815` `iYL1228` `iCN718` `iAF692` |
+| pipeline drafts | 17 | the four *E. faecium* of `rc-3.5.1-final-A/efm`, the seven *S. aureus* of `cm2-e2e/results_full`, six Methanoflorens |
+| CarveMe 1.5.0 drafts | 6 | as shipped in `carveme/data/benchmark/models/` |
+| carved that day | 19 | the six bundled proteomes and 13 RefSeq ones, through `carve_scip.py` |
+
+**What held:**
+- **An independent re-implementation agrees on every verdict.** It was cobrapy
+  0.32.1, written from the docstring's definitions rather than from the code,
+  and solved with HiGHS (53 models) and GLPK (34). **0 of 1,590 verdicts
+  differ**, and M9 and LB growth agree to four decimals. `iNF517` and `iAF692`
+  are the two not compared.
+- **No CarveMe draft makes what it should not.** All 42 drafts were given seven
+  control media: empty, and M9 without carbon, nitrogen, sulfur, phosphate,
+  iron or cobalt. **None made a panel compound the missing element rules
+  out.**
+- None carries a boundary reaction other than `R_EX_*_e` that can supply a
+  metabolite, a forced flux, or a mis-oriented exchange. Every solve on a draft
+  was `Optimal`.
+- master reproduces the stored rc-3.5.1 *E. faecium* tables byte for byte.
+
+**The complete-medium figure is reframed's, not COBRA's.** `load_cbmodel`
+defaults to `use_infinity=True`, which reads CarveMe's ±1000 bounds as ±∞. No
+verdict moves: re-solved with `False`, `iML1515` and the 1.5.0 *E. coli* draft
+give the same 29. But the complete-medium growth comes out higher than a
+±1000 tool reports: `iML1515` **30.76 against 20.73**, the *E. coli* draft
+47.13 against 26.55. M9 and LB are unchanged, because the uptake caps bind
+first.
+
+**Fixed: a solver that raises killed the rule.** `iAF692` makes SCIP give up on
+18 of its 818 LPs ("unresolved numerical troubles in LP"). master exited 1 on
+it. It now completes, with the 18 counted as `error` on stderr, and the other
+54 models' tables are byte-identical before and after.
+
 ### biosynthesis through Snakemake, 13:51–14:03 on 2026-09-03
 `--until biosynthesis` over the four *E. faecium* genomes: bakta, carveme and
 biosynthesis, **13 of 13 steps, exit 0**, report written. The rule takes **3 s**

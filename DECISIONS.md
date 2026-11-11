@@ -4335,3 +4335,30 @@ Its header comment says so; switch both together.
 
 `docs/assets/example-report.html` was patched again, not re-rendered — the
 method and the counts are in `STATUS.md`.
+
+## 2026-11-11 — a solver that raises is a status, not a crash
+
+Found in the day's biosynthesis review (STATUS.md, *biosynthesis review,
+executed 2026-11-11*). `iAF692`, a curated archaeal model, makes SCIP give up
+on 18 of its 818 LPs ("unresolved numerical troubles in LP"), and pyscipopt
+raises a bare `Exception` from `optimize()`. Uncaught, that ended the rule, and
+under Snakemake a failed rule is a genome with no section.
+
+`_Probe._solve` now catches it. It counts `Error` like any other status that
+is not `Optimal`, and prints the first message on stderr. `flux_from` reads it
+as zero, and `growth_cell` as `error`. This is the 2026-09-10 rule applied to
+one more case: a partial answer with the status reported is worth more than no
+report.
+
+**The solver is rebuilt after an error**, because reframed's `Solver.solve`
+restores its temporary bounds with no `try/finally`. Measured, it is a
+precaution rather than a repair. Every medium sets every bound any medium
+touches, and on `iAF692` the outputs are identical with and without the
+rebuild.
+
+**Rejected: catching it around a whole verdict or medium.** One LP is the unit
+that fails. Catching there keeps every other answer the model gives.
+
+The report's note for a model unsolved on the complete medium gave one cause,
+a maintenance floor. That explains `infeasible` and is false of `error`, so the
+cause now follows the status.
