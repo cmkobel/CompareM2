@@ -950,16 +950,21 @@ GUIDANCE: dict[str, Guidance] = {
                "salvage is not synthesis.",
         reading=(
             ("De novo",
-             "A complete, connected route from the minimal medium. The calibration is "
-             "29 of 30, and it is the same number whether the model was curated by hand "
-             "or carved by this pipeline: the manually curated Escherichia coli model "
-             "iML1515 returns 29, and so do CarveMe drafts of E. coli, B. subtilis, "
-             "P. aeruginosa, S. oneidensis and R. solanacearum. In every one the single "
-             "miss is adenosylcobalamin, which E. coli genuinely cannot synthesise and "
-             "can only salvage. That agreement is what says how much weight the column "
-             "carries — read as 29 of 29 comparable compounds, because the thirtieth "
-             "is not in the bacterial reaction database and could not have come out "
-             "any other way for any genome."),
+             "A complete, connected route from the minimal medium. How much weight the "
+             "column carries is measured on genomes whose answer is known, carved by "
+             "this pipeline from the proteomes CarveMe bundles (measured 2026-11-11, "
+             "CarveMe 1.6.6). The E. coli and B. subtilis drafts make 29 of 30, as "
+             "does the manually curated E. coli model iML1515, and the miss is "
+             "adenosylcobalamin, which is not in the bacterial reaction database "
+             "CarveMe carves from, so no draft can make it whatever the genome. "
+             "29 is not every prototroph's right answer, though. The P. aeruginosa "
+             "and R. solanacearum drafts make 28 and 27, and that is correct: "
+             "neither genome annotates a menaquinone pathway, and R. solanacearum "
+             "annotates no asparagine synthetase either. Of nine prototroph drafts "
+             "carved that day, seven have no false dependency once that is counted "
+             "right. S. oneidensis has one, proline. P. putida has seven, every one "
+             "traceable to glutamine synthetase, which its genome annotates and its "
+             "draft lost."),
             ("Blocked upstream",
              "The pathway to this compound is present, but it cannot run from the "
              "minimal medium because another compound on the panel is unavailable. "

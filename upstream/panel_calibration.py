@@ -1,33 +1,52 @@
 #!/usr/bin/env python3
 """What the biosynthesis panel answers for genomes whose answer is known.
 
-The panel's calibration used to be one curated model, `iML1515` at 31 of 32
-de novo. That is the wrong reference class: this pipeline never produces a
-curated model, and on 2026-09-10 a CarveMe draft of the *same organism* came
-out at 29, missing biotin and ubiquinone-8 — both of which *E. coli* makes.
-Dropping those two took the panel to 30 and the curated model and the drafts
-then agreed at **29 of 30, adenosylcobalamin the only miss in either**.
+The calibration is a table of expected answers, one per genome CarveMe
+bundles, and what this reports is where a draft departs from it. It used to be
+a count — "29 of 30, for the curated `iML1515` and for drafts of five
+prototrophs" — and the count hid two things. Three of those five were CarveMe
+1.5.0 drafts that ship with the package, not drafts carved the way this
+pipeline carves. And 29 is not every prototroph's right answer: an organism
+with no menaquinone pathway should not make menaquinone-8.
 
-This re-measures that. It is the check to re-run when CarveMe's version, its
-universe or its scoring changes, because the agreement is what says how much
-weight the *de novo* column carries.
+**What each genome should not make, and why:**
+- `adocbl` for every genome: not in the carving universe at all
+  (`biosynthesis.UNIVERSE_CEILING`).
+- `mqn8` for *P. aeruginosa* and *R. solanacearum*: neither bundled proteome
+  annotates a menaquinone-pathway gene, only the `UbiE` methyltransferase that
+  ubiquinone synthesis shares. *K. pneumoniae* and *S. aureus* annotate the
+  whole Men pathway, checked the same way. Ubiquinone-9 is *P. aeruginosa*'s
+  major quinone (Vo et al. 2020, J Biol Chem, PMC7335794), and Q-8 the
+  predominant one in the *Ralstonia* species described since 2023.
+- `asn__L` for *R. solanacearum*: its proteome annotates no asparagine
+  synthetase, and does annotate the GatCAB amidotransferase, which makes
+  Asn-tRNA from Asp-tRNA without free asparagine. A model has no
+  representation of that route, so "no route to free asparagine" is the
+  faithful reading of the genome. It is listed as expected so that it is not
+  counted as a carving error, and the reason says why.
+- *M. genitalium* is the negative control: a genome-reduced parasite, which
+  must not come out making anything from a minimal medium.
+
+Anything else not *de novo* is a **false dependency**, and anything listed
+that is *de novo* is a **false prototrophy**.
+
+Measured 2026-11-11 on thylakoid, CarveMe 1.6.6 through this repo's
+`carve_scip.py`, ReFramed 1.6.0:
+
+    Ecoli_K12_MG1655       29 de novo   as expected
+    Bsubtilis_168          29 de novo   as expected
+    Paeruginosa_PAO1       28 de novo   as expected
+    Soneidensis_MR1        28 de novo   false dependency: pro__L
+    Rsolanacearum_GMI1000  27 de novo   as expected
+    M_genitalium_G37        0 de novo   as expected (negative control)
+
+*S. oneidensis*'s proline is not traced. Its draft carries `GLU5K`, `G5SD`
+and `P5CR`, the same as the *E. coli* draft, which does make proline.
 
 **The inputs ship with CarveMe.** `carveme/data/benchmark/fasta/` holds the
 proteomes of the five organisms the CarveMe paper benchmarks against plus
-*M. genitalium*, so nothing has to be downloaded and nothing has to be
-annotated. Carving *E. coli* K-12 took 7.5 s of solver time on thylakoid and
-*B. subtilis* 168 took 23.7 s, both to a certified optimum;
-*M. genitalium* took 274.9 s and stopped at a 6.9e-5 gap.
-
-Measured 2026-09-10, CarveMe 1.6.6 and ReFramed 1.6.0, panel of 30:
-
-    iML1515             29 de novo   adocbl none    (curated, for comparison)
-    Ecoli_K12_MG1655    29 de novo   adocbl absent
-    Bsubtilis_168       29 de novo   adocbl absent
-    M_genitalium_G37     0 de novo   3 upstream, 24 none, 3 absent
-
-The *M. genitalium* row is the negative control and the reason it is in the
-set: a genome-reduced obligate parasite must not come out prototrophic.
+*M. genitalium*, so nothing has to be downloaded and nothing annotated.
+Carving took 24–48 s a genome on thylakoid, and 336 s for *M. genitalium*.
 
 Self-contained, like `carve_scip.py` and `biosynthesis.py` — runs under the
 tool environment's own python. It imports `biosynthesis` by path rather than
@@ -42,6 +61,8 @@ workdir are reused, so scoring alone needs no DIAMOND at all.
     conda activate <the carveme env>
     python3 panel_calibration.py --workdir /tmp/cal
     python3 panel_calibration.py --workdir /tmp/cal --model iML1515.xml
+
+A `--model` has no expected answer and is scored without one.
 """
 
 from __future__ import annotations
@@ -56,8 +77,21 @@ HERE = Path(__file__).resolve().parent
 BIOSYNTHESIS = HERE.parent / "src" / "comparem2" / "biosynthesis.py"
 CARVE_SCIP = HERE.parent / "src" / "comparem2" / "carve_scip.py"
 
-# The prototroph controls, then the negative control. Named as the files are.
-GENOMES = ("Ecoli_K12_MG1655", "Bsubtilis_168", "M_genitalium_G37")
+CEILING = "not in the carving universe"
+NO_MENAQUINONE = "no menaquinone pathway annotated; respires with ubiquinone"
+INDIRECT_ASN = "no asparagine synthetase annotated; Asn-tRNA by GatCAB"
+
+# Every bundled genome, named as the files are, and what it should not make
+# beyond the universe ceiling. See the module docstring for each reason.
+EXPECTED = {
+    "Ecoli_K12_MG1655": {},
+    "Bsubtilis_168": {},
+    "Paeruginosa_PAO1": {"mqn8": NO_MENAQUINONE},
+    "Soneidensis_MR1": {},
+    "Rsolanacearum_GMI1000": {"mqn8": NO_MENAQUINONE, "asn__L": INDIRECT_ASN},
+}
+NEGATIVE_CONTROL = "M_genitalium_G37"
+GENOMES = (*EXPECTED, NEGATIVE_CONTROL)
 
 
 def load_biosynthesis():
@@ -83,18 +117,32 @@ def carve(faa: Path, output: Path) -> None:
                     "--faa", str(faa), "--output", str(output)], check=True)
 
 
-def report(bio, path: Path) -> tuple[str, dict[str, int], list[str]]:
+def expected_not(bio, name: str) -> dict[str, str] | None:
+    """What `name` should not make, with reasons; None for no expectation."""
+    if name not in EXPECTED:
+        return None
+    return {**{b: CEILING for b in bio.UNIVERSE_CEILING}, **EXPECTED[name]}
+
+
+def departures(bio, found: dict[str, str], name: str) -> list[str]:
+    """Where a genome's verdicts depart from what it should answer."""
+    if name == NEGATIVE_CONTROL:
+        return [f"false prototrophy: {b}" for b, v in found.items()
+                if v == bio.DE_NOVO]
+    expected = expected_not(bio, name)
+    if expected is None:
+        return []
+    out = [f"false dependency: {b} ({v})" for b, v in found.items()
+           if v != bio.DE_NOVO and b not in expected]
+    out += [f"false prototrophy: {b}" for b in expected
+            if found.get(b) == bio.DE_NOVO]
+    return out
+
+
+def score(bio, path: Path) -> dict[str, str]:
     from reframed import load_cbmodel
 
-    model = load_cbmodel(str(path), flavor="bigg")
-    probe = bio._Probe(model)
-    counts: dict[str, int] = {}
-    missed = []
-    for compound, verdict in bio.verdicts(probe).items():
-        counts[verdict] = counts.get(verdict, 0) + 1
-        if verdict != bio.DE_NOVO:
-            missed.append(f"{compound}:{verdict}")
-    return path.stem, counts, missed
+    return bio.verdicts(bio._Probe(load_cbmodel(str(path), flavor="bigg")))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -123,11 +171,19 @@ def main(argv: list[str] | None = None) -> int:
         carve(faa, output)
         models.append(output)
 
-    print(f"{'model':<22} {'panel':>5} {'de novo':>8}  not de novo")
+    print(f"{'model':<22} {'de novo':>8}  departures from the expected answer")
+    total = 0
     for path in models:
-        name, counts, missed = report(bio, Path(path))
-        print(f"{name:<22} {len(bio.PANEL):>5} "
-              f"{counts.get(bio.DE_NOVO, 0):>8}  {' '.join(missed) or '—'}")
+        name = Path(path).stem
+        found = score(bio, Path(path))
+        off = departures(bio, found, name)
+        total += len(off)
+        de_novo = sum(v == bio.DE_NOVO for v in found.values())
+        known = (name == NEGATIVE_CONTROL) or name in EXPECTED
+        print(f"{name:<22} {de_novo:>8}  "
+              + ("; ".join(off) if off else
+                 "as expected" if known else "no expectation"))
+    print(f"\n{total} departure(s) across {len(models)} model(s)")
     return 0
 
 

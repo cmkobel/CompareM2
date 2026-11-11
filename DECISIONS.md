@@ -4460,3 +4460,49 @@ spread through the section.
 The starved note's reason for a model with no solution on M9 is the
 infeasibility alone. Every probe fails on such a medium, the source check
 with it, so the unreachable elements it reports are not a second reason.
+
+## 2026-11-11 — the calibration is a table of expected answers, not a count
+
+The panel's calibration was "29 of 30, the same for the curated `iML1515` and
+for CarveMe drafts of five prototrophs". The day's review re-carved the same
+five through `carve_scip.py`, which is the pipeline's own path. They gave
+29, 29, 28, 28 and 27. The 2026-09-10 figure had used CarveMe's bundled 1.5.0
+drafts for *P. aeruginosa*, *S. oneidensis* and *R. solanacearum*, and carved
+only *E. coli* and *B. subtilis*.
+
+Two of the three lower figures are **right**. *P. aeruginosa* and
+*R. solanacearum* annotate no menaquinone-pathway gene, only the `UbiE`
+methyltransferase that ubiquinone synthesis shares, so menaquinone-8 should
+not come out *de novo*. Ubiquinone-9 is *P. aeruginosa*'s major quinone (Vo et
+al. 2020, J Biol Chem, PMC7335794). The 1.5.0 drafts that scored them 29 were
+the wrong ones. A count would have kept saying 29 is the target.
+
+So `upstream/panel_calibration.py` now holds what each bundled genome should
+*not* make, each with a reason, and reports departures both ways:
+- false dependencies: not *de novo*, and not expected;
+- false prototrophy: expected, yet *de novo*.
+
+*M. genitalium* stays as the negative control. Today it reports one departure,
+*S. oneidensis* proline, which is untraced.
+`tests/environments/check.py` compares *E. coli*'s misses as a set,
+`{adocbl}`, rather than counting to 29. A draft that lost one compound and
+gained another passed the count.
+
+**`asn__L` is an expected miss for *R. solanacearum*, not a carving error.**
+Its proteome annotates no asparagine synthetase and does annotate GatCAB, as
+do both *S. aureus* proteomes and *A. baumannii*'s. No reaction in a BiGG model
+represents GatCAB, so "no route to free asparagine" reads that genome
+faithfully. What the organism needs is a separate question. The table says
+"expected, because"; it does not say "required".
+
+**Rejected: putting the RefSeq genomes in the script.** *K. pneumoniae*,
+*M. tuberculosis*, *A. baumannii* and *P. putida* widened the review usefully.
+*P. putida*'s seven false dependencies all come from one glutamine synthetase
+lost in carving. But those proteomes need NCBI, and the script's point is
+that it needs nothing CarveMe does not ship. Their numbers are in STATUS.
+
+The two review instruments are committed beside it:
+`biosynthesis_controls.py`, the negative controls, and
+`biosynthesis_crosscheck.py`, the cobrapy reading. Both claims, 0 of 42
+drafts making what they should not and 0 of 1,620 verdicts differing, are
+re-measurable, not remembered.

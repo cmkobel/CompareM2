@@ -1090,6 +1090,11 @@ at once. Glucose 6-phosphate now counts too. Across all 55 models the only
 table that changes is `iSB619`'s media table, whose `carbon` empties. No
 CarveMe draft measured is PTS-only.
 
+The note itself now also names a model with no solution on M9 (`iNF517`, whose
+fixed fluxes M9 cannot meet). It no longer calls a starved row "a property of
+the reconstruction": the six Methanoflorens drafts make nothing from CO2 and H2
+or from acetate either, so for them it is at least as much the organism.
+
 **Fixed: the report called models that grew "models that did not grow".** The
 closest-medium note took any model with a medium it failed on. Rendered from
 the 55 models' real tables, it listed 16 that grow on some defined medium,
@@ -1098,10 +1103,39 @@ anaerobically. It now takes only models that grew on no defined medium, by
 the same test the summary counts them with. Re-rendered, the 16 are gone and
 nothing else in the section moves but the starved note's wording.
 
-The note itself now also names a model with no solution on M9 (`iNF517`, whose
-fixed fluxes M9 cannot meet). It no longer calls a starved row "a property of
-the reconstruction": the six Methanoflorens drafts make nothing from CO2 and H2
-or from acetate either, so for them it is at least as much the organism.
+**The calibration, re-measured on the pipeline's own carving.** This replaces
+the "29 of 30 for `iML1515` and five carved prototrophs" of 2026-09-10 and
+09-15 above. Three of those five were CarveMe 1.5.0 drafts shipped with the
+package, and carved here they do not all give 29. `upstream/panel_calibration.py`
+now scores the drafts against a table of what each genome should not make.
+CarveMe 1.6.6, through `carve_scip.py`:
+
+| draft | de novo | not de novo | expected? |
+| --- | ---: | --- | --- |
+| *E. coli* K-12 MG1655 | 29 | `adocbl` | yes, the universe ceiling |
+| *B. subtilis* 168 | 29 | `adocbl` | yes |
+| *P. aeruginosa* PAO1 | 28 | `adocbl` `mqn8` | yes: no menaquinone pathway annotated |
+| *S. oneidensis* MR-1 | 28 | `adocbl` `pro__L` | **proline is a false dependency**, untraced |
+| *R. solanacearum* GMI1000 | 27 | `adocbl` `asn__L` `mqn8` | yes: no Men pathway; no asparagine synthetase, GatCAB present |
+| *M. genitalium* G37 | 0 | all 30 | yes, the negative control |
+| *K. pneumoniae* MGH78578 ¹ | 29 | `adocbl` | — |
+| *M. tuberculosis* H37Rv ¹ | 29 | `adocbl` | — |
+| *A. baumannii* AYE ¹ | 27 | `adocbl` `asn__L` `mqn8` | — (the same two reasons as *R. solanacearum*) |
+| *P. putida* KT2440 ¹ | 21 | `adocbl` `mqn8`, `gln__L` and six `upstream` | **seven false dependencies**: the draft has no `GLNS`, though `glnA` is annotated, and glutamine alone on M9 unblocks all six |
+
+¹ RefSeq proteomes, not bundled with CarveMe, so not in the script. The
+menaquinone and asparagine reasons were read off the proteomes' own
+annotation. *K. pneumoniae* and *S. aureus* annotate the whole Men pathway,
+and the four with none annotate only `UbiE`, which ubiquinone synthesis
+shares. `tests/environments/check.py` now requires *E. coli*'s misses to be
+exactly `{adocbl}`; run on thylakoid against a fresh carve, it passes.
+
+**The independent reading is an instrument now.**
+`upstream/biosynthesis_crosscheck.py` re-ran the cobrapy comparison against
+this branch's tables: **0 of 1,620 verdicts differ across 54 models, with HiGHS
+and again with GLPK**, and growth agrees on all four defined media. `iAF692`
+can be compared now that it completes. `iNF517` cannot: cobrapy refuses its
+arginine exchange, fixed at an uptake, once the medium closes it.
 
 ### biosynthesis through Snakemake, 13:51–14:03 on 2026-09-03
 `--until biosynthesis` over the four *E. faecium* genomes: bakta, carveme and

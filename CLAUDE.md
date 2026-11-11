@@ -113,8 +113,8 @@ all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.
 `.github/workflows/environments.yaml` builds each of the six from the files
 `render_envs` generates, Mondays and on demand, and runs
 `tests/environments/check.py` in it: a version call per tool, a toy FastTree,
-a real CarveMe carve of *E. coli* scored by `biosynthesis.py`, which must
-come out 29 of 30, and CheckM2's three bundled models loaded and run on a zero
+a real CarveMe carve of *E. coli* scored by `biosynthesis.py`, whose one
+miss must be adenosylcobalamin, and CheckM2's three bundled models loaded and run on a zero
 vector, which must give the numbers measured on thylakoid. Solving is not the
 test. On 2026-09-24 carveme solved, installed, and had no solver. The runner is
 `ubuntu-latest` on purpose: its move to 26.04 is what caught checkm2 failing
@@ -209,10 +209,16 @@ ANI, 0 SNPs, identical CDS counts.
   each other and the pair then reports a kinase. **And a target that is the
   same answer for every genome is not a target**: `btn` and `q8` were dropped
   on 2026-09-10 after coming out `none` in 12 of 12 drafts across 8 species,
-  including organisms that make both. Tests enforce all three. The calibration
-  is **29 of 30**, the same for the curated `iML1515` and for CarveMe drafts of
-  five prototrophs — re-measure it with `upstream/panel_calibration.py`.
-  Adding a compound means checking its BiGG representation the same way.
+  including organisms that make both. Tests enforce all three. **The
+  calibration is a table of expected answers, not a count**:
+  `upstream/panel_calibration.py` says what each genome CarveMe bundles should
+  not make and why, and reports departures. Adenosylcobalamin is expected of
+  all of them, since the carving universe lacks it. So is menaquinone-8 of the
+  two with no menaquinone pathway, so 29 of 30 is not every prototroph's
+  answer. Measured 2026-11-11: one departure, *S. oneidensis* proline. Its
+  negative controls are `upstream/biosynthesis_controls.py`, and an
+  independent cobrapy reading is `upstream/biosynthesis_crosscheck.py`. Adding
+  a compound means checking its BiGG representation the same way.
 - **The documentation ships with the change, not after it.** A change that
   makes something in these files wrong is not finished until that file says so
   — in the same commit, so the two cannot drift apart between one session and

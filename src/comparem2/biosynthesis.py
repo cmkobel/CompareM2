@@ -85,16 +85,24 @@ that cycle it. **The routes are in the database and carving does not keep
 them**, so a column that is always the same answer was costing every genome two
 false dependencies. Menaquinone-8 stays and does vary.
 
-**Validated at two levels.** The BiGG universe itself — every reaction capped
-at ±1000, exchanges added for M9, 25,348 reactions — reaches all 32 compounds
-that were on the panel then, so every target here is a representation the
-database can actually reach and no verdict below is a badly chosen metabolite.
-And the curated model and the drafts now agree: `iML1515` returns **29 of 30**,
-and so do drafts of *E. coli*, *B. subtilis*, *P. aeruginosa*, *S. oneidensis*
-and *R. solanacearum*. In every one the single miss is adenosylcobalamin —
-correct for *E. coli*, which cannot synthesise it de novo, and an honest "not in
-this draft" for the rest. **29 of 30 is the calibration**, and it is the same
-number whether the model was curated by hand or carved by this pipeline.
+**The calibration is a table of expected answers**, in
+`upstream/panel_calibration.py`: what each genome CarveMe bundles should not
+make, and why. It is *not* 29 of 30 for every prototroph. Carved by this
+pipeline on 2026-11-11, *E. coli* and *B. subtilis* make 29, as the curated
+`iML1515` does, all three missing only adenosylcobalamin, which the carving
+universe does not contain. *P. aeruginosa* makes 28 and *R. solanacearum* 27,
+correctly: neither annotates a menaquinone pathway, and *R. solanacearum* has
+no asparagine synthetase. *S. oneidensis* makes 28, and its proline is a false
+dependency. Of nine prototroph drafts carved that day, seven had no false
+dependency at all, and *P. putida* had seven, all from the glutamine
+synthetase its draft lost. The earlier claim, 29 of 30 "the same whether
+curated or carved by this pipeline", rested on CarveMe 1.5.0 drafts for three
+of its five organisms.
+
+**Every target but adocbl is one the database can reach.** In
+`universe_bacteria`, the universe `carve` loads, 29 of the 30 come out de novo
+from M9 and `adocbl` is not there at all (`upstream/universe_ceiling.py`,
+2026-09-15). So no verdict is the artefact of a badly chosen metabolite.
 
 On the drafts the probe recovers described requirements. All four *E. faecium*
 have no route to leucine, methionine, threonine, tryptophan, valine, riboflavin,
@@ -277,8 +285,8 @@ DE_NOVO, UPSTREAM, NO_ROUTE, ABSENT = "de_novo", "upstream", "none", "absent"
 # Measured 2026-09-15 with `upstream/universe_ceiling.py` against carveme
 # 1.6.6: `M_adocbl_c` is in `universe_archaea` and in `bigg_universe`, and in
 # none of `bacteria`, `gramneg`, `grampos`, `cyanobacteria`. It is the only one
-# of the thirty, and it is why every prototroph lands on exactly 29 — curated
-# `iML1515` and CarveMe drafts of five prototrophs all miss it and nothing else.
+# of the thirty, so every bacterial draft misses it whatever the genome, and it
+# is in every genome's expected answer in `upstream/panel_calibration.py`.
 #
 # **Universe-dependent, not absolute**, which is why the report hedges on the
 # universe rather than on the compound: a run with

@@ -506,10 +506,15 @@ something already published. The post-mortems are in
   model — including drafts of four organisms that make biotin and two that use
   ubiquinone-8. Both routes are in the reaction database and carving does not
   keep them, so the columns were two false dependencies a genome rather than a
-  signal. All three rules are enforced by tests, and the calibration is now
-  **29 of 30 for the curated `iML1515` and for CarveMe drafts of five
-  prototrophs alike**, adenosylcobalamin the only miss in any of them.
-  `upstream/panel_calibration.py` re-measures it from proteomes CarveMe bundles.
+  signal. All three rules are enforced by tests.
+- **The calibration is a table of expected answers, not a count.** For each
+  genome CarveMe bundles, `upstream/panel_calibration.py` says what its draft
+  should not make, and why. Adenosylcobalamin is expected of every genome,
+  because the carving universe does not contain it. Menaquinone-8 is expected
+  of genomes with no menaquinone pathway, and asparagine of one with no
+  asparagine synthetase. The script reports departures both ways. A count
+  ("29 of 30") passes a draft that lost one compound and gained another, and
+  it is the wrong number for an organism that respires with ubiquinone.
 
 ## Open questions
 
