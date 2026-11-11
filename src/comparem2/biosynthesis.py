@@ -336,8 +336,8 @@ PANEL_HEADER = ("compound", "name", "group", "verdict", "rescues")
 # for M9 and differed in which three were missing.
 # `precursors` and `blocked` answer the question a zero in `growth` raises and
 # nothing else here could: which of the things biomass needs is the model
-# unable to make. Filled only on a medium that did not grow — 53 solves each,
-# against 70 for the whole of the rest of this module.
+# unable to make. Filled only on a medium that did not grow, at one solve per
+# precursor — see `media` for what that costs.
 MEDIA_HEADER = ("medium", "compounds", "present", "growth", "missing",
                 "unreachable", "precursors", "blocked")
 
@@ -734,10 +734,11 @@ def media(probe: _Probe) -> list[tuple[str, ...]]:
     output and are reproduced by it exactly, which is the reason to trust the
     definition in `biomass_precursors`.
 
-    **Only on a medium that did not grow.** 53 solves a medium is eight times
-    the rest of this module put together — 6.5 s against 0.8 s on `116_2` —
-    and there is nothing to explain about a medium that worked. A model that
-    grows on all five pays nothing.
+    **Only on a medium that did not grow.** It is one solve per biomass
+    precursor, 53 on a CarveMe draft. `116_2` fails four media, so that is 212
+    of its 346 solves and most of its 6.6 s. The *E. coli* draft grows on all
+    five and needs 38 solves in all, 2.0 s (measured 2026-11-11). There is
+    nothing to explain about a medium that worked.
 
     **A count was not enough**, so `missing` names them and `unreachable` says
     whether what is gone matters. On 2026-09-08 two models of one strain both
