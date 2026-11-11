@@ -22,9 +22,19 @@
 }
 
 /* Links in the accent. The theme's are #2980b9, hover #3091d1; visited keeps
- * the theme's purple, which still reads as visited against green. */
+ * the theme's purple, which still reads as visited against green.
+ *
+ * The bare `a` is safe because it is the weakest selector there is: the
+ * sidebar's `.wy-menu-vertical a` beats it. Anything with a pseudo-class is
+ * not — `a:hover` ties `.wy-menu-vertical a` on specificity and wins by
+ * loading later, and the theme's menu hover sets only a background, so a
+ * global `a:hover` painted hovered menu items dark green on #4e4a4a, unreadable
+ * (2026-11-11). So every rule here past the bare `a` is scoped to the page. */
 a, a code { color: #1d7a3e; }
-a:hover, a:hover code { color: #155e2f; }
+.wy-nav-content a:hover, .wy-nav-content a:hover code { color: #155e2f; }
+
+/* The theme flashes a menu item #2980b9 while it is pressed. */
+.wy-menu-vertical a:active { background-color: #1d7a3e; }
 
 .wy-side-nav-search {
   padding: 0.95em 0.809em 0.809em;
@@ -125,9 +135,12 @@ a:hover, a:hover code { color: #155e2f; }
     color: #9a9a9a;
   }
 
+  /* Scoped past the bare `a` for the reason given at the light-mode links:
+   * unscoped, these also recoloured the sidebar on hover, and turned every
+   * visited menu item purple. */
   a, a code { color: #6fdc8c; }
-  a:hover, a:hover code { color: #a3ecb6; }
-  a:visited, a:visited code { color: #c39bd3; }
+  .wy-nav-content a:hover, .wy-nav-content a:hover code { color: #a3ecb6; }
+  .wy-nav-content a:visited, .wy-nav-content a:visited code { color: #c39bd3; }
 
   /* Sidebar. Neutral grey rather than the theme's warm #343131, which sits
    * oddly beside a neutral page. */
