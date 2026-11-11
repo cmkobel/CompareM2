@@ -90,7 +90,7 @@ def report(bio, path: Path) -> tuple[str, dict[str, int], list[str]]:
     probe = bio._Probe(model)
     counts: dict[str, int] = {}
     missed = []
-    for compound, _, _, verdict in bio.verdicts(probe):
+    for compound, verdict in bio.verdicts(probe).items():
         counts[verdict] = counts.get(verdict, 0) + 1
         if verdict != bio.DE_NOVO:
             missed.append(f"{compound}:{verdict}")

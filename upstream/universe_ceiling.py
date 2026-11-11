@@ -124,7 +124,7 @@ def main(argv: list[str] | None = None) -> int:
           f"{bio.unreachable_sources(probe, bio.M9) or 'none'}")
 
     by: dict[str, list[str]] = {}
-    for bigg, _, _, verdict in bio.verdicts(probe):
+    for bigg, verdict in bio.verdicts(probe).items():
         by.setdefault(verdict, []).append(bigg)
     for verdict in (bio.DE_NOVO, bio.UPSTREAM, bio.NO_ROUTE, bio.ABSENT):
         got = by.get(verdict, [])

@@ -5931,23 +5931,20 @@ def test_the_starved_note_reaches_a_rendered_report(tmp_path):
 class _StubProbe:
     """Enough of `_Probe` to check `unreachable_sources` without a solver.
 
-    `reach` maps a drain reaction to the flux the probe should report for it,
-    so a source can be given an exchange and still be unreachable — which is
-    the case that matters.
+    `reach` is the set of metabolites the probe should report reachable, so a
+    source can be given an exchange and still be unreachable — which is the
+    case that matters.
     """
 
     def __init__(self, reach, exchanges):
-        from comparem2.biosynthesis import SOURCES, _demand
+        from comparem2.biosynthesis import SOURCES, cytoplasmic
 
-        self.sources = [(b, e, _demand(b)) for b, e in SOURCES]
+        self.sources = [(b, e, cytoplasmic(b)) for b, e in SOURCES]
         self.exchanges = exchanges
         self._reach = reach
 
-    def medium(self, compounds, open_drain=None):
-        return {}
-
-    def maximum(self, reaction, constraints):
-        return self._reach.get(reaction, 0.0)
+    def reaches(self, met, compounds):
+        return met in self._reach
 
 
 def test_an_unbounded_solve_is_producible_and_not_a_zero():
@@ -6012,20 +6009,15 @@ class _RescueProbe:
         self._restores = restores
         self.asked = []
 
-    def medium(self, compounds, open_drain=None):
+    def reaches(self, met, compounds):
         from comparem2.biosynthesis import M9
 
         # Everything the background adds on top of the minimal medium, which
         # for this search is exactly the one compound under test.
-        return {"supplied": [c for c in compounds if c not in M9],
-                "drain": open_drain}
-
-    def maximum(self, reaction, constraints):
-        supplied = constraints["supplied"]
-        self.asked.append((tuple(supplied), reaction))
-        target = reaction.removeprefix("R_CM2_DM_")
-        return 10.0 if any(target in self._restores.get(s, ())
-                           for s in supplied) else 0.0
+        supplied = [c for c in compounds if c not in M9]
+        self.asked.append((tuple(supplied), met))
+        target = met.removeprefix("M_").removesuffix("_c")
+        return any(target in self._restores.get(s, ()) for s in supplied)
 
 
 def test_rescuers_never_asks_whether_a_de_novo_compound_rescues_anything():
@@ -6036,13 +6028,12 @@ def test_rescuers_never_asks_whether_a_de_novo_compound_rescues_anything():
     blocked."""
     from comparem2.biosynthesis import (DE_NOVO, NO_ROUTE, UPSTREAM, rescuers)
 
-    rows = [("ala__L", "", "", DE_NOVO), ("gly", "", "", UPSTREAM),
-            ("ser__L", "", "", UPSTREAM), ("thr__L", "", "", NO_ROUTE),
-            ("leu__L", "", "", NO_ROUTE)]
+    found = {"ala__L": DE_NOVO, "gly": UPSTREAM, "ser__L": UPSTREAM,
+             "thr__L": NO_ROUTE, "leu__L": NO_ROUTE}
     probe = _RescueProbe(["ala__L", "gly", "ser__L", "thr__L", "leu__L"],
                          {"thr__L": ("gly", "ser__L"), "gly": ("ser__L",)})
 
-    assert rescuers(probe, rows) == {"thr__L", "gly"}
+    assert rescuers(probe, found) == {"thr__L", "gly"}
     tried = {supplied[0] for supplied, _ in probe.asked}
     assert "ala__L" not in tried  # de novo, so it cannot be the missing one
     assert tried == {"gly", "ser__L", "thr__L", "leu__L"}
@@ -6054,17 +6045,16 @@ def test_rescuers_stops_at_the_first_hit_and_skips_a_model_with_no_block():
     must not pay for the search at all."""
     from comparem2.biosynthesis import DE_NOVO, NO_ROUTE, UPSTREAM, rescuers
 
-    rows = [("gly", "", "", UPSTREAM), ("ser__L", "", "", UPSTREAM),
-            ("thr__L", "", "", NO_ROUTE)]
+    found = {"gly": UPSTREAM, "ser__L": UPSTREAM, "thr__L": NO_ROUTE}
     probe = _RescueProbe(["gly", "ser__L", "thr__L"],
                          {"thr__L": ("gly", "ser__L")})
-    assert rescuers(probe, rows) == {"thr__L"}
+    assert rescuers(probe, found) == {"thr__L"}
     # thr__L unblocks gly, the first blocked compound tried, so ser__L is not
     # asked about for it.
     assert sum(1 for supplied, _ in probe.asked if supplied[0] == "thr__L") == 1
 
     quiet = _RescueProbe(["gly"], {})
-    assert rescuers(quiet, [("gly", "", "", DE_NOVO)]) == set()
+    assert rescuers(quiet, {"gly": DE_NOVO}) == set()
     assert quiet.asked == []
 
 
@@ -6148,13 +6138,13 @@ def test_a_source_with_an_exchange_can_still_be_unreachable():
 
     # ATCC700669's shape: ammonium is in the exchange set and does not reach
     # the cytoplasm. It must still be reported.
-    probe = _StubProbe({"R_CM2_DM_glc__D": 10.0},
+    probe = _StubProbe({"M_glc__D_c"},
                        {"glc__D": "R_EX_glc__D_e", "nh4": "R_EX_nh4_e"})
     assert unreachable_sources(probe, M9) == ["nitrogen"]
 
     # And the converse, so the check is not merely inverted: reaching the
     # cytoplasm is what counts, however it got there.
-    probe = _StubProbe({"R_CM2_DM_glc__D": 10.0, "R_CM2_DM_nh4": 10.0},
+    probe = _StubProbe({"M_glc__D_c", "M_nh4_c"},
                        {"glc__D": "R_EX_glc__D_e"})
     assert unreachable_sources(probe, M9) == []
 
@@ -6173,21 +6163,96 @@ def test_the_source_elements_are_m9s_own_and_carry_their_element():
     assert len([c for c in LB if c.endswith("__L")]) > 1
 
 
-def test_a_source_compound_absent_from_the_model_gets_a_reaction_of_none():
+class _DrainModel:
+    """Enough of a reframed model for `add_drains`: metabolite and reaction
+    ids, an objective, and `add_reaction_from_str` for a one-metabolite drain.
+    `biomass` names what the objective consumes."""
+
+    def __init__(self, metabolites, biomass=()):
+        from types import SimpleNamespace
+
+        self._ns = SimpleNamespace
+        self.metabolites = dict.fromkeys(metabolites)
+        self.reactions = {}
+        self._objective = {}
+        if biomass:
+            self.reactions["R_Growth"] = SimpleNamespace(
+                stoichiometry={**{m: -1.0 for m in biomass}, "M_adp_c": 1.0})
+            self._objective = {"R_Growth": 1.0}
+
+    def get_objective(self):
+        return self._objective
+
+    def add_reaction_from_str(self, spec):
+        rid, _, rest = spec.partition(": ")
+        self.reactions[rid] = self._ns(stoichiometry={rest.split()[0]: -1.0})
+
+
+def test_a_source_compound_absent_from_the_model_gets_no_metabolite():
     """"The metabolite is not in the network" is one of the ways a source is
     unreachable, and dropping it would report the model as fine."""
-    from comparem2.biosynthesis import add_source_demands
+    from comparem2.biosynthesis import add_drains
 
-    class _Model:
-        metabolites = {"M_glc__D_c": object()}  # no M_nh4_c
-        reactions: dict = {}
+    out = add_drains(_DrainModel(["M_glc__D_c"]))  # no M_nh4_c
+    assert out.sources == [("glc__D", "carbon", "M_glc__D_c"),
+                           ("nh4", "nitrogen", None)]
+    assert "M_nh4_c" not in out.reactions
 
-        def add_reaction_from_str(self, spec):
-            self.reactions[spec.split(":")[0]] = object()
 
-    out = add_source_demands(_Model())
-    assert [(b, e, r is None) for b, e, r in out] == [
-        ("glc__D", "carbon", False), ("nh4", "nitrogen", True)]
+def test_a_metabolite_asked_about_twice_gets_one_drain():
+    """The amino acids are panel compounds *and* biomass precursors, and used
+    to get a drain for each role. Only one drain is ever open, so the duplicate
+    never changed an answer — it was one more reaction to keep shut."""
+    from comparem2.biosynthesis import add_drains
+
+    model = _DrainModel(["M_trp__L_c", "M_atp_c", "M_glc__D_c", "M_nh4_c"],
+                        biomass=["M_trp__L_c", "M_atp_c"])
+    out = add_drains(model)
+    assert [c.bigg for c in out.present] == ["trp__L"]
+    assert out.precursors == ["M_trp__L_c", "M_atp_c"]
+    assert out.reactions == {"M_trp__L_c": "R_CM2_DM_trp__L_c",
+                             "M_glc__D_c": "R_CM2_DM_glc__D_c",
+                             "M_nh4_c": "R_CM2_DM_nh4_c",
+                             "M_atp_c": "R_CM2_DM_atp_c"}
+    # Nothing was added to the model but those drains.
+    assert set(model.reactions) == {"R_Growth", *out.reactions.values()}
+
+
+def test_a_drain_that_would_overwrite_a_model_reaction_stops_the_run():
+    from comparem2.biosynthesis import add_drains
+
+    model = _DrainModel(["M_trp__L_c"])
+    model.reactions["R_CM2_DM_trp__L_c"] = object()
+    with pytest.raises(SystemExit):
+        add_drains(model)
+
+
+def test_verdicts_try_the_minimal_medium_then_the_rest_of_the_panel():
+    """`upstream` is decided on M9 plus every *other* panel compound the model
+    carries. Offering a compound to itself would make every compound with an
+    exchange look reachable, so the background must never contain the target."""
+    from comparem2.biosynthesis import (ABSENT, DE_NOVO, M9, NO_ROUTE, PANEL,
+                                        UPSTREAM, Compound, verdicts)
+
+    class Probe:
+        present = [Compound(b, b, "g") for b in ("trp__L", "gly", "ser__L")]
+        asked = []
+
+        def reaches(self, met, compounds):
+            extra = set(compounds) - set(M9)
+            self.asked.append((met, extra))
+            # trp from nothing, gly only given serine, serine only from itself.
+            return {"M_trp__L_c": True, "M_gly_c": "ser__L" in extra,
+                    "M_ser__L_c": "ser__L" in extra}[met]
+
+    probe = Probe()
+    found = verdicts(probe)
+    assert list(found) == [c.bigg for c in PANEL]
+    assert (found["trp__L"], found["gly"], found["ser__L"]) == (
+        DE_NOVO, UPSTREAM, NO_ROUTE)
+    assert {found[c.bigg] for c in PANEL[20:]} == {ABSENT}
+    assert all("ser__L" not in extra
+               for met, extra in probe.asked if met == "M_ser__L_c")
 
 
 def test_biosynthesis_section_survives_a_half_written_media_table(tmp_path):

@@ -135,7 +135,7 @@ MIN_FLUX = 1e-6
 
 # Prefixed so it cannot collide with a demand reaction the model already has:
 # BiGG ships `DM_4crsol_c` in the E. coli reconstructions.
-DEMAND_PREFIX = "R_CM2_DM_"
+DRAIN_PREFIX = "R_CM2_DM_"
 
 # M9 and LB as CarveMe defines them, from `carveme/data/input/media_db.tsv`
 # (CarveMe, Apache-2.0, © 2017 Daniel Machado). Embedded rather than read out of
@@ -155,6 +155,23 @@ LB = ("adn", "ala__L", "amp", "arg__L", "aso3", "asp__L", "ca2", "cbl1", "cd2",
       "ura", "uri", "val__L", "zn2")
 
 AEROBE = "o2"
+
+
+def anaerobic(medium: tuple[str, ...]) -> tuple[str, ...]:
+    """The medium without oxygen, which is how media_db defines the variants."""
+    return tuple(c for c in medium if c != AEROBE)
+
+
+# The media table's rows, in order, and whether `SOURCES` is checked on each —
+# see there for why only the M9 family is. The complete medium comes last and
+# is every exchange the model has rather than a recipe, so it is not listed.
+REFERENCE_MEDIA = (
+    ("M9", M9, True),
+    ("M9[-O2]", anaerobic(M9), True),
+    ("LB", LB, False),
+    ("LB[-O2]", anaerobic(LB), False),
+)
+COMPLETE = "complete"
 
 # M9's two elemental sources. The panel's `de_novo` verdict is measured on M9,
 # so a model that cannot get carbon or nitrogen into its cytoplasm from that
@@ -311,8 +328,14 @@ def growth_cell(status: str, value: float | None) -> str:
     return f"{max(0.0, value or 0.0):.4f}"
 
 
-def _demand(bigg: str) -> str:
-    return f"{DEMAND_PREFIX}{bigg}"
+def cytoplasmic(bigg: str) -> str:
+    """`trp__L` to `M_trp__L_c`, the form every compound here is probed in."""
+    return f"M_{bigg}_c"
+
+
+def drain_id(met: str) -> str:
+    """`M_trp__L_c` to `R_CM2_DM_trp__L_c`. One drain per metabolite."""
+    return DRAIN_PREFIX + met.removeprefix("M_")
 
 
 def _exchanges(model) -> dict[str, str]:
@@ -324,56 +347,15 @@ def _exchanges(model) -> dict[str, str]:
     return out
 
 
-def add_demands(model) -> list[Compound]:
-    """One drain per panel compound the model carries. Returns those compounds.
-
-    Must run before the solver is built, and `add_reaction_from_str` would
-    silently invent the metabolite if it were missing, so membership is checked
-    rather than assumed.
-    """
-    present = []
-    for compound in PANEL:
-        if f"M_{compound.bigg}_c" not in model.metabolites:
-            continue
-        rid = _demand(compound.bigg)
-        if rid in model.reactions:
-            raise SystemExit(f"biosynthesis: {rid} already exists in the model")
-        model.add_reaction_from_str(f"{rid}: M_{compound.bigg}_c --> ")
-        present.append(compound)
-    return present
-
-
-def add_source_demands(model) -> list[tuple[str, str, str | None]]:
-    """One drain per `SOURCES` compound, as (compound, element, reaction).
-
-    Same contract as `add_demands` — must run before the solver is built. A
-    compound the model does not carry gets `None` for its reaction rather than
-    being dropped, because "the metabolite is not in the network" is one of the
-    ways a source is unreachable and has to reach the report as such.
-    """
-    out: list[tuple[str, str, str | None]] = []
-    for bigg, element in SOURCES:
-        if f"M_{bigg}_c" not in model.metabolites:
-            out.append((bigg, element, None))
-            continue
-        rid = _demand(bigg)
-        if rid in model.reactions:
-            raise SystemExit(f"biosynthesis: {rid} already exists in the model")
-        model.add_reaction_from_str(f"{rid}: M_{bigg}_c --> ")
-        out.append((bigg, element, rid))
-    return out
-
-
-PRECURSOR_PREFIX = "R_CM2_BM_"
-
-
 def biomass_precursors(model) -> list[str]:
     """The metabolites the model's own objective reaction consumes.
 
     Which is the question a zero in the growth column raises and the `present`
     count cannot answer: *which* of the things biomass needs is the model
     unable to make? Taken off the objective rather than from a list, because
-    CarveMe's biomass composition is the model's, not ours.
+    CarveMe's biomass composition is the model's, not ours. Full metabolite ids,
+    because the objective is free to reach outside the cytoplasm, even though
+    every model measured stays inside it.
 
     **A drain asks for net production, which is stricter than the biomass
     reaction needs for its maintenance term.** `atp_c` is consumed and `adp_c`
@@ -392,23 +374,6 @@ def biomass_precursors(model) -> list[str]:
     return consumed
 
 
-def add_precursor_demands(model) -> dict[str, str]:
-    """One drain per biomass precursor, as metabolite id to reaction id.
-
-    Same contract as `add_demands` — before the solver is built. Keyed by the
-    full metabolite id because the objective is free to reach outside the
-    cytoplasm, even though every model measured stays inside it.
-    """
-    out = {}
-    for met in biomass_precursors(model):
-        rid = f"{PRECURSOR_PREFIX}{met.removeprefix('M_')}"
-        if rid in model.reactions:
-            raise SystemExit(f"biosynthesis: {rid} already exists in the model")
-        model.add_reaction_from_str(f"{rid}: {met} --> ")
-        out[met] = rid
-    return out
-
-
 def short_metabolite(met: str) -> str:
     """`M_mql8_c` to `mql8`, for a column a reader checks against BiGG.
 
@@ -416,6 +381,53 @@ def short_metabolite(met: str) -> str:
     the interesting part.
     """
     return met.removeprefix("M_").removesuffix("_c")
+
+
+class Drains(NamedTuple):
+    """Every metabolite this module asks about, and the drain it asks through."""
+
+    present: list[Compound]                     # panel compounds the model carries
+    sources: list[tuple[str, str, str | None]]  # (compound, element, metabolite)
+    precursors: list[str]                       # what the objective consumes
+    reactions: dict[str, str]                   # metabolite id to its drain
+
+
+def add_drains(model) -> Drains:
+    """One irreversible drain on each metabolite any question here asks about.
+
+    Must run before the solver is built, which would not know about a reaction
+    added later. `add_reaction_from_str` would silently invent a metabolite
+    that is missing, so membership is checked rather than assumed. A source
+    compound the model does not carry is kept, with `None` for its metabolite,
+    because "the metabolite is not in the network" is one of the ways a source
+    is unreachable and has to reach the report as such.
+
+    **One drain per metabolite, not one per question.** The amino acids are
+    both panel compounds and biomass precursors, and used to get a drain for
+    each role. Only one drain is ever open at a time, so the duplicate never
+    changed an answer; it was only one more reaction to keep shut.
+    """
+    reactions: dict[str, str] = {}
+
+    def drain(met: str) -> None:
+        if met in reactions:
+            return
+        rid = drain_id(met)
+        if rid in model.reactions:
+            raise SystemExit(f"biosynthesis: {rid} already exists in the model")
+        model.add_reaction_from_str(f"{rid}: {met} --> ")
+        reactions[met] = rid
+
+    present = [c for c in PANEL if cytoplasmic(c.bigg) in model.metabolites]
+    sources = [(bigg, element,
+                cytoplasmic(bigg) if cytoplasmic(bigg) in model.metabolites else None)
+               for bigg, element in SOURCES]
+    precursors = biomass_precursors(model)
+    for met in (*(cytoplasmic(c.bigg) for c in present),
+                *(met for _, _, met in sources if met is not None),
+                *precursors):
+        drain(met)
+    return Drains(present, sources, precursors, reactions)
 
 
 def medium_constraints(by_compound: dict[str, str], upper: dict[str, float | None],
@@ -453,20 +465,29 @@ def medium_constraints(by_compound: dict[str, str], upper: dict[str, float | Non
 
 
 class _Probe:
-    """A model with drains attached, and the solver built over it."""
+    """A model with its drains attached, and the solver built over it.
 
-    def __init__(self, model, max_uptake: float = MAX_UPTAKE):
+    It answers one question, `reaches`: can the model make net flux of a
+    metabolite on a medium of exactly these compounds? Every verdict, source
+    check and precursor check in this module is that question.
+    """
+
+    def __init__(self, model, max_uptake: float = MAX_UPTAKE,
+                 min_flux: float = MIN_FLUX):
         from reframed.solvers import solver_instance
 
         self.model = model
         self.max_uptake = max_uptake
+        self.min_flux = min_flux
         # Every status this probe's solves came back with, counted. Reported at
         # the end of a run because a non-optimal solve is read as a zero and
         # would otherwise be invisible in a table of zeros.
         self.statuses: dict[str, int] = {}
-        self.present = add_demands(model)
-        self.sources = add_source_demands(model)
-        self.precursors = add_precursor_demands(model)
+        drains = add_drains(model)
+        self.present = drains.present
+        self.sources = drains.sources
+        self.precursors = drains.precursors
+        self.drains = drains.reactions
         self.exchanges = _exchanges(model)
         # After the drains, because the solver is built over the model as it
         # stands and would not know about a reaction added later.
@@ -476,20 +497,14 @@ class _Probe:
         # Each drain's own upper bound, to restore when it is the one being
         # maximised. Read off the model rather than assumed: it is
         # `add_reaction_from_str` that decides it, and an unbounded reaction is
-        # `None` here, not `inf`.
-        self._drain_ub = {_demand(c.bigg): model.reactions[_demand(c.bigg)].ub
-                          for c in self.present}
-        # The source and precursor drains are pinned shut with the rest, so
-        # probing one cannot leave another open as a free sink. The precursor
-        # ones matter most here: there are 53 of them on a CarveMe draft, and
-        # 53 open sinks would let the media table report growth the model
+        # `None` here, not `inf`. Every drain is in here, so every medium pins
+        # all of them shut: there are 53 precursor drains on a CarveMe draft,
+        # and 53 open sinks would let the media table report growth the model
         # cannot achieve.
-        self._drain_ub.update({rid: model.reactions[rid].ub
-                               for _, _, rid in self.sources if rid is not None})
-        self._drain_ub.update({rid: model.reactions[rid].ub
-                               for rid in self.precursors.values()})
+        self._drain_ub = {rid: model.reactions[rid].ub
+                          for rid in self.drains.values()}
 
-    def medium(self, compounds, open_drain: str | None = None) -> dict:
+    def _medium(self, compounds, open_drain: str | None = None) -> dict:
         return medium_constraints(self.exchanges, self._upper, self._drain_ub,
                                   compounds, self.max_uptake, open_drain)
 
@@ -503,19 +518,39 @@ class _Probe:
         self.statuses[status] = self.statuses.get(status, 0) + 1
         return status, solution.fobj
 
-    def maximum(self, reaction: str, constraints: dict) -> float:
-        return flux_from(*self._solve({reaction: 1}, constraints))
+    def reaches(self, met: str, compounds) -> bool:
+        """Can the model make net `met` on a medium of exactly `compounds`?"""
+        rid = self.drains[met]
+        flux = flux_from(*self._solve({rid: 1}, self._medium(compounds, rid)))
+        return flux > self.min_flux
 
-    def growth(self, constraints: dict) -> tuple[str, float | None]:
-        """The model's own objective — biomass — under `constraints`.
+    def growth(self, compounds) -> tuple[str, float | None]:
+        """The model's own objective — biomass — on `compounds`.
 
         Returns the status too, because `growth_cell` needs it: an infeasible
         LP is not a growth rate of zero.
         """
-        return self._solve(None, constraints)
+        return self._solve(None, self._medium(compounds))
 
 
-def rescuers(probe: _Probe, rows, min_flux: float = MIN_FLUX) -> set[str]:
+def verdicts(probe: _Probe) -> dict[str, str]:
+    """Each panel compound's verdict, by BiGG id, in panel order."""
+    carried = [c.bigg for c in probe.present]
+    found = {}
+    for compound in PANEL:
+        met = cytoplasmic(compound.bigg)
+        if compound.bigg not in carried:
+            found[compound.bigg] = ABSENT
+        elif probe.reaches(met, M9):
+            found[compound.bigg] = DE_NOVO
+        elif probe.reaches(met, [*M9, *(b for b in carried if b != compound.bigg)]):
+            found[compound.bigg] = UPSTREAM
+        else:
+            found[compound.bigg] = NO_ROUTE
+    return found
+
+
+def rescuers(probe: _Probe, found: dict[str, str]) -> set[str]:
     """Which panel compounds, supplied alone on M9, unblock an `upstream` one.
 
     **A set and not a per-compound list, deliberately.** Naming the rescuers of
@@ -540,69 +575,38 @@ def rescuers(probe: _Probe, rows, min_flux: float = MIN_FLUX) -> set[str]:
     30 solves a blocked compound to about 17 — and to none at all for a model
     with nothing blocked upstream, which is most of them.
     """
-    verdict = {row[0]: row[3] for row in rows}
-    blocked = [bigg for bigg, value in verdict.items() if value == UPSTREAM]
+    blocked = [bigg for bigg, verdict in found.items() if verdict == UPSTREAM]
     if not blocked:
         return set()
-    found = set()
+    helps = set()
     for compound in probe.present:
-        if verdict.get(compound.bigg) not in (UPSTREAM, NO_ROUTE):
+        if found.get(compound.bigg) not in (UPSTREAM, NO_ROUTE):
             continue
-        for target in blocked:
-            if target == compound.bigg:
-                continue
-            drain = _demand(target)
-            background = list(M9) + [compound.bigg]
-            if probe.maximum(drain, probe.medium(background, drain)) > min_flux:
-                found.add(compound.bigg)
-                break  # one is enough; this is a yes-or-no about the compound
-    return found
+        medium = [*M9, compound.bigg]
+        # `any` stops at the first hit: this is a yes-or-no about the compound.
+        if any(probe.reaches(cytoplasmic(target), medium)
+               for target in blocked if target != compound.bigg):
+            helps.add(compound.bigg)
+    return helps
 
 
-def verdicts(probe: _Probe, min_flux: float = MIN_FLUX) -> list[tuple[str, ...]]:
-    """One row per panel compound, in panel order."""
-    present = {c.bigg for c in probe.present}
-    others = [c.bigg for c in probe.present]
-    rows = []
-    for compound in PANEL:
-        if compound.bigg not in present:
-            rows.append((compound.bigg, compound.name, compound.group, ABSENT))
-            continue
-        drain = _demand(compound.bigg)
-        if probe.maximum(drain, probe.medium(M9, drain)) > min_flux:
-            verdict = DE_NOVO
-        else:
-            background = list(M9) + [c for c in others if c != compound.bigg]
-            verdict = (UPSTREAM
-                       if probe.maximum(drain, probe.medium(background, drain)) > min_flux
-                       else NO_ROUTE)
-        rows.append((compound.bigg, compound.name, compound.group, verdict))
-    return rows
-
-
-def unreachable_sources(probe: _Probe, compounds,
-                        min_flux: float = MIN_FLUX) -> list[str]:
+def unreachable_sources(probe: _Probe, compounds) -> list[str]:
     """Which of `SOURCES` the model cannot reach in the cytoplasm on `compounds`.
 
     The check that has to pass before any verdict on this medium means
     anything about the organism. See `SOURCES` for why it is a flux probe and
     not a lookup in `probe.exchanges`.
     """
-    blocked = []
-    for _, element, rid in probe.sources:
-        if rid is None or probe.maximum(rid, probe.medium(compounds, rid)) <= min_flux:
-            blocked.append(element)
-    return blocked
+    return [element for _, element, met in probe.sources
+            if met is None or not probe.reaches(met, compounds)]
 
 
-def blocked_precursors(probe: _Probe, compounds,
-                       min_flux: float = MIN_FLUX) -> list[str]:
+def blocked_precursors(probe: _Probe, compounds) -> list[str]:
     """Which biomass precursors the model cannot produce on `compounds`."""
-    return [met for met, rid in probe.precursors.items()
-            if probe.maximum(rid, probe.medium(compounds, rid)) <= min_flux]
+    return [met for met in probe.precursors if not probe.reaches(met, compounds)]
 
 
-def media(probe: _Probe, min_flux: float = MIN_FLUX) -> list[tuple[str, ...]]:
+def media(probe: _Probe) -> list[tuple[str, ...]]:
     """Growth on each reference medium, and on a zero, what it was short of.
 
     `present` was the original diagnostic: a medium whose compounds the model
@@ -630,31 +634,30 @@ def media(probe: _Probe, min_flux: float = MIN_FLUX) -> list[tuple[str, ...]]:
     those three was ammonium, M9's only nitrogen source, which zeroed every one
     of that model's panel verdicts. 17 of 20 looks fine; `nitrogen` does not.
     """
-    anaerobic = tuple(c for c in M9 if c != AEROBE)
-    lb_anaerobic = tuple(c for c in LB if c != AEROBE)
-    every = tuple(probe.exchanges)
     rows = []
-    for name, compounds in (("M9", M9), ("M9[-O2]", anaerobic),
-                            ("LB", LB), ("LB[-O2]", lb_anaerobic),
-                            ("complete", every)):
-        absent = tuple(c for c in compounds if c not in probe.exchanges)
-        status, value = probe.growth(probe.medium(compounds))
-        # M9 family only — see `SOURCES` on why LB gets no such claim, and the
-        # complete medium is every exchange the model has rather than a recipe.
-        blocked = (unreachable_sources(probe, compounds, min_flux)
-                   if name.startswith("M9") else [])
-        if status == OPTIMAL and (value or 0.0) > min_flux:
-            reached, short = "", ()
+    for name, compounds, sourced in (*REFERENCE_MEDIA,
+                                     (COMPLETE, tuple(probe.exchanges), False)):
+        absent = [c for c in compounds if c not in probe.exchanges]
+        status, value = probe.growth(compounds)
+        unreachable = unreachable_sources(probe, compounds) if sourced else []
+        if status == OPTIMAL and (value or 0.0) > probe.min_flux:
+            reached, short = "", []
         else:
-            missed = blocked_precursors(probe, compounds, min_flux)
+            missed = blocked_precursors(probe, compounds)
             reached = f"{len(probe.precursors) - len(missed)}/{len(probe.precursors)}"
-            short = tuple(short_metabolite(m) for m in missed)
+            short = [short_metabolite(m) for m in missed]
         rows.append((name, str(len(compounds)),
                      str(len(compounds) - len(absent)),
                      growth_cell(status, value),
-                     " ".join(absent), " ".join(blocked),
+                     " ".join(absent), " ".join(unreachable),
                      reached, " ".join(short)))
     return rows
+
+
+def panel_rows(found: dict[str, str], helps: set[str]) -> list[tuple[str, ...]]:
+    """The panel table's rows, in panel order, as `PANEL_HEADER` names them."""
+    return [(c.bigg, c.name, c.group, found[c.bigg],
+             "yes" if c.bigg in helps else "") for c in PANEL]
 
 
 def write_tsv(path: Path, header, rows) -> None:
@@ -686,22 +689,20 @@ def main(argv: list[str] | None = None) -> int:
     # flavor='bigg' is what gives the R_/M_ prefixes every id here assumes, and
     # it is what CarveMe writes.
     model = load_cbmodel(str(args.model), flavor="bigg")
-    probe = _Probe(model, max_uptake=args.max_uptake)
+    probe = _Probe(model, max_uptake=args.max_uptake, min_flux=args.min_flux)
 
     # The media table first, so its numbers are read off a model whose drains
     # are shut — which they are in every constraint set, but the ordering says
     # so without the reader having to check.
-    write_tsv(args.media, MEDIA_HEADER, media(probe, min_flux=args.min_flux))
-    rows = verdicts(probe, min_flux=args.min_flux)
+    write_tsv(args.media, MEDIA_HEADER, media(probe))
+    found = verdicts(probe)
     # After the verdicts, because the search is over what they say the model
     # cannot make — and skipped entirely when nothing is blocked upstream.
-    helps = rescuers(probe, rows, min_flux=args.min_flux)
-    rows = [(*row, "yes" if row[0] in helps else "") for row in rows]
-    write_tsv(args.output, PANEL_HEADER, rows)
+    write_tsv(args.output, PANEL_HEADER, panel_rows(found, rescuers(probe, found)))
 
     counts: dict[str, int] = {}
-    for row in rows:
-        counts[row[3]] = counts.get(row[3], 0) + 1
+    for verdict in found.values():
+        counts[verdict] = counts.get(verdict, 0) + 1
     print(f"biosynthesis: {args.model.name} — "
           + ", ".join(f"{n} {k}" for k, n in sorted(counts.items())),
           file=sys.stderr)
