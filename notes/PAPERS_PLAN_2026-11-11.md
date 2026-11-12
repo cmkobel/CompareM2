@@ -12,6 +12,10 @@ under *Decided* so the next session does not reopen them.
 
 ## 1. iML1515's "~0.88 h⁻¹" has no source — measure it, then reword
 
+**Done 2026-11-11**, on branch `biosynthesis-review`: 0.8770 h⁻¹ with oxygen
+unconstrained, 0.5315 capped. The guidance cites both as this pipeline's
+measurement. See DECISIONS.md and STATUS.md.
+
 `guidance.py:1044`, in the biosynthesis caveat about the growth column:
 
 > iML1515 comes out at 0.53 h⁻¹ on M9 glucose that way, against the ~0.88 h⁻¹

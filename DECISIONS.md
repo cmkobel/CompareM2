@@ -4335,3 +4335,210 @@ Its header comment says so; switch both together.
 
 `docs/assets/example-report.html` was patched again, not re-rendered — the
 method and the counts are in `STATUS.md`.
+
+## 2026-11-11 — a solver that raises is a status, not a crash
+
+Found in the day's biosynthesis review (STATUS.md, *biosynthesis review,
+executed 2026-11-11*). `iAF692`, a curated archaeal model, makes SCIP give up
+on 18 of its 818 LPs ("unresolved numerical troubles in LP"), and pyscipopt
+raises a bare `Exception` from `optimize()`. Uncaught, that ended the rule, and
+under Snakemake a failed rule is a genome with no section.
+
+`_Probe._solve` now catches it. It counts `Error` like any other status that
+is not `Optimal`, and prints the first message on stderr. `flux_from` reads it
+as zero, and `growth_cell` as `error`. This is the 2026-09-10 rule applied to
+one more case: a partial answer with the status reported is worth more than no
+report.
+
+**The solver is rebuilt after an error**, because reframed's `Solver.solve`
+restores its temporary bounds with no `try/finally`. Measured, it is a
+precaution rather than a repair. Every medium sets every bound any medium
+touches, and on `iAF692` the outputs are identical with and without the
+rebuild.
+
+**Rejected: catching it around a whole verdict or medium.** One LP is the unit
+that fails. Catching there keeps every other answer the model gives.
+
+The report's note for a model unsolved on the complete medium gave one cause,
+a maintenance floor. That explains `infeasible` and is false of `error`, so the
+cause now follows the status.
+
+## 2026-11-11 — the medium governs the exchanges; closing the other boundaries was tried and dropped
+
+The review planned to make `medium_constraints` total. Every one-sided
+reaction that is neither an `R_EX_*_e` exchange nor a drain would have its
+supply direction shut, so that "exactly `compounds` available" held of any
+model. The change was written, unit-tested and run on all 55 review models
+before it was dropped.
+
+**What it changed:**
+- No verdict, in any of the 55.
+- No table of any CarveMe draft, since no draft has such a reaction.
+- The media table of three curated models, two of them for the worse:
+  `iJN1463` and `iYS854` stopped growing on every medium, the complete one
+  included.
+
+Their sinks are not leaks. `SK_pqqA_kt_c`, `SK_apoACP_c` and `SK_2fe1s_c`
+stand in for a peptide, a protein and a cluster the network has no way to
+make, and the modellers put them there so that it could grow. Code cannot
+tell those from a real leak, and neither could a list.
+
+**It would not have fixed the leaks that exist, either.** The negative
+controls (`upstream/biosynthesis_controls.py`) catch four curated models
+making a panel compound from a medium that lacks one of its elements. Only
+`iIT341`'s goes through a sink. `iYS854`, `iCN718` and `iCN900` keep theirs
+with every sink shut, because the leak is an imbalanced reaction: `iYS854`'s
+`SRK` creates a nitrogen, and `iCN900`'s `GLNSCP` a phosphate. No medium
+closes that. The review had put `iYS854`'s leak down to its sinks, which was
+an inference, and this run is what disproved it.
+
+So the scope is written where it applies: `medium_constraints` says "exactly"
+means through the exchanges. The instrument is committed, because it finds a
+leak of either kind. If CarveMe ever emits a sink, the instrument's first run
+on that draft is where it shows.
+
+## 2026-11-11 — glucose has arrived when it is glucose 6-phosphate, too
+
+The carbon half of `SOURCES` drained `glc__D_c`. A model whose only glucose
+uptake is the phosphotransferase system never has free glucose in its
+cytoplasm, since PTS hands it over as glucose 6-phosphate. The curated
+*S. aureus* `iSB619` is one. It read `carbon` unreachable while making 25 of 30
+panel compounds *de novo*, and the report's starved note would have put it
+beside a claim that every compound fell at once.
+
+`SOURCES` is now a `Source(element, compound, forms)`. Carbon is reached when
+`glc__D_c` or `g6p_c` is. g6p is also where a permease's glucose goes next,
+by hexokinase, so the pair covers both routes measured. The test pins the
+compound itself as the first form, so the original meaning is kept and an
+extra form has to be argued for in the comment.
+
+**Rejected: pyruvate as the one probe.** Every glucose route reaches it, and
+so it would cover the periplasmic route too. But it is downstream: a model
+could fail to reach pyruvate and still make compounds from glucose, and then
+the note's claim that a starved model builds nothing would be false. The
+first cytoplasmic forms keep that claim true.
+
+**Left uncovered, on purpose: glucose oxidised in the periplasm** and taken up
+as gluconate, which enters at 6-phosphogluconate. No measured model depends on
+it. The comment says so, which is where the next case will be noticed.
+
+**The starved note no longer picks a cause.** It said a starved row was "a
+property of the reconstruction and not of the organism". That is true of the
+four pneumococci that lost `NH4tpp`. It is not clearly true of the six
+Methanoflorens drafts: they make nothing from CO2 and H2 or from acetate
+either, and methanogens do not live on glucose. Measured 2026-11-11 by
+swapping M9's carbon source. The note now says the column says nothing about
+the genome, and that the grid cannot tell organism from draft. It also names
+a model with no solution on M9 at all, such as `iNF517`. That model read
+`no route` for every compound, with nothing beside the count to say why.
+
+## 2026-11-11 — the report reads the biosynthesis tables by column name
+
+The closest-medium note was meant for "a model that grew on nothing", and its
+sentence said so. It took any model with a medium it had failed on. Rendered
+from the review's real tables it listed 16 models that grow, the 1.5.0
+*E. coli* draft (4.83 h⁻¹ on LB) and five of the six benchmark drafts among
+them, each for failing anaerobically. Any strict aerobe would be listed too.
+The unit tests had a model that failed everything and one that grew
+everywhere, and no model in between.
+
+The cause was structural. "Did this model grow" was worked out once, inline,
+for the summary sentence, and the note never asked. Both tables were read by
+column index: `raw(sample, medium, 6)`, `len(row) > 5`, and `cell(s, m, 3)`,
+spread through the section.
+
+- `_read_named` reads a TSV by the file's own header. A table written before a
+  column existed, or one a rule is still writing, simply lacks that key. It is
+  the one place the section reads defensively.
+- `_read_media` returns a `_MediumRow` per medium, and `_read_panel` returns
+  the verdicts and rescuers.
+- `_grew` is the one test of whether a model grew. The summary sentence counts
+  with it and `_closest_note` skips with it, so the two cannot disagree again.
+- The table's columns come from `biosynthesis.REFERENCE_MEDIA`, so a medium
+  added there without a label fails at import.
+
+The starved note's reason for a model with no solution on M9 is the
+infeasibility alone. Every probe fails on such a medium, the source check
+with it, so the unreachable elements it reports are not a second reason.
+
+## 2026-11-11 — the calibration is a table of expected answers, not a count
+
+The panel's calibration was "29 of 30, the same for the curated `iML1515` and
+for CarveMe drafts of five prototrophs". The day's review re-carved the same
+five through `carve_scip.py`, which is the pipeline's own path. They gave
+29, 29, 28, 28 and 27. The 2026-09-10 figure had used CarveMe's bundled 1.5.0
+drafts for *P. aeruginosa*, *S. oneidensis* and *R. solanacearum*, and carved
+only *E. coli* and *B. subtilis*.
+
+Two of the three lower figures are **right**. *P. aeruginosa* and
+*R. solanacearum* annotate no menaquinone-pathway gene, only the `UbiE`
+methyltransferase that ubiquinone synthesis shares, so menaquinone-8 should
+not come out *de novo*. Ubiquinone-9 is *P. aeruginosa*'s major quinone (Vo et
+al. 2020, J Biol Chem, PMC7335794). The 1.5.0 drafts that scored them 29 were
+the wrong ones. A count would have kept saying 29 is the target.
+
+So `upstream/panel_calibration.py` now holds what each bundled genome should
+*not* make, each with a reason, and reports departures both ways:
+- false dependencies: not *de novo*, and not expected;
+- false prototrophy: expected, yet *de novo*.
+
+*M. genitalium* stays as the negative control. Today it reports one departure,
+*S. oneidensis* proline, which is untraced.
+`tests/environments/check.py` compares *E. coli*'s misses as a set,
+`{adocbl}`, rather than counting to 29. A draft that lost one compound and
+gained another passed the count.
+
+**`asn__L` is an expected miss for *R. solanacearum*, not a carving error.**
+Its proteome annotates no asparagine synthetase and does annotate GatCAB, as
+do both *S. aureus* proteomes and *A. baumannii*'s. No reaction in a BiGG model
+represents GatCAB, so "no route to free asparagine" reads that genome
+faithfully. What the organism needs is a separate question. The table says
+"expected, because"; it does not say "required".
+
+**Rejected: putting the RefSeq genomes in the script.** *K. pneumoniae*,
+*M. tuberculosis*, *A. baumannii* and *P. putida* widened the review usefully.
+*P. putida*'s seven false dependencies all come from one glutamine synthetase
+lost in carving. But those proteomes need NCBI, and the script's point is
+that it needs nothing CarveMe does not ship. Their numbers are in STATUS.
+
+The two review instruments are committed beside it:
+`biosynthesis_controls.py`, the negative controls, and
+`biosynthesis_crosscheck.py`, the cobrapy reading. Both claims, 0 of 42
+drafts making what they should not and 0 of 1,620 verdicts differing, are
+re-measurable, not remembered.
+
+## 2026-11-11 — the biosynthesis prose says what was measured, and the example report is re-rendered
+
+The last of the review's changes, and the only one that is prose.
+
+- **"No route means there is no route at all" was false for cofactors.** The
+  panel probes the form a pathway ends at, which has no exchange, so the
+  vitamin it is salvaged from is never offered. The *S. aureus* drafts make
+  thiamine diphosphate from thiamine and NAD from nicotinate, and read `none`
+  for both. The verdict is right, since the genome has to be given the
+  vitamin, but the sentence was not. Rejected again, as on 2026-09-10: a fifth
+  `salvage` verdict. It would offer the vitamin forms, and the
+  one-member-per-family rule exists to keep them out.
+- **The asparagine call is explained, not apologised for.** "Not a described
+  requirement of that organism" was true and incomplete. The genomes annotate
+  GatCAB and no asparagine synthetase. The carving universes have no
+  asparaginyl-tRNA at all, only glutamyl-tRNA for heme, so "no free
+  asparagine" is the faithful reading. Rejected: dropping `asn__L` from the
+  panel, as `btn` and `q8` were. It is *de novo* in *E. coli*,
+  *K. pneumoniae* and *L. monocytogenes*, so it varies, and it fails that test.
+- **The growth caveat's "~0.88 h⁻¹, usually simulated" is now a measurement.**
+  It is `iML1515` through this probe with oxygen unconstrained, 0.8770. This
+  is `notes/PAPERS_PLAN_2026-11-11.md` item 1, done here because it is the
+  same sentence. The caveat also says why the complete-medium figure runs
+  above a COBRA tool's: ReFramed reads ±1000 as unbounded. `main()` now
+  passes `use_infinity=True` explicitly, with the reason. Rejected: `False`.
+  It is CarveMe's own reading, no verdict depends on it, and it would move
+  every complete-medium number in the record.
+
+**`docs/assets/example-report.html` was re-rendered, not patched.** It had
+been patched twice since 3.5.0. A patch here would have put four new
+paragraphs beside the old ones, which is the 2026-09-15 reason for
+re-rendering. It ran over a copy of the GenomeDK run, with the title and
+command passed explicitly. The only differences are in the biosynthesis
+section, and they include finding 1 caught on the real report: `Spn_R6`
+grows on LB and was listed as a model that did not grow.

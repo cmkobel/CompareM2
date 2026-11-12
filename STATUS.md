@@ -835,6 +835,12 @@ ship with the package.
 | *M. genitalium* G37, 1.6.6 | 0 | 0.0000 | 0.0000 | 1.65 |
 | `116_2` *E. faecium*, `COL` `N315` `TW20` *S. aureus* | 10–26 | 0.0000 | 0.0000 | 14.9–21.1 |
 
+`iML1515`'s M9 figure is with oxygen capped at 10 like every other compound.
+**With oxygen unconstrained it is 0.8770**, measured 2026-11-11 through the
+same probe, and identical whether CarveMe's ±1000 bounds are read as ±1000 or
+as unbounded. That is the figure the guidance used to give as "~0.88, usually
+simulated", with no source.
+
 Every prototroph draft lands on 29 and every one misses the same two, `btn` and
 `q8`. **The BiGG universe reaches all 32** — 25,348 reactions, bounds capped
 at ±1000, M9 exchanges added, all 34 solves `Optimal` — so every target on the
@@ -1029,6 +1035,168 @@ every medium pays nothing, which is the point of the scoping.
 
 `~ghrunner/biosynth-review` is ~130 MB and deletable — the three fresh models
 are re-carvable in under six minutes from bundled proteomes.
+
+### biosynthesis review, executed 2026-11-11 — what held, and what was fixed
+On thylakoid, in `/evo/postdoc/cm2-envs-two/6d67b6a4fe39c742e4d740c0d883faa6_`
+(carveme 1.6.6, reframed 1.6.0, SCIP 10.0), working directory
+`/evo/postdoc/cm2-biosynth-review-1111`. 55 models:
+
+| set | models | |
+| --- | ---: | --- |
+| curated BiGG | 13 | `iML1515` `iYO844` `iJN1463` `iSB619` `iYS854` `iNF517` `iCN900` `iIT341` `iNJ661` `iPC815` `iYL1228` `iCN718` `iAF692` |
+| pipeline drafts | 17 | the four *E. faecium* of `rc-3.5.1-final-A/efm`, the seven *S. aureus* of `cm2-e2e/results_full`, six Methanoflorens |
+| CarveMe 1.5.0 drafts | 6 | as shipped in `carveme/data/benchmark/models/` |
+| carved that day | 19 | the six bundled proteomes and 13 RefSeq ones, through `carve_scip.py` |
+
+**What held:**
+- **An independent re-implementation agrees on every verdict.** It was cobrapy
+  0.32.1, written from the docstring's definitions rather than from the code,
+  and solved with HiGHS (53 models) and GLPK (34). **0 of 1,590 verdicts
+  differ**, and M9 and LB growth agree to four decimals. `iNF517` and `iAF692`
+  are the two not compared.
+- **No CarveMe draft makes what it should not.** All 42 drafts were given seven
+  control media: empty, and M9 without carbon, nitrogen, sulfur, phosphate,
+  iron or cobalt. **None made a panel compound the missing element rules
+  out.**
+- None carries a boundary reaction other than `R_EX_*_e` that can supply a
+  metabolite, a forced flux, or a mis-oriented exchange. Every solve on a draft
+  was `Optimal`.
+- master reproduces the stored rc-3.5.1 *E. faecium* tables byte for byte.
+
+**The complete-medium figure is reframed's, not COBRA's.** `load_cbmodel`
+defaults to `use_infinity=True`, which reads CarveMe's ±1000 bounds as ±∞. No
+verdict moves: re-solved with `False`, `iML1515` and the 1.5.0 *E. coli* draft
+give the same 29. But the complete-medium growth comes out higher than a
+±1000 tool reports: `iML1515` **30.76 against 20.73**, the *E. coli* draft
+47.13 against 26.55. M9 and LB are unchanged, because the uptake caps bind
+first.
+
+**Fixed: a solver that raises killed the rule.** `iAF692` makes SCIP give up on
+18 of its 818 LPs ("unresolved numerical troubles in LP"). master exited 1 on
+it. It now completes, with the 18 counted as `error` on stderr, and the other
+54 models' tables are byte-identical before and after.
+
+**Checked, and left alone: boundaries other than the exchanges.**
+`upstream/biosynthesis_controls.py`, on all 55:
+- **42 of 42 drafts are clean** and carry nothing the medium does not govern.
+- **Four of 13 curated models leak.** `iIT341` makes cysteine with no sulfate
+  through its `SK_ahcys_c` sink. `iYS854`, `iCN718` and `iCN900` leak through
+  reactions that do not balance (`iYS854`'s `SRK` creates a nitrogen,
+  `iCN900`'s `GLNSCP` a phosphate).
+- **Closing every other boundary was tried and dropped.** It moved no verdict
+  in 55 models, and it stopped `iJN1463` and `iYS854` growing on any medium,
+  because their sinks stand in for a peptide and a protein the network cannot
+  make.
+
+**Fixed: the carbon check missed glucose that arrives phosphorylated.** It
+drained free `glc__D_c`. The curated *S. aureus* `iSB619` takes glucose up by
+PTS only, so it never has free glucose. It read `carbon` unreachable beside
+25 of 30 *de novo*, and the report's note would have said every compound fell
+at once. Glucose 6-phosphate now counts too. Across all 55 models the only
+table that changes is `iSB619`'s media table, whose `carbon` empties. No
+CarveMe draft measured is PTS-only.
+
+The note itself now also names a model with no solution on M9 (`iNF517`, whose
+fixed fluxes M9 cannot meet). It no longer calls a starved row "a property of
+the reconstruction": the six Methanoflorens drafts make nothing from CO2 and H2
+or from acetate either, so for them it is at least as much the organism.
+
+**Fixed: the report called models that grew "models that did not grow".** The
+closest-medium note took any model with a medium it failed on. Rendered from
+the 55 models' real tables, it listed 16 that grow on some defined medium,
+the 1.5.0 *E. coli* draft (4.83 h⁻¹ on LB) among them, for failing
+anaerobically. It now takes only models that grew on no defined medium, by
+the same test the summary counts them with. Re-rendered, the 16 are gone and
+nothing else in the section moves but the starved note's wording.
+
+**The calibration, re-measured on the pipeline's own carving.** This replaces
+the "29 of 30 for `iML1515` and five carved prototrophs" of 2026-09-10 and
+09-15 above. Three of those five were CarveMe 1.5.0 drafts shipped with the
+package, and carved here they do not all give 29. `upstream/panel_calibration.py`
+now scores the drafts against a table of what each genome should not make.
+CarveMe 1.6.6, through `carve_scip.py`:
+
+| draft | de novo | not de novo | expected? |
+| --- | ---: | --- | --- |
+| *E. coli* K-12 MG1655 | 29 | `adocbl` | yes, the universe ceiling |
+| *B. subtilis* 168 | 29 | `adocbl` | yes |
+| *P. aeruginosa* PAO1 | 28 | `adocbl` `mqn8` | yes: no menaquinone pathway annotated |
+| *S. oneidensis* MR-1 | 28 | `adocbl` `pro__L` | **proline is a false dependency**, untraced |
+| *R. solanacearum* GMI1000 | 27 | `adocbl` `asn__L` `mqn8` | yes: no Men pathway; no asparagine synthetase, GatCAB present |
+| *M. genitalium* G37 | 0 | all 30 | yes, the negative control |
+| *K. pneumoniae* MGH78578 ¹ | 29 | `adocbl` | — |
+| *M. tuberculosis* H37Rv ¹ | 29 | `adocbl` | — |
+| *A. baumannii* AYE ¹ | 27 | `adocbl` `asn__L` `mqn8` | — (the same two reasons as *R. solanacearum*) |
+| *P. putida* KT2440 ¹ | 21 | `adocbl` `mqn8`, `gln__L` and six `upstream` | **seven false dependencies**: the draft has no `GLNS`, though `glnA` is annotated, and glutamine alone on M9 unblocks all six |
+
+¹ RefSeq proteomes, not bundled with CarveMe, so not in the script. The
+menaquinone and asparagine reasons were read off the proteomes' own
+annotation. *K. pneumoniae* and *S. aureus* annotate the whole Men pathway,
+and the four with none annotate only `UbiE`, which ubiquinone synthesis
+shares. `tests/environments/check.py` now requires *E. coli*'s misses to be
+exactly `{adocbl}`; run on thylakoid against a fresh carve, it passes.
+
+**The prose says what was measured.** In the guidance, the module docstring
+and the report:
+- *No route* no longer means "no path at all". For a cofactor it is often a
+  salvage-only route: the panel never offers the vitamin, and the *S. aureus*
+  drafts (`COL`, `N315` tested) make thiamine diphosphate from thiamine and NAD
+  from nicotinate.
+- Asparagine is explained. The *S. aureus*, *R. solanacearum* and
+  *A. baumannii* proteomes annotate GatCAB and no asparagine synthetase. The
+  carving universes hold no asparaginyl-tRNA at all; their one tRNA species is
+  glutamyl-tRNA, for heme.
+- The growth caveat now cites `iML1515`'s 0.88 h⁻¹ as the measurement above,
+  and says why the complete-medium figure runs high.
+
+**The example report was re-rendered, not patched.** `render_report` ran with
+this branch over a copy of `results_showcase_350` on GenomeDK, with the title
+and command passed explicitly; the run itself was not touched. **172,596 →
+174,142 bytes.** The style block, the favicon and all seven figures are
+identical. The extracted text differs in six places: the header's version and
+time, the guidance readings, the summary sentence, the starved note's
+wording, the closest-medium note, and the `iML1515` citation.
+
+The re-render shows finding 1 on the real report. Its summary says "1 of 8
+genomes grow on any defined medium", which is `Spn_R6`, at 0.4604 h⁻¹ on LB.
+The old closest-medium note listed R6 among the models that "did not grow",
+in the same section. R6 is gone from the note, and the other seven read
+exactly as before.
+
+The tables under that report are 3.5.0's, and none of its eight models is in
+the 55 above. Streptococci take up glucose by PTS, which is the case the carbon
+probe changed for. So on 2026-11-12 the eight CarveMe models were copied from
+GenomeDK to thylakoid, and this branch's module and master's both ran on them
+in the carveme environment. All 16 tables are **byte-identical** to the stored
+3.5.0 run, and every run exited 0. The example report is what a fresh run of
+this branch would produce.
+
+**End to end, through Snakemake, with the branch.** On thylakoid, the
+rc-3.5.1-final-A install with the branch first on `PYTHONPATH` (CompareM2
+3.5.2, snakemake 9.27.0), its own conda prefix, databases at
+`/midifiler/carl/cm2_db_v3`. `--until biosynthesis` over the four
+*E. faecium* genomes, fresh output:
+- **13 of 13 steps, exit 0, 434 s**, and nothing in the log is a traceback
+  or an error.
+- All eight biosynthesis tables are **byte-identical** to the stored 3.5.1
+  run's, and the duplicate pair agrees.
+- The report is 54,105 bytes. Its biosynthesis prose reads as above, with no
+  `nan` or `None`.
+
+`comparem2 --demo` then ran twice into the same directory, and `check.py demo`
+passed every check, the "nothing to do" re-run included. The unit suite
+passes on Python 3.11.2 (thylakoid) and 3.14.8 (laptop), 399 tests each.
+`universe_ceiling.py` and `lifestyle_calibration.py --curated-only`, both of
+which drive the refactored probe, reproduce their 2026-09-15 results:
+- 29 *de novo* in `universe_bacteria`, with `adocbl` absent;
+- 7 of 7 through the free-energy gate.
+
+**The independent reading is an instrument now.**
+`upstream/biosynthesis_crosscheck.py` re-ran the cobrapy comparison against
+this branch's tables: **0 of 1,620 verdicts differ across 54 models, with HiGHS
+and again with GLPK**, and growth agrees on all four defined media. `iAF692`
+can be compared now that it completes. `iNF517` cannot: cobrapy refuses its
+arginine exchange, fixed at an uptake, once the medium closes it.
 
 ### biosynthesis through Snakemake, 13:51–14:03 on 2026-09-03
 `--until biosynthesis` over the four *E. faecium* genomes: bakta, carveme and
@@ -1706,7 +1874,9 @@ The split is new information. S. aureus (2026-09-02) and E. faecium
 (2026-09-24) both kept their topology, and the FastTree guidance now says that
 this set did not. The report was rendered over the run with the title and
 command passed explicitly, as on 2026-09-15, and is checked in at
-`docs/assets/example-report.html` (172,503 bytes).
+`docs/assets/example-report.html` (172,503 bytes). It was re-rendered over the
+same run on 2026-11-11 (174,142 bytes); see *biosynthesis review, executed
+2026-11-11*.
 
 **Then the issue #156 changes, and a defect 3.4.0 already had.** Adding
 `--remove-invalid-genes` re-ran panaroo, snp-dists and FastTree, and panaroo

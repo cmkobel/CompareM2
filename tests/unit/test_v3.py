@@ -5827,12 +5827,36 @@ def test_a_model_that_cannot_reach_nitrogen_is_named_beside_its_de_novo_count():
     from comparem2.report import _starved_note
 
     body = _starved_note({"R6": ["nitrogen"], "T4": ["carbon", "nitrogen"]}, 8)
-    assert "2 of 8 models cannot reach a source element" in body
+    assert "2 of 8 models cannot use the minimal medium" in body
     assert "R6 (no nitrogen)" in body
     assert "T4 (no carbon or nitrogen)" in body
-    assert "not of the organism" in body
+    assert "says nothing about the genome" in body
+    # It does not decide between the organism and the draft, because it
+    # cannot: the Methanoflorens drafts do not live on glucose at all, and the
+    # pneumococci lost a transporter.
+    assert "the grid cannot say which" in body
+    assert "not of the organism" not in body
     # Silent when every model can eat, so the sentence means something.
     assert _starved_note({}, 8) == ""
+
+
+def test_a_model_with_no_solution_on_m9_is_named_with_the_starved_ones(tmp_path):
+    """The curated iNF517 is infeasible on M9 — fixed fluxes the medium cannot
+    meet — and read `no route` for every compound with nothing beside the count
+    to say why. That is the same failure as an unreachable element: the column
+    says nothing about the genome."""
+    _biosynthesis_fixture(
+        tmp_path, {"A": {}, "B": {}},
+        # Every probe fails on an infeasible medium, the source check too, so
+        # the elements it reports are not the reason and are not named.
+        media={"A": {"M9": ("infeasible", "", "carbon nitrogen"),
+                     "complete": "5.2018"},
+               "B": {"M9": ("0.0000", "", "carbon"), "complete": "1.0000"}})
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("A", "B")).read_text()
+    assert "2 of 2 models cannot use the minimal medium" in body
+    assert "A (no solution on M9)" in body
+    assert "B (no carbon)" in body
 
 
 def test_the_summary_counts_only_panel_compounds(tmp_path):
@@ -5920,7 +5944,7 @@ def test_the_starved_note_reaches_a_rendered_report(tmp_path):
                      "complete": "21.0601"}})
     body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
                          ("A", "B")).read_text()
-    assert "1 of 2 models cannot reach a source element" in body
+    assert "1 of 2 models cannot use the minimal medium" in body
     assert "A (no nitrogen)" in body
     assert "B (no" not in body  # B can eat; only A is named
     # And the compounds themselves, which is what a reader checks the medium
@@ -5931,23 +5955,21 @@ def test_the_starved_note_reaches_a_rendered_report(tmp_path):
 class _StubProbe:
     """Enough of `_Probe` to check `unreachable_sources` without a solver.
 
-    `reach` maps a drain reaction to the flux the probe should report for it,
-    so a source can be given an exchange and still be unreachable — which is
-    the case that matters.
+    `reach` is the set of metabolites the probe should report reachable, so a
+    source can be given an exchange and still be unreachable — which is the
+    case that matters.
     """
 
     def __init__(self, reach, exchanges):
-        from comparem2.biosynthesis import SOURCES, _demand
+        from comparem2.biosynthesis import SOURCES, cytoplasmic
 
-        self.sources = [(b, e, _demand(b)) for b, e in SOURCES]
+        self.sources = [(s.element, [cytoplasmic(f) for f in s.forms])
+                        for s in SOURCES]
         self.exchanges = exchanges
         self._reach = reach
 
-    def medium(self, compounds, open_drain=None):
-        return {}
-
-    def maximum(self, reaction, constraints):
-        return self._reach.get(reaction, 0.0)
+    def reaches(self, met, compounds):
+        return met in self._reach
 
 
 def test_an_unbounded_solve_is_producible_and_not_a_zero():
@@ -5964,7 +5986,7 @@ def test_an_unbounded_solve_is_producible_and_not_a_zero():
     # Everything else is a zero: Infeasible genuinely is one, and Unknown and
     # Suboptimal are not knowledge — under-reporting beats inventing a route.
     for status in ("Infeasible", "Unknown", "Suboptimal",
-                   "Infeasible or Unbounded"):
+                   "Infeasible or Unbounded", "Error"):
         assert flux_from(status, 10.0) == 0.0, status
     assert flux_from("Optimal", 10.0) == 10.0
     assert flux_from("Optimal", None) == 0.0
@@ -5981,6 +6003,48 @@ def test_a_growth_cell_says_why_there_is_no_number():
     assert growth_cell("Optimal", -1e-14) == "0.0000"  # never a negative rate
     assert growth_cell("Infeasible", None) == "infeasible"
     assert growth_cell("Unbounded", 1e30) == "unbounded"
+    assert growth_cell("Error", None) == "error"
+
+
+def test_a_solver_that_raises_is_a_status_and_a_fresh_solver():
+    """SCIP gives up on an LP now and then — 18 of the curated iAF692's 818
+    solves, every time — and pyscipopt raises a bare Exception. That used to end
+    the rule. It is a zero now, counted and named like any status that is not
+    Optimal, and the solver is rebuilt, because reframed restores its temporary
+    bounds without a try/finally and the failed solve's are still applied."""
+    from comparem2.biosynthesis import ERROR, OPTIMAL, _Probe
+
+    probe = object.__new__(_Probe)  # no reframed here, so no __init__
+    probe.statuses, probe.errors, built = {}, [], []
+    outcomes = [RuntimeError("SCIP: error in LP solver!"), (OPTIMAL, 2.5)]
+
+    def fba(objective, constraints):
+        outcome = outcomes.pop(0)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    probe._fba = fba
+    probe._build_solver = lambda: built.append(True)
+
+    assert probe._solve({"R_x": 1}, {}) == (ERROR, None)
+    assert built == [True]
+    assert probe.errors == ["SCIP: error in LP solver!"]
+    assert probe._solve({"R_x": 1}, {}) == (OPTIMAL, 2.5)
+    assert probe.statuses == {ERROR: 1, OPTIMAL: 1}
+
+
+def test_the_unsolved_note_gives_the_cause_its_status_has():
+    """"A maintenance reaction it cannot pay" explains `infeasible` and is
+    false of `error`, which is the solver giving up."""
+    from comparem2.report import _unsolved_note
+
+    assert _unsolved_note({}, 3) == ""
+    infeasible = _unsolved_note({"A": "infeasible"}, 3)
+    assert "1 of 3 models could not be solved" in infeasible
+    assert "maintenance reaction" in infeasible and "giving up" not in infeasible
+    error = _unsolved_note({"A": "error"}, 3)
+    assert "giving up" in error and "maintenance" not in error
 
 
 def test_the_media_table_survives_a_status_where_a_number_goes(tmp_path):
@@ -6012,20 +6076,15 @@ class _RescueProbe:
         self._restores = restores
         self.asked = []
 
-    def medium(self, compounds, open_drain=None):
+    def reaches(self, met, compounds):
         from comparem2.biosynthesis import M9
 
         # Everything the background adds on top of the minimal medium, which
         # for this search is exactly the one compound under test.
-        return {"supplied": [c for c in compounds if c not in M9],
-                "drain": open_drain}
-
-    def maximum(self, reaction, constraints):
-        supplied = constraints["supplied"]
-        self.asked.append((tuple(supplied), reaction))
-        target = reaction.removeprefix("R_CM2_DM_")
-        return 10.0 if any(target in self._restores.get(s, ())
-                           for s in supplied) else 0.0
+        supplied = [c for c in compounds if c not in M9]
+        self.asked.append((tuple(supplied), met))
+        target = met.removeprefix("M_").removesuffix("_c")
+        return any(target in self._restores.get(s, ()) for s in supplied)
 
 
 def test_rescuers_never_asks_whether_a_de_novo_compound_rescues_anything():
@@ -6036,13 +6095,12 @@ def test_rescuers_never_asks_whether_a_de_novo_compound_rescues_anything():
     blocked."""
     from comparem2.biosynthesis import (DE_NOVO, NO_ROUTE, UPSTREAM, rescuers)
 
-    rows = [("ala__L", "", "", DE_NOVO), ("gly", "", "", UPSTREAM),
-            ("ser__L", "", "", UPSTREAM), ("thr__L", "", "", NO_ROUTE),
-            ("leu__L", "", "", NO_ROUTE)]
+    found = {"ala__L": DE_NOVO, "gly": UPSTREAM, "ser__L": UPSTREAM,
+             "thr__L": NO_ROUTE, "leu__L": NO_ROUTE}
     probe = _RescueProbe(["ala__L", "gly", "ser__L", "thr__L", "leu__L"],
                          {"thr__L": ("gly", "ser__L"), "gly": ("ser__L",)})
 
-    assert rescuers(probe, rows) == {"thr__L", "gly"}
+    assert rescuers(probe, found) == {"thr__L", "gly"}
     tried = {supplied[0] for supplied, _ in probe.asked}
     assert "ala__L" not in tried  # de novo, so it cannot be the missing one
     assert tried == {"gly", "ser__L", "thr__L", "leu__L"}
@@ -6054,17 +6112,16 @@ def test_rescuers_stops_at_the_first_hit_and_skips_a_model_with_no_block():
     must not pay for the search at all."""
     from comparem2.biosynthesis import DE_NOVO, NO_ROUTE, UPSTREAM, rescuers
 
-    rows = [("gly", "", "", UPSTREAM), ("ser__L", "", "", UPSTREAM),
-            ("thr__L", "", "", NO_ROUTE)]
+    found = {"gly": UPSTREAM, "ser__L": UPSTREAM, "thr__L": NO_ROUTE}
     probe = _RescueProbe(["gly", "ser__L", "thr__L"],
                          {"thr__L": ("gly", "ser__L")})
-    assert rescuers(probe, rows) == {"thr__L"}
+    assert rescuers(probe, found) == {"thr__L"}
     # thr__L unblocks gly, the first blocked compound tried, so ser__L is not
     # asked about for it.
     assert sum(1 for supplied, _ in probe.asked if supplied[0] == "thr__L") == 1
 
     quiet = _RescueProbe(["gly"], {})
-    assert rescuers(quiet, [("gly", "", "", DE_NOVO)]) == set()
+    assert rescuers(quiet, {"gly": DE_NOVO}) == set()
     assert quiet.asked == []
 
 
@@ -6126,6 +6183,56 @@ def test_a_long_list_of_blocked_precursors_is_counted_and_not_named(tmp_path):
     assert "mql8" not in body
 
 
+def test_a_model_that_grew_aerobically_is_not_a_model_that_did_not_grow(tmp_path):
+    """The note used to take any model with a medium it failed on, under a
+    sentence calling them models that did not grow. Rendered from real tables,
+    it listed the 1.5.0 E. coli draft — 4.83 h⁻¹ on LB — for failing
+    anaerobically, and five of six benchmark drafts with it. Any strict aerobe
+    would be. Whether a model grew is one test, shared with the summary."""
+    _biosynthesis_fixture(
+        tmp_path, {"ecol": {}, "efm": {}},
+        media={"ecol": {"M9": "0.6744",
+                        "M9[-O2]": ("0.0000", "", "", "57/60", "pe161 pe161_p pydx5p"),
+                        "LB": "4.8299",
+                        "LB[-O2]": ("0.0000", "", "", "58/60", "pe161 pe161_p"),
+                        "complete": "47.1264"},
+               "efm": {"M9": ("0.0000", "", "", "27/53", "atp gtp nad thf mql8"),
+                       "LB": ("0.0000", "", "", "52/53", "mql8"),
+                       "complete": "18.1086"}})
+    body = render_report(CATALOGUE, ["biosynthesis"], tmp_path, Path("db"),
+                         ("ecol", "efm")).read_text()
+    assert "1 of 2 genomes grow on any defined medium" in body
+    assert "efm reaches 52/53 on LB: mql8" in body
+    assert "ecol reaches" not in body
+
+
+def test_the_media_columns_are_the_media_biosynthesis_writes():
+    from comparem2.biosynthesis import COMPLETE, REFERENCE_MEDIA
+    from comparem2.report import _MEDIA_COLUMNS
+
+    assert [name for name, _ in _MEDIA_COLUMNS] == [
+        *(name for name, _, _ in REFERENCE_MEDIA), COMPLETE]
+
+
+def test_an_older_media_table_is_read_by_name(tmp_path):
+    """A table from before the precursor columns has six, and one a rule is
+    still writing may stop mid-row. Read by the file's own header, both simply
+    lack the later fields."""
+    from comparem2.report import _read_media
+
+    path = tmp_path / "A.media.tsv"
+    path.write_text("medium\tcompounds\tpresent\tgrowth\tmissing\tunreachable\n"
+                    "M9\t20\t17\t0.0000\tna1 nh4 ni2\tnitrogen\n"
+                    "LB\t65\t50\tinfeasible\n"
+                    "complete\t225\n")
+    rows = _read_media(path)
+    assert set(rows) == {"M9", "LB"}  # no growth cell yet, so no row
+    assert rows["M9"].unreachable == ["nitrogen"] and rows["M9"].reached == ""
+    assert rows["M9"].growth == 0.0 and rows["M9"].present == 17
+    assert rows["LB"].growth is None and rows["LB"].cell == "infeasible"
+    assert rows["LB"].missing == [] and rows["LB"].blocked == []
+
+
 def test_the_closest_note_is_silent_when_every_model_grew(tmp_path):
     """`precursors` is empty on a medium that grew — 53 solves is eight times
     the rest of the module, and there is nothing to explain."""
@@ -6148,15 +6255,29 @@ def test_a_source_with_an_exchange_can_still_be_unreachable():
 
     # ATCC700669's shape: ammonium is in the exchange set and does not reach
     # the cytoplasm. It must still be reported.
-    probe = _StubProbe({"R_CM2_DM_glc__D": 10.0},
+    probe = _StubProbe({"M_glc__D_c"},
                        {"glc__D": "R_EX_glc__D_e", "nh4": "R_EX_nh4_e"})
     assert unreachable_sources(probe, M9) == ["nitrogen"]
 
     # And the converse, so the check is not merely inverted: reaching the
     # cytoplasm is what counts, however it got there.
-    probe = _StubProbe({"R_CM2_DM_glc__D": 10.0, "R_CM2_DM_nh4": 10.0},
+    probe = _StubProbe({"M_glc__D_c", "M_nh4_c"},
                        {"glc__D": "R_EX_glc__D_e"})
     assert unreachable_sources(probe, M9) == []
+
+
+def test_glucose_that_arrives_phosphorylated_has_arrived():
+    """The phosphotransferase system hands glucose to the cytoplasm as glucose
+    6-phosphate, so a model whose only uptake is PTS never has free glucose
+    there. Probing only `glc__D_c` reported the curated S. aureus iSB619 as
+    having no carbon beside 25 of 30 compounds made de novo."""
+    from comparem2.biosynthesis import M9, unreachable_sources
+
+    pts = _StubProbe({"M_g6p_c", "M_nh4_c"},
+                     {"glc__D": "R_EX_glc__D_e", "nh4": "R_EX_nh4_e"})
+    assert unreachable_sources(pts, M9) == []
+    neither = _StubProbe({"M_nh4_c"}, {"glc__D": "R_EX_glc__D_e"})
+    assert unreachable_sources(neither, M9) == ["carbon"]
 
 
 def test_the_source_elements_are_m9s_own_and_carry_their_element():
@@ -6165,29 +6286,108 @@ def test_the_source_elements_are_m9s_own_and_carry_their_element():
     carries nitrogen — and the code must not invent one."""
     from comparem2.biosynthesis import LB, M9, SOURCES
 
-    assert dict(SOURCES) == {"glc__D": "carbon", "nh4": "nitrogen"}
-    for bigg, _ in SOURCES:
-        assert bigg in M9, bigg
+    assert {s.element: s.compound for s in SOURCES} == {
+        "carbon": "glc__D", "nitrogen": "nh4"}
+    for source in SOURCES:
+        assert source.compound in M9, source
+        # The compound itself always counts as arrival; anything else is the
+        # form it takes on the way in, and must be justified in SOURCES.
+        assert source.forms[0] == source.compound, source
+    assert dict((s.element, s.forms) for s in SOURCES)["carbon"] == ("glc__D", "g6p")
     # The reason LB is excluded, stated as a fact about LB rather than a
     # comment: it carries many nitrogen sources beyond ammonium.
     assert len([c for c in LB if c.endswith("__L")]) > 1
 
 
-def test_a_source_compound_absent_from_the_model_gets_a_reaction_of_none():
+class _DrainModel:
+    """Enough of a reframed model for `add_drains`: metabolite and reaction
+    ids, an objective, and `add_reaction_from_str` for a one-metabolite drain.
+    `biomass` names what the objective consumes."""
+
+    def __init__(self, metabolites, biomass=()):
+        from types import SimpleNamespace
+
+        self._ns = SimpleNamespace
+        self.metabolites = dict.fromkeys(metabolites)
+        self.reactions = {}
+        self._objective = {}
+        if biomass:
+            self.reactions["R_Growth"] = SimpleNamespace(
+                stoichiometry={**{m: -1.0 for m in biomass}, "M_adp_c": 1.0})
+            self._objective = {"R_Growth": 1.0}
+
+    def get_objective(self):
+        return self._objective
+
+    def add_reaction_from_str(self, spec):
+        rid, _, rest = spec.partition(": ")
+        self.reactions[rid] = self._ns(stoichiometry={rest.split()[0]: -1.0})
+
+
+def test_a_source_compound_absent_from_the_model_gets_no_metabolite():
     """"The metabolite is not in the network" is one of the ways a source is
     unreachable, and dropping it would report the model as fine."""
-    from comparem2.biosynthesis import add_source_demands
+    from comparem2.biosynthesis import add_drains
 
-    class _Model:
-        metabolites = {"M_glc__D_c": object()}  # no M_nh4_c
-        reactions: dict = {}
+    out = add_drains(_DrainModel(["M_glc__D_c"]))  # no M_g6p_c, no M_nh4_c
+    assert out.sources == [("carbon", ["M_glc__D_c"]), ("nitrogen", [])]
+    assert "M_nh4_c" not in out.reactions
 
-        def add_reaction_from_str(self, spec):
-            self.reactions[spec.split(":")[0]] = object()
 
-    out = add_source_demands(_Model())
-    assert [(b, e, r is None) for b, e, r in out] == [
-        ("glc__D", "carbon", False), ("nh4", "nitrogen", True)]
+def test_a_metabolite_asked_about_twice_gets_one_drain():
+    """The amino acids are panel compounds *and* biomass precursors, and used
+    to get a drain for each role. Only one drain is ever open, so the duplicate
+    never changed an answer — it was one more reaction to keep shut."""
+    from comparem2.biosynthesis import add_drains
+
+    model = _DrainModel(["M_trp__L_c", "M_atp_c", "M_glc__D_c", "M_nh4_c"],
+                        biomass=["M_trp__L_c", "M_atp_c"])
+    out = add_drains(model)
+    assert [c.bigg for c in out.present] == ["trp__L"]
+    assert out.precursors == ["M_trp__L_c", "M_atp_c"]
+    assert out.reactions == {"M_trp__L_c": "R_CM2_DM_trp__L_c",
+                             "M_glc__D_c": "R_CM2_DM_glc__D_c",
+                             "M_nh4_c": "R_CM2_DM_nh4_c",
+                             "M_atp_c": "R_CM2_DM_atp_c"}
+    # Nothing was added to the model but those drains.
+    assert set(model.reactions) == {"R_Growth", *out.reactions.values()}
+
+
+def test_a_drain_that_would_overwrite_a_model_reaction_stops_the_run():
+    from comparem2.biosynthesis import add_drains
+
+    model = _DrainModel(["M_trp__L_c"])
+    model.reactions["R_CM2_DM_trp__L_c"] = object()
+    with pytest.raises(SystemExit):
+        add_drains(model)
+
+
+def test_verdicts_try_the_minimal_medium_then_the_rest_of_the_panel():
+    """`upstream` is decided on M9 plus every *other* panel compound the model
+    carries. Offering a compound to itself would make every compound with an
+    exchange look reachable, so the background must never contain the target."""
+    from comparem2.biosynthesis import (ABSENT, DE_NOVO, M9, NO_ROUTE, PANEL,
+                                        UPSTREAM, Compound, verdicts)
+
+    class Probe:
+        present = [Compound(b, b, "g") for b in ("trp__L", "gly", "ser__L")]
+        asked = []
+
+        def reaches(self, met, compounds):
+            extra = set(compounds) - set(M9)
+            self.asked.append((met, extra))
+            # trp from nothing, gly only given serine, serine only from itself.
+            return {"M_trp__L_c": True, "M_gly_c": "ser__L" in extra,
+                    "M_ser__L_c": "ser__L" in extra}[met]
+
+    probe = Probe()
+    found = verdicts(probe)
+    assert list(found) == [c.bigg for c in PANEL]
+    assert (found["trp__L"], found["gly"], found["ser__L"]) == (
+        DE_NOVO, UPSTREAM, NO_ROUTE)
+    assert {found[c.bigg] for c in PANEL[20:]} == {ABSENT}
+    assert all("ser__L" not in extra
+               for met, extra in probe.asked if met == "M_ser__L_c")
 
 
 def test_biosynthesis_section_survives_a_half_written_media_table(tmp_path):

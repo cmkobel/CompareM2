@@ -71,9 +71,11 @@ novo* for D39 and 0 for R6, flipping 20 of the 30 in one direction, for two
 genomes 55 SNPs apart. Their CarveMe models share 1,048 reactions, with 530
 unique to R6 and 85 unique to D39.
 
-(The run is CompareM2 3.5.0 on GenomeDK, 2026-10-09. It replaced a
-2026-09-08 run, and the two agree everywhere except where 3.5.0 meant them to
-differ. The eight CarveMe models have the same reaction sets, and every
+(The run is CompareM2 3.5.0 on GenomeDK, 2026-10-09. The report was
+re-rendered over that same run on 2026-11-11, which is why its header names a
+later version: no tool was re-run, and only the biosynthesis section's prose
+changed. The run replaced a 2026-09-08 run, and the two agree everywhere
+except where 3.5.0 meant them to differ. The eight CarveMe models have the same reaction sets, and every
 biosynthesis verdict is the same. snp-dists and FastTree now read Panaroo's
 *filtered* core alignment: 8.9% fewer columns, 11–21% fewer SNPs per pair
 (D39/R6 went from 65 to 55), and one of the tree's five splits moved, with
@@ -116,8 +118,8 @@ Finding this changed the biosynthesis section, so the report now says it
 itself. The section checks whether each model can reach the minimal medium's
 carbon and nitrogen sources, and names those that cannot directly beneath the
 *de novo* counts, so the qualification sits next to the number a reader would
-quote. In this report that line reads *"4 of 8 models cannot reach a source
-element from the minimal medium."*
+quote. In this report that line reads *"4 of 8 models cannot use the minimal
+medium"*, and names each with the element it cannot reach.
 
 The check is a flux probe and not a look at the model's exchange reactions,
 which is why ATCC700669 is caught: it *has* an ammonium exchange and reads a
