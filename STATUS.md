@@ -1163,6 +1163,14 @@ The old closest-medium note listed R6 among the models that "did not grow",
 in the same section. R6 is gone from the note, and the other seven read
 exactly as before.
 
+The tables under that report are 3.5.0's, and none of its eight models is in
+the 55 above. Streptococci take up glucose by PTS, which is the case the carbon
+probe changed for. So on 2026-11-12 the eight CarveMe models were copied from
+GenomeDK to thylakoid, and this branch's module and master's both ran on them
+in the carveme environment. All 16 tables are **byte-identical** to the stored
+3.5.0 run, and every run exited 0. The example report is what a fresh run of
+this branch would produce.
+
 **End to end, through Snakemake, with the branch.** On thylakoid, the
 rc-3.5.1-final-A install with the branch first on `PYTHONPATH` (CompareM2
 3.5.2, snakemake 9.27.0), its own conda prefix, databases at
