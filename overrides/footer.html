@@ -6,6 +6,11 @@
   the free-form `copyright` sentence and "Built with MkDocs using a theme
   provided by Read the Docs."
 
+  "Git repo", with the Git logomark in front (git-logo.html), is the site's
+  one link to the repository. That is a choice, not an omission (2026-11-15):
+  for a few hours the mark was also beside the sidebar's wordmark and in the
+  mobile bar, and the author kept only this one.
+
   An override of the file rather than of base.html's `footer` block, so that
   404.html, which extends base.html directly, gets the same footer.
 #}
@@ -31,6 +36,6 @@
       {%- if config.copyright %}{{ config.copyright }} · {% endif -%}
       <a href="{{ config.repo_url }}/blob/master/LICENSE">GPL-3.0 or later</a>
     </span>
-    <a href="{{ config.repo_url }}">{% include "git-logo.html" %} GitHub</a>
+    <a href="{{ config.repo_url }}">{% include "git-logo.html" %} Git repo</a>
   </div>
 </footer>

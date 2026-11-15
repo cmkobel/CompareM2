@@ -29,12 +29,11 @@ theme:
   highlightjs: true
   # Three template overrides and a partial. `main.html` is the theme's own
   # documented hook: it redefines the `mobile_nav` block so the narrow-screen
-  # bar carries the wordmark instead of the site name as text, and the
-  # `site_name` block to put the repository link beside the sidebar's wordmark.
-  # `footer.html` and `versions.html` replace the theme's files of those names:
-  # a one-row footer with the licence and the repository, and no fixed bar at
-  # the foot of the sidebar. `git-logo.html` is the Git logomark those links
-  # carry. Each file says why at its top.
+  # bar carries the wordmark instead of the site name as text. `footer.html`
+  # and `versions.html` replace the theme's files of those names: a one-row
+  # footer with the licence and the repository, and no fixed bar at the foot
+  # of the sidebar. `git-logo.html` is the Git logomark the footer's link
+  # carries. Each file says why at its top.
   custom_dir: overrides
   # The sidebar wordmark, in the on-colour variant: the header keeps a coloured
   # backdrop (the accent green, set in extra.css), so the dark-ink wordmark
@@ -64,7 +63,7 @@ markdown_extensions:
 repo_url: https://github.com/cmkobel/CompareM2
 # No "Edit on GitHub" on every page (2026-11-15): it pointed at the editor for
 # one Markdown file, not at the repository, and was the only GitHub link Read
-# the Docs left visible. The repository is linked from the sidebar header, the
-# mobile bar and the footer instead — see overrides/.
+# the Docs left visible. The repository is linked once, as "Git repo" in the
+# footer — see overrides/footer.html.
 edit_uri: ""
 

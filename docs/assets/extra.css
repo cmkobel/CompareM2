@@ -1,8 +1,8 @@
 /* CompareM2 additions to the built-in `readthedocs` theme.
  *
- * Most of this is the sidebar header; the repository link, the homepage hero,
- * the footer, the Read the Docs flyout and a dark-mode block follow it, the
- * last at the end with its own note. The theme builds that slot for a
+ * Most of this is the sidebar header; the homepage hero, the footer, the Read
+ * the Docs flyout and a dark-mode block follow it, the last at the end with its
+ * own note. The theme builds that slot for a
  * circular avatar — theme.css pins `.wy-side-nav-search img` to 45x45 with
  * `border-radius:100%` — and the CompareM2 mark is a 5.9:1 wordmark, so the
  * crop has to go. The first attempt un-cropped it onto a white panel, which
@@ -87,48 +87,6 @@ a, a code { color: #1d7a3e; }
   border-radius: 0;
 }
 
-/* The repository link, put there by overrides/main.html: the Git logomark
- * (overrides/git-logo.html, an inline SVG in currentColor) in
- * the sidebar header, opposite the wordmark, and in the mobile bar, opposite
- * the menu button. In the header it is a second `> a`, so it takes the
- * wordmark link's padding and the theme's white-10% hover with it; placed
- * absolutely, its 27px line plus that 2px padding is the wordmark link's box
- * exactly, at the same top, so the two centre on one line. The right offset
- * cancels the 4px padding, so the mark's edge lines up with the search field's.
- * The size goes on the SVG, not the link: `top` and `right` are in the
- * header's em, as its padding is. The mark is 24px square, a little over the
- * 22px the GitHub mark had, because a diamond fills less of its box; centred
- * in a 27px-tall block, it sits on the wordmark's midline.
- * Colour is pinned, :visited included, because the theme's `a:visited` purple
- * ties `.wy-side-nav-search > a` on specificity. */
-.wy-side-nav-search { position: relative; }
-
-.wy-side-nav-search > a.comparem2-repo,
-.wy-side-nav-search > a.comparem2-repo:visited {
-  position: absolute;
-  top: 0.95em;
-  right: calc(0.809em - 4px);
-  margin: 0;
-  line-height: 27px;
-  color: #fcfcfc;
-}
-.wy-side-nav-search > a.comparem2-repo svg {
-  display: block;     /* its own 27px box, not an inline box on the strut */
-  width: 24px;
-  height: 27px;
-}
-
-.wy-nav-top > a.comparem2-repo,
-.wy-nav-top > a.comparem2-repo:visited {
-  float: right;
-  color: #fff;
-}
-.wy-nav-top > a.comparem2-repo svg {
-  width: 28px;
-  height: 28px;
-  vertical-align: middle;
-}
-
 /* Homepage hero. The wordmark carries the project name, so index.md has no
  * separate <h1> text to sit under it. */
 .comparem2-hero {
@@ -142,10 +100,11 @@ a, a code { color: #1d7a3e; }
 }
 
 /* Footer (overrides/footer.html): one quiet row under the rule, copyright and
- * licence left, GitHub right, wrapping onto two lines when narrow. Links are
- * the row's own grey until hovered, then the accent, and do not go purple once
- * visited. #707070 rather than the theme's `footer` gray, which is 3.9:1 on
- * #fcfcfc; this is 4.8:1 at the smaller size. */
+ * licence left, the repository right, wrapping onto two lines when narrow.
+ * Links are the row's own grey until hovered, then the accent, and do not go
+ * purple once visited; the Git logomark before "Git repo" follows, being
+ * currentColor. #707070 rather than the theme's `footer` gray, which is 3.9:1
+ * on #fcfcfc; this is 4.8:1 at the smaller size. */
 .comparem2-footer {
   display: flex;
   flex-wrap: wrap;

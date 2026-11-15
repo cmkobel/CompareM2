@@ -16,7 +16,6 @@
 #}
 {% block mobile_nav %}
   <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-  <a href="{{ config.repo_url }}" class="comparem2-repo" title="CompareM2 on GitHub" aria-label="CompareM2 on GitHub">{% include "git-logo.html" %}</a>
   <a href="{{ nav.homepage.url|url }}">
     {%- if config.theme.logo %}
       <img src="{{ config.theme.logo|url }}" class="logo" alt="{{ config.site_name }}"/>
@@ -24,19 +23,6 @@
       {{ config.site_name }}
     {%- endif %}
   </a>
-{% endblock %}
-
-{#
-  The repository, linked from the sidebar header beside the wordmark, and from
-  the mobile bar above (floated right, opposite the menu button). Without these
-  the only route to GitHub was the theme's bar at the foot of the sidebar,
-  which Read the Docs replaces with its version flyout, and the per-page "Edit
-  on GitHub", which pointed at one file's editor and is now off (`edit_uri` in
-  mkdocs.yml). The footer links it too (overrides/footer.html).
-#}
-{% block site_name %}
-  {{ super() }}
-  <a href="{{ config.repo_url }}" class="comparem2-repo" title="CompareM2 on GitHub" aria-label="CompareM2 on GitHub">{% include "git-logo.html" %}</a>
 {% endblock %}
 
 {#
