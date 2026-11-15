@@ -2670,6 +2670,15 @@ Linux: aarch64, **16 KiB pages**, 8 cores, 16 GB. Also measured by CI on the
 `macos-latest` (arm64) at 16 KiB. Working material, outside git:
 `~/cm2-aarch64/` on the laptop.
 
+*The pipeline's own environment* is in `pixi.lock` for linux-aarch64 and
+osx-arm64 since 2026-11-11: python 3.14.10 and snakemake 9.27.1 on both, the
+versions `arm_probe.sh`'s copy solved to on linux-aarch64, against 3.11.16 and
+9.16.3 on linux-64. On linux-aarch64, on the laptop, the 389 unit tests pass
+(399 after the biosynthesis merge, rerun from the lock 2026-11-15)
+and `pixi run test-fast` gives 8 of 8 steps, the duplicate pair at 100.00% ANI
+and 0.00000 mash distance. **osx-arm64 is solved, not installed**: nothing has
+run on macOS from this lock.
+
 *Solve*, the six files `render_envs` writes, `pixi lock` per platform. **Five
 of six on linux-aarch64, and five of six on osx-arm64.** gtdbtk fails on both,
 on `pplacer 1.1.alpha19` (bioconda-recipes#71426). Versions that differ from

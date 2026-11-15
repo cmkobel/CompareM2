@@ -24,8 +24,12 @@ Three files carry the context, and they are deliberately separate:
 
 CompareM2 v3: a Snakemake-driven pipeline that runs 14 analysis tools over a set
 of microbial assemblies and produces one self-contained HTML report.
-**Linux-only** — the tools are `linux-64`, so `pixi install` will not work on
-macOS. Unit tests are pure Python and run anywhere.
+**Linux-only** — `main()` refuses the analysis on macOS, leaving `--dry-run`
+and `--report-only`. `pixi.toml` locks `linux-64`, `linux-aarch64` and
+`osx-arm64` all the same, so `pixi install` should work on an Apple-silicon
+Mac: solved, not yet installed there from the lock (STATUS.md).
+Arm is checked, not supported (see *Testing*). Unit tests are pure Python and
+run anywhere.
 
 **Publication (describes v2):** Kobel et al. "CompareM2 is a genomes-to-report
 pipeline for comparing microbial genomes." *Bioinformatics* 41(9), btaf517

@@ -1,7 +1,13 @@
 [workspace]
 channels = ["conda-forge", "bioconda"]
 name = "comparem2"
-platforms = ["linux-64"]
+# The platforms the pipeline's own environment installs on, which says nothing
+# about the fourteen tools: Snakemake deploys those per rule, and gtdbtk does
+# not install on arm (STATUS.md, *linux-aarch64, end to end*), so arm is still
+# not supported. On macOS `main()` refuses the analysis itself, so osx-arm64
+# buys the unit tests, --dry-run and --report-only. linux-aarch64 ran 389 unit
+# tests and `test-fast` on 2026-11-11; osx-arm64 is solved, not yet installed.
+platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
 version = "3.5.2"
 
 [tasks]

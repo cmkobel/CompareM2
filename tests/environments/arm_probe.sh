@@ -42,8 +42,9 @@ esac
 echo "$(uname -sm), page size $(getconf PAGESIZE), conda platform $platform"
 echo "checkout $(git -C "$here" rev-parse --short HEAD), workdir $work"
 
-# The pipeline's own environment, for this platform. pixi.toml lists linux-64
-# only, so it is copied with the platform swapped and its tasks dropped.
+# The pipeline's own environment, for this platform. pixi.toml is copied with
+# the platform narrowed to this one and its tasks dropped. The copy has no
+# lock, so the probe gets today's solve rather than pixi.lock's.
 mkdir -p "$work/pixi"
 sed -e "s/^platforms = .*/platforms = [\"$platform\"]/" \
     -e '/^\[tasks\]/,/^\[activation.env\]/{/^\[activation.env\]/!d;}' \
