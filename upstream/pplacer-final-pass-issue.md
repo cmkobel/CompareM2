@@ -1,6 +1,16 @@
 # Draft: pplacer's final branch-length pass does not catch what the first pass does
 
-**Unsent.** Destination: an issue on
+**Not sending — decided 2026-11-10.** Carl: he won't publish a report on
+pplacer internals he can't answer questions about, and a path never observed,
+which alpha19 shares, is pplacer's to find, not ours. Kept as a record of the
+reading; a three-sentence version was drafted and also not sent. #71426's body
+still says "I'll raise it with pplacer"; left as is on purpose — **if anyone
+asks, answer from this file**: the two call sites, and the route found
+2026-11-10 (the #394 clamp stores the last-evaluated distal length exactly on
+0 or `cut_bl`; `get_results` reports that stored value, not Brent's minimum;
+the final pass starts from it; `start_finder_prep` rejects a start on the
+bound). Zero-length edges are safe: `optimize_something` returns early when
+`min_v = max_v`. Never observed in 31 alpha23 logs. Destination was: an issue on
 [matsen/pplacer](https://github.com/matsen/pplacer), addressed to matsen, who
 wrote both #391's fix (5f4b5186, alpha21) and #394's (40509ec8, alpha22). Send
 it **after** [gtdbtk-pplacer-pin-pr.md](gtdbtk-pplacer-pin-pr.md): that text
