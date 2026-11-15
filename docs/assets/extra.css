@@ -1,7 +1,8 @@
 /* CompareM2 additions to the built-in `readthedocs` theme.
  *
- * Most of this is the sidebar header; the homepage hero and a dark-mode block
- * follow it, the latter at the end with its own note. The theme builds that slot for a
+ * Most of this is the sidebar header; the repository link, the homepage hero,
+ * the footer, the Read the Docs flyout and a dark-mode block follow it, the
+ * last at the end with its own note. The theme builds that slot for a
  * circular avatar — theme.css pins `.wy-side-nav-search img` to 45x45 with
  * `border-radius:100%` — and the CompareM2 mark is a 5.9:1 wordmark, so the
  * crop has to go. The first attempt un-cropped it onto a white panel, which
@@ -86,6 +87,41 @@ a, a code { color: #1d7a3e; }
   border-radius: 0;
 }
 
+/* The repository link, put there by overrides/main.html: the GitHub mark in
+ * the sidebar header, opposite the wordmark, and in the mobile bar, opposite
+ * the menu button. In the header it is a second `> a`, so it takes the
+ * wordmark link's padding and the theme's white-10% hover with it; placed
+ * absolutely, its 27px line plus that 2px padding is the wordmark link's box
+ * exactly, at the same top, so the two centre on one line. The right offset
+ * cancels the 4px padding, so the mark's edge lines up with the search field's.
+ * The size goes on the glyph, not the link: `top` and `right` are in the
+ * header's em, as its padding is, and a 22px link would scale them with it.
+ * Colour is pinned, :visited included, because the theme's `a:visited` purple
+ * ties `.wy-side-nav-search > a` on specificity. */
+.wy-side-nav-search { position: relative; }
+
+.wy-side-nav-search > a.comparem2-repo,
+.wy-side-nav-search > a.comparem2-repo:visited {
+  position: absolute;
+  top: 0.95em;
+  right: calc(0.809em - 4px);
+  margin: 0;
+  line-height: 27px;
+  color: #fcfcfc;
+}
+.wy-side-nav-search > a.comparem2-repo .fa {
+  display: block;     /* its own 27px line, not an inline box on the strut */
+  font-size: 22px;
+  line-height: 27px;
+}
+
+.wy-nav-top > a.comparem2-repo,
+.wy-nav-top > a.comparem2-repo:visited {
+  float: right;
+  font-size: 28px;
+  color: #fff;
+}
+
 /* Homepage hero. The wordmark carries the project name, so index.md has no
  * separate <h1> text to sit under it. */
 .comparem2-hero {
@@ -97,6 +133,34 @@ a, a code { color: #1d7a3e; }
   max-width: 420px;
   height: auto;
 }
+
+/* Footer (overrides/footer.html): one quiet row under the rule, copyright and
+ * licence left, GitHub right, wrapping onto two lines when narrow. Links are
+ * the row's own grey until hovered, then the accent, and do not go purple once
+ * visited. #707070 rather than the theme's `footer` gray, which is 3.9:1 on
+ * #fcfcfc; this is 4.8:1 at the smaller size. */
+.comparem2-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.3em 1.5em;
+  margin-bottom: 1.5em;
+  font-size: 90%;
+  color: #707070;
+}
+.wy-nav-content .comparem2-footer a,
+.wy-nav-content .comparem2-footer a:visited {
+  color: inherit;
+}
+.wy-nav-content .comparem2-footer a:hover { color: #1d7a3e; }
+
+/* Read the Docs' version flyout: the "latest" box it injects at the bottom
+ * right of every published page. Hidden (2026-11-15) because it had nothing to
+ * offer: the project builds one version, `latest`, so the switcher lists only
+ * the page you are on. If more versions are ever published, delete this rule,
+ * or the flyout can instead be turned off in the Read the Docs dashboard,
+ * under the project's Addons settings. A local build never has it. */
+readthedocs-flyout { display: none !important; }
 
 /* Dark mode, following the reader's system setting. The readthedocs theme has
  * none and no toggle, so this is every colour theme.css and theme_extra.css set
@@ -141,6 +205,11 @@ a, a code { color: #1d7a3e; }
   a, a code { color: #6fdc8c; }
   .wy-nav-content a:hover, .wy-nav-content a:hover code { color: #a3ecb6; }
   .wy-nav-content a:visited, .wy-nav-content a:visited code { color: #c39bd3; }
+
+  /* The footer row. Its `inherit` already beats the visited purple above;
+   * only the hover needs restating, or it would be the light accent. */
+  .comparem2-footer { color: #9a9a9a; }
+  .wy-nav-content .comparem2-footer a:hover { color: #6fdc8c; }
 
   /* Sidebar. Neutral grey rather than the theme's warm #343131, which sits
    * oddly beside a neutral page. */

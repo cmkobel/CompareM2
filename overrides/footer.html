@@ -1,0 +1,36 @@
+{#
+  Replaces the theme's footer.html. The Previous / Next buttons are the
+  theme's, unchanged — re-read them against the theme if a mkdocs upgrade
+  changes that markup. What changed is the line under the rule: one quiet row,
+  copyright and licence on the left, the repository on the right, in place of
+  the free-form `copyright` sentence and "Built with MkDocs using a theme
+  provided by Read the Docs."
+
+  An override of the file rather than of base.html's `footer` block, so that
+  404.html, which extends base.html directly, gets the same footer.
+#}
+<footer>
+  {%- block next_prev %}
+  {%- if config.theme.prev_next_buttons_location|lower in ['bottom', 'both']
+        and page and (page.next_page or page.previous_page) %}
+    <div class="rst-footer-buttons" role="navigation" aria-label="{% trans %}Footer Navigation{% endtrans %}">
+      {%- if page.previous_page %}
+        <a href="{{ page.previous_page.url|url }}" class="btn btn-neutral float-left" title="{{ page.previous_page.title }}"><span class="icon icon-circle-arrow-left"></span> {% trans %}Previous{% endtrans %}</a>
+      {%- endif %}
+      {%- if page.next_page %}
+        <a href="{{ page.next_page.url|url }}" class="btn btn-neutral float-right" title="{{ page.next_page.title }}">{% trans %}Next{% endtrans %} <span class="icon icon-circle-arrow-right"></span></a>
+      {%- endif %}
+    </div>
+  {%- endif %}
+  {%- endblock %}
+
+  <hr/>
+
+  <div role="contentinfo" class="comparem2-footer">
+    <span>
+      {%- if config.copyright %}{{ config.copyright }} · {% endif -%}
+      <a href="{{ config.repo_url }}/blob/master/LICENSE">GPL-3.0 or later</a>
+    </span>
+    <a href="{{ config.repo_url }}"><span class="fa fa-github" aria-hidden="true"></span> GitHub</a>
+  </div>
+</footer>

@@ -1,6 +1,8 @@
 site_name: CompareM2
 site_description: Documentation for CompareM2, the genomes-to-report pipeline
-copyright: CompareM2 genomes-to-report pipeline. Copyright © 2019-2026 GNU GPL v3
+# Rendered by overrides/footer.html, which adds the licence and the repository
+# link beside it.
+copyright: © 2019–2026 CompareM2 contributors
 nav:
   # The homepage leads with the wordmark instead of an `# CompareM2` heading,
   # so its nav label is set here rather than taken from a first-level heading.
@@ -25,9 +27,13 @@ site_url: https://comparem2.readthedocs.io/
 theme:
   name: readthedocs
   highlightjs: true
-  # One template override, `overrides/main.html`, and it is the theme's own
-  # documented hook: it redefines the `mobile_nav` block so the narrow-screen
-  # bar carries the wordmark instead of the site name as text.
+  # Three template overrides. `main.html` is the theme's own documented hook:
+  # it redefines the `mobile_nav` block so the narrow-screen bar carries the
+  # wordmark instead of the site name as text, and the `site_name` block to put
+  # the GitHub mark beside the sidebar's wordmark. `footer.html` and
+  # `versions.html` replace the theme's files of those names: a one-row footer
+  # with the licence and the repository, and no fixed bar at the foot of the
+  # sidebar. Each file says why at its top.
   custom_dir: overrides
   # The sidebar wordmark, in the on-colour variant: the header keeps a coloured
   # backdrop (the accent green, set in extra.css), so the dark-ink wordmark
@@ -55,4 +61,9 @@ markdown_extensions:
       base_path: .
   - admonition
 repo_url: https://github.com/cmkobel/CompareM2
+# No "Edit on GitHub" on every page (2026-11-15): it pointed at the editor for
+# one Markdown file, not at the repository, and was the only GitHub link Read
+# the Docs left visible. The repository is linked from the sidebar header, the
+# mobile bar and the footer instead — see overrides/.
+edit_uri: ""
 
