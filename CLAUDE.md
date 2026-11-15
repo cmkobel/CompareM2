@@ -124,9 +124,11 @@ test. On 2026-09-24 carveme solved, installed, and had no solver. The runner is
 `ubuntu-latest` on purpose: its move to 26.04 is what caught checkm2 failing
 on glibc 2.41+, on 2026-10-26. `build` also runs on `ubuntu-26.04-arm` and
 `macos-latest` (Apple silicon), and `demo` on the Linux arm runner — every
-environment but gtdbtk, which no gtdbtk >=2.7 solves on arm until
-bioconda-recipes#71426; the `gtdbtk-arm` job goes red when that changes,
-saying what to delete. Full arm support on Linux and macOS is the goal; arm is
+environment but gtdbtk, which no gtdbtk >=2.7 solves on arm while it pins
+pplacer alpha19. That ends with the GTDB-Tk release that replaces pplacer
+with gPlace (Ecogenomics/GTDBTk#728), not with a pin change — #71426 was
+declined for it on 2026-11-11. The `gtdbtk-arm` job goes red when that
+changes, saying what to delete. Full arm support on Linux and macOS is the goal; arm is
 checked there, not yet supported. A new environment needs an entry in
 `check.py`, and a unit test enforces that. The same workflow's `demo` job runs
 `comparem2 --demo` as a user would, then again, and `check.py demo` requires

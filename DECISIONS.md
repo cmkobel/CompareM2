@@ -4542,3 +4542,46 @@ re-rendering. It ran over a copy of the GenomeDK run, with the title and
 command passed explicitly. The only differences are in the biosynthesis
 section, and they include finding 1 caught on the real report: `Spn_R6`
 grows on LB and was listed as a model that did not grow.
+
+## 2026-11-11 — GTDB-Tk on arm waits for gPlace, not for a pplacer pin
+
+bioconda-recipes#71426, moving gtdbtk's pin from pplacer alpha19 to alpha23,
+was **declined** by pchaumeil the same day. The evidence, he wrote, "answers
+the questions we had when we pinned alpha19", but GTDB-Tk will replace pplacer
+with gPlace in the coming weeks (Ecogenomics/GTDBTk#728), that release removes
+pplacer from the recipe, and they would rather not change pplacer twice in a
+short time. 2.8.0 keeps alpha19. He says the gPlace release brings
+linux-aarch64 and osx-arm64 support, together with #723. On #728 he added that
+GTDB-Tk will then place on the full trees directly, dropping the backbone and
+class-level split that exists to keep pplacer within memory, and that there
+will be no `--placer` option in the meantime.
+
+This is what the 2026-11-10 CheckM2 entry anticipated ("if GTDB-Tk adopts it,
+the pplacer pin stops mattering on Linux arm"), except that it now also covers
+macOS: that entry found no macOS build of gPlace, and the maintainer says the
+release will have one. **Unverified until it exists.**
+
+What follows:
+
+- **No more pplacer work for arm.** The pin was the maintainers' to change,
+  they have said why not, and the route they named replaces the thing being
+  pinned. The 234-genome alpha19/alpha23 comparison stays as the record; the
+  unsent pplacer final-pass issue stays unsent.
+- **`gtdbtk-arm` stays as it is.** It fails when the solve succeeds, and a
+  gtdbtk without pplacer will solve on arm. If gPlace lacks a build for one
+  of the two platforms, that solve fails on something other than alpha19, and
+  the job goes red on its grep — also a signal to look. Only its comment, and
+  the sentences in CLAUDE.md, STATUS.md and `arm_probe.sh` that named #71426
+  as the unblocking event, changed.
+- **When the release lands, the GTDB-Tk rule is unverified again.** Placement
+  is restructured, so `catalogue.py`'s outputs, `steps.py`'s merge, the
+  `gtdbtk` CI job's trimmed mock (`gtdb_mock.sh`, built against the R232
+  layout) and `check.py gtdbtk` all need re-running before STATUS calls it
+  verified on that version. Whether the reference package changes with it is
+  not known. The rule carried six defects the first time it was run. And x86
+  will not wait: `catalogue.py` gives gtdbtk a floor (`>=2.7`) and no
+  ceiling, so every fresh solve takes the gPlace release once bioconda has
+  it. The weekly `gtdbtk` job will be the first thing to run it.
+- **#71426 is closed.** Carl answered and closed it the same day, and
+  pchaumeil closed #728 at 16:16 UTC with "We'll update this issue when the
+  gPlace version of GTDB-Tk is available." **Watch #728, not #71426.**

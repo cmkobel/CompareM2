@@ -193,13 +193,17 @@ jobs:
     # A job that fails when it ought to start passing. Every gtdbtk >=2.7 pins
     # pplacer 1.1.alpha19, which bioconda builds for linux-64 only, so the
     # environment does not solve on arm and is left out of the arm builds
-    # above. bioconda-recipes#71426 moves the pin to alpha23, which has
-    # linux-aarch64 and osx-arm64 builds. This solves the environment without
-    # building it, and fails once the solve succeeds: the signal to delete this
-    # job and the exclusions. Linux arm then gets the `gtdbtk` job too. macOS
-    # does not until a GTDB-Tk release carries Ecogenomics/GTDBTk#723, without
-    # which it hangs at gene calling under `spawn`. A solve that fails for any
-    # other reason fails this as well, rather than passing as "still blocked".
+    # above. Moving the pin to alpha23 (bioconda-recipes#71426) was declined
+    # on 2026-11-11: GTDB-Tk is replacing pplacer with gPlace
+    # (Ecogenomics/GTDBTk#728), and its maintainer says that release drops the
+    # pplacer dependency and brings linux-aarch64 and osx-arm64 support. This
+    # solves the environment without building it, and fails once the solve
+    # succeeds: the signal to delete this job and the exclusions. Linux arm
+    # then gets the `gtdbtk` job too. macOS does not until a GTDB-Tk release
+    # carries Ecogenomics/GTDBTk#723, without which it hangs at gene calling
+    # under `spawn` — the gPlace release is said to. A solve that fails for any
+    # other reason, such as a gPlace with no build for this platform, fails
+    # this as well, rather than passing as "still blocked".
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false

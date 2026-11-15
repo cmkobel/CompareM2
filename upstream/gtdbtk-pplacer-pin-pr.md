@@ -1,5 +1,13 @@
 # Draft: move gtdbtk's pplacer pin from alpha19 to alpha23
 
+**Declined 2026-11-11 by pchaumeil**, on the PR: it "answers the questions we
+had when we pinned alpha19", but GTDB-Tk replaces pplacer with gPlace in the
+coming weeks ([Ecogenomics/GTDBTk#728](https://github.com/Ecogenomics/GTDBTk/issues/728)),
+that release removes pplacer from the recipe, and they would rather not change
+pplacer twice; 2.8.0 keeps alpha19. Carl answered and closed it the same day;
+#728 is where the gPlace release will be announced. See DECISIONS.md,
+2026-11-11.
+
 **Sent 2026-11-09 as [bioconda-recipes#71426](https://github.com/bioconda/bioconda-recipes/pull/71426)**, with the body
 below and the title `Update gtdbtk: pin pplacer 1.1.alpha23 instead of alpha19`.
 Branch `cmkobel/bioconda-recipes:gtdbtk-pplacer-alpha23`, one commit `4efc2ad`

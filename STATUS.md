@@ -2556,9 +2556,23 @@ merged: the two are independent, and the body says #71400 fixes `dev`.
 *#71400 merged 2026-11-10* (bgruening); bioconda's alpha23 build 1 reports
 `v1.1.alpha23` on linux-64 and linux-aarch64, checked with `pixi exec`. At his
 request the root cause went upstream as
-[matsen/pplacer#399](https://github.com/matsen/pplacer/issues/399). #71426 is
-labelled and waits for pchaumeil and aaronmussig; its body's `dev` sentence is
+[matsen/pplacer#399](https://github.com/matsen/pplacer/issues/399). #71426 was
+labelled and waited for pchaumeil and aaronmussig; its body's `dev` sentence is
 now history.
+
+*Declined 2026-11-11* by pchaumeil, on the PR: the evidence "answers the
+questions we had when we pinned alpha19", but GTDB-Tk will replace pplacer
+with gPlace "in the coming weeks"
+([Ecogenomics/GTDBTk#728](https://github.com/Ecogenomics/GTDBTk/issues/728)),
+that release drops pplacer from the recipe, and they would rather not change
+pplacer twice. 2.8.0 keeps alpha19. He says the gPlace release brings
+linux-aarch64 and osx-arm64 support, with #723. On #728 the same day: GTDB-Tk
+will place directly on the full trees, dropping the backbone and class-level
+split that exists to keep pplacer within memory, and there will be no
+`--placer` option meanwhile. **None of that release exists yet; nothing here
+has run it.** Carl answered and closed the PR the same day, and pchaumeil
+closed #728 saying he will update it when the gPlace version of GTDB-Tk is
+available: #728 is the one to watch.
 
 ### panaroo on linux-aarch64 needs intbitset alone
 
@@ -2681,7 +2695,8 @@ run on macOS from this lock.
 
 *Solve*, the six files `render_envs` writes, `pixi lock` per platform. **Five
 of six on linux-aarch64, and five of six on osx-arm64.** gtdbtk fails on both,
-on `pplacer 1.1.alpha19` (bioconda-recipes#71426). Versions that differ from
+on `pplacer 1.1.alpha19` (bioconda-recipes#71426, declined for the gPlace
+release; see *On GTDB-Tk 2.8.0* above). Versions that differ from
 linux-64: linux-aarch64 gets **bakta 1.11.4**, because bakta 1.12 needs
 `blast >=2.17` and bioconda's blast recipe has linux-aarch64 commented out
 (CircleCI timeouts, bioconda-recipes#58217). osx-arm64 gets bakta 1.12.2, and

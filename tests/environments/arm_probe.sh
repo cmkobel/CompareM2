@@ -8,7 +8,8 @@
 # Needs pixi on PATH, and about 10 GB in workdir and ~/.comparem2 together:
 # the five tool environments, and the bakta, CheckM2 and AMRFinder databases
 # (about 3.4 GB of downloads). GTDB-Tk is left out: no gtdbtk >=2.7 installs on
-# arm until bioconda-recipes#71426 is merged.
+# arm while it pins pplacer alpha19, which ends with the GTDB-Tk release that
+# replaces pplacer with gPlace (Ecogenomics/GTDBTk#728).
 #
 # It runs, in order: `--demo` twice and `check.py demo`, as the CI job does;
 # then the thirteen other tools over tests/E._faecium. On macOS, `comparem2`
