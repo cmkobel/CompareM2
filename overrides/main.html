@@ -16,7 +16,7 @@
 #}
 {% block mobile_nav %}
   <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-  <a href="{{ config.repo_url }}" class="comparem2-repo" title="CompareM2 on GitHub" aria-label="CompareM2 on GitHub"><span class="fa fa-github" aria-hidden="true"></span></a>
+  <a href="{{ config.repo_url }}" class="comparem2-repo" title="CompareM2 on GitHub" aria-label="CompareM2 on GitHub">{% include "git-logo.html" %}</a>
   <a href="{{ nav.homepage.url|url }}">
     {%- if config.theme.logo %}
       <img src="{{ config.theme.logo|url }}" class="logo" alt="{{ config.site_name }}"/>
@@ -36,7 +36,7 @@
 #}
 {% block site_name %}
   {{ super() }}
-  <a href="{{ config.repo_url }}" class="comparem2-repo" title="CompareM2 on GitHub" aria-label="CompareM2 on GitHub"><span class="fa fa-github" aria-hidden="true"></span></a>
+  <a href="{{ config.repo_url }}" class="comparem2-repo" title="CompareM2 on GitHub" aria-label="CompareM2 on GitHub">{% include "git-logo.html" %}</a>
 {% endblock %}
 
 {#

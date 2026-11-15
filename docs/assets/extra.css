@@ -87,15 +87,18 @@ a, a code { color: #1d7a3e; }
   border-radius: 0;
 }
 
-/* The repository link, put there by overrides/main.html: the GitHub mark in
+/* The repository link, put there by overrides/main.html: the Git logomark
+ * (overrides/git-logo.html, an inline SVG in currentColor) in
  * the sidebar header, opposite the wordmark, and in the mobile bar, opposite
  * the menu button. In the header it is a second `> a`, so it takes the
  * wordmark link's padding and the theme's white-10% hover with it; placed
  * absolutely, its 27px line plus that 2px padding is the wordmark link's box
  * exactly, at the same top, so the two centre on one line. The right offset
  * cancels the 4px padding, so the mark's edge lines up with the search field's.
- * The size goes on the glyph, not the link: `top` and `right` are in the
- * header's em, as its padding is, and a 22px link would scale them with it.
+ * The size goes on the SVG, not the link: `top` and `right` are in the
+ * header's em, as its padding is. The mark is 24px square, a little over the
+ * 22px the GitHub mark had, because a diamond fills less of its box; centred
+ * in a 27px-tall block, it sits on the wordmark's midline.
  * Colour is pinned, :visited included, because the theme's `a:visited` purple
  * ties `.wy-side-nav-search > a` on specificity. */
 .wy-side-nav-search { position: relative; }
@@ -109,17 +112,21 @@ a, a code { color: #1d7a3e; }
   line-height: 27px;
   color: #fcfcfc;
 }
-.wy-side-nav-search > a.comparem2-repo .fa {
-  display: block;     /* its own 27px line, not an inline box on the strut */
-  font-size: 22px;
-  line-height: 27px;
+.wy-side-nav-search > a.comparem2-repo svg {
+  display: block;     /* its own 27px box, not an inline box on the strut */
+  width: 24px;
+  height: 27px;
 }
 
 .wy-nav-top > a.comparem2-repo,
 .wy-nav-top > a.comparem2-repo:visited {
   float: right;
-  font-size: 28px;
   color: #fff;
+}
+.wy-nav-top > a.comparem2-repo svg {
+  width: 28px;
+  height: 28px;
+  vertical-align: middle;
 }
 
 /* Homepage hero. The wordmark carries the project name, so index.md has no
@@ -153,6 +160,11 @@ a, a code { color: #1d7a3e; }
   color: inherit;
 }
 .wy-nav-content .comparem2-footer a:hover { color: #1d7a3e; }
+.comparem2-footer svg {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+}
 
 /* Read the Docs' version flyout: the "latest" box it injects at the bottom
  * right of every published page. Hidden (2026-11-15) because it had nothing to

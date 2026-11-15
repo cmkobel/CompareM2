@@ -27,13 +27,14 @@ site_url: https://comparem2.readthedocs.io/
 theme:
   name: readthedocs
   highlightjs: true
-  # Three template overrides. `main.html` is the theme's own documented hook:
-  # it redefines the `mobile_nav` block so the narrow-screen bar carries the
-  # wordmark instead of the site name as text, and the `site_name` block to put
-  # the GitHub mark beside the sidebar's wordmark. `footer.html` and
-  # `versions.html` replace the theme's files of those names: a one-row footer
-  # with the licence and the repository, and no fixed bar at the foot of the
-  # sidebar. Each file says why at its top.
+  # Three template overrides and a partial. `main.html` is the theme's own
+  # documented hook: it redefines the `mobile_nav` block so the narrow-screen
+  # bar carries the wordmark instead of the site name as text, and the
+  # `site_name` block to put the repository link beside the sidebar's wordmark.
+  # `footer.html` and `versions.html` replace the theme's files of those names:
+  # a one-row footer with the licence and the repository, and no fixed bar at
+  # the foot of the sidebar. `git-logo.html` is the Git logomark those links
+  # carry. Each file says why at its top.
   custom_dir: overrides
   # The sidebar wordmark, in the on-colour variant: the header keeps a coloured
   # backdrop (the accent green, set in extra.css), so the dark-ink wordmark
