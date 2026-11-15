@@ -72,11 +72,13 @@ VERSIONS: dict[str, list[list[str]]] = {
     "checkm2": [["checkm2", "--version"]],
 }
 
-# The calibration CLAUDE.md records: 29 of 30 de novo for a CarveMe draft of
-# E. coli K-12, adenosylcobalamin the one miss. A presolver-mangled model is
-# missing hundreds of reactions and lands well below it; re-measure with
-# `upstream/panel_calibration.py` before moving this number.
-ECOLI_DE_NOVO = 29
+# What a CarveMe draft of E. coli K-12 must not make, and nothing else: the
+# compound the carving universe does not contain. A set, not a count, because a
+# draft that lost one compound and gained another would pass a count. A
+# presolver-mangled model is missing hundreds of reactions and misses many more.
+# This is `EXPECTED["Ecoli_K12_MG1655"]` in `upstream/panel_calibration.py`,
+# which is where to re-measure before changing it.
+ECOLI_NOT_DE_NOVO = {"adocbl"}
 
 
 def environment_files() -> dict[str, str]:
@@ -126,11 +128,12 @@ def carveme(path: str) -> bool:
                  "--output", str(panel), "--media", str(tmp / "media.tsv")],
                 path).returncode:
             return False
-        rows = panel.read_text().splitlines()[1:]
-        de_novo = sum(row.split("\t")[3] == "de_novo" for row in rows)
-    print(f"  E. coli K-12: {de_novo} of {len(rows)} de novo "
-          f"(calibrated at {ECOLI_DE_NOVO})", flush=True)
-    return de_novo == ECOLI_DE_NOVO
+        rows = [row.split("\t") for row in panel.read_text().splitlines()[1:]]
+    missed = {row[0] for row in rows if row[3] != "de_novo"}
+    print(f"  E. coli K-12: {len(rows) - len(missed)} of {len(rows)} de novo, "
+          f"missing {' '.join(sorted(missed)) or 'nothing'} "
+          f"(expected {' '.join(sorted(ECOLI_NOT_DE_NOVO))})", flush=True)
+    return missed == ECOLI_NOT_DE_NOVO
 
 
 # What CheckM2's models answer for an all-zero feature vector, measured on
