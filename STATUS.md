@@ -2812,8 +2812,22 @@ since 2026-10-30 and unreviewed, makes the same four renames plus `== None` to
 is still 1.1.0. The bioconda recipe is `noarch: python` with no patches, so a
 recipe patch would reach every platform at once. Linux is not exposed while
 the environment stays below Python 3.14, where `forkserver` becomes the
-default. *Unverified:* whether anything holds the checkm2 environment below
-3.14.
+default. **What holds it there is TensorFlow**: checkm2 1.1.0's own
+`tensorflow >=2.17,<2.20` has no build for Python 3.13 or 3.14 on linux-64,
+linux-aarch64 or osx-arm64, so `pixi lock` finds no solution for `python
+3.13.*` or `3.14.*` on any of the three and solves `3.12.*` (2026-11-11).
+Linux is exposed the day that range admits a 3.14 build.
+
+**#164 itself, run on linux-aarch64 on 2026-11-11**, applied to a copy of
+bioconda's build 2: `predict` over the four genomes gives a report
+byte-identical to the 11-10 `fork` run under `spawn`, `forkserver` and `fork`
+alike, and the released copy fails under `spawn` on Linux exactly as on macOS.
+Through the real `bin/checkm2` under `spawn`, `checkm2 testrun` fails as
+released with #97's message and passes patched. conda-build 26.9.1 builds the
+patched recipe, and its `run_test.py` passes with the patch and fails without
+it. Not yet run on macOS as the exact diff. Draft recipe patch, numbers and the
+database-free test:
+[upstream/checkm2-spawn-recipe-pr.md](upstream/checkm2-spawn-recipe-pr.md).
 
 **CI is blind to it.** `check.py`'s CheckM2 check loads the three models on a
 zero vector and never reaches `predict`'s prodigal stage, which is why
