@@ -128,9 +128,13 @@ a, a code { color: #1d7a3e; }
 /* Read the Docs' version flyout: the "latest" box it injects at the bottom
  * right of every published page. Hidden (2026-11-15) because it had nothing to
  * offer: the project builds one version, `latest`, so the switcher lists only
- * the page you are on. If more versions are ever published, delete this rule,
- * or the flyout can instead be turned off in the Read the Docs dashboard,
- * under the project's Addons settings. A local build never has it. */
+ * the page you are on. It is also switched off in the Read the Docs dashboard
+ * (Settings → Addons → Flyout menu, 2026-11-15), and that is what removes it
+ * from assets/example-report.html: Read the Docs injects its addons into every
+ * HTML file it serves, and the report does not load this stylesheet. This rule
+ * stays because the dashboard setting cannot be seen from the repository. If
+ * more versions are ever published, re-enable it there and delete this rule.
+ * A local build never has it. */
 readthedocs-flyout { display: none !important; }
 
 /* Dark mode, following the reader's system setting. The readthedocs theme has
