@@ -120,10 +120,9 @@ recipe lists no `recipe-maintainers` — so a bioconda member could merge this
 without him, and should not. He merged intbitset-feedstock#21 himself on
 2026-09-25, the day he was asked.
 
-**He agreed, 2026-10-04.** Carl asked by email on 2026-09-28 ("Panaroo on
-Macos?"); the reply: *"If you're willing to submit a pull request to remove the
-prokka dependency (or make it optional) that would be great!"* So either form
-is approved; the diff below is the removal.
+**He agreed, 2026-10-04, by email,** to a pull request that either removes the
+prokka dependency or makes it optional. So either form is approved; the diff
+below is the removal.
 
 If he wants to keep a floor for `run_prokka` users, conda's form of an optional
 dependency is `run_constrained: - prokka >=1.14` — it bounds prokka when

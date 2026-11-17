@@ -83,7 +83,7 @@ if at all.
 ```bash
 # what CI installs; no pixi needed
 pip install pytest pytest-asyncio textual "snakemake>=9,<10"
-python -m pytest tests/unit -q              # 399 tests, ~31 s
+python -m pytest tests/unit -q              # 400 tests, ~31 s
 
 pixi install                                # linux; macOS arm64: tests and --report-only
 pixi run test-fast                          # 4 genomes, no databases needed

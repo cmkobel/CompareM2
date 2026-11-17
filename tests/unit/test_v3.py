@@ -6419,3 +6419,39 @@ def test_the_note_names_whichever_set_of_compounds_is_shorter():
     half = list(PANEL[:_BIOSYNTHESIS_NAME_BUDGET + 1])
     assert _biosynthesis_naming(half) == "."  # neither set is short
     assert _biosynthesis_naming([]) == "."
+
+
+def test_public_files_hold_nothing_meant_for_internal():
+    """What is written for the team lives in the private repository cloned at
+    internal/, and this one is public (CLAUDE.md). This is the mechanical half
+    of that rule: email addresses, cluster project paths and paths to files in
+    internal/; naming the directory itself is fine. Names, correspondence and
+    judgements of people are not mechanical, and are on whoever writes the
+    text. A placeholder passes:
+    `you@example.org`, `/faststorage/project/x/`, `<project>/comparem2/`."""
+    root = Path(__file__).resolve().parents[2]
+    try:
+        listed = subprocess.run(["git", "ls-files", "-z"], cwd=root,
+                                capture_output=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        pytest.skip("not a git checkout")
+
+    email = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
+    placeholder = re.compile(r"@(example\.(org|com)|github\.com|users\.noreply\.github\.com)$")
+    # Built in two halves so that this file's own source does not match it.
+    cluster = re.compile("/faststorage" + r"/project/(?!x/)[^/\s`]+")
+    into_internal = re.compile(r"(?<![A-Za-z0-9_.-])internal/[A-Za-z0-9_.-]")
+    may_name_internal = {".gitignore", "CLAUDE.md", "tests/unit/test_v3.py"}
+
+    found = []
+    for name in filter(None, listed.decode().split("\0")):
+        try:
+            text = (root / name).read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue  # binary (the zipped genomes), or deleted but not yet staged
+        found += [f"{name}: email address {m.group()}" for m in email.finditer(text)
+                  if not placeholder.search(m.group())]
+        found += [f"{name}: cluster path {m.group()}" for m in cluster.finditer(text)]
+        if name not in may_name_internal and into_internal.search(text):
+            found.append(f"{name}: cites a file in internal/")
+    assert not found, "\n".join(found)

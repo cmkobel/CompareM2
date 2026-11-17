@@ -4585,3 +4585,35 @@ What follows:
 - **#71426 is closed.** Carl answered and closed it the same day, and
   pchaumeil closed #728 at 16:16 UTC with "We'll update this issue when the
   gPlace version of GTDB-Tk is available." **Watch #728, not #71426.**
+
+## 2026-11-17 — what is written for the team lives in a private repository
+
+`cmkobel/CompareM2-internal` is private and is cloned at `internal/`, which
+`.gitignore` excludes. **Anything sensitive goes there and never here.**
+CLAUDE.md lists what counts. Engineering plans, decisions and measurements
+stay in this repository, whose openness is deliberate.
+
+**Check before pushing, because a push cannot be recalled.** Rewriting public
+history changes every later commit. It moves the release tags, and with them
+the source tarballs whose sha256 the published bioconda recipes pin. It leaves
+hashes cited in these files pointing at nothing. And it still removes nothing
+from existing clones, from the `refs/pull/*` refs and the event feed GitHub
+keeps, or from archives. Material that has been pushed is therefore brought
+in line with the rule from then on, not removed from history. A rewrite is
+for credentials, after rotating them. An unpushed commit can be rebuilt at no
+cost, which is why CLAUDE.md asks for `git log -p origin/master..HEAD` before
+every push.
+
+**A redaction does not describe what it removed.** Its diff already shows the
+old lines to anyone who opens it. A commit message, or an entry here, that
+lists what was taken out and where turns the commit into an index to it. Say
+only that the files were brought in line with the rule.
+
+**The mechanical half is enforced:**
+`test_public_files_hold_nothing_meant_for_internal` fails on an email
+address, a cluster project path, or a path to a file in `internal/` in any
+tracked file. Placeholders (`you@example.org`, `/faststorage/project/x/`)
+pass, and naming the directory itself is fine. It was checked against a
+planted file carrying one of each. Names, correspondence and judgements of
+people cannot be matched by a pattern, so that half stays a rule for whoever
+writes the text.

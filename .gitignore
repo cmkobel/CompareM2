@@ -74,5 +74,11 @@ hpc.env
 # it. Nothing here is an input to anything.
 Claude outputs/
 
+# A separate private repository, cmkobel/CompareM2-internal, cloned here for
+# the documents written for the team rather than for users. CLAUDE.md says what
+# belongs in it. Ignored so that it can never be added to this public one, not
+# even as an embedded-repository pointer.
+/internal/
+
 # Misc
 *.log

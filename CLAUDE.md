@@ -20,6 +20,46 @@ Three files carry the context, and they are deliberately separate:
   actually been executed, measured database sizes, where things live on
   thylakoid, and what is known broken.
 
+**`internal/` is a different repository.** `cmkobel/CompareM2-internal` is
+private and is cloned at `internal/`, which `.gitignore` excludes.
+
+**Anything sensitive goes there, never here.** "Here" includes commit
+messages, PR and issue text, and the drafts under `upstream/`, which are all
+public too. Sensitive means:
+
+- positioning against named competitors, and paper plans before the preprint;
+- anything that names and judges people, or plans how to approach them: who
+  to ask, who is slow, who to route around;
+- private correspondence. Say what was agreed and when, and never quote an
+  email;
+- people outside the project by full name. Use their GitHub handle or their
+  role ("the issue's reporter");
+- cluster accounts, project names, and paths with a username in them. Write
+  `<project>/comparem2/…`.
+
+Engineering plans, decisions, status and measurements stay here, in `notes/`,
+`DECISIONS.md` and `STATUS.md`. This repository's openness is deliberate, and
+`internal/` is the exception to it, not a second home.
+
+**No file in this repository cites a file in `internal/`.** A decision
+recorded here must stand on its own reasoning, because for everyone else the
+link is dead. Nothing here depends on `internal/` existing. When planning
+work, read `internal/README.md` first if it is present: it says which plan is
+current.
+
+**Check before pushing, not after.** `git log -p origin/master..HEAD` is the
+last point where a slip is cheap. An unpushed commit can be rebuilt without
+it. A pushed one stays in clones, PR refs, GitHub's event feed and archives,
+whatever is rewritten afterwards (DECISIONS.md, 2026-11-17).
+
+**A redaction does not say what it removed.** Its diff already shows the old
+lines, and a message that lists them makes the commit an index to them.
+
+`test_public_files_hold_nothing_meant_for_internal` catches the mechanical
+half: email addresses, cluster project paths, and paths to files in
+`internal/`. Names, correspondence and judgements are not mechanical, so that
+half is on whoever writes the text.
+
 ## What this is
 
 CompareM2 v3: a Snakemake-driven pipeline that runs 14 analysis tools over a set
@@ -108,7 +148,7 @@ move.
 
 ### Testing
 
-`tests/unit/test_v3.py`, 399 tests, ~31 s. This is the primary instrument: the
+`tests/unit/test_v3.py`, 400 tests, ~31 s. This is the primary instrument: the
 codebase is a generator, and a wrong wildcard produces a Snakefile that parses
 cleanly and builds the wrong DAG, which an end-to-end run catches slowly if at
 all. CI (`.github/workflows/unit.yaml`) runs it on 3.11–3.13 without pixi.
@@ -241,6 +281,7 @@ ANI, 0 SNPs, identical CDS counts.
   | a decision the next session could undo without knowing why | `DECISIONS.md` — dated, append-only, and it records reversals rather than deleting them |
   | what a real run actually did or now does | `STATUS.md`, which tracks *execution* and never installation |
   | the test count, the environment list, the architecture map | `CLAUDE.md` — this file goes stale first, because nothing fails when it is wrong |
+  | positioning against competitors, paper plans, anything that judges people | `internal/` — never `notes/`, which is public |
 
   Nothing here fails a build, which is exactly why it has to be habit: a wrong
   `CLAUDE.md` misleads the next session silently, and stale `docs/` is a

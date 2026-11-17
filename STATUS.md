@@ -251,7 +251,7 @@ GenomeDK on 2026-11-08**; see *The TUI under SLURM, and `s`* below.
 
 On `fe-open-02`, reached through thylakoid's ControlMaster socket, from the
 uncommitted working tree in
-`/faststorage/project/PM_group/carl/comparem2/gaps-1108`, the `slurm`
+`<project>/comparem2/gaps-1108`, the `slurm`
 profile, the TUI in a detached tmux session read with `capture-pane`.
 `--tui --until bakta` over the four *E. faecium* genomes:
 
@@ -1556,7 +1556,7 @@ a non-default setting, and only in the file the report reads for coverage.
 that matters for `--set`: a profile's values arrive as argparse *defaults*, so
 the override had to survive the path that once made the TUI ignore `--set`
 entirely. Same clone of `a91c68d` under
-`/faststorage/project/PM_group/carl/comparem2/set-check-0909`, `--profile
+`<project>/comparem2/set-check-0909`, `--profile
 profiles/showcase`, against the six environments already in
 `.comparem2-envs` — nothing rebuilt, because the clone's `catalogue.py` is
 identical to the synced `repo/`'s and the prefix realpath did not move.
@@ -3200,7 +3200,7 @@ moved 1,014 insertions after it — `cli.py`, `snakefile.py`, `tools.py`,
 decide what a run *is*, so this was not ceremony.
 
 18:49:00–18:51:31 CEST on 2026-09-07, `8bb961c` rsynced to
-`/faststorage/project/PM_group/carl/comparem2/repo` (`__version__` read back as
+`<project>/comparem2/repo` (`__version__` read back as
 **3.2.0** there), `comparem2 --demo --profile <slurm>` with the frontend on the
 login node and `COMPAREM2_CONDA_PREFIX` pointed at the six environments built
 that morning:
@@ -3322,7 +3322,7 @@ carrying the code this tag ships.
   **Says so since 2026-11-07.** Above `_OVERLAP_VOCABULARY_MAXIMUM` (12
   genomes, `report.py`) the *Shared gene content* heading still appears, with
   one sentence saying why the table is not shown and pointing at the partition
-  table and `gene_presence_absence.Rtab`. Prompted by Patrick on #156, at 139
+  table and `gene_presence_absence.Rtab`. Prompted by the reporter on #156, at 139
   *E. coli*, 2026-10-27. A test renders 12 and 13 genomes. Unit-tested only; no
   report over more than 12 genomes has been rendered with it.
 - **`/evo/postdoc/cm2v3`** is the old rsync scratch directory, now redundant,
@@ -3482,7 +3482,7 @@ the only one with no `no route` at all.
 
 ### The docs showcase report was re-rendered, 2026-09-15
 Not patched. The 2026-09-08 run is still at
-`/faststorage/project/PM_group/carl/comparem2/results_showcase` on GenomeDK and
+`<project>/comparem2/results_showcase` on GenomeDK and
 was **not re-run** — `render_report` was called over its existing outputs with
 3.4.0, title and command passed explicitly so the provenance header still names
 the command that produced the numbers. The header's version and timestamp move,

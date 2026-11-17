@@ -20,7 +20,7 @@ which — unlike alpha19 — have `osx-arm64` builds.
   selection, `compare.py`, comparison outputs), `time.log` / `run.log` (the
   2026-10-05 ANI-screen run), `pr/` (working copies of both diffs).
   `alpha-crash/FINDINGS.md` was the working version of this note.
-- GenomeDK, `/faststorage/project/PM_group/carl/comparem2/pplacer-compare/`:
+- GenomeDK, `<project>/comparem2/pplacer-compare/`:
   `env_alpha{19,20,22,23,23s}/` (pixi environments), `run_alpha{19,19b,20,22,23s}/`
   (the 234-genome runs), `shared/` (identify + align, done once), `yiran/`,
   `gtdb/`, `mock/py314/`. Job logs in `../slurm_logs/<jobid>.out`.
